@@ -37,7 +37,6 @@ import me.wizos.loread.utils.UTime;
 import me.wizos.loread.utils.UToast;
 
 public class ArticleActivity extends BaseActivity implements Neter.LogRequest {
-    private String label = "Article - ";
     protected WebView webView; // implements Html.ImageGetter
     protected Context context;
     @Override
@@ -110,7 +109,7 @@ public class ArticleActivity extends BaseActivity implements Neter.LogRequest {
         webSettings.setDisplayZoomControls(false); //隐藏webview缩放按钮
         webSettings.setLayoutAlgorithm(WebSettings.LayoutAlgorithm.SINGLE_COLUMN); // 就是这句使自适应屏幕
         webSettings.setLoadWithOverviewMode(true);// 缩放至屏幕的大小
-        setOneapmWebViewWatch();
+//        setOneapmWebViewWatch();
     }
 
     private void setOneapmWebViewWatch(){
@@ -176,6 +175,11 @@ public class ArticleActivity extends BaseActivity implements Neter.LogRequest {
                 if( htmlAndSrcList!= null){
                     srcList =  htmlAndSrcList.getList();
                     content = htmlAndSrcList.getString();
+                    if(srcList!=null && srcList.size()!=0){
+                        article.setCoverSrc(srcList.get(0).getStringB());
+                        KLog.d(srcList.get(0).getStringB());
+                    }
+
                 }
             }else if(imgState.equals("OK")){
             }else {
@@ -185,7 +189,7 @@ public class ArticleActivity extends BaseActivity implements Neter.LogRequest {
             showContent = contentHeader + content + contentFooter;
             numOfImgs = mNeter.getBitmapList(srcList);
 //            vArticleNum.setText(String.valueOf(articleNum) + " / " + String.valueOf(articleCount));
-            vArticleNum.setText( fileNameInMD5.substring(0,9) ); // FIXME: 2016/5/3 测试
+            vArticleNum.setText( fileNameInMD5.substring(0,10) ); // FIXME: 2016/5/3 测试
             webView.loadDataWithBaseURL(null, showContent , "text/html", "utf-8", null);
         }
 
@@ -322,7 +326,7 @@ public class ArticleActivity extends BaseActivity implements Neter.LogRequest {
                     String testUrl = oldHtml.substring(testStart + 6, testEnd);
                     String testType = testUrl.substring(testUrl.length() - API.MyFileType.length() ,testUrl.length()) ;
 //                    testType = testUrl.substring(path.lastIndexOf("."));
-                    KLog.d(label + "【测试 src 是否修改 】" + testUrl + "==" + testType );
+                    KLog.d("【测试 src 是否修改 】" + testUrl + "==" + testType );
                     if (testType.equals(API.MyFileType)){
                         return null;
                     }
@@ -331,7 +335,7 @@ public class ArticleActivity extends BaseActivity implements Neter.LogRequest {
         }
 
         String newHtml = oldHtml;
-        KLog.d(label + "【文章1】");
+        KLog.d("【文章1】");
 //        list.add(fileNameInMD5);
         int indexStart = newHtml.indexOf("<img ", 0);
         while (indexStart != -1) {
@@ -341,7 +345,7 @@ public class ArticleActivity extends BaseActivity implements Neter.LogRequest {
                 if (indexEnd != -1) {
                     String netSrc = newHtml.substring(indexStart + 6, indexEnd);
                     String fileType = UFile.getFileExtByUrl(netSrc);
-                    KLog.d(label + "【文章13】" + fileType );
+                    KLog.d("【文章13】" + fileType );
                     num++;
                     String localSrc = App.cacheAbsolutePath + fileNameInMD5  + File.separator + fileNameInMD5 + "_files" + File.separator + fileNameInMD5 + "_" + num + API.MyFileType;
                     String loadSrc = App.cacheRelativePath  + fileNameInMD5 + File.separator + fileNameInMD5  + "_files" + File.separator + fileNameInMD5 + "_" + num + API.MyFileType;
@@ -350,7 +354,7 @@ public class ArticleActivity extends BaseActivity implements Neter.LogRequest {
                     srcInLocalNetArray.add(new Strings(netSrc,loadSrc));
                     indexEnd = indexStart + 6 + localSrc.length() + netSrc.length() + 10;
                     indexStart = newHtml.indexOf("<img ", indexEnd);
-                    KLog.d(label + "【文章14】" + localSrc + newHtml);
+                    KLog.d("【文章14】" + localSrc + newHtml);
                 }
             }
         }
@@ -359,17 +363,18 @@ public class ArticleActivity extends BaseActivity implements Neter.LogRequest {
         StringAndList htmlAndImgSrcList = new StringAndList();
         htmlAndImgSrcList.setList(srcInLocalNetArray);
         htmlAndImgSrcList.setString(newHtml);
-        KLog.d(label + "【文章2】");
+        KLog.d("【文章2】");
         UFile.saveHtml(fileNameInMD5, newHtml);
         return htmlAndImgSrcList;
     }
     protected ArrayList<Strings> srcInLocalNetArray = new ArrayList<>();
 
+
     private static final int MSG_DOUBLE_TAP = 0;
     private Handler mHandler = new Handler();
     @Override
     public void onClick(View v) {
-        KLog.d( label + "【 toolbar 是否双击 】" );
+        KLog.d( "【 toolbar 是否双击 】" );
         switch (v.getId()) {
             case R.id.article_num:
             case R.id.art_toolbar:

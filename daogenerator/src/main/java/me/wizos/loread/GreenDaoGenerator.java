@@ -82,6 +82,7 @@ public class GreenDaoGenerator {
         article.addStringProperty("readState"); // read , unread .reading 保持未读（在读）
         article.addStringProperty("starState"); // star , unstar
         article.addStringProperty("imgState"); // ok 代表所有图片下载完成，空就要去加载图片，或者为加载失败的图片src
+        article.addStringProperty("coverSrc");
         article.addStringProperty("origin");
 
 

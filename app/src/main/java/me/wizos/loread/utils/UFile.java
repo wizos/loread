@@ -1,14 +1,15 @@
 package me.wizos.loread.utils;
 
 import android.content.Context;
+import android.graphics.BitmapFactory;
 import android.os.Environment;
-
-import com.socks.library.KLog;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
@@ -131,6 +132,26 @@ public class UFile {
         return fileContent;
     }
 
+    public static android.graphics.Bitmap getBitmap(String filePath){
+        if(filePath==null)
+            return null;
+        if(filePath.equals(""))
+            return null;
+
+        File file = new File( filePath );
+
+        try {
+            FileInputStream fis = new FileInputStream(file);
+            return BitmapFactory.decodeStream(fis);
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+
+
+
 
     /**
      * 此方法在使用完InputStream后会关闭它。
@@ -179,35 +200,6 @@ public class UFile {
         }
     }
 
-//    public static ImageType checkImageType(String filePath) {
-//        try {
-//            byte[] b = getBytes(new FileInputStream(filePath), 10);
-//            byte b0 = b[0];
-//            byte b1 = b[1];
-//            byte b2 = b[2];
-//            byte b3 = b[3];
-//            byte b6 = b[6];
-//            byte b7 = b[7];
-//            byte b8 = b[8];
-//            byte b9 = b[9];
-//            if (b0 == (byte) 'G' && b1 == (byte) 'I' && b2 == (byte) 'F') {
-//                return ImageType.GIF;
-//            } else if (b1 == (byte) 'P' && b2 == (byte) 'N' && b3 == (byte) 'G') {
-//                return ImageType.PNG;
-//            } else if (b6 == (byte) 'J' && b7 == (byte) 'F' && b8 == (byte) 'I' && b9 == (byte) 'F') {
-//                return ImageType.JPG;
-//            } else if (b6 == (byte) 'E' && b7 == (byte) 'x' && b8 == (byte) 'i' && b9 == (byte) 'f') {
-//                return ImageType.JPG;
-//            } else {
-//                return ImageType.UNKNOW;
-//            }
-//        } catch (Exception e) {
-//            return ImageType.UNKNOW;
-//        }
-//    }
-//    public enum ImageType {
-//        GIF, JPG, PNG, UNKNOW
-//    }
 
     public static boolean isFileExists(String filePath){
         File file = new File(filePath);
@@ -300,121 +292,6 @@ public class UFile {
         }
         return b;
     }
-
-//    java 根据输入流检查图片格式
-//    /**
-//     * File extensions.
-//     */
-//    private static final String[] FILE_EXTS = {"JPG", "PNG", "GIF"};
-//    /**
-//     * Magic bytes in a file with above extension.
-//     */
-//    private static final byte[][] FILE_MAGS = new byte[][] {
-//            new byte[] {(byte)0xFF, (byte)0xD8, (byte)0xFF, (byte)0xE0}, //JPG
-//            new byte[] {(byte)0x89, (byte)0x50, (byte)0x4E, (byte)0x47}, //PNG
-//            new byte[] {(byte)0x47, (byte)0x49, (byte)0x46, (byte)0x38}  //GIF
-//    };
-//    /**
-//     * Get file format from file name.
-//     * @param fileName file name
-//     * @return file format, null if unsupported.
-//     */
-//    public static String getFileFormat(String fileName) {
-//        int dp = fileName.lastIndexOf(".");
-//        if (dp == -1) return null;
-//        String ext = fileName.substring(dp + 1).toUpperCase();
-//        if (ext.equals("JPEG")) ext = "JPG"; //JPEG is JPG
-//        if (ArrayUtils.indexOf(FILE_EXTS, ext) == -1) return null;
-//        return ext;
-//    }
-//    /**
-//     * Get file format by contents.
-//     * @param contents file contents
-//     * @return file format, null if unsupported.
-//     */
-//    public static String getFileFormat(byte[] contents) {
-//        for (int i = 0; i < FILE_MAGS.length; i++) {
-//            byte[] mag = FILE_MAGS[i];
-//            if (contents.length >= mag.length) {
-//                if (Arrays.equals(Arrays.copyOf(contents, mag.length), mag)) {
-//                    return FILE_EXTS[i];
-//                }
-//            }
-//        }
-//        return null;
-//    }
-
-
-
-
-//    /**
-//     *
-//     *TODO：保存文件
-//     *Author：Andy.Liu
-//     *Create Time：2012-7-10 上午08:42:40
-//     *TAG：@param str 文件的内容
-//     *TAG：@param filePath 保存路径
-//     *Return：void
-//     */
-//    public static void saveFilesss(String str,String filePath){
-//        FileOutputStream fos = null;
-//        try {
-//            File file = new File(filePath);
-//            if(!file.exists())
-//                file.mkdirs();
-//            fos = new FileOutputStream(file);
-//            fos.write(str.getBytes());
-//            fos.flush();
-//        } catch (FileNotFoundException e) {
-//            e.printStackTrace();
-//        }catch(IOException e){
-//            e.printStackTrace();
-//        }finally{
-//            try {
-//                if(null!=fos)
-//                    fos.close();
-//            } catch (IOException e) {
-//                e.printStackTrace();
-//            }
-//        }
-//    }
-
-//    FileOutputStream是用来输出原始字节流的，如图像数据。要输出字符流，则使用FileWriter。
-//    如果你对于设计模式也熟悉的话，FileWriter是典型的装饰者模式。我已经写过教程来解释装饰者模式了，因为它对于很多设计来说都很重要。
-//    FileOutputStream的一个应用就是将文件转换成字节数组。
-//    FileWriter 用来写入字符文件的便捷类，此类的构造方法假定默认字符编码和默认字节缓冲区大小都是可接受的
-
-//
-//    /**
-//     *
-//     *TODO：读取文件
-//     *Author：Andy.Liu
-//     *Create Time：2012-7-10 上午08:48:40
-//     *TAG：@param filePath
-//     *TAG：@return
-//     *Return：String
-//     */
-//    public static String readFile(String filePath){
-//        FileInputStream fis = null;
-//        byte[] mByte = new byte[512];
-//        try {
-//            fis = new FileInputStream(new File(filePath));
-//            fis.read(mByte);
-//        } catch (FileNotFoundException e) {
-//            e.printStackTrace();
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }finally{
-//            try {
-//                if(null!=fis)
-//                    fis.close();
-//            } catch (IOException e) {
-//                e.printStackTrace();
-//            }
-//        }
-//        return new String(mByte).toString();
-//    }
-
 
 
 //    mkdir()

@@ -1,5 +1,7 @@
 package me.wizos.loread.net;
 
+import android.text.Html;
+
 import com.google.gson.Gson;
 import com.socks.library.KLog;
 
@@ -13,6 +15,7 @@ import java.util.Map;
 import me.wizos.loread.bean.Article;
 import me.wizos.loread.bean.Tag;
 import me.wizos.loread.dao.WithDB;
+import me.wizos.loread.dao.WithSet;
 import me.wizos.loread.gson.GsItemContents;
 import me.wizos.loread.gson.GsStreamContents;
 import me.wizos.loread.gson.GsSubscriptions;
@@ -49,6 +52,7 @@ public class Parser {
         Gson gson = new Gson();
         UserInfo userInfo = gson.fromJson(info, UserInfo.class);
 //        System.out.println("【parseUserInfo】" + userInfo.toString());
+        WithSet.getInstance().setUseId(Long.valueOf( userInfo.getUserId() ));
         return userInfo.getUserId();
 //        mUserID = userInfo.getUserId();
 //        mUserName = userInfo.getUserName();
@@ -115,6 +119,7 @@ public class Parser {
     public void parseStreamPrefList( String info,long mUserID){
         if(mUserID == 0){
             mUserID = Long.valueOf(tagIdArray.get(0).split("/")[1]);
+            WithSet.getInstance().setUseId(Long.valueOf(mUserID));
         }
         Gson gson = new Gson();
         StreamPrefs streamPrefs = gson.fromJson(info, StreamPrefs.class);
@@ -384,6 +389,8 @@ public class Parser {
             article.setAuthor(items.getAuthor());
             article.setReadState(API.ART_UNREAD);
             article.setStarState(API.ART_UNSTAR);
+
+            article.setSummary(Html.fromHtml(items.getSummary().getContent()).toString().substring(0,92));
             article.setOrigin(items.getOrigin().toString());
             UFile.saveHtml(UString.stringToMD5(article.getId()), items.getSummary().getContent());
             saveList.add(article);

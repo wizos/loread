@@ -31,6 +31,7 @@ public class Article {
     private String readState;
     private String starState;
     private String imgState;
+    private String coverSrc;
     private String origin;
 
     /** Used to resolve relations */
@@ -53,7 +54,7 @@ public class Article {
         this.id = id;
     }
 
-    public Article(String id, Long crawlTimeMsec, Long timestampUsec, String categories, String title, Long published, Long updated, String enclosure, String canonical, String alternate, String summary, String author, String readState, String starState, String imgState, String origin) {
+    public Article(String id, Long crawlTimeMsec, Long timestampUsec, String categories, String title, Long published, Long updated, String enclosure, String canonical, String alternate, String summary, String author, String readState, String starState, String imgState, String coverSrc, String origin) {
         this.id = id;
         this.crawlTimeMsec = crawlTimeMsec;
         this.timestampUsec = timestampUsec;
@@ -69,6 +70,7 @@ public class Article {
         this.readState = readState;
         this.starState = starState;
         this.imgState = imgState;
+        this.coverSrc = coverSrc;
         this.origin = origin;
     }
 
@@ -198,6 +200,14 @@ public class Article {
 
     public void setImgState(String imgState) {
         this.imgState = imgState;
+    }
+
+    public String getCoverSrc() {
+        return coverSrc;
+    }
+
+    public void setCoverSrc(String coverSrc) {
+        this.coverSrc = coverSrc;
     }
 
     public String getOrigin() {

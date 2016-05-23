@@ -87,12 +87,6 @@ public class Tag {
         this.unreadcount = unreadcount;
     }
 
-
-    public String toString(){
-        return title + " - " + id + " - " + unreadcount + " - " + sortid;
-    }
-
-
     /** To-many relationship, resolved on first access (and after reset). Changes to to-many relations are not persisted, make changes to the target entity. */
     public List<Feed> getFeeds() {
         if (feeds == null) {

@@ -4,6 +4,8 @@ import android.app.Activity;
 import android.app.Application;
 import android.content.Context;
 
+import com.facebook.drawee.backends.pipeline.Fresco;
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
@@ -28,11 +30,9 @@ public class App extends Application{
         super.onCreate();
         App.context = getApplicationContext();
         instance = this;
-//        Fresco.initialize(context);
+        Fresco.initialize(context);
         cacheRelativePath = getExternalFilesDir(null) + File.separator + "cache" + File.separator;
         cacheAbsolutePath = "file:"+ File.separator + File.separator + cacheRelativePath;
-        // 官方推荐将获取 DaoMaster 对象的方法放到 Application 层，这样将避免多次创建生成 Session 对象
-//        initDB();
     }
     public static Context getContext(){
         return context;}
@@ -62,9 +62,10 @@ public class App extends Application{
     }
 
     private  static DaoSession daoSession;
-    private static final String DB_NAME = "lore_db";
+    public static final String DB_NAME = "lore_db";
 
 
+    // 官方推荐将获取 DaoMaster 对象的方法放到 Application 层，这样将避免多次创建生成 Session 对象
     public static DaoSession getDaoSession() {
         if (daoSession == null) {
             DaoMaster.OpenHelper helper = new DaoMaster.DevOpenHelper(getInstance(), DB_NAME, null);

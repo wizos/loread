@@ -45,7 +45,8 @@ public class ArticleDao extends AbstractDao<Article, String> {
         public final static Property ReadState = new Property(12, String.class, "readState", false, "READ_STATE");
         public final static Property StarState = new Property(13, String.class, "starState", false, "STAR_STATE");
         public final static Property ImgState = new Property(14, String.class, "imgState", false, "IMG_STATE");
-        public final static Property Origin = new Property(15, String.class, "origin", false, "ORIGIN");
+        public final static Property CoverSrc = new Property(15, String.class, "coverSrc", false, "COVER_SRC");
+        public final static Property Origin = new Property(16, String.class, "origin", false, "ORIGIN");
     };
 
     private DaoSession daoSession;
@@ -80,7 +81,8 @@ public class ArticleDao extends AbstractDao<Article, String> {
                 "\"READ_STATE\" TEXT," + // 12: readState
                 "\"STAR_STATE\" TEXT," + // 13: starState
                 "\"IMG_STATE\" TEXT," + // 14: imgState
-                "\"ORIGIN\" TEXT);"); // 15: origin
+                "\"COVER_SRC\" TEXT," + // 15: coverSrc
+                "\"ORIGIN\" TEXT);"); // 16: origin
     }
 
     /** Drops the underlying database table. */
@@ -165,9 +167,14 @@ public class ArticleDao extends AbstractDao<Article, String> {
             stmt.bindString(15, imgState);
         }
  
+        String coverSrc = entity.getCoverSrc();
+        if (coverSrc != null) {
+            stmt.bindString(16, coverSrc);
+        }
+ 
         String origin = entity.getOrigin();
         if (origin != null) {
-            stmt.bindString(16, origin);
+            stmt.bindString(17, origin);
         }
     }
 
@@ -202,7 +209,8 @@ public class ArticleDao extends AbstractDao<Article, String> {
             cursor.isNull(offset + 12) ? null : cursor.getString(offset + 12), // readState
             cursor.isNull(offset + 13) ? null : cursor.getString(offset + 13), // starState
             cursor.isNull(offset + 14) ? null : cursor.getString(offset + 14), // imgState
-            cursor.isNull(offset + 15) ? null : cursor.getString(offset + 15) // origin
+            cursor.isNull(offset + 15) ? null : cursor.getString(offset + 15), // coverSrc
+            cursor.isNull(offset + 16) ? null : cursor.getString(offset + 16) // origin
         );
         return entity;
     }
@@ -225,7 +233,8 @@ public class ArticleDao extends AbstractDao<Article, String> {
         entity.setReadState(cursor.isNull(offset + 12) ? null : cursor.getString(offset + 12));
         entity.setStarState(cursor.isNull(offset + 13) ? null : cursor.getString(offset + 13));
         entity.setImgState(cursor.isNull(offset + 14) ? null : cursor.getString(offset + 14));
-        entity.setOrigin(cursor.isNull(offset + 15) ? null : cursor.getString(offset + 15));
+        entity.setCoverSrc(cursor.isNull(offset + 15) ? null : cursor.getString(offset + 15));
+        entity.setOrigin(cursor.isNull(offset + 16) ? null : cursor.getString(offset + 16));
      }
     
     /** @inheritdoc */

@@ -17,6 +17,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.afollestad.materialdialogs.MaterialDialog;
+import com.facebook.drawee.view.SimpleDraweeView;
 import com.socks.library.KLog;
 import com.yydcdut.sdlv.Menu;
 import com.yydcdut.sdlv.MenuItem;
@@ -34,6 +35,8 @@ import me.wizos.loread.adapter.MaterialSimpleListAdapter;
 import me.wizos.loread.adapter.MaterialSimpleListItem;
 import me.wizos.loread.bean.Article;
 import me.wizos.loread.bean.RequestLog;
+import me.wizos.loread.dao.DaoMaster;
+import me.wizos.loread.dao.UpdateDB;
 import me.wizos.loread.dao.WithDB;
 import me.wizos.loread.dao.WithSet;
 import me.wizos.loread.gson.ItemRefs;
@@ -48,12 +51,6 @@ import me.wizos.loread.view.SwipeRefresh;
 
 public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefreshListener ,Neter.LogRequest{
 
-//    SlideAndDragListView.OnListItemLongClickListener,
-//    SlideAndDragListView.OnDragListener, SlideAndDragListView.OnSlideListener,
-//    SlideAndDragListView.OnListItemClickListener, SlideAndDragListView.OnMenuItemClickListener,
-//    SlideAndDragListView.OnItemDeleteListener,
-
-
     protected static final String TAG = "MainActivity";
     private Context context;
     private ImageView vReadIcon, vStarIcon;
@@ -63,8 +60,6 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
     private Menu mMenu;
     private SwipeRefresh mSwipeRefreshLayout;
     private SlideAndDragListView slv;
-//    private AppBarLayout appBarLayout;
-//    private NestedScrollView vScrolllayout;
 
     private String sListState;
     private String sListTag;
@@ -76,6 +71,7 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
     private long mUserID;
     private MainSlvAdapter mainSlvAdapter;
     private List<Article> articleList;
+    private boolean hadArticleSlvSummary = true;
 //    private String sListTagCount = "";
 
     @Override
@@ -83,6 +79,7 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         context = this ;
+//        upgrade();
         UFile.setContext(this);
         App.addActivity(this);
         mNeter = new Neter(handler,this);
@@ -93,11 +90,13 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
         initSwipe();
         initView();
         KLog.i("【一】" + toolbar.getTitle() );
-        WithSet.getInstance().setUseId(1006097346L);
         initData();
         KLog.i("【二】" + toolbar.getTitle());
     }
-
+    protected void upgrade(){
+        UpdateDB helper = new UpdateDB(this, App.DB_NAME,null);// 升级数据库成功
+        DaoMaster daoMaster = new DaoMaster(helper.getWritableDatabase());
+    }
 
     @Override
     protected void onResume(){
@@ -123,7 +122,6 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
     protected void readSetting(){
         API.INOREADER_ATUH = WithSet.getInstance().getAuth();
         mUserID = WithSet.getInstance().getUseId();
-        mUserID = 1006097346L; // 【测试】
         sListState = WithSet.getInstance().getListState();
         sListTag = "user/" +  mUserID + "/state/com.google/reading-list";
         syncFirstOpen = WithSet.getInstance().isSyncFirstOpen();
@@ -134,12 +132,23 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
         KLog.i("【 readSetting 】ATUH 为" + API.INOREADER_ATUH + syncFirstOpen + "【mUserID为】" + hadSyncAllStarredList );
         KLog.i( WithSet.getInstance().getCachePathStarred() + WithSet.getInstance().getUseName() );
     }
+
+    private SimpleDraweeView vArticleCover;
     protected void initView(){
         vReadIcon = (ImageView)findViewById(R.id.main_read);
         vStarIcon = (ImageView)findViewById(R.id.main_star);
         vToolbarCount = (TextView)findViewById(R.id.main_toolbar_count);
         vToolbarHint = (TextView)findViewById(R.id.main_toolbar_hint);
         vPlaceHolder = (ImageView)findViewById(R.id.main_placeholder);
+
+
+//        GenericDraweeHierarchyBuilder builder = new GenericDraweeHierarchyBuilder(getResources());
+//        GenericDraweeHierarchy hierarchy = builder
+//                .setFadeDuration(300)
+//                .setPlaceholderImage(new MyCustomDrawable())
+//                .build();
+//        vArticleCover.setHierarchy(hierarchy);
+
     }
     protected void initSwipe(){
         mSwipeRefreshLayout = (SwipeRefresh) findViewById(R.id.swipe_layout);
@@ -180,7 +189,6 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
     }
 
     protected void initData(){
-//        UpdateDB helper = new UpdateDB(this, "Article.db", null); // 升级数据库，没试用过
         readSetting();
         initBottombarIcon();
         reloadData();  // 先加载已有数据
