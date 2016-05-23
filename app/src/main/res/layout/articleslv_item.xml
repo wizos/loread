@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/slv_item"
+    android:layout_width="match_parent"
+    android:layout_height="@dimen/slv_item_height"
+    android:background="@android:color/transparent"
+    android:orientation="horizontal">
+    <!--MarginStart指的是控件距离开头View部分的间距大小，MarginLeft则指的是控件距离左边View部分的间距大小，MarginEnd和MarginRight同理。-->
+    <!--一般情况下，View开始部分就是左边，但是有的语言目前为止还是按照从右往左的顺序来书写的-->
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:gravity="center_vertical"
+        android:orientation="vertical"
+        android:layout_marginTop="6dp"
+        android:layout_marginBottom="6dp"
+        android:layout_marginStart="10dp"
+        android:layout_marginEnd="10dp">
+        <TextView
+            android:id="@+id/articleslv_item_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="3dp"
+            android:alpha="0.87"
+            android:fontFamily="sans-serif"
+            android:lines="2"
+            android:singleLine="false"
+            android:ellipsize="end"
+            android:textColor="@android:color/black"
+            android:textSize="16sp"
+            tools:text="标题"/>
+        <!--android:ellipsize = "end"　　  省略号在结尾-->
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical">
+            <ImageView
+                android:id="@+id/articleslv_item_star"
+                android:layout_width="14dp"
+                android:layout_height="match_parent"
+                android:src="@drawable/item_state_stared"
+                android:visibility="gone"
+                tools:visibility="visible"
+                android:scaleType="centerInside"
+                android:padding="1dp"
+                android:alpha="0.90" />
+            <ImageView
+                android:id="@+id/articleslv_item_reading"
+                android:layout_width="14dp"
+                android:layout_height="match_parent"
+                android:src="@drawable/item_state_unread"
+                android:visibility="gone"
+                tools:visibility="visible"
+                android:scaleType="centerInside"
+                android:padding="1dp"
+                android:alpha="0.90" />
+            <TextView
+                android:id="@+id/articleslv_item_author"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="6dp"
+                android:layout_marginStart="2dp"
+                android:alpha="0.36"
+                android:textColor="@color/main_grey_dark"
+                android:textSize="11sp"
+                tools:text="文章作者"/>
+            <TextView
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content" />
+
+            <TextView
+                android:id="@+id/articleslv_item_time"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="6dp"
+                android:layout_marginStart="2dp"
+                style="@style/string_grey"
+                android:textSize="11sp"
+                tools:text="文章时间"/>
+        </LinearLayout>
+
+    </LinearLayout>
+</LinearLayout>

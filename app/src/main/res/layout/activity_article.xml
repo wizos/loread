@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.design.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/coordinatorLayout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fitsSystemWindows="true"
+    tools:context=".activity.ArticleActivity">
+    <!-- android:fitsSystemWindows="true" 简单的讲：设置应用布局时是否考虑系统窗口布局；如果为true，将调整系统窗口布局以适应你自定义的布局。比如系统有状态栏，应用也有状态栏时。 -->
+
+    <android.support.design.widget.AppBarLayout
+        android:id="@+id/art_appBarLayout"
+        android:theme="@style/AppTheme.AppBarOverlay"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        <android.support.v7.widget.Toolbar
+            android:id="@+id/art_toolbar"
+            app:layout_scrollFlags="scroll|enterAlways"
+            app:popupTheme="@style/AppTheme.PopupOverlay"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            android:background="@color/main_grey_dark" >
+            <!--<TextView-->
+                <!--android:id="@+id/article_state"-->
+                <!--android:layout_gravity="end|center"-->
+                <!--android:gravity="center_vertical"-->
+                <!--android:layout_marginEnd="16dp"-->
+                <!--android:layout_width="wrap_content"-->
+                <!--android:layout_height="match_parent"-->
+                <!--android:text=""-->
+                <!--android:textSize="16dp"/>-->
+            <TextView
+                android:id="@+id/article_num"
+                android:layout_gravity="end|center"
+                android:gravity="center_vertical"
+                android:layout_marginEnd="16dp"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:text="12"
+                android:textSize="16dp"/>
+        </android.support.v7.widget.Toolbar>
+    </android.support.design.widget.AppBarLayout>
+
+    <!-- Use Nested to make toolbar auto hide enable -->
+    <!--CoordinatorLayout必须作为整个布局的父布局容器。 给需要滑动的组件设置 app:layout_scrollFlags=”scroll|enterAlways” 属性。-->
+    <!--给你的可滑动的组件，也就是RecyclerView 或者 NestedScrollView 设置如下属性：-->
+    <!--app:layout_behavior="@string/appbar_scrolling_view_behavior"-->
+    <!--app:layout_behavior="me.wizos.loread.list.Behavior"-->
+    <android.support.v4.widget.NestedScrollView
+        android:id="@+id/art_scroll"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingBottom="@dimen/bottom_bar_height">
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center_horizontal"
+            android:orientation="vertical"
+            android:paddingTop="36dp"
+            android:padding="12dp">
+            <TextView
+                android:id="@+id/article_title"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center_horizontal"
+                android:textColor="@color/main_grey_dark"
+                android:textSize="20sp" />
+            <LinearLayout
+                android:id="@+id/article_meta"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="22dp"
+                android:layout_marginBottom="12dp">
+                <TextView
+                    android:id="@+id/article_feed"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:alpha="0.54"
+                    android:textColor="@color/main_grey_light"
+                    android:textSize="12sp" />
+                <TextView
+                    android:id="@+id/article_date"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:alpha="0.54"
+                    android:textColor="@color/main_grey_light"
+                    android:textSize="12sp" />
+
+                <TextView
+                    android:id="@+id/article_time"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="8dp"
+                    android:alpha="0.54"
+                    android:textColor="@color/main_grey_light"
+                    android:textAppearance="@android:style/TextAppearance.Small"
+                    android:textSize="12sp" />
+            </LinearLayout>
+
+
+            <WebView
+                android:id="@+id/article_content"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"/>
+
+            <!--<WebView-->
+                <!--android:id="@+id/article_con"-->
+                <!--android:layout_marginTop="60dp"-->
+                <!--android:layout_width="match_parent"-->
+                <!--android:layout_height="150dp"/>-->
+            <!--<org.sufficientlysecure.htmltextview.HtmlTextView-->
+                <!--android:id="@+id/article_con"-->
+                <!--android:layout_marginTop="60dp"-->
+                <!--android:layout_width="match_parent"-->
+                <!--android:layout_height="wrap_content"-->
+                <!--android:lineSpacingExtra="4dp"-->
+                <!--android:textColor="#2d2d2d"-->
+                <!--android:textColorLink="#000039"-->
+                <!--tools:text="sagsdgsgaasgdasdgasdg"-->
+                <!--android:textSize="16sp" />-->
+        </LinearLayout>
+    </android.support.v4.widget.NestedScrollView>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/bottom_bar_height"
+        android:background="@color/white"
+        android:gravity="center"
+        android:layout_gravity="center_vertical|bottom"
+        android:layout_alignParentBottom="true">
+        <ImageView
+            android:id="@+id/art_star"
+            style="@style/bottom_bar_icon"
+            android:src="@drawable/ic_vector_unstar"
+            android:onClick="onStarClick"/>
+        <ImageView
+            style="@style/bottom_bar_icon"
+            android:src="@drawable/ic_vector_not_label"/>
+        <ImageView
+            android:id="@+id/art_read"
+            style="@style/bottom_bar_icon"
+            android:src="@drawable/ic_vector_all"
+            android:onClick="onReadClick"/>
+    </LinearLayout>
+    <!--<include layout="@layout/tool_art"-->
+        <!--android:id="@+id/art_tool"-->
+        <!--android:layout_width="match_parent"-->
+        <!--android:layout_height="wrap_content"-->
+        <!--android:gravity="center_vertical"-->
+        <!--android:layout_gravity="center_vertical|bottom"/>-->
+
+</android.support.design.widget.CoordinatorLayout>

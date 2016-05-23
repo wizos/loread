@@ -1,0 +1,258 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.design.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fitsSystemWindows="true"
+    android:addStatesFromChildren="true"
+    tools:context="me.wizos.loread.activity.SettingActivity">
+    <android.support.design.widget.AppBarLayout
+        android:id="@+id/appBarLayout"
+        android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        <android.support.v7.widget.Toolbar
+            android:id="@+id/setting_toolbar"
+            android:layout_width="match_parent"
+            android:title="设置"
+            android:layout_height="?attr/actionBarSize"
+            android:background="@color/main_grey_dark" >
+            <TextView
+                android:id="@+id/setting_toolbar_count"
+                android:layout_gravity="end|center"
+                android:gravity="center_vertical"
+                android:layout_marginEnd="16dp"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:text="节能型"
+                android:textSize="12sp"/>
+        </android.support.v7.widget.Toolbar>
+    </android.support.design.widget.AppBarLayout>
+
+
+
+    <!--app:layout_behavior="@string/appbar_scrolling_view_behavior"-->
+    <android.support.v4.widget.NestedScrollView
+        android:id="@+id/set_scroll"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingBottom="@dimen/bottom_bar_height">
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:paddingBottom="@dimen/activity_vertical_margin"
+            android:paddingLeft="@dimen/activity_horizontal_margin"
+            android:paddingRight="@dimen/activity_horizontal_margin"
+            android:paddingTop="@dimen/activity_vertical_margin"
+            android:orientation="vertical">
+            <!--<TextView-->
+            <!--android:id="@+id/setting_sync_icon"-->
+            <!--android:layout_width="match_parent"-->
+            <!--android:layout_height="20dp"-->
+            <!--tools:text="同步"-->
+            <!--android:text="同步"-->
+            <!--android:textSize="18sp" />-->
+            <LinearLayout
+                style="@style/SettingItem"
+                android:layout_marginBottom="8dp">
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+                    <TextView
+                        android:id="@+id/setting_sync_first_open_title"
+                        style="@style/SettingItemTitle"
+                        tools:text="首次开启同步"
+                        android:text="首次开启同步" />
+                    <TextView
+                        android:id="@+id/setting_sync_first_open_tips"
+                        style="@style/SettingItemTips"
+                        android:text="打开应用就开始同步？" />
+                </LinearLayout>
+                <com.kyleduo.switchbutton.SwitchButton
+                    android:id="@+id/setting_sync_first_open_sb_flyme"
+                    style="@style/SwitchButtonStyle"
+                    android:onClick="onSBClick"
+                    android:checked="true"
+                    />
+            </LinearLayout>
+            <LinearLayout
+                style="@style/SettingItem"
+                android:gravity="center_vertical">
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+                    <TextView
+                        android:id="@+id/setting_sync_all_starred_title"
+                        style="@style/SettingItemTitle"
+                        tools:text="同步所有加星文章"
+                        android:text="同步所有加星文章" />
+                    <TextView
+                        android:id="@+id/setting_sync_all_starred_tips"
+                        style="@style/SettingItemTips"
+                        android:text="加星文章已占用 200M / 6% 的空间" />
+                </LinearLayout>
+                <com.kyleduo.switchbutton.SwitchButton
+                    android:id="@+id/setting_sync_all_starred_sb_flyme"
+                    style="@style/SwitchButtonStyle"
+                    android:checked="true"
+                    android:onClick="onSBClick" />
+            </LinearLayout>
+            <LinearLayout
+                android:id="@+id/setting_sync_frequency"
+                style="@style/SettingItem"
+                android:orientation="horizontal">
+                <TextView
+                    android:id="@+id/setting_sync_frequency_title"
+                    style="@style/SettingItemTitleTwo"
+                    tools:text="同步频率"
+                    android:text="同步频率" />
+                <TextView
+                    android:id="@+id/setting_sync_frequency_summary"
+                    style="@style/SettingItemSummary"
+                    android:text="30 M / 1 次"/>
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/setting_clear_day"
+                style="@style/SettingItem"
+                android:orientation="horizontal">
+                <TextView
+                    android:id="@+id/setting_clear_day_title"
+                    style="@style/SettingItemTitleTwo"
+                    android:text="文章只保留" />
+                <TextView
+                    android:id="@+id/setting_clear_day_summary"
+                    style="@style/SettingItemSummary"
+                    android:text="10 天"/>
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/setting_down_img"
+                style="@style/SettingItem"
+                android:gravity="center_vertical">
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+                    <TextView
+                        android:id="@+id/setting_down_img_title"
+                        style="@style/SettingItemTitle"
+                        tools:text="省流量下载图片"
+                        android:text="省流量下载图片" />
+                    <TextView
+                        android:id="@+id/setting_down_img_tips"
+                        style="@style/SettingItemTips"
+                        android:text="只在 WiFi 时下载图片"
+                        android:textSize="12sp"/>
+                </LinearLayout>
+                <com.kyleduo.switchbutton.SwitchButton
+                    android:id="@+id/setting_down_img_sb_flyme"
+                    style="@style/SwitchButtonStyle"
+                    android:allowUndo="false"
+                    android:checked="true"
+                    android:onClick="onSBClick" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/setting_scroll_mark"
+                style="@style/SettingItem"
+                android:gravity="center_vertical">
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+                    <TextView
+                        android:id="@+id/setting_scroll_mark_title"
+                        style="@style/SettingItemTitle"
+                        android:text="滚动标记为已读" />
+                    <TextView
+                        android:id="@+id/setting_scroll_mark_tips"
+                        style="@style/SettingItemTips"
+                        android:text="滚动标记为已读"/>
+                </LinearLayout>
+                <com.kyleduo.switchbutton.SwitchButton
+                    android:id="@+id/setting_scroll_mark_sb_flyme"
+                    style="@style/SwitchButtonStyle"
+                    android:checked="true"
+                    android:onClick="onSBClick"/>
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/setting_order_tagfeed"
+                style="@style/SettingItem"
+                android:gravity="center_vertical">
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+                    <TextView
+                        android:id="@+id/setting_order_tagfeed_title"
+                        style="@style/SettingItemTitle"
+                        android:text="是否开启分组与源的排序？" />
+                    <TextView
+                        android:id="@+id/setting_order_tagfeed_tips"
+                        style="@style/SettingItemTips"
+                        android:text="开启后费流量，费时间，还没多大用"/>
+                </LinearLayout>
+                <com.kyleduo.switchbutton.SwitchButton
+                    android:id="@+id/setting_order_tagfeed_sb_flyme"
+                    style="@style/SwitchButtonStyle"
+                    android:checked="false"
+                    android:onClick="onSBClick"/>
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/setting_cache_path_starred"
+                style="@style/SettingItem"
+                android:orientation="horizontal">
+                <TextView
+                    android:id="@+id/setting_cache_path_starred_title"
+                    style="@style/SettingItemTitle"
+                    tools:text="加星文章保存位置"
+                    android:text="加星文章保存位置" />
+                <TextView
+                    android:id="@+id/setting_cache_path_starred_summary"
+                    style="@style/SettingItemSummary"
+                    android:textSize="12sp" />
+            </LinearLayout>
+            <LinearLayout
+                android:id="@+id/setting_license"
+                style="@style/SettingItem"
+                android:orientation="horizontal">
+                <TextView
+                    android:id="@+id/setting_license_title"
+                    style="@style/SettingItemTitleTwo"
+                    tools:text="License"
+                    android:text="许可" />
+                <TextView
+                    android:id="@+id/setting_license_summary"
+                    style="@style/SettingItemSummary"
+                    android:text="More" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/setting_about"
+                style="@style/SettingItem"
+                android:orientation="horizontal">
+                <TextView
+                    android:id="@+id/setting_about_title"
+                    style="@style/SettingItemTitleTwo"
+                    tools:text="About"
+                    android:text="关于" />
+                <TextView
+                    android:id="@+id/setting_about_summary"
+                    style="@style/SettingItemSummary"
+                    android:text="1-2"/>
+            </LinearLayout>
+        </LinearLayout>
+    </android.support.v4.widget.NestedScrollView>
+
+</android.support.design.widget.CoordinatorLayout>

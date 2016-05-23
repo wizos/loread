@@ -1,0 +1,54 @@
+apply plugin: 'com.android.application'
+apply plugin: 'oneapm'
+apply plugin: 'com.neenbedankt.android-apt'
+
+android {
+    compileSdkVersion 23
+    buildToolsVersion "23.0.3"
+
+    defaultConfig {
+        applicationId "me.wizos.loread"
+        minSdkVersion 21
+        targetSdkVersion 23
+        versionCode 1
+        versionName "1.1"
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+    sourceSets {
+        main {
+            java.srcDirs = ['src/main/java', 'src/main/java-gen']
+        }
+    }
+}
+
+dependencies {
+    compile fileTree(include: ['*.jar'], dir: 'libs')
+    testCompile 'junit:junit:4.12'
+    compile('com.github.afollestad.material-dialogs:core:0.8.5.8@aar') {
+        transitive = true
+    }
+//    compile 'com.facebook.fresco:fresco:0.8.1+'
+//    compile 'com.github.yuweiguocn:GreenDaoUpgradeHelper:v0.0.5'
+//    compile 'org.sufficientlysecure:html-textview:1.4'
+//    compile 'org.greenrobot:eventbus:3.0.0'
+    compile files('libs/oneapm-android-agent.jar')
+    compile files('libs/klog.jar')
+    compile 'com.android.support:appcompat-v7:23.3.0'
+    compile 'com.android.support:support-v4:23.3.0'
+    compile 'com.android.support:design:23.3.0'
+    compile 'com.google.code.gson:gson:2.6.2'
+    compile 'org.parceler:parceler-api:1.1.1'
+    compile 'com.squareup.okhttp:okhttp:2.7.5'
+    compile 'com.zhy:okhttputils:2.3.8'
+    compile 'com.readystatesoftware.systembartint:systembartint:1.0.3'
+    compile 'de.greenrobot:greendao:2.1.0'
+    compile 'com.kyleduo.switchbutton:library:1.4.0'
+    compile 'com.jakewharton:butterknife:8.0.1'
+    apt 'com.jakewharton:butterknife-compiler:8.0.1'
+//    compile 'com.bigkoo:snappingstepper:1.0.2'
+}

@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="utf-8"?>
+<me.wizos.loread.view.SwipeRefresh
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/swipe_layout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fitsSystemWindows="true"
+    android:addStatesFromChildren="true"
+    app:layout_behavior="@string/appbar_scrolling_view_behavior"
+    tools:context=".activity.MainActivity">
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <!--<include layout="@layout/background" />-->
+        <!--app:expandedTitleMarginStart="48dp"-->
+        <!--app:contentScrim="#30469b"-->
+        <android.support.design.widget.AppBarLayout
+            android:id="@+id/main_appBarLayout"
+            android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+            <android.support.v7.widget.Toolbar
+                android:id="@+id/main_toolbar"
+                app:layout_scrollFlags="scroll|enterAlways"
+                android:layout_width="match_parent"
+                android:layout_height="?attr/actionBarSize"
+                android:background="@color/main_grey_dark" >
+                <TextView
+                    android:id="@+id/main_toolbar_hint"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:layout_gravity="center"
+                    android:gravity="center_vertical"
+                    android:alpha="0.6"
+                    tools:text="小提示"
+                    android:textSize="12sp"/>
+                <TextView
+                    android:id="@+id/main_toolbar_count"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:layout_marginEnd="16dp"
+                    android:layout_gravity="end|center"
+                    android:gravity="center_vertical"
+                    android:text="计数"
+                    tools:text="计数"
+                    android:textSize="16sp"/>
+            </android.support.v7.widget.Toolbar>
+        </android.support.design.widget.AppBarLayout>
+        <!--android:layout_marginBottom="@dimen/bottom_bar_height"-->
+        <!--app:layout_behavior="@string/appbar_scrolling_view_behavior"-->
+
+        <com.yydcdut.sdlv.SlideAndDragListView
+            android:id="@+id/main_slv"
+            app:layout_behavior="@string/appbar_scrolling_view_behavior"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_marginLeft="12dp"
+            android:layout_marginRight="12dp"
+            android:divider="#666666"
+            android:layout_above="@+id/bottombar"
+            android:layout_below="@+id/main_appBarLayout">
+        </com.yydcdut.sdlv.SlideAndDragListView>
+
+
+
+
+        <ImageView
+            android:id="@+id/main_placeholder"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:paddingLeft="88dp"
+            android:paddingRight="88dp"
+            android:visibility="gone"
+            tools:visibility="visible"
+            android:src="@drawable/ic_vector_unread"
+            android:layout_below="@+id/main_appBarLayout"
+            android:layout_above="@+id/bottombar" />
+        <LinearLayout
+            android:id="@+id/bottombar"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/bottom_bar_height"
+            android:gravity="center"
+            android:background="@color/white"
+            android:onClick="onBottombarClicked"
+            android:layout_gravity="center_vertical|bottom"
+            android:layout_alignParentBottom="true">
+            <ImageView
+                android:id="@+id/main_star"
+                style="@style/bottom_bar_icon"
+                android:onClick="onStarIconClicked"
+                android:src="@drawable/ic_vector_unstar"/>
+            <ImageView
+                android:id="@+id/main_tag"
+                style="@style/bottom_bar_icon"
+                android:onClick="onTagIconClicked"
+                android:src="@drawable/ic_vector_menu"/>
+            <ImageView
+                android:id="@+id/main_read"
+                style="@style/bottom_bar_icon"
+                android:onClick="onReadIconClicked"
+                android:src="@drawable/ic_vector_unread"/>
+         </LinearLayout>
+        <ImageView
+            android:id="@+id/tag_setting"
+            android:layout_width="@dimen/bottom_bar_height"
+            android:layout_height="@dimen/bottom_bar_height"
+            android:paddingTop="9dp"
+            android:paddingBottom="9dp"
+            android:layout_marginLeft="22dp"
+            android:layout_marginRight="22dp"
+            android:layout_gravity="center|left|bottom"
+            android:onClick="onSettingIconClicked"
+            android:src="@drawable/ic_vector_unread"
+            android:layout_alignBottom="@+id/bottombar" />
+    </RelativeLayout>
+</me.wizos.loread.view.SwipeRefresh>

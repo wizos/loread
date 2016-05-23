@@ -1,0 +1,10 @@
+/plugin/oneapm-android-gradle-plugin-2.0.0.jar
+*.iml
+.gradle
+/local.properties
+/.idea/workspace.xml
+/.idea/libraries
+.DS_Store
+/build
+/captures
+/.idea

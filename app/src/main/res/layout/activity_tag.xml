@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.design.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fitsSystemWindows="true"
+    tools:context=".activity.TagActivity">
+
+
+    <android.support.design.widget.AppBarLayout
+        android:id="@+id/tag_appBarLayout"
+        android:theme="@style/AppTheme.AppBarOverlay"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        <android.support.v7.widget.Toolbar
+            android:id="@+id/tag_toolbar"
+            app:layout_scrollFlags="scroll|enterAlways"
+            app:popupTheme="@style/AppTheme.PopupOverlay"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            android:background="@color/main_grey_dark" >
+            <TextView
+                android:id="@+id/tag__count"
+                android:layout_gravity="end|center"
+                android:gravity="center_vertical"
+                android:layout_marginEnd="16dp"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:text="12"
+                android:textSize="16dp"/>
+        </android.support.v7.widget.Toolbar>
+    </android.support.design.widget.AppBarLayout>
+
+    <com.yydcdut.sdlv.SlideAndDragListView
+        android:id="@+id/tag_slv"
+        android:divider="#bababa"
+        tools:divider="#bababa"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginLeft="12dp"
+        android:layout_marginRight="12dp"
+        android:layout_marginBottom="50dp"
+        android:layout_marginTop="58dp"
+        >
+    </com.yydcdut.sdlv.SlideAndDragListView>
+
+
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/bottom_bar_height"
+        android:background="@color/white"
+        android:gravity="center"
+        android:layout_gravity="center_vertical|bottom">
+        <!--<ImageView-->
+            <!--android:id="@+id/tag_star"-->
+            <!--android:layout_width="22dp"-->
+            <!--android:layout_height="22dp"-->
+            <!--android:onClick="onStarlistClicked"-->
+            <!--android:src="@drawable/ic_vector_unstar"/>-->
+        <ImageView
+            android:id="@+id/tag_main"
+            android:layout_width="22dp"
+            android:layout_height="22dp"
+            android:layout_marginStart="30dp"
+            android:layout_marginEnd="30dp"
+            android:onClick="onMainListClicked"
+            android:src="@drawable/ic_vector_menu"/>
+
+    </LinearLayout>
+
+</android.support.design.widget.CoordinatorLayout>

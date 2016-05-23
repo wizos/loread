@@ -1,0 +1,110 @@
+<resources>
+    <string name="app_name">知微</string>
+    <string name="loread_name">知微</string>
+    <string name="action_settings">设置</string>
+    <string name="main_activity_title_all">所有文章</string>
+    <string name="main_activity_title_unread">未读文章</string>
+    <string name="main_activity_title_star">已收藏文章</string>
+    <string name="title_activity_article">文章</string>
+    <string name="title_activity_splash">启动页·欢迎</string>
+    <string name="title_activity_login">登录</string>
+    <string name="title_activity_tag">分组</string>
+    <string-array name="markArticleListItem">
+        <item>向上标记为已读</item>
+        <item>向下标记为已读</item>
+        <item>保持未读</item>
+    </string-array>
+    <string name="setting_activity_title">设置</string>
+
+    <!-- Strings related to Settings -->
+    <string name="main_toolbar_hint_sync">同步%1$s</string>
+    <string name="main_toolbar_hint_clear_article">1 - 清除 %1$s 天之前的文章</string>
+    <string name="main_toolbar_hint_sync_article_content">1 - 同步文章内容[%1$s : %2$s]</string>
+    <string name="main_toolbar_hint_sync_stared_refs">2 - 同步收藏信息</string>
+    <string name="main_toolbar_hint_sync_unread_refs">3 - 同步未读信息</string>
+    <string name="main_toolbar_hint_sync_unread_count">4 - 获取未读数目</string>
+    <string name="main_toolbar_hint_sync_tag_order">5 - 同步分组排序信息</string>
+    <string name="main_toolbar_hint_sync_all_stared_content">5 - 同步所有加星文章</string>
+    <string name="main_toolbar_hint_sync_tag">6 - 同步分组信息</string>
+
+    <string name="choose_label">确认</string>
+    <string name="agree">同意</string>
+    <string name="disagree">取消</string>
+    <string name="more_info">更多</string>
+    <string name="setting_about_dialog_title">关于本软件</string>
+    <string name="setting_about_dialog_content">烟都抽烟了，可 app 还没写完</string>
+
+
+    <string name="setting_clear_day_dialog_title">选择保留最近多少天的文章呢？</string>
+    <string-array name="setting_clear_day_dialog_item_array">
+        <item>1 天</item>
+        <item>7 天</item>
+        <item>15 天</item>
+        <item>30 天</item>
+        <item>60 天</item>
+    </string-array>
+
+
+    <!-- Example General settings -->
+    <string name="pref_header_general">General</string>
+
+    <string name="pref_title_social_recommendations">Enable social recommendations</string>
+    <string name="pref_description_social_recommendations">Recommendations for people to contact
+        based on your message history
+    </string>
+
+    <string name="pref_title_display_name">Display name</string>
+    <string name="pref_default_display_name">John Smith</string>
+
+    <string name="pref_title_add_friends_to_messages">Add friends to messages</string>
+    <string-array name="pref_example_list_titles">
+        <item>Always</item>
+        <item>When possible</item>
+        <item>Never</item>
+    </string-array>
+    <string-array name="pref_example_list_values">
+        <item>1</item>
+        <item>0</item>
+        <item>-1</item>
+    </string-array>
+
+    <!-- Example settings for Data & Sync -->
+    <string name="pref_header_data_sync">Data &amp; sync</string>
+
+    <string name="pref_title_sync_time">同步频率</string>
+    <string-array name="pref_sync_frequency_titles">
+        <item>15 minutes</item>
+        <item>30 minutes</item>
+        <item>1 hour</item>
+        <item>3 hours</item>
+        <item>6 hours</item>
+        <item>Never</item>
+    </string-array>
+    <string-array name="pref_sync_frequency_values">
+        <item>15</item>
+        <item>30</item>
+        <item>60</item>
+        <item>180</item>
+        <item>360</item>
+        <item>-1</item>
+    </string-array>
+
+    <string name="pref_title_system_sync_settings">System sync settings</string>
+
+    <!-- Example settings for Notifications -->
+    <string name="pref_header_notifications">Notifications</string>
+
+    <string name="pref_title_sync_auto">手动同步</string>
+    <string name="pref_title_sync_first_start">首次启动同步</string>
+
+    <string name="pref_title_ringtone">Ringtone</string>
+    <string name="pref_ringtone_silent">Silent</string>
+    <string name="title_activity_set">Settings</string>
+
+    <string name="pref_title_sync_frequency">Sync frequency</string>
+
+    <string name="pref_title_new_message_notifications">New message notifications</string>
+
+    <string name="pref_title_vibrate">Vibrate</string>
+
+</resources>

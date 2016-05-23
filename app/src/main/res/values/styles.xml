@@ -1,0 +1,86 @@
+<resources>
+    <!-- Base App theme. -->
+    <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
+        <!-- Customize your theme here. -->
+        <!--<item name="colorPrimary">@color/colorPrimary</item>-->
+        <!--<item name="colorPrimaryDark">@color/colorPrimaryDark</item>-->
+        <!--<item name="colorAccent">@color/colorAccent</item>-->
+    </style>
+    <style name="AppTheme.NoActionBar">
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+    </style>
+    <style name="AppTheme.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />
+    <style name="AppTheme.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" />
+
+
+    <style name="SettingItem">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginTop">12dp</item>
+    </style>
+
+    <style name="SwitchButtonStyle">
+        <item name="android:paddingLeft">10dp</item>
+        <item name="android:paddingRight">10dp</item>
+        <item name="android:paddingTop">8dp</item>
+        <item name="android:paddingBottom">8dp</item>
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_gravity">center</item>
+        <item name="kswBackDrawable">@drawable/flyme_back_drawable</item>
+        <item name="kswBackMeasureRatio">2.2</item>
+        <item name="kswThumbDrawable">@drawable/flyme_thumb_drawable</item>
+        <item name="kswThumbHeight">16dp</item>
+        <item name="kswThumbWidth">16dp</item>
+    </style>
+
+    <style name="SettingItemTitle">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">38dp</item>
+        <item name="android:textSize">18sp</item>
+        <item name="android:layout_gravity">center</item>
+        <item name="android:gravity">center_vertical</item>
+    </style>
+    <style name="SettingItemTitleTwo">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:layout_height">38dp</item>
+        <item name="android:textSize">18sp</item>
+        <item name="android:layout_gravity">center</item>
+        <item name="android:gravity">center_vertical</item>
+    </style>
+    <style name="SettingItemTips">
+        <item name="android:alpha">0.36</item>
+        <item name="android:textColor">@color/main_grey_dark</item>
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginStart">0dp</item>
+        <item name="android:textSize">12sp</item>
+        <item name="android:layout_gravity">center</item>
+        <item name="android:gravity">center_vertical</item>
+    </style>
+    <style name="SettingItemSummary">
+        <item name="android:alpha">0.36</item>
+        <item name="android:textColor">@color/main_grey_dark</item>
+        <item name="android:layout_width">90dp</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginRight">8dp</item>
+        <item name="android:textSize">12sp</item>
+        <item name="android:layout_gravity">center</item>
+        <item name="android:gravity">center|right</item>
+    </style>
+    <style name="string_grey">
+        <item name="android:alpha">0.36</item>
+        <item name="android:textColor">@color/main_grey_dark</item>
+    </style>
+    <style name="bottom_bar_icon">
+        <item name="android:layout_width">@dimen/bottom_bar_height</item>
+        <item name="android:layout_height">match_parent</item>
+        <item name="android:paddingTop">9dp</item>
+        <item name="android:paddingBottom">9dp</item>
+        <item name="android:layout_marginStart">9dp</item>
+        <item name="android:layout_marginEnd">9dp</item>
+    </style>
+
+</resources>
