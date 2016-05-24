@@ -4,7 +4,6 @@ import android.app.Activity;
 import android.app.Application;
 import android.content.Context;
 
-import com.facebook.drawee.backends.pipeline.Fresco;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -30,7 +29,7 @@ public class App extends Application{
         super.onCreate();
         App.context = getApplicationContext();
         instance = this;
-        Fresco.initialize(context);
+//        Fresco.initialize(context);
         cacheRelativePath = getExternalFilesDir(null) + File.separator + "cache" + File.separator;
         cacheAbsolutePath = "file:"+ File.separator + File.separator + cacheRelativePath;
     }

@@ -120,6 +120,12 @@ public class WithSet {
     public void setSyncAllStarred(boolean syncAllStarred) {
         savePref("SyncAllStarred", syncAllStarred);
     }
+    public boolean getHadSyncAllStarred() {
+        return readPref("HadSyncAllStarred", false);
+    }
+    public void setHadSyncAllStarred(boolean had) {
+        savePref("HadSyncAllStarred", had);
+    }
 
     public String getSyncFrequency() {
         return readPref("SyncFrequency", "");
@@ -139,7 +145,7 @@ public class WithSet {
 
 
     public boolean isDownImgWifi() {
-        return readPref("DownImgWifi", false);
+        return readPref("DownImgWifi", true);
     }
 
     public void setDownImgWifi(boolean downImgMode) {
@@ -147,7 +153,7 @@ public class WithSet {
     }
 
     public boolean isScrollMark() {
-        return readPref("ScrollMark", false);
+        return readPref("ScrollMark", true);
     }
 
     public void setScrollMark(boolean scrollMark) {
@@ -182,11 +188,5 @@ public class WithSet {
 
 
 
-    public boolean getHadSyncAllStarred() {
-        return readPref("HadSyncAllStarred", true);
-    }
-    public void setHadSyncAllStarred(boolean had) {
-        savePref("HadSyncAllStarred", had);
-    }
 
 }

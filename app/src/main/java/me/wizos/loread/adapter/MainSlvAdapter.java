@@ -83,10 +83,8 @@ public class MainSlvAdapter extends ArrayAdapter<Article> {
             cvh.articleImg.setVisibility(View.VISIBLE);
             cvh.articleImg.setImageBitmap(bitmap);
         }else {
-
+            cvh.articleImg.setVisibility(View.GONE);
         }
-//        cvh.articleImg.setImageURI();
-
 
         Gson gson = new Gson();
         Origin origin = gson.fromJson(article.getOrigin(), Origin.class);

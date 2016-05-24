@@ -46,7 +46,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="3dp"
-                    android:alpha="0.9"
+                    android:alpha="0.6"
                     android:fontFamily="sans-serif"
                     android:lines="2"
                     android:singleLine="false"

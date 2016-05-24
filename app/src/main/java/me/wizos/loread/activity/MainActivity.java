@@ -17,7 +17,6 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.afollestad.materialdialogs.MaterialDialog;
-import com.facebook.drawee.view.SimpleDraweeView;
 import com.socks.library.KLog;
 import com.yydcdut.sdlv.Menu;
 import com.yydcdut.sdlv.MenuItem;
@@ -63,7 +62,8 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
 
     private String sListState;
     private String sListTag;
-    private boolean hadSyncAllStarredList ;
+    private boolean hadSyncAllStarredList = false;
+    private boolean syncAllStarredList = false;
     private boolean syncFirstOpen = true;
     private boolean hadSyncLogRequest = true;
     private boolean orderTagFeed;
@@ -125,30 +125,20 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
         sListState = WithSet.getInstance().getListState();
         sListTag = "user/" +  mUserID + "/state/com.google/reading-list";
         syncFirstOpen = WithSet.getInstance().isSyncFirstOpen();
+        syncAllStarredList = WithSet.getInstance().isSyncAllStarred();
         hadSyncAllStarredList = WithSet.getInstance().getHadSyncAllStarred();
         clearBeforeDay = WithSet.getInstance().getClearBeforeDay();
         orderTagFeed = WithSet.getInstance().isOrderTagFeed();
-        syncFirstOpen = false;
         KLog.i("【 readSetting 】ATUH 为" + API.INOREADER_ATUH + syncFirstOpen + "【mUserID为】" + hadSyncAllStarredList );
         KLog.i( WithSet.getInstance().getCachePathStarred() + WithSet.getInstance().getUseName() );
     }
 
-    private SimpleDraweeView vArticleCover;
     protected void initView(){
         vReadIcon = (ImageView)findViewById(R.id.main_read);
         vStarIcon = (ImageView)findViewById(R.id.main_star);
         vToolbarCount = (TextView)findViewById(R.id.main_toolbar_count);
         vToolbarHint = (TextView)findViewById(R.id.main_toolbar_hint);
         vPlaceHolder = (ImageView)findViewById(R.id.main_placeholder);
-
-
-//        GenericDraweeHierarchyBuilder builder = new GenericDraweeHierarchyBuilder(getResources());
-//        GenericDraweeHierarchy hierarchy = builder
-//                .setFadeDuration(300)
-//                .setPlaceholderImage(new MyCustomDrawable())
-//                .build();
-//        vArticleCover.setHierarchy(hierarchy);
-
     }
     protected void initSwipe(){
         mSwipeRefreshLayout = (SwipeRefresh) findViewById(R.id.swipe_layout);
@@ -193,6 +183,7 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
         initBottombarIcon();
         reloadData();  // 先加载已有数据
         if( syncFirstOpen && articleList.size() !=0 ){
+            mSwipeRefreshLayout.setEnabled(false);
             mNeter.getWithAuth(API.U_TAGS_LIST);
             KLog.i("首次开启同步");
             UToast.showLong("首次开启同步");
@@ -243,45 +234,45 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
     }
 
 
-    private List<Article> getNoLabelList(){
-        List<Article> all,part,exist;
-        if( sListState.contains(API.LIST_STAR) ){
-            all = WithDB.getInstance().loadStarAll();
-            part = WithDB.getInstance().loadStarListHasLabel(mUserID);
-            exist = WithDB.getInstance().loadStarNoLabel();
-        }else {
-            all = WithDB.getInstance().loadReadAll( sListState );
-            part = WithDB.getInstance().loadReadListHasLabel( sListState,mUserID);
-            exist = WithDB.getInstance().loadReadNoLabel();
-       }
-
-        ArrayList<Article> noLabel = new ArrayList<>( all.size() - part.size() );
-//        ArrayList<Article> exists = (ArrayList)exist;
-        Map<String,Integer> map = new HashMap<>( part.size());
-        String articleId;
-        StringBuffer sb = new StringBuffer(0);
-
-        for( Article article: part ){
-            articleId = article.getId();
-            map.put(articleId,1);
-        }
-        for( Article article: all ){
-            articleId = article.getId();
-            Integer cc = map.get( articleId );
-            if(cc!=null) {
-                map.put( articleId , ++cc);
-            }else {
-                sb = new StringBuffer();
-                sb.append(article.getCategories());
-                sb.insert( sb.length()-1 , ", \"user/"+ mUserID + API.U_NO_LABEL +"\"");
-                article.setCategories( sb.toString() );
-                noLabel.add( article );
-            }
-        }
-        KLog.d( sb.toString() +" - "+  all.size() + " - "+ part.size());
-        noLabel.addAll( exist );
-        return noLabel;
-    }
+//    private List<Article> getNoLabelList(){
+//        List<Article> all,part,exist;
+//        if( sListState.contains(API.LIST_STAR) ){
+//            all = WithDB.getInstance().loadStarAll();
+//            part = WithDB.getInstance().loadStarListHasLabel(mUserID);
+//            exist = WithDB.getInstance().loadStarNoLabel();
+//        }else {
+//            all = WithDB.getInstance().loadReadAll( sListState );
+//            part = WithDB.getInstance().loadReadListHasLabel( sListState,mUserID);
+//            exist = WithDB.getInstance().loadReadNoLabel();
+//       }
+//
+//        ArrayList<Article> noLabel = new ArrayList<>( all.size() - part.size() );
+////        ArrayList<Article> exists = (ArrayList)exist;
+//        Map<String,Integer> map = new HashMap<>( part.size());
+//        String articleId;
+//        StringBuffer sb = new StringBuffer(0);
+//
+//        for( Article article: part ){
+//            articleId = article.getId();
+//            map.put(articleId,1);
+//        }
+//        for( Article article: all ){
+//            articleId = article.getId();
+//            Integer cc = map.get( articleId );
+//            if(cc!=null) {
+//                map.put( articleId , ++cc);
+//            }else {
+//                sb = new StringBuffer();
+//                sb.append(article.getCategories());
+//                sb.insert( sb.length()-1 , ", \"user/"+ mUserID + API.U_NO_LABEL +"\"");
+//                article.setCategories( sb.toString() );
+//                noLabel.add( article );
+//            }
+//        }
+//        KLog.d( sb.toString() +" - "+  all.size() + " - "+ part.size());
+//        noLabel.addAll( exist );
+//        return noLabel;
+//    }
 
 
 
@@ -308,11 +299,14 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
                     break;
                 case API.S_TAGS_LIST:
                     mParser.parseTagList(info);
-                    if( !hadSyncAllStarredList ){
+                    KLog.i("【获取所有加星文章1】" + hadSyncAllStarredList + "---" + syncAllStarredList);
+                    if( !hadSyncAllStarredList && syncAllStarredList ){
                         vToolbarHint.setText(R.string.main_toolbar_hint_sync_all_stared_content);
-                        KLog.i("【获取所有加星文章】" + hadSyncAllStarredList + "---" + msg.what);
+                        KLog.i("【获取所有加星文章2】" + hadSyncAllStarredList + "---" + msg.what);
                         mNeter.getStarredContents();
+                        break;
                     }
+
                     if(orderTagFeed){
                         vToolbarHint.setText(R.string.main_toolbar_hint_sync_tag_order);
                         mNeter.getWithAuth(API.U_STREAM_PREFS);// 有了这份数据才可以对 tagslist feedlist 进行排序，并储存下来
@@ -369,6 +363,7 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
                 case API.S_ITEM_CONTENTS:
                     KLog.i("【Main 解析 ITEM_CONTENTS 】" + urlState );
                     if(urlState == 0){
+
                     }else if(urlState == 1){
                         afterItemRefs = mParser.reUnreadUnstarRefs;
                         mParser.parseItemContentsUnreadUnstar(info);
@@ -414,17 +409,16 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
 
                     break;
                 case API.S_STREAM_CONTENTS_STARRED:
-                    KLog.i("【解析所有加星文章】" + urlState  + "---" + msg.what);
                     String continuation = mParser.parseStreamContentsStarred(info);
-                    if(continuation!=null && starredNums < 3){
+                    KLog.i("【解析所有加星文章1】" + urlState  + "---" + continuation);
+                    if(continuation!=null){
                         mNeter.addHeader("c", continuation);
                         mNeter.getStarredContents();
-                        starredNums++;
-                        KLog.i("【获取 StarredContents 】" + continuation);
+                        KLog.i("【获取 StarredContents 】" );
                     }else {
                         hadSyncAllStarredList = true;
                         WithSet.getInstance().setHadSyncAllStarred( hadSyncAllStarredList );
-                        mNeter.getWithAuth(API.U_UNREAD_COUNTS); // 接着继续
+                        mNeter.getWithAuth(API.U_TAGS_LIST); // 接着继续
 //                        handler.sendEmptyMessage(100); // 测试
                     }
                     break;
@@ -580,7 +574,6 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
         WithDB.getInstance().delArtAll(allArtsBeforeTime);
     }
 
-    private int starredNums;
 
     private Map<Long,RequestLog> requestMap = new HashMap<>();
     @Override

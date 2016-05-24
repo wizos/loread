@@ -375,6 +375,7 @@ public class Parser {
         ArrayList<Items> currentItemsArray = gson.fromJson(info, GsItemContents.class).getItems();
         ArrayList<Article> saveList = new ArrayList<>( currentItemsArray.size() ) ;
         long time = System.currentTimeMillis(); // FIXME: 2016/5/1 测试
+        String summary = "",html = "";
         for ( Items items: currentItemsArray ) {
             Article article= new Article();
             article.setId(items.getId());
@@ -389,10 +390,15 @@ public class Parser {
             article.setAuthor(items.getAuthor());
             article.setReadState(API.ART_UNREAD);
             article.setStarState(API.ART_UNSTAR);
-
-            article.setSummary(Html.fromHtml(items.getSummary().getContent()).toString().substring(0,92));
+            html = items.getSummary().getContent();
+            summary = Html.fromHtml(html).toString();
+            if(summary.length()>92){
+                article.setSummary(summary.substring(0,92));
+            }else {
+                article.setSummary(summary.substring(0,summary.length()));
+            }
             article.setOrigin(items.getOrigin().toString());
-            UFile.saveHtml(UString.stringToMD5(article.getId()), items.getSummary().getContent());
+            UFile.saveHtml(UString.stringToMD5(article.getId()), html);
             saveList.add(article);
         }
         long me1 = System.currentTimeMillis() - time;
@@ -455,7 +461,7 @@ public class Parser {
 
 
     public String parseStreamContentsStarred(String info){
-        if(info==null || info.equals("")){return null;}
+        if(info==null || info.equals("")){return "";} // 如果返回 null 会与正常获取到流末端时返回 continuation = null 相同，导致调用该函数的那端误以为是正常的 continuation = null
         Gson gson = new Gson();
         GsItemContents gsItemContents = gson.fromJson(info, GsItemContents.class);
         ArrayList<Items> currentItemsArray = gsItemContents.getItems();
@@ -480,7 +486,7 @@ public class Parser {
             KLog.d("【所有加星文章标题】" + article.getTitle() + article.getCategories());
         }
         WithDB.getInstance().saveArticleList(saveList);
-        KLog.d("【解析所有加星文章】" + saveList.size() + saveList.get(0).getCategories());
+        KLog.d("【解析所有加星文章2】" + saveList.size() + saveList.get(0).getCategories());
         return gsItemContents.getContinuation();
     }
 
