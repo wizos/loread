@@ -5,6 +5,7 @@ import android.graphics.Color;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
 import android.view.View;
+import android.widget.Button;
 import android.widget.TextView;
 
 import com.afollestad.materialdialogs.DialogAction;
@@ -17,6 +18,7 @@ import com.socks.library.KLog;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 import me.wizos.loread.R;
+import me.wizos.loread.dao.WithDB;
 import me.wizos.loread.dao.WithSet;
 
 public class SettingActivity extends BaseActivity {
@@ -61,14 +63,25 @@ public class SettingActivity extends BaseActivity {
 
     private SwitchButton syncFirstOpen,syncAllStarred,downImgWifi,scrollMark,orderTagFeed;
     private TextView clearBeforeDaySummary;
+    private Button clearLog;
     private int clearBeforeDayIndex, clearBeforeDay;
+
+    private void initView(){
+        syncFirstOpen = (SwitchButton) findViewById(R.id.setting_sync_first_open_sb_flyme);
+        syncAllStarred = (SwitchButton) findViewById(R.id.setting_sync_all_starred_sb_flyme);
+        downImgWifi = (SwitchButton) findViewById(R.id.setting_down_img_sb_flyme);
+        scrollMark = (SwitchButton) findViewById(R.id.setting_scroll_mark_sb_flyme);
+        orderTagFeed = (SwitchButton) findViewById(R.id.setting_order_tagfeed_sb_flyme);
+        clearBeforeDaySummary = (TextView) findViewById(R.id.setting_clear_day_summary);
+//        clearLog = (Button)findViewById(R.id.setting_clear_log_button);
+    }
+
     protected void readSettingAndChangeView(){
         syncFirstOpen.setChecked(WithSet.getInstance().isSyncFirstOpen());
         syncAllStarred.setChecked(WithSet.getInstance().isSyncAllStarred());
         downImgWifi.setChecked(WithSet.getInstance().isDownImgWifi());
         scrollMark.setChecked(WithSet.getInstance().isScrollMark());
         orderTagFeed.setChecked(WithSet.getInstance().isOrderTagFeed());
-
         clearBeforeDay = WithSet.getInstance().getClearBeforeDay();
         changeViewSummary();
         KLog.d( "3333=="+  clearBeforeDayIndex );
@@ -83,15 +96,6 @@ public class SettingActivity extends BaseActivity {
             }
         }
         clearBeforeDaySummary.setText( clearBeforeDay +" 天");
-    }
-
-    private void initView(){
-        syncFirstOpen = (SwitchButton) findViewById(R.id.setting_sync_first_open_sb_flyme);
-        syncAllStarred = (SwitchButton) findViewById(R.id.setting_sync_all_starred_sb_flyme);
-        downImgWifi = (SwitchButton) findViewById(R.id.setting_down_img_sb_flyme);
-        scrollMark = (SwitchButton) findViewById(R.id.setting_scroll_mark_sb_flyme);
-        orderTagFeed = (SwitchButton) findViewById(R.id.setting_order_tagfeed_sb_flyme);
-        clearBeforeDaySummary = (TextView) findViewById(R.id.setting_clear_day_summary);
     }
 
     public void onSBClick(View view){
@@ -159,6 +163,11 @@ public class SettingActivity extends BaseActivity {
                     .theme(Theme.DARK)
                     .show();
     }
+
+    @OnClick(R.id.setting_clear_log_button) void clearLog() {
+        WithDB.getInstance().delRequestListAll();
+    }
+
 
     private void initToolbar() {
         toolbar = (Toolbar) findViewById(R.id.setting_toolbar);

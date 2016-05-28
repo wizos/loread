@@ -2,6 +2,8 @@ package me.wizos.loread.utils;
 
 import android.widget.Toast;
 
+import com.socks.library.KLog;
+
 import me.wizos.loread.App;
 
 /**
@@ -14,7 +16,8 @@ public class UToast {
             toast.cancel();
             toast = null;
         }
-        toast = Toast.makeText(App.getContext(), msg, Toast.LENGTH_LONG);
+        toast = Toast.makeText(App.getInstance(), msg, Toast.LENGTH_LONG);
+        KLog.d(msg);
         toast.show();
     }
     public static void showShort(String msg) {
@@ -22,7 +25,8 @@ public class UToast {
             toast.cancel();
             toast = null;
         }
-        toast = Toast.makeText(App.getContext(), msg, Toast.LENGTH_SHORT);
+        toast = Toast.makeText(App.getInstance(), msg, Toast.LENGTH_SHORT);
+        KLog.d(msg);
         toast.show();
     }
 }

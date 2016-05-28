@@ -4,7 +4,6 @@
     android:layout_height="match_parent"
     android:orientation="horizontal"
     android:gravity="center_vertical">
-
     <ImageView
         android:layout_width="22dp"
         android:layout_height="22dp"

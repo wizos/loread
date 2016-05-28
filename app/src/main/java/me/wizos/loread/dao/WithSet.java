@@ -32,7 +32,7 @@ public class WithSet {
             synchronized (WithSet.class) {  // 同步锁，避免多线程时可能 new 出两个实例的情况
                 if (withSet == null) {
                     withSet = new WithSet();
-                    mySharedPreferences = App.getContext().getSharedPreferences("test", Activity.MODE_PRIVATE);
+                    mySharedPreferences = App.getContext().getSharedPreferences("loread", Activity.MODE_PRIVATE);
                     editor = mySharedPreferences.edit();
                 }
             }
@@ -75,7 +75,6 @@ public class WithSet {
     }
 
 
-
     public String getAuth() {
         return readPref("Auth", "");
     }
@@ -85,11 +84,25 @@ public class WithSet {
     }
 
 
+    public String getAccountID() {
+        return readPref("AccountID", "");
+    }
+
+    public void setAccountID(String accountID) {
+        savePref("AccountID", accountID);
+    }
+
+    public String getAccountPD() {
+        return readPref("AccountPD", "");
+    }
+
+    public void setAccountPD(String accountPD) {
+        savePref("AccountPD", accountPD);
+    }
 
     public long getUseId() {
         return readPref("UserID", 0L);
     }
-
     public void setUseId(long useId) {
         savePref("UserID", useId);
     }
@@ -101,8 +114,6 @@ public class WithSet {
     public void setUseName(String useName) {
         savePref("UserName", useName);
     }
-
-
 
 
     public boolean isSyncFirstOpen() {
@@ -180,7 +191,7 @@ public class WithSet {
 
 
     public boolean isOrderTagFeed() {
-        return readPref("OrderTagFeed", false);
+        return readPref("OrderTagFeed", true);
     }
     public void setOrderTagFeed(boolean is) {
         savePref("OrderTagFeed", is);

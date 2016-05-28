@@ -4,6 +4,7 @@ import android.content.Context;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.text.TextUtils;
 import android.view.View;
 import android.widget.EditText;
 
@@ -11,7 +12,6 @@ import com.socks.library.KLog;
 
 import me.wizos.loread.App;
 import me.wizos.loread.R;
-import me.wizos.loread.bean.RequestLog;
 import me.wizos.loread.dao.WithSet;
 import me.wizos.loread.net.API;
 import me.wizos.loread.net.Neter;
@@ -21,7 +21,7 @@ import me.wizos.loread.utils.UToast;
 /**
  * Created by Wizos on 2016/3/5.
  */
-public class LoginActivity extends BaseActivity implements Neter.LogRequest {
+public class LoginActivity extends BaseActivity{
     protected Context context;
     protected String mAccountID = "";
     protected String mAccountPD = "";
@@ -32,8 +32,24 @@ public class LoginActivity extends BaseActivity implements Neter.LogRequest {
         setContentView(R.layout.activity_login);
         App.addActivity(this);
         mNeter = new Neter(handler,this);
-        mNeter.setLogRequestListener(this);
         KLog.d("【未登录】" + handler);
+
+        vID = (EditText)findViewById(R.id.edittext_id);
+        vPD = (EditText)findViewById(R.id.edittext_pd);
+//        EditText vID = (EditText)findViewById(R.id.edittext_id);
+//        EditText vPD = (EditText)findViewById(R.id.edittext_pd);
+//        vPD.setOnEditorActionListener(new TextView.OnEditorActionListener() {
+//            @Override
+//            public boolean onEditorAction(TextView textView, int id, KeyEvent keyEvent) {
+//                if (id == R.id.ime_login || id == EditorInfo.IME_ACTION_DONE
+//                        || id == EditorInfo.IME_NULL) {
+//                    attemptStartAuth();
+//                    return true;
+//                }
+//                return false;
+//            }
+//        });
+
     }
     protected Neter mNeter;
     protected Parser mParser = new Parser();
@@ -42,7 +58,6 @@ public class LoginActivity extends BaseActivity implements Neter.LogRequest {
     protected Context getActivity(){
         return LoginActivity.this;
     }
-
     protected static final String TAG = "LoginActivity";
     @Override
     public String getTAG(){
@@ -50,8 +65,20 @@ public class LoginActivity extends BaseActivity implements Neter.LogRequest {
     }
 
 
-//    protected String mAuth = "";
-//    protected long mUserID;
+
+    private void recoverData(){
+        mAccountID = WithSet.getInstance().getAccountID();
+        mAccountPD = WithSet.getInstance().getAccountPD();
+        if (!TextUtils.isEmpty(mAccountID)) {
+            vID.setText(mAccountID);
+        }
+        if (!TextUtils.isEmpty(mAccountPD)) {
+            vPD.setText(mAccountPD);
+        }
+    }
+
+
+
     protected Handler handler = new Handler(new Handler.Callback() {
         @Override
         public boolean handleMessage(Message msg) {
@@ -81,16 +108,9 @@ public class LoginActivity extends BaseActivity implements Neter.LogRequest {
         }
     });
 
-    @Override
-    public void addRequest(RequestLog requestLog){
-    }
-    @Override
-    public void delRequest(long index){
-    }
 
+    private EditText vID,vPD;
     public void onLoginClicked(View view) {
-        EditText vID = (EditText)findViewById(R.id.edittext_id);
-        EditText vPD = (EditText)findViewById(R.id.edittext_pd);
         mAccountID = vID.getText().toString();
         mAccountPD = vPD.getText().toString();
 
@@ -122,6 +142,13 @@ public class LoginActivity extends BaseActivity implements Neter.LogRequest {
     }
     @Override
     protected void notifyDataChanged(){
+    }
+
+
+    private void onStartAuth() {
+    }
+
+    private void onAuthResponse(boolean successful, int result, boolean error) {
     }
 
 

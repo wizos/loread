@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.app.Application;
 import android.content.Context;
 
+import com.facebook.stetho.Stetho;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -11,37 +12,50 @@ import java.util.List;
 
 import me.wizos.loread.dao.DaoMaster;
 import me.wizos.loread.dao.DaoSession;
+import me.wizos.loread.utils.HttpUtil;
 
 /**
  * Created by Wizos on 2015/12/24.
  * 该类为活动管理器，每个活动创建时都添加到该 list （销毁时便移除），可以实时收集到目前存在的 活动 ，方便要退出该应用时调用 finishAll() 来一次性关闭所有活动
  */
 public class App extends Application{
-    public static List<Activity> activities = new ArrayList<Activity>();
+    public static final String DB_NAME = "loread_DB";
+    public static String cacheRelativePath,cacheAbsolutePath;
+    public static String logRelativePath,logAbsolutePath;
+    public static List<Activity> activities = new ArrayList<>();
+
+
+    private  static DaoSession daoSession;
     public static Context context;
-    //    private static App instance;   extends Application
+    private static App instance;
+    public static App getInstance() {
+        return instance;
+    }
+    public static Context getContext(){ return context;}
     public static void addActivity(Activity activity){
-        context = getContext();
         activities.add(activity);
     }
+
     @Override
     public void onCreate() {
         super.onCreate();
         App.context = getApplicationContext();
         instance = this;
-//        Fresco.initialize(context);
         cacheRelativePath = getExternalFilesDir(null) + File.separator + "cache" + File.separator;
         cacheAbsolutePath = "file:"+ File.separator + File.separator + cacheRelativePath;
+        logRelativePath = getExternalFilesDir(null) + File.separator + "log" + File.separator;
+        logAbsolutePath = "file:"+ File.separator + File.separator + logRelativePath;
+        Stetho.initialize(
+                Stetho.newInitializerBuilder(this)
+                        .enableDumpapp(Stetho.defaultDumperPluginsProvider(this))
+                        .enableWebKitInspector(Stetho.defaultInspectorModulesProvider(this))
+                        .build());
+        HttpUtil.xx();
     }
-    public static Context getContext(){
-        return context;}
+
+
 
     public static void removeActivity(Activity activity){
-        activities.remove(activity);
-        activity.finish();
-    }
-    public static void removeContext(Context context){
-        Activity activity = (Activity) context;
         activities.remove(activity);
         activity.finish();
     }
@@ -52,16 +66,6 @@ public class App extends Application{
             }
         }
     }
-
-//    public static Handler handler;
-    public static String cacheRelativePath,cacheAbsolutePath;
-    private static App instance;
-    public static App getInstance() {
-        return instance;
-    }
-
-    private  static DaoSession daoSession;
-    public static final String DB_NAME = "lore_db";
 
 
     // 官方推荐将获取 DaoMaster 对象的方法放到 Application 层，这样将避免多次创建生成 Session 对象

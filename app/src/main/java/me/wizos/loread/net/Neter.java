@@ -11,20 +11,19 @@ import android.os.Message;
 import com.socks.library.KLog;
 import com.squareup.okhttp.Callback;
 import com.squareup.okhttp.FormEncodingBuilder;
-import com.squareup.okhttp.MediaType;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.RequestBody;
 import com.squareup.okhttp.Response;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.SocketTimeoutException;
 import java.util.ArrayList;
 
 import me.wizos.loread.bean.RequestLog;
-import me.wizos.loread.bean.x.Strings;
+import me.wizos.loread.gson.SrcPair;
 import me.wizos.loread.utils.HttpUtil;
 import me.wizos.loread.utils.UFile;
+import me.wizos.loread.utils.UString;
 
 /**
  * Created by Wizos on 2016/3/10.
@@ -73,7 +72,6 @@ public class Neter {
         addHeader("n","160");
         addHeader("ot","0");
         addHeader("s", "user/" + mUserID + "/state/com.google/starred");
-//        System.out.println("【Header22】 " + headParamList.get(2).toString());
         getWithAuth(url);
     }
     public void getStarredContents(){
@@ -81,12 +79,7 @@ public class Neter {
         addHeader("ot", "0");
         getWithAuth(API.U_STREAM_CONTENTS + API.U_STARRED);
     }
-    public void postArticleContents( String articleID ){
-        addBody("i", articleID);
-        long logTime = System.currentTimeMillis();
-        logRequest(API.U_EDIT_TAG, "post", logTime, headParamList, bodyParamList);
-        postWithAuth(API.U_ARTICLE_CONTENTS, logTime);
-    }
+
 //    public void postArticle( List<String> articleIDList ){
 //        addBody("i", articleID);
 //        long logTime = System.currentTimeMillis();
@@ -95,68 +88,66 @@ public class Neter {
 //    }
 
 
+    public void postArticleContents( String articleID ){
+        addBody("i", articleID);
+        postWithAuthLog(API.U_EDIT_TAG);
+    }
     public void postUnReadArticle( String articleID ){
         addBody("r", "user/-/state/com.google/read");
         addBody("i", articleID);
-        long logTime = System.currentTimeMillis();
-        logRequest(API.U_EDIT_TAG, "post", logTime, headParamList, bodyParamList);
-        postWithAuth(API.U_EDIT_TAG,logTime);
+        postWithAuthLog(API.U_EDIT_TAG);
+        KLog.d("【post】1记录 "+ headParamList.size());
     }
     public void postReadArticle( String articleID ){
         addBody("a", "user/-/state/com.google/read");
         addBody("i", articleID);
-        long logTime = System.currentTimeMillis();
-        logRequest(API.U_EDIT_TAG, "post", logTime, headParamList, bodyParamList);
-        postWithAuth(API.U_EDIT_TAG,logTime);
+        postWithAuthLog(API.U_EDIT_TAG);
+        KLog.d("【post】2记录 "+ headParamList.size());
     }
     public void postUnStarArticle( String articleID ){
         addBody("r", "user/-/state/com.google/starred");
         addBody("i", articleID);
-        long logTime = System.currentTimeMillis();
-        logRequest(API.U_EDIT_TAG, "post", logTime, headParamList, bodyParamList);
-        postWithAuth(API.U_EDIT_TAG,logTime);
+        postWithAuthLog(API.U_EDIT_TAG);
     }
     public void postStarArticle( String articleID ){
         addBody("a", "user/-/state/com.google/starred");
         addBody("i", articleID);
-        long logTime = System.currentTimeMillis();
-        logRequest(API.U_EDIT_TAG, "post", logTime, headParamList, bodyParamList);
-        postWithAuth(API.U_EDIT_TAG, logTime);
+        postWithAuthLog(API.U_EDIT_TAG);
     }
 
 
-    //测试之用
-    public void getWithAuth3(String url, long logCode) {
-        System.out.println("【执行 getWithAuth 1 】" + url);
-        if(!isNetworkEnabled(context)){
-            handler.sendEmptyMessage(55);
-            return;}
-        Request.Builder builder = new Request.Builder();
-        builder.url(url);
-        addHeader("Authorization", API.INOREADER_ATUH);
-        addHeader("AppId", API.INOREADER_APP_ID);
-        addHeader("AppKey", API.INOREADER_APP_KEY);
-        for ( Parameter para : headParamList) {
-            builder.addHeader( para.getKey() , para.getValue() );
-        }
-        headParamList.clear();
-        Request request = builder.build();
-        forData(url, request,logCode);
-    }
+//    //测试之用
+//    public void getWithAuth3(String url, long logCode) {
+//        KLog.d("【执行 getWithAuth 1 】" + url);
+//        if(!isNetworkEnabled(context)){
+//            handler.sendEmptyMessage(55);
+//            return;}
+//        Request.Builder builder = new Request.Builder();
+//        builder.url(url);
+//        addHeader("Authorization", API.INOREADER_ATUH);
+//        addHeader("AppId", API.INOREADER_APP_ID);
+//        addHeader("AppKey", API.INOREADER_APP_KEY);
+//        for ( Parameter para : headParamList) {
+//            builder.addHeader( para.getKey() , para.getValue() );
+//        }
+//        headParamList.clear();
+//        Request request = builder.build();
+//        forData(url, request,logCode);
+//    }
 
     public void getWithAuth(String url) {
-        System.out.println("【执行 getWithAuth 】" + url);
+        KLog.d("【执行 getWithAuth 】" + url);
         if(!isNetworkEnabled(context)){
+            headParamList.clear();
             handler.sendEmptyMessage(55);
             return;}
 
         Request.Builder builder = new Request.Builder();
         String paraString = "?";
-        for ( Parameter para : headParamList) {
-            paraString = paraString + para.getKey() + "=" + para.getValue() + "&";
+        for ( String[] param : headParamList) {
+            paraString = paraString + param[0] + "=" + param[1] + "&";
         }
         headParamList.clear(); // headParamList = new ArrayList<>();
-
         if (paraString.equals("?")) {
             paraString = "";
         }
@@ -170,41 +161,47 @@ public class Neter {
         forData(url, request,0);
     }
 
-
-    public void postWithAuth(final String url) {
-        postWithAuth(url,System.currentTimeMillis());
-    }
-    public void postWithAuth(final String url ,long logTime) {
+    public void postWithAuthLog(final String url) {
         addHeader("AppId", API.INOREADER_APP_ID);
         addHeader("AppKey", API.INOREADER_APP_KEY);
         addHeader("Authorization", API.INOREADER_ATUH);
+        long logTime = System.currentTimeMillis();
+        toRequest(API.U_EDIT_TAG, "post", logTime, headParamList, bodyParamList);
         post(url,logTime);
     }
-    public void post(final String url){
+    public void postWithAuth(final String url) {
+        addHeader("AppId", API.INOREADER_APP_ID);
+        addHeader("AppKey", API.INOREADER_APP_KEY);
+        addHeader("Authorization", API.INOREADER_ATUH);
         post(url,System.currentTimeMillis());
     }
     public void post(final String url, long logTime) { // just for login
-        System.out.println("【执行 = " + url + "】");
+        KLog.d("【执行 = " + url + "】");
         if(!isNetworkEnabled(context)){
+            headParamList.clear();
+            bodyParamList.clear();
             handler.sendEmptyMessage(55);
             return;}
         // 构建请求头
         Request.Builder headBuilder = new Request.Builder().url(url);
-        for ( Parameter para : headParamList) {
-            headBuilder.addHeader(para.getKey(), para.getValue());
+//        for ( Parameter para : headParamList) {
+//            headBuilder.addHeader(para.getKey(), para.getValue());
+//        }
+        for ( String[] param : headParamList) {
+            headBuilder.addHeader( param[0], param[1] );
         }
         headParamList.clear();
 
         // 构建请求体
         FormEncodingBuilder bodyBuilder = new FormEncodingBuilder();
-        for ( Parameter para : bodyParamList ) {
-            bodyBuilder.add( para.getKey(), para.getValue());
+        for ( String[] param : bodyParamList ) {
+            bodyBuilder.add( param[0], param[1] );
+            KLog.d("【2】" + param[0] + param[1]);
         }
         bodyParamList.clear();
 
         RequestBody body = bodyBuilder.build();
         Request request = headBuilder.post(body).build();
-//        saveRequest(url,"post",headParamList, bodyParamList );
         forData(url, request,logTime);
     }
 
@@ -213,7 +210,7 @@ public class Neter {
         if( !isNetworkEnabled(context) ){
             handler.sendEmptyMessage(55);
             return ;}
-        KLog.d("【开始请求】 "+ logTime + url);
+        KLog.d("【开始请求】 "+ logTime + "--" + url);
 
         new Thread(new Runnable() {
             @Override
@@ -221,29 +218,35 @@ public class Neter {
                 HttpUtil.enqueue(request, new Callback() {
                     @Override
                     public void onFailure(Request request, IOException e) {
-                        System.out.println("【请求失败】" + url );
+                        KLog.d("【请求失败】" + url + request.body().toString());
                         API.request = request;
                         makeMsg(url, "noRequest",logTime);
                     }
                     @Override
                     public void onResponse(Response response) throws IOException {
                         if (!response.isSuccessful()) {
-                            System.out.println("【响应失败】" + response);
+                            KLog.d("【响应失败】" + response);
                             API.request = request;
                             makeMsg(url, "noResponse",logTime);
                             return;
                         }
                         try {
                             String res = response.body().string();
-                            System.out.println("【forData】" + res.length());
+                            KLog.d("【forData】" + res.length());
                             makeMsg(url, res,logTime);
-                        }catch (SocketTimeoutException e) {
-                            System.out.println("【超时】");
+                        }catch (IOException e){
+                            KLog.d("【超时】");
                             API.request = request;
                             makeMsg(url, "noResponse", logTime);
                             e.printStackTrace();
                         }
 
+//                        catch (SocketTimeoutException e) {
+//                            KLog.d("【超时】");
+//                            API.request = request;
+//                            makeMsg(url, "noResponse", logTime);
+//                            e.printStackTrace();
+//                        }
                     }
                 });
             }
@@ -255,7 +258,7 @@ public class Neter {
         Bundle bundle = new Bundle();
         bundle.putString("url", url);
         bundle.putLong("logTime",logTime);
-//        bundle.putString("param", url); // 有些可能 url 一样，但头部不一样。而我又是靠 url 来区分请求，从而进行下一步的。所以立此参数，以作分辨
+// 有些可能 url 一样，但头部不一样。而我又是靠 url 来区分请求，从而进行下一步的。
         if (res.equals("noRequest")) {
             message.what = API.FAILURE_Request;
         } else if (res.equals("noResponse")) {
@@ -266,26 +269,162 @@ public class Neter {
         }
         message.setData(bundle);
         handler.sendMessage(message);
-        System.out.println("【getData】" +  message.what + " -- "+ url );
+        KLog.d("【getData】" + url   + " -- "+  res );
     }
 
 
+//    public interface Call{
+//        void onSuccess(long logTime);
+//    }
+//    public void post(final String url,final long logTime,final Call call) { // just for login
+//        KLog.d("【执行 = " + url + "】");
+//        if(!isNetworkEnabled(context)){
+//            headParamList.clear();
+//            bodyParamList.clear();
+//            handler.sendEmptyMessage(55);
+//            return;}
+//        // 构建请求头
+//        Request.Builder headBuilder = new Request.Builder().url(url);
+//        for ( Parameter para : headParamList) {
+//            headBuilder.addHeader(para.getKey(), para.getValue());
+//        }
+//        headParamList.clear();
+//
+//        // 构建请求体
+//        FormEncodingBuilder bodyBuilder = new FormEncodingBuilder();
+//        for ( Parameter para : bodyParamList ) {
+//            bodyBuilder.add( para.getKey(), para.getValue());
+//        }
+//        bodyParamList.clear();
+//
+//        RequestBody body = bodyBuilder.build();
+//        final Request request = headBuilder.post(body).build();
+//
+//        if( !isNetworkEnabled(context) ){
+//            handler.sendEmptyMessage(55);
+//            return ;}
+//        KLog.d("【开始请求】 "+ logTime + url);
+//
+//        new Thread(new Runnable() {
+//            @Override
+//            public void run() {
+//                HttpUtil.enqueue(request, new Callback() {
+//                    @Override
+//                    public void onFailure(Request request, IOException e) {
+//                        KLog.d("【请求失败】" + url );
+//                        API.request = request;
+//                        makeMsg(url, "noRequest",logTime);
+//                    }
+//                    @Override
+//                    public void onResponse(Response response) throws IOException {
+//                        if (!response.isSuccessful()) {
+//                            KLog.d("【响应失败】" + response);
+//                            API.request = request;
+//                            makeMsg(url, "noResponse",logTime);
+//                            return;
+//                        }
+//                        try {
+//                            String res = response.body().string();
+//                            call.onSuccess(logTime);
+//                            makeMsg(url, res,logTime);
+//                        }catch (SocketTimeoutException e) {
+//                            KLog.d("【超时】");
+//                            API.request = request;
+//                            makeMsg(url, "noResponse", logTime);
+//                            e.printStackTrace();
+//                        }
+//
+//                    }
+//                });
+//            }
+//        }).start();
+//    }
 
-    private ArrayList<Parameter> headParamList = new ArrayList<>();
-    private ArrayList<Parameter> bodyParamList = new ArrayList<>();
+
+
+//    public static class Builder {
+//        private ArrayList<String[]> headParamList;
+//        private ArrayList<String[]> bodyParamList;
+//        private Parameter parameter;
+//
+//        public Builder(ArrayList<String[]> headParams,ArrayList<String[]> bodyParams){
+//            headParamList = headParams;
+//            bodyParamList = bodyParams;
+//        }
+//        public Builder addHeader(ArrayList<String[]> params){
+//            headParamList.addAll(params);
+//            return this;
+//        }
+//        public Builder addHeader(String[] params){
+//            headParamList.add(params);
+//            return this;
+//        }
+//        public Builder addHeader(String key ,String value){
+//            String[] params = new String[2];
+//            params[0] = key;
+//            params[1] = value;
+//            headParamList.add(params);
+//            return this;
+//        }
+//        public Builder addBody(ArrayList<String[]> params){
+//            bodyParamList.addAll(params);
+//            return this;
+//        }
+//        public Builder addBody(String[] params){
+//            bodyParamList.add(params);
+//            return this;
+//        }
+//        public Builder addBody(String key ,String value){
+//            String[] params = new String[2];
+//            params[0] = key;
+//            params[1] = value;
+//            bodyParamList.add(params);
+//            return this;
+//        }
+//        public ArrayList<ArrayList> build() {
+//            ArrayList<ArrayList> arrayList = new ArrayList<>();
+//            arrayList.add(headParamList);
+//            arrayList.add(bodyParamList);
+//            return arrayList;
+//        }
+//    }
+
+
+//    private ArrayList<Parameter> headParamList = new ArrayList<>();
+//    private ArrayList<Parameter> bodyParamList = new ArrayList<>();
+//    private ArrayList<String[]> paramList = new ArrayList<>();
+
+    private ArrayList<String[]> headParamList = new ArrayList<>();
+    private ArrayList<String[]> bodyParamList = new ArrayList<>();
+
     private Parameter parameter;
     public void addHeader(String key ,String value){
-        parameter = new Parameter(key,value);
-        headParamList.add(parameter);
-//        System.out.println("【addHeader】 " + key + ": " + value);
-    }
+//        parameter = new Parameter(key,value);
+//        headParamList.add(parameter);
+        String[] params = new String[2];
+        params[0] = key;
+        params[1] = value;
+        headParamList.add(params);
 
+    }
+    public void addHeader(ArrayList<String[]> params){
+        headParamList.addAll(params);
+    }
+    public void addHeader(String[] params){
+        headParamList.add(params);
+    }
     public void addBody(String key ,String value){
-        parameter = new Parameter(key,value);
-        bodyParamList.add(parameter);
+//        parameter = new Parameter(key,value);
+//        bodyParamList.add(parameter);
+        String[] params = new String[2];
+        params[0] = key;
+        params[1] = value;
+        bodyParamList.add(params);
     }
-
-    public class Parameter {
+    public void addBody(ArrayList<String[]> params){
+        bodyParamList.addAll(params);
+    }
+    private class Parameter {
         private String key;
         private String value;
 
@@ -309,47 +448,55 @@ public class Neter {
     }
 
 
-    private void logRequest(String url, String method,long logTime, ArrayList<Parameter> headParamList, ArrayList<Parameter> bodyParamList){
-        String file = "{\n\"items\": [{\n\"url\": \"" + url + "\",\n\"method\": \"" + method  + "\",";
-        StringBuffer sbHead = new StringBuffer("");
-        StringBuffer sbBody = new StringBuffer("");
 
-        if( headParamList!=null){
-            if(headParamList.size()!=0){
-                for(Parameter param:headParamList){
-                    sbHead.append(param.getKey() + ":" + param.getValue() + ",");
-                }
-                sbHead.deleteCharAt(sbHead.length() - 1);
-            }
-        }
-
-        if( bodyParamList!=null ){
-            if( bodyParamList.size()!=0 ){
-                for(Parameter param:bodyParamList){
-                    sbBody.append(param.getKey() + ":" + param.getValue() + ",");
-                }
-                sbBody.deleteCharAt(sbBody.length() - 1);
-            }
-        }
-
-        RequestLog requests = new RequestLog(url,method,logTime,sbHead.toString(),sbBody.toString());
-        logRequest.addRequest(requests);
-        System.out.println("【添加请求】" + url + sbHead.toString());
+    public void toRequest(String url, String method, long logTime, ArrayList<String[]> headParamList, ArrayList<String[]> bodyParamList){
+        String headParamString = UString.formParamListToString(headParamList);
+        String bodyParamString = UString.formParamListToString(bodyParamList);
+        RequestLog requests = new RequestLog(logTime,url,method,headParamString,bodyParamString);
+        if(logRequest==null){return;}
+        logRequest.add(requests);
     }
 
-    public void setLogRequestListener(LogRequest logRequest) {
+//    private void toRequest(String url, String method,long logTime, ArrayList<Parameter> headParamList, ArrayList<Parameter> bodyParamList){
+////        String file = "{\n\"items\": [{\n\"url\": \"" + url + "\",\n\"method\": \"" + method  + "\",";
+//
+//        StringBuilder sbHead = new StringBuilder("");
+//        StringBuilder sbBody = new StringBuilder("");
+//        if( headParamList!=null){
+//            if(headParamList.size()!=0){
+//                for(Parameter param:headParamList){
+//                    sbHead.append(param.getKey() + ":" + param.getValue() + ",");
+//                }
+//                sbHead.deleteCharAt(sbHead.length() - 1);
+//            }
+//        }
+//        if( bodyParamList!=null ){
+//            if( bodyParamList.size()!=0 ){
+//                for(Parameter param:bodyParamList){
+//                    sbBody.append(param.getKey() + ":" + param.getValue() + ",");
+//                }
+//                sbBody.deleteCharAt(sbBody.length() - 1);
+//            }
+//        }
+//        RequestLog requests = new RequestLog(url,method,logTime,sbHead.toString(),sbBody.toString());
+//        logRequest.addRequest(requests);
+//        KLog.d("【添加请求1】" + sbHead.toString());
+//        KLog.d("【添加请求2】" + sbBody.toString());
+//    }
+
+    public void setLogRequestListener(Loger logRequest) {
         this.logRequest = logRequest;
     }
-
-    protected LogRequest logRequest ;
-    public interface LogRequest {
-        void addRequest(RequestLog requests);
-        void delRequest(long index);
+    private Loger logRequest ;
+    public interface Loger<T> {
+        void add(T entry);
+        void del(long index);
     }
 
 
 
-    public int getBitmapList(ArrayList<Strings> imgSrcList){
+
+    public int getBitmapList(ArrayList<SrcPair> imgSrcList){
         if(!isWifiEnabled(context)){
             handler.sendEmptyMessage(55);
             return 0;}
@@ -358,44 +505,44 @@ public class Neter {
         }
         int num = imgSrcList.size();
         for(int i=0;i<num;i++){
-            getBitmap(imgSrcList.get(i).getStringA(), imgSrcList.get(i).getStringB(), i );
-//            downImg( imgSrcList.get(i).getStringA(),imgSrcList.get(i).getStringB(),i  );
+            getBitmap(imgSrcList.get(i).getNetSrc(), imgSrcList.get(i).getLocalSrc(), i );
         }
         return num;
     }
     public void getBitmap(final String url ,final String filePath ,final int imgNum) {
-        System.out.println("【获取图片 " + url + "】");
+        KLog.d("【获取图片 " + url + "】" + filePath );
         Request.Builder builder = new Request.Builder();
         builder.url(url);
         Request request = builder.build();
         HttpUtil.enqueue(request, new Callback() {
             @Override
             public void onFailure(Request request, IOException e) {
-                System.out.println("【图片请求失败 = " + url + "】");
+                KLog.d("【图片请求失败 = " + url + "】");
                 makeMsgForImg(url, filePath ,imgNum );
             }
             @Override
             public void onResponse(Response response) throws IOException {
                 if (!response.isSuccessful()) {
-                    System.out.println("【图片响应失败】" + response);
+                    KLog.d("【图片响应失败】" + response);
                     makeMsgForImg(url, filePath ,imgNum);
                     return;
                 }
                 inputStream = response.body().byteStream();
 
-                String fileTypeInResponse = "";
-                MediaType mediaType = response.body().contentType();
-                if (mediaType != null) {
-                    fileTypeInResponse = "." + mediaType.subtype();
-                }
+//                得到响应内容的文件格式
+//                String fileTypeInResponse = "";
+//                MediaType mediaType = response.body().contentType();
+//                if (mediaType != null) {
+//                    fileTypeInResponse = "." + mediaType.subtype();
+//                }
+
                 try {
                     UFile.saveFromStream(inputStream, filePath);
                 } catch (IOException e) {
                     e.printStackTrace();
-//                    java抛出异常的方法有很多，其中最常用的两个： System.out.println(e)，这个方法打印出异常，并且输出在哪里出现的异常. 不过它和另外一个e.printStackTrace()方法不同。后者也是打印出异常，但是它还将显示出更深的调用信息。
-                }
-                System.out.println("【成功保存图片】" + filePath + fileTypeInResponse);
-                makeMsgForImg(null, null,imgNum);
+               }
+                KLog.d("【成功保存图片】" + url + "==" + filePath);
+                makeMsgForImg(url, filePath,imgNum);
             }
         });
     }
@@ -408,11 +555,10 @@ public class Neter {
         bundle.putString("filePath", filePath);
         bundle.putInt("imgNum", imgNum);
         message.what = API.S_BITMAP;
-        if(url != null){message.what = API.F_BITMAP;}
+        if(url != null){ message.what = API.F_BITMAP;}
         message.setData(bundle);
         handler.sendMessage(message);
     }
-
 
 //    public void downImg(String url,String filePath ,final int imgNum){
 //        String path = filePath.substring(filePath.lastIndexOf(File.separator));
@@ -437,7 +583,5 @@ public class Neter {
 //                    }
 //                });
 //    }
-
-
 
 }

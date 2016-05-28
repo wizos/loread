@@ -34,7 +34,6 @@ import me.wizos.loread.adapter.MaterialSimpleListAdapter;
 import me.wizos.loread.adapter.MaterialSimpleListItem;
 import me.wizos.loread.bean.Article;
 import me.wizos.loread.bean.RequestLog;
-import me.wizos.loread.dao.DaoMaster;
 import me.wizos.loread.dao.UpdateDB;
 import me.wizos.loread.dao.WithDB;
 import me.wizos.loread.dao.WithSet;
@@ -44,11 +43,12 @@ import me.wizos.loread.net.Neter;
 import me.wizos.loread.net.Parser;
 import me.wizos.loread.utils.UDensity;
 import me.wizos.loread.utils.UFile;
+import me.wizos.loread.utils.ULog;
 import me.wizos.loread.utils.UString;
 import me.wizos.loread.utils.UToast;
 import me.wizos.loread.view.SwipeRefresh;
 
-public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefreshListener ,Neter.LogRequest{
+public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefreshListener ,Neter.Loger<RequestLog>{
 
     protected static final String TAG = "MainActivity";
     private Context context;
@@ -65,7 +65,7 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
     private boolean hadSyncAllStarredList = false;
     private boolean syncAllStarredList = false;
     private boolean syncFirstOpen = true;
-    private boolean hadSyncLogRequest = true;
+    private boolean hadSyncLogRequest = false;
     private boolean orderTagFeed;
     private int clearBeforeDay;
     private long mUserID;
@@ -74,28 +74,32 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
     private boolean hadArticleSlvSummary = true;
 //    private String sListTagCount = "";
 
+    protected Neter mNeter;
+    protected Parser mParser;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         context = this ;
-//        upgrade();
+        UpdateDB.upgrade(this);
         UFile.setContext(this);
         App.addActivity(this);
         mNeter = new Neter(handler,this);
         mNeter.setLogRequestListener(this);
+        mParser = new Parser();
         initToolbar();
-        initSlvMenu();
         initSlvListener();
         initSwipe();
         initView();
         KLog.i("【一】" + toolbar.getTitle() );
         initData();
         KLog.i("【二】" + toolbar.getTitle());
+        initLogService();
     }
-    protected void upgrade(){
-        UpdateDB helper = new UpdateDB(this, App.DB_NAME,null);// 升级数据库成功
-        DaoMaster daoMaster = new DaoMaster(helper.getWritableDatabase());
+
+    private void initLogService(){
+        Intent intent = new Intent(this, ULog.class);
+        startService(intent);
     }
 
     @Override
@@ -164,9 +168,10 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
         mSwipeRefreshLayout.setEnabled(false);
         mSwipeRefreshLayout.setRefreshing(false);  // 调用 setRefreshing(false) 去取消任何刷新的视觉迹象。如果活动只是希望展示一个进度条的动画，他应该条用 setRefreshing(true) 。 关闭手势和进度条动画，调用该 View 的 setEnable(false)
 
-        if( hadSyncLogRequest ){ // 防止在更新 logRequest 时又去开始刷新
-            handler.sendEmptyMessage(API.M_BEGIN_SYNC);
-        }
+//        if( hadSyncLogRequest ){ // 防止在更新 logRequest 时又去开始刷新
+//            handler.sendEmptyMessage(API.M_BEGIN_SYNC);
+//        }
+        handler.sendEmptyMessage(API.M_BEGIN_SYNC);
         KLog.i("【刷新中】" + hadSyncLogRequest);
 //        UToast.showLong("正在刷新");
     }
@@ -184,20 +189,19 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
         reloadData();  // 先加载已有数据
         if( syncFirstOpen && articleList.size() !=0 ){
             mSwipeRefreshLayout.setEnabled(false);
-            mNeter.getWithAuth(API.U_TAGS_LIST);
+            handler.sendEmptyMessage(API.M_BEGIN_SYNC);
             KLog.i("首次开启同步");
             UToast.showLong("首次开启同步");
         }else {
             List<Article> allArts = WithDB.getInstance().loadArtAll();  //  速度更快，用时更短，这里耗时 43,43
             if(allArts.size() == 0 && hadSyncLogRequest ){
                 // 显示一个没有内容正在加载的样子
-                mNeter.getWithAuth(API.U_TAGS_LIST);
+                handler.sendEmptyMessage(API.M_BEGIN_SYNC);
                 UToast.showLong("首次同步");
             }
         }
         KLog.i("列表数目：" + articleList.size() + "  当前状态：" + sListState);
     }
-
 
     /**
      * sListState 包含 3 个状态：All，Unread，Stared
@@ -205,7 +209,7 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
      * */
     protected void reloadData(){ // 获取 articleList , 并且根据 articleList 的到未读数目
         if(sListTag.contains(API.U_NO_LABEL)){
-//            articleList = getNoLabelList( );  // FIXME: 2016/5/7 这里的未分类暂时无法使用，因为在云端订阅源的分类是可能会变的，导致本地缓存的文章分类错误
+            articleList = getNoLabelList( );  // FIXME: 2016/5/7 这里的未分类暂时无法使用，因为在云端订阅源的分类是可能会变的，导致本地缓存的文章分类错误
         }else {
             if( sListState.equals(API.LIST_STAR) ){
                 articleList = WithDB.getInstance().loadStarList(sListTag);
@@ -227,70 +231,91 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
         mainSlvAdapter = new MainSlvAdapter(this, articleList);
         slv.setAdapter(mainSlvAdapter);
         mainSlvAdapter.notifyDataSetChanged();
-        tagCount = articleList.size();
-        KLog.i("【notify2】" + tagCount + "--" + mainSlvAdapter.getCount());
+        KLog.i("【notify2】" + articleList.size() + "--" + mainSlvAdapter.getCount());
         changeToolbarTitle();
-        changeItemNums( tagCount );
+        tagCount = articleList.size();
+        setItemNum( tagCount );
     }
 
 
-//    private List<Article> getNoLabelList(){
-//        List<Article> all,part,exist;
-//        if( sListState.contains(API.LIST_STAR) ){
-//            all = WithDB.getInstance().loadStarAll();
-//            part = WithDB.getInstance().loadStarListHasLabel(mUserID);
-//            exist = WithDB.getInstance().loadStarNoLabel();
-//        }else {
-//            all = WithDB.getInstance().loadReadAll( sListState );
-//            part = WithDB.getInstance().loadReadListHasLabel( sListState,mUserID);
-//            exist = WithDB.getInstance().loadReadNoLabel();
-//       }
-//
-//        ArrayList<Article> noLabel = new ArrayList<>( all.size() - part.size() );
-////        ArrayList<Article> exists = (ArrayList)exist;
-//        Map<String,Integer> map = new HashMap<>( part.size());
-//        String articleId;
-//        StringBuffer sb = new StringBuffer(0);
-//
-//        for( Article article: part ){
-//            articleId = article.getId();
-//            map.put(articleId,1);
-//        }
-//        for( Article article: all ){
-//            articleId = article.getId();
-//            Integer cc = map.get( articleId );
-//            if(cc!=null) {
-//                map.put( articleId , ++cc);
-//            }else {
-//                sb = new StringBuffer();
-//                sb.append(article.getCategories());
-//                sb.insert( sb.length()-1 , ", \"user/"+ mUserID + API.U_NO_LABEL +"\"");
-//                article.setCategories( sb.toString() );
-//                noLabel.add( article );
-//            }
-//        }
-//        KLog.d( sb.toString() +" - "+  all.size() + " - "+ part.size());
-//        noLabel.addAll( exist );
-//        return noLabel;
-//    }
+    private List<Article> getNoLabelList(){
+        List<Article> all,part,exist;
+        if( sListState.contains(API.LIST_STAR) ){
+            all = WithDB.getInstance().loadStarAll();
+            part = WithDB.getInstance().loadStarListHasLabel(mUserID);
+            exist = WithDB.getInstance().loadStarNoLabel();
+        }else {
+            all = WithDB.getInstance().loadReadAll( sListState );
+            part = WithDB.getInstance().loadReadListHasLabel( sListState,mUserID);
+            exist = WithDB.getInstance().loadReadNoLabel();
+       }
+
+        ArrayList<Article> noLabel = new ArrayList<>( all.size() - part.size() );
+        Map<String,Integer> map = new HashMap<>( part.size());
+        String articleId;
+        StringBuffer sb = new StringBuffer(0);
+
+        for( Article article: part ){
+            articleId = article.getId();
+            map.put(articleId,1);
+        }
+        for( Article article: all ){
+            articleId = article.getId();
+            Integer cc = map.get( articleId );
+            if(cc!=null) {
+                map.put( articleId , ++cc);
+            }else {
+                sb = new StringBuffer();
+                sb.append(article.getCategories());
+                sb.insert( sb.length()-1 , ", \"user/"+ mUserID + API.U_NO_LABEL +"\"");
+                article.setCategories( sb.toString() );
+                noLabel.add( article );
+            }
+        }
+        KLog.d( sb.toString() +" - "+  all.size() + " - "+ part.size());
+        noLabel.addAll( exist );
+        return noLabel;
+    }
 
 
 
-
+    /**
+     * 异步类: AsyncTask 和 Handler 对比
+     * 1 ） AsyncTask实现的原理,和适用的优缺点
+     * AsyncTask,是android提供的轻量级的异步类,可以直接继承AsyncTask,在类中实现异步操作,并提供接口反馈当前异步执行的程度(可以通过接口实现UI进度更新),最后反馈执行的结果给UI主线程.
+     * 使用的优点: 1、简单,快捷；2、过程可控
+     * 使用的缺点：在使用多个异步操作和并需要进行Ui变更时,就变得复杂起来.
+     * 2 ）Handler异步实现的原理和适用的优缺点
+     * 在Handler 异步实现时,涉及到 Handler, Looper, Message,Thread 四个对象，实现异步的流程是主线程启动 Thread（子线程）àthread(子线程)运行并生成Message-àLooper获取Message并传递给HandleràHandler逐个获取Looper中的Message，并进行UI变更。
+     * 使用的优点：1、结构清晰，功能定义明确；2、对于多个后台任务时，简单，清晰
+     * 使用的缺点：在单个后台异步处理时，显得代码过多，结构过于复杂（相对性）
+     *
+     *
+     * 采用线程+Handler实现异步处理时，当每次执行耗时操作都创建一条新线程进行处理，性能开销会比较大。另外，如果耗时操作执行的时间比较长，就有可能同时运行着许多线程，系统将不堪重负。
+     * 为了提高性能，我们可以使用AsynTask实现异步处理，事实上其内部也是采用线程+Handler来实现异步处理的，只不过是其内部使用了线程池技术，有效的降低了线程创建数量及限定了同时运行的线程数。
+     */
     private int urlState = 0 ,capacity,getNumForArts = 0,numOfFailure = 0;
     private ArrayList<ItemRefs> afterItemRefs = new ArrayList<>();
-    protected Neter mNeter;
-    protected Parser mParser = new Parser();
     protected Handler handler = new Handler(new Handler.Callback() {
         @Override
         public boolean handleMessage(Message msg) {
             String info = msg.getData().getString("res");
             String url = msg.getData().getString("url");
-
+//            long logTime = msg.getData().getLong("logTime");
+            // 虽然可以根据 api 来判断一条请求，但还是需要 时间 logTime ，还有 指定码 code
             KLog.i("【handler】"  + msg.what +"---"  + handler +"---" + mParser );
             switch (msg.what) {
                 case API.M_BEGIN_SYNC:
-                    if( !readRequestList()){
+                    if( syncRequestLog()){
+                        break;
+                    }
+                    KLog.i("【获取所有加星文章1】" + hadSyncAllStarredList + "---" + syncAllStarredList);
+                    if( !hadSyncAllStarredList && syncAllStarredList ){
+                        vToolbarHint.setText(R.string.main_toolbar_hint_sync_all_stared_content);
+                        KLog.i("【获取所有加星文章2】" + hadSyncAllStarredList + "---" + msg.what);
+                        mNeter.getStarredContents();
+                        break;
+                    }else {
                         vToolbarHint.setText(R.string.main_toolbar_hint_sync_tag);
                         mNeter.getWithAuth(API.U_TAGS_LIST);
                         KLog.i("【获取0】");
@@ -299,14 +324,6 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
                     break;
                 case API.S_TAGS_LIST:
                     mParser.parseTagList(info);
-                    KLog.i("【获取所有加星文章1】" + hadSyncAllStarredList + "---" + syncAllStarredList);
-                    if( !hadSyncAllStarredList && syncAllStarredList ){
-                        vToolbarHint.setText(R.string.main_toolbar_hint_sync_all_stared_content);
-                        KLog.i("【获取所有加星文章2】" + hadSyncAllStarredList + "---" + msg.what);
-                        mNeter.getStarredContents();
-                        break;
-                    }
-
                     if(orderTagFeed){
                         vToolbarHint.setText(R.string.main_toolbar_hint_sync_tag_order);
                         mNeter.getWithAuth(API.U_STREAM_PREFS);// 有了这份数据才可以对 tagslist feedlist 进行排序，并储存下来
@@ -320,13 +337,9 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
                     mParser.parseStreamPrefList(info, mUserID);
                     vToolbarHint.setText(R.string.main_toolbar_hint_sync_unread_count);
                     mNeter.getWithAuth(API.U_UNREAD_COUNTS);
-//                    KLog.i("【S_STREAM_PREFS】" + hadSyncAllStarredList );
                     break;
-//                case API.S_SUBSCRIPTION_LIST:
-//                    mNeter.getWithAuth(API.U_UNREAD_COUNTS);
-//                    break;
                 case API.S_UNREAD_COUNTS:
-                    mParser.parseUnreadCounts(info); // 首次登录时，应该先下载以往加星的文章，在同步文章状态
+                    mParser.parseUnreadCounts(info);
                     vToolbarHint.setText( R.string.main_toolbar_hint_sync_unread_refs );
                     mNeter.getUnReadRefs(API.U_ITEM_IDS, mUserID);
                     urlState = 1;
@@ -363,11 +376,9 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
                 case API.S_ITEM_CONTENTS:
                     KLog.i("【Main 解析 ITEM_CONTENTS 】" + urlState );
                     if(urlState == 0){
-
                     }else if(urlState == 1){
                         afterItemRefs = mParser.reUnreadUnstarRefs;
                         mParser.parseItemContentsUnreadUnstar(info);
-//                        KLog.i("【 指向 】" + afterItemRefs);
                     }else if(urlState == 2){
                         afterItemRefs = mParser.reUnreadStarredRefs;
                         mParser.parseItemContentsUnreadStarred(info);
@@ -379,16 +390,15 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
                     vToolbarHint.setText(getString(R.string.main_toolbar_hint_sync_article_content,getNumForArts,capacity));
                     ArrayList<ItemRefs> beforeItemRefs = new ArrayList<>( afterItemRefs );
                     int num = beforeItemRefs.size();
-                    KLog.i("【获取 ITEM_CONTENTS 1】" + urlState +" - "+ afterItemRefs.size() + "--" + num);
+//                    KLog.i("【获取 ITEM_CONTENTS 1】" + urlState +" - "+ afterItemRefs.size() + "--" + num);
                     if(num!=0){
-                        if( beforeItemRefs==null || beforeItemRefs.size()==0){return false;}
+                        if( beforeItemRefs.size()==0){return false;}
                         if(num>50){ num = 50; }
                         for(int i=0; i<num; i++){ // 给即将获取 item 正文 的请求构造包含 item 地址 的头部
-//                            KLog.i("【获取 ITEM_CONTENTS 2】" + num  + "--"+ beforeItemRefs.size());
                             String value = beforeItemRefs.get(i).getId();
                             mNeter.addBody("i", value);
                             afterItemRefs.remove(0);
-                            KLog.i("【获取 ITEM_CONTENTS 3】" + num + "--" + afterItemRefs.size());
+//                            KLog.i("【获取 ITEM_CONTENTS 3】" + num + "--" + afterItemRefs.size());
                         }
                         getNumForArts = getNumForArts + num;
                         mNeter.postWithAuth(API.U_ITEM_CONTENTS);
@@ -406,7 +416,6 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
                         }
                         handler.sendEmptyMessage(API.S_ITEM_CONTENTS);
                     }
-
                     break;
                 case API.S_STREAM_CONTENTS_STARRED:
                     String continuation = mParser.parseStreamContentsStarred(info);
@@ -418,17 +427,13 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
                     }else {
                         hadSyncAllStarredList = true;
                         WithSet.getInstance().setHadSyncAllStarred( hadSyncAllStarredList );
+                        vToolbarHint.setText(R.string.main_toolbar_hint_sync_tag);
                         mNeter.getWithAuth(API.U_TAGS_LIST); // 接着继续
-//                        handler.sendEmptyMessage(100); // 测试
                     }
                     break;
-//                case API.S_READING_LIST:
-//                    mParser.parseReadingList(info);
-//                    KLog.i("【加载READING_LIST】");
-//                    break;
                 case API.S_EDIT_TAG:
                     long logTime = msg.getData().getLong("logTime");
-                    delRequest(logTime);
+                    del(logTime);
                     if(!info.equals("OK")){
                         mNeter.forData(url,API.request,logTime);
                         KLog.i("返回的不是 ok");
@@ -438,31 +443,8 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
                         hadSyncLogRequest = true;}
                     break;
                 case API.S_Contents:
-                    mParser.parseContents(info);
+                    mParser.parseStreamContents(info);
                     break;
-//                case API.S_BITMAP:
-//                    imgNum = msg.getData().getInt("imgNum");
-//                    numOfGetImgs = numOfGetImgs + 1;
-//                    listOfSrcPath.get(imgNum).stringA = "OK";
-//                    KLog.i(getActivity() + "【 API.S_BITMAP 】" + numOfGetImgs + "--" + numOfImgs);
-//                    if(  numOfImgs == numOfGetImgs ) {
-//                        KLog.i(getActivity() + "【 重新加载 webview 】" );
-//                        notifyDataChanged();
-//                    }
-//                    break;
-//                case API.F_BITMAP:
-//                    imgNum = msg.getData().getInt("imgNum");
-//                    numOfFailureImg = numOfFailureImg + 1;
-//                    if (numOfFailureImg > numOfFailures){
-//                        numOfGetImgs = numOfImgs-1;
-//                        handler.sendEmptyMessage(API.S_BITMAP);
-//                        break;}
-//                    if (numOfFailureImg == 1){
-//                        url = UFile.reviseSrc(url);
-//                    }
-//                    filePath = msg.getData().getString("filePath");
-//                    mNeter.getBitmap(url, filePath, imgNum);
-//                    break;
                 case API.FAILURE:
                 case API.FAILURE_Request:
                 case API.FAILURE_Response:
@@ -474,152 +456,103 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
                     mNeter.forData(url, API.request, msg.getData().getLong("logTime"));
                     break;
                 case 88:
-                    mParser.parseContents(info);
+                    mParser.parseStreamContents(info);
                     break;
                 case 100:
                     clearArticles(clearBeforeDay);
                     notifyDataChanged();
                     getNumForArts = 0;
                     vToolbarHint.setText("");
-                    KLog.i("【文章列表获取完成】" + getActivity());
+                    KLog.i("【文章列表获取完成】" );
                     break;
                 case 55:
                     mSwipeRefreshLayout.setRefreshing(false);
                     mSwipeRefreshLayout.setEnabled(true);
+                    vToolbarHint.setText("");
                     saveRequestList();
-//                    UToast.showLong("没网了");
-                    KLog.i("【 没网了 】" );
+                    KLog.i("【网络不好，中断】");
                     break;
-//                case API.S_ARTICLE_STATE:
-//                    KLog.i("【 判断当前 activity 2】" + getActivity() );
-//                    break;
-//                case API.S_ARTICLE_CONTENTS:
-//                    mParser.parseArticleContents(info);
-//                    handler.sendEmptyMessage(100); // 通知内容重载
-//                    break;
             }
             return false;
         }
     });
 
-    private boolean readRequestList(){
-        List<RequestLog> requestLogs = WithDB.getInstance().loadRequestListAll();
-        WithDB.getInstance().delRequestListAll();
-        KLog.d("读取到的是否为空", requestLogs.size());
-        if(requestLogs==null || requestLogs.size()==0){
-            return false;
-        }
-        hadSyncLogRequest = false;
-        for(RequestLog item : requestLogs){
-            String headParamString = item.getHeadParamString();
-            String bodyParamString = item.getBodyParamString();
-            if( headParamString != null || !headParamString.isEmpty() ){  //  headParamString = headParamString.replace("|",",");
-                KLog.i("【上一次记录的错误 1 】" + item.getUrl() +"  --  "+ headParamString );
-                String[] headParamStringArray = headParamString.split(",");
-                String[] paramPair;
-                for(String string : headParamStringArray){
-                    KLog.i("【1】" + headParamStringArray[0]);
-                    paramPair = string.split(":");
-                    if(paramPair.length!=2){continue;}
-                    KLog.i("【2】" + string + paramPair[0]);
-                    mNeter.addHeader(paramPair[0],paramPair[1]);
-                }
-            }
-            if( bodyParamString != null || !bodyParamString.isEmpty() ){
-                KLog.i("【上一次记录的错误 2】" + item.getUrl() +"  --  "+ bodyParamString );
-                String[] bodyParamStringArray = bodyParamString.split(",");
-                String[] paramPair;
-                for(String string : bodyParamStringArray){
-                    KLog.i("【3】" + bodyParamStringArray[0]);
-                    paramPair = string.split(":");
-                    if(paramPair.length!=2){continue;}
-                    KLog.i("【4】" + string + paramPair[0]);
-                    mNeter.addBody(paramPair[0], paramPair[1]);
-                }
-            }
-            if(item.getMethod().equals("post")){
-                mNeter.post(item.getUrl(), item.getLogTime());
-            }
-            KLog.d("LogRequest: ",item.getUrl());
-        }
-        return true;
-    }
 
-    public void clearArticles(int days){
-//        vToolbarHint.setText( getString(R.string.main_toolbar_hint_clear_article,clearBeforeDay) );
-//        List<Article> all3 =WithDB.getInstance().loadReadListAll("%"); // 53，1473-14,1473-25
-//        List<Article> all2 =WithDB.getInstance().loadReadList("%",sListTag); // 53，1473-17,1473-23
-//        List<Article> all = WithDB.getInstance().allArticleListNoOrder();  // 99  ，1473-8，1473-11
 
-//        List<Article> unread2 = WithDB.getInstance().loadReadList(API.ART_UNREAD,""); // 12，590-11，590-6（这两个用时都与先后关系有关，在前的反而用时少）
-//        List<Article> unread = WithDB.getInstance().loadReadList("UnRe%",sListTag);// 26，590-7，590-11
-
-//        List<Article> read = WithDB.getInstance().loadReadList(API.ART_READ,"");// ，883-16，883-10
-//        KLog.i("【用时】" + all.size() + "--"+ all2.size() + "--"+ all3.size() + "--"+  unread.size() + "--" + unread2.size() + "--" + read.size() );
-
-        long clearTime = System.currentTimeMillis() - days*24*3600*1000L;
-        List<Article> allArtsBeforeTime = WithDB.getInstance().loadArtsBeforeTime(clearTime);
-        KLog.i("清除" + clearTime + "--"+  allArtsBeforeTime.size()  + "--"+  days );
-        if( allArtsBeforeTime==null || allArtsBeforeTime.size()==0){return;}
-        ArrayList<String> idListMD5 = new ArrayList<>( allArtsBeforeTime.size() );
-        ArrayList<String> idList = new ArrayList<>( allArtsBeforeTime.size() );
-        for(Article article:allArtsBeforeTime){
-            idListMD5.add(UString.stringToMD5(article.getId()));
-            idList.add( article.getId() );
-        }
-        if( idList==null || idList.size()==0){
-            return;
-        }
-        UFile.deleteHtmlDirList(idListMD5);
-        WithDB.getInstance().delArtAll(allArtsBeforeTime);
-    }
 
 
     private Map<Long,RequestLog> requestMap = new HashMap<>();
     @Override
-    public void addRequest(RequestLog requestLog){
+    public void add(RequestLog requestLog){
         if(!requestLog.getHeadParamString().contains("c=")){
-            requestMap.put(requestLog.getLogTime(),requestLog);
-            KLog.i("【添加】" + requestLog.getLogTime() + requestLog.getUrl());
+            requestMap.put( requestLog.getLogTime(),requestLog );
         }
     }
     @Override
-    public void delRequest(long index){
+    public void del(long index){
         if( requestMap != null){
             if(requestMap.size()!=0){
-                KLog.i("【移除】" + index ); // 因为最后一次使用 handleMessage(100) 时也会调用
-                requestMap.remove(index);
+                requestMap.remove(index); // 因为最后一次使用 handleMessage(100) 时也会调用
             }
         }
     }
-
     private void saveRequestList(){
-        KLog.i("【saveRequestList】10" );
         if(requestMap==null){return;}
-        KLog.i("【saveRequestList】11" );
+        KLog.i("【saveRequestList0】" );
         ArrayList<RequestLog> commitRequestList = new ArrayList<>( requestMap.size() );
         for( Map.Entry<Long,RequestLog> entry : requestMap.entrySet()) {
             commitRequestList.add(entry.getValue());
-            KLog.i("【saveRequestList】" +" - " +  entry.getKey() + " - "+ entry.getValue() );
         }
         WithDB.getInstance().saveRequestLogList(commitRequestList);
         requestMap = new HashMap<>();
     }
 
-
-
-    private int itemNum = 0 ,unreadNums = 0;
-    private void changeItemNums(int offset){
-//        itemNum = offset;
-//        if(sListState.equals(API.LIST_UNREAD)){
-//            vToolbarCount.setText(String.valueOf( unreadNums ));
-//        }else {
-//            vToolbarCount.setText(String.valueOf( itemNums ));
-//        }
-
-        vToolbarCount.setText(String.valueOf( offset ));
+    private boolean syncRequestLog(){
+        List<RequestLog> requestLogs = WithDB.getInstance().loadRequestListAll();
+        if( requestLogs.size()==0){
+            return false;
+        }
+        vToolbarHint.setText( R.string.main_toolbar_hint_sync_log );
+        WithDB.getInstance().delRequestListAll();
+        hadSyncLogRequest = false;
+        // TODO: 2016/5/26 将这个改为 json 格式来持久化 RequestLog 对象 ？貌似也不好
+        for(RequestLog requestLog:requestLogs){
+            requestMap.put(requestLog.getLogTime(),requestLog);
+            String headParamString = requestLog.getHeadParamString();
+            String bodyParamString = requestLog.getBodyParamString();
+            mNeter.addHeader( UString.formStringToParamList(headParamString));
+            mNeter.addBody( UString.formStringToParamList(bodyParamString));
+            KLog.d("同步错误：" + headParamString + " = " + bodyParamString);
+            if( requestLog.getMethod().equals("post")){
+                mNeter.post( requestLog.getUrl(), requestLog.getLogTime() );
+            }
+        }
+        KLog.d("读取到的数目： " +  requestLogs.size());
+        return true;
     }
 
+    public void clearArticles(int days){
+        long clearTime = System.currentTimeMillis() - days*24*3600*1000L;
+        List<Article> allArtsBeforeTime = WithDB.getInstance().loadArtsBeforeTime(clearTime);
+        KLog.i("清除" + clearTime + "--"+  allArtsBeforeTime.size()  + "--"+  days );
+        if( allArtsBeforeTime.size()==0){return;}
+        ArrayList<String> idListMD5 = new ArrayList<>( allArtsBeforeTime.size() );
+        for(Article article:allArtsBeforeTime){
+            idListMD5.add(UString.stringToMD5(article.getId()));
+        }
+        UFile.deleteHtmlDirList(idListMD5);
+        WithDB.getInstance().delArtAll(allArtsBeforeTime);
+    }
+
+    private int tagCount;
+    private void changeItemNum(int offset){
+        tagCount = tagCount + offset;
+        vToolbarCount.setText(String.valueOf( tagCount ));
+    }
+    private void setItemNum(int offset){
+        tagCount = offset;
+        vToolbarCount.setText(String.valueOf( tagCount ));
+    }
     private void changeToolbarTitle(){
         if(sListTag.contains(API.U_READING_LIST)){
             if( sListState.equals(API.LIST_STAR) ){
@@ -657,6 +590,7 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
 
 
     public void initSlvListener() {
+        initSlvMenu();
         slv = (SlideAndDragListView)findViewById(R.id.main_slv);
         slv.setMenu(mMenu);
         slv.setOnListItemClickListener(new SlideAndDragListView.OnListItemClickListener() {
@@ -674,9 +608,7 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
         slv.setOnSlideListener(new SlideAndDragListView.OnSlideListener() {
             @Override
             public int onSlideOpen(View view, View parentView, int position, int direction) {
-//                String itemLongID = articleList.get(position).getId();
                 Article article = articleList.get(position);
-                KLog.i("【itemPosition】" + position);
                 switch (direction) {
                     case MenuItem.DIRECTION_LEFT:
                         addStarList(article);
@@ -690,7 +622,6 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
 
             @Override
             public void onSlideClose(View view, View parentView, int position, int direction) {
-
             }
         });
         slv.setOnListItemLongClickListener(new SlideAndDragListView.OnListItemLongClickListener() {
@@ -708,11 +639,7 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
                         .icon(R.drawable.ic_vector_mark_before)
                         .backgroundColor(Color.WHITE)
                         .build());
-//                adapter.add(new MaterialSimpleListItem.Builder(MainActivity.this)
-//                        .content("标为未读")
-//                        .icon(R.drawable.ic_sync_black_24dp)
-//                        .iconPaddingDp(8)
-//                        .build());
+
 
                 new MaterialDialog.Builder(MainActivity.this)
                         .adapter(adapter, new MaterialDialog.ListCallback() {
@@ -731,10 +658,6 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
                                         num = articleList.size();
                                         artList = new ArrayList<>( num - position - 1 );
                                         break;
-//                                    case 2:
-//                                        articleList.get(position).setReadState(API.ART_UNREAD);
-//                                        addReadList( articleList.get(position) );
-//                                        break;
                                 }
 
                                 for(int n = i; n< num; n++){
@@ -757,8 +680,8 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
     private void addReadedList(ArrayList<Article> artList){
         if(artList.size() == 0){return;}
         for(Article artId: artList){
-            mNeter.postUnReadArticle(artId.getId());
-            changeItemNums( tagCount - artList.size() );
+            mNeter.postReadArticle(artId.getId());
+            changeItemNum( - artList.size() );
         }
         WithDB.getInstance().saveArticleList(artList);
         mainSlvAdapter.notifyDataSetChanged();
@@ -767,15 +690,13 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
         if(article.getReadState().equals(API.ART_READ)){
             article.setReadState(API.ART_READING);
             mNeter.postUnReadArticle(article.getId());
-//            unreadNums = unreadNums + 1;
-            changeItemNums( tagCount + 1 );
-            UToast.showLong("标为未读");
+            changeItemNum( + 1 );
+            UToast.showShort("标为未读");
         }else {
             article.setReadState(API.ART_READ);
             mNeter.postReadArticle(article.getId());
-//            unreadNums = unreadNums - 1;
-            changeItemNums( tagCount - 1 );
-            UToast.showLong("标为已读");
+            changeItemNum( - 1 );
+            UToast.showShort("标为已读");
         }
         WithDB.getInstance().saveArticle(article);
         mainSlvAdapter.notifyDataSetChanged();
@@ -875,27 +796,13 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
     }
 
 
-//    protected void up(){
-//        ArrayList<Article> list = (ArrayList)WithDB.getInstance().allarticleList();
-//        int num = list.size();
-//        for(int i=0;i<num;i++){
-//            if(list.get(i).getStarState() == null || list.get(i).getStarState().equals("")){
-//                WithDB.getInstance().setArticleStarState(list.get(i).getId(), API.ART_UNSTAR);
-//            }
-//            if(list.get(i).getReadState() == null || list.get(i).getReadState().equals("")){
-//                WithDB.getInstance().setArticleReadState(list.get(i).getId(),API.ART_UNREAD);
-//            }
-//        }
-//    }
-
-    private int tagCount;
 
     /**
      * 监听返回键，弹出提示退出对话框
      */
     @Override
     public boolean onKeyDown(int keyCode , KeyEvent event){
-        if(keyCode == KeyEvent.KEYCODE_BACK || event.getRepeatCount() == 0){
+        if(keyCode == KeyEvent.KEYCODE_BACK && event.getRepeatCount() == 0){ // 后者为短期内按下的次数
             createDialog();// 创建弹出的Dialog
             return true;//返回真表示返回键被屏蔽掉
         }
@@ -930,110 +837,23 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
         // setDisplayShowHomeEnabled(true)   //使左上角图标是否显示，如果设成false，则没有程序图标，仅仅就个标题，否则，显示应用程序图标，对应id为android.R.id.home，对应ActionBar.DISPLAY_SHOW_HOME
         // setDisplayShowCustomEnabled(true)  // 使自定义的普通View能在title栏显示，即actionBar.setCustomView能起作用，对应ActionBar.DISPLAY_SHOW_CUSTOM
     }
-//    @Override
-//    public void onSlideClose(View view, View parentView, int position, int direction) {
-//    }
-//    @Override
-//    public int onMenuItemClick(View view, int itemPosition, int buttonPosition, int direction) {
-//        return Menu.ITEM_NOTHING;
-//    }
-//    @Override
-//    public void onItemDelete(View view, int position) {
-//    }
+
     public void initSlvMenu() {
         mMenu = new Menu(new ColorDrawable(Color.WHITE), true, 0);//第2个参数表示滑动item是否能滑的过量(true表示过量，就像Gif中显示的那样；false表示不过量，就像QQ中的那样)
         mMenu.addItem(new MenuItem.Builder().setWidth(UDensity.get2Px(this, R.dimen.slv_menu_left_width))
                 .setBackground(new ColorDrawable(getResources().getColor(R.color.white)))
-//                .setIcon(getResources().getDrawable(R.drawable.ic_launcher)) // 插入图片
-                .setText("加星")
-                .setTextColor(UDensity.getColor(R.color.crimson))
-                .setTextSize((int) getResources().getDimension(R.dimen.txt_size))
+                .setIcon(getResources().getDrawable(R.drawable.ic_vector_menu_star,null)) // 插入图片
+//                .setTextSize((int) getResources().getDimension(R.dimen.txt_size))
+//                .setTextColor(UDensity.getColor(R.color.crimson))
+//                .setText("加星")
                 .build());
         mMenu.addItem(new MenuItem.Builder().setWidth(UDensity.get2Px(this, R.dimen.slv_menu_right_width))
                 .setBackground(new ColorDrawable(getResources().getColor(R.color.white)))
+                .setIcon(getResources().getDrawable(R.drawable.ic_vector_menu_adjust,null))
                 .setDirection(MenuItem.DIRECTION_RIGHT) // 设置是左或右
-                .setTextColor(R.color.white)
-                .setText("已读")
-                .setTextSize(UDensity.getDimen(this, R.dimen.txt_size))
+//                .setTextColor(R.color.white)
+//                .setTextSize(UDensity.getDimen(this, R.dimen.txt_size))
+//                .setText("已读")
                 .build());
     }
-//    @Override
-//    public void onListItemLongClick(View listItemView, final int position) {
-//        KLog.d("长按");
-////        new MaterialDialog.Builder(this)
-////                .items(R.array.markArticleListItem)
-////                .itemsCallback(new MaterialDialog.ListCallback() {
-////                    @Override
-////                    public void onSelection(MaterialDialog dialog, View itemMenuView, int which, CharSequence text) {
-////                        UToast.showShort("已标记");
-////                    }
-////                })
-////                .show();
-//
-//        final MaterialSimpleListAdapter adapter = new MaterialSimpleListAdapter(this);
-//        adapter.add(new MaterialSimpleListItem.Builder(this)
-//                .content("向上标记已读")
-//                .icon(R.drawable.ic_vector_mark_after)
-//                .backgroundColor(Color.WHITE)
-//                .build());
-//        adapter.add(new MaterialSimpleListItem.Builder(this)
-//                .content("向下标记已读")
-//                .icon(R.drawable.ic_vector_mark_before)
-//                .backgroundColor(Color.WHITE)
-//                .build());
-//        adapter.add(new MaterialSimpleListItem.Builder(this)
-//                .content("标为未读")
-//                .icon(R.drawable.ic_sync_black_24dp)
-//                .iconPaddingDp(8)
-//                .build());
-//
-//        new MaterialDialog.Builder(this)
-//                .adapter(adapter, new MaterialDialog.ListCallback() {
-//                    @Override
-//                    public void onSelection(MaterialDialog dialog, View itemView, int which, CharSequence text) {
-//                        switch (which) {
-//                            case 0:
-//                                ArrayList<String> artIdListBefore = new ArrayList<>( position+1 );
-//                                for(int i=0; i< position; i++){
-//                                    artIdListBefore.add( articleList.get( i ).getId() );
-//                                }
-//                                break;
-//                            case 1:
-//                                int num = articleList.size();
-//                                ArrayList<String> artIdListAfter = new ArrayList<>( num - position + 1);
-//                                for(int  i= position ; i< num; i++){
-//                                    artIdListAfter.add( articleList.get( i ).getId() );
-//                                }
-//                                break;
-//                            case 3:
-//                                UToast.showShort("未读");
-//                                break;
-//                        }
-//                    }
-//                })
-//                .show();
-//    }
-
-//
-//
-//
-//
-//    @Override
-//    public void onDragViewStart(int position) {
-//    }
-//    @Override
-//    public void onDragViewMoving(int position) {
-//    }
-//    @Override
-//    public void onDragViewDown(int position) {
-//    }
-//    public class Task extends TimerTask {
-//        public void run()
-//        {
-//            mSwipeRefreshLayout.setRefreshing(false);
-//            mSwipeRefreshLayout.setEnabled(true);
-//            KLog.i("取消刷新图标");
-//        }
-//    }
-
 }

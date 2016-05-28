@@ -16,18 +16,19 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.blueware.agent.android.util.OneapmWebViewClient;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import com.socks.library.KLog;
 
 import java.io.File;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 
 import me.wizos.loread.App;
 import me.wizos.loread.R;
 import me.wizos.loread.bean.Article;
-import me.wizos.loread.bean.RequestLog;
-import me.wizos.loread.bean.x.StringAndList;
-import me.wizos.loread.bean.x.Strings;
 import me.wizos.loread.dao.WithDB;
+import me.wizos.loread.gson.SrcPair;
 import me.wizos.loread.net.API;
 import me.wizos.loread.net.Neter;
 import me.wizos.loread.net.Parser;
@@ -36,9 +37,17 @@ import me.wizos.loread.utils.UString;
 import me.wizos.loread.utils.UTime;
 import me.wizos.loread.utils.UToast;
 
-public class ArticleActivity extends BaseActivity implements Neter.LogRequest {
+public class ArticleActivity extends BaseActivity {
+    protected static final String TAG = "ArticleActivity";
     protected WebView webView; // implements Html.ImageGetter
     protected Context context;
+    protected Neter mNeter;
+    protected Parser mParser;
+    protected TextView vTitle ,vDate ,vTime ,vFeed;
+    protected ImageView vStar , vRead;
+    protected NestedScrollView vScrolllayout ;
+    protected TextView vArticleNum;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -46,36 +55,29 @@ public class ArticleActivity extends BaseActivity implements Neter.LogRequest {
         context = this;
         App.addActivity(this);
         mNeter = new Neter(handler,this);
-        mNeter.setLogRequestListener(this);
+//        mNeter.setLogRequestListener(this);
+        mParser = new Parser();
         initView();
         initData();
     }
 
-    protected Neter mNeter;
-    protected Parser mParser = new Parser();
 
     @Override
     protected void onResume(){
         super.onResume();
     }
 
-
     @Override
     protected Context getActivity(){
         return context;
     }
-    protected static final String TAG = "ArticleActivity";
     public String getTAG(){
         return TAG;
     }
 
-    protected TextView vTitle ,vDate ,vTime ,vFeed;
-    protected ImageView vStar , vRead;
-    protected NestedScrollView vScrolllayout ;
-    protected TextView vArticleNum;
+
 //    protected String webUrl;
     private void initView() {
-        initSystemBar();
         initToolbar();
         initWebView();
         vTitle = (TextView) findViewById(R.id.article_title);
@@ -112,10 +114,10 @@ public class ArticleActivity extends BaseActivity implements Neter.LogRequest {
 //        setOneapmWebViewWatch();
     }
 
+    /**
+     * 为了监控 webView 的性能
+     */
     private void setOneapmWebViewWatch(){
-        /**
-         * 为了监控 webView 的性能
-         */
         OneapmWebViewClient client = new OneapmWebViewClient( webView){
             @Override
             public void onPageFinished(WebView view, String url) {
@@ -156,6 +158,7 @@ public class ArticleActivity extends BaseActivity implements Neter.LogRequest {
         String imgState = article.getImgState();// 读取失败 imgSrc 的字段 , 如果读取的为 ok 代表加载完成，如果为空 or "" ，代表要提取正文与srcList加载图片  ,content
 
         String cssFileName = "normalize.css";
+
         String folderAbsolutePath = "file:"+ File.separator + File.separator + getExternalFilesDir(null)+ File.separator + "config" + File.separator;
         String cssPath = folderAbsolutePath + cssFileName;
         if(!UFile.isFileExists(cssPath)){
@@ -170,29 +173,31 @@ public class ArticleActivity extends BaseActivity implements Neter.LogRequest {
             KLog.d( "【文章内容被删，再去加载获取内容】" + webUrl);
             mNeter.postArticleContents(articleID);
         }else {
-            if(imgState == null){
+            if( imgState == null){
+                KLog.d( "【imgState为null】" + webUrl);
                 StringAndList htmlAndSrcList = getSrcListAndNewHtml(content, fileNameInMD5);
                 if( htmlAndSrcList!= null){
                     srcList =  htmlAndSrcList.getList();
                     content = htmlAndSrcList.getString();
-                    if(srcList!=null && srcList.size()!=0){
-                        article.setCoverSrc(srcList.get(0).getStringB());
-                        KLog.d(srcList.get(0).getStringB());
+                    if( srcList!=null && srcList.size()!=0){
+                        KLog.d( "【srcList】" + srcList.size());
+                        article.setCoverSrc(srcList.get(0).getLocalSrc());
+                        KLog.d(srcList.get(0).getLocalSrc());
                     }
-
                 }
             }else if(imgState.equals("OK")){
             }else {
-                String[] srcArray = imgState.split(",");
-                srcList = Strings.asValues(srcArray);
+                Gson gson = new Gson();
+                Type type = new TypeToken<ArrayList<SrcPair>>() {}.getType();
+                srcList = gson.fromJson(imgState, type);
             }
             showContent = contentHeader + content + contentFooter;
             numOfImgs = mNeter.getBitmapList(srcList);
+
 //            vArticleNum.setText(String.valueOf(articleNum) + " / " + String.valueOf(articleCount));
             vArticleNum.setText( fileNameInMD5.substring(0,10) ); // FIXME: 2016/5/3 测试
             webView.loadDataWithBaseURL(null, showContent , "text/html", "utf-8", null);
         }
-
         initStateView();
     }
 
@@ -227,9 +232,7 @@ public class ArticleActivity extends BaseActivity implements Neter.LogRequest {
             webView.loadDataWithBaseURL(null, showContent, "text/html", "utf-8", null);  //  contentView.reload();这种刷新方法无效
             KLog.d("【重载】");
         }
-        logSrcList();
     }
-    protected ArrayList<Strings> srcList = new ArrayList<>();
     protected Handler handler = new Handler(new Handler.Callback() {
         @Override
         public boolean handleMessage(Message msg) {
@@ -241,7 +244,7 @@ public class ArticleActivity extends BaseActivity implements Neter.LogRequest {
             switch (msg.what) {
                 case API.S_EDIT_TAG:
                     long logTime = msg.getData().getLong("logTime");
-                    delRequest(logTime);
+//                    del(logTime);
                     if(!info.equals("OK")){
                         mNeter.forData(url,API.request,logTime);
                         KLog.d("【返回的不是 ok");
@@ -254,20 +257,22 @@ public class ArticleActivity extends BaseActivity implements Neter.LogRequest {
                 case API.S_BITMAP:
                     imgNum = msg.getData().getInt("imgNum");
                     numOfGetImgs = numOfGetImgs + 1;
-                    srcList.get(imgNum).stringA = "OK";
+                    srcList.remove(imgNum);
                     KLog.i("【 API.S_BITMAP 】" + numOfGetImgs + "--" + numOfImgs);
                     if(  numOfImgs == numOfGetImgs || numOfGetImgs % 5 == 0) {
                         KLog.i("【 重新加载 webView 】" + numOfGetImgs % 5 );
+                        logSrcList("OK");
                         notifyDataChanged();
                     }
                     break;
                 case API.F_BITMAP:
                     imgNum = msg.getData().getInt("imgNum");
                     numOfFailureImg = numOfFailureImg + 1;
-                    if (numOfFailureImg > numOfFailures){
+                    if ( numOfFailureImg > numOfFailures ){
                         numOfGetImgs = numOfImgs-1;
                         handler.sendEmptyMessage(API.S_BITMAP);
-                        break;}
+                        break;
+                    }
                     if (numOfFailureImg == 1){
                         url = UFile.reviseSrc(url);
                     }
@@ -279,6 +284,11 @@ public class ArticleActivity extends BaseActivity implements Neter.LogRequest {
                     numOfFailure = numOfFailure + 1;
                     if (numOfFailure > 4){break;}
                     mNeter.forData(url,API.request,0);
+//                    logSrcList();
+                    break;
+                case 55:
+                    logSrcList();
+                    KLog.i("【网络不好，中断】");
                     break;
             }
             return false;
@@ -286,88 +296,80 @@ public class ArticleActivity extends BaseActivity implements Neter.LogRequest {
     });
 
 
+    private ArrayList<SrcPair> srcList = new ArrayList<>();
     private String sReadState= "";
     private String sStarState= "";
     protected void logSrcList(){
-        String urlState = "";
-        int num = srcList.size();
-        StringBuilder sb = new StringBuilder();
-        for(int i=0; i<num; i++){
-            urlState = srcList.get(i).getStringA();
-            if(!urlState.equals("OK")){
-                sb.append(urlState + ","+ srcList.get(i).getStringB());
-            }
+        logSrcList("");
+    }
+    private void logSrcList(String json){
+        if (srcList==null){return;}
+        if (srcList.size()!=0){
+            Gson gson = new Gson();
+            json = gson.toJson(srcList);
         }
-        Article article = WithDB.getInstance().getArticle(articleID);
-        article.setImgState(sb.toString());
+        KLog.d( "【 logSrcList =】" + json );
+        article.setImgState( json );
         WithDB.getInstance().saveArticle(article);
-        KLog.d( "【 logSrcList 】" + getActivity() );
     }
-
-    private void saveSrcList(){
-
-    }
-
-
-
 
 
     private StringAndList getSrcListAndNewHtml(String oldHtml,String fileNameInMD5) {
         if (UString.isBlank(oldHtml))
             return null;
         int num = 0;
+        StringBuilder tempHtml = new StringBuilder(oldHtml);
+        String netSrc,fileType,localSrc,loadSrc,temp;
+        ArrayList<SrcPair> srcInLocalNetArray = new ArrayList<>();
+        int indexA = tempHtml.indexOf("<img ", 0);
+        while (indexA != -1) {
+            indexA = tempHtml.indexOf(" src=\"", indexA);
+            if(indexA == -1){break;}
+            int indexB = tempHtml.indexOf("\"", indexA + 6);
+            if(indexB == -1){break;}
+            netSrc = tempHtml.substring( indexA + 6, indexB );
+            fileType = UFile.getFileExtByUrl(netSrc);
+            KLog.d("【文章13】" + fileType );
+            num++;
+            localSrc = App.cacheAbsolutePath + fileNameInMD5  + File.separator + fileNameInMD5 + "_files" + File.separator + fileNameInMD5 + "_" + num + fileType + API.MyFileType;
+            loadSrc  = App.cacheRelativePath  + fileNameInMD5 + File.separator + fileNameInMD5 + "_files" + File.separator + fileNameInMD5 + "_" + num + fileType + API.MyFileType;
 
-        int testStart = oldHtml.indexOf("<img ", 0);
-        if( testStart != -1 ){
-            testStart = oldHtml.indexOf(" src=\"", testStart);
-            if( testStart != -1 ){
-                int testEnd = oldHtml.indexOf("\"", testStart + 6);
-                if( testEnd != -1){
-                    String testUrl = oldHtml.substring(testStart + 6, testEnd);
-                    String testType = testUrl.substring(testUrl.length() - API.MyFileType.length() ,testUrl.length()) ;
-//                    testType = testUrl.substring(path.lastIndexOf("."));
-                    KLog.d("【测试 src 是否修改 】" + testUrl + "==" + testType );
-                    if (testType.equals(API.MyFileType)){
-                        return null;
-                    }
-                }
-            }
+            temp = " src=\"" + localSrc + "\"" + " netsrc=\"" + netSrc + "\"";
+            tempHtml = tempHtml.replace( indexA, indexB+1, temp ) ;
+            srcInLocalNetArray.add(new SrcPair( netSrc,loadSrc ));
+            indexB = indexA + 6 + localSrc.length() + netSrc.length() + 10;
+            indexA = tempHtml.indexOf("<img ", indexB);
         }
 
-        String newHtml = oldHtml;
-        KLog.d("【文章1】");
-//        list.add(fileNameInMD5);
-        int indexStart = newHtml.indexOf("<img ", 0);
-        while (indexStart != -1) {
-            indexStart = newHtml.indexOf(" src=\"", indexStart);
-            if (indexStart != -1) {
-                int indexEnd = newHtml.indexOf("\"", indexStart + 6);
-                if (indexEnd != -1) {
-                    String netSrc = newHtml.substring(indexStart + 6, indexEnd);
-                    String fileType = UFile.getFileExtByUrl(netSrc);
-                    KLog.d("【文章13】" + fileType );
-                    num++;
-                    String localSrc = App.cacheAbsolutePath + fileNameInMD5  + File.separator + fileNameInMD5 + "_files" + File.separator + fileNameInMD5 + "_" + num + API.MyFileType;
-                    String loadSrc = App.cacheRelativePath  + fileNameInMD5 + File.separator + fileNameInMD5  + "_files" + File.separator + fileNameInMD5 + "_" + num + API.MyFileType;
-                    newHtml = newHtml.substring(0, indexStart + 6) + localSrc + "\" " + "netsrc=\"" + netSrc + newHtml.substring(indexEnd, newHtml.length());
-//                    list.add(netSrc);
-                    srcInLocalNetArray.add(new Strings(netSrc,loadSrc));
-                    indexEnd = indexStart + 6 + localSrc.length() + netSrc.length() + 10;
-                    indexStart = newHtml.indexOf("<img ", indexEnd);
-                    KLog.d("【文章14】" + localSrc + newHtml);
-                }
-            }
-        }
         if(srcInLocalNetArray.size()==0){return null;}
-        showContent = newHtml;
+        showContent = tempHtml.toString();
         StringAndList htmlAndImgSrcList = new StringAndList();
         htmlAndImgSrcList.setList(srcInLocalNetArray);
-        htmlAndImgSrcList.setString(newHtml);
-        KLog.d("【文章2】");
-        UFile.saveHtml(fileNameInMD5, newHtml);
+        htmlAndImgSrcList.setString( showContent );
+        UFile.saveHtml( fileNameInMD5, showContent );
+        KLog.d("【文章2】" + showContent);
         return htmlAndImgSrcList;
     }
-    protected ArrayList<Strings> srcInLocalNetArray = new ArrayList<>();
+
+    private class StringAndList {
+        private String string;
+        private ArrayList<SrcPair> list;
+
+        private void setString(String string){
+            this.string = string;
+        }
+        private String getString(){
+            return string;
+        }
+
+        private void setList(ArrayList<SrcPair> list){
+            this.list = list;
+        }
+        private ArrayList<SrcPair> getList(){
+            return list;
+        }
+    }
+
 
 
     private static final int MSG_DOUBLE_TAP = 0;
@@ -390,25 +392,22 @@ public class ArticleActivity extends BaseActivity implements Neter.LogRequest {
 
 
 
-
-
-
     public void onReadClick(View view){
         if(sReadState.equals(API.ART_READ)){
             changeReadIcon(API.ART_UNREAD);
-            UToast.showLong("未读");
+            UToast.showShort("未读");
         }else {
             changeReadIcon(API.ART_READ);
-            UToast.showLong("已读");
+            UToast.showShort("已读");
         }
     }
     public void onStarClick(View view){
         if(sStarState.equals(API.ART_UNSTAR)){
             changeStarState(API.ART_STAR);
-            UToast.showLong("已收藏");
+            UToast.showShort("已收藏");
         }else {
             changeStarState(API.ART_UNSTAR);
-            UToast.showLong("取消收藏");
+            UToast.showShort("取消收藏");
         }
     }
 
@@ -446,11 +445,4 @@ public class ArticleActivity extends BaseActivity implements Neter.LogRequest {
         }
     }
 
-
-    @Override
-    public void addRequest(RequestLog requestLog){
-    }
-    @Override
-    public void delRequest(long index){
-    }
 }

@@ -15,7 +15,7 @@
         <android.support.v7.widget.Toolbar
             android:id="@+id/setting_toolbar"
             android:layout_width="match_parent"
-            android:title="设置"
+            android:title="@string/setting_activity_title"
             android:layout_height="?attr/actionBarSize"
             android:background="@color/main_grey_dark" >
             <TextView
@@ -64,12 +64,11 @@
                     <TextView
                         android:id="@+id/setting_sync_first_open_title"
                         style="@style/SettingItemTitle"
-                        tools:text="首次开启同步"
-                        android:text="首次开启同步" />
+                        android:text="@string/setting_sync_first_open_title" />
                     <TextView
                         android:id="@+id/setting_sync_first_open_tips"
                         style="@style/SettingItemTips"
-                        android:text="打开应用就开始同步？" />
+                        android:text="@string/setting_sync_first_open_tips" />
                 </LinearLayout>
                 <com.kyleduo.switchbutton.SwitchButton
                     android:id="@+id/setting_sync_first_open_sb_flyme"
@@ -78,6 +77,7 @@
                     android:checked="true"
                     />
             </LinearLayout>
+
             <LinearLayout
                 style="@style/SettingItem"
                 android:gravity="center_vertical">
@@ -89,12 +89,11 @@
                     <TextView
                         android:id="@+id/setting_sync_all_starred_title"
                         style="@style/SettingItemTitle"
-                        tools:text="同步所有加星文章"
-                        android:text="同步所有加星文章" />
+                        android:text="@string/setting_sync_all_starred_title" />
                     <TextView
                         android:id="@+id/setting_sync_all_starred_tips"
                         style="@style/SettingItemTips"
-                        android:text="加星文章已占用 200M / 6% 的空间" />
+                        android:text="@string/setting_sync_all_starred_tips" />
                 </LinearLayout>
                 <com.kyleduo.switchbutton.SwitchButton
                     android:id="@+id/setting_sync_all_starred_sb_flyme"
@@ -109,13 +108,14 @@
                 <TextView
                     android:id="@+id/setting_sync_frequency_title"
                     style="@style/SettingItemTitleTwo"
-                    tools:text="同步频率"
-                    android:text="同步频率" />
+                    android:text="@string/setting_sync_frequency_title" />
                 <TextView
                     android:id="@+id/setting_sync_frequency_summary"
                     style="@style/SettingItemSummary"
                     android:text="30 M / 1 次"/>
             </LinearLayout>
+
+
 
             <LinearLayout
                 android:id="@+id/setting_clear_day"
@@ -124,7 +124,7 @@
                 <TextView
                     android:id="@+id/setting_clear_day_title"
                     style="@style/SettingItemTitleTwo"
-                    android:text="文章只保留" />
+                    android:text="@string/setting_clear_day_title" />
                 <TextView
                     android:id="@+id/setting_clear_day_summary"
                     style="@style/SettingItemSummary"
@@ -143,12 +143,11 @@
                     <TextView
                         android:id="@+id/setting_down_img_title"
                         style="@style/SettingItemTitle"
-                        tools:text="省流量下载图片"
-                        android:text="省流量下载图片" />
+                        android:text="@string/setting_down_img_title" />
                     <TextView
                         android:id="@+id/setting_down_img_tips"
                         style="@style/SettingItemTips"
-                        android:text="只在 WiFi 时下载图片"
+                        android:text="@string/setting_down_img_tips"
                         android:textSize="12sp"/>
                 </LinearLayout>
                 <com.kyleduo.switchbutton.SwitchButton
@@ -171,11 +170,11 @@
                     <TextView
                         android:id="@+id/setting_scroll_mark_title"
                         style="@style/SettingItemTitle"
-                        android:text="滚动标记为已读" />
+                        android:text="@string/setting_scroll_mark_title" />
                     <TextView
                         android:id="@+id/setting_scroll_mark_tips"
                         style="@style/SettingItemTips"
-                        android:text="滚动标记为已读"/>
+                        android:text="@string/setting_scroll_mark_tips"/>
                 </LinearLayout>
                 <com.kyleduo.switchbutton.SwitchButton
                     android:id="@+id/setting_scroll_mark_sb_flyme"
@@ -196,11 +195,11 @@
                     <TextView
                         android:id="@+id/setting_order_tagfeed_title"
                         style="@style/SettingItemTitle"
-                        android:text="是否开启分组与源的排序？" />
+                        android:text="" />
                     <TextView
                         android:id="@+id/setting_order_tagfeed_tips"
                         style="@style/SettingItemTips"
-                        android:text="开启后费流量，费时间，还没多大用"/>
+                        android:text="@string/setting_order_tagfeed_tips"/>
                 </LinearLayout>
                 <com.kyleduo.switchbutton.SwitchButton
                     android:id="@+id/setting_order_tagfeed_sb_flyme"
@@ -217,7 +216,7 @@
                     android:id="@+id/setting_cache_path_starred_title"
                     style="@style/SettingItemTitle"
                     tools:text="加星文章保存位置"
-                    android:text="加星文章保存位置" />
+                    android:text="@string/setting_cache_path_starred_title" />
                 <TextView
                     android:id="@+id/setting_cache_path_starred_summary"
                     style="@style/SettingItemSummary"
@@ -231,7 +230,7 @@
                     android:id="@+id/setting_license_title"
                     style="@style/SettingItemTitleTwo"
                     tools:text="License"
-                    android:text="许可" />
+                    android:text="@string/setting_license_title" />
                 <TextView
                     android:id="@+id/setting_license_summary"
                     style="@style/SettingItemSummary"
@@ -246,11 +245,21 @@
                     android:id="@+id/setting_about_title"
                     style="@style/SettingItemTitleTwo"
                     tools:text="About"
-                    android:text="关于" />
+                    android:text="@string/setting_about_title" />
                 <TextView
                     android:id="@+id/setting_about_summary"
                     style="@style/SettingItemSummary"
                     android:text="1-2"/>
+            </LinearLayout>
+            <LinearLayout
+                android:id="@+id/setting_clear_log"
+                style="@style/SettingItem"
+                android:orientation="horizontal">
+                <Button
+                    android:id="@+id/setting_clear_log_button"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:text="@string/setting_clear_log_title" />
             </LinearLayout>
         </LinearLayout>
     </android.support.v4.widget.NestedScrollView>

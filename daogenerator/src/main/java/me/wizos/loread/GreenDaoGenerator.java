@@ -101,9 +101,9 @@ public class GreenDaoGenerator {
 
     private static void addRequestLog(Schema schema) {
         Entity requestLog = schema.addEntity("RequestLog");// 接下来你便可以设置表中的字段：
-        requestLog.addStringProperty("url").notNull().primaryKey();
+        requestLog.addLongProperty("logTime").notNull().primaryKey();
+        requestLog.addStringProperty("url");
         requestLog.addStringProperty("method");
-        requestLog.addLongProperty("logTime");
         requestLog.addStringProperty("headParamString");
         requestLog.addStringProperty("bodyParamString");
     }

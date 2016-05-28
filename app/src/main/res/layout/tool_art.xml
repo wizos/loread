@@ -4,7 +4,6 @@
     android:layout_height="match_parent"
     android:orientation="horizontal"
     android:gravity="center_vertical">
-
     <ImageView
         android:id="@+id/art_star"
         android:layout_width="22dp"

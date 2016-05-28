@@ -14,7 +14,7 @@ import me.wizos.loread.bean.RequestLog;
 /** 
  * DAO for table "REQUEST_LOG".
 */
-public class RequestLogDao extends AbstractDao<RequestLog, String> {
+public class RequestLogDao extends AbstractDao<RequestLog, Long> {
 
     public static final String TABLENAME = "REQUEST_LOG";
 
@@ -23,9 +23,9 @@ public class RequestLogDao extends AbstractDao<RequestLog, String> {
      * Can be used for QueryBuilder and for referencing column names.
     */
     public static class Properties {
-        public final static Property Url = new Property(0, String.class, "url", true, "URL");
-        public final static Property Method = new Property(1, String.class, "method", false, "METHOD");
-        public final static Property LogTime = new Property(2, Long.class, "logTime", false, "LOG_TIME");
+        public final static Property LogTime = new Property(0, long.class, "logTime", true, "LOG_TIME");
+        public final static Property Url = new Property(1, String.class, "url", false, "URL");
+        public final static Property Method = new Property(2, String.class, "method", false, "METHOD");
         public final static Property HeadParamString = new Property(3, String.class, "headParamString", false, "HEAD_PARAM_STRING");
         public final static Property BodyParamString = new Property(4, String.class, "bodyParamString", false, "BODY_PARAM_STRING");
     };
@@ -43,9 +43,9 @@ public class RequestLogDao extends AbstractDao<RequestLog, String> {
     public static void createTable(SQLiteDatabase db, boolean ifNotExists) {
         String constraint = ifNotExists? "IF NOT EXISTS ": "";
         db.execSQL("CREATE TABLE " + constraint + "\"REQUEST_LOG\" (" + //
-                "\"URL\" TEXT PRIMARY KEY NOT NULL ," + // 0: url
-                "\"METHOD\" TEXT," + // 1: method
-                "\"LOG_TIME\" INTEGER," + // 2: logTime
+                "\"LOG_TIME\" INTEGER PRIMARY KEY NOT NULL ," + // 0: logTime
+                "\"URL\" TEXT," + // 1: url
+                "\"METHOD\" TEXT," + // 2: method
                 "\"HEAD_PARAM_STRING\" TEXT," + // 3: headParamString
                 "\"BODY_PARAM_STRING\" TEXT);"); // 4: bodyParamString
     }
@@ -60,16 +60,16 @@ public class RequestLogDao extends AbstractDao<RequestLog, String> {
     @Override
     protected void bindValues(SQLiteStatement stmt, RequestLog entity) {
         stmt.clearBindings();
-        stmt.bindString(1, entity.getUrl());
+        stmt.bindLong(1, entity.getLogTime());
+ 
+        String url = entity.getUrl();
+        if (url != null) {
+            stmt.bindString(2, url);
+        }
  
         String method = entity.getMethod();
         if (method != null) {
-            stmt.bindString(2, method);
-        }
- 
-        Long logTime = entity.getLogTime();
-        if (logTime != null) {
-            stmt.bindLong(3, logTime);
+            stmt.bindString(3, method);
         }
  
         String headParamString = entity.getHeadParamString();
@@ -85,17 +85,17 @@ public class RequestLogDao extends AbstractDao<RequestLog, String> {
 
     /** @inheritdoc */
     @Override
-    public String readKey(Cursor cursor, int offset) {
-        return cursor.getString(offset + 0);
+    public Long readKey(Cursor cursor, int offset) {
+        return cursor.getLong(offset + 0);
     }    
 
     /** @inheritdoc */
     @Override
     public RequestLog readEntity(Cursor cursor, int offset) {
         RequestLog entity = new RequestLog( //
-            cursor.getString(offset + 0), // url
-            cursor.isNull(offset + 1) ? null : cursor.getString(offset + 1), // method
-            cursor.isNull(offset + 2) ? null : cursor.getLong(offset + 2), // logTime
+            cursor.getLong(offset + 0), // logTime
+            cursor.isNull(offset + 1) ? null : cursor.getString(offset + 1), // url
+            cursor.isNull(offset + 2) ? null : cursor.getString(offset + 2), // method
             cursor.isNull(offset + 3) ? null : cursor.getString(offset + 3), // headParamString
             cursor.isNull(offset + 4) ? null : cursor.getString(offset + 4) // bodyParamString
         );
@@ -105,24 +105,25 @@ public class RequestLogDao extends AbstractDao<RequestLog, String> {
     /** @inheritdoc */
     @Override
     public void readEntity(Cursor cursor, RequestLog entity, int offset) {
-        entity.setUrl(cursor.getString(offset + 0));
-        entity.setMethod(cursor.isNull(offset + 1) ? null : cursor.getString(offset + 1));
-        entity.setLogTime(cursor.isNull(offset + 2) ? null : cursor.getLong(offset + 2));
+        entity.setLogTime(cursor.getLong(offset + 0));
+        entity.setUrl(cursor.isNull(offset + 1) ? null : cursor.getString(offset + 1));
+        entity.setMethod(cursor.isNull(offset + 2) ? null : cursor.getString(offset + 2));
         entity.setHeadParamString(cursor.isNull(offset + 3) ? null : cursor.getString(offset + 3));
         entity.setBodyParamString(cursor.isNull(offset + 4) ? null : cursor.getString(offset + 4));
      }
     
     /** @inheritdoc */
     @Override
-    protected String updateKeyAfterInsert(RequestLog entity, long rowId) {
-        return entity.getUrl();
+    protected Long updateKeyAfterInsert(RequestLog entity, long rowId) {
+        entity.setLogTime(rowId);
+        return rowId;
     }
     
     /** @inheritdoc */
     @Override
-    public String getKey(RequestLog entity) {
+    public Long getKey(RequestLog entity) {
         if(entity != null) {
-            return entity.getUrl();
+            return entity.getLogTime();
         } else {
             return null;
         }

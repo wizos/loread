@@ -31,8 +31,6 @@ public abstract class BaseActivity extends AppCompatActivity implements View.OnC
         initSystemBar();
     }
 
-
-
     @Override
     protected void onResume(){
         super.onResume();
@@ -72,39 +70,6 @@ public abstract class BaseActivity extends AppCompatActivity implements View.OnC
     public void onBottombarClicked(View view){
         return;
     }
-
-
-//    protected void savePref(String key,String value){
-//        savePref(key, value ,"test");
-//    }
-//    protected void savePref(String key,String value,String table){
-//        SharedPreferences mySharedPreferences = getSharedPreferences(table, Activity.MODE_PRIVATE); //实例化SharedPreferences对象（第一步）
-//        SharedPreferences.Editor editor = mySharedPreferences.edit();//实例化SharedPreferences.Editor对象（第二步）
-//        editor.putString(key, value); //用putString的方法保存数据
-//        editor.apply(); //提交当前数据
-//    }
-//    protected void savePref(String key,boolean value){
-//        SharedPreferences mySharedPreferences = getSharedPreferences("test", Activity.MODE_PRIVATE); //实例化SharedPreferences对象（第一步）
-//        SharedPreferences.Editor editor = mySharedPreferences.edit();//实例化SharedPreferences.Editor对象（第二步）
-//        editor.putBoolean(key, value); //用putString的方法保存数据
-//        editor.apply(); //提交当前数据
-//    }
-//    protected boolean readPref(String key,boolean defaultValue ){
-//        SharedPreferences mySharedPreferences = getSharedPreferences("test", Activity.MODE_PRIVATE);
-//        return mySharedPreferences.getBoolean(key, defaultValue);
-//    }
-//
-//    protected String readPref(String key){
-//        return readPref(key, "", "test");
-//    }
-//    protected String readPref(String key,String defaultValue){
-//        return readPref(key,defaultValue,"test");
-//    }
-//    protected String readPref(String key,String defaultValue,String table){
-//        SharedPreferences mySharedPreferences = getSharedPreferences(table, Activity.MODE_PRIVATE);
-//        return mySharedPreferences.getString(key, defaultValue);//getString()第二个参数为缺省值，如果preference中不存在该key，将返回缺省值
-//    }
-
 
     protected void initSystemBar() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {

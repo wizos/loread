@@ -6,34 +6,39 @@ package me.wizos.loread.bean;
  */
 public class RequestLog {
 
-    /** Not-null value. */
+    private long logTime;
     private String url;
     private String method;
-    private Long logTime;
     private String headParamString;
     private String bodyParamString;
 
     public RequestLog() {
     }
 
-    public RequestLog(String url) {
-        this.url = url;
+    public RequestLog(long logTime) {
+        this.logTime = logTime;
     }
 
-    public RequestLog(String url, String method, Long logTime, String headParamString, String bodyParamString) {
+    public RequestLog(long logTime, String url, String method, String headParamString, String bodyParamString) {
+        this.logTime = logTime;
         this.url = url;
         this.method = method;
-        this.logTime = logTime;
         this.headParamString = headParamString;
         this.bodyParamString = bodyParamString;
     }
 
-    /** Not-null value. */
+    public long getLogTime() {
+        return logTime;
+    }
+
+    public void setLogTime(long logTime) {
+        this.logTime = logTime;
+    }
+
     public String getUrl() {
         return url;
     }
 
-    /** Not-null value; ensure this value is available before it is saved to the database. */
     public void setUrl(String url) {
         this.url = url;
     }
@@ -44,14 +49,6 @@ public class RequestLog {
 
     public void setMethod(String method) {
         this.method = method;
-    }
-
-    public Long getLogTime() {
-        return logTime;
-    }
-
-    public void setLogTime(Long logTime) {
-        this.logTime = logTime;
     }
 
     public String getHeadParamString() {

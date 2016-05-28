@@ -5,7 +5,8 @@ import android.database.sqlite.SQLiteDatabase;
 
 import com.github.yuweiguocn.library.greendao.MigrationHelper;
 
-//import com.github.yuweiguocn.library.greendao.MigrationHelper;
+import me.wizos.loread.App;
+
 
 /**
  * Created by Wizos on 2016/3/15.
@@ -14,6 +15,12 @@ public class UpdateDB extends DaoMaster.OpenHelper {
     public UpdateDB(Context context, String name, SQLiteDatabase.CursorFactory factory) {
         super(context, name, factory);
     }
+
+    public static void upgrade(Context context){
+        UpdateDB helper = new UpdateDB(context, App.DB_NAME,null);// 升级数据库成功
+        DaoMaster daoMaster = new DaoMaster(helper.getWritableDatabase());
+    }
+
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         MigrationHelper.getInstance().migrate(db,ArticleDao.class,FeedDao.class,RequestLogDao.class,TagDao.class);// 后边填写所有的 Dao 类

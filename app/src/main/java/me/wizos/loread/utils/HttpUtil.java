@@ -1,9 +1,8 @@
 
 package me.wizos.loread.utils;
 
-import android.content.Context;
-import android.net.ConnectivityManager;
-
+import com.facebook.stetho.okhttp.StethoInterceptor;
+import com.socks.library.KLog;
 import com.squareup.okhttp.Callback;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
@@ -11,8 +10,6 @@ import com.squareup.okhttp.Response;
 
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
-
-import me.wizos.loread.App;
 
 /**
  * Created by mummyding on 15-11-22.<br>
@@ -22,7 +19,6 @@ import me.wizos.loread.App;
  */
 public class HttpUtil {
     private static final OkHttpClient mOkHttpClient = new OkHttpClient();
-    public static boolean isWIFI = true;
     static{
         mOkHttpClient.setConnectTimeout(30, TimeUnit.SECONDS);
         mOkHttpClient.setReadTimeout(30, TimeUnit.SECONDS);
@@ -43,8 +39,16 @@ public class HttpUtil {
      * @param responseCallback
      */
     public static void enqueue(Request request, Callback responseCallback){
+//        mOkHttpClient.networkInterceptors().add(new StethoInterceptor());
+//        KLog.d("【】【】【】【】");
         mOkHttpClient.newCall(request).enqueue(responseCallback);
     }
+
+    public static void xx(){
+        mOkHttpClient.networkInterceptors().add(new StethoInterceptor());
+        KLog.d("【1】【2】【1】【2】");
+    }
+
     /**
      * 开启异步线程访问网络, 且不在意返回结果（实现空callback）
      * @param request
@@ -61,16 +65,7 @@ public class HttpUtil {
         });
     }
 
-    public static boolean readNetworkState() {
 
-        ConnectivityManager cm = (ConnectivityManager) App.context.getSystemService(Context.CONNECTIVITY_SERVICE);
-        if (cm != null && cm.getActiveNetworkInfo() != null && cm.getActiveNetworkInfo().isConnected()) {
-            isWIFI = (cm.getActiveNetworkInfo().getType() == ConnectivityManager.TYPE_WIFI);
-            return true;
-        } else {
-            return false;
-        }
-    }
 
 
 

@@ -14,10 +14,6 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical">
-
-        <!--<include layout="@layout/background" />-->
-        <!--app:expandedTitleMarginStart="48dp"-->
-        <!--app:contentScrim="#30469b"-->
         <android.support.design.widget.AppBarLayout
             android:id="@+id/main_appBarLayout"
             android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
@@ -45,13 +41,10 @@
                     android:layout_marginEnd="16dp"
                     android:layout_gravity="end|center"
                     android:gravity="center_vertical"
-                    android:text="计数"
                     tools:text="计数"
                     android:textSize="16sp"/>
             </android.support.v7.widget.Toolbar>
         </android.support.design.widget.AppBarLayout>
-        <!--android:layout_marginBottom="@dimen/bottom_bar_height"-->
-        <!--app:layout_behavior="@string/appbar_scrolling_view_behavior"-->
 
         <com.yydcdut.sdlv.SlideAndDragListView
             android:id="@+id/main_slv"
@@ -60,13 +53,13 @@
             android:layout_height="match_parent"
             android:layout_marginLeft="12dp"
             android:layout_marginRight="12dp"
-            android:divider="#666666"
+            android:background="@android:color/transparent"
+            android:divider="#d1d1d1"
+            android:dividerHeight="0.01dp"
+            android:headerDividersEnabled="false"
             android:layout_above="@+id/bottombar"
             android:layout_below="@+id/main_appBarLayout">
         </com.yydcdut.sdlv.SlideAndDragListView>
-
-
-
 
         <ImageView
             android:id="@+id/main_placeholder"
@@ -75,7 +68,6 @@
             android:paddingLeft="88dp"
             android:paddingRight="88dp"
             android:visibility="gone"
-            tools:visibility="visible"
             android:src="@drawable/ic_vector_unread"
             android:layout_below="@+id/main_appBarLayout"
             android:layout_above="@+id/bottombar" />
@@ -114,7 +106,7 @@
             android:layout_marginRight="22dp"
             android:layout_gravity="center|left|bottom"
             android:onClick="onSettingIconClicked"
-            android:src="@drawable/ic_vector_unread"
+            android:src="@drawable/ic_vector_setting"
             android:layout_alignBottom="@+id/bottombar" />
     </RelativeLayout>
 </me.wizos.loread.view.SwipeRefresh>

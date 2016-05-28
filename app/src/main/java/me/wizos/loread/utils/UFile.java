@@ -4,6 +4,8 @@ import android.content.Context;
 import android.graphics.BitmapFactory;
 import android.os.Environment;
 
+import com.socks.library.KLog;
+
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
@@ -96,7 +98,7 @@ public class UFile {
         try {
             if(!folder.exists())
                 folder.mkdirs();
-//            System.out.println("【】" + file.toString() + "--"+ folder.toString());
+//            KLog.d("【】" + file.toString() + "--"+ folder.toString());
             FileWriter fileWriter = new FileWriter(file,false); //在 (file,false) 后者表示在 fileWriter 对文件再次写入时，是否会在该文件的结尾续写，true 是续写，false 是覆盖。
             fileWriter.write( fileContent );
             fileWriter.flush();  // 刷新该流中的缓冲。将缓冲区中的字符数据保存到目的文件中去。
@@ -113,7 +115,7 @@ public class UFile {
         File file = new File( filePathName );
         File folder = new File( folderPathName );
         String fileContent ="" , temp = "";
-        System.out.println("【】" + file.toString() + "--"+ folder.toString());
+        KLog.d("【】" + file.toString() + "--"+ folder.toString());
         try {
             if(!folder.exists()){
                 return null;
@@ -161,12 +163,12 @@ public class UFile {
      * @throws IOException
      */
     public static void saveFromStream( InputStream is, String filePath) throws IOException {
-        System.out.println("【 saveFromStream 1】" + filePath);
+        KLog.d("【 saveFromStream 1】" + filePath);
         File file = new File(filePath);
         BufferedInputStream bis = new BufferedInputStream(is);
         FileOutputStream os = null;
         BufferedOutputStream bos = null;  // BufferedReader buffered = null.，故此时之关闭了in
-//        System.out.println("【 saveFromStream 4】");
+//        KLog.d("【 saveFromStream 4】");
         // TODO 保存文件，会遇到存储空间满的问题，如果批量保存文件，会一直尝试保存
         try {
             if (file.exists()) {  //  如果目标文件已存在，不保存
@@ -174,7 +176,7 @@ public class UFile {
             }
             File dir = file.getParentFile();
             dir.mkdirs();
-//            System.out.println("【saveFromStream 8】" );
+//            KLog.d("【saveFromStream 8】" );
 
             byte[] buff = new byte[8192];
             int size = 0;
@@ -250,19 +252,18 @@ public class UFile {
         }else if(fileExt.contains(".gif")){
             url =  url.substring(0,typeIndex)  + ".gif";
         }
-        System.out.println( "【 修正后的url 】" + url );
+        KLog.d( "【 修正后的url 】" + url );
         return url;
     }
 
     public static String getFileExtByUrl(String url){
         int typeIndex = url.lastIndexOf(".");
         int extLength = url.length() - typeIndex;
-        String fileExt ="";
+        String fileExt = "";
         if(extLength<6){
             fileExt = url.substring( typeIndex ,url.length());
         }else {
-            System.out.println( "【获取 FileExtByUrl 】失败" + extLength );
-            fileExt = url.substring( typeIndex ,url.length());
+//            fileExt = url.substring( typeIndex ,url.length());
             if(fileExt.contains(".jpg")){
                 fileExt = ".jpg";
             }else if(fileExt.contains(".jpeg")){
@@ -273,7 +274,8 @@ public class UFile {
                 fileExt = ".gif";
             }
         }
-        System.out.println( "【修正正文内的SRC】的格式" + fileExt );
+        KLog.d( "【获取 FileExtByUrl 】失败" + url.substring( typeIndex ,url.length()) + extLength );
+        KLog.d( "【修正正文内的SRC】的格式" + fileExt );
         return fileExt;
     }
 
@@ -285,8 +287,8 @@ public class UFile {
 //            in.skip(9);//跳过前9个字节
             int read  = in.read(b,0,nums); //读取文件中的内容到b[]数组,//读取 nums 个字节赋值给 b
 //            in.close();
-            System.out.println("read ="+ read );
-            System.out.println("b ="+ b[0]);
+            KLog.d("read ="+ read );
+            KLog.d("b ="+ b[0]);
         } catch (IOException e) {
             e.printStackTrace();
         }

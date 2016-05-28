@@ -13,13 +13,10 @@ body {
     line-height: 1.6;
     color: #333;
     background-color:rgba(0,0,0,0);
-    /*多看阅读默认背景色
-    background-color: #F7EFE7;
-    padding: 20px;
-    max-width: 800px;*/
+    background-color: #FFFFFF;
     margin: 0 auto;
 }
-
+/*    color: #333;   */
 body > *:first-child {
     margin-top: 0 !important;
 }

@@ -1,7 +1,6 @@
 package me.wizos.loread.adapter;
 
 import android.content.Context;
-import android.graphics.Bitmap;
 import android.text.Html;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -10,6 +9,7 @@ import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.bumptech.glide.Glide;
 import com.google.gson.Gson;
 
 import java.util.List;
@@ -19,7 +19,6 @@ import me.wizos.loread.R;
 import me.wizos.loread.bean.Article;
 import me.wizos.loread.gson.itemContents.Origin;
 import me.wizos.loread.net.API;
-import me.wizos.loread.utils.UFile;
 import me.wizos.loread.utils.UTime;
 
 /**
@@ -78,10 +77,12 @@ public class MainSlvAdapter extends ArrayAdapter<Article> {
         if(summary!=null){
             cvh.articleSummary.setText(summary);
         }
-        Bitmap bitmap = UFile.getBitmap(article.getCoverSrc());
-        if(bitmap!=null){
+//        Bitmap bitmap = UFile.getBitmap(article.getCoverSrc());
+//        if(bitmap!=null){
+        if(article.getCoverSrc()!=null){
             cvh.articleImg.setVisibility(View.VISIBLE);
-            cvh.articleImg.setImageBitmap(bitmap);
+//            cvh.articleImg.setImageBitmap(bitmap);
+            Glide.with(context).load(article.getCoverSrc()).centerCrop().into(cvh.articleImg);
         }else {
             cvh.articleImg.setVisibility(View.GONE);
         }
@@ -100,7 +101,7 @@ public class MainSlvAdapter extends ArrayAdapter<Article> {
 //            System.out.println("【2】" + article.getTitle());
             cvh.articleTitle.setAlpha(0.90f);
             cvh.articleTitle.setTextColor(App.getInstance().getResources().getColor(R.color.main_grey_dark));
-            cvh.articleSummary.setAlpha(0.90f);
+            cvh.articleSummary.setAlpha(0.65f);
             cvh.articleSummary.setTextColor(App.getInstance().getResources().getColor(R.color.main_grey_dark));
         }
         if( article.getReadState().equals(API.ART_READING)){

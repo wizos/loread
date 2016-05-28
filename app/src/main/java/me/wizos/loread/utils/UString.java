@@ -1,9 +1,15 @@
 package me.wizos.loread.utils;
 
+
+import com.socks.library.KLog;
+
 import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by Wizos on 2016/3/16.
@@ -51,6 +57,54 @@ public class UString {
 
 
 
+    public static ArrayList<String[]> asList(String[] array){
+        if(array==null || array.length==0){return null;}
+        long xx = System.currentTimeMillis();
+        ArrayList<String[]> arrayList = new ArrayList<>(array.length);
+        String[] srcPair;
+        for(String s:array){
+            srcPair = s.split("|");
+            arrayList.add( srcPair );
+            KLog.d("【测试】" + s );
+            KLog.d("【测试】" + srcPair[0] );
+            KLog.d("【测试】" + srcPair[1] );
+        }
+        KLog.d("【时间】1测试" + (System.currentTimeMillis() - xx));
+        return arrayList;
+    }
+    public static String[][] asArray(String[] array){
+        if(array==null || array.length==0){return null;}
+        long xx = System.currentTimeMillis();
+        String[][] arrayList = new String[array.length][2];
+        String[] srcPair;
+        int num = array.length;
+        for(int i=0 ; i<num ; i++){
+            srcPair = array[i].split("|");
+            arrayList[i] = srcPair;
+        }
+        KLog.d("【时间】2测试" + (System.currentTimeMillis() - xx));
+        return arrayList;
+    }
+
+
+    public interface Con<V>{
+        Object inputKey(V key);
+    }
+    public static <K,V> List<V> mapToList(Map<K,V> map){
+        ArrayList<V> list = new ArrayList<>(map.size());
+        for( Map.Entry<K,V> entry: map.entrySet()) {
+            list.add(entry.getValue());
+        }
+        return list;
+    }
+    public static <V> Map<Object,V> listToMap(ArrayList<V> arrayList, Con<? super V> con){
+        Map<Object,V> map = new HashMap<>(arrayList.size());
+        for(V item:arrayList){
+            map.put(con.inputKey(item),item);
+        }
+        return map;
+    }
+
 
 //    public static String beanListSort(ArrayList<Tag> list){
 //        int listSize = list.size()-1;
@@ -67,6 +121,37 @@ public class UString {
 //    }
 
 
+
+    public static ArrayList<String[]> formStringToParamList(String paramString){
+        if( paramString == null || isBlank(paramString) ){
+            return null;
+        }
+        String[] paramStringArray = paramString.split("_");
+        String[] paramPair;
+        ArrayList<String[]> paramList = new ArrayList<>();
+        for(String string : paramStringArray){
+            paramPair = string.split("#");
+            if(paramPair.length!=2){continue;}
+            paramList.add(paramPair);
+            KLog.d("【1】" + paramPair[0] + paramPair[1]);
+        }
+        return paramList;
+    }
+
+    public static String formParamListToString(ArrayList<String[]> paramList){
+        if( paramList==null){
+            return null;
+        }
+        if(paramList.size()==0){
+            return null;
+        }
+        StringBuilder sb = new StringBuilder("");
+        for( String[] paramPair:paramList){
+            sb.append(paramPair[0] + "#" + paramPair[1] + "_");
+        }
+        sb.deleteCharAt(sb.length() - 1);
+        return sb.toString();
+    }
 
     public static String sort(String str){
         char[] charArray = str.toCharArray();

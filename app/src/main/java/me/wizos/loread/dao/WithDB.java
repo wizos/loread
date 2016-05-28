@@ -80,14 +80,6 @@ public class WithDB {
             articleDao.insertOrReplaceInTx(articleList);
         }
     }
-
-    public void saveRequestLogList(ArrayList<RequestLog> requestLogList) {
-        if (requestLogList.size() != 0) { // new fetch
-            requestLogDao.insertOrReplaceInTx(requestLogList);
-        }
-    }
-
-
     public Article getArticle(String articleId) {
 //        if (articleID == null) {return null;}
         List<Article> articles = articleDao.queryBuilder().where(ArticleDao.Properties.Id.eq(articleId)).list();
@@ -106,9 +98,11 @@ public class WithDB {
     }
 
 
-
-
-
+    public void saveRequestLogList(ArrayList<RequestLog> requestLogList) {
+        if (requestLogList.size() != 0) { // new fetch
+            requestLogDao.insertOrReplaceInTx(requestLogList);
+        }
+    }
 
     public List<RequestLog> loadRequestListAll(){
         return  requestLogDao.loadAll();
@@ -116,8 +110,9 @@ public class WithDB {
     public void delRequestListAll(){
         requestLogDao.deleteAll();
     }
-
-
+    public void delRequest(RequestLog requestLog){
+        requestLogDao.delete(requestLog);
+    }
 
 
    /**

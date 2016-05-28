@@ -48,6 +48,7 @@ public class API {
     public static String MyFileType = ".loread";
 
 
+
 //    public static final int SUCCESS_AUTH = 1;
 //    public static final int FAILURE_AUTH = 2;
 //    public static final int SUCCESS_NET = 3;
@@ -72,7 +73,7 @@ public class API {
     public static final int S_ARTICLE_CONTENTS = 27;
 
 
-    public static final int S_ARTICLE_STATE = 30;
+    public static final int S_ALL_STARRED = 30;
     public static final int FAILURE = 00;
     public static final int FAILURE_Request = 01;
     public static final int FAILURE_Response = 02;

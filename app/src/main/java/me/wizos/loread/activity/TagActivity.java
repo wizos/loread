@@ -30,16 +30,14 @@ import me.wizos.loread.utils.UToast;
 
 //import TagSlvAdapter;
 
-public class TagActivity extends BaseActivity implements SlideAndDragListView.OnListItemLongClickListener,
-        SlideAndDragListView.OnDragListener, SlideAndDragListView.OnSlideListener,
-        SlideAndDragListView.OnListItemClickListener, SlideAndDragListView.OnMenuItemClickListener,
-        SlideAndDragListView.OnItemDeleteListener {
+public class TagActivity extends BaseActivity implements SlideAndDragListView.OnListItemLongClickListener, SlideAndDragListView.OnSlideListener,
+        SlideAndDragListView.OnListItemClickListener, SlideAndDragListView.OnMenuItemClickListener {
 
     protected Context context;
     private String listState;
     private int listCount;
-//    private int noLabelCount;
     private String listTag;
+    private int noLabelCount;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -49,10 +47,9 @@ public class TagActivity extends BaseActivity implements SlideAndDragListView.On
         listState = getIntent().getExtras().getString("ListState");
         listTag = getIntent().getExtras().getString("ListTag");
         listCount = getIntent().getExtras().getInt("ListCount");
-//        noLabelCount = getIntent().getExtras().getInt("NoLabelCount");
+        noLabelCount = getIntent().getExtras().getInt("NoLabelCount");
         userID = WithSet.getInstance().getUseId();
         initToolbar();
-        initSlvMenu();
         initSlvListener();
         initData();
     }
@@ -78,27 +75,29 @@ public class TagActivity extends BaseActivity implements SlideAndDragListView.On
     private Tag noLabelTag;
     private Tag getRootTag(){
         rootTag = new Tag();
-//        noLabelTag = new Tag();
+        noLabelTag = new Tag();
         userID = WithSet.getInstance().getUseId();
         if( listState.equals(API.LIST_STAR) ){
             rootTag.setTitle("所有加星");
-//            noLabelTag.setTitle("加星未分类");
+            noLabelTag.setTitle("加星未分类");
         }else if(listState.equals(API.LIST_UNREAD)){
             rootTag.setTitle("所有未读");
-//            noLabelTag.setTitle("未读未分类");
+            noLabelTag.setTitle("未读未分类");
         }else {
             rootTag.setTitle("所有文章");
-//            noLabelTag.setTitle("所有未分类");
+            noLabelTag.setTitle("所有未分类");
         }
         rootTag.setUnreadcount(listCount);
 
         rootTag.setId("\"user/"+ userID + API.U_READING_LIST +"\"");
         rootTag.setSortid("00000000");
 
-//        noLabelTag.setId( "\"user/"+ userID + API.U_NO_LABEL +"\"");
-//        noLabelTag.setSortid("00000001");
-//        noLabelTag.setUnreadcount(noLabelCount);
+        noLabelTag.setId( "\"user/"+ userID + API.U_NO_LABEL +"\"");
+        noLabelTag.setSortid("00000001");
+        noLabelTag.setUnreadcount(noLabelCount);
 
+        tagList.add( rootTag );
+        tagList.add( noLabelTag );
         KLog.d("【listTag】 " + rootTag.toString());
         return rootTag;
     }
@@ -110,8 +109,6 @@ public class TagActivity extends BaseActivity implements SlideAndDragListView.On
         if(!tagListTemp.isEmpty()){
             tagList = new ArrayList<>(tagListTemp.size());
             getRootTag();
-            tagList.add( rootTag );
-//            tagList.add( noLabelTag );
             tagList.addAll( tagListTemp );
             slv.setAdapter(tagSlvAdapter);
             KLog.d("【tag的长度】 " + tagList.size());
@@ -122,9 +119,6 @@ public class TagActivity extends BaseActivity implements SlideAndDragListView.On
 //        for(Tag tag:tagListTemp){
 //            KLog.d( tag.getId() );
 //        }
-
-
-
     }
 
 
@@ -144,12 +138,12 @@ public class TagActivity extends BaseActivity implements SlideAndDragListView.On
 
     private  SlideAndDragListView slv;
     public void initSlvListener() {
+        initSlvMenu();
         slv = (SlideAndDragListView)findViewById(R.id.tag_slv);
         slv.setMenu(mMenu);
         slv.setOnListItemClickListener(this);
         slv.setOnSlideListener(this);
         slv.setOnMenuItemClickListener(this);
-        slv.setOnItemDeleteListener(this);
     }
 
     // 初始化（每一个列表项左右滑动时出现的）菜单
@@ -187,15 +181,7 @@ public class TagActivity extends BaseActivity implements SlideAndDragListView.On
     @Override
     public void onListItemLongClick(View view, int position) {
     }
-    @Override
-    public void onDragViewStart(int position) {
-    }
-    @Override
-    public void onDragViewMoving(int position) {
-    }
-    @Override
-    public void onDragViewDown(int position) {
-    }
+
 
     @Override
     public void onListItemClick(View v, int position) {
@@ -236,13 +222,8 @@ public class TagActivity extends BaseActivity implements SlideAndDragListView.On
         }
         return Menu.ITEM_NOTHING;
     }
-    @Override
-    public void onItemDelete(View view, int position) {
-    }
-
 
     protected BaseAdapter tagSlvAdapter = new BaseAdapter() {
-
         @Override
         public int getCount() {
             return tagList.size();
@@ -287,35 +268,4 @@ public class TagActivity extends BaseActivity implements SlideAndDragListView.On
     public void onClick(View v) {
     }
 
-//
-//    @OnClick(R.id.tag_setting)
-//    public void showMultiChoice() {
-//        new MaterialDialog.Builder(this)
-////                .title(R.string.socialNetworks)
-////                .items(R.array.socialNetworks)
-//                .itemsCallbackMultiChoice(new Integer[]{1, 3}, new MaterialDialog.ListCallbackMultiChoice() {
-//                    @Override
-//                    public boolean onSelection(MaterialDialog dialog, Integer[] which, CharSequence[] text) {
-//                        StringBuilder str = new StringBuilder();
-//                        for (int i = 0; i < which.length; i++) {
-//                            if (i > 0) str.append('\n');
-//                            str.append(which[i]);
-//                            str.append(": ");
-//                            str.append(text[i]);
-//                        }
-//                        return true; // allow selection
-//                    }
-//                })
-//                .onNeutral(new MaterialDialog.SingleButtonCallback() {
-//                    @Override
-//                    public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
-//                        dialog.clearSelectedIndices();
-//                    }
-//                })
-//                .alwaysCallMultiChoiceCallback()
-//                .positiveText("Choose")
-//                .autoDismiss(false)
-//                .neutralText("Clear")
-//                .show();
-//    }
 }
