@@ -7,12 +7,13 @@ import android.os.Message;
 import android.text.TextUtils;
 import android.view.View;
 import android.widget.EditText;
+import android.widget.Space;
 
 import com.socks.library.KLog;
 
 import me.wizos.loread.App;
 import me.wizos.loread.R;
-import me.wizos.loread.dao.WithSet;
+import me.wizos.loread.data.WithSet;
 import me.wizos.loread.net.API;
 import me.wizos.loread.net.Neter;
 import me.wizos.loread.net.Parser;
@@ -21,7 +22,7 @@ import me.wizos.loread.utils.UToast;
 /**
  * Created by Wizos on 2016/3/5.
  */
-public class LoginActivity extends BaseActivity{
+public class LoginActivity extends BaseActivity implements View.OnLayoutChangeListener{
     protected Context context;
     protected String mAccountID = "";
     protected String mAccountPD = "";
@@ -33,7 +34,7 @@ public class LoginActivity extends BaseActivity{
         App.addActivity(this);
         mNeter = new Neter(handler,this);
         KLog.d("【未登录】" + handler);
-
+        forInput();
         vID = (EditText)findViewById(R.id.edittext_id);
         vPD = (EditText)findViewById(R.id.edittext_pd);
 //        EditText vID = (EditText)findViewById(R.id.edittext_id);
@@ -107,6 +108,38 @@ public class LoginActivity extends BaseActivity{
             return false;
         }
     });
+
+
+    //Activity最外层的Layout视图
+    private View activityRootView;
+    //屏幕高度
+    private int screenHeight = 0;
+    //软件盘弹起后所占高度阀值
+    private int keyHeight = 0;
+    @Override
+    protected void onResume() {
+        super.onResume();
+        //添加layout大小发生改变监听器
+        activityRootView.addOnLayoutChangeListener(this);
+    }
+    private void forInput(){
+        activityRootView = findViewById(R.id.login_root_layout);
+        screenHeight = this.getWindowManager().getDefaultDisplay().getHeight();//获取屏幕高度
+        keyHeight = screenHeight/3; //阀值设置为屏幕高度的1/3
+    }
+    @Override
+    public void onLayoutChange(View v, int left, int top, int right,int bottom, int oldLeft, int oldTop, int oldRight, int oldBottom) {
+        Space space = (Space)findViewById(R.id.login_space_a);
+        if(oldBottom != 0 && bottom != 0 &&(oldBottom - bottom > keyHeight)){
+//            if(space.getVisibility() == View.VISIBLE){
+//                space.setVisibility(View.GONE);
+//            }
+        }else if(oldBottom != 0 && bottom != 0 &&(bottom - oldBottom > keyHeight)){
+//            if(space.getVisibility() == View.GONE){
+//                space.setVisibility(View.VISIBLE);
+//            }
+        }
+    }
 
 
     private EditText vID,vPD;

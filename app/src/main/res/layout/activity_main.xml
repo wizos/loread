@@ -56,11 +56,14 @@
             android:background="@android:color/transparent"
             android:divider="#d1d1d1"
             android:dividerHeight="0.01dp"
+            android:animateLayoutChanges="true"
             android:headerDividersEnabled="false"
             android:layout_above="@+id/bottombar"
             android:layout_below="@+id/main_appBarLayout">
         </com.yydcdut.sdlv.SlideAndDragListView>
 
+        <!--android:animateLayoutChanges="true" 属性只能用在ViewGroup控件里，表示容器里面布局改变时有默认的动画效果，比如说添加控件，删除控件的时候就是默认的动画效果。-->
+        <!--或者创建一个LayoutTransition对象，并在容器布局调用setLayoutTransition(LayoutTransition)方法-->
         <ImageView
             android:id="@+id/main_placeholder"
             android:layout_width="match_parent"

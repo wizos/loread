@@ -14,8 +14,8 @@ import java.util.Map;
 
 import me.wizos.loread.bean.Article;
 import me.wizos.loread.bean.Tag;
-import me.wizos.loread.dao.WithDB;
-import me.wizos.loread.dao.WithSet;
+import me.wizos.loread.data.WithDB;
+import me.wizos.loread.data.WithSet;
 import me.wizos.loread.gson.GsItemContents;
 import me.wizos.loread.gson.GsStreamContents;
 import me.wizos.loread.gson.GsSubscriptions;
@@ -286,7 +286,7 @@ public class Parser {
 
     public ArrayList<ItemRefs> reStarredRefs(){
         List<Article> beforeStarredList = WithDB.getInstance().loadStarAll();
-//        WithDB.getInstance().loadStarAllOrder();
+//        IDataModel.getInstance().loadStarAllOrder();
         Map<String,Integer> map = new HashMap<>( beforeStarredList.size() + allStarredRefs.size());
         Map<String,Article> mapArticle = new HashMap<>( beforeStarredList.size() );
         ArrayList<Article> starList =  new ArrayList<>( beforeStarredList.size() );
@@ -396,7 +396,7 @@ public class Parser {
 //    private ArrayList<Article> listA;
 //    private ArrayList<ItemRefs> listB;
 //    public ArrayList<ItemRefs> reStarredRefsB(){
-//        List<Article> beforeStarredList = WithDB.getInstance().loadStarAll();
+//        List<Article> beforeStarredList = IDataModel.getInstance().loadStarAll();
 //        listA =  new ArrayList<>( beforeStarredList.size() );
 //        listB = new ArrayList<>( allStarredRefs.size() );
 //
@@ -408,7 +408,7 @@ public class Parser {
 //            }
 //            @Override
 //            public void listB(ItemRefs itemRefs) {
-//                Article article = WithDB.getInstance().getArticle( UString.toLongID(itemRefs.getId()) );
+//                Article article = IDataModel.getInstance().getArticle( UString.toLongID(itemRefs.getId()) );
 //                if(article!=null){
 //                    article.setStarState(API.ART_STAR);// 2，去掉“本地有，状态为未加星”的
 //                    listA.add(article);
@@ -426,7 +426,7 @@ public class Parser {
 //            }
 //        });
 ////        System.out.println("【reStarredList】" + beforeStarredList.size() + "==" + allStarredRefs.size() +"==" + starList.size() +"=="+ starredRefs.size());
-//        WithDB.getInstance().saveArticleList(listA);
+//        IDataModel.getInstance().saveArticleList(listA);
 //        allStarredRefs = new ArrayList<>();
 //        return listB;
 //    }
@@ -510,7 +510,7 @@ public class Parser {
 //        UFile.saveHtml(UString.stringToMD5(article.getId()), html);
 //    }
 //    private void afterParseContents(){
-//        WithDB.getInstance().saveArticleList(saveList);
+//        IDataModel.getInstance().saveArticleList(saveList);
 //        gsItemContents = null;
 //        currentItemsArray = null;
 //        saveList = null;

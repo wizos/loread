@@ -34,9 +34,9 @@ import me.wizos.loread.adapter.MaterialSimpleListAdapter;
 import me.wizos.loread.adapter.MaterialSimpleListItem;
 import me.wizos.loread.bean.Article;
 import me.wizos.loread.bean.RequestLog;
-import me.wizos.loread.dao.UpdateDB;
-import me.wizos.loread.dao.WithDB;
-import me.wizos.loread.dao.WithSet;
+import me.wizos.loread.data.UpdateDB;
+import me.wizos.loread.data.WithDB;
+import me.wizos.loread.data.WithSet;
 import me.wizos.loread.gson.ItemRefs;
 import me.wizos.loread.net.API;
 import me.wizos.loread.net.Neter;
@@ -439,7 +439,7 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
                         KLog.i("返回的不是 ok");
                     }
                     if( !hadSyncLogRequest && requestMap.size()==0 ){
-                        handler.sendEmptyMessage(API.M_BEGIN_SYNC) ;
+//                        handler.sendEmptyMessage(API.M_BEGIN_SYNC) ;
                         hadSyncLogRequest = true;}
                     break;
                 case API.S_Contents:

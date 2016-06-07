@@ -22,8 +22,8 @@ import java.util.List;
 
 import me.wizos.loread.R;
 import me.wizos.loread.bean.Tag;
-import me.wizos.loread.dao.WithDB;
-import me.wizos.loread.dao.WithSet;
+import me.wizos.loread.data.WithDB;
+import me.wizos.loread.data.WithSet;
 import me.wizos.loread.net.API;
 import me.wizos.loread.utils.UDensity;
 import me.wizos.loread.utils.UToast;

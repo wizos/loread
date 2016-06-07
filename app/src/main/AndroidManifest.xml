@@ -42,6 +42,7 @@
         <activity
             android:name=".activity.LoginActivity"
             android:label="@string/title_activity_login"
+            android:windowSoftInputMode="adjustResize|stateHidden"
             android:launchMode="singleTop" />
         <activity
             android:name=".activity.TagActivity"

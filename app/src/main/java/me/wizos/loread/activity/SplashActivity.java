@@ -4,7 +4,7 @@ import android.content.Context;
 import android.os.Bundle;
 import android.view.View;
 
-import me.wizos.loread.dao.WithSet;
+import me.wizos.loread.data.WithSet;
 import me.wizos.loread.net.API;
 import me.wizos.loread.R;
 

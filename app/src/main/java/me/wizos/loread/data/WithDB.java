@@ -1,4 +1,4 @@
-package me.wizos.loread.dao;
+package me.wizos.loread.data;
 
 import com.socks.library.KLog;
 
@@ -11,6 +11,10 @@ import me.wizos.loread.bean.Article;
 import me.wizos.loread.bean.Feed;
 import me.wizos.loread.bean.RequestLog;
 import me.wizos.loread.bean.Tag;
+import me.wizos.loread.dao.ArticleDao;
+import me.wizos.loread.dao.FeedDao;
+import me.wizos.loread.dao.RequestLogDao;
+import me.wizos.loread.dao.TagDao;
 import me.wizos.loread.net.API;
 
 /**
@@ -183,6 +187,22 @@ public class WithDB {
         return articleList;
     }
 
+
+    public List<Article> loadStarAll(){
+        Query query = articleDao.queryBuilder()
+                .where(ArticleDao.Properties.StarState.eq(API.LIST_STAR)) /**  Creates an "equal ('=')" condition  for this property. */
+                .build();
+        return query.list();
+    }
+
+    public List<Article> loadStarAllOrder(){
+        Query query = articleDao.queryBuilder()
+                .where(ArticleDao.Properties.StarState.eq(API.LIST_STAR)) /**  Creates an "equal ('=')" condition  for this property. */
+                .orderDesc(ArticleDao.Properties.TimestampUsec)
+                .build();
+        return query.list();
+    }
+
     public List<Article> loadStarList(String listTag){
         Query query = articleDao.queryBuilder()
                 .where(ArticleDao.Properties.StarState.eq(API.LIST_STAR),ArticleDao.Properties.Categories.like("%"+ listTag + "%")) /**  Creates an "equal ('=')" condition  for this property. */
@@ -190,23 +210,13 @@ public class WithDB {
                 .build();
         return query.list();
     }
-    public List<Article> loadStarAllOrder(){
+    public List<Article> loadStarNoLabel(){
         Query query = articleDao.queryBuilder()
-                .where(ArticleDao.Properties.StarState.eq(API.LIST_STAR)) /**  Creates an "equal ('=')" condition  for this property. */
-                .orderDesc(ArticleDao.Properties.TimestampUsec)
+                .where(ArticleDao.Properties.StarState.eq(API.LIST_STAR),ArticleDao.Properties.Categories.like( "%" + API.U_NO_LABEL + "%" )) /**  Creates an "equal ('=')" condition  for this property. */
                 .build();
-        KLog.d("【loadStarAll】" + query.list().size() +"--" );
+        KLog.d("Star无标签：" + query.list().size());
         return query.list();
     }
-
-    public List<Article> loadStarAll(){
-        Query query = articleDao.queryBuilder()
-                .where(ArticleDao.Properties.StarState.eq(API.LIST_STAR)) /**  Creates an "equal ('=')" condition  for this property. */
-                .build();
-        KLog.d("【loadStarAllNoOrder】" + query.list().size() +"--" );
-        return query.list();
-    }
-
 
     public List<Article> loadStarListHasLabel(long userId){
         Query query = articleDao.queryBuilder()
@@ -231,11 +241,5 @@ public class WithDB {
         return query.list();
     }
 
-    public List<Article> loadStarNoLabel(){
-        Query query = articleDao.queryBuilder()
-                .where(ArticleDao.Properties.StarState.eq(API.LIST_STAR),ArticleDao.Properties.Categories.like( "%" + API.U_NO_LABEL + "%" )) /**  Creates an "equal ('=')" condition  for this property. */
-                .build();
-        KLog.d("Star无标签：" + query.list().size());
-        return query.list();
-    }
+
 }

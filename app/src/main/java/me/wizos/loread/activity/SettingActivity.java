@@ -18,8 +18,8 @@ import com.socks.library.KLog;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 import me.wizos.loread.R;
-import me.wizos.loread.dao.WithDB;
-import me.wizos.loread.dao.WithSet;
+import me.wizos.loread.data.WithDB;
+import me.wizos.loread.data.WithSet;
 
 public class SettingActivity extends BaseActivity {
     protected static final String TAG = "SettingActivity";

@@ -1,2 +1,4 @@
 /libs/oneapm-android-agent.jar
 /build
+/src/main/java/me/wizos/loread/protocol/
+/src/main/java/me/wizos/loread/list/

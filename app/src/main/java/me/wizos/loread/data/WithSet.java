@@ -1,4 +1,4 @@
-package me.wizos.loread.dao;
+package me.wizos.loread.data;
 
 import android.app.Activity;
 import android.content.SharedPreferences;

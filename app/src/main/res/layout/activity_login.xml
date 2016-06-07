@@ -8,6 +8,7 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/login_root_layout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fillViewport="true">
@@ -24,10 +25,12 @@
         android:orientation="vertical">
 
         <Space
+            android:id="@+id/login_space_a"
             android:layout_width="0dp"
             android:layout_height="0dp"
             android:layout_weight="1" />
 
+        <!--android:visibility="gone"-->
         <!-- Using android:layout_marginTop here to compensate for CardView's margin. -->
         <!-- Using dp as unit for android:textSize because this TextView functions as imagery. -->
         <TextView
@@ -45,7 +48,7 @@
         <Space
             android:layout_width="0dp"
             android:layout_height="0dp"
-            android:layout_weight="1" />
+            android:layout_weight="0" />
 
         <!-- Using app:cardMaxElevation as margin. -->
         <me.wizos.loread.view.FriendlyCardView
@@ -110,18 +113,18 @@
                     android:onClick="onLoginClicked"
                     style="@style/Widget.AppCompat.Button.Colored" />
 
-                <Button
-                    android:id="@+id/register"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginLeft="4dp"
-                    android:layout_marginRight="4dp"
-                    android:layout_marginTop="8dp"
-                    android:layout_marginBottom="8dp"
-                    android:layout_gravity="right"
-                    android:text="@string/auth_register"
-                    android:textColor="?android:textColorHint"
-                    style="?borderlessButtonStyle" />
+                <!--<Button-->
+                    <!--android:id="@+id/register"-->
+                    <!--android:layout_width="wrap_content"-->
+                    <!--android:layout_height="wrap_content"-->
+                    <!--android:layout_marginLeft="4dp"-->
+                    <!--android:layout_marginRight="4dp"-->
+                    <!--android:layout_marginTop="8dp"-->
+                    <!--android:layout_marginBottom="8dp"-->
+                    <!--android:layout_gravity="right"-->
+                    <!--android:text="@string/auth_register"-->
+                    <!--android:textColor="?android:textColorHint"-->
+                    <!--style="?borderlessButtonStyle" />-->
             </LinearLayout>
 
             <me.zhanghai.android.materialprogressbar.MaterialProgressBar
@@ -137,6 +140,6 @@
         <Space
             android:layout_width="0dp"
             android:layout_height="0dp"
-            android:layout_weight="0" />
+            android:layout_weight="3" />
     </LinearLayout>
 </ScrollView>

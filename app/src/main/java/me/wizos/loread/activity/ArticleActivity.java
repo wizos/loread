@@ -27,7 +27,7 @@ import java.util.ArrayList;
 import me.wizos.loread.App;
 import me.wizos.loread.R;
 import me.wizos.loread.bean.Article;
-import me.wizos.loread.dao.WithDB;
+import me.wizos.loread.data.WithDB;
 import me.wizos.loread.gson.SrcPair;
 import me.wizos.loread.net.API;
 import me.wizos.loread.net.Neter;
