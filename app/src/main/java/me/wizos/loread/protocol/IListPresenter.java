@@ -1,9 +1,9 @@
-package me.wizos.loread.list;
+package me.wizos.loread.protocol;
 
 /**
  * Created by Wizos on 2016/3/9.
  */
-public class ArticleListPresenter {
+public class IListPresenter {
 
     public void articleItemSelected(long sourceId) {
     }
