@@ -48,7 +48,7 @@ import me.wizos.loread.utils.UString;
 import me.wizos.loread.utils.UToast;
 import me.wizos.loread.view.SwipeRefresh;
 
-public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefreshListener ,Neter.Loger<RequestLog>{
+public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefreshListener ,Neter.Loger<RequestLog> {
 
     protected static final String TAG = "MainActivity";
     private Context context;
@@ -173,7 +173,6 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
 //        }
         handler.sendEmptyMessage(API.M_BEGIN_SYNC);
         KLog.i("【刷新中】" + hadSyncLogRequest);
-//        UToast.showLong("正在刷新");
     }
     @Override
     protected void notifyDataChanged(){
@@ -301,6 +300,7 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
         public boolean handleMessage(Message msg) {
             String info = msg.getData().getString("res");
             String url = msg.getData().getString("url");
+
 //            long logTime = msg.getData().getLong("logTime");
             // 虽然可以根据 api 来判断一条请求，但还是需要 时间 logTime ，还有 指定码 code
             KLog.i("【handler】"  + msg.what +"---"  + handler +"---" + mParser );

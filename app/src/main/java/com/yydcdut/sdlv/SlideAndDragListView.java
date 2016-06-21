@@ -21,7 +21,7 @@ import java.util.Map;
  * Created by yuyidong on 15/9/28.
  */
 public class SlideAndDragListView<T> extends DragListView<T> implements WrapperAdapter.OnAdapterSlideListenerProxy,
-        WrapperAdapter.OnAdapterMenuClickListenerProxy, Handler.Callback {
+        WrapperAdapter.OnAdapterMenuClickListenerProxy, Handler.Callback  {
     /* Handler 的 Message 信息 */
     private static final int MSG_WHAT_LONG_CLICK = 1;
     /* Handler 发送message需要延迟的时间 */
@@ -64,6 +64,8 @@ public class SlideAndDragListView<T> extends DragListView<T> implements WrapperA
     private OnItemDeleteListener mOnItemDeleteListener;
     private OnListScrollListener mOnListScrollListener;
 
+
+//    private SlideAndDragListView listView;
     public SlideAndDragListView(Context context) {
         this(context, null);
     }
@@ -76,7 +78,6 @@ public class SlideAndDragListView<T> extends DragListView<T> implements WrapperA
         super(context, attrs, defStyleAttr);
 //        mVibrator = (Vibrator) getContext().getSystemService(Context.VIBRATOR_SERVICE);
         mHandler = new Handler(this);
-
 //        mShortestDistance = ViewConfiguration.get(context).getScaledDoubleTapSlop();
     }
 
@@ -204,7 +205,7 @@ public class SlideAndDragListView<T> extends DragListView<T> implements WrapperA
     }
 
 
-    
+
     
     /**
      * 将滑开的item归位

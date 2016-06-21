@@ -218,7 +218,7 @@ public class Neter {
                 HttpUtil.enqueue(request, new Callback() {
                     @Override
                     public void onFailure(Request request, IOException e) {
-                        KLog.d("【请求失败】" + url + request.body().toString());
+                        KLog.d("【请求失败】" + url );
                         API.request = request;
                         makeMsg(url, "noRequest",logTime);
                     }
