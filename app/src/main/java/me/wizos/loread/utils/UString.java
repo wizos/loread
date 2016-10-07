@@ -3,6 +3,7 @@ package me.wizos.loread.utils;
 
 import com.socks.library.KLog;
 
+import java.io.File;
 import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -10,6 +11,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import me.wizos.loread.App;
 
 /**
  * Created by Wizos on 2016/3/16.
@@ -50,11 +53,51 @@ public class UString {
 //    }
 
     public static boolean isBlank(String content){
-        return content==null || content.isEmpty();
+        return content==null || content.isEmpty() || content.equals("");
     }
     public static boolean isBlank(List list){return  list==null || list.isEmpty() || list.size()==0;}
 
+    public static ArrayList<String> changeHtmlForBox(String oldHtml, String fileName  ){
+        StringBuilder boxHtml = new StringBuilder(oldHtml);
+        StringBuilder cacheHtml = new StringBuilder(oldHtml);
+        String srcPath, boxSrcPath, cacheSrcPath;
+        int indexB = 0,indexA, indexC = 0;
+        do  {
+            indexA = boxHtml.indexOf(" src=\"", indexB);
+            if (indexA == -1) {
+                break;
+            }
+            indexB = boxHtml.indexOf("\"", indexA + 6);
+            if (indexB == -1) {
+                break;
+            }
+            srcPath = boxHtml.substring(indexA + 6, indexB);
+//            if ( srcPath.substring(0, 3).equals("file")) {
+//                break;
+//            }
+            String FileNameExt = UFile.getFileNameExtByUrl(srcPath);
+            boxSrcPath = "./" + fileName + "_files" + File.separator + FileNameExt;
+            cacheSrcPath = App.boxAbsolutePath  + fileName + "_files" + File.separator + FileNameExt;
 
+            KLog.e( indexA + 6 + " - " + indexB + " - " + boxHtml.length() + " - " );
+            KLog.e( indexA + 6 + indexC + " - " + (indexB + indexC) + " - " + cacheHtml.length() + " - " );
+            KLog.e( "=" + boxSrcPath );
+            KLog.e( "=" + cacheSrcPath );
+
+            boxHtml = boxHtml.replace( indexA + 6, indexB, boxSrcPath );
+            cacheHtml = cacheHtml.replace( indexA + 6 + indexC, indexB + indexC, cacheSrcPath );
+
+            KLog.e( "--" + boxHtml );
+            KLog.e( "--" + cacheHtml );
+
+            indexC = indexC +  cacheSrcPath.length() - boxSrcPath.length() ;
+            indexB = indexA + 6 + boxSrcPath.length() + 1;
+        }while (true);
+        ArrayList<String> twohtml = new ArrayList<>(2);
+        twohtml.add( cacheHtml.toString() );
+        twohtml.add( boxHtml.toString() );
+        return twohtml;
+    }
 
 
     public static ArrayList<String[]> asList(String[] array){

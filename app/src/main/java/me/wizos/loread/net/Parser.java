@@ -1,5 +1,6 @@
 package me.wizos.loread.net;
 
+import android.support.v4.util.ArrayMap;
 import android.text.Html;
 
 import com.google.gson.Gson;
@@ -8,7 +9,6 @@ import com.socks.library.KLog;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -194,8 +194,9 @@ public class Parser {
     }
 
 
-    public void parseSubscriptionList(String info){
+    public ArrayList<Sub> parseSubscriptionList(String info){
         ArrayList<Sub> subs = gson.fromJson(info, GsSubscriptions.class).getSubscriptions();
+        return subs;
     }
 
 
@@ -240,8 +241,8 @@ public class Parser {
     public ArrayList<ItemRefs> reUnreadRefs(){
         long xx = System.currentTimeMillis();
         List<Article> beforeArticleArray = WithDB.getInstance().loadReadList(API.LIST_UNREAD, "");
-        Map<String,Integer> map = new HashMap<>( beforeArticleArray.size() + allUnreadRefs.size() );
-        Map<String,Article> mapArticle = new HashMap<>( beforeArticleArray.size() );
+        Map<String,Integer> map = new ArrayMap<>( beforeArticleArray.size() + allUnreadRefs.size() );
+        Map<String,Article> mapArticle = new ArrayMap<>( beforeArticleArray.size() );
         ArrayList<Article> readList =  new ArrayList<>( beforeArticleArray.size() );
         ArrayList<ItemRefs> unreadRefs = new ArrayList<>( allUnreadRefs.size() );
 
@@ -287,8 +288,8 @@ public class Parser {
     public ArrayList<ItemRefs> reStarredRefs(){
         List<Article> beforeStarredList = WithDB.getInstance().loadStarAll();
 //        IDataModel.getInstance().loadStarAllOrder();
-        Map<String,Integer> map = new HashMap<>( beforeStarredList.size() + allStarredRefs.size());
-        Map<String,Article> mapArticle = new HashMap<>( beforeStarredList.size() );
+        Map<String,Integer> map = new ArrayMap<>( beforeStarredList.size() + allStarredRefs.size());
+        Map<String,Article> mapArticle = new ArrayMap<>( beforeStarredList.size() );
         ArrayList<Article> starList =  new ArrayList<>( beforeStarredList.size() );
         ArrayList<ItemRefs> starredRefs = new ArrayList<>( allStarredRefs.size() );
 
@@ -339,8 +340,8 @@ public class Parser {
         reUnreadUnstarRefs = new ArrayList<>( unreadRefs.size() );
         reUnreadStarredRefs = new ArrayList<>(arrayCapacity);
         reReadStarredRefs = new ArrayList<>( starredRefs.size() );
-        Map<String,Integer> map = new HashMap<>( unreadRefs.size() + starredRefs.size() );
-        Map<String,ItemRefs> mapArray = new HashMap<>( unreadRefs.size() );
+        Map<String,Integer> map = new ArrayMap<>( unreadRefs.size() + starredRefs.size() );
+        Map<String,ItemRefs> mapArray = new ArrayMap<>( unreadRefs.size() );
         for ( ItemRefs item : unreadRefs ) {
             map.put( item.getId() ,1 ); //  String articleId = item.getId();
             mapArray.put( item.getId() ,item );
@@ -372,8 +373,8 @@ public class Parser {
 //    }
 //    public <T,S>  void checkRepeat(List<T> listA,List<S> listB ,CheckResult<? super T,S> result){
 //        if (listA.getClass() == ArrayList.class && listB.getClass() == ArrayList.class) {
-//            Map<Object,Integer> map = new HashMap<>( listA.size() + listB.size() );
-//            Map<Object,Object> mapA = new HashMap<>( listA.size() + listB.size() );
+//            Map<Object,Integer> map = new ArrayMap<>( listA.size() + listB.size() );
+//            Map<Object,Object> mapA = new ArrayMap<>( listA.size() + listB.size() );
 //            for (T a:listA){
 //                map.put( result.compareAAttr(a) ,1 );
 //                mapA.put(result.compareAAttr(a),a );
@@ -563,6 +564,12 @@ public class Parser {
             }
         });
     }
+
+
+    public void parseItemContentsReadStarred(){
+
+    }
+
     public interface ArticleChanger{
         Article change(Article article);
     }
@@ -604,7 +611,7 @@ public class Parser {
             }
             article = ArticleChanger.change(article);
 
-            UFile.saveHtml(UString.stringToMD5(article.getId()), html);
+            UFile.saveCacheHtml(UString.stringToMD5(article.getId()), html);
             saveList.add(article);
         }
         WithDB.getInstance().saveArticleList(saveList);
@@ -616,7 +623,7 @@ public class Parser {
         ArrayList<Items> itemArticles = gson.fromJson(info, GsItemContents.class).getItems();
         Items items = itemArticles.get(0);
         if( itemArticles.size()!=0 && WithDB.getInstance().getArticle( items.getId()) != null ){
-            UFile.saveHtml(UString.stringToMD5(items.getId()), items.getSummary().getContent());
+            UFile.saveCacheHtml(UString.stringToMD5(items.getId()), items.getSummary().getContent()  );
         }
     }
 

@@ -195,7 +195,7 @@
                     <TextView
                         android:id="@+id/setting_order_tagfeed_title"
                         style="@style/SettingItemTitle"
-                        android:text="" />
+                        android:text="@string/setting_order_tagfeed_title" />
                     <TextView
                         android:id="@+id/setting_order_tagfeed_tips"
                         style="@style/SettingItemTips"
@@ -229,7 +229,6 @@
                 <TextView
                     android:id="@+id/setting_license_title"
                     style="@style/SettingItemTitleTwo"
-                    tools:text="License"
                     android:text="@string/setting_license_title" />
                 <TextView
                     android:id="@+id/setting_license_summary"
@@ -244,15 +243,19 @@
                 <TextView
                     android:id="@+id/setting_about_title"
                     style="@style/SettingItemTitleTwo"
-                    tools:text="About"
                     android:text="@string/setting_about_title" />
                 <TextView
                     android:id="@+id/setting_about_summary"
                     style="@style/SettingItemSummary"
                     android:text="1-2"/>
             </LinearLayout>
+            <!--<LinearLayout-->
+                <!--android:id="@+id/setting_clear_log"-->
+                <!--style="@style/SettingItem"-->
+                <!--android:orientation="horizontal">-->
+            <!--</LinearLayout>-->
             <LinearLayout
-                android:id="@+id/setting_clear_log"
+                android:id="@+id/setting_update_article_tag"
                 style="@style/SettingItem"
                 android:orientation="horizontal">
                 <Button
@@ -260,6 +263,23 @@
                     android:layout_width="wrap_content"
                     android:layout_height="match_parent"
                     android:text="@string/setting_clear_log_title" />
+                <Button
+                    android:id="@+id/setting_update_article_tag_button"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:onClick="onClickUpdateArticle"
+                    android:text="@string/setting_update_article_tag_title" />
+            </LinearLayout>
+            <LinearLayout
+                android:id="@+id/setting_esc"
+                style="@style/SettingItem"
+                android:orientation="horizontal">
+                <Button
+                    android:id="@+id/setting_esc_button"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:onClick="onClickEsc"
+                    android:text="@string/setting_esc_title" />
             </LinearLayout>
         </LinearLayout>
     </android.support.v4.widget.NestedScrollView>

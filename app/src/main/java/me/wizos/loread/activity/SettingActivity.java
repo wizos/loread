@@ -120,6 +120,12 @@ public class SettingActivity extends BaseActivity {
         }
         KLog.d("Switch: " , v.isChecked() );
     }
+    public void onClickUpdateArticle(View view){
+//        Intent data = new Intent();
+//        data.putExtra("source", "updateArticles" );
+        SettingActivity.this.setResult( 2);//注意下面的RESULT_OK常量要与回传接收的Activity中onActivityResult（）方法一致
+        SettingActivity.this.finish();
+    }
 
     @OnClick(R.id.setting_clear_day_title) void showClearBeforeDay() {
         KLog.d( clearBeforeDayIndex );

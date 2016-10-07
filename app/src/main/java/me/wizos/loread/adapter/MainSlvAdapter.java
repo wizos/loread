@@ -16,6 +16,7 @@ import java.util.List;
 
 import me.wizos.loread.App;
 import me.wizos.loread.R;
+import me.wizos.loread.activity.MainActivity;
 import me.wizos.loread.bean.Article;
 import me.wizos.loread.gson.itemContents.Origin;
 import me.wizos.loread.net.API;
@@ -32,11 +33,6 @@ public class MainSlvAdapter extends ArrayAdapter<Article> {
         this.articleList = itemArray;
         this.context = context;
     }
-//    public MainSlvAdapter(Context context, int textViewResourceId, List<Article> itemArray){
-//        super(context, textViewResourceId, itemArray);
-//        this.articleList = itemArray;
-//        this.context = context;
-//    }
 
     List<Article> articleList;
     Context context;
@@ -91,7 +87,7 @@ public class MainSlvAdapter extends ArrayAdapter<Article> {
         Origin origin = gson.fromJson(article.getOrigin(), Origin.class);
         cvh.articleFeed.setText(Html.fromHtml(origin.getTitle()));
         cvh.articleTime.setText(UTime.formatDate(article.getCrawlTimeMsec()));
-        if (article.getReadState().equals(API.ART_READ)) {
+        if ( article.getReadState().equals(API.ART_READ) &  !MainActivity.sListState.equals(API.ART_STAR) ) {
 //            System.out.println("【1】" + article.getTitle());
             cvh.articleTitle.setAlpha(0.50f);
             cvh.articleTitle.setTextColor(App.getInstance().getResources().getColor(R.color.main_grey_light));

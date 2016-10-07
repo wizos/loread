@@ -53,9 +53,9 @@ public class UFile {
         return false;
     }
 
-    public static String getCacheFileRelativePath(String fileNameInMD5){
-        return fileNameInMD5;
-    }
+//    public static String getCacheFileRelativePath(String fileNameInMD5){
+//        return fileNameInMD5;
+//    }
 
 
     /**
@@ -84,16 +84,72 @@ public class UFile {
         }
     }
 
+//    public static boolean copyFile(String srcFileName, String destFileName){
+//
+//    }
 
-    public static void saveHtml( String fileNameInMD5 ,String fileContent){
+
+    public static boolean moveFile(String srcFileName, String destFileName) {
+        File srcFile = new File(srcFileName);
+        if(!srcFile.exists() || !srcFile.isFile())
+            return false;
+
+        File destDir = new File(destFileName);
+        if (destDir.exists() && destDir.getParent()!=null){
+            destDir.getParentFile().mkdirs();
+        }
+
+        return srcFile.renameTo( destDir );
+//        return srcFile.renameTo(new File(destDirName + File.separator + srcFile.getName()));
+    }
+
+    /**
+     * 移动目录
+     * @param srcDirName     源目录完整路径
+     * @param destDirName    目的目录完整路径
+     * @return 目录移动成功返回true，否则返回false
+     */
+    public static boolean moveDir(String srcDirName, String destDirName) {
+        File srcDir = new File(srcDirName);
+        if(!srcDir.exists() || !srcDir.isDirectory())
+            return false;
+
+        File destDir = new File(destDirName);
+        if(!destDir.exists())
+            destDir.mkdirs();
+
+        /**
+         * 如果是文件则移动，否则递归移动文件夹。删除最终的空源文件夹
+         * 注意移动文件夹时保持文件夹的树状结构
+         */
+        File[] sourceFiles = srcDir.listFiles();
+        for (File sourceFile : sourceFiles) {
+            if (sourceFile.isFile())
+                moveFile(sourceFile.getAbsolutePath(), destDir.getAbsolutePath() + File.separator + sourceFile.getName() );
+            else if (sourceFile.isDirectory())
+                moveDir(sourceFile.getAbsolutePath(), destDir.getAbsolutePath() + File.separator + sourceFile.getName());
+        }
+        return srcDir.delete();
+    }
+
+    public static void saveCacheHtml( String fileNameInMD5 ,String fileContent){
+        String filePathName =  App.cacheRelativePath + fileNameInMD5 + File.separator + fileNameInMD5 + ".html";
+//        String folderPathName =  App.cacheRelativePath + fileNameInMD5;
+        saveHtml(filePathName,fileContent);
+    }
+    public static void saveBoxHtml( String fileName ,String fileContent){
+        String filePathName =  App.boxRelativePath + fileName + ".html";
+//        String folderPathName =  App.boxRelativePath;
+        saveHtml(filePathName,fileContent);
+    }
+
+    protected static void saveHtml( String filePath ,String fileContent){
         if( !isExternalStorageWritable() ){return;}
 //        添加文件写入和创建的权限
 //        String aaa = Environment.getExternalStorageDirectory() + File.separator + "aaa.txt";
 //        Environment.getExternalStorageDirectory() 获得sd卡根目录   File.separator 代表 / 分隔符
-        String filePathName =  App.cacheRelativePath + fileNameInMD5 + File.separator + fileNameInMD5 + ".html";
-        String folderPathName =  App.cacheRelativePath + fileNameInMD5;
-        File file = new File( filePathName );
-        File folder =  new File( folderPathName );
+        File file = new File( filePath );
+        File folder =  file.getParentFile();
 
         try {
             if(!folder.exists())
@@ -107,18 +163,23 @@ public class UFile {
             e.printStackTrace();
         }
     }
-
-    public static String readHtml( String fileNameInMD5 ){
+    public static String readHtml( String fileNameInMD5, String fileName){
         if( !isExternalStorageWritable() ){return null;}
         String filePathName =   App.cacheRelativePath + fileNameInMD5 + File.separator + fileNameInMD5 + ".html";
-        String folderPathName =  App.cacheRelativePath + fileNameInMD5 ;
+//        String folderPathName =  App.cacheRelativePath + fileNameInMD5 ;
         File file = new File( filePathName );
-        File folder = new File( folderPathName );
+//        File folder = new File( folderPathName );
         String fileContent ="" , temp = "";
-        KLog.d("【】" + file.toString() + "--"+ folder.toString());
+        KLog.d("【】" + file.toString() + "--" );
+
         try {
-            if(!folder.exists()){
-                return null;
+            if(!file.exists()){
+                // 为了中转文件
+                file = new File( App.boxRelativePath + fileName + ".html"); //
+                if(!file.exists()){ //
+                    return null;
+                }
+//                folder = new File( App.cacheRelativePath );//
             }
 
             FileReader fileReader = new FileReader(file);
@@ -257,29 +318,53 @@ public class UFile {
     }
 
     public static String getFileExtByUrl(String url){
-        int typeIndex = url.lastIndexOf(".");
-        int extLength = url.length() - typeIndex;
+
+        int dotIndex = url.lastIndexOf(".");
+        int extLength = url.length() - dotIndex;
         String fileExt = "";
         if(extLength<6){
-            fileExt = url.substring( typeIndex ,url.length());
+            fileExt = url.substring( dotIndex ,url.length());
         }else {
 //            fileExt = url.substring( typeIndex ,url.length());
-            if(fileExt.contains(".jpg")){
+            if(url.contains(".jpg")){
                 fileExt = ".jpg";
-            }else if(fileExt.contains(".jpeg")){
+            }else if(url.contains(".jpeg")){
                 fileExt = ".jpeg";
-            }else if(fileExt.contains(".png")){
+            }else if(url.contains(".png")){
                 fileExt = ".png";
-            }else if(fileExt.contains(".gif")){
+            }else if(url.contains(".gif")){
                 fileExt = ".gif";
             }
         }
-        KLog.d( "【获取 FileExtByUrl 】失败" + url.substring( typeIndex ,url.length()) + extLength );
-        KLog.d( "【修正正文内的SRC】的格式" + fileExt );
+        KLog.d( "【获取 FileExtByUrl 】失败" + url.substring( dotIndex ,url.length()) + extLength );
+        KLog.d( "【修正正文内的SRC】的格式" + fileExt + url );
         return fileExt;
     }
 
+    public static String getFileNameByUrl(String url){
+        String fileName;
+        int dotIndex = url.lastIndexOf(".");
+        int separatorIndex = url.lastIndexOf("/") + 1;
+//        int extLength = separatorIndex - dotIndex; extLength +
+        KLog.e("【文件名】" + dotIndex + '='+ separatorIndex + '='+ '=' + url.length() );
 
+        if( separatorIndex > dotIndex ){
+            dotIndex = url.length();
+        }
+        fileName = url.substring(separatorIndex, dotIndex);
+        KLog.e("【文件名】" + fileName);
+        return fileName;
+    }
+    public static String getFileNameExtByUrl(String url){
+        if(UString.isBlank(url)){
+            return null;
+        }
+        String fileName;
+        int separatorIndex = url.lastIndexOf("/") + 1;
+        fileName = url.substring(separatorIndex, url.length() );
+        KLog.e("【文件名】" + fileName);
+        return fileName;
+    }
 
     private static byte[] getBytes(InputStream in,int nums){
         byte b[]= new byte[nums];     //创建合适文件大小的数组

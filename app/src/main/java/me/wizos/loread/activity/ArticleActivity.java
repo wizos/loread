@@ -13,9 +13,10 @@ import android.view.ViewConfiguration;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
-import com.blueware.agent.android.util.OneapmWebViewClient;
+import com.afollestad.materialdialogs.MaterialDialog;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.socks.library.KLog;
@@ -23,11 +24,14 @@ import com.socks.library.KLog;
 import java.io.File;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.List;
 
 import me.wizos.loread.App;
 import me.wizos.loread.R;
 import me.wizos.loread.bean.Article;
+import me.wizos.loread.bean.Tag;
 import me.wizos.loread.data.WithDB;
+import me.wizos.loread.gson.ExtraImg;
 import me.wizos.loread.gson.SrcPair;
 import me.wizos.loread.net.API;
 import me.wizos.loread.net.Neter;
@@ -43,7 +47,7 @@ public class ArticleActivity extends BaseActivity {
     protected Context context;
     protected Neter mNeter;
     protected Parser mParser;
-    protected TextView vTitle ,vDate ,vTime ,vFeed;
+    protected TextView vTitle ,vDate ,vTime, vFeed;
     protected ImageView vStar , vRead;
     protected NestedScrollView vScrolllayout ;
     protected TextView vArticleNum;
@@ -98,15 +102,23 @@ public class ArticleActivity extends BaseActivity {
         getSupportActionBar().setDisplayShowTitleEnabled(false);
         toolbar.setOnClickListener(this);
 
-        // Make arrow color white
+//        白色箭头
 //        Drawable upArrow = getResources().getDrawable(R.drawable.mz_ic_sb_back);
 //        upArrow.setColorFilter(Color.WHITE, PorterDuff.Mode.SRC_ATOP);
 //        getSupportActionBar().setHomeAsUpIndicator(upArrow); // 替换返回箭头
     }
 
     private void initWebView(){
-        webView = (WebView) findViewById(R.id.article_content);
+//        webView = (WebView) findViewById(R.id.article_content);
+        webView = new WebView( getApplicationContext() );
+//        View convertView = LayoutInflater.from(context).inflate(R.layout.activity_article, null);
+//        LinearLayout mll  = (LinearLayout) convertView.findViewById(R.id.article_webview);
+        LinearLayout mll = (LinearLayout) findViewById(R.id.article_webview);
+
+        mll.addView(webView);
         WebSettings webSettings = webView.getSettings();
+//        webSettings.setCacheMode(WebSettings.LOAD_NO_CACHE); // 默认不使用缓存
+//        webView.buildDrawingCache();
         webSettings.setUseWideViewPort(false);// 设置此属性，可任意比例缩放
         webSettings.setDisplayZoomControls(false); //隐藏webview缩放按钮
         webSettings.setLayoutAlgorithm(WebSettings.LayoutAlgorithm.SINGLE_COLUMN); // 就是这句使自适应屏幕
@@ -114,22 +126,28 @@ public class ArticleActivity extends BaseActivity {
 //        setOneapmWebViewWatch();
     }
 
-    /**
-     * 为了监控 webView 的性能
-     */
-    private void setOneapmWebViewWatch(){
-        OneapmWebViewClient client = new OneapmWebViewClient( webView){
-            @Override
-            public void onPageFinished(WebView view, String url) {
-                super.onPageFinished(view, url);
-            }
-            @Override
-            public boolean shouldOverrideUrlLoading(WebView view, String url) {
-                return super.shouldOverrideUrlLoading(view, url);
-            }
-        };
-        webView.setWebViewClient(client);
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        webView.removeAllViews();
+        webView.destroy();
     }
+//    /**
+//     * 为了监控 webView 的性能
+//     */
+//    private void setOneapmWebViewWatch(){
+//        OneapmWebViewClient client = new OneapmWebViewClient( webView){
+//            @Override
+//            public void onPageFinished(WebView view, String url) {
+//                super.onPageFinished(view, url);
+//            }
+//            @Override
+//            public boolean shouldOverrideUrlLoading(WebView view, String url) {
+//                return super.shouldOverrideUrlLoading(view, url);
+//            }
+//        };
+//        webView.setWebViewClient(client);
+//    }
 
     protected String articleID="";
     private int numOfImgs,numOfGetImgs = 0 ,numOfFailureImg = 0 ,numOfFailure = 0 ,numOfFailures = 4;
@@ -138,64 +156,82 @@ public class ArticleActivity extends BaseActivity {
     protected int articleNum,articleCount;
     private void initData(){
         articleID = getIntent().getExtras().getString("articleID");
-        articleNum = getIntent().getExtras().getInt("articleNum");
-        articleCount = getIntent().getExtras().getInt("articleCount");
-        article = WithDB.getInstance().getArticle(articleID);
+        articleNum = getIntent().getExtras().getInt("articleNum"); // 文章在列表中的位置编号
+        articleCount = getIntent().getExtras().getInt("articleCount"); // 列表中所有的文章数目
+
         KLog.d("【article】" + articleID);
+        article = WithDB.getInstance().getArticle(articleID);
         if ( article == null ){ KLog.d("【article为空】");return; }
-        String webUrl = article.getCanonical();
         sReadState = article.getReadState();
         sStarState = article.getStarState();
-        Spanned titleWithUrl = Html.fromHtml("<a href=\"" + webUrl +"\">" + article.getTitle() + "</a>");
+//        String articleUrl = article.getCanonical();
+        Spanned titleWithUrl = Html.fromHtml("<a href=\"" + article.getCanonical() +"\">" + article.getTitle() + "</a>");
         vTitle.setText( titleWithUrl );
-        vDate.setText(UTime.formatDate(article.getCrawlTimeMsec()));
-//        vFeed.setText(article.getFeed().getTitle());
-//        articleID = article.getId();
-        numOfGetImgs = 0;
+        vDate.setText(UTime.formatDate(article.getTimestampUsec()));
+        vFeed.setText(article.getFeed().getTitle());
+
         String fileNameInMD5 = UString.stringToMD5(articleID);
-        String content = UFile.readHtml( fileNameInMD5 );
-        KLog.d( "【article状态为】" + sReadState + titleWithUrl );
-        String imgState = article.getImgState();// 读取失败 imgSrc 的字段 , 如果读取的为 ok 代表加载完成，如果为空 or "" ，代表要提取正文与srcList加载图片  ,content
+        String content = UFile.readHtml( fileNameInMD5 ,article.getTitle());
+//        KLog.d( "【article状态为】" + sReadState + titleWithUrl );
 
+        // 加载内部css样式
+        String configAbsolutePath = "file:"+ File.separator + File.separator + getExternalFilesDir(null)+ File.separator + "config" + File.separator;
         String cssFileName = "normalize.css";
-
-        String folderAbsolutePath = "file:"+ File.separator + File.separator + getExternalFilesDir(null)+ File.separator + "config" + File.separator;
-        String cssPath = folderAbsolutePath + cssFileName;
+        String cssPath = configAbsolutePath + cssFileName;
         if(!UFile.isFileExists(cssPath)){
             cssPath = "file:///android_asset/" + cssFileName;
             KLog.d("自定义的 css 文件不存在");
         }
 
-        String contentHeader = "<html xmlns=\"http://www.w3.org/1999/xhtml\"><head>" + "<link rel=\"stylesheet\" href=\"" + cssPath +"\" type=\"text/css\"/>" + "</head><body>";
-        String contentFooter = "</body></html>";
+
+
+        numOfGetImgs = 0;
+        String imgState = article.getImgState();// 读取失败 imgSrc 的字段 , 有4类值：
+        // 1，null（未打开）；2，"" （无图且被打开）； 3，ok（有图且加载完成）；4，src list (代表要提取正文与srcList加载图片)
+        Gson gson = new Gson();
+        Type type = new TypeToken<ExtraImg>() {}.getType();
+        ExtraImg extraImg = gson.fromJson(imgState, type);
+
 
         if(UString.isBlank(content)){
-            KLog.d( "【文章内容被删，再去加载获取内容】" + webUrl);
+            KLog.d( "【文章内容被删，再去加载获取内容】" );
             mNeter.postArticleContents(articleID);
         }else {
             if( imgState == null){
-                KLog.d( "【imgState为null】" + webUrl);
-                StringAndList htmlAndSrcList = getSrcListAndNewHtml(content, fileNameInMD5);
-                if( htmlAndSrcList!= null){
-                    srcList =  htmlAndSrcList.getList();
-                    content = htmlAndSrcList.getString();
-                    if( srcList!=null && srcList.size()!=0){
-                        KLog.d( "【srcList】" + srcList.size());
-                        article.setCoverSrc(srcList.get(0).getLocalSrc());
-                        KLog.d(srcList.get(0).getLocalSrc());
+                KLog.d( "【imgState为null】");
+                ArrayList<SrcPair> listOfSrcAndHtml = getListOfSrcAndHtml(content, fileNameInMD5);
+                if( listOfSrcAndHtml!= null){
+                    content = listOfSrcAndHtml.get(0).getLocalSrc();
+                    listOfSrcAndHtml.remove(0);
+                    srcList = listOfSrcAndHtml;
+                    if( srcList.size()!=0){
+                        article.setCoverSrc( srcList.get(0).getLocalSrc());
                     }
+
+                    article.setImgState( new Gson().toJson(srcList) );
+                    KLog.d( "【判断ImgState是否为空】" + article.getImgState()==null);
+                    UFile.saveCacheHtml( fileNameInMD5, content );
+                }else {
+                    article.setImgState("");
                 }
+                WithDB.getInstance().saveArticle(article);
             }else if(imgState.equals("OK")){
             }else {
-                Gson gson = new Gson();
-                Type type = new TypeToken<ArrayList<SrcPair>>() {}.getType();
-                srcList = gson.fromJson(imgState, type);
+//                Gson gson = new Gson();
+//                Type type = new TypeToken<ArrayList<SrcPair>>() {}.getType();
+//                srcList = gson.fromJson(imgState, type);
             }
+            String contentHeader = "<html xmlns=\"http://www.w3.org/1999/xhtml\"><head>" + "<link rel=\"stylesheet\" href=\"" + cssPath +"\" type=\"text/css\"/>" + "</head><body>";
+            String contentFooter = "</body></html>";
             showContent = contentHeader + content + contentFooter;
             numOfImgs = mNeter.getBitmapList(srcList);
 
-//            vArticleNum.setText(String.valueOf(articleNum) + " / " + String.valueOf(articleCount));
-            vArticleNum.setText( fileNameInMD5.substring(0,10) ); // FIXME: 2016/5/3 测试
+            if (fileNameInMD5!=null){
+                vArticleNum.setText( fileNameInMD5.substring(0,10) ); // FIXME: 2016/5/3 测试
+            }else {
+                String numStr = String.valueOf(articleNum) + " / " + String.valueOf(articleCount);
+                vArticleNum.setText( numStr );
+            }
             webView.loadDataWithBaseURL(null, showContent , "text/html", "utf-8", null);
         }
         initStateView();
@@ -259,9 +295,11 @@ public class ArticleActivity extends BaseActivity {
                     numOfGetImgs = numOfGetImgs + 1;
                     srcList.remove(imgNum);
                     KLog.i("【 API.S_BITMAP 】" + numOfGetImgs + "--" + numOfImgs);
-                    if(  numOfImgs == numOfGetImgs || numOfGetImgs % 5 == 0) {
-                        KLog.i("【 重新加载 webView 】" + numOfGetImgs % 5 );
+                    if(  numOfImgs == numOfGetImgs ) { // || numOfGetImgs % 5 == 0
+                        KLog.i("【 重新加载 webView 】"  );
                         logSrcList("OK");
+                        webView.clearCache(true);
+//                        webView.notify();
                         notifyDataChanged();
                     }
                     break;
@@ -287,7 +325,7 @@ public class ArticleActivity extends BaseActivity {
 //                    logSrcList();
                     break;
                 case 55:
-                    logSrcList();
+                    logSrcList("");
                     KLog.i("【网络不好，中断】");
                     break;
             }
@@ -299,9 +337,9 @@ public class ArticleActivity extends BaseActivity {
     private ArrayList<SrcPair> srcList = new ArrayList<>();
     private String sReadState= "";
     private String sStarState= "";
-    protected void logSrcList(){
-        logSrcList("");
-    }
+//    private void logSrcList(){
+//        logSrcList("");
+//    }
     private void logSrcList(String json){
         if (srcList==null){return;}
         if (srcList.size()!=0){
@@ -314,62 +352,52 @@ public class ArticleActivity extends BaseActivity {
     }
 
 
-    private StringAndList getSrcListAndNewHtml(String oldHtml,String fileNameInMD5) {
+    private ArrayList<SrcPair> getListOfSrcAndHtml(String oldHtml,String fileNameInMD5) {
         if (UString.isBlank(oldHtml))
             return null;
         int num = 0;
         StringBuilder tempHtml = new StringBuilder(oldHtml);
-        String netSrc,fileType,localSrc,loadSrc,temp;
+
+        String srcLocal,srcNet,srcLocalInHtml,srcLoading,fileExt,fileName,temp;
         ArrayList<SrcPair> srcInLocalNetArray = new ArrayList<>();
-        int indexA = tempHtml.indexOf("<img ", 0);
+        srcInLocalNetArray.add(new SrcPair("","")); // 先存一个空的，方便后面把修改后的正文放进来
+        int indexA = tempHtml.indexOf("<img ", 0), indexB;
         while (indexA != -1) {
             indexA = tempHtml.indexOf(" src=\"", indexA);
             if(indexA == -1){break;}
-            int indexB = tempHtml.indexOf("\"", indexA + 6);
+            indexB = tempHtml.indexOf("\"", indexA + 6);
             if(indexB == -1){break;}
-            netSrc = tempHtml.substring( indexA + 6, indexB );
-            fileType = UFile.getFileExtByUrl(netSrc);
-            KLog.d("【文章13】" + fileType );
+            srcNet = tempHtml.substring( indexA + 6, indexB );
+            if ( srcNet.substring(0,3).equals("file")){  // 这段代码可以优化，没必要每次都判断相等
+//                indexA = tempHtml.indexOf("<img ", indexB);
+                break;
+            }
+            fileExt = UFile.getFileExtByUrl( srcNet );
+            fileName = UFile.getFileNameByUrl( srcNet );
+            KLog.d("【文章13】" + fileExt );
             num++;
-            localSrc = App.cacheAbsolutePath + fileNameInMD5  + File.separator + fileNameInMD5 + "_files" + File.separator + fileNameInMD5 + "_" + num + fileType + API.MyFileType;
-            loadSrc  = App.cacheRelativePath  + fileNameInMD5 + File.separator + fileNameInMD5 + "_files" + File.separator + fileNameInMD5 + "_" + num + fileType + API.MyFileType;
+            srcLocal = App.cacheAbsolutePath + fileNameInMD5  + File.separator + fileNameInMD5 + "_files" + File.separator + fileNameInMD5 + "_" + num + fileExt + API.MyFileType;
+            srcLoading  = App.cacheRelativePath  + fileNameInMD5 + File.separator + fileNameInMD5 + "_files" + File.separator + fileNameInMD5 + "_" + num + fileExt + API.MyFileType;
+//            srcLocal = "./" + fileName + fileExt + API.MyFileType;
+//            srcLoading  = App.cacheRelativePath  + article.getTitle() + "_files" + File.separator + fileName + fileExt + API.MyFileType;
 
-            temp = " src=\"" + localSrc + "\"" + " netsrc=\"" + netSrc + "\"";
-            tempHtml = tempHtml.replace( indexA, indexB+1, temp ) ;
-            srcInLocalNetArray.add(new SrcPair( netSrc,loadSrc ));
-            indexB = indexA + 6 + localSrc.length() + netSrc.length() + 10;
+            srcInLocalNetArray.add(new SrcPair( srcNet,srcLoading ));
+            temp = " src=\"" + srcLocal + "\"" + " netsrc=\"" + srcNet + "\"";
+            tempHtml = tempHtml.replace( indexA, indexB + 1, temp ) ;
+            indexB = indexA + 6 + srcLocal.length() + srcNet.length() + 10;
             indexA = tempHtml.indexOf("<img ", indexB);
         }
-
         if(srcInLocalNetArray.size()==0){return null;}
-        showContent = tempHtml.toString();
-        StringAndList htmlAndImgSrcList = new StringAndList();
-        htmlAndImgSrcList.setList(srcInLocalNetArray);
-        htmlAndImgSrcList.setString( showContent );
-        UFile.saveHtml( fileNameInMD5, showContent );
-        KLog.d("【文章2】" + showContent);
-        return htmlAndImgSrcList;
+
+//        oldHtml = tempHtml.toString();
+        srcInLocalNetArray.set(0,new SrcPair(String.valueOf(srcInLocalNetArray.size()),tempHtml.toString() ));
+
+//        StringAndList htmlAndImgSrcList = new StringAndList();
+//        htmlAndImgSrcList.setList(srcInLocalNetArray);
+//        htmlAndImgSrcList.setString( showContent );
+        KLog.d("【文章2】" + oldHtml );
+        return srcInLocalNetArray;
     }
-
-    private class StringAndList {
-        private String string;
-        private ArrayList<SrcPair> list;
-
-        private void setString(String string){
-            this.string = string;
-        }
-        private String getString(){
-            return string;
-        }
-
-        private void setList(ArrayList<SrcPair> list){
-            this.list = list;
-        }
-        private ArrayList<SrcPair> getList(){
-            return list;
-        }
-    }
-
 
 
     private static final int MSG_DOUBLE_TAP = 0;
@@ -390,7 +418,85 @@ public class ArticleActivity extends BaseActivity {
         }
     }
 
+    public void onStarClick(View view){
+        if(sStarState.equals(API.ART_UNSTAR)){
+            changeStarState(API.ART_STAR);
+            UToast.showShort("已收藏");
+        }else {
+            changeStarState(API.ART_UNSTAR);
+            UToast.showShort("取消收藏");
+        }
+    }
+    public void onLabelClick(View view){
 
+        final List<Tag> tagsList = WithDB.getInstance().loadTags();
+        ArrayList<String> tags = new ArrayList<>(tagsList.size()) ;
+        for( Tag tag: tagsList ) {
+            tags.add(tag.getTitle());
+        }
+
+//        Pattern regex = Pattern.compile("user/"+ MainActivity.mUserID + "/label/" + ".*?");
+//        final Matcher m = regex.matcher(article.getCategories());
+
+        new MaterialDialog.Builder(this)
+                .title(R.string.article_choose_tag_dialog_title)
+                .items( tags )
+                .itemsCallbackSingleChoice( -1, new MaterialDialog.ListCallbackSingleChoice() {
+                    @Override
+                    public boolean onSelection(MaterialDialog dialog, View view, int which, CharSequence text) {
+                        String tagId = tagsList.get(which).getId();
+//                        String articleCategories = m.replaceAll( tagId );
+//                        String articleCate = m.replaceFirst( tagId );
+//                        KLog.d("【被选择文章的分类2】" + articleCategories + articleCate );
+//                        String categories = article.getCategories();
+//                        KLog.d("【被选择文章的分类1】" + categories );
+                        StringBuilder newCategories = new StringBuilder(  article.getCategories().length()  );
+                        String[] cateArray = article.getCategories().replace("]","").replace("[","").split(", ");
+                        for (String cate:cateArray){
+                            if (cate.contains( "user/"+ MainActivity.mUserID + "/label/" )){
+                                mNeter.postRemoveArticleTags( articleID,cate);
+                                KLog.d("【-】" + cate );
+                            }else {
+                                newCategories.append(cate);
+                                newCategories.append(", ");
+                            }
+                        }
+                        newCategories.append(tagId);
+                        newCategories.append("]");
+                        KLog.d("【==】" + newCategories + articleID);
+                        article.setCategories( newCategories.toString() );
+                        mNeter.postAddArticleTags(articleID,tagId);
+                        mNeter.postStarArticle( articleID );
+                        dialog.dismiss();
+                        return true; // allow selection
+                    }
+                })
+                .show();
+//        WithDB.getInstance().saveArticle( article );
+    }
+
+    public void onSaveClick(View view){
+        String fileNameMD5 = UString.stringToMD5(articleID);
+        String fileName = article.getTitle();
+        KLog.e("【getExternalFilesDir】" + getExternalFilesDir(null) );
+
+        ArrayList<String> twoHtml = UString.changeHtmlForBox( UFile.readHtml(fileNameMD5 ,fileName) ,fileName ) ;
+        UFile.saveCacheHtml(  fileNameMD5, twoHtml.get(0)  );
+        UFile.saveBoxHtml(  fileName, String.format( getResources().getString(R.string.box_html_format), "UTF-8",fileName, article.getCanonical() ,article.getAuthor(), String.valueOf( article.getPublished() ),  twoHtml.get(1))  );
+        twoHtml = null;
+
+
+        String soureDir = App.cacheRelativePath + fileNameMD5 + File.separator + fileNameMD5 + "_files";
+        String targetDir = App.boxRelativePath + fileName + "_files";
+        UFile.moveDir( soureDir , targetDir );// 移动文件
+
+//        String sourceFilePath = App.cacheRelativePath + fileNameMD5 + File.separator + fileNameMD5 + ".html";
+//        String targetFilePath = App.boxRelativePath  + fileName + ".html";
+//        UFile.moveFile( sourceFilePath, targetFilePath );
+        UToast.showShort("文件导出成功");
+        article.setCoverSrc(  App.boxAbsolutePath + fileName + "_files" + File.separator + UFile.getFileNameExtByUrl(article.getCoverSrc()) );
+        WithDB.getInstance().saveArticle(article);
+    }
 
     public void onReadClick(View view){
         if(sReadState.equals(API.ART_READ)){
@@ -401,15 +507,7 @@ public class ArticleActivity extends BaseActivity {
             UToast.showShort("已读");
         }
     }
-    public void onStarClick(View view){
-        if(sStarState.equals(API.ART_UNSTAR)){
-            changeStarState(API.ART_STAR);
-            UToast.showShort("已收藏");
-        }else {
-            changeStarState(API.ART_UNSTAR);
-            UToast.showShort("取消收藏");
-        }
-    }
+
 
 
     private void changeReadIcon(String iconState){

@@ -1,7 +1,6 @@
 /app/build/tmp
 /app/build/outputs/logs
 /app/build/outputs
-/plugin/oneapm-android-gradle-plugin-2.0.0.jar
 *.iml
 .gradle
 /local.properties
@@ -11,3 +10,6 @@
 /build
 /captures
 /.idea
+app/src/main/java/me/wizos/loread/Service/
+app/src/test/
+daogenerator/libs/

@@ -42,7 +42,7 @@ public class Origin {
 
 	public String toString(){
 //		System.out.println("【Origin.toString()】" + toString());
-		return "{\"streamId\": \""+streamId + "\",\"title\": \"" + title + "\",\"htmlUrl\": \"" + htmlUrl +"\"}";
+		return "{\"streamId\": \""+ streamId + "\",\"title\": \"" + title + "\",\"htmlUrl\": \"" + htmlUrl +"\"}";
 	}
 
 }

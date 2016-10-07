@@ -20,7 +20,7 @@ import me.wizos.loread.utils.HttpUtil;
  */
 public class App extends Application{
     public static final String DB_NAME = "loread_DB";
-    public static String cacheRelativePath,cacheAbsolutePath;
+    public static String cacheRelativePath,cacheAbsolutePath ,boxRelativePath, boxAbsolutePath;
     public static String logRelativePath,logAbsolutePath;
     public static List<Activity> activities = new ArrayList<>();
 
@@ -41,8 +41,13 @@ public class App extends Application{
         super.onCreate();
         App.context = getApplicationContext();
         instance = this;
+
         cacheRelativePath = getExternalFilesDir(null) + File.separator + "cache" + File.separator;
-        cacheAbsolutePath = "file:"+ File.separator + File.separator + cacheRelativePath;
+        cacheAbsolutePath = "file:"+ File.separator + File.separator + cacheRelativePath; // 仅在储存于 html 时使用
+
+        boxRelativePath = getExternalFilesDir(null) + File.separator + "box" + File.separator;
+        boxAbsolutePath = "file:"+ File.separator + File.separator + boxRelativePath;
+
         logRelativePath = getExternalFilesDir(null) + File.separator + "log" + File.separator;
         logAbsolutePath = "file:"+ File.separator + File.separator + logRelativePath;
         Stetho.initialize(
@@ -50,7 +55,9 @@ public class App extends Application{
                         .enableDumpapp(Stetho.defaultDumperPluginsProvider(this))
                         .enableWebKitInspector(Stetho.defaultInspectorModulesProvider(this))
                         .build());
-        HttpUtil.xx();
+//        Stetho.initializeWithDefaults(this);
+        HttpUtil.initInterceptors();
+//        CrashReport.initCrashReport( App.context , "900044326", true);
     }
 
 

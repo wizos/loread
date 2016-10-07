@@ -9,6 +9,7 @@ import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.support.v4.util.ArrayMap;
 import android.support.v7.widget.Toolbar;
 import android.view.KeyEvent;
 import android.view.View;
@@ -17,13 +18,13 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.afollestad.materialdialogs.MaterialDialog;
+import com.google.gson.Gson;
 import com.socks.library.KLog;
 import com.yydcdut.sdlv.Menu;
 import com.yydcdut.sdlv.MenuItem;
 import com.yydcdut.sdlv.SlideAndDragListView;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -34,10 +35,13 @@ import me.wizos.loread.adapter.MaterialSimpleListAdapter;
 import me.wizos.loread.adapter.MaterialSimpleListItem;
 import me.wizos.loread.bean.Article;
 import me.wizos.loread.bean.RequestLog;
-import me.wizos.loread.data.UpdateDB;
+import me.wizos.loread.bean.Tag;
 import me.wizos.loread.data.WithDB;
 import me.wizos.loread.data.WithSet;
 import me.wizos.loread.gson.ItemRefs;
+import me.wizos.loread.gson.Sub;
+import me.wizos.loread.gson.SubCategories;
+import me.wizos.loread.gson.itemContents.Origin;
 import me.wizos.loread.net.API;
 import me.wizos.loread.net.Neter;
 import me.wizos.loread.net.Parser;
@@ -60,15 +64,15 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
     private SwipeRefresh mSwipeRefreshLayout;
     private SlideAndDragListView slv;
 
-    private String sListState;
-    private String sListTag;
+    public static String sListState;
+    public static String sListTag;
     private boolean hadSyncAllStarredList = false;
-    private boolean syncAllStarredList = false;
+    private boolean setSyncAllStarredList = false;
     private boolean syncFirstOpen = true;
     private boolean hadSyncLogRequest = false;
-    private boolean orderTagFeed;
+    private boolean isOrderTagFeed;
     private int clearBeforeDay;
-    private long mUserID;
+    public static long mUserID;
     private MainSlvAdapter mainSlvAdapter;
     private List<Article> articleList;
     private boolean hadArticleSlvSummary = true;
@@ -81,7 +85,7 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         context = this ;
-        UpdateDB.upgrade(this);
+//        UpdateDB.upgrade(this);
         UFile.setContext(this);
         App.addActivity(this);
         mNeter = new Neter(handler,this);
@@ -91,10 +95,10 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
         initSlvListener();
         initSwipe();
         initView();
-        KLog.i("【一】" + toolbar.getTitle() );
+//        KLog.i("【一】" + toolbar.getTitle() );
         initData();
-        KLog.i("【二】" + toolbar.getTitle());
-        initLogService();
+//        KLog.i("【二】" + toolbar.getTitle());
+//        initLogService();
     }
 
     private void initLogService(){
@@ -129,10 +133,10 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
         sListState = WithSet.getInstance().getListState();
         sListTag = "user/" +  mUserID + "/state/com.google/reading-list";
         syncFirstOpen = WithSet.getInstance().isSyncFirstOpen();
-        syncAllStarredList = WithSet.getInstance().isSyncAllStarred();
+        setSyncAllStarredList = WithSet.getInstance().isSyncAllStarred();
         hadSyncAllStarredList = WithSet.getInstance().getHadSyncAllStarred();
         clearBeforeDay = WithSet.getInstance().getClearBeforeDay();
-        orderTagFeed = WithSet.getInstance().isOrderTagFeed();
+        isOrderTagFeed = WithSet.getInstance().isOrderTagFeed();
         KLog.i("【 readSetting 】ATUH 为" + API.INOREADER_ATUH + syncFirstOpen + "【mUserID为】" + hadSyncAllStarredList );
         KLog.i( WithSet.getInstance().getCachePathStarred() + WithSet.getInstance().getUseName() );
     }
@@ -250,9 +254,9 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
        }
 
         ArrayList<Article> noLabel = new ArrayList<>( all.size() - part.size() );
-        Map<String,Integer> map = new HashMap<>( part.size());
+        Map<String,Integer> map = new ArrayMap<>( part.size());
         String articleId;
-        StringBuffer sb = new StringBuffer(0);
+        StringBuffer sb = new StringBuffer(10);
 
         for( Article article: part ){
             articleId = article.getId();
@@ -264,8 +268,8 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
             if(cc!=null) {
                 map.put( articleId , ++cc);
             }else {
-                sb = new StringBuffer();
-                sb.append(article.getCategories());
+                sb = new StringBuffer( article.getCategories() );
+//                sb.append(article.getCategories());
                 sb.insert( sb.length()-1 , ", \"user/"+ mUserID + API.U_NO_LABEL +"\"");
                 article.setCategories( sb.toString() );
                 noLabel.add( article );
@@ -300,7 +304,7 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
         public boolean handleMessage(Message msg) {
             String info = msg.getData().getString("res");
             String url = msg.getData().getString("url");
-
+//            KLog.d("[[1111]=="+ info);
 //            long logTime = msg.getData().getLong("logTime");
             // 虽然可以根据 api 来判断一条请求，但还是需要 时间 logTime ，还有 指定码 code
             KLog.i("【handler】"  + msg.what +"---"  + handler +"---" + mParser );
@@ -309,22 +313,23 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
                     if( syncRequestLog()){
                         break;
                     }
-                    KLog.i("【获取所有加星文章1】" + hadSyncAllStarredList + "---" + syncAllStarredList);
-                    if( !hadSyncAllStarredList && syncAllStarredList ){
+                    KLog.i("【获取所有加星文章1】" + hadSyncAllStarredList + "---" + setSyncAllStarredList);
+                    if( !hadSyncAllStarredList && setSyncAllStarredList ){
                         vToolbarHint.setText(R.string.main_toolbar_hint_sync_all_stared_content);
                         KLog.i("【获取所有加星文章2】" + hadSyncAllStarredList + "---" + msg.what);
                         mNeter.getStarredContents();
                         break;
                     }else {
+                        // 为了得到分组名，及排序
                         vToolbarHint.setText(R.string.main_toolbar_hint_sync_tag);
                         mNeter.getWithAuth(API.U_TAGS_LIST);
-                        KLog.i("【获取0】");
+                        KLog.i("【开始同步分组信息：TAGS_LIST】");
                     }
                     KLog.i("【获取1】");
                     break;
-                case API.S_TAGS_LIST:
+                case API.S_TAGS_LIST: // 分组列表
                     mParser.parseTagList(info);
-                    if(orderTagFeed){
+                    if(isOrderTagFeed){
                         vToolbarHint.setText(R.string.main_toolbar_hint_sync_tag_order);
                         mNeter.getWithAuth(API.U_STREAM_PREFS);// 有了这份数据才可以对 tagslist feedlist 进行排序，并储存下来
                     }else {
@@ -332,6 +337,13 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
                         vToolbarHint.setText(R.string.main_toolbar_hint_sync_unread_count);
                         mNeter.getWithAuth(API.U_UNREAD_COUNTS);
                     }
+                    break;
+                case API.S_SUBSCRIPTION_LIST: // 订阅列表
+                    ArrayList<Sub> subs = mParser.parseSubscriptionList(info);
+                    updateArticles(subs);
+                    reloadData();
+                    // 获取所有加星文章
+                    // 比对streamId
                     break;
                 case API.S_STREAM_PREFS:
                     mParser.parseStreamPrefList(info, mUserID);
@@ -449,11 +461,22 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
                 case API.FAILURE_Request:
                 case API.FAILURE_Response:
                     numOfFailure = numOfFailure + 1;
-                    if (numOfFailure > 2){
-                        handler.sendEmptyMessage(55);
+                    if (numOfFailure < 3){
+                        mNeter.forData(url, API.request, msg.getData().getLong("logTime"));
                         break;
                     }
-                    mNeter.forData(url, API.request, msg.getData().getLong("logTime"));
+                    if(info.equals("Authorization Required")){
+                        UToast.showShort("没有Authorization，请重新登录");
+                        finish();
+                        goTo(LoginActivity.TAG,"Login For Authorization");
+                    }else {
+                        mSwipeRefreshLayout.setRefreshing(false);
+                        mSwipeRefreshLayout.setEnabled(true);
+                        vToolbarHint.setText("");
+                        UToast.showShort("网络不好，更新中断");
+                        saveRequestList();
+                        KLog.i("【网络不好，中断】");
+                    }
                     break;
                 case 88:
                     mParser.parseStreamContents(info);
@@ -466,11 +489,19 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
                     KLog.i("【文章列表获取完成】" );
                     break;
                 case 55:
-                    mSwipeRefreshLayout.setRefreshing(false);
-                    mSwipeRefreshLayout.setEnabled(true);
-                    vToolbarHint.setText("");
-                    saveRequestList();
-                    KLog.i("【网络不好，中断】");
+                    KLog.i("【Handle 55】" );
+//                    KLog.d("[[]=="+ info);
+//                    if(info=="Authorization Required"){
+//                        UToast.showShort("没有Authorization，请重新登录");
+//                        finish();
+//                        goTo(LoginActivity.TAG,"Login For Authorization");
+//                    }
+//                    mSwipeRefreshLayout.setRefreshing(false);
+//                    mSwipeRefreshLayout.setEnabled(true);
+//                    vToolbarHint.setText("");
+//                    UToast.showShort("网络不好，更新中断");
+//                    saveRequestList();
+//                    KLog.i("【网络不好，中断】");
                     break;
             }
             return false;
@@ -481,7 +512,7 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
 
 
 
-    private Map<Long,RequestLog> requestMap = new HashMap<>();
+    private Map<Long,RequestLog> requestMap = new ArrayMap<>();
     @Override
     public void add(RequestLog requestLog){
         if(!requestLog.getHeadParamString().contains("c=")){
@@ -504,7 +535,7 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
             commitRequestList.add(entry.getValue());
         }
         WithDB.getInstance().saveRequestLogList(commitRequestList);
-        requestMap = new HashMap<>();
+        requestMap = new ArrayMap<>();
     }
 
     private boolean syncRequestLog(){
@@ -543,6 +574,82 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
         UFile.deleteHtmlDirList(idListMD5);
         WithDB.getInstance().delArtAll(allArtsBeforeTime);
     }
+
+//    public void updateArticle(){
+//        mNeter.getWithAuth(API.U_SUSCRIPTION_LIST);
+//    }
+
+
+    public void updateArticles(ArrayList<Sub> subs){
+        List<Article> allStarArts = WithDB.getInstance().loadStarAll();
+        List<Tag> allTags = WithDB.getInstance().loadTags();
+        Gson gson = new Gson();
+        Origin origin;
+        Map<String,Sub> mapSub = new ArrayMap<>(subs.size());
+        Map<String,String> mapTag = new ArrayMap<>(allTags.size());
+        // 此处比较是否存在有个性能疑问，是用字符串是否包含还是map是否包含来判断呢？
+        for (Sub sub:subs){
+            mapSub.put(sub.getId(),sub);
+        }
+        for(Tag tag:allTags){
+            mapTag.put(tag.getTitle(),tag.getId());
+        }
+
+//        Sub subscription;
+//        String artCategories;
+//        Pattern regex = Pattern.compile("user/"+ mUserID + "/label/" + ".*?]");
+        for ( Article article : allStarArts ){
+//            Matcher m = regex.matcher(article.getCategories());
+
+            origin  = gson.fromJson( article.getOrigin() ,Origin.class );
+            String streamIdOfArticle = origin.getStreamId();
+
+            if ( mapSub.containsKey( streamIdOfArticle )){ // 判断是否还订阅着这篇文章的站点
+                // 情况1，还在订阅着，但是云端分组名已变（一个订阅源可能属于多个分组）
+//                subscription = mapSub.get( streamIdOfArticle );
+//                artCategories = m.replaceFirst( subscription.getCategories().get(0).getId() );
+
+                // 构建没有 label 的 分类String
+                StringBuilder newCategories = new StringBuilder( article.getCategories().length() );
+                String[] categories = article.getCategories().replace("]","").replace("[","").split(", ");
+                for (String cateId:categories ){
+                    if ( !cateId.contains( "user/"+ MainActivity.mUserID + "/label/" )){
+                        newCategories.append(cateId);
+                        newCategories.append(", ");
+                    }else {
+                        break;
+                    }
+                }
+                ArrayList<SubCategories> newSubCategories = mapSub.get( streamIdOfArticle ).getCategories();
+                for( SubCategories cate: newSubCategories ){
+                    newCategories.append( cate.getId() );
+                    newCategories.append(", ");
+                }
+                newCategories.deleteCharAt(newCategories.length()-2);
+                newCategories.append("]");
+                newCategories.insert(0,"[");
+                KLog.d("【==】" + newCategories );
+                article.setCategories( newCategories.toString() );
+            }else {
+                // 情况2，该文章的源站点已经退订
+                StringBuilder newCategories = new StringBuilder(  article.getCategories().length()  );
+                String[] categories = article.getCategories().replace("]","").replace("[","").split(", ");
+                for (String cate:categories ){
+                    if ( !cate.contains( "user/"+ MainActivity.mUserID + "/label/" )){
+                        newCategories.append(cate);
+                        newCategories.append(", ");
+                    }else if( mapTag.containsValue(cate) ) {
+                        newCategories.append(cate);
+                        newCategories.append(", ");
+                    }
+                }
+                newCategories.deleteCharAt(newCategories.length()-2);
+                article.setCategories( newCategories.toString() );
+            }
+            WithDB.getInstance().saveArticle( article );
+        }
+    }
+
 
     private int tagCount;
     private void changeItemNum(int offset){
@@ -741,6 +848,8 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
                 tagCount = intent.getExtras().getInt("tagCount");
                 tagName = intent.getExtras().getString("tagName");
                 break;
+            case 2:
+                mNeter.getWithAuth(API.U_SUSCRIPTION_LIST);
         }
 //        KLog.i("【== onActivityResult 】" + tagId + "----" + sListTag);
         if( tagId == null){
@@ -755,18 +864,17 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
     }
     public void onSettingIconClicked(View view){
         Intent intent = new Intent(getActivity(),SettingActivity.class);
-        startActivity(intent);
+        startActivityForResult(intent, 0);
     }
     //定义一个startActivityForResult（）方法用到的整型值
     public void onTagIconClicked(View view){
-        int requestCode = 0;
-
         Intent intent = new Intent(MainActivity.this,TagActivity.class);
         intent.putExtra("ListState",sListState);
         intent.putExtra("ListTag",sListTag);
         intent.putExtra("ListCount",articleList.size());
 //        intent.putExtra("NoLabelCount",getNoLabelList().size());
-        startActivityForResult(intent, requestCode);
+        startActivityForResult(intent, 0);
+//        CrashReport.testJavaCrash();
     }
 
     public void onStarIconClicked(View view){

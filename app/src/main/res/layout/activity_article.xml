@@ -91,11 +91,16 @@
                     android:textAppearance="@android:style/TextAppearance.Small"
                     android:textSize="12sp" />
             </LinearLayout>
-
-            <WebView
-                android:id="@+id/article_content"
+            <LinearLayout
+                android:id="@+id/article_webview"
+                android:orientation="vertical"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"/>
+                android:layout_height="match_parent">
+            </LinearLayout>
+            <!--<WebView-->
+                <!--android:id="@+id/article_content"-->
+                <!--android:layout_width="match_parent"-->
+                <!--android:layout_height="match_parent"/>-->
         </LinearLayout>
     </android.support.v4.widget.NestedScrollView>
 
@@ -112,8 +117,15 @@
             android:src="@drawable/ic_vector_unstar"
             android:onClick="onStarClick"/>
         <ImageView
+            android:id="@+id/art_label"
             style="@style/bottom_bar_icon"
-            android:src="@drawable/ic_vector_not_label"/>
+            android:src="@drawable/ic_vector_label"
+            android:onClick="onLabelClick"/>
+        <ImageView
+            android:id="@+id/art_save"
+            style="@style/bottom_bar_icon"
+            android:src="@drawable/ic_vector_file_download"
+            android:onClick="onSaveClick"/>
         <ImageView
             android:id="@+id/art_read"
             style="@style/bottom_bar_icon"

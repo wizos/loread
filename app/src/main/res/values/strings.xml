@@ -33,7 +33,7 @@
     <string name="disagree">取消</string>
     <string name="more_info">更多</string>
     <string name="setting_about_dialog_title">有些小抑郁</string>
-    <string name="setting_about_dialog_content">路很长，看向远方，却不知方向。\n抽支烟，思绪无常，边跑边彷徨。\n逃不脱的苟且，看不见的远方…</string>
+    <string name="setting_about_dialog_content">路很长，纵然远望，却不知方向。\n抽支烟，思绪无常，奔跑着彷徨。\n逃不脱的苟且，追不到的远方…</string>
 
     <string name="auth_username">用户名</string>
     <string name="auth_password">密码</string>
@@ -42,10 +42,12 @@
 
 
     <string name="setting_clear_log_title">清除错误记录</string>
+    <string name="setting_update_article_tag_title">更新离线文章的分组信息</string>
+    <string name="setting_esc_title">退出</string>
     <string name="setting_about_title">关于</string>
     <string name="setting_license_title">许可</string>
     <string name="setting_cache_path_starred_title">加星文章保存位置</string>
-    <string name="setting_order_tagfeed_title">是否开启分组与源的排序？</string>
+    <string name="setting_order_tagfeed_title">是否同步分组与源的排序？</string>
     <string name="setting_order_tagfeed_tips">开启后费流量，费时间，还没多大用</string>
     <string name="setting_scroll_mark_title">滚动标记为已读</string>
     <string name="setting_scroll_mark_tips">开启后，左滑置为未读</string>
@@ -59,6 +61,9 @@
     <string name="setting_sync_first_open_tips">打开应用就开始同步</string>
 
     <string name="setting_clear_day_dialog_title">选择保留最近多少天的文章呢？</string>
+
+    <string name="article_choose_tag_dialog_title">选择标签</string>
+
     <string-array name="setting_clear_day_dialog_item_array">
         <item>1 天</item>
         <item>7 天</item>
@@ -66,6 +71,7 @@
         <item>30 天</item>
         <item>60 天</item>
     </string-array>
+    <string name="box_html_format">&lt;!DOCTYPE html&gt;\n&lt;html&gt;\n&lt;head&gt;\n&lt;meta charset=&quot;%1$s&quot;&gt;\n&lt;title&gt;%2$s&lt;/title&gt;\n    &lt;link rel=&quot;stylesheet&quot;  type=&quot;text/css&quot;  href=&quot;./normalize.css&quot; /&gt;\n    &lt;link rel=&quot;stylesheet&quot;  type=&quot;text/css&quot;  href=&quot;./markdown.css&quot; /&gt;\n    &lt;link rel=&quot;stylesheet&quot;  type=&quot;text/css&quot;  href=&quot;./customer.css&quot; /&gt;\n&lt;/head&gt;\n&lt;body&gt;\n&lt;div class=&quot;info&quot;&gt;\n&lt;div class=&quot;info-title&quot;&gt;&lt;h1&gt;&lt;a href=&quot;%3$s&quot; target=&quot;_blank&quot;&gt;%2$s&lt;/a&gt;&lt;/h1&gt;&lt;/div&gt;\n&lt;div class=&quot;info-author&quot;&gt;%4$s&lt;/div&gt;\n&lt;div class=&quot;info-pubDate&quot;&gt;%5$s&lt;/div&gt;\n&lt;/div&gt;\n&lt;div class=&quot;content&quot;&gt;%6$s&lt;/div&gt;\n&lt;/body&gt;\n&lt;/html&gt;</string>
 
 
 </resources>

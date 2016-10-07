@@ -44,8 +44,9 @@ public class HttpUtil {
         mOkHttpClient.newCall(request).enqueue(responseCallback);
     }
 
-    public static void xx(){
+    public static void initInterceptors(){
         mOkHttpClient.networkInterceptors().add(new StethoInterceptor());
+
         KLog.d("【1】【2】【1】【2】");
     }
 

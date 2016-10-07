@@ -87,7 +87,16 @@ public class Neter {
 //        postWithAuth(API.U_ARTICLE_CONTENTS,logTime);
 //    }
 
-
+    public void postRemoveArticleTags( String articleID ,String tagId ){
+        addBody("r", tagId );
+        addBody("i", articleID);
+        postWithAuthLog(API.U_EDIT_TAG);
+    }
+    public void postAddArticleTags( String articleID ,String tagId ){
+        addBody("a", tagId );
+        addBody("i", articleID);
+        postWithAuthLog(API.U_EDIT_TAG);
+    }
     public void postArticleContents( String articleID ){
         addBody("i", articleID);
         postWithAuthLog(API.U_EDIT_TAG);
@@ -196,7 +205,7 @@ public class Neter {
         FormEncodingBuilder bodyBuilder = new FormEncodingBuilder();
         for ( String[] param : bodyParamList ) {
             bodyBuilder.add( param[0], param[1] );
-            KLog.d("【2】" + param[0] + param[1]);
+//            KLog.d("【2】" + param[0] + param[1]);
         }
         bodyParamList.clear();
 
@@ -220,24 +229,24 @@ public class Neter {
                     public void onFailure(Request request, IOException e) {
                         KLog.d("【请求失败】" + url );
                         API.request = request;
-                        makeMsg(url, "noRequest",logTime);
+                        makeMsg(API.FAILURE_Request, url, "noRequest",logTime);
                     }
                     @Override
                     public void onResponse(Response response) throws IOException {
                         if (!response.isSuccessful()) {
-                            KLog.d("【响应失败】" + response);
+                            KLog.d("【响应失败】" + response.message());
                             API.request = request;
-                            makeMsg(url, "noResponse",logTime);
+                            makeMsg(API.FAILURE_Response, url, response.message(),logTime);
                             return;
                         }
                         try {
                             String res = response.body().string();
                             KLog.d("【forData】" + res.length());
-                            makeMsg(url, res,logTime);
+                            makeMsg( API.url2int(url), url, res,logTime);
                         }catch (IOException e){
                             KLog.d("【超时】");
                             API.request = request;
-                            makeMsg(url, "noResponse", logTime);
+                            makeMsg( API.FAILURE_Response, url, response.message(), logTime);
                             e.printStackTrace();
                         }
 
@@ -253,23 +262,25 @@ public class Neter {
         }).start();
     }
 
-    private void makeMsg(String url, String res , long logTime) {
+    private void makeMsg( int msgCode, String url, String res, long logTime) {
         Message message = new Message();
         Bundle bundle = new Bundle();
         bundle.putString("url", url);
         bundle.putLong("logTime",logTime);
 // 有些可能 url 一样，但头部不一样。而我又是靠 url 来区分请求，从而进行下一步的。
-        if (res.equals("noRequest")) {
-            message.what = API.FAILURE_Request;
-        } else if (res.equals("noResponse")) {
-            message.what = API.FAILURE_Response;
-        } else {
-            bundle.putString("res", res);
-            message.what = API.url2int(url);
-        }
+//        if (res.equals("noRequest")) {
+//            message.what = API.FAILURE_Request;
+//        } else if (res.equals("noResponse")) {
+//            message.what = API.FAILURE_Response;
+//        } else {
+//            bundle.putString("res", res);
+//            message.what = API.url2int(url);
+//        }
+        message.what = msgCode;
+        bundle.putString("res", res);
         message.setData(bundle);
         handler.sendMessage(message);
-        KLog.d("【getData】" + url   + " -- "+  res );
+        KLog.d("【getData】" + url   + " -- ");
     }
 
 
@@ -513,41 +524,46 @@ public class Neter {
         KLog.d("【获取图片 " + url + "】" + filePath );
         Request.Builder builder = new Request.Builder();
         builder.url(url);
-        Request request = builder.build();
-        HttpUtil.enqueue(request, new Callback() {
+        final Request request = builder.build();
+        new Thread(new Runnable() {
             @Override
-            public void onFailure(Request request, IOException e) {
-                KLog.d("【图片请求失败 = " + url + "】");
-                makeMsgForImg(url, filePath ,imgNum );
-            }
-            @Override
-            public void onResponse(Response response) throws IOException {
-                if (!response.isSuccessful()) {
-                    KLog.d("【图片响应失败】" + response);
-                    makeMsgForImg(url, filePath ,imgNum);
-                    return;
-                }
-                inputStream = response.body().byteStream();
+            public void run() {
+                HttpUtil.enqueue(request, new Callback() {
+                    @Override
+                    public void onFailure(Request request, IOException e) {
+                        KLog.d("【图片请求失败 = " + url + "】");
+                        makeMsgForImg(url, filePath ,imgNum );
+                    }
+                    @Override
+                    public void onResponse(Response response) throws IOException {
+                        if (!response.isSuccessful()) {
+                            KLog.d("【图片响应失败】" + response);
+                            makeMsgForImg(url, filePath ,imgNum);
+                            return;
+                        }
+                        InputStream inputStream = response.body().byteStream();
+//                        //得到响应内容的文件格式
+//                        String fileTypeInResponse = "";
+//                        MediaType mediaType = response.body().contentType();
+//                        if (mediaType != null) {
+//                            fileTypeInResponse = "." + mediaType.subtype();
+//                        }
+                        try {
+                            UFile.saveFromStream(inputStream, filePath);
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                        KLog.d("【成功保存图片】" + url + "==" + filePath);
+                        makeMsgForImg(url, filePath,imgNum);
+                    }
+                });
 
-//                得到响应内容的文件格式
-//                String fileTypeInResponse = "";
-//                MediaType mediaType = response.body().contentType();
-//                if (mediaType != null) {
-//                    fileTypeInResponse = "." + mediaType.subtype();
-//                }
-
-                try {
-                    UFile.saveFromStream(inputStream, filePath);
-                } catch (IOException e) {
-                    e.printStackTrace();
-               }
-                KLog.d("【成功保存图片】" + url + "==" + filePath);
-                makeMsgForImg(url, filePath,imgNum);
             }
-        });
+        }).start();
     }
 
-    public static InputStream inputStream;
+
+//    public static InputStream inputStream;
     private void makeMsgForImg(String url,String filePath ,int imgNum){
         Message message = new Message();
         Bundle bundle = new Bundle();
