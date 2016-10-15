@@ -20,6 +20,7 @@ import java.io.InputStream;
 import java.util.ArrayList;
 
 import me.wizos.loread.bean.RequestLog;
+import me.wizos.loread.data.WithSet;
 import me.wizos.loread.gson.SrcPair;
 import me.wizos.loread.utils.HttpUtil;
 import me.wizos.loread.utils.UFile;
@@ -156,16 +157,26 @@ public class Neter {
         for ( String[] param : headParamList) {
             paraString = paraString + param[0] + "=" + param[1] + "&";
         }
+
+        //just for InoreaderProxy
+        if( WithSet.getInstance().isInoreaderProxy() ){
+            paraString = paraString +  "action=" + convertGetUrlForProxy(url);
+            url = API.proxySite;
+        }
+
         headParamList.clear(); // headParamList = new ArrayList<>();
         if (paraString.equals("?")) {
             paraString = "";
         }
         url = url + paraString;
         builder.url(url)
-                .addHeader("Authorization", API.INOREADER_ATUH)
                 .addHeader("AppId", API.INOREADER_APP_ID)
                 .addHeader("AppKey", API.INOREADER_APP_KEY);
-
+        if( WithSet.getInstance().isInoreaderProxy() ){
+            builder.addHeader("Auth", API.INOREADER_ATUH);
+        }else {
+            builder.addHeader("Authorization", API.INOREADER_ATUH);
+        }
         Request request = builder.build();
         forData(url, request,0);
     }
@@ -173,7 +184,11 @@ public class Neter {
     public void postWithAuthLog(final String url) {
         addHeader("AppId", API.INOREADER_APP_ID);
         addHeader("AppKey", API.INOREADER_APP_KEY);
-        addHeader("Authorization", API.INOREADER_ATUH);
+        if( WithSet.getInstance().isInoreaderProxy() ){
+            addHeader("Auth", API.INOREADER_ATUH);
+        }else {
+            addHeader("Authorization", API.INOREADER_ATUH);
+        }
         long logTime = System.currentTimeMillis();
         toRequest(API.U_EDIT_TAG, "post", logTime, headParamList, bodyParamList);
         post(url,logTime);
@@ -181,10 +196,14 @@ public class Neter {
     public void postWithAuth(final String url) {
         addHeader("AppId", API.INOREADER_APP_ID);
         addHeader("AppKey", API.INOREADER_APP_KEY);
-        addHeader("Authorization", API.INOREADER_ATUH);
+        if( WithSet.getInstance().isInoreaderProxy() ){
+            addHeader("Auth", API.INOREADER_ATUH);
+        }else {
+            addHeader("Authorization", API.INOREADER_ATUH);
+        }
         post(url,System.currentTimeMillis());
     }
-    public void post(final String url, long logTime) { // just for login
+    public void post( String url, long logTime) { // just for login
         KLog.d("【执行 = " + url + "】");
         if(!isNetworkEnabled(context)){
             headParamList.clear();
@@ -208,13 +227,49 @@ public class Neter {
 //            KLog.d("【2】" + param[0] + param[1]);
         }
         bodyParamList.clear();
-
+        //just for InoreaderProxy
+        if( WithSet.getInstance().isInoreaderProxy() ){
+            bodyBuilder.add( "action", convertPostUrlForProxy(url) );
+            url = API.proxySite;
+        }
         RequestBody body = bodyBuilder.build();
         Request request = headBuilder.post(body).build();
-        forData(url, request,logTime);
+        forData(url, request, logTime);
     }
 
 
+    private String convertPostUrlForProxy( String url ){
+        String action = "";
+        if(url.equals(API.U_CLIENTLOGIN)){
+            action = "login";
+        }else if( url.equals(API.U_ITEM_CONTENTS) ){
+            action = "item_contents";
+        }else if( url.equals(API.U_EDIT_TAG) ){
+            action = "edit_tag";
+        }
+        return action;
+    }
+    private String convertGetUrlForProxy( String url ){
+        String action = "";
+        if(url.equals(API.U_USER_INFO)){
+            action = "user_info";
+        }else if( url.equals(API.U_TAGS_LIST) ){
+            action = "tag_list";
+        }else if( url.equals(API.U_STREAM_PREFS) ){
+            action = "stream_prefs";
+        }else if( url.equals(API.U_SUSCRIPTION_LIST) ){
+            action = "suscription_list";
+        }else if( url.equals(API.U_UNREAD_COUNTS) ){
+            action = "unread_counts";
+        }else if( url.equals(API.U_ITEM_IDS) ){
+            action = "item_ids";
+        }else if( url.equals(API.U_ARTICLE_CONTENTS) ){
+            action = "article_contents";
+        }else if( url.equals(API.U_STREAM_CONTENTS) ){
+            action = "stream_contents";
+        }
+        return action;
+    }
     public void forData(final String url, final Request request ,final long logTime) {
         if( !isNetworkEnabled(context) ){
             handler.sendEmptyMessage(55);
@@ -515,12 +570,13 @@ public class Neter {
             return 0;
         }
         int num = imgSrcList.size();
+        KLog.d("【获取图片数量为：" + num );
         for(int i=0;i<num;i++){
             getBitmap(imgSrcList.get(i).getNetSrc(), imgSrcList.get(i).getLocalSrc(), i );
         }
         return num;
     }
-    public void getBitmap(final String url ,final String filePath ,final int imgNum) {
+    public void getBitmap(final String url ,final String filePath ,final int imgNo) {
         KLog.d("【获取图片 " + url + "】" + filePath );
         Request.Builder builder = new Request.Builder();
         builder.url(url);
@@ -532,29 +588,41 @@ public class Neter {
                     @Override
                     public void onFailure(Request request, IOException e) {
                         KLog.d("【图片请求失败 = " + url + "】");
-                        makeMsgForImg(url, filePath ,imgNum );
+                        makeMsgForImg(API.F_BITMAP, url, filePath ,imgNo );
                     }
                     @Override
                     public void onResponse(Response response) throws IOException {
                         if (!response.isSuccessful()) {
                             KLog.d("【图片响应失败】" + response);
-                            makeMsgForImg(url, filePath ,imgNum);
-                            return;
-                        }
-                        InputStream inputStream = response.body().byteStream();
-//                        //得到响应内容的文件格式
+                            makeMsgForImg(API.F_BITMAP,url, filePath ,imgNo);
+                        }else {
+                            InputStream inputStream = null;
+                            try {
+//                            is = response.body.byteStream();
+//                            is.reset();
+//                            BitmapFactory.Options ops = new BitmapFactory.Options();
+//                            ops.inJustDecodeBounds = false;
+//                            final Bitmap bm = BitmapFactory.decodeStream(is, null, ops);
+//                            mDelivery.post(new Runnable() {
+//                                @Override
+//                                public void run() {
+//                                    callBack.onResponse(bm);
+//                                }
+//                            })
+                                inputStream = response.body().byteStream();
+                                UFile.saveFromStream(inputStream, filePath);
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+                            KLog.d("【成功保存图片】" + url + "==" + filePath);
+                            makeMsgForImg(API.S_BITMAP, url, filePath,imgNo);
+                        //得到响应内容的文件格式
 //                        String fileTypeInResponse = "";
 //                        MediaType mediaType = response.body().contentType();
 //                        if (mediaType != null) {
 //                            fileTypeInResponse = "." + mediaType.subtype();
 //                        }
-                        try {
-                            UFile.saveFromStream(inputStream, filePath);
-                        } catch (IOException e) {
-                            e.printStackTrace();
                         }
-                        KLog.d("【成功保存图片】" + url + "==" + filePath);
-                        makeMsgForImg(url, filePath,imgNum);
                     }
                 });
 
@@ -564,14 +632,14 @@ public class Neter {
 
 
 //    public static InputStream inputStream;
-    private void makeMsgForImg(String url,String filePath ,int imgNum){
+    private void makeMsgForImg(int msg, String url,String filePath ,int imgNo){
         Message message = new Message();
         Bundle bundle = new Bundle();
         bundle.putString("url", url);
         bundle.putString("filePath", filePath);
-        bundle.putInt("imgNum", imgNum);
-        message.what = API.S_BITMAP;
-        if(url != null){ message.what = API.F_BITMAP;}
+        bundle.putInt("imgNo", imgNo);
+        message.what = msg;
+//        if(url != null){ message.what = API.F_BITMAP;}
         message.setData(bundle);
         handler.sendMessage(message);
     }

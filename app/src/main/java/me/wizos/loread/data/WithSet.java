@@ -158,10 +158,17 @@ public class WithSet {
     public boolean isDownImgWifi() {
         return readPref("DownImgWifi", true);
     }
-
     public void setDownImgWifi(boolean downImgMode) {
         savePref("DownImgWifi", downImgMode);
     }
+
+    public boolean isInoreaderProxy() {
+        return readPref("InoreaderProxy", false);
+    }
+    public void setInoreaderProxy(boolean proxyMode) {
+        savePref("InoreaderProxy", proxyMode);
+    }
+
 
     public boolean isScrollMark() {
         return readPref("ScrollMark", true);

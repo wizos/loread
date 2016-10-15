@@ -13,6 +13,8 @@ import java.util.List;
 import java.util.Map;
 
 import me.wizos.loread.App;
+import me.wizos.loread.gson.SrcPair;
+import me.wizos.loread.net.API;
 
 /**
  * Created by Wizos on 2016/3/16.
@@ -57,11 +59,69 @@ public class UString {
     }
     public static boolean isBlank(List list){return  list==null || list.isEmpty() || list.size()==0;}
 
-    public static ArrayList<String> changeHtmlForBox(String oldHtml, String fileName  ){
+    /**
+     * 修改 原始 html ，获得 src 的下载地址和保存地址 + 修改后的 html
+     * @param oldHtml 原始 html
+     * @param fileNameInMD5 MD5 加密后的文件名，用于有图片的文章内 src 的 **FileName_files 路径
+     * @return
+     */
+    public static ArrayList<SrcPair> getListOfSrcAndHtml(String oldHtml, String fileNameInMD5) {
+        if (UString.isBlank(oldHtml))
+            return null;
+        int num = 0;
+        StringBuilder tempHtml = new StringBuilder(oldHtml);
+
+        String srcLocal,srcNet,srcSavePath,imgExt,imgName,temp;
+        ArrayList<SrcPair> srcInLocalNetArray = new ArrayList<>();
+        srcInLocalNetArray.add(new SrcPair("","")); // 先存一个空的，方便后面把修改后的正文放进来
+        int indexA = tempHtml.indexOf("<img ", 0), indexB;
+        while (indexA != -1) {
+            indexA = tempHtml.indexOf(" src=\"", indexA);
+            if(indexA == -1){break;}
+            indexB = tempHtml.indexOf("\"", indexA + 6);
+            if(indexB == -1){break;}
+            srcNet = tempHtml.substring( indexA + 6, indexB );
+            if ( srcNet.substring(0,3).equals("file")){  // 这段代码可以优化，没必要每次都判断相等
+//                indexA = tempHtml.indexOf("<img ", indexB);
+                break;
+            }
+            imgExt = UFile.getFileExtByUrl( srcNet );
+            imgName = UFile.getFileNameByUrl( srcNet );
+            KLog.d("【文章13】" + imgExt );
+            num++;
+//            srcLocal = App.cacheAbsolutePath + fileNameInMD5  + File.separator + fileNameInMD5 + "_files" + File.separator + fileNameInMD5 + "_" + num + fileExt + API.MyFileType;
+//            srcLoading  = App.cacheRelativePath  + fileNameInMD5 + File.separator + fileNameInMD5 + "_files" + File.separator + fileNameInMD5 + "_" + num + fileExt + API.MyFileType;
+            srcLocal = "./" + fileNameInMD5 + "_files"  + File.separator + imgName + imgExt + API.MyFileType;
+            srcSavePath  = App.cacheRelativePath  + fileNameInMD5 + "_files" + File.separator + imgName + imgExt + API.MyFileType;
+
+            srcInLocalNetArray.add(new SrcPair( srcNet,srcSavePath ));
+            temp = " src=\"" + srcLocal + "\"" + " netsrc=\"" + srcNet + "\"";
+            tempHtml = tempHtml.replace( indexA, indexB + 1, temp ) ;
+            indexB = indexA + 6 + srcLocal.length() + srcNet.length() + 10;
+            indexA = tempHtml.indexOf("<img ", indexB);
+        }
+        if(srcInLocalNetArray.size()==0){return null;}
+
+//        oldHtml = tempHtml.toString();
+        srcInLocalNetArray.set(0,new SrcPair(String.valueOf(srcInLocalNetArray.size()),tempHtml.toString() ));
+
+        KLog.d("【文章2】" + oldHtml );
+        return srcInLocalNetArray;
+    }
+
+
+
+    /**
+     * 将 cache html 中的 src 的 **MD5_files 文件夹由 MD5 加密，改为正常的 **Name_files，防止图片不能显示
+     *
+     * @param oldHtml
+     * @param fileName
+     * @return
+     */
+    public static String reviseHtmlForBox(String oldHtml, String fileName  ){
         StringBuilder boxHtml = new StringBuilder(oldHtml);
-        StringBuilder cacheHtml = new StringBuilder(oldHtml);
-        String srcPath, boxSrcPath, cacheSrcPath;
-        int indexB = 0,indexA, indexC = 0;
+        String srcPath, boxSrcPath;
+        int indexB = 0,indexA;
         do  {
             indexA = boxHtml.indexOf(" src=\"", indexB);
             if (indexA == -1) {
@@ -72,31 +132,14 @@ public class UString {
                 break;
             }
             srcPath = boxHtml.substring(indexA + 6, indexB);
-//            if ( srcPath.substring(0, 3).equals("file")) {
-//                break;
-//            }
             String FileNameExt = UFile.getFileNameExtByUrl(srcPath);
             boxSrcPath = "./" + fileName + "_files" + File.separator + FileNameExt;
-            cacheSrcPath = App.boxAbsolutePath  + fileName + "_files" + File.separator + FileNameExt;
-
-            KLog.e( indexA + 6 + " - " + indexB + " - " + boxHtml.length() + " - " );
-            KLog.e( indexA + 6 + indexC + " - " + (indexB + indexC) + " - " + cacheHtml.length() + " - " );
-            KLog.e( "=" + boxSrcPath );
-            KLog.e( "=" + cacheSrcPath );
-
             boxHtml = boxHtml.replace( indexA + 6, indexB, boxSrcPath );
-            cacheHtml = cacheHtml.replace( indexA + 6 + indexC, indexB + indexC, cacheSrcPath );
-
-            KLog.e( "--" + boxHtml );
-            KLog.e( "--" + cacheHtml );
-
-            indexC = indexC +  cacheSrcPath.length() - boxSrcPath.length() ;
+//            KLog.e( indexA + 6 + " - " + indexB + " - " + boxHtml.length() + " - " );
+            KLog.e( "=" + boxSrcPath );
             indexB = indexA + 6 + boxSrcPath.length() + 1;
         }while (true);
-        ArrayList<String> twohtml = new ArrayList<>(2);
-        twohtml.add( cacheHtml.toString() );
-        twohtml.add( boxHtml.toString() );
-        return twohtml;
+        return boxHtml.toString();
     }
 
 

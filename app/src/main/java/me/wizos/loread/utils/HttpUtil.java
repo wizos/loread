@@ -1,4 +1,3 @@
-
 package me.wizos.loread.utils;
 
 import com.facebook.stetho.okhttp.StethoInterceptor;
@@ -44,9 +43,8 @@ public class HttpUtil {
         mOkHttpClient.newCall(request).enqueue(responseCallback);
     }
 
-    public static void initInterceptors(){
+    public static void xx(){
         mOkHttpClient.networkInterceptors().add(new StethoInterceptor());
-
         KLog.d("【1】【2】【1】【2】");
     }
 
@@ -65,10 +63,4 @@ public class HttpUtil {
             }
         });
     }
-
-
-
-
-
-
 }

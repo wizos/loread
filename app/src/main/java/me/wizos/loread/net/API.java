@@ -31,15 +31,18 @@ public class API {
     public static String U_ARTICLE_CONTENTS ="https://www.inoreader.com/reader/api/0/stream/items/contents";
     public static String U_EDIT_TAG ="https://www.inoreader.com/reader/api/0/edit-tag";
 
-    public static String U_Stream_Contents_Atom ="https://www.inoreader.com/reader/atom";
-
     public static String U_STREAM_CONTENTS ="https://www.inoreader.com/reader/api/0/stream/contents/";
+    public static String U_Stream_Contents_Atom ="https://www.inoreader.com/reader/atom";
     public static String U_Stream_Contents_User ="https://www.inoreader.com/reader/api/0/stream/contents/user/";
 
     public static String U_READING_LIST ="/state/com.google/reading-list";
     public static String U_STARRED ="user/-/state/com.google/starred";
     public static String U_NO_LABEL ="/state/com.google/no-label";
     public static String U_UNREAND ="/state/com.google/unread";
+
+    public static String proxySite = "http://wizos.me/Inoreader.php";
+
+
 //    public static String U_READED ="user/-/state/com.google/read";
 //    public static String U_BROADCAST ="user/-/state/com.google/broadcast";
 //    public static String U_LIKED ="user/-/state/com.google/like";

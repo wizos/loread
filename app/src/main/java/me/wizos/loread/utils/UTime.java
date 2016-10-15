@@ -127,14 +127,14 @@ public class UTime {
         System.out.println("【当前】");
         return dateHMS.format(getDateTime(0));
     }
+
     public static String getFormatDate(Date date){
         SimpleDateFormat dateYMD = new SimpleDateFormat("yyyy-MM-dd", Locale.CHINA);
         return dateYMD.format(date);
     }
 
-
-    public static String formatDate(Long stringDate){
-        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd",Locale.CHINA);
+    public static String getFormatDate(Long stringDate){
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm",Locale.CHINA);
         Date date = new Date(stringDate);
         return dateFormat.format(date);
     }

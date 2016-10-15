@@ -53,6 +53,8 @@
     <string name="setting_scroll_mark_tips">开启后，左滑置为未读</string>
     <string name="setting_down_img_title">省流量下载图片</string>
     <string name="setting_down_img_tips">只在 WiFi 时下载图片</string>
+    <string name="setting_inoreader_proxy_title">Inoreader 代理</string>
+    <string name="setting_inoreader_proxy_tips">开启后将使用内置代理服务器访问 Inoreader 服务</string>
     <string name="setting_clear_day_title">已读文章保留期限</string>
     <string name="setting_sync_frequency_title">同步频率</string>
     <string name="setting_sync_all_starred_title">同步所有加星文章</string>

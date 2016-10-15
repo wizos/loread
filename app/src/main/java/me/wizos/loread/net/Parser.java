@@ -6,6 +6,7 @@ import android.text.Html;
 import com.google.gson.Gson;
 import com.socks.library.KLog;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -594,7 +595,7 @@ public class Parser {
             article.setCrawlTimeMsec(items.getCrawlTimeMsec());
             article.setTimestampUsec(items.getTimestampUsec());
             article.setCategories(items.getCategories().toString());
-            article.setTitle(items.getTitle());
+            article.setTitle(items.getTitle().replace(File.separator,"-"));
             article.setPublished(items.getPublished());
             article.setUpdated(items.getUpdated());
             article.setCanonical(items.getCanonical().get(0).getHref());

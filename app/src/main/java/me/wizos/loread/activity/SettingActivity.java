@@ -61,7 +61,7 @@ public class SettingActivity extends BaseActivity {
     public void onClick(View v) {
     }
 
-    private SwitchButton syncFirstOpen,syncAllStarred,downImgWifi,scrollMark,orderTagFeed;
+    private SwitchButton syncFirstOpen,syncAllStarred,downImgWifi,inoreaderProxy,scrollMark,orderTagFeed;
     private TextView clearBeforeDaySummary;
     private Button clearLog;
     private int clearBeforeDayIndex, clearBeforeDay;
@@ -70,6 +70,7 @@ public class SettingActivity extends BaseActivity {
         syncFirstOpen = (SwitchButton) findViewById(R.id.setting_sync_first_open_sb_flyme);
         syncAllStarred = (SwitchButton) findViewById(R.id.setting_sync_all_starred_sb_flyme);
         downImgWifi = (SwitchButton) findViewById(R.id.setting_down_img_sb_flyme);
+        inoreaderProxy = (SwitchButton) findViewById(R.id.setting_inoreader_proxy_sb_flyme) ;
         scrollMark = (SwitchButton) findViewById(R.id.setting_scroll_mark_sb_flyme);
         orderTagFeed = (SwitchButton) findViewById(R.id.setting_order_tagfeed_sb_flyme);
         clearBeforeDaySummary = (TextView) findViewById(R.id.setting_clear_day_summary);
@@ -80,11 +81,12 @@ public class SettingActivity extends BaseActivity {
         syncFirstOpen.setChecked(WithSet.getInstance().isSyncFirstOpen());
         syncAllStarred.setChecked(WithSet.getInstance().isSyncAllStarred());
         downImgWifi.setChecked(WithSet.getInstance().isDownImgWifi());
+        inoreaderProxy.setChecked(WithSet.getInstance().isInoreaderProxy());
         scrollMark.setChecked(WithSet.getInstance().isScrollMark());
         orderTagFeed.setChecked(WithSet.getInstance().isOrderTagFeed());
         clearBeforeDay = WithSet.getInstance().getClearBeforeDay();
         changeViewSummary();
-        KLog.d( "3333=="+  clearBeforeDayIndex );
+        KLog.d( "读取默认的选项"+  clearBeforeDayIndex );
     }
 
     private void changeViewSummary(){
@@ -110,6 +112,9 @@ public class SettingActivity extends BaseActivity {
                 break;
             case R.id.setting_down_img_sb_flyme:
                 WithSet.getInstance().setDownImgWifi(v.isChecked());
+                break;
+            case R.id.setting_inoreader_proxy_sb_flyme:
+                WithSet.getInstance().setInoreaderProxy(v.isChecked());
                 break;
             case R.id.setting_scroll_mark_sb_flyme:
                 WithSet.getInstance().setScrollMark(v.isChecked());

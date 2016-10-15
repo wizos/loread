@@ -12,7 +12,6 @@ import java.util.List;
 
 import me.wizos.loread.dao.DaoMaster;
 import me.wizos.loread.dao.DaoSession;
-import me.wizos.loread.utils.HttpUtil;
 
 /**
  * Created by Wizos on 2015/12/24.
@@ -56,7 +55,7 @@ public class App extends Application{
                         .enableWebKitInspector(Stetho.defaultInspectorModulesProvider(this))
                         .build());
 //        Stetho.initializeWithDefaults(this);
-        HttpUtil.initInterceptors();
+//        HttpUtil.initInterceptors();
 //        CrashReport.initCrashReport( App.context , "900044326", true);
     }
 

@@ -94,12 +94,12 @@ public class UFile {
         if(!srcFile.exists() || !srcFile.isFile())
             return false;
 
-        File destDir = new File(destFileName);
-        if (destDir.exists() && destDir.getParent()!=null){
-            destDir.getParentFile().mkdirs();
+        File destFile = new File(destFileName);
+        if ( destFile.exists() && destFile.getParent()!=null){
+            destFile.getParentFile().mkdirs();
         }
 
-        return srcFile.renameTo( destDir );
+        return srcFile.renameTo( destFile );
 //        return srcFile.renameTo(new File(destDirName + File.separator + srcFile.getName()));
     }
 
@@ -133,7 +133,8 @@ public class UFile {
     }
 
     public static void saveCacheHtml( String fileNameInMD5 ,String fileContent){
-        String filePathName =  App.cacheRelativePath + fileNameInMD5 + File.separator + fileNameInMD5 + ".html";
+        String filePathName =  App.cacheRelativePath + fileNameInMD5 + ".html";
+//        String filePathName =  App.cacheRelativePath + fileNameInMD5 + File.separator + fileNameInMD5 + ".html";
 //        String folderPathName =  App.cacheRelativePath + fileNameInMD5;
         saveHtml(filePathName,fileContent);
     }
@@ -163,24 +164,59 @@ public class UFile {
             e.printStackTrace();
         }
     }
-    public static String readHtml( String fileNameInMD5, String fileName){
-        if( !isExternalStorageWritable() ){return null;}
-        String filePathName =   App.cacheRelativePath + fileNameInMD5 + File.separator + fileNameInMD5 + ".html";
-//        String folderPathName =  App.cacheRelativePath + fileNameInMD5 ;
-        File file = new File( filePathName );
-//        File folder = new File( folderPathName );
-        String fileContent ="" , temp = "";
-        KLog.d("【】" + file.toString() + "--" );
+    public static String judgeHtmlPath( String fileNameInMD5, String fileName){
+        File file;
 
+        file = new File(  App.cacheRelativePath + fileNameInMD5  + ".html" );
+        if(file.exists()){
+            return "cache";
+        }
+        file = new File( App.boxRelativePath + fileName + ".html" );
+        if(file.exists()){
+            return "box";
+        }
+        file = new File( App.cacheRelativePath + fileNameInMD5 + File.separator + fileNameInMD5 + ".html" );
+        if(file.exists()){
+            return "cacheFolder";
+        }
+        file = new File( App.cacheRelativePath + fileName + ".html" );
+        if(file.exists()){
+            return "cacheBox";
+        }
+        return null;
+    }
+
+
+    public static ArrayList<String> readHtml( String fileNameInMD5, String fileName){
+        if( !isExternalStorageWritable() ){return null;}
+        String fileContent ="" , temp = "";
+        ArrayList<String> html = new ArrayList<>(2);
+        html.add("");
+
+        // 读取 一级层、有加密的 cacheHtml
         try {
+            File file = new File(  App.cacheRelativePath + fileNameInMD5  + ".html" );
+            html.set(0,"cache");
             if(!file.exists()){
-                // 为了中转文件
-                file = new File( App.boxRelativePath + fileName + ".html"); //
-                if(!file.exists()){ //
-                    return null;
+                // 读取 一级层、无加密的 boxHtml
+                file = new File( App.boxRelativePath + fileName + ".html");
+                html.set(0,"box");
+                if(!file.exists()){
+                    // 读取 一级层、有加密的 cacheHtml （为了兼容版本与数据，暂时这么用着）
+                    file = new File(  App.cacheRelativePath + fileNameInMD5 + File.separator + fileNameInMD5 + ".html");
+                    html.set(0,"cacheFolder");
+                    if(!file.exists()){
+                        // 读取 而级层、无加密的 boxHtmlInCache
+                        file = new File( App.cacheRelativePath + fileName + ".html");
+                        html.set(0,"cacheBox");
+                        if(!file.exists()){
+                            return null;
+                        }
+                    }
                 }
-//                folder = new File( App.cacheRelativePath );//
             }
+
+            KLog.d("【】" + file.toString() + "--" );
 
             FileReader fileReader = new FileReader(file);
             BufferedReader br = new BufferedReader( fileReader );//一行一行读取 。在电子书程序上经常会用到。
@@ -192,8 +228,13 @@ public class UFile {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        return fileContent;
+        html.add(fileContent);
+        return html;
     }
+
+
+
+
 
     public static android.graphics.Bitmap getBitmap(String filePath){
         if(filePath==null)
@@ -232,9 +273,7 @@ public class UFile {
 //        KLog.d("【 saveFromStream 4】");
         // TODO 保存文件，会遇到存储空间满的问题，如果批量保存文件，会一直尝试保存
         try {
-            if (file.exists()) {  //  如果目标文件已存在，不保存
-                return;
-            }
+            if (file.exists()) { return;}
             File dir = file.getParentFile();
             dir.mkdirs();
 //            KLog.d("【saveFromStream 8】" );
@@ -261,8 +300,26 @@ public class UFile {
                 bos.close();
             }
         }
-    }
 
+
+
+    }
+//
+//    public static void savaBitmap(File dir, String fileName, Bitmap bitmap) {
+//        if (bitmap == null) {
+//            return;
+//        }
+//        File file = new File(dir, fileName);
+//        try {
+//            file.createNewFile();
+//            FileOutputStream fos = new FileOutputStream(file);
+//            bitmap.compress(Bitmap.CompressFormat.JPEG, 100, fos);
+//            fos.flush();
+//            fos.close();
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
+//    }
 
     public static boolean isFileExists(String filePath){
         File file = new File(filePath);
@@ -336,7 +393,7 @@ public class UFile {
                 fileExt = ".gif";
             }
         }
-        KLog.d( "【获取 FileExtByUrl 】失败" + url.substring( dotIndex ,url.length()) + extLength );
+        KLog.d( "【获取 FileExtByUrl 】" + url.substring( dotIndex ,url.length()) + extLength );
         KLog.d( "【修正正文内的SRC】的格式" + fileExt + url );
         return fileExt;
     }

@@ -154,6 +154,32 @@
                     android:id="@+id/setting_down_img_sb_flyme"
                     style="@style/SwitchButtonStyle"
                     android:allowUndo="false"
+                    android:checked="false"
+                    android:onClick="onSBClick" />
+            </LinearLayout>
+            <LinearLayout
+                android:id="@+id/setting_inoreader_proxy"
+                style="@style/SettingItem"
+                android:gravity="center_vertical">
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+                    <TextView
+                        android:id="@+id/setting_inoreader_proxy_title"
+                        style="@style/SettingItemTitle"
+                        android:text="@string/setting_inoreader_proxy_title" />
+                    <TextView
+                        android:id="@+id/setting_inoreader_proxy_tips"
+                        style="@style/SettingItemTips"
+                        android:text="@string/setting_inoreader_proxy_tips"
+                        android:textSize="12sp"/>
+                </LinearLayout>
+                <com.kyleduo.switchbutton.SwitchButton
+                    android:id="@+id/setting_inoreader_proxy_sb_flyme"
+                    style="@style/SwitchButtonStyle"
+                    android:allowUndo="false"
                     android:checked="true"
                     android:onClick="onSBClick" />
             </LinearLayout>

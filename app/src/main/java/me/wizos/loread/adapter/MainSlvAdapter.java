@@ -86,7 +86,7 @@ public class MainSlvAdapter extends ArrayAdapter<Article> {
         Gson gson = new Gson();
         Origin origin = gson.fromJson(article.getOrigin(), Origin.class);
         cvh.articleFeed.setText(Html.fromHtml(origin.getTitle()));
-        cvh.articleTime.setText(UTime.formatDate(article.getCrawlTimeMsec()));
+        cvh.articleTime.setText(UTime.getFormatDate(article.getCrawlTimeMsec()));
         if ( article.getReadState().equals(API.ART_READ) &  !MainActivity.sListState.equals(API.ART_STAR) ) {
 //            System.out.println("【1】" + article.getTitle());
             cvh.articleTitle.setAlpha(0.50f);
