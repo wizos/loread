@@ -18,6 +18,8 @@ import com.squareup.okhttp.Response;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 import me.wizos.loread.bean.RequestLog;
 import me.wizos.loread.data.WithSet;
@@ -100,7 +102,7 @@ public class Neter {
     }
     public void postArticleContents( String articleID ){
         addBody("i", articleID);
-        postWithAuthLog(API.U_EDIT_TAG);
+        postWithAuthLog(API.U_ARTICLE_CONTENTS);
     }
     public void postUnReadArticle( String articleID ){
         addBody("r", "user/-/state/com.google/read");
@@ -303,6 +305,8 @@ public class Neter {
                             API.request = request;
                             makeMsg( API.FAILURE_Response, url, response.message(), logTime);
                             e.printStackTrace();
+                        }finally {
+                            response.body().close();
                         }
 
 //                        catch (SocketTimeoutException e) {
@@ -562,7 +566,7 @@ public class Neter {
 
 
 
-    public int getBitmapList(ArrayList<SrcPair> imgSrcList){
+    public int getBitmapList(HashMap<Integer, SrcPair> imgSrcList){
         if(!isWifiEnabled(context)){
             handler.sendEmptyMessage(55);
             return 0;}
@@ -570,10 +574,15 @@ public class Neter {
             return 0;
         }
         int num = imgSrcList.size();
-        KLog.d("【获取图片数量为：" + num );
-        for(int i=0;i<num;i++){
-            getBitmap(imgSrcList.get(i).getNetSrc(), imgSrcList.get(i).getLocalSrc(), i );
+//        for(int i=1;i<num;i++){
+//            getBitmap(imgSrcList.get(i).getNetSrc(), imgSrcList.get(i).getSaveSrc(), i );
+//        }
+//        SrcPair src;
+        for(Map.Entry<Integer, SrcPair> entry: imgSrcList.entrySet()){
+            getBitmap(entry.getValue().getNetSrc(), entry.getValue().getSaveSrc(),entry.getKey() );
+            KLog.d("【获取图片数量为：" + entry.getKey() );
         }
+
         return num;
     }
     public void getBitmap(final String url ,final String filePath ,final int imgNo) {
@@ -613,6 +622,8 @@ public class Neter {
                                 UFile.saveFromStream(inputStream, filePath);
                             } catch (IOException e) {
                                 e.printStackTrace();
+                            }finally {
+                                response.body().close();
                             }
                             KLog.d("【成功保存图片】" + url + "==" + filePath);
                             makeMsgForImg(API.S_BITMAP, url, filePath,imgNo);

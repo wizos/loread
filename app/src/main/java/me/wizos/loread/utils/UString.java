@@ -10,7 +10,6 @@ import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import me.wizos.loread.App;
 import me.wizos.loread.gson.SrcPair;
@@ -65,15 +64,15 @@ public class UString {
      * @param fileNameInMD5 MD5 加密后的文件名，用于有图片的文章内 src 的 **FileName_files 路径
      * @return
      */
-    public static ArrayList<SrcPair> getListOfSrcAndHtml(String oldHtml, String fileNameInMD5) {
+    public static HashMap<Integer,SrcPair> getListOfSrcAndHtml(String oldHtml, String fileNameInMD5) {
         if (UString.isBlank(oldHtml))
             return null;
         int num = 0;
         StringBuilder tempHtml = new StringBuilder(oldHtml);
 
         String srcLocal,srcNet,srcSavePath,imgExt,imgName,temp;
-        ArrayList<SrcPair> srcInLocalNetArray = new ArrayList<>();
-        srcInLocalNetArray.add(new SrcPair("","")); // 先存一个空的，方便后面把修改后的正文放进来
+        HashMap<Integer,SrcPair> srcMap = new HashMap<>();
+        srcMap.put(0, new SrcPair("","","")); // 先存一个空的，方便后面把修改后的正文放进来
         int indexA = tempHtml.indexOf("<img ", 0), indexB;
         while (indexA != -1) {
             indexA = tempHtml.indexOf(" src=\"", indexA);
@@ -85,28 +84,27 @@ public class UString {
 //                indexA = tempHtml.indexOf("<img ", indexB);
                 break;
             }
-            imgExt = UFile.getFileExtByUrl( srcNet );
-            imgName = UFile.getFileNameByUrl( srcNet );
-            KLog.d("【文章13】" + imgExt );
+            imgExt = UString.getFileExtByUrl( srcNet );
+            imgName = UString.getFileNameByUrl( srcNet );
+            KLog.d("【获取src和html】" + imgExt + num );
             num++;
 //            srcLocal = App.cacheAbsolutePath + fileNameInMD5  + File.separator + fileNameInMD5 + "_files" + File.separator + fileNameInMD5 + "_" + num + fileExt + API.MyFileType;
 //            srcLoading  = App.cacheRelativePath  + fileNameInMD5 + File.separator + fileNameInMD5 + "_files" + File.separator + fileNameInMD5 + "_" + num + fileExt + API.MyFileType;
             srcLocal = "./" + fileNameInMD5 + "_files"  + File.separator + imgName + imgExt + API.MyFileType;
             srcSavePath  = App.cacheRelativePath  + fileNameInMD5 + "_files" + File.separator + imgName + imgExt + API.MyFileType;
 
-            srcInLocalNetArray.add(new SrcPair( srcNet,srcSavePath ));
+            srcMap.put( num , new SrcPair( srcNet,srcSavePath ,srcLocal ));
+//            temp = " src=\"" + srcLocal + "\"" + " netsrc=\"" + srcNet + "\"";
             temp = " src=\"" + srcLocal + "\"" + " netsrc=\"" + srcNet + "\"";
             tempHtml = tempHtml.replace( indexA, indexB + 1, temp ) ;
             indexB = indexA + 6 + srcLocal.length() + srcNet.length() + 10;
             indexA = tempHtml.indexOf("<img ", indexB);
         }
-        if(srcInLocalNetArray.size()==0){return null;}
+        if(srcMap.size()==1){return null;}
+        srcMap.put(0,new SrcPair( String.valueOf(srcMap.size()-1),tempHtml.toString() ,""));
 
-//        oldHtml = tempHtml.toString();
-        srcInLocalNetArray.set(0,new SrcPair(String.valueOf(srcInLocalNetArray.size()),tempHtml.toString() ));
-
-        KLog.d("【文章2】" + oldHtml );
-        return srcInLocalNetArray;
+        KLog.d("【文章2】" + srcMap.size() );
+        return srcMap;
     }
 
 
@@ -132,7 +130,7 @@ public class UString {
                 break;
             }
             srcPath = boxHtml.substring(indexA + 6, indexB);
-            String FileNameExt = UFile.getFileNameExtByUrl(srcPath);
+            String FileNameExt = getFileNameExtByUrl(srcPath);
             boxSrcPath = "./" + fileName + "_files" + File.separator + FileNameExt;
             boxHtml = boxHtml.replace( indexA + 6, indexB, boxSrcPath );
 //            KLog.e( indexA + 6 + " - " + indexB + " - " + boxHtml.length() + " - " );
@@ -141,6 +139,81 @@ public class UString {
         }while (true);
         return boxHtml.toString();
     }
+
+
+
+    public static String getFileExtByUrl(String url){
+        int dotIndex = url.lastIndexOf(".");
+        int extLength = url.length() - dotIndex;
+        String fileExt = "";
+        if(extLength<6){
+            fileExt = url.substring( dotIndex ,url.length());
+        }else {
+//            fileExt = url.substring( typeIndex ,url.length());
+            if(url.contains(".jpg")){
+                fileExt = ".jpg";
+            }else if(url.contains(".jpeg")){
+                fileExt = ".jpeg";
+            }else if(url.contains(".png")){
+                fileExt = ".png";
+            }else if(url.contains(".gif")){
+                fileExt = ".gif";
+            }else {
+                fileExt = "";
+            }
+        }
+        KLog.d( "【获取 FileExtByUrl 】" + url.substring( dotIndex ,url.length()) + extLength );
+        KLog.d( "【修正正文内的SRC】的格式" + fileExt + url );
+        return fileExt;
+    }
+
+    public static String getFileNameByUrl(String url){
+        if(UString.isBlank(url)){
+            return null;
+        }
+        String fileName;
+        int dotIndex = url.lastIndexOf(".");
+        int separatorIndex = url.lastIndexOf("/") + 1;
+//        int extLength = separatorIndex - dotIndex; extLength +
+        KLog.e("【文件名】" + dotIndex + '='+ separatorIndex + '='+ '=' + url.length() );
+
+        if( separatorIndex > dotIndex ){
+            dotIndex = url.length();
+        }
+        fileName = url.substring(separatorIndex, dotIndex);
+        fileName.replace("\\","");
+        fileName.replace("/","");
+        fileName.replace(":","");
+        fileName.replace("*","");
+        fileName.replace("?","");
+        fileName.replace("\"","");
+        fileName.replace("<","");
+        fileName.replace(">","");
+        fileName.replace("|","");
+        KLog.e("【文件名】" + fileName);
+        return fileName;
+    }
+    public static String getFileNameExtByUrl(String url){
+        if(UString.isBlank(url)){
+            return null;
+        }
+        String fileName;
+        int separatorIndex = url.lastIndexOf("/") + 1;
+        fileName = url.substring(separatorIndex, url.length() );
+        fileName.replace("\\","");
+        fileName.replace("/","");
+        fileName.replace(":","");
+        fileName.replace("*","");
+        fileName.replace("?","");
+        fileName.replace("\"","");
+        fileName.replace("<","");
+        fileName.replace(">","");
+        fileName.replace("|","");
+        KLog.e("【文件名与后缀名】" + fileName);
+        return fileName;
+    }
+
+
 
 
     public static ArrayList<String[]> asList(String[] array){
@@ -173,23 +246,23 @@ public class UString {
     }
 
 
-    public interface Con<V>{
-        Object inputKey(V key);
-    }
-    public static <K,V> List<V> mapToList(Map<K,V> map){
-        ArrayList<V> list = new ArrayList<>(map.size());
-        for( Map.Entry<K,V> entry: map.entrySet()) {
-            list.add(entry.getValue());
-        }
-        return list;
-    }
-    public static <V> Map<Object,V> listToMap(ArrayList<V> arrayList, Con<? super V> con){
-        Map<Object,V> map = new HashMap<>(arrayList.size());
-        for(V item:arrayList){
-            map.put(con.inputKey(item),item);
-        }
-        return map;
-    }
+//    public interface Con<V>{
+//        Object inputKey(V key);
+//    }
+//    public static <K,V> List<V> mapToList(Map<K,V> map){
+//        ArrayList<V> list = new ArrayList<>(map.size());
+//        for( Map.Entry<K,V> entry: map.entrySet()) {
+//            list.add(entry.getValue());
+//        }
+//        return list;
+//    }
+//    public static <V> Map<Object,V> listToMap(ArrayList<V> arrayList, Con<? super V> con){
+//        Map<Object,V> map = new HashMap<>(arrayList.size());
+//        for(V item:arrayList){
+//            map.put(con.inputKey(item),item);
+//        }
+//        return map;
+//    }
 
 
 //    public static String beanListSort(ArrayList<Tag> list){

@@ -374,54 +374,6 @@ public class UFile {
         return url;
     }
 
-    public static String getFileExtByUrl(String url){
-
-        int dotIndex = url.lastIndexOf(".");
-        int extLength = url.length() - dotIndex;
-        String fileExt = "";
-        if(extLength<6){
-            fileExt = url.substring( dotIndex ,url.length());
-        }else {
-//            fileExt = url.substring( typeIndex ,url.length());
-            if(url.contains(".jpg")){
-                fileExt = ".jpg";
-            }else if(url.contains(".jpeg")){
-                fileExt = ".jpeg";
-            }else if(url.contains(".png")){
-                fileExt = ".png";
-            }else if(url.contains(".gif")){
-                fileExt = ".gif";
-            }
-        }
-        KLog.d( "【获取 FileExtByUrl 】" + url.substring( dotIndex ,url.length()) + extLength );
-        KLog.d( "【修正正文内的SRC】的格式" + fileExt + url );
-        return fileExt;
-    }
-
-    public static String getFileNameByUrl(String url){
-        String fileName;
-        int dotIndex = url.lastIndexOf(".");
-        int separatorIndex = url.lastIndexOf("/") + 1;
-//        int extLength = separatorIndex - dotIndex; extLength +
-        KLog.e("【文件名】" + dotIndex + '='+ separatorIndex + '='+ '=' + url.length() );
-
-        if( separatorIndex > dotIndex ){
-            dotIndex = url.length();
-        }
-        fileName = url.substring(separatorIndex, dotIndex);
-        KLog.e("【文件名】" + fileName);
-        return fileName;
-    }
-    public static String getFileNameExtByUrl(String url){
-        if(UString.isBlank(url)){
-            return null;
-        }
-        String fileName;
-        int separatorIndex = url.lastIndexOf("/") + 1;
-        fileName = url.substring(separatorIndex, url.length() );
-        KLog.e("【文件名】" + fileName);
-        return fileName;
-    }
 
     private static byte[] getBytes(InputStream in,int nums){
         byte b[]= new byte[nums];     //创建合适文件大小的数组

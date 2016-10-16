@@ -7,13 +7,16 @@ import com.google.gson.annotations.SerializedName;
  */
 public class SrcPair {
 
-    public SrcPair(String netSrc,String localSrc){
+    public SrcPair(String netSrc,String saveSrc,String localSrc){
         this.netSrc = netSrc;
+        this.saveSrc = saveSrc;
         this.localSrc = localSrc;
     }
 
     @SerializedName("netSrc")
     String netSrc;
+    @SerializedName("saveSrc")
+    String saveSrc;
     @SerializedName("localSrc")
     String localSrc;
 
@@ -23,11 +26,18 @@ public class SrcPair {
     public void setNetSrc(String netSrc) {
         this.netSrc = netSrc;
     }
+    public String getSaveSrc() {
+        return saveSrc;
+    }
+    public void setSaveSrc(String saveSrc) {
+        this.saveSrc = saveSrc;
+    }
+
     public String getLocalSrc() {
         return localSrc;
     }
     public void setLocalSrc(String localSrc) {
         this.localSrc = localSrc;
     }
-//    }
+
 }

@@ -746,8 +746,11 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
                         .icon(R.drawable.ic_vector_mark_before)
                         .backgroundColor(Color.WHITE)
                         .build());
-
-
+                adapter.add(new MaterialSimpleListItem.Builder(MainActivity.this)
+                        .content("标记为未读")
+                        .icon(R.drawable.ic_vector_unread)
+                        .backgroundColor(Color.WHITE)
+                        .build());
                 new MaterialDialog.Builder(MainActivity.this)
                         .adapter(adapter, new MaterialDialog.ListCallback() {
                             @Override
@@ -764,6 +767,9 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
                                         i= position;
                                         num = articleList.size();
                                         artList = new ArrayList<>( num - position - 1 );
+                                        break;
+                                    case 2:
+                                        addReadList(articleList.get(position));
                                         break;
                                 }
 

@@ -42,6 +42,7 @@ public class App extends Application{
         instance = this;
 
         cacheRelativePath = getExternalFilesDir(null) + File.separator + "cache" + File.separator;
+
         cacheAbsolutePath = "file:"+ File.separator + File.separator + cacheRelativePath; // 仅在储存于 html 时使用
 
         boxRelativePath = getExternalFilesDir(null) + File.separator + "box" + File.separator;
