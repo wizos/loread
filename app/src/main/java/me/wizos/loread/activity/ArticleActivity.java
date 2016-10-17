@@ -379,6 +379,7 @@ public class ArticleActivity extends BaseActivity {
                                 switch (which) {
                                     case 0:
                                         KLog.e( "重新下载" );
+                                        // 此时还要判断他的储存位置 是 box 还是 cache
                                         restartDownloadImg(imgNo);
                                         break;
                                     case 1:
@@ -397,14 +398,53 @@ public class ArticleActivity extends BaseActivity {
 
 
     private void restartDownloadImg(int imgNo){
-        SrcPair imgSrc = lossSrcList.get(imgNo);
-        if(imgSrc==null){
+        KLog.d(imgNo);
+        SrcPair imgSrc;
+        if( lossSrcList!=null ){
+            imgSrc = lossSrcList.get(imgNo);
+            if( imgSrc==null){
+                if ( obtainSrcList != null ){
+                    imgSrc = obtainSrcList.get(imgNo);
+                    if(imgSrc ==null ){
+                        UToast.showShort("没有找到图片");
+                        return;
+                    }
+                }else {
+                    UToast.showShort("没有找到图片");
+                    return;
+                }
+            }
+        }else if( obtainSrcList!= null ){
             imgSrc = obtainSrcList.get(imgNo);
+            if ( imgSrc==null ){
+                UToast.showShort("没有找到图片");
+                KLog.d("==");
+                return;
+            }
+        }else {
+            UToast.showShort("没有找到图片");
+            KLog.d("--");
+            return;
         }
+
+
+
         if(!mNeter.isWifiEnabled(context)){
             handler.sendEmptyMessage(55);
             return ;}
-        mNeter.getBitmap(imgSrc.getNetSrc(),imgSrc.getSaveSrc(),imgNo);
+        String srcBaseUrl = "";
+        if (htmlState.equals("cache")){ //
+            srcBaseUrl = App.cacheRelativePath + fileNameInMD5 + "_files" + File.separator;
+        }else if(htmlState.equals("cacheFolder")){
+            srcBaseUrl = App.cacheRelativePath + fileNameInMD5 + File.separator + fileNameInMD5 + "_files" + File.separator;
+        }else if(htmlState.equals("box")){
+            srcBaseUrl = App.boxRelativePath + article.getTitle() + "_files" + File.separator;
+        }else if(htmlState.equals("cacheBox")){
+            srcBaseUrl = App.cacheRelativePath + article.getTitle() + "_files" + File.separator;
+        }
+        KLog.d("修改后的src保存地址为："  + lossSrcList.size() + imgNo );
+        KLog.d("修改后的src保存地址为："  + srcBaseUrl + UString.getFileNameExtByUrl(imgSrc.getSaveSrc()) );
+        mNeter.getBitmap(imgSrc.getNetSrc(), srcBaseUrl + UString.getFileNameExtByUrl(imgSrc.getSaveSrc()) ,imgNo);
     }
 
 
@@ -451,11 +491,11 @@ public class ArticleActivity extends BaseActivity {
                     obtainSrcList = new HashMap<>(lossSrcList.size());
                     StringBuffer imgNoArray = new StringBuffer("");
                     for(Map.Entry<Integer, SrcPair> entry: lossSrcList.entrySet()){
-                        imgNoArray.append( entry.getKey().toString() + "_");
+                        imgNoArray.append( (entry.getKey()-1) + "_"); // imgState 里的图片下标是从1开始的
                     }
                     imgNoArray.deleteCharAt(imgNoArray.length()-1);
                     KLog.d("传递的值" + imgNoArray);
-                    webView.loadUrl("javascript:appointImgPlaceholder("+ imgNoArray.toString() +")");
+                    webView.loadUrl("javascript:appointImgPlaceholder("+ "\"" + imgNoArray.toString() + "\"" +")");
                 }
             }
         }
@@ -525,13 +565,20 @@ public class ArticleActivity extends BaseActivity {
                     numOfGetImgs = numOfGetImgs + 1;
                     KLog.i("【 API.S_BITMAP 】" + imgNo + "=" + numOfGetImgs + "--" + numOfImgs);
                     obtainSrcList.put(imgNo, lossSrcList.get(imgNo) );
-                    replaceSrc( imgNo, lossSrcList.get(imgNo).getLocalSrc() );
+                    SrcPair imgSrc = lossSrcList.get(imgNo);
+                    if(imgSrc==null){
+                        imgSrc = obtainSrcList.get(imgNo);
+                    }
+                    replaceSrc( imgNo, imgSrc.getLocalSrc() );
+                    KLog.i("【】" +  lossSrcList.get(imgNo).getNetSrc()  );
                     lossSrcList.remove(imgNo);
+                    KLog.i("【】" +  lossSrcList.size()  );
+
                     if(  numOfImgs == numOfGetImgs ) { // || numOfGetImgs % 5 == 0
                         KLog.i("【图片全部下载完成】" + numOfGetImgs  );
-                        logImgStatus(ExtraImg.DOWNLOAD_OVER);
                         webView.clearCache(true);
                         lossSrcList.clear();
+                        logImgStatus(ExtraImg.DOWNLOAD_OVER);
 //                        webView.notify();
 //                        notifyDataChanged();// 通知内容重载
                     }else {
@@ -562,10 +609,8 @@ public class ArticleActivity extends BaseActivity {
                     numOfFailure = numOfFailure + 1;
                     if (numOfFailure > 4){break;}
                     mNeter.forData(url,API.request,0);
-//                    logSrcList();
                     break;
                 case 55:
-//                    logSrcList("");
                     KLog.i("【网络不好，中断】");
                     break;
             }
@@ -574,15 +619,19 @@ public class ArticleActivity extends BaseActivity {
     });
 
 
-
+    /**
+     * 在初次进入 html 获得 imgList 时，记录值 DOWNLOAD_ING。
+     * 在每次成功下载到图片时，记录 DOWNLOAD_ING。
+     * 在所有下载完成时，记录 DOWNLOAD_OVER。
+     * @param imgStatus 有两个值：DOWNLOAD_ING(下载中) 和 DOWNLOAD_OVER(下载完成)
+     */
     private void logImgStatus(int imgStatus){
-        if (lossSrcList==null){return;}
-        if (lossSrcList.size()==0) {return;}
         if(extraImg==null){
             extraImg = new ExtraImg();
         }
         extraImg.setImgStatus(imgStatus);
         extraImg.setLossImgs(lossSrcList);
+        extraImg.setObtainImgs(obtainSrcList);
         article.setImgState( new Gson().toJson(extraImg) );
         WithDB.getInstance().saveArticle(article);
     }

@@ -718,10 +718,10 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
                 Article article = articleList.get(position);
                 switch (direction) {
                     case MenuItem.DIRECTION_LEFT:
-                        addStarList(article);
+                        changeStarState(article);
                         return Menu.ITEM_SCROLL_BACK;
                     case MenuItem.DIRECTION_RIGHT:
-                        addReadList(article);
+                        changeReadState(article);
                         return Menu.ITEM_SCROLL_BACK;
                 }
                 return Menu.ITEM_NOTHING;
@@ -769,7 +769,9 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
                                         artList = new ArrayList<>( num - position - 1 );
                                         break;
                                     case 2:
-                                        addReadList(articleList.get(position));
+                                        Article article = articleList.get(position);
+                                        article.setReadState(API.ART_UNREAD);
+                                        mNeter.postUnReadArticle( article.getId() );
                                         break;
                                 }
 
@@ -799,7 +801,7 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
         WithDB.getInstance().saveArticleList(artList);
         mainSlvAdapter.notifyDataSetChanged();
     }
-    private void addReadList(Article article){
+    private void changeReadState(Article article){
         if(article.getReadState().equals(API.ART_READ)){
             article.setReadState(API.ART_READING);
             mNeter.postUnReadArticle(article.getId());
@@ -815,16 +817,19 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
         mainSlvAdapter.notifyDataSetChanged();
     }
 
-    protected void addStarList(Article article){
+    protected void changeStarState(Article article){
         if(article.getStarState().equals(API.ART_STAR)){
             article.setStarState(API.ART_UNSTAR);
             mNeter.postUnStarArticle(article.getId());
-        }else {article.setStarState(API.ART_STAR);
+        }else {
+            article.setStarState(API.ART_STAR);
             mNeter.postStarArticle(article.getId());
         }
         WithDB.getInstance().saveArticle(article);
         mainSlvAdapter.notifyDataSetChanged();
     }
+
+
 
     private static final int MSG_DOUBLE_TAP = 0;
     @Override

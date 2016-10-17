@@ -580,7 +580,7 @@ public class Neter {
 //        SrcPair src;
         for(Map.Entry<Integer, SrcPair> entry: imgSrcList.entrySet()){
             getBitmap(entry.getValue().getNetSrc(), entry.getValue().getSaveSrc(),entry.getKey() );
-            KLog.d("【获取图片数量为：" + entry.getKey() );
+            KLog.d("【获取图片的key为：" + entry.getKey() );
         }
 
         return num;
