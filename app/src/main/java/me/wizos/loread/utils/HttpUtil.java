@@ -1,5 +1,10 @@
 package me.wizos.loread.utils;
 
+import android.content.Context;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
+import android.net.wifi.WifiManager;
+
 import com.facebook.stetho.okhttp.StethoInterceptor;
 import com.socks.library.KLog;
 import com.squareup.okhttp.Callback;
@@ -19,9 +24,9 @@ import java.util.concurrent.TimeUnit;
 public class HttpUtil {
     private static final OkHttpClient mOkHttpClient = new OkHttpClient();
     static{
-        mOkHttpClient.setConnectTimeout(30, TimeUnit.SECONDS);
-        mOkHttpClient.setReadTimeout(30, TimeUnit.SECONDS);
-        mOkHttpClient.setWriteTimeout(30, TimeUnit.SECONDS);
+        mOkHttpClient.setConnectTimeout(300, TimeUnit.SECONDS); // 初始为30
+        mOkHttpClient.setReadTimeout(300, TimeUnit.SECONDS);// 初始为30
+        mOkHttpClient.setWriteTimeout(300, TimeUnit.SECONDS);// 初始为30
     }
     /**
      * 该不会开启异步线程。
@@ -63,4 +68,20 @@ public class HttpUtil {
             }
         });
     }
+
+    public static boolean isWifiEnabled(Context context) {
+        if (!isNetworkEnabled(context)) {
+            return false;
+        }
+        return ((WifiManager) context.getSystemService(Context.WIFI_SERVICE)).isWifiEnabled();
+    }
+    public static boolean isNetworkEnabled(Context context) {
+        ConnectivityManager cm =
+                (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo netInfo = cm.getActiveNetworkInfo();
+        return netInfo != null && netInfo.isConnectedOrConnecting();
+    }
+
+
+
 }

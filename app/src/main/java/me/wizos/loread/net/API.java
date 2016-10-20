@@ -77,9 +77,11 @@ public class API {
 
 
     public static final int S_ALL_STARRED = 30;
-    public static final int FAILURE = 00;
-    public static final int FAILURE_Request = 01;
-    public static final int FAILURE_Response = 02;
+    public static final int SUCCESS = 100;
+    public static final int MSG_DOUBLE_TAP = -1;
+    public static final int F_NoMsg = 00;
+    public static final int F_Request = 01;
+    public static final int F_Response = 02;
     public static final int F_BITMAP = 03;
     public static ArrayList<Item> itemlist;
 
@@ -111,15 +113,15 @@ public class API {
         }else if(api.contains(U_STREAM_CONTENTS + U_STARRED)){
             return S_STREAM_CONTENTS_STARRED;
         }
-        return FAILURE;
+        return F_NoMsg;
     }
 
     /**
      * 是否需要改变这个为 int 以方便比较呢？
      */
-    public static final String ART_READ = "Readed";// 1
-    public static final String ART_READING = "UnReading"; // 00
-    public static final String ART_UNREAD = "UnRead"; // 0
+    public static final String ART_READ = "Readed";// 1 已读
+    public static final String ART_READING = "UnReading"; // 00 强制未读
+    public static final String ART_UNREAD = "UnRead"; // 0 未读
     public static final String ART_STAR = "Stared"; // 1
     public static final String ART_UNSTAR = "UnStar"; // 0
 

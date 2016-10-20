@@ -321,7 +321,7 @@ public class Parser {
                 starList.add(article);// 取消加星
             }
         }
-        System.out.println("【reStarredList】" + beforeStarredList.size() + "==" + allStarredRefs.size() +"==" + starList.size() +"=="+ starredRefs.size());
+        KLog.d("【reStarredList】" + beforeStarredList.size() + "==" + allStarredRefs.size() +"==" + starList.size() +"=="+ starredRefs.size());
         WithDB.getInstance().saveArticleList(starList);
         allStarredRefs = new ArrayList<>();
         return starredRefs;

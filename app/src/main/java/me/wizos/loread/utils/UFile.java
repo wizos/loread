@@ -264,7 +264,7 @@ public class UFile {
      * @param filePath
      * @throws IOException
      */
-    public static void saveFromStream( InputStream is, String filePath) throws IOException {
+    public static boolean saveFromStream( InputStream is, String filePath) throws IOException {
         KLog.d("【 saveFromStream 1】" + filePath);
         File file = new File(filePath);
         BufferedInputStream bis = new BufferedInputStream(is);
@@ -273,7 +273,7 @@ public class UFile {
 //        KLog.d("【 saveFromStream 4】");
         // TODO 保存文件，会遇到存储空间满的问题，如果批量保存文件，会一直尝试保存
         try {
-            if (file.exists()) { return;}
+            if (file.exists()) { return false;}
             File dir = file.getParentFile();
             dir.mkdirs();
 //            KLog.d("【saveFromStream 8】" );
@@ -286,6 +286,7 @@ public class UFile {
                 bos.write(buff, 0, size);
             }
             bos.flush();
+            return true;
         } finally {
             if (is != null) {
                 is.close();
@@ -293,12 +294,13 @@ public class UFile {
             if (bis != null) {
                 bis.close();
             }
-            if (os != null) {
-                os.close();
-            }
             if (bos != null) {
                 bos.close();
             }
+            if (os != null) {
+                os.close();
+            }
+            return false;
         }
 
 

@@ -244,7 +244,7 @@ abstract class WrapperAdapter implements WrapperListAdapter, ItemMainLayout.OnIt
 
     @Override
     public void onSlideOpen(View view, int direction) {
-        System.out.println("【onSlideOpen】");
+//        System.out.println("【onSlideOpen】");
         if (mOnAdapterSlideListenerProxy != null) {
             int scroll = mOnAdapterSlideListenerProxy.onSlideOpen(view, mSlideItemPosition, direction);
             switch (scroll) {

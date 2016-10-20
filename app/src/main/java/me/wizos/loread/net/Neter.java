@@ -1,12 +1,10 @@
 package me.wizos.loread.net;
 
 import android.content.Context;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
-import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.support.v4.util.ArrayMap;
 
 import com.socks.library.KLog;
 import com.squareup.okhttp.Callback;
@@ -18,8 +16,6 @@ import com.squareup.okhttp.Response;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
 
 import me.wizos.loread.bean.RequestLog;
 import me.wizos.loread.data.WithSet;
@@ -42,18 +38,6 @@ public class Neter {
         this.context = context;
     }
 
-    public static boolean isWifiEnabled(Context context) {
-        if (!isNetworkEnabled(context)) {
-            return false;
-        }
-        return ((WifiManager) context.getSystemService(Context.WIFI_SERVICE)).isWifiEnabled();
-    }
-    public static boolean isNetworkEnabled(Context context) {
-        ConnectivityManager cm =
-                (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo netInfo = cm.getActiveNetworkInfo();
-        return netInfo != null && netInfo.isConnectedOrConnecting();
-    }
 
 
     /**
@@ -128,30 +112,12 @@ public class Neter {
     }
 
 
-//    //测试之用
-//    public void getWithAuth3(String url, long logCode) {
-//        KLog.d("【执行 getWithAuth 1 】" + url);
-//        if(!isNetworkEnabled(context)){
-//            handler.sendEmptyMessage(55);
-//            return;}
-//        Request.Builder builder = new Request.Builder();
-//        builder.url(url);
-//        addHeader("Authorization", API.INOREADER_ATUH);
-//        addHeader("AppId", API.INOREADER_APP_ID);
-//        addHeader("AppKey", API.INOREADER_APP_KEY);
-//        for ( Parameter para : headParamList) {
-//            builder.addHeader( para.getKey() , para.getValue() );
-//        }
-//        headParamList.clear();
-//        Request request = builder.build();
-//        forData(url, request,logCode);
-//    }
 
     public void getWithAuth(String url) {
         KLog.d("【执行 getWithAuth 】" + url);
-        if(!isNetworkEnabled(context)){
+        if(!HttpUtil.isNetworkEnabled(context)){
             headParamList.clear();
-            handler.sendEmptyMessage(55);
+            handler.sendEmptyMessage(API.F_NoMsg);
             return;}
 
         Request.Builder builder = new Request.Builder();
@@ -207,26 +173,25 @@ public class Neter {
     }
     public void post( String url, long logTime) { // just for login
         KLog.d("【执行 = " + url + "】");
-        if(!isNetworkEnabled(context)){
+        if(!HttpUtil.isNetworkEnabled(context)){
             headParamList.clear();
             bodyParamList.clear();
-            handler.sendEmptyMessage(55);
+            handler.sendEmptyMessage(API.F_NoMsg);
             return;}
         // 构建请求头
         Request.Builder headBuilder = new Request.Builder().url(url);
-//        for ( Parameter para : headParamList) {
-//            headBuilder.addHeader(para.getKey(), para.getValue());
-//        }
         for ( String[] param : headParamList) {
+            KLog.d(param[0] + param[1]);
             headBuilder.addHeader( param[0], param[1] );
         }
         headParamList.clear();
 
+        KLog.d("----");
         // 构建请求体
         FormEncodingBuilder bodyBuilder = new FormEncodingBuilder();
         for ( String[] param : bodyParamList ) {
             bodyBuilder.add( param[0], param[1] );
-//            KLog.d("【2】" + param[0] + param[1]);
+            KLog.d(param[0] + param[1]);
         }
         bodyParamList.clear();
         //just for InoreaderProxy
@@ -273,8 +238,8 @@ public class Neter {
         return action;
     }
     public void forData(final String url, final Request request ,final long logTime) {
-        if( !isNetworkEnabled(context) ){
-            handler.sendEmptyMessage(55);
+        if( !HttpUtil.isNetworkEnabled(context) ){
+            handler.sendEmptyMessage(API.F_NoMsg);
             return ;}
         KLog.d("【开始请求】 "+ logTime + "--" + url);
 
@@ -286,14 +251,14 @@ public class Neter {
                     public void onFailure(Request request, IOException e) {
                         KLog.d("【请求失败】" + url );
                         API.request = request;
-                        makeMsg(API.FAILURE_Request, url, "noRequest",logTime);
+                        makeMsg(API.F_Request, url, "noRequest",logTime);
                     }
                     @Override
                     public void onResponse(Response response) throws IOException {
                         if (!response.isSuccessful()) {
-                            KLog.d("【响应失败】" + response.message());
+                            KLog.d("【响应失败】" + response.message() + response.body().string());
                             API.request = request;
-                            makeMsg(API.FAILURE_Response, url, response.message(),logTime);
+                            makeMsg(API.F_Response, url, response.message(),logTime);
                             return;
                         }
                         try {
@@ -303,7 +268,7 @@ public class Neter {
                         }catch (IOException e){
                             KLog.d("【超时】");
                             API.request = request;
-                            makeMsg( API.FAILURE_Response, url, response.message(), logTime);
+                            makeMsg( API.F_Response, url, response.message(), logTime);
                             e.printStackTrace();
                         }finally {
                             response.body().close();
@@ -339,7 +304,7 @@ public class Neter {
         bundle.putString("res", res);
         message.setData(bundle);
         handler.sendMessage(message);
-        KLog.d("【getData】" + url   + " -- ");
+        KLog.d("【getData】" + url   + " -- " + res );
     }
 
 
@@ -566,24 +531,24 @@ public class Neter {
 
 
 
-    public int getBitmapList(HashMap<Integer, SrcPair> imgSrcList){
-        if(!isWifiEnabled(context)){
-            handler.sendEmptyMessage(55);
+    public int getBitmapList(ArrayMap<Integer,SrcPair> imgSrcList){
+        if(!HttpUtil.isWifiEnabled(context)){
+            handler.sendEmptyMessage(API.F_NoMsg);
             return 0;}
         if(imgSrcList == null || imgSrcList.size()==0){
             return 0;
         }
-        int num = imgSrcList.size();
-//        for(int i=1;i<num;i++){
-//            getBitmap(imgSrcList.get(i).getNetSrc(), imgSrcList.get(i).getSaveSrc(), i );
-//        }
-//        SrcPair src;
-        for(Map.Entry<Integer, SrcPair> entry: imgSrcList.entrySet()){
+        int length = imgSrcList.size();
+        for(ArrayMap.Entry<Integer, SrcPair> entry: imgSrcList.entrySet()){
             getBitmap(entry.getValue().getNetSrc(), entry.getValue().getSaveSrc(),entry.getKey() );
             KLog.d("【获取图片的key为：" + entry.getKey() );
         }
 
-        return num;
+//        for (int i = 0; i < length; i++) {
+//            getBitmap(imgSrcList.valueAt(i).getNetSrc(), imgSrcList.valueAt(i).getSaveSrc(),imgSrcList.keyAt(i) );
+//            KLog.d("【获取图片的key为：" + imgSrcList.keyAt(i) );
+//        }
+        return length;
     }
     public void getBitmap(final String url ,final String filePath ,final int imgNo) {
         KLog.d("【获取图片 " + url + "】" + filePath );
@@ -606,6 +571,7 @@ public class Neter {
                             makeMsgForImg(API.F_BITMAP,url, filePath ,imgNo);
                         }else {
                             InputStream inputStream = null;
+                            int state = API.S_BITMAP;
                             try {
 //                            is = response.body.byteStream();
 //                            is.reset();
@@ -619,14 +585,17 @@ public class Neter {
 //                                }
 //                            })
                                 inputStream = response.body().byteStream();
-                                UFile.saveFromStream(inputStream, filePath);
+                                if( UFile.saveFromStream(inputStream, filePath) ){
+                                    state = API.F_BITMAP;
+                                }
                             } catch (IOException e) {
                                 e.printStackTrace();
-                            }finally {
+                            } finally {
                                 response.body().close();
                             }
+
                             KLog.d("【成功保存图片】" + url + "==" + filePath);
-                            makeMsgForImg(API.S_BITMAP, url, filePath,imgNo);
+                            makeMsgForImg(state, url, filePath,imgNo);
                         //得到响应内容的文件格式
 //                        String fileTypeInResponse = "";
 //                        MediaType mediaType = response.body().contentType();
@@ -642,7 +611,6 @@ public class Neter {
     }
 
 
-//    public static InputStream inputStream;
     private void makeMsgForImg(int msg, String url,String filePath ,int imgNo){
         Message message = new Message();
         Bundle bundle = new Bundle();
@@ -650,7 +618,6 @@ public class Neter {
         bundle.putString("filePath", filePath);
         bundle.putInt("imgNo", imgNo);
         message.what = msg;
-//        if(url != null){ message.what = API.F_BITMAP;}
         message.setData(bundle);
         handler.sendMessage(message);
     }

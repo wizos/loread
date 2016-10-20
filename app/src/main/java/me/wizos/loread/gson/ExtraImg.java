@@ -1,8 +1,8 @@
 package me.wizos.loread.gson;
 
-import com.google.gson.annotations.SerializedName;
+import android.support.v4.util.ArrayMap;
 
-import java.util.HashMap;
+import com.google.gson.annotations.SerializedName;
 
 /**
  * Created by Wizos on 2016/10/7.
@@ -17,10 +17,10 @@ public class ExtraImg {
 
     // 每个src要记录，网络src和要保存到本地的src
     @SerializedName("lossImgs")
-    private HashMap<Integer,SrcPair> lossImgs;
+    private ArrayMap<Integer,SrcPair> lossImgs;
 
     @SerializedName("obtainImgs")
-    private HashMap<Integer,SrcPair> obtainImgs;
+    private ArrayMap<Integer,SrcPair> obtainImgs;
 
     public int getImgStatus() {
         return imgStatus;
@@ -30,19 +30,19 @@ public class ExtraImg {
         this.imgStatus = imgStatus;
     }
 
-    public HashMap<Integer, SrcPair> getLossImgs() {
+    public ArrayMap<Integer,SrcPair> getLossImgs() {
         return lossImgs;
     }
 
-    public void setLossImgs(HashMap<Integer, SrcPair> lossImgs) {
+    public void setLossImgs(ArrayMap<Integer,SrcPair> lossImgs) {
         this.lossImgs = lossImgs;
     }
 
-    public HashMap<Integer, SrcPair> getObtainImgs() {
+    public ArrayMap<Integer,SrcPair> getObtainImgs() {
         return obtainImgs;
     }
 
-    public void setObtainImgs(HashMap<Integer, SrcPair> obtainImgs) {
+    public void setObtainImgs(ArrayMap<Integer,SrcPair> obtainImgs) {
         this.obtainImgs = obtainImgs;
     }
 }

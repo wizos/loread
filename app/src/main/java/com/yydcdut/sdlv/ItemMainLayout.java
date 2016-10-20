@@ -416,7 +416,7 @@ class ItemMainLayout extends FrameLayout {
         mScroller.startScroll(mItemCustomLayout.getLeft(), 0, -mItemCustomLayout.getLeft(), 0, SCROLL_BACK_TIME);
         postInvalidate();
         mScrollState = SCROLL_STATE_CLOSE;
-        System.out.println("【scrollBack 归位 】" + mScrollState);
+//        System.out.println("【scrollBack 归位 】" + mScrollState);
     }
 
     /**

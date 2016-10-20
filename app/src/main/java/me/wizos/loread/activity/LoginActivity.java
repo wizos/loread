@@ -9,6 +9,7 @@ import android.view.View;
 import android.widget.EditText;
 import android.widget.Space;
 
+import com.kyleduo.switchbutton.SwitchButton;
 import com.socks.library.KLog;
 
 import me.wizos.loread.App;
@@ -91,6 +92,10 @@ public class LoginActivity extends BaseActivity implements View.OnLayoutChangeLi
                     if (info==null){ return false; }
                     API.INOREADER_ATUH = "GoogleLogin auth=" + info.split("Auth=")[1].replaceAll("\n", "");
                     WithSet.getInstance().setAuth(API.INOREADER_ATUH);
+                    if( WithSet.getInstance().isInoreaderProxy() ){  // TEST: 其实这段代码应该除去，因为既然在登录界面开启该选项，就说明后续的网络动作都必须要代理才行
+                        WithSet.getInstance().setInoreaderProxy(false);
+                    }
+
                     mNeter.getWithAuth(API.U_USER_INFO);
                     break;
                 case API.S_USER_INFO:
@@ -99,9 +104,10 @@ public class LoginActivity extends BaseActivity implements View.OnLayoutChangeLi
                     finish();
                     goTo(MainActivity.TAG,"syncAll");
                     break;
-                case API.FAILURE:
-                case API.FAILURE_Request:
-                case API.FAILURE_Response:
+                case API.F_NoMsg:
+                case API.F_Request:
+                case API.F_Response:
+                    KLog.d(info);
                     UToast.showShort("登录失败");
                     break;
             }
@@ -173,6 +179,18 @@ public class LoginActivity extends BaseActivity implements View.OnLayoutChangeLi
     @Override
     public void onClick(View v) {
     }
+
+    public void onSBClick(View view){
+        SwitchButton v = (SwitchButton)view;
+        KLog.d( "点击" );
+        switch (v.getId()) {
+            case R.id.setting_inoreader_proxy_sb_flyme:
+                WithSet.getInstance().setInoreaderProxy(v.isChecked());
+                break;
+        }
+        KLog.d("Switch: " , v.isChecked() );
+    }
+
     @Override
     protected void notifyDataChanged(){
     }

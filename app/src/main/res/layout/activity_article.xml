@@ -7,6 +7,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fitsSystemWindows="true"
+    android:background="@color/article_dark_background"
     tools:context=".activity.ArticleActivity">
     <!-- android:fitsSystemWindows="true" 简单的讲：设置应用布局时是否考虑系统窗口布局；如果为true，将调整系统窗口布局以适应你自定义的布局。比如系统有状态栏，应用也有状态栏时。 -->
 
@@ -44,6 +45,7 @@
         app:layout_behavior="@string/appbar_scrolling_view_behavior"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:textColor="@color/article_dark_text"
         android:paddingBottom="@dimen/bottom_bar_height">
         <LinearLayout
             android:layout_width="match_parent"
@@ -54,10 +56,11 @@
             android:padding="12dp">
             <TextView
                 android:id="@+id/article_title"
+                android:background="@color/article_dark_background"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:gravity="center_horizontal"
-                android:textColor="@color/main_grey_dark"
+                tools:text="adfdfdfdfdf"
                 android:textSize="20sp" />
             <LinearLayout
                 android:id="@+id/article_meta"
@@ -104,11 +107,12 @@
         </LinearLayout>
     </android.support.v4.widget.NestedScrollView>
 
+    <!--android:background="@color/white"-->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="@dimen/bottom_bar_height"
-        android:background="@color/white"
         android:gravity="center"
+        android:background="@color/article_dark_background"
         android:layout_gravity="center_vertical|bottom"
         android:layout_alignParentBottom="true">
         <ImageView

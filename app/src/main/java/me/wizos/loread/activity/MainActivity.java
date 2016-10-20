@@ -307,7 +307,11 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
 //            KLog.d("[[1111]=="+ info);
 //            long logTime = msg.getData().getLong("logTime");
             // 虽然可以根据 api 来判断一条请求，但还是需要 时间 logTime ，还有 指定码 code
-            KLog.i("【handler】"  + msg.what +"---"  + handler +"---" + mParser );
+            KLog.i("【handler】"  + msg.what +"---"  +"---"  );
+
+            if ( info == null ){
+                info = "";
+            }
             switch (msg.what) {
                 case API.M_BEGIN_SYNC:
                     if( syncRequestLog()){
@@ -387,8 +391,7 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
                     break;
                 case API.S_ITEM_CONTENTS:
                     KLog.i("【Main 解析 ITEM_CONTENTS 】" + urlState );
-                    if(urlState == 0){
-                    }else if(urlState == 1){
+                    if(urlState == 1){
                         afterItemRefs = mParser.reUnreadUnstarRefs;
                         mParser.parseItemContentsUnreadUnstar(info);
                     }else if(urlState == 2){
@@ -423,7 +426,7 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
                             urlState = 3;
                         }else if(urlState == 3){
                             urlState = 0;
-                            handler.sendEmptyMessage(100);
+                            handler.sendEmptyMessage(API.SUCCESS);
                             return false;
                         }
                         handler.sendEmptyMessage(API.S_ITEM_CONTENTS);
@@ -445,63 +448,48 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
                     break;
                 case API.S_EDIT_TAG:
                     long logTime = msg.getData().getLong("logTime");
+//                    KLog.d("==" + logTime + info );
                     del(logTime);
                     if(!info.equals("OK")){
                         mNeter.forData(url,API.request,logTime);
                         KLog.i("返回的不是 ok");
                     }
                     if( !hadSyncLogRequest && requestMap.size()==0 ){
-//                        handler.sendEmptyMessage(API.M_BEGIN_SYNC) ;
+                        handler.sendEmptyMessage(API.M_BEGIN_SYNC) ;
                         hadSyncLogRequest = true;}
                     break;
                 case API.S_Contents:
                     mParser.parseStreamContents(info);
                     break;
-                case API.FAILURE:
-                case API.FAILURE_Request:
-                case API.FAILURE_Response:
+                case API.F_NoMsg:
+                case API.F_Request:
+                case API.F_Response:
+                    if(info.equals("Authorization Required")){
+                        UToast.showShort("没有Authorization，请重新登录");
+                        finish();
+                        goTo(LoginActivity.TAG,"Login For Authorization");
+                        break;
+                    }
                     numOfFailure = numOfFailure + 1;
                     if (numOfFailure < 3){
                         mNeter.forData(url, API.request, msg.getData().getLong("logTime"));
                         break;
                     }
-                    if(info.equals("Authorization Required")){
-                        UToast.showShort("没有Authorization，请重新登录");
-                        finish();
-                        goTo(LoginActivity.TAG,"Login For Authorization");
-                    }else {
-                        mSwipeRefreshLayout.setRefreshing(false);
-                        mSwipeRefreshLayout.setEnabled(true);
-                        vToolbarHint.setText("");
-                        UToast.showShort("网络不好，更新中断");
-                        saveRequestList();
-                        KLog.i("【网络不好，中断】");
-                    }
+                    mSwipeRefreshLayout.setRefreshing(false);
+                    mSwipeRefreshLayout.setEnabled(true);
+                    vToolbarHint.setText("");
+                    saveRequestList();
+//                    UToast.showShort("网络不好，更新中断");// Note: 没必要，因为已经做了离线环境下，网络操作的保存
                     break;
                 case 88:
                     mParser.parseStreamContents(info);
                     break;
-                case 100:
+                case API.SUCCESS: // 文章获取完成
                     clearArticles(clearBeforeDay);
                     notifyDataChanged();
                     getNumForArts = 0;
                     vToolbarHint.setText("");
                     KLog.i("【文章列表获取完成】" );
-                    break;
-                case 55:
-                    KLog.i("【Handle 55】" );
-//                    KLog.d("[[]=="+ info);
-//                    if(info=="Authorization Required"){
-//                        UToast.showShort("没有Authorization，请重新登录");
-//                        finish();
-//                        goTo(LoginActivity.TAG,"Login For Authorization");
-//                    }
-//                    mSwipeRefreshLayout.setRefreshing(false);
-//                    mSwipeRefreshLayout.setEnabled(true);
-//                    vToolbarHint.setText("");
-//                    UToast.showShort("网络不好，更新中断");
-//                    saveRequestList();
-//                    KLog.i("【网络不好，中断】");
                     break;
             }
             return false;
@@ -512,7 +500,7 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
 
 
 
-    private Map<Long,RequestLog> requestMap = new ArrayMap<>();
+    private ArrayMap<Long,RequestLog> requestMap = new ArrayMap<>();
     @Override
     public void add(RequestLog requestLog){
         if(!requestLog.getHeadParamString().contains("c=")){
@@ -544,7 +532,7 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
             return false;
         }
         vToolbarHint.setText( R.string.main_toolbar_hint_sync_log );
-        WithDB.getInstance().delRequestListAll();
+        WithDB.getInstance().delRequestListAll(); // // TODO: 2016/10/20 不能先删除，可能删除后，手机退出，那么这些记录就丢失了
         hadSyncLogRequest = false;
         // TODO: 2016/5/26 将这个改为 json 格式来持久化 RequestLog 对象 ？貌似也不好
         for(RequestLog requestLog:requestLogs){
@@ -770,8 +758,10 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
                                         break;
                                     case 2:
                                         Article article = articleList.get(position);
-                                        article.setReadState(API.ART_UNREAD);
+                                        article.setReadState(API.ART_READING);
                                         mNeter.postUnReadArticle( article.getId() );
+                                        WithDB.getInstance().saveArticle(article);
+                                        mainSlvAdapter.notifyDataSetChanged();
                                         break;
                                 }
 
@@ -831,16 +821,16 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
 
 
 
-    private static final int MSG_DOUBLE_TAP = 0;
+
     @Override
     public void onClick(View v) {
         switch (v.getId()) {
             case R.id.main_toolbar:
-                if (handler.hasMessages(MSG_DOUBLE_TAP)) {
-                    handler.removeMessages(MSG_DOUBLE_TAP);
+                if (handler.hasMessages(API.MSG_DOUBLE_TAP)) {
+                    handler.removeMessages(API.MSG_DOUBLE_TAP);
                     slv.smoothScrollToPosition(0);
                 } else {
-                    handler.sendEmptyMessageDelayed(MSG_DOUBLE_TAP, ViewConfiguration.getDoubleTapTimeout());
+                    handler.sendEmptyMessageDelayed(API.MSG_DOUBLE_TAP, ViewConfiguration.getDoubleTapTimeout());
                 }
                 break;
         }

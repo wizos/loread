@@ -1,6 +1,8 @@
 package me.wizos.loread.utils;
 
 
+import android.support.v4.util.ArrayMap;
+
 import com.socks.library.KLog;
 
 import java.io.File;
@@ -8,7 +10,6 @@ import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 
 import me.wizos.loread.App;
@@ -64,14 +65,14 @@ public class UString {
      * @param fileNameInMD5 MD5 加密后的文件名，用于有图片的文章内 src 的 **FileName_files 路径
      * @return
      */
-    public static HashMap<Integer,SrcPair> getListOfSrcAndHtml(String oldHtml, String fileNameInMD5) {
+    public static ArrayMap<Integer,SrcPair> getListOfSrcAndHtml(String oldHtml, String fileNameInMD5) {
         if (UString.isBlank(oldHtml))
             return null;
         int num = 0;
         StringBuilder tempHtml = new StringBuilder(oldHtml);
 
         String srcLocal,srcNet,srcSavePath,imgExt,imgName,temp;
-        HashMap<Integer,SrcPair> srcMap = new HashMap<>();
+        ArrayMap<Integer,SrcPair> srcMap = new ArrayMap<>();
         srcMap.put(0, new SrcPair("","","")); // 先存一个空的，方便后面把修改后的正文放进来
         int indexA = tempHtml.indexOf("<img ", 0), indexB;
         while (indexA != -1) {
