@@ -4,7 +4,7 @@ import com.squareup.okhttp.Request;
 
 import java.util.ArrayList;
 
-import me.wizos.loread.gson.Item;
+import me.wizos.loread.bean.gson.Item;
 
 /**
  * Created by Wizos on 2016/3/5.

@@ -13,7 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import me.wizos.loread.App;
-import me.wizos.loread.gson.SrcPair;
+import me.wizos.loread.bean.gson.SrcPair;
 import me.wizos.loread.net.API;
 
 /**
@@ -191,6 +191,8 @@ public class UString {
         fileName.replace("<","");
         fileName.replace(">","");
         fileName.replace("|","");
+
+        fileName.replace("%","_");
         KLog.e("【文件名】" + fileName);
         return fileName;
     }

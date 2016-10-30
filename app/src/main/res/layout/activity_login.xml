@@ -51,7 +51,7 @@
             android:layout_weight="0" />
 
         <!-- Using app:cardMaxElevation as margin. -->
-        <me.wizos.loread.view.FriendlyCardView
+        <me.wizos.loread.view.common.FriendlyCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="-8dp"
@@ -135,7 +135,7 @@
                 android:indeterminate="true"
                 android:visibility="invisible"
                 style="@style/Widget.MaterialProgressBar.ProgressBar" />
-        </me.wizos.loread.view.FriendlyCardView>
+        </me.wizos.loread.view.common.FriendlyCardView>
 
         <LinearLayout
             android:id="@+id/setting_inoreader_proxy"

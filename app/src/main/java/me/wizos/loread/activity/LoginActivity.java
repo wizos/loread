@@ -54,7 +54,7 @@ public class LoginActivity extends BaseActivity implements View.OnLayoutChangeLi
 
     }
     protected Neter mNeter;
-    protected Parser mParser = new Parser();
+//    protected Parser mParser = new Parser();
 
     @Override
     protected Context getActivity(){
@@ -66,7 +66,13 @@ public class LoginActivity extends BaseActivity implements View.OnLayoutChangeLi
         return TAG;
     }
 
-
+    @Override
+    protected void onDestroy() {
+        // 如果参数为null的话，会将所有的Callbacks和Messages全部清除掉。
+        // 这样做的好处是在Acticity退出的时候，可以避免内存泄露。因为 handler 内可能引用 Activity ，导致 Activity 退出后，内存泄漏。
+        handler.removeCallbacksAndMessages(null);
+        super.onDestroy();
+    }
 
     private void recoverData(){
         mAccountID = WithSet.getInstance().getAccountID();
@@ -99,7 +105,7 @@ public class LoginActivity extends BaseActivity implements View.OnLayoutChangeLi
                     mNeter.getWithAuth(API.U_USER_INFO);
                     break;
                 case API.S_USER_INFO:
-                    long mUserID = mParser.parseUserInfo(info);
+                    long mUserID = Parser.instance().parseUserInfo(info);
                     WithSet.getInstance().setUseId(mUserID);
                     finish();
                     goTo(MainActivity.TAG,"syncAll");
@@ -172,7 +178,7 @@ public class LoginActivity extends BaseActivity implements View.OnLayoutChangeLi
         mNeter.addBody("Email", mAccountID);
         mNeter.addBody("Passwd", mAccountPD);
         mNeter.post(API.U_CLIENTLOGIN ,0);
-        KLog.d("【handler】" + mNeter + "-" + mParser);
+        KLog.d("【handler】" + mNeter + "-" );
     }
 
 

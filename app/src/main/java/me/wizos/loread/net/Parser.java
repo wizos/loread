@@ -13,23 +13,26 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
+import me.wizos.loread.activity.MainActivity;
 import me.wizos.loread.bean.Article;
 import me.wizos.loread.bean.Tag;
+import me.wizos.loread.bean.gson.GsItemContents;
+import me.wizos.loread.bean.gson.GsStreamContents;
+import me.wizos.loread.bean.gson.GsSubscriptions;
+import me.wizos.loread.bean.gson.GsTags;
+import me.wizos.loread.bean.gson.GsUnreadCount;
+import me.wizos.loread.bean.gson.ItemIDs;
+import me.wizos.loread.bean.gson.ItemRefs;
+import me.wizos.loread.bean.gson.StreamPref;
+import me.wizos.loread.bean.gson.StreamPrefs;
+import me.wizos.loread.bean.gson.Sub;
+import me.wizos.loread.bean.gson.SubCategories;
+import me.wizos.loread.bean.gson.UnreadCounts;
+import me.wizos.loread.bean.gson.UserInfo;
+import me.wizos.loread.bean.gson.itemContents.Items;
+import me.wizos.loread.bean.gson.itemContents.Origin;
 import me.wizos.loread.data.WithDB;
 import me.wizos.loread.data.WithSet;
-import me.wizos.loread.gson.GsItemContents;
-import me.wizos.loread.gson.GsStreamContents;
-import me.wizos.loread.gson.GsSubscriptions;
-import me.wizos.loread.gson.GsTags;
-import me.wizos.loread.gson.GsUnreadCount;
-import me.wizos.loread.gson.ItemIDs;
-import me.wizos.loread.gson.ItemRefs;
-import me.wizos.loread.gson.StreamPref;
-import me.wizos.loread.gson.StreamPrefs;
-import me.wizos.loread.gson.Sub;
-import me.wizos.loread.gson.UnreadCounts;
-import me.wizos.loread.gson.UserInfo;
-import me.wizos.loread.gson.itemContents.Items;
 import me.wizos.loread.utils.UFile;
 import me.wizos.loread.utils.UString;
 
@@ -37,30 +40,26 @@ import me.wizos.loread.utils.UString;
  * Created by Wizos on 2016/3/10.
  */
 public class Parser {
-
-//    public GsStreamContents sContents;
-//    public String mTagsOrder;
-//    public ArrayList<Item> itemArray;
-//    public String mUserName;
-//    public String mUserProfileId;
-//    public String mUserEmail;
-//    public Boolean mIsBloggerUser;
-//    public long mSignupTimeSec;
-//    public Boolean mIsMultiLoginEnabled;
-
+    private static Parser parser;
 
     private Gson gson;
 
-    public Parser(){
-//        long uu = System.currentTimeMillis(); // 使用取得数据库的未读/加星的数目为初始容量时，耗时 70，改为数字后，耗时 0
-//        allStarredRefs = new ArrayList<>( 500 );
-//        allUnreadRefs = new ArrayList<>( 1000 );
-//        long gg = System.currentTimeMillis() - uu ;
-//        KLog.d("用时：" , gg );
+    private Parser(){
         if(gson==null){
             gson = new Gson();
         }
     }
+    public static Parser instance(){
+        if (parser == null) { // 双重锁定，只有在 parser 还没被初始化的时候才会进入到下一行，然后加上同步锁
+            synchronized (Parser.class) { // 同步锁，避免多线程时可能 new 出两个实例的情况
+                if ( parser == null) {
+                    parser = new Parser();
+                }
+            }
+        }
+        return parser;
+    }
+
 
     public long parseUserInfo(String info){
         UserInfo userInfo = gson.fromJson(info, UserInfo.class);
@@ -152,9 +151,7 @@ public class Parser {
         }
         return orderingArray;
     }
-    private void saveReTags(){
-        WithDB.getInstance().saveTagList(reTagList);
-    }
+
     public void orderTags(){
         // 排序,通过泛型和匿名类来实现
         // <? super T>表示包括T在内的任何T的父类，<? extends T>表示包括T在内的任何T的子类。http://www.cnblogs.com/friends-wf/p/3582841.html
@@ -191,7 +188,7 @@ public class Parser {
                 }
             }
         }
-        saveReTags();
+        WithDB.getInstance().saveTagList(reTagList);
     }
 
 
@@ -224,12 +221,9 @@ public class Parser {
      * 2，同理得到加星的 本地 starList 与 云端 staredRefs
      * 3，去重 readList 与 starList 得到 reReadStaredRefs，reReadUnstarRefs，reUnreadStaredRefs
      */
-    // 【以下为错误】因为参数不能重复添加一个。服务器没有直接给出 unreadRefs
-    // 我想 获取 UnreadRefs StarredRefs，再分出 reUnreadRefs reStarredRefs reUnreadStarredRefs。以保证保存到数据库的文章的初始属性不一致，其实完全没有必要
-    // 只要在获取 Refs 时加上参数，就可分出了。
 
     /**
-     * 本地与云端去重的 2 种思路的测试比对：比较字符串是否相等很费时间
+     * 本地与云端去重的 2 种思路的测试比对：（比较字符串是否相等很费时间）
      * 1，循环本地未读 AList 放入 map，循环云端未读 BRefs 内每项在 map 内是否存在：存在 value+1，不在的再查该条是否存在于数据中否则放入 CRefs 。循环 map 内 value = 1 的
      * 2，循环本地所有 AList 放入 map，循环云端未读 BList 内每项在 map 内是否存在：存在再查数据库取出 Article 并判断状态 （状态字符串是否相等）。
      *
@@ -339,7 +333,7 @@ public class Parser {
             arrayCapacity = unreadRefs.size();
         }
         reUnreadUnstarRefs = new ArrayList<>( unreadRefs.size() );
-        reUnreadStarredRefs = new ArrayList<>(arrayCapacity);
+        reUnreadStarredRefs = new ArrayList<>( arrayCapacity );
         reReadStarredRefs = new ArrayList<>( starredRefs.size() );
         Map<String,Integer> map = new ArrayMap<>( unreadRefs.size() + starredRefs.size() );
         Map<String,ItemRefs> mapArray = new ArrayMap<>( unreadRefs.size() );
@@ -364,165 +358,6 @@ public class Parser {
         KLog.d("【reRefs】测试" + reUnreadUnstarRefs.size() + "--" + reReadStarredRefs.size() + "--" + reUnreadStarredRefs.size() );
         return reUnreadUnstarRefs.size() + reReadStarredRefs.size() + reUnreadStarredRefs.size();
     }
-
-//    public interface CheckResult<T,S>{
-//        void listA(T a);
-//        void listB(S b);
-////        void listX(U u);
-//        Object compareAAttr(T a);
-//        Object compareBAttr(S b);
-//    }
-//    public <T,S>  void checkRepeat(List<T> listA,List<S> listB ,CheckResult<? super T,S> result){
-//        if (listA.getClass() == ArrayList.class && listB.getClass() == ArrayList.class) {
-//            Map<Object,Integer> map = new ArrayMap<>( listA.size() + listB.size() );
-//            Map<Object,Object> mapA = new ArrayMap<>( listA.size() + listB.size() );
-//            for (T a:listA){
-//                map.put( result.compareAAttr(a) ,1 );
-//                mapA.put(result.compareAAttr(a),a );
-//            }
-//            for (S b:listB){
-//                Integer cc = map.get( result.compareBAttr(b) );
-//                if( cc!=null ) {
-//                    map.put( result.compareBAttr(b) ,+cc );
-//                }else {
-//                    result.listB(b);
-//                }
-//            }
-//            for( Map.Entry<Object, Integer> entry: map.entrySet()) {
-//                if(entry.getValue()==1) {
-//                    result.listA((T) mapA.get(entry.getKey()));
-//                }
-//            }
-//        }
-//    }
-//    private ArrayList<Article> listA;
-//    private ArrayList<ItemRefs> listB;
-//    public ArrayList<ItemRefs> reStarredRefsB(){
-//        List<Article> beforeStarredList = IDataModel.getInstance().loadStarAll();
-//        listA =  new ArrayList<>( beforeStarredList.size() );
-//        listB = new ArrayList<>( allStarredRefs.size() );
-//
-//        checkRepeat( beforeStarredList, allStarredRefs, new CheckResult<Article, ItemRefs>() {
-//            @Override
-//            public void listA(Article article) {
-//                article.setStarState(API.ART_UNSTAR);
-//                listA.add(article);// 取消加星
-//            }
-//            @Override
-//            public void listB(ItemRefs itemRefs) {
-//                Article article = IDataModel.getInstance().getArticle( UString.toLongID(itemRefs.getId()) );
-//                if(article!=null){
-//                    article.setStarState(API.ART_STAR);// 2，去掉“本地有，状态为未加星”的
-//                    listA.add(article);
-//                }else {
-//                    listB.add(itemRefs);// 3，就剩云端的，要请求的加星资源（但是还是含有一些要请求的未读资源）
-//                }
-//            }
-//            @Override
-//            public Object compareAAttr(Article attr) {
-//                return attr.getId();
-//            }
-//            @Override
-//            public Object compareBAttr(ItemRefs attr) {
-//                return attr.getId();
-//            }
-//        });
-////        System.out.println("【reStarredList】" + beforeStarredList.size() + "==" + allStarredRefs.size() +"==" + starList.size() +"=="+ starredRefs.size());
-//        IDataModel.getInstance().saveArticleList(listA);
-//        allStarredRefs = new ArrayList<>();
-//        return listB;
-//    }
-
-//    public void parseItemContentsUnreadUnstar(String info){
-//        if(!beforeParseContents(info)){return;}
-//        for ( Items items: currentItemsArray  ) {
-//            betweenParseContents(items);
-//            article.setReadState(API.ART_UNREAD);
-//            article.setStarState(API.ART_UNSTAR);
-//            saveList.add(article);
-//        }
-//        afterParseContents();
-//    }
-//    public void parseItemContentsUnreadStarred(String info){
-//        if(!beforeParseContents(info)){return;}
-//        for ( Items items: currentItemsArray  ) {
-//            betweenParseContents(items);
-//            article.setReadState(API.ART_UNREAD);
-//            article.setStarState(API.ART_STAR);
-//            saveList.add(article);
-//        }
-//        afterParseContents();
-//    }
-//    public void parseItemContentsReadStarred(String info){
-//        if(!beforeParseContents(info)){return;}
-//        for ( Items items: currentItemsArray  ) {
-//            betweenParseContents(items);
-//            article.setReadState(API.ART_READ);
-//            article.setStarState(API.ART_STAR);
-//            saveList.add(article);
-//        }
-//        afterParseContents();
-//    }
-//
-//    public String parseStreamContentsStarred(String info){
-//        if(!beforeParseContents(info)){return "";}
-//        for ( Items items: currentItemsArray  ) {
-//            betweenParseContents(items);
-//            article.setReadState(API.ART_READ);
-//            article.setStarState(API.ART_STAR);
-//            saveList.add(article);
-//        }
-//        afterParseContents();
-//        return gsItemContents.getContinuation();
-//    }
-//    private GsItemContents gsItemContents;
-//    private ArrayList<Items> currentItemsArray;
-//    private ArrayList<Article> saveList;
-//    private Article article;
-//    private String summary = "",html = "";
-//    private boolean beforeParseContents(String info){
-//        if(info==null || info.equals("")){return false;} // 如果返回 null 会与正常获取到流末端时返回 continuation = null 相同，导致调用该函数的那端误以为是正常的 continuation = null
-//        Gson gson = new Gson();
-//        gsItemContents = gson.fromJson(info, GsItemContents.class);
-//        currentItemsArray = gsItemContents.getItems();
-//        saveList = new ArrayList<>( currentItemsArray.size() ) ;
-//        return true;
-//    }
-//    private void betweenParseContents(Items items){
-//        article = new Article();
-//        article.setId(items.getId());
-//        article.setCrawlTimeMsec(items.getCrawlTimeMsec());
-//        article.setTimestampUsec(items.getTimestampUsec());
-//        article.setCategories(items.getCategories().toString());
-//        article.setTitle(items.getTitle());
-//        article.setPublished(items.getPublished());
-//        article.setUpdated(items.getUpdated());
-//        article.setCanonical(items.getCanonical().get(0).getHref());
-//        article.setAlternate(items.getAlternate().toString());
-//        article.setAuthor(items.getAuthor());
-//
-//        html = items.getSummary().getContent();
-//        summary = Html.fromHtml(html).toString();
-//        if(summary.length()>92){
-//            article.setSummary(summary.substring(0,92));
-//        }else {
-//            article.setSummary(summary.substring(0,summary.length()));
-//        }
-//        article.setOrigin(items.getOrigin().toString());
-//        UFile.saveHtml(UString.stringToMD5(article.getId()), html);
-//    }
-//    private void afterParseContents(){
-//        IDataModel.getInstance().saveArticleList(saveList);
-//        gsItemContents = null;
-//        currentItemsArray = null;
-//        saveList = null;
-//        article = null;
-//        summary = "";
-//        html = "";
-//
-//        Html.fromHtml(summary,null,null);
-//    }
-
 
 
     public void parseItemContentsUnreadUnstar(String info){
@@ -565,24 +400,19 @@ public class Parser {
             }
         });
     }
-
-
-    public void parseItemContentsReadStarred(){
-
-    }
-
-    public interface ArticleChanger{
+    private interface ArticleChanger{
         Article change(Article article);
     }
     /**
-     * 这里用两种方法来实现了函数 A B C 共用一个主函数 X ，但各自在主函数中的某些语句又不同
+     * 这里有两种方法来实现了函数 A B C 共用一个主函数 X ，但各自在主函数中的某些语句又不同
      * 1.是采用分割主函数为多个函数 X[]，再在要在具体的函数 A B C 内拼接调用 X[]。
-     * 2.是采用接口类作为主函数 X 的参数传递，在调用具体的函数 A B C 时，将各自要不同的语句在该接口内实现
-     * 古老的原始代码是函数 A B C 都各自再写一遍共用函数
+     * 2.（目前）是采用接口类作为主函数 X 的参数传递，在调用具体的函数 A B C 时，将各自要不同的语句在该接口内实现
+     * 之前的代码是函数 A B C 都各自再写一遍共用函数
      * 使用接口类作为参数传递，实际上是让调用者来实现具体语句
-     * @param info
+     * @param info 获得的响应体
+     * @param articleChanger 回调，用于修改 Article 对象
      */
-    public String parseItemContents(String info,ArticleChanger ArticleChanger){
+    private String parseItemContents( String info, ArticleChanger articleChanger ){
         if(info==null || info.equals("")){return "";}// 如果返回 null 会与正常获取到流末端时返回 continuation = null 相同，导致调用该函数的那端误以为是正常的 continuation = null
         Gson gson = new Gson();
         GsItemContents gsItemContents = gson.fromJson(info, GsItemContents.class);
@@ -610,7 +440,7 @@ public class Parser {
             }else {
                 article.setSummary(summary.substring(0,summary.length()));
             }
-            article = ArticleChanger.change(article);
+            article = articleChanger.change(article);
 
             UFile.saveCacheHtml(UString.stringToMD5(article.getId()), html);
             saveList.add(article);
@@ -627,6 +457,78 @@ public class Parser {
             UFile.saveCacheHtml(UString.stringToMD5(items.getId()), items.getSummary().getContent()  );
         }
     }
+
+
+    /**
+     * 更新所有的已保存文章的分组等信息
+     * @param subs
+     */
+    public void updateArticles(ArrayList<Sub> subs){
+        List<Article> allStarArts = WithDB.getInstance().loadStarAll();
+        List<Tag> allTags = WithDB.getInstance().loadTags();
+        Gson gson = new Gson();
+        Origin origin;
+        Map<String,Sub> mapSub = new ArrayMap<>(subs.size());
+        Map<String,String> mapTag = new ArrayMap<>(allTags.size());
+        // 此处比较是否存在有个性能疑问，是用字符串是否包含还是map是否包含来判断呢？
+        for (Sub sub:subs){
+            mapSub.put(sub.getId(),sub);
+        }
+        for(Tag tag:allTags){
+            mapTag.put(tag.getTitle(),tag.getId());
+        }
+
+        for ( Article article : allStarArts ){
+            origin  = gson.fromJson( article.getOrigin() ,Origin.class );
+            String streamIdOfArticle = origin.getStreamId();
+
+            if ( mapSub.containsKey( streamIdOfArticle )){ // 判断是否还订阅着这篇文章的站点
+                // 情况1，还在订阅着，但是云端分组名已变（一个订阅源可能属于多个分组）
+//                subscription = mapSub.get( streamIdOfArticle );
+//                artCategories = m.replaceFirst( subscription.getCategories().get(0).getId() );
+
+                // 构建没有 label 的 分类String
+                StringBuilder newCategories = new StringBuilder( article.getCategories().length() );
+                String[] categories = article.getCategories().replace("]","").replace("[","").split(", ");
+                for (String cateId:categories ){
+                    if ( !cateId.contains( "user/"+ MainActivity.mUserID + "/label/" )){
+                        newCategories.append(cateId);
+                        newCategories.append(", ");
+                    }else {
+                        break;
+                    }
+                }
+                ArrayList<SubCategories> newSubCategories = mapSub.get( streamIdOfArticle ).getCategories();
+                for( SubCategories cate: newSubCategories ){
+                    newCategories.append( cate.getId() );
+                    newCategories.append(", ");
+                }
+                newCategories.deleteCharAt(newCategories.length()-2);
+                newCategories.append("]");
+                newCategories.insert(0,"[");
+                KLog.d("【==】" + newCategories );
+                article.setCategories( newCategories.toString() );
+            }else {
+                // 情况2，该文章的源站点已经退订
+                StringBuilder newCategories = new StringBuilder(  article.getCategories().length()  );
+                String[] categories = article.getCategories().replace("]","").replace("[","").split(", ");
+                for (String cate:categories ){
+                    if ( !cate.contains( "user/"+ MainActivity.mUserID + "/label/" )){
+                        newCategories.append(cate);
+                        newCategories.append(", ");
+                    }else if( mapTag.containsValue(cate) ) {
+                        newCategories.append(cate);
+                        newCategories.append(", ");
+                    }
+                }
+                newCategories.deleteCharAt(newCategories.length()-2);
+                article.setCategories( newCategories.toString() );
+            }
+            WithDB.getInstance().saveArticle( article );
+        }
+    }
+
+
 
 
 

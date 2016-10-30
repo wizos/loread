@@ -11,10 +11,10 @@ import me.wizos.loread.bean.Article;
 import me.wizos.loread.bean.Feed;
 import me.wizos.loread.bean.RequestLog;
 import me.wizos.loread.bean.Tag;
-import me.wizos.loread.dao.ArticleDao;
-import me.wizos.loread.dao.FeedDao;
-import me.wizos.loread.dao.RequestLogDao;
-import me.wizos.loread.dao.TagDao;
+import me.wizos.loread.data.dao.ArticleDao;
+import me.wizos.loread.data.dao.FeedDao;
+import me.wizos.loread.data.dao.RequestLogDao;
+import me.wizos.loread.data.dao.TagDao;
 import me.wizos.loread.net.API;
 
 /**

@@ -11,8 +11,8 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-import me.wizos.loread.dao.DaoMaster;
-import me.wizos.loread.dao.DaoSession;
+import me.wizos.loread.data.dao.DaoMaster;
+import me.wizos.loread.data.dao.DaoSession;
 
 /**
  * Created by Wizos on 2015/12/24.

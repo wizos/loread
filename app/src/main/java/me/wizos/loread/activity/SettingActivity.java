@@ -61,6 +61,7 @@ public class SettingActivity extends BaseActivity {
     public void onClick(View v) {
     }
 
+
     private SwitchButton syncFirstOpen,syncAllStarred,downImgWifi,inoreaderProxy,scrollMark,orderTagFeed;
     private TextView clearBeforeDaySummary;
     private Button clearLog;

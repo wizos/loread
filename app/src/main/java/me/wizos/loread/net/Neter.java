@@ -18,8 +18,8 @@ import java.io.InputStream;
 import java.util.ArrayList;
 
 import me.wizos.loread.bean.RequestLog;
+import me.wizos.loread.bean.gson.SrcPair;
 import me.wizos.loread.data.WithSet;
-import me.wizos.loread.gson.SrcPair;
 import me.wizos.loread.utils.HttpUtil;
 import me.wizos.loread.utils.UFile;
 import me.wizos.loread.utils.UString;
@@ -46,20 +46,24 @@ public class Neter {
      * 2，是仅预置好 AppId AppKey 的 getWithAuth , postWithAuth
      * 3，是最基本的 get post 方法，不带有参数
      */
-
-    public void getUnReadRefs(final String url,long mUserID){
+    /**
+     * HTTP 异步请求。
+     *
+     * @param mUserID  要获取的用户
+     */
+    public void getUnReadRefs( long mUserID ){
         addHeader("n","160");
         addHeader("ot","0");
         addHeader("xt","user/"+ mUserID+"/state/com.google/read");
         addHeader("s", "user/" + mUserID + "/state/com.google/reading-list");
-        getWithAuth(url);
+        getWithAuth( API.U_ITEM_IDS );
     }
 
-    public void getStarredRefs(final String url,long mUserID){
+    public void getStarredRefs( long mUserID){
         addHeader("n","160");
         addHeader("ot","0");
         addHeader("s", "user/" + mUserID + "/state/com.google/starred");
-        getWithAuth(url);
+        getWithAuth( API.U_ITEM_IDS );
     }
     public void getStarredContents(){
         addHeader("n","20");
@@ -117,6 +121,7 @@ public class Neter {
         KLog.d("【执行 getWithAuth 】" + url);
         if(!HttpUtil.isNetworkEnabled(context)){
             headParamList.clear();
+//            headersMap.clear();
             handler.sendEmptyMessage(API.F_NoMsg);
             return;}
 
@@ -125,6 +130,7 @@ public class Neter {
         for ( String[] param : headParamList) {
             paraString = paraString + param[0] + "=" + param[1] + "&";
         }
+        headParamList.clear(); // headParamList = new ArrayList<>();
 
         //just for InoreaderProxy
         if( WithSet.getInstance().isInoreaderProxy() ){
@@ -132,7 +138,6 @@ public class Neter {
             url = API.proxySite;
         }
 
-        headParamList.clear(); // headParamList = new ArrayList<>();
         if (paraString.equals("?")) {
             paraString = "";
         }
@@ -140,11 +145,7 @@ public class Neter {
         builder.url(url)
                 .addHeader("AppId", API.INOREADER_APP_ID)
                 .addHeader("AppKey", API.INOREADER_APP_KEY);
-        if( WithSet.getInstance().isInoreaderProxy() ){
-            builder.addHeader("Auth", API.INOREADER_ATUH);
-        }else {
-            builder.addHeader("Authorization", API.INOREADER_ATUH);
-        }
+        builder.addHeader("Authorization", API.INOREADER_ATUH);
         Request request = builder.build();
         forData(url, request,0);
     }
@@ -158,7 +159,10 @@ public class Neter {
             addHeader("Authorization", API.INOREADER_ATUH);
         }
         long logTime = System.currentTimeMillis();
-        toRequest(API.U_EDIT_TAG, "post", logTime, headParamList, bodyParamList);
+
+        if(requestlogger!=null){
+            requestlogger.logRequest( toRequest(API.U_EDIT_TAG, "post", logTime, headParamList, bodyParamList) );
+        }
         post(url,logTime);
     }
     public void postWithAuth(final String url) {
@@ -176,6 +180,8 @@ public class Neter {
         if(!HttpUtil.isNetworkEnabled(context)){
             headParamList.clear();
             bodyParamList.clear();
+//            headersMap.clear();
+//            bodyParamsMap.clear();
             handler.sendEmptyMessage(API.F_NoMsg);
             return;}
         // 构建请求头
@@ -185,6 +191,11 @@ public class Neter {
             headBuilder.addHeader( param[0], param[1] );
         }
         headParamList.clear();
+//        for( Map.Entry<String,String> entry : headersMap.entrySet() ){
+//            KLog.d( entry.getKey() + entry.getValue() );
+//            headBuilder.addHeader( entry.getKey(), entry.getValue() );
+//        }
+//        headersMap.clear();
 
         KLog.d("----");
         // 构建请求体
@@ -194,6 +205,13 @@ public class Neter {
             KLog.d(param[0] + param[1]);
         }
         bodyParamList.clear();
+
+//        for( Map.Entry<String,String> entry : bodyParamsMap.entrySet() ){
+//            KLog.d( entry.getKey() + entry.getValue() );
+//            headBuilder.addHeader( entry.getKey(), entry.getValue() );
+//        }
+//        bodyParamsMap.clear();
+
         //just for InoreaderProxy
         if( WithSet.getInstance().isInoreaderProxy() ){
             bodyBuilder.add( "action", convertPostUrlForProxy(url) );
@@ -205,38 +223,7 @@ public class Neter {
     }
 
 
-    private String convertPostUrlForProxy( String url ){
-        String action = "";
-        if(url.equals(API.U_CLIENTLOGIN)){
-            action = "login";
-        }else if( url.equals(API.U_ITEM_CONTENTS) ){
-            action = "item_contents";
-        }else if( url.equals(API.U_EDIT_TAG) ){
-            action = "edit_tag";
-        }
-        return action;
-    }
-    private String convertGetUrlForProxy( String url ){
-        String action = "";
-        if(url.equals(API.U_USER_INFO)){
-            action = "user_info";
-        }else if( url.equals(API.U_TAGS_LIST) ){
-            action = "tag_list";
-        }else if( url.equals(API.U_STREAM_PREFS) ){
-            action = "stream_prefs";
-        }else if( url.equals(API.U_SUSCRIPTION_LIST) ){
-            action = "suscription_list";
-        }else if( url.equals(API.U_UNREAD_COUNTS) ){
-            action = "unread_counts";
-        }else if( url.equals(API.U_ITEM_IDS) ){
-            action = "item_ids";
-        }else if( url.equals(API.U_ARTICLE_CONTENTS) ){
-            action = "article_contents";
-        }else if( url.equals(API.U_STREAM_CONTENTS) ){
-            action = "stream_contents";
-        }
-        return action;
-    }
+
     public void forData(final String url, final Request request ,final long logTime) {
         if( !HttpUtil.isNetworkEnabled(context) ){
             handler.sendEmptyMessage(API.F_NoMsg);
@@ -291,15 +278,7 @@ public class Neter {
         Bundle bundle = new Bundle();
         bundle.putString("url", url);
         bundle.putLong("logTime",logTime);
-// 有些可能 url 一样，但头部不一样。而我又是靠 url 来区分请求，从而进行下一步的。
-//        if (res.equals("noRequest")) {
-//            message.what = API.FAILURE_Request;
-//        } else if (res.equals("noResponse")) {
-//            message.what = API.FAILURE_Response;
-//        } else {
-//            bundle.putString("res", res);
-//            message.what = API.url2int(url);
-//        }
+
         message.what = msgCode;
         bundle.putString("res", res);
         message.setData(bundle);
@@ -308,139 +287,13 @@ public class Neter {
     }
 
 
-//    public interface Call{
-//        void onSuccess(long logTime);
-//    }
-//    public void post(final String url,final long logTime,final Call call) { // just for login
-//        KLog.d("【执行 = " + url + "】");
-//        if(!isNetworkEnabled(context)){
-//            headParamList.clear();
-//            bodyParamList.clear();
-//            handler.sendEmptyMessage(55);
-//            return;}
-//        // 构建请求头
-//        Request.Builder headBuilder = new Request.Builder().url(url);
-//        for ( Parameter para : headParamList) {
-//            headBuilder.addHeader(para.getKey(), para.getValue());
-//        }
-//        headParamList.clear();
-//
-//        // 构建请求体
-//        FormEncodingBuilder bodyBuilder = new FormEncodingBuilder();
-//        for ( Parameter para : bodyParamList ) {
-//            bodyBuilder.add( para.getKey(), para.getValue());
-//        }
-//        bodyParamList.clear();
-//
-//        RequestBody body = bodyBuilder.build();
-//        final Request request = headBuilder.post(body).build();
-//
-//        if( !isNetworkEnabled(context) ){
-//            handler.sendEmptyMessage(55);
-//            return ;}
-//        KLog.d("【开始请求】 "+ logTime + url);
-//
-//        new Thread(new Runnable() {
-//            @Override
-//            public void run() {
-//                HttpUtil.enqueue(request, new Callback() {
-//                    @Override
-//                    public void onFailure(Request request, IOException e) {
-//                        KLog.d("【请求失败】" + url );
-//                        API.request = request;
-//                        makeMsg(url, "noRequest",logTime);
-//                    }
-//                    @Override
-//                    public void onResponse(Response response) throws IOException {
-//                        if (!response.isSuccessful()) {
-//                            KLog.d("【响应失败】" + response);
-//                            API.request = request;
-//                            makeMsg(url, "noResponse",logTime);
-//                            return;
-//                        }
-//                        try {
-//                            String res = response.body().string();
-//                            call.onSuccess(logTime);
-//                            makeMsg(url, res,logTime);
-//                        }catch (SocketTimeoutException e) {
-//                            KLog.d("【超时】");
-//                            API.request = request;
-//                            makeMsg(url, "noResponse", logTime);
-//                            e.printStackTrace();
-//                        }
-//
-//                    }
-//                });
-//            }
-//        }).start();
-//    }
-
-
-
-//    public static class Builder {
-//        private ArrayList<String[]> headParamList;
-//        private ArrayList<String[]> bodyParamList;
-//        private Parameter parameter;
-//
-//        public Builder(ArrayList<String[]> headParams,ArrayList<String[]> bodyParams){
-//            headParamList = headParams;
-//            bodyParamList = bodyParams;
-//        }
-//        public Builder addHeader(ArrayList<String[]> params){
-//            headParamList.addAll(params);
-//            return this;
-//        }
-//        public Builder addHeader(String[] params){
-//            headParamList.add(params);
-//            return this;
-//        }
-//        public Builder addHeader(String key ,String value){
-//            String[] params = new String[2];
-//            params[0] = key;
-//            params[1] = value;
-//            headParamList.add(params);
-//            return this;
-//        }
-//        public Builder addBody(ArrayList<String[]> params){
-//            bodyParamList.addAll(params);
-//            return this;
-//        }
-//        public Builder addBody(String[] params){
-//            bodyParamList.add(params);
-//            return this;
-//        }
-//        public Builder addBody(String key ,String value){
-//            String[] params = new String[2];
-//            params[0] = key;
-//            params[1] = value;
-//            bodyParamList.add(params);
-//            return this;
-//        }
-//        public ArrayList<ArrayList> build() {
-//            ArrayList<ArrayList> arrayList = new ArrayList<>();
-//            arrayList.add(headParamList);
-//            arrayList.add(bodyParamList);
-//            return arrayList;
-//        }
-//    }
-
-
-//    private ArrayList<Parameter> headParamList = new ArrayList<>();
-//    private ArrayList<Parameter> bodyParamList = new ArrayList<>();
-//    private ArrayList<String[]> paramList = new ArrayList<>();
-
     private ArrayList<String[]> headParamList = new ArrayList<>();
     private ArrayList<String[]> bodyParamList = new ArrayList<>();
-
-    private Parameter parameter;
     public void addHeader(String key ,String value){
-//        parameter = new Parameter(key,value);
-//        headParamList.add(parameter);
         String[] params = new String[2];
         params[0] = key;
         params[1] = value;
         headParamList.add(params);
-
     }
     public void addHeader(ArrayList<String[]> params){
         headParamList.addAll(params);
@@ -449,8 +302,6 @@ public class Neter {
         headParamList.add(params);
     }
     public void addBody(String key ,String value){
-//        parameter = new Parameter(key,value);
-//        bodyParamList.add(parameter);
         String[] params = new String[2];
         params[0] = key;
         params[1] = value;
@@ -459,75 +310,45 @@ public class Neter {
     public void addBody(ArrayList<String[]> params){
         bodyParamList.addAll(params);
     }
-    private class Parameter {
-        private String key;
-        private String value;
-
-        Parameter(String key, String value){
-            this.key = key;
-            this.value = value;
-        }
-        public void setKey(String key){
-            this.key = key;
-        }
-        public String getKey(){
-            return key;
-        }
-
-        public void setValue(String value){
-            this.value = value;
-        }
-        public String getValue(){
-            return value;
-        }
-    }
 
 
-
-    public void toRequest(String url, String method, long logTime, ArrayList<String[]> headParamList, ArrayList<String[]> bodyParamList){
-        String headParamString = UString.formParamListToString(headParamList);
-        String bodyParamString = UString.formParamListToString(bodyParamList);
-        RequestLog requests = new RequestLog(logTime,url,method,headParamString,bodyParamString);
-        if(logRequest==null){return;}
-        logRequest.add(requests);
-    }
-
-//    private void toRequest(String url, String method,long logTime, ArrayList<Parameter> headParamList, ArrayList<Parameter> bodyParamList){
-////        String file = "{\n\"items\": [{\n\"url\": \"" + url + "\",\n\"method\": \"" + method  + "\",";
-//
-//        StringBuilder sbHead = new StringBuilder("");
-//        StringBuilder sbBody = new StringBuilder("");
-//        if( headParamList!=null){
-//            if(headParamList.size()!=0){
-//                for(Parameter param:headParamList){
-//                    sbHead.append(param.getKey() + ":" + param.getValue() + ",");
-//                }
-//                sbHead.deleteCharAt(sbHead.length() - 1);
-//            }
-//        }
-//        if( bodyParamList!=null ){
-//            if( bodyParamList.size()!=0 ){
-//                for(Parameter param:bodyParamList){
-//                    sbBody.append(param.getKey() + ":" + param.getValue() + ",");
-//                }
-//                sbBody.deleteCharAt(sbBody.length() - 1);
-//            }
-//        }
-//        RequestLog requests = new RequestLog(url,method,logTime,sbHead.toString(),sbBody.toString());
-//        logRequest.addRequest(requests);
-//        KLog.d("【添加请求1】" + sbHead.toString());
-//        KLog.d("【添加请求2】" + sbBody.toString());
+    /**
+     * 使用 map 替代原有的简单的 数组
+     */
+//    private ArrayMap<String,String> headersMap = new ArrayMap<>();
+//    private ArrayMap<String,String> bodyParamsMap = new ArrayMap<>();
+//    public void addHeader( String key ,String value ){
+//        headersMap.put(key,value);
+//    }
+//    public void addHeader( Map<String,String> headers ){
+//        headersMap.putAll( headers );
+//    }
+//    public void addBodyParam( String key ,String value ){
+//        bodyParamsMap.put( key, value );
+//    }
+//    public void addBodyParam( Map<String,String> bodyParams ){
+//        bodyParamsMap.putAll( bodyParams );
 //    }
 
-    public void setLogRequestListener(Loger logRequest) {
-        this.logRequest = logRequest;
-    }
-    private Loger logRequest ;
-    public interface Loger<T> {
-        void add(T entry);
-        void del(long index);
-    }
 
+
+
+    /**
+     * 此处设置了一个回调，使得调用者可以获得想要 cache 的 request。
+     *
+     */
+    public void setLogRequestListener( RequestLogger requestlogger ) {
+        this.requestlogger = requestlogger;
+    }
+    private RequestLogger requestlogger ;
+    public interface RequestLogger<T> {
+        void logRequest(T entry);
+    }
+    private RequestLog toRequest(String url, String method, long logTime, ArrayList<String[]> headParamList, ArrayList<String[]> bodyParamList){
+        String headParamString = UString.formParamListToString(headParamList);
+        String bodyParamString = UString.formParamListToString(bodyParamList);
+        return new RequestLog(logTime,url,method,headParamString,bodyParamString);
+    }
 
 
 
@@ -543,11 +364,6 @@ public class Neter {
             getBitmap(entry.getValue().getNetSrc(), entry.getValue().getSaveSrc(),entry.getKey() );
             KLog.d("【获取图片的key为：" + entry.getKey() );
         }
-
-//        for (int i = 0; i < length; i++) {
-//            getBitmap(imgSrcList.valueAt(i).getNetSrc(), imgSrcList.valueAt(i).getSaveSrc(),imgSrcList.keyAt(i) );
-//            KLog.d("【获取图片的key为：" + imgSrcList.keyAt(i) );
-//        }
         return length;
     }
     public void getBitmap(final String url ,final String filePath ,final int imgNo) {
@@ -621,6 +437,43 @@ public class Neter {
         message.setData(bundle);
         handler.sendMessage(message);
     }
+
+
+
+    private String convertPostUrlForProxy( String url ){
+        String action = "";
+        if(url.equals(API.U_CLIENTLOGIN)){
+            action = "login";
+        }else if( url.equals(API.U_ITEM_CONTENTS) ){
+            action = "item_contents";
+        }else if( url.equals(API.U_EDIT_TAG) ){
+            action = "edit_tag";
+        }
+        return action;
+    }
+    private String convertGetUrlForProxy( String url ){
+        String action = "";
+        if(url.equals(API.U_USER_INFO)){
+            action = "user_info";
+        }else if( url.equals(API.U_TAGS_LIST) ){
+            action = "tag_list";
+        }else if( url.equals(API.U_STREAM_PREFS) ){
+            action = "stream_prefs";
+        }else if( url.equals(API.U_SUSCRIPTION_LIST) ){
+            action = "suscription_list";
+        }else if( url.equals(API.U_UNREAD_COUNTS) ){
+            action = "unread_counts";
+        }else if( url.equals(API.U_ITEM_IDS) ){
+            action = "item_ids";
+        }else if( url.equals(API.U_ARTICLE_CONTENTS) ){
+            action = "article_contents";
+        }else if( url.equals(API.U_STREAM_CONTENTS) ){
+            action = "stream_contents";
+        }
+        return action;
+    }
+
+
 
 //    public void downImg(String url,String filePath ,final int imgNum){
 //        String path = filePath.substring(filePath.lastIndexOf(File.separator));

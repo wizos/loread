@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<me.wizos.loread.view.SwipeRefresh
+<me.wizos.loread.view.common.SwipeRefresh
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
@@ -112,4 +112,4 @@
             android:src="@drawable/ic_vector_setting"
             android:layout_alignBottom="@+id/bottombar" />
     </RelativeLayout>
-</me.wizos.loread.view.SwipeRefresh>
+</me.wizos.loread.view.common.SwipeRefresh>

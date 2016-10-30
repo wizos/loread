@@ -35,14 +35,14 @@ import java.util.List;
 
 import me.wizos.loread.App;
 import me.wizos.loread.R;
-import me.wizos.loread.adapter.MaterialSimpleListAdapter;
-import me.wizos.loread.adapter.MaterialSimpleListItem;
+import me.wizos.loread.presenter.adapter.MaterialSimpleListAdapter;
+import me.wizos.loread.presenter.adapter.MaterialSimpleListItem;
 import me.wizos.loread.bean.Article;
 import me.wizos.loread.bean.Feed;
 import me.wizos.loread.bean.Tag;
 import me.wizos.loread.data.WithDB;
-import me.wizos.loread.gson.ExtraImg;
-import me.wizos.loread.gson.SrcPair;
+import me.wizos.loread.bean.gson.ExtraImg;
+import me.wizos.loread.bean.gson.SrcPair;
 import me.wizos.loread.net.API;
 import me.wizos.loread.net.Neter;
 import me.wizos.loread.net.Parser;
@@ -54,11 +54,11 @@ import me.wizos.loread.utils.UToast;
 
 @SuppressLint("SetJavaScriptEnabled")
 public class ArticleActivity extends BaseActivity {
-    protected static final String TAG = "ArticleActivity";
+    protected static final String TAG = "ArticleActivityView";
     protected WebView webView; // implements Html.ImageGetter
     protected Context context;
     protected Neter mNeter;
-    protected Parser mParser;
+//    protected Parser mParser;
     protected TextView vTitle ,vDate ,vTime, vFeed;
     protected ImageView vStar , vRead;
     protected NestedScrollView vScrolllayout ;
@@ -86,7 +86,7 @@ public class ArticleActivity extends BaseActivity {
         App.addActivity(this);
         mNeter = new Neter(handler,this);
 //        mNeter.setLogRequestListener(this);
-        mParser = new Parser();
+//        mParser = new Parser();
         initView();
         initData();
     }
@@ -98,9 +98,13 @@ public class ArticleActivity extends BaseActivity {
 
     @Override
     protected void onDestroy() {
-        super.onDestroy();
+        // 如果参数为null的话，会将所有的Callbacks和Messages全部清除掉。
+        // 这样做的好处是在Acticity退出的时候，可以避免内存泄露。因为 handler 内可能引用 Activity ，导致 Activity 退出后，内存泄漏
+        mHandler.removeCallbacksAndMessages(null);
+        handler.removeCallbacksAndMessages(null);
         webView.removeAllViews();
         webView.destroy();
+        super.onDestroy();
     }
 
     @Override
@@ -564,6 +568,108 @@ public class ArticleActivity extends BaseActivity {
             KLog.d("【重载】");
         }
     }
+    // 非静态匿名内部类的实例，所以它持有外部类Activity的引用
+    // 所以此处的 handler 会持有外部类 Activity 的引用，消息队列是在一个Looper线程中不断轮询处理消息。
+    // 那么当这个Activity退出时消息队列中还有未处理的消息或者正在处理消息，而消息队列中的Message持有mHandler实例的引用，mHandler又持有Activity的引用，所以导致该Activity的内存资源无法及时回收，引发内存泄漏
+
+//    private MyHandler handler = new MyHandler(this);
+//    private static class MyHandler extends Handler {
+//        private WeakReference<Context> reference;
+//        public MyHandler(Context context) {
+//            reference = new WeakReference<>(context);
+//        }
+//
+//        @Override
+//        public void handleMessage(Message msg) {
+//            MainActivity activity = (MainActivity) reference.get();
+//            if(activity != null){
+////                activity.mTextView.setText("");
+//            }
+//            String info = msg.getData().getString("res");
+//            String url = msg.getData().getString("url");
+//            String filePath ="";
+//            int imgNo;
+//            if ( info == null ){
+//                info = "";
+//            }
+//            KLog.d("【handler】" +  msg.what + handler + url );
+//            switch (msg.what) {
+//                case API.S_EDIT_TAG:
+//                    long logTime = msg.getData().getLong("logTime");
+//                    if(!info.equals("OK")){
+//                        mNeter.forData(url,API.request,logTime);
+//                        KLog.d("【返回的不是 ok");
+//                    }
+//                    break;
+//                case API.S_ARTICLE_CONTENTS:
+//                    Parser.instance().parseArticleContents(info);
+//                    initData(); // 内容重载
+//                    break;
+//                case API.S_BITMAP:
+//                    imgNo = msg.getData().getInt("imgNo");
+//                    numOfGetImgs = numOfGetImgs + 1;
+//                    KLog.i("【 API.S_BITMAP 】" + imgNo + "=" + numOfGetImgs + "--" + numOfImgs);
+//                    SrcPair imgSrc = lossSrcList.get(imgNo);
+//                    if(imgSrc==null){
+//                        KLog.i("【 API.S_BITMAP 】==");
+//                        imgSrc = obtainSrcList.get(imgNo);
+//                    }
+//
+//                    KLog.i("【 API.S_BITMAP 】111");
+//                    obtainSrcList.put(imgNo, lossSrcList.get(imgNo) );
+//                    lossSrcList.remove(imgNo);
+//                    replaceSrc( imgNo, imgSrc.getLocalSrc() );
+////                    KLog.i("【】" + lossSrcList.size() +  lossSrcList.get(imgNo).getNetSrc()  );
+//
+//                    if( numOfGetImgs >= numOfImgs ) { // || numOfGetImgs % 5 == 0
+//                        KLog.i("【图片全部下载完成】" + numOfGetImgs  );
+//                        webView.clearCache(true);
+//                        lossSrcList.clear();
+//                        logImgStatus(ExtraImg.DOWNLOAD_OVER);
+////                        webView.notify();
+//                    }else {
+//                        logImgStatus(ExtraImg.DOWNLOAD_ING);
+//                    }
+//                    break;
+//                case API.F_BITMAP:
+//                    imgNo = msg.getData().getInt("imgNo");
+//                    if (failImgList == null){
+//                        failImgList = new SparseArray<>(numOfImgs);
+//                    }
+//                    numOfFailureImg = failImgList.get(imgNo,0);
+//                    failImgList.put( imgNo, numOfFailureImg + 1 );
+////                    numOfFailureImg = numOfFailureImg + 1;
+//                    KLog.i("【 API.F_BITMAP 】" + imgNo + "=" + numOfFailureImg + "--" + numOfImgs);
+//                    if ( numOfFailureImg > numOfFailures ){
+//                        UToast.showShort( "图片无法下载，请稍候再试" );
+//                        break;
+//                    }
+//                    filePath = msg.getData().getString("filePath");
+//                    mNeter.getBitmap(url, filePath, imgNo);
+//                    break;
+//                case API.F_Request:
+//                case API.F_Response:
+//                    if( info.equals("Authorization Required")){
+//                        UToast.showShort("没有Authorization，请重新登录");
+//                        finish();
+//                        goTo(LoginActivity.TAG,"Login For Authorization");
+//                        break;
+//                    }
+//                    numOfFailure = numOfFailure + 1;
+//                    if (numOfFailure < 3){
+//                        mNeter.forData(url,API.request,0);
+//                        break;
+//                    }
+//                    UToast.showShort("网络不好，中断");
+//                    break;
+//                case API.F_NoMsg:
+//                    break;
+//            }
+//            return false;
+//        }
+//    }
+
+
     protected Handler handler = new Handler(new Handler.Callback() {
         @Override
         public boolean handleMessage(Message msg) {
@@ -584,7 +690,7 @@ public class ArticleActivity extends BaseActivity {
                     }
                     break;
                 case API.S_ARTICLE_CONTENTS:
-                    mParser.parseArticleContents(info);
+                    Parser.instance().parseArticleContents(info);
                     initData(); // 内容重载
                     break;
                 case API.S_BITMAP:
@@ -602,7 +708,6 @@ public class ArticleActivity extends BaseActivity {
                     lossSrcList.remove(imgNo);
                     replaceSrc( imgNo, imgSrc.getLocalSrc() );
 //                    KLog.i("【】" + lossSrcList.size() +  lossSrcList.get(imgNo).getNetSrc()  );
-
                     if( numOfGetImgs >= numOfImgs ) { // || numOfGetImgs % 5 == 0
                         KLog.i("【图片全部下载完成】" + numOfGetImgs  );
                         webView.clearCache(true);
@@ -835,6 +940,9 @@ public class ArticleActivity extends BaseActivity {
             mNeter.postUnStarArticle(articleID);
         }
     }
+
+
+
 //    /**
 //     * 为了监控 webView 的性能
 //     */

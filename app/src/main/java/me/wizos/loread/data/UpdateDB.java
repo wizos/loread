@@ -6,11 +6,11 @@ import android.database.sqlite.SQLiteDatabase;
 import com.github.yuweiguocn.library.greendao.MigrationHelper;
 
 import me.wizos.loread.App;
-import me.wizos.loread.dao.ArticleDao;
-import me.wizos.loread.dao.DaoMaster;
-import me.wizos.loread.dao.FeedDao;
-import me.wizos.loread.dao.RequestLogDao;
-import me.wizos.loread.dao.TagDao;
+import me.wizos.loread.data.dao.ArticleDao;
+import me.wizos.loread.data.dao.DaoMaster;
+import me.wizos.loread.data.dao.FeedDao;
+import me.wizos.loread.data.dao.RequestLogDao;
+import me.wizos.loread.data.dao.TagDao;
 
 
 /**

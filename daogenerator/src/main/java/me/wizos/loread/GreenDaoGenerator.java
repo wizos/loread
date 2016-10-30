@@ -11,7 +11,7 @@ public class GreenDaoGenerator {
         // http://www.open-open.com/lib/view/open1438065400878.html
         // 现在创建一个用于添加实体（Entity）的模式（Schema）对象，两个参数分别代表：数据库版本号与自动生成代码的包路径。
         Schema schema = new Schema(1, "me.wizos.loread.bean");
-        schema.setDefaultJavaPackageDao("me.wizos.loread.dao");
+        schema.setDefaultJavaPackageDao("me.wizos.loread.data.dao");
 //      如果要分别指定生成的 Bean 与 DAO 类所在的目录，只要：
 //      Schema schema = new Schema(1, "me.wizos.loread.bean");
 //      schema.setDefaultJavaPackageDao("me.wizos.loread.greendao");
