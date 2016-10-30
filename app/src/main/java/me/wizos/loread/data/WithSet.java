@@ -32,7 +32,7 @@ public class WithSet {
             synchronized (WithSet.class) {  // 同步锁，避免多线程时可能 new 出两个实例的情况
                 if (withSet == null) {
                     withSet = new WithSet();
-                    mySharedPreferences = App.getContext().getSharedPreferences("loread", Activity.MODE_PRIVATE);
+                    mySharedPreferences = App.getInstance().getSharedPreferences("loread", Activity.MODE_PRIVATE);
                     editor = mySharedPreferences.edit();
                 }
             }

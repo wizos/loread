@@ -10,10 +10,7 @@ import me.wizos.loread.bean.gson.Item;
  * Created by Wizos on 2016/3/5.
  */
 public class API {
-
-
     public static Request request;
-
     public static final String INOREADER_APP_ID = "1000001277";
     public static final String INOREADER_APP_KEY = "8dByWzO4AYi425yx5glICKntEY2g3uJo";
     public static String INOREADER_ATUH = "";

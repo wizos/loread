@@ -2,10 +2,10 @@ package me.wizos.loread;
 
 import android.app.Activity;
 import android.app.Application;
-import android.content.Context;
 
 import com.facebook.stetho.Stetho;
 import com.socks.library.KLog;
+import com.tencent.bugly.crashreport.CrashReport;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -16,7 +16,7 @@ import me.wizos.loread.data.dao.DaoSession;
 
 /**
  * Created by Wizos on 2015/12/24.
- * 该类为活动管理器，每个活动创建时都添加到该 list （销毁时便移除），可以实时收集到目前存在的 活动 ，方便要退出该应用时调用 finishAll() 来一次性关闭所有活动
+ * 该类为 Activity 管理器，每个活动创建时都添加到该 list （销毁时便移除），可以实时收集到目前存在的 活动 ，方便要退出该应用时调用 finishAll() 来一次性关闭所有活动
  */
 public class App extends Application{
     public static final String DB_NAME = "loread_DB";
@@ -26,12 +26,10 @@ public class App extends Application{
 
 
     private  static DaoSession daoSession;
-    public static Context context;
-    private static App instance;
+    public static App instance; // 此处的单例不会造成内存泄露，因为 App 本身就是全局的单例
     public static App getInstance() {
         return instance;
     }
-    public static Context getContext(){ return context;}
     public static void addActivity(Activity activity){
         activities.add(activity);
     }
@@ -39,8 +37,7 @@ public class App extends Application{
     @Override
     public void onCreate() {
         super.onCreate();
-        App.context = getApplicationContext();
-        instance = this;
+        App.instance = this;
         KLog.init(false);// TEST，应该注释掉
         cacheRelativePath = getExternalFilesDir(null) + File.separator + "cache" + File.separator;
 
@@ -51,19 +48,21 @@ public class App extends Application{
 
         logRelativePath = getExternalFilesDir(null) + File.separator + "log" + File.separator;
         logAbsolutePath = "file:"+ File.separator + File.separator + logRelativePath;
+
+        // TEST，应该注释掉
         Stetho.initialize(
                 Stetho.newInitializerBuilder(this)
                         .enableDumpapp(Stetho.defaultDumperPluginsProvider(this))
                         .enableWebKitInspector(Stetho.defaultInspectorModulesProvider(this))
                         .build());
 //        Stetho.initializeWithDefaults(this);
-//        HttpUtil.initInterceptors();
-//        CrashReport.initCrashReport( App.context , "900044326", true);
+
+        CrashReport.initCrashReport( App.getInstance() , "900044326", true);
     }
 
 
 
-    public static void removeActivity(Activity activity){
+    public static void finishActivity(Activity activity){
         activities.remove(activity);
         activity.finish();
     }

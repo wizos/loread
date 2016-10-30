@@ -26,7 +26,7 @@ public class UDensity {
     }
     public static int getColor(@ColorRes int id) {
 //        final int dimen = (int)context.getResources().getDimension(id);
-        return (int) App.getContext().getResources().getColor(id);
+        return (int) App.getInstance().getResources().getColor(id);
     }
     /**
      * 根据手机的分辨率从 dp 的单位 转成为 px(像素)
@@ -36,7 +36,7 @@ public class UDensity {
         return (int) (dpValue * scale + 0.5f);
     }
     public static int dpToPx(int dp) {
-        DisplayMetrics displayMetrics = App.getContext().getResources().getDisplayMetrics();
+        DisplayMetrics displayMetrics = App.getInstance().getResources().getDisplayMetrics();
         int px = Math.round(dp * (displayMetrics.xdpi / DisplayMetrics.DENSITY_DEFAULT));
         return px;
     }

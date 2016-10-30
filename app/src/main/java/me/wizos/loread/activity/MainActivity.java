@@ -168,9 +168,6 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
         mSwipeRefreshLayout.setEnabled(false);
         mSwipeRefreshLayout.setRefreshing(false);  // 调用 setRefreshing(false) 去取消任何刷新的视觉迹象。如果活动只是希望展示一个进度条的动画，他应该条用 setRefreshing(true) 。 关闭手势和进度条动画，调用该 View 的 setEnable(false)
 
-//        if( hadSyncLogRequest ){ // 防止在更新 logRequest 时又去开始刷新
-//            handler.sendEmptyMessage(API.M_BEGIN_SYNC);
-//        }
         handler.sendEmptyMessage(API.M_BEGIN_SYNC);
         KLog.i("【刷新中】" + hadSyncLogRequest);
     }
