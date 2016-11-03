@@ -14,30 +14,32 @@ public class API {
     public static final String INOREADER_APP_ID = "1000001277";
     public static final String INOREADER_APP_KEY = "8dByWzO4AYi425yx5glICKntEY2g3uJo";
     public static String INOREADER_ATUH = "";
-    public static final String INOREADER_BASE_URL = "https://www.inoreader.com/";
 
-    public static String U_CLIENTLOGIN ="https://www.inoreader.com/accounts/ClientLogin";
+    public static final String HOST_OFFICIAL = "https://www.inoreader.com";
+    public static final String HOST_PROXY = "http://ino-socoxx.rhcloud.com";
 
-    public static String U_USER_INFO ="https://www.inoreader.com/reader/api/0/user-info";
-    public static String U_TAGS_LIST ="https://www.inoreader.com/reader/api/0/tag/list";
-    public static String U_STREAM_PREFS ="https://www.inoreader.com/reader/api/0/preference/stream/list";
-    public static String U_SUSCRIPTION_LIST ="https://www.inoreader.com/reader/api/0/subscription/list";
-    public static String U_UNREAD_COUNTS ="https://www.inoreader.com/reader/api/0/unread-count";
-    public static String U_ITEM_IDS ="https://www.inoreader.com/reader/api/0/stream/items/ids";
-    public static String U_ITEM_CONTENTS ="https://www.inoreader.com/reader/api/0/stream/items/contents";
-    public static String U_ARTICLE_CONTENTS ="https://www.inoreader.com/reader/api/0/stream/items/contents";
-    public static String U_EDIT_TAG ="https://www.inoreader.com/reader/api/0/edit-tag";
+    public static String HOST = "";
 
-    public static String U_STREAM_CONTENTS ="https://www.inoreader.com/reader/api/0/stream/contents/";
-    public static String U_Stream_Contents_Atom ="https://www.inoreader.com/reader/atom";
-    public static String U_Stream_Contents_User ="https://www.inoreader.com/reader/api/0/stream/contents/user/";
+    public static final String U_CLIENTLOGIN ="/accounts/ClientLogin";
 
-    public static String U_READING_LIST ="/state/com.google/reading-list";
-    public static String U_STARRED ="user/-/state/com.google/starred";
-    public static String U_NO_LABEL ="/state/com.google/no-label";
-    public static String U_UNREAND ="/state/com.google/unread";
+    public static final String U_USER_INFO ="/reader/api/0/user-info";
+    public static final String U_TAGS_LIST ="/reader/api/0/tag/list";
+    public static final String U_STREAM_PREFS ="/reader/api/0/preference/stream/list";
+    public static final String U_SUSCRIPTION_LIST ="/reader/api/0/subscription/list";
+    public static final String U_UNREAD_COUNTS ="/reader/api/0/unread-count";
+    public static final String U_ITEM_IDS ="/reader/api/0/stream/items/ids";
+    public static final String U_ITEM_CONTENTS ="/reader/api/0/stream/items/contents";
+    public static final String U_ARTICLE_CONTENTS ="/reader/api/0/stream/items/contents";
+    public static final String U_EDIT_TAG ="/reader/api/0/edit-tag";
 
-    public static String proxySite = "http://wizos.me/Inoreader.php";
+    public static final String U_STREAM_CONTENTS ="/reader/api/0/stream/contents/";
+    public static final String U_Stream_Contents_Atom ="/reader/atom";
+    public static final String U_Stream_Contents_User ="/reader/api/0/stream/contents/user/";
+
+    public static final String U_READING_LIST ="/state/com.google/reading-list";
+    public static final String U_STARRED ="user/-/state/com.google/starred";
+    public static final String U_NO_LABEL ="/state/com.google/no-label";
+    public static final String U_UNREAND ="/state/com.google/unread";
 
 
 //    public static String U_READED ="user/-/state/com.google/read";
@@ -85,29 +87,29 @@ public class API {
 
 
     public static int url2int(String api){
-        if (api.equals(U_CLIENTLOGIN)){
+        if (api.equals(HOST + U_CLIENTLOGIN)){
             return S_CLIENTLOGIN;
-        }else if(api.equals(U_USER_INFO)){
+        }else if(api.equals(HOST + U_USER_INFO)){
             return S_USER_INFO;
-        }else if(api.equals(U_STREAM_PREFS)){
+        }else if(api.equals(HOST + U_STREAM_PREFS)){
             return S_STREAM_PREFS;
-        }else if(api.equals(U_TAGS_LIST)){
+        }else if(api.equals(HOST + U_TAGS_LIST)){
             return S_TAGS_LIST;
-        }else if(api.equals(U_SUSCRIPTION_LIST)) {
+        }else if(api.equals(HOST + U_SUSCRIPTION_LIST)) {
             return S_SUBSCRIPTION_LIST;
-        }else if(api.contains(U_ITEM_IDS)){
+        }else if(api.contains(HOST + U_ITEM_IDS)){
             return S_ITEM_IDS;
-        }else if(api.contains(U_READING_LIST)){
+        }else if(api.contains( U_READING_LIST )){
             return S_READING_LIST;
-        }else if(api.equals(U_UNREAD_COUNTS)){
+        }else if(api.equals(HOST + U_UNREAD_COUNTS)){
             return S_UNREAD_COUNTS;
-        }else if(api.equals(U_ITEM_CONTENTS)){
+        }else if(api.equals(HOST + U_ITEM_CONTENTS)){
             return S_ITEM_CONTENTS;
-        }else if(api.equals(U_ARTICLE_CONTENTS)) {
+        }else if(api.equals(HOST + U_ARTICLE_CONTENTS)) {
             return S_ARTICLE_CONTENTS;
-        }else if(api.equals(U_EDIT_TAG)){
+        }else if(api.equals(HOST + U_EDIT_TAG)){
             return S_EDIT_TAG;
-        }else if(api.contains(U_STREAM_CONTENTS + U_STARRED)){
+        }else if(api.contains( U_STREAM_CONTENTS + U_STARRED)){
             return S_STREAM_CONTENTS_STARRED;
         }
         return F_NoMsg;

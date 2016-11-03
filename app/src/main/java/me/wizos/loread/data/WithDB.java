@@ -101,7 +101,12 @@ public class WithDB {
                 .where(FeedDao.Properties.Url.eq(url)).list().size() > 0;
     }
 
-
+    public void saveRequestLog( RequestLog  requestLog) {
+        if(requestLog == null ){
+            return;
+        }
+        requestLogDao.insertOrReplaceInTx( requestLog );
+    }
     public void saveRequestLogList(ArrayList<RequestLog> requestLogList) {
         if (requestLogList.size() != 0) { // new fetch
             requestLogDao.insertOrReplaceInTx(requestLogList);

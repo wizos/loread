@@ -355,7 +355,7 @@ public class ArticleActivity extends BaseActivity {
             }else if( extraImg.getImgStatus() == ExtraImg.DOWNLOAD_OVER ){
                 KLog.e( " = 图片下载完成，请选择是重新下载还是打开大图" );
             }
-            ment(imgNo);
+            openImgMenuDialog(imgNo);
             // 下载图片
             // 打开大图
         }
@@ -364,7 +364,7 @@ public class ArticleActivity extends BaseActivity {
 
     }
 
-    private void ment(final int imgNo){
+    private void openImgMenuDialog(final int imgNo){
         runOnUiThread(new Runnable() {
             @Override
             public void run() {

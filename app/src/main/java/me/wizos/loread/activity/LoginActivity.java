@@ -36,8 +36,7 @@ public class LoginActivity extends BaseActivity implements View.OnLayoutChangeLi
         mNeter = new Neter(handler,this);
         KLog.d("【未登录】" + handler);
         forInput();
-        vID = (EditText)findViewById(R.id.edittext_id);
-        vPD = (EditText)findViewById(R.id.edittext_pd);
+        initView();
 //        EditText vID = (EditText)findViewById(R.id.edittext_id);
 //        EditText vPD = (EditText)findViewById(R.id.edittext_pd);
 //        vPD.setOnEditorActionListener(new TextView.OnEditorActionListener() {
@@ -55,6 +54,16 @@ public class LoginActivity extends BaseActivity implements View.OnLayoutChangeLi
     }
     protected Neter mNeter;
 //    protected Parser mParser = new Parser();
+
+    private SwitchButton inoreaderProxy;
+    private void initView(){
+        vID = (EditText)findViewById(R.id.edittext_id);
+        vPD = (EditText)findViewById(R.id.edittext_pd);
+        inoreaderProxy = (SwitchButton) findViewById(R.id.setting_inoreader_proxy_sb_flyme) ;
+        inoreaderProxy.setChecked(WithSet.getInstance().isInoreaderProxy());
+    }
+
+
 
     @Override
     protected Context getActivity(){
@@ -98,11 +107,7 @@ public class LoginActivity extends BaseActivity implements View.OnLayoutChangeLi
                     if (info==null){ return false; }
                     API.INOREADER_ATUH = "GoogleLogin auth=" + info.split("Auth=")[1].replaceAll("\n", "");
                     WithSet.getInstance().setAuth(API.INOREADER_ATUH);
-                    if( WithSet.getInstance().isInoreaderProxy() ){  // TEST: 其实这段代码应该除去，因为既然在登录界面开启该选项，就说明后续的网络动作都必须要代理才行
-                        WithSet.getInstance().setInoreaderProxy(false);
-                    }
-
-                    mNeter.getWithAuth(API.U_USER_INFO);
+                    mNeter.getWithAuth(API.HOST + API.U_USER_INFO);
                     break;
                 case API.S_USER_INFO:
                     long mUserID = Parser.instance().parseUserInfo(info);
@@ -177,7 +182,7 @@ public class LoginActivity extends BaseActivity implements View.OnLayoutChangeLi
 
         mNeter.addBody("Email", mAccountID);
         mNeter.addBody("Passwd", mAccountPD);
-        mNeter.post(API.U_CLIENTLOGIN ,0);
+        mNeter.post(API.HOST + API.U_CLIENTLOGIN ,0);
         KLog.d("【handler】" + mNeter + "-" );
     }
 

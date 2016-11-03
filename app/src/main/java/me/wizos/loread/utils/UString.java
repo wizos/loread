@@ -182,17 +182,16 @@ public class UString {
             dotIndex = url.length();
         }
         fileName = url.substring(separatorIndex, dotIndex);
-        fileName.replace("\\","");
-        fileName.replace("/","");
-        fileName.replace(":","");
-        fileName.replace("*","");
-        fileName.replace("?","");
-        fileName.replace("\"","");
-        fileName.replace("<","");
-        fileName.replace(">","");
-        fileName.replace("|","");
-
-        fileName.replace("%","_");
+        fileName = fileName.replace("\\","");
+        fileName = fileName.replace("/","");
+        fileName = fileName.replace(":","");
+        fileName = fileName.replace("*","");
+        fileName = fileName.replace("?","");
+        fileName = fileName.replace("\"","");
+        fileName = fileName.replace("<","");
+        fileName = fileName.replace(">","");
+        fileName = fileName.replace("|","");
+        fileName = fileName.replace("%","_");
         KLog.e("【文件名】" + fileName);
         return fileName;
     }

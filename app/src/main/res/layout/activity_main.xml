@@ -98,7 +98,7 @@
                 style="@style/bottom_bar_icon"
                 android:onClick="onReadIconClicked"
                 android:src="@drawable/ic_vector_unread"/>
-         </LinearLayout>
+        </LinearLayout>
         <ImageView
             android:id="@+id/tag_setting"
             android:layout_width="@dimen/bottom_bar_height"

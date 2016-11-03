@@ -52,7 +52,7 @@ public class Parser {
     public static Parser instance(){
         if (parser == null) { // 双重锁定，只有在 parser 还没被初始化的时候才会进入到下一行，然后加上同步锁
             synchronized (Parser.class) { // 同步锁，避免多线程时可能 new 出两个实例的情况
-                if ( parser == null) {
+                if ( parser == null ) {
                     parser = new Parser();
                 }
             }

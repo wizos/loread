@@ -5,8 +5,6 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.wifi.WifiManager;
 
-import com.facebook.stetho.okhttp.StethoInterceptor;
-import com.socks.library.KLog;
 import com.squareup.okhttp.Callback;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
@@ -14,6 +12,11 @@ import com.squareup.okhttp.Response;
 
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
+
+//import okhttp3.Callback;
+//import okhttp3.OkHttpClient;
+//import okhttp3.Request;
+//import okhttp3.Response;
 
 /**
  * Created by mummyding on 15-11-22.<br>
@@ -48,10 +51,6 @@ public class HttpUtil {
         mOkHttpClient.newCall(request).enqueue(responseCallback);
     }
 
-    public static void xx(){
-        mOkHttpClient.networkInterceptors().add(new StethoInterceptor());
-        KLog.d("【1】【2】【1】【2】");
-    }
 
     /**
      * 开启异步线程访问网络, 且不在意返回结果（实现空callback）

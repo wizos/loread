@@ -8,7 +8,7 @@
     <color name="main_grey_light">#9e9e9e</color>
     <color name="main_grey_dark">#424242</color>
     <color name="article_dark_background">#202B2F</color>
-    <color name="article_dark_webview">#203238</color>
+    <color name="dark_foreground">#203238</color>
 
     <color name="article_dark_text">#97A0A5</color>
 

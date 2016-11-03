@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <attr name="root_view_bg" format="reference|color" />
+
+    <attr name="topbar_bg" format="reference|color" />
+    <attr name="topbar_fg" format="reference|color" />
+
+    <attr name="bottombar_bg" format="reference|color" />
+    <attr name="bottombar_fg" format="reference|color" />
+
+    <attr name="listitem_bg" format="reference|color" />
+    <attr name="listitem_fg" format="reference|color" />
+    <attr name="listitem_title_color" format="reference|color" />
+    <attr name="listitem_desc_color" format="reference|color" />
+</resources>

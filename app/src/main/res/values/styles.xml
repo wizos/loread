@@ -1,10 +1,20 @@
 <resources>
-    <!-- Base App theme. -->
+    <!-- Base App theme. --><!--白天主题-->
     <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
         <!-- Customize your theme here. -->
         <!--<item name="colorPrimary">@color/colorPrimary</item>-->
         <!--<item name="colorPrimaryDark">@color/colorPrimaryDark</item>-->
         <item name="android:windowBackground">@color/white</item>
+        <!--<item name="c_topbarBg">@color/main_grey_dark</item>-->
+        <!--<item name="c_topbarIcon">@color/white</item>-->
+        <!--<item name="c_screenBg">@color/white</item>-->
+        <!--<item name="c_bottombarBg">@color/main_grey_dark</item>-->
+        <!--<item name="c_bottombarIcon">@color/white</item>-->
+
+        <!--<item name="c_listitemBg">@color/white</item>-->
+        <!--<item name="c_listitemIcon">@color/main_grey_dark</item>-->
+        <!--<item name="c_listitemTitle">@color/main_grey_dark</item>-->
+        <!--<item name="c_listitemDesc">@color/main_grey_dark</item>-->
     </style>
     <style name="AppTheme.NoActionBar">
         <item name="windowActionBar">false</item>
@@ -12,6 +22,26 @@
     </style>
     <style name="AppTheme.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />
     <style name="AppTheme.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" />
+
+    <!--夜间主题-->
+    <style name="AppTheme.Dark" parent="Theme.AppCompat.Light.DarkActionBar">
+        <!-- Customize your theme here. -->
+        <item name="colorPrimary">@color/colorPrimary</item>
+        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
+        <!--<item name="c_topbarBg">@color/dark_foreground</item>-->
+        <!--<item name="c_topbarIcon">@color/main_grey_light</item>-->
+        <!--<item name="c_screenBg">@color/article_dark_background</item>-->
+        <!--<item name="c_bottombarBg">@color/dark_foreground</item>-->
+        <!--<item name="c_bottombarIcon">@color/main_grey_light</item>-->
+
+        <!--<item name="c_listitemBg">@color/article_dark_background</item>-->
+        <!--<item name="c_listitemIcon">@color/main_grey_light</item>-->
+        <!--<item name="c_listitemTitle">@color/main_grey_light</item>-->
+        <!--<item name="c_listitemDesc">@color/main_grey_dark</item>-->
+
+        <!--<item name="android:windowBackground">@color/article_dark_background</item>-->
+    </style>
+
 
 
     <style name="SettingItem">

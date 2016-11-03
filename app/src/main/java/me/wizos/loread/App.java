@@ -11,8 +11,10 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
+import me.wizos.loread.data.WithSet;
 import me.wizos.loread.data.dao.DaoMaster;
 import me.wizos.loread.data.dao.DaoSession;
+import me.wizos.loread.net.API;
 
 /**
  * Created by Wizos on 2015/12/24.
@@ -38,9 +40,13 @@ public class App extends Application{
     public void onCreate() {
         super.onCreate();
         App.instance = this;
-        KLog.init(false);// TEST，应该注释掉
+        KLog.init( false );// TEST，测试环境下应该注释掉
+        if( !WithSet.getInstance().isInoreaderProxy()){
+            API.HOST = API.HOST_OFFICIAL;
+        }else {
+            API.HOST = API.HOST_PROXY;
+        }
         cacheRelativePath = getExternalFilesDir(null) + File.separator + "cache" + File.separator;
-
         cacheAbsolutePath = "file:"+ File.separator + File.separator + cacheRelativePath; // 仅在储存于 html 时使用
 
         boxRelativePath = getExternalFilesDir(null) + File.separator + "box" + File.separator;
@@ -93,7 +99,5 @@ public class App extends Application{
         }
         return daoSession;
     }
-
-
 
 }

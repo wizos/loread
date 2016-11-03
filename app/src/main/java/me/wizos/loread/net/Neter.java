@@ -19,7 +19,6 @@ import java.util.ArrayList;
 
 import me.wizos.loread.bean.RequestLog;
 import me.wizos.loread.bean.gson.SrcPair;
-import me.wizos.loread.data.WithSet;
 import me.wizos.loread.utils.HttpUtil;
 import me.wizos.loread.utils.UFile;
 import me.wizos.loread.utils.UString;
@@ -56,19 +55,19 @@ public class Neter {
         addHeader("ot","0");
         addHeader("xt","user/"+ mUserID+"/state/com.google/read");
         addHeader("s", "user/" + mUserID + "/state/com.google/reading-list");
-        getWithAuth( API.U_ITEM_IDS );
+        getWithAuth( API.HOST + API.U_ITEM_IDS );
     }
 
     public void getStarredRefs( long mUserID){
         addHeader("n","160");
         addHeader("ot","0");
         addHeader("s", "user/" + mUserID + "/state/com.google/starred");
-        getWithAuth( API.U_ITEM_IDS );
+        getWithAuth( API.HOST + API.U_ITEM_IDS );
     }
     public void getStarredContents(){
         addHeader("n","20");
         addHeader("ot", "0");
-        getWithAuth(API.U_STREAM_CONTENTS + API.U_STARRED);
+        getWithAuth( API.HOST + API.U_STREAM_CONTENTS + API.U_STARRED);
     }
 
 //    public void postArticle( List<String> articleIDList ){
@@ -81,38 +80,38 @@ public class Neter {
     public void postRemoveArticleTags( String articleID ,String tagId ){
         addBody("r", tagId );
         addBody("i", articleID);
-        postWithAuthLog(API.U_EDIT_TAG);
+        postWithAuthLog( API.HOST + API.U_EDIT_TAG);
     }
     public void postAddArticleTags( String articleID ,String tagId ){
         addBody("a", tagId );
         addBody("i", articleID);
-        postWithAuthLog(API.U_EDIT_TAG);
+        postWithAuthLog( API.HOST + API.U_EDIT_TAG);
     }
     public void postArticleContents( String articleID ){
         addBody("i", articleID);
-        postWithAuthLog(API.U_ARTICLE_CONTENTS);
+        postWithAuthLog( API.HOST + API.U_ARTICLE_CONTENTS);
     }
     public void postUnReadArticle( String articleID ){
         addBody("r", "user/-/state/com.google/read");
         addBody("i", articleID);
-        postWithAuthLog(API.U_EDIT_TAG);
+        postWithAuthLog( API.HOST + API.U_EDIT_TAG);
         KLog.d("【post】1记录 "+ headParamList.size());
     }
     public void postReadArticle( String articleID ){
         addBody("a", "user/-/state/com.google/read");
         addBody("i", articleID);
-        postWithAuthLog(API.U_EDIT_TAG);
+        postWithAuthLog( API.HOST + API.U_EDIT_TAG);
         KLog.d("【post】2记录 "+ headParamList.size());
     }
     public void postUnStarArticle( String articleID ){
         addBody("r", "user/-/state/com.google/starred");
         addBody("i", articleID);
-        postWithAuthLog(API.U_EDIT_TAG);
+        postWithAuthLog( API.HOST + API.U_EDIT_TAG);
     }
     public void postStarArticle( String articleID ){
         addBody("a", "user/-/state/com.google/starred");
         addBody("i", articleID);
-        postWithAuthLog(API.U_EDIT_TAG);
+        postWithAuthLog( API.HOST + API.U_EDIT_TAG);
     }
 
 
@@ -132,11 +131,6 @@ public class Neter {
         }
         headParamList.clear(); // headParamList = new ArrayList<>();
 
-        //just for InoreaderProxy
-        if( WithSet.getInstance().isInoreaderProxy() ){
-            paraString = paraString +  "action=" + convertGetUrlForProxy(url);
-            url = API.proxySite;
-        }
 
         if (paraString.equals("?")) {
             paraString = "";
@@ -153,26 +147,18 @@ public class Neter {
     public void postWithAuthLog(final String url) {
         addHeader("AppId", API.INOREADER_APP_ID);
         addHeader("AppKey", API.INOREADER_APP_KEY);
-        if( WithSet.getInstance().isInoreaderProxy() ){
-            addHeader("Auth", API.INOREADER_ATUH);
-        }else {
-            addHeader("Authorization", API.INOREADER_ATUH);
-        }
+        addHeader("Authorization", API.INOREADER_ATUH);
         long logTime = System.currentTimeMillis();
 
         if(requestlogger!=null){
-            requestlogger.logRequest( toRequest(API.U_EDIT_TAG, "post", logTime, headParamList, bodyParamList) );
+            requestlogger.logRequest( toRequest( API.HOST + API.U_EDIT_TAG, "post", logTime, headParamList, bodyParamList) );
         }
         post(url,logTime);
     }
     public void postWithAuth(final String url) {
         addHeader("AppId", API.INOREADER_APP_ID);
         addHeader("AppKey", API.INOREADER_APP_KEY);
-        if( WithSet.getInstance().isInoreaderProxy() ){
-            addHeader("Auth", API.INOREADER_ATUH);
-        }else {
-            addHeader("Authorization", API.INOREADER_ATUH);
-        }
+        addHeader("Authorization", API.INOREADER_ATUH);
         post(url,System.currentTimeMillis());
     }
     public void post( String url, long logTime) { // just for login
@@ -212,11 +198,7 @@ public class Neter {
 //        }
 //        bodyParamsMap.clear();
 
-        //just for InoreaderProxy
-        if( WithSet.getInstance().isInoreaderProxy() ){
-            bodyBuilder.add( "action", convertPostUrlForProxy(url) );
-            url = API.proxySite;
-        }
+
         RequestBody body = bodyBuilder.build();
         Request request = headBuilder.post(body).build();
         forData(url, request, logTime);
@@ -257,7 +239,6 @@ public class Neter {
                             API.request = request;
                             makeMsg( API.F_Response, url, response.message(), logTime);
                             e.printStackTrace();
-                        }finally {
                             response.body().close();
                         }
 
@@ -273,6 +254,76 @@ public class Neter {
         }).start();
     }
 
+    public void postCallback( String urlx, final long logTime) { // just for login
+        KLog.d("【执行 = " + urlx + "】");
+        if(!HttpUtil.isNetworkEnabled(context)){
+            headParamList.clear();
+            bodyParamList.clear();
+            handler.sendEmptyMessage(API.F_NoMsg);
+            return;}
+
+        // 构建请求头
+        Request.Builder headBuilder = new Request.Builder().url(urlx);
+        for ( String[] param : headParamList) {
+            KLog.d(param[0] + param[1]);
+            headBuilder.addHeader( param[0], param[1] );
+        }
+        headParamList.clear();
+
+        KLog.d("----");
+        // 构建请求体
+        FormEncodingBuilder bodyBuilder = new FormEncodingBuilder();
+        for ( String[] param : bodyParamList ) {
+            bodyBuilder.add( param[0], param[1] );
+            KLog.d(param[0] + param[1]);
+        }
+        bodyParamList.clear();
+
+
+        RequestBody body = bodyBuilder.build();
+        final Request request = headBuilder.post(body).build();
+        KLog.d("【开始请求】 "+ logTime + "--" + urlx);
+
+        final String url = urlx;
+
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                HttpUtil.enqueue(request, new Callback() {
+                    @Override
+                    public void onFailure(Request request, IOException e) {
+                        KLog.d("【请求失败2】" + url );
+                        API.request = request;
+                        makeMsg(API.F_Request, url, "noRequest",logTime);
+                    }
+                    @Override
+                    public void onResponse(Response response) throws IOException {
+                        if (!response.isSuccessful()) {
+                            KLog.d("【响应失败2】" + response.message() + response.body().string());
+                            API.request = request;
+                            makeMsg(API.F_Response, url, response.message(),logTime);
+                            return;
+                        }
+                        try {
+                            String res = response.body().string();
+                            KLog.d("【forData2】" + res.length());
+                            handler.sendEmptyMessage(API.M_BEGIN_SYNC);
+                        }catch (IOException e){
+                            KLog.d("【超时2】");
+                            API.request = request;
+                            makeMsg( API.F_Response, url, response.message(), logTime);
+                            e.printStackTrace();
+                            response.body().close();
+                        }
+                    }
+                });
+            }
+        }).start();
+    }
+
+
+
+
     private void makeMsg( int msgCode, String url, String res, long logTime) {
         Message message = new Message();
         Bundle bundle = new Bundle();
@@ -283,7 +334,7 @@ public class Neter {
         bundle.putString("res", res);
         message.setData(bundle);
         handler.sendMessage(message);
-        KLog.d("【getData】" + url   + " -- " + res );
+        KLog.d("【makeMsg】" + url   + " -- " + res );
     }
 
 
@@ -442,32 +493,32 @@ public class Neter {
 
     private String convertPostUrlForProxy( String url ){
         String action = "";
-        if(url.equals(API.U_CLIENTLOGIN)){
+        if(url.equals(API.HOST + API.U_CLIENTLOGIN)){
             action = "login";
-        }else if( url.equals(API.U_ITEM_CONTENTS) ){
+        }else if( url.equals(API.HOST + API.U_ITEM_CONTENTS) ){
             action = "item_contents";
-        }else if( url.equals(API.U_EDIT_TAG) ){
+        }else if( url.equals(API.HOST + API.U_EDIT_TAG) ){
             action = "edit_tag";
         }
         return action;
     }
     private String convertGetUrlForProxy( String url ){
         String action = "";
-        if(url.equals(API.U_USER_INFO)){
+        if(url.equals(API.HOST + API.U_USER_INFO)){
             action = "user_info";
-        }else if( url.equals(API.U_TAGS_LIST) ){
+        }else if( url.equals(API.HOST + API.U_TAGS_LIST) ){
             action = "tag_list";
-        }else if( url.equals(API.U_STREAM_PREFS) ){
+        }else if( url.equals(API.HOST + API.U_STREAM_PREFS) ){
             action = "stream_prefs";
-        }else if( url.equals(API.U_SUSCRIPTION_LIST) ){
+        }else if( url.equals(API.HOST + API.U_SUSCRIPTION_LIST) ){
             action = "suscription_list";
-        }else if( url.equals(API.U_UNREAD_COUNTS) ){
+        }else if( url.equals(API.HOST + API.U_UNREAD_COUNTS) ){
             action = "unread_counts";
-        }else if( url.equals(API.U_ITEM_IDS) ){
+        }else if( url.equals(API.HOST + API.U_ITEM_IDS) ){
             action = "item_ids";
-        }else if( url.equals(API.U_ARTICLE_CONTENTS) ){
+        }else if( url.equals(API.HOST + API.U_ARTICLE_CONTENTS) ){
             action = "article_contents";
-        }else if( url.equals(API.U_STREAM_CONTENTS) ){
+        }else if( url.equals(API.HOST + API.U_STREAM_CONTENTS) ){
             action = "stream_contents";
         }
         return action;

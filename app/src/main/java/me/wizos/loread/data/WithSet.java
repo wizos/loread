@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.SharedPreferences;
 
 import me.wizos.loread.App;
+import me.wizos.loread.net.API;
 
 /**
  * Created by Wizos on 2016/4/30.
@@ -23,6 +24,11 @@ public class WithSet {
 //    private boolean downImgMode;
 //    private boolean scrollMark;
 //    private String cachePathStarred;
+
+    public final static String spName = "loread";
+    public final static String syncFirstOpen = "SyncFirstOpen";
+    public final static String themeDay = "Day";
+    public final static String themeNight = "Night";
 
 
     private WithSet() {
@@ -167,6 +173,11 @@ public class WithSet {
     }
     public void setInoreaderProxy(boolean proxyMode) {
         savePref("InoreaderProxy", proxyMode);
+        if( !isInoreaderProxy()){
+            API.HOST = API.HOST_OFFICIAL;
+        }else {
+            API.HOST = API.HOST_PROXY;
+        }
     }
 
 
@@ -205,6 +216,12 @@ public class WithSet {
     }
 
 
+    public String getThemeMode() {
+        return readPref("ThemeMode", themeDay);
+    }
+    public void setThemeMode(String themeMode) {
+        savePref("ThemeMode", themeMode);
+    }
 
 
 }

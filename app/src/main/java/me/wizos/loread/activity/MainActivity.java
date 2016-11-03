@@ -76,6 +76,195 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
 
     protected Neter mNeter;
 //    protected Parser mParser;
+
+//    /**用于将主题设置保存到SharePreferences的工具类**/
+////    private AppThemeHelper mAppThemeHelper;
+//    private void initTheme() {
+//        if ( WithSet.getInstance().getThemeMode().equals(WithSet.themeDay) ) {
+//            setTheme(R.style.AppTheme);
+//        } else {
+//            setTheme(R.style.AppTheme_Dark);
+//        }
+//    }
+//    /**
+//     * 切换主题设置
+//     */
+//    private void toggleThemeSetting() {
+//        if ( WithSet.getInstance().getThemeMode().equals(WithSet.themeDay) ) {
+//            WithSet.getInstance().setThemeMode(WithSet.themeNight);
+//            setTheme(R.style.AppTheme_Dark);
+//        } else {
+//            WithSet.getInstance().setThemeMode(WithSet.themeDay);
+//            setTheme(R.style.AppTheme);
+//        }
+//    }
+//    /**
+//     * 使用知乎的实现套路来切换夜间主题
+//     */
+//    private void toggleTheme() {
+//        showAnimation();
+//        toggleThemeSetting();
+//        refreshUI();
+//    }
+//    /**
+//     * 刷新UI界面
+//     */
+//    private void refreshUI() {
+//        TypedValue background = new TypedValue();//背景色
+//        TypedValue textColor = new TypedValue();//字体颜色
+//        Resources.Theme theme = getTheme();
+//        theme.resolveAttribute(R.attr.c_screenBg, background, true);
+//        theme.resolveAttribute(R.attr.c_topbarBg, background, true);
+//        theme.resolveAttribute(R.attr.c_topbarIcon, textColor, true);
+//        theme.resolveAttribute(R.attr.c_bottombarBg, background, true);
+//        theme.resolveAttribute(R.attr.c_bottombarIcon, textColor, true);
+//        theme.resolveAttribute(R.attr.c_listitemBg, background, true);
+//        theme.resolveAttribute(R.attr.c_listitemIcon, textColor, true);
+//        theme.resolveAttribute(R.attr.c_listitemTitle, textColor, true);
+//        theme.resolveAttribute(R.attr.c_listitemDesc, textColor, true);
+//
+//
+////        mHeaderLayout.setBackgroundResource(background.resourceId);
+////        for (RelativeLayout layout : mLayoutList) {
+////            layout.setBackgroundResource(background.resourceId);
+////        }
+////        for (CheckBox checkBox : mCheckBoxList) {
+////            checkBox.setBackgroundResource(background.resourceId);
+////        }
+////        for (TextView textView : mTextViewList) {
+////            textView.setBackgroundResource(background.resourceId);
+////        }
+////
+////        Resources resources = getResources();
+////        for (TextView textView : mTextViewList) {
+////            textView.setTextColor(resources.getColor(textColor.resourceId));
+////        }
+////
+////        int childCount = mRecyclerView.getChildCount();
+////        for (int childIndex = 0; childIndex < childCount; childIndex++) {
+////            ViewGroup childView = (ViewGroup) mRecyclerView.getChildAt(childIndex);
+////            childView.setBackgroundResource(background.resourceId);
+////            View infoLayout = childView.findViewById(R.id.info_layout);
+////            infoLayout.setBackgroundResource(background.resourceId);
+////            TextView nickName = (TextView) childView.findViewById(R.id.tv_nickname);
+////            nickName.setBackgroundResource(background.resourceId);
+////            nickName.setTextColor(resources.getColor(textColor.resourceId));
+////            TextView motto = (TextView) childView.findViewById(R.id.tv_motto);
+////            motto.setBackgroundResource(background.resourceId);
+////            motto.setTextColor(resources.getColor(textColor.resourceId));
+////        }
+//
+//        //让 RecyclerView 缓存在 Pool 中的 Item 失效
+//        //那么，如果是ListView，要怎么做呢？这里的思路是通过反射拿到 AbsListView 类中的 RecycleBin 对象，然后同样再用反射去调用 clear 方法
+////        Field mField = AbsListView.class.getDeclaredField（"mFastScroller"）;
+//        Class<RecyclerView> recyclerViewClass = RecyclerView.class;
+//        Class<ListView> listViewClass = ListView.class;
+//        try {
+////            Field declaredField = recyclerViewClass.getDeclaredField("mRecycler");
+//            Field declaredField = listViewClass.getDeclaredField("mRecycler");
+//            declaredField.setAccessible(true);
+//            Method declaredMethod = Class.forName( AbsListView.RecyclerBin.class.getName()).getDeclaredMethod("clear", (Class<?>[]) new Class[0]);
+//            declaredMethod.setAccessible(true);
+//            declaredMethod.invoke(declaredField.get( slv ), new Object[0]);
+//
+//            RecyclerView.RecycledViewPool recycledViewPool = slv.getRecycledViewPool();
+//            recycledViewPool.clear();
+//
+//        } catch (NoSuchFieldException e) {
+//            e.printStackTrace();
+//        } catch (ClassNotFoundException e) {
+//            e.printStackTrace();
+//        } catch (NoSuchMethodException e) {
+//            e.printStackTrace();
+//        } catch (InvocationTargetException e) {
+//            e.printStackTrace();
+//        } catch (IllegalAccessException e) {
+//            e.printStackTrace();
+//        }
+//        refreshStatusBar();
+//    }
+//
+//    /**
+//     * 刷新 StatusBar
+//     */
+//    private void refreshStatusBar() {
+//        if (Build.VERSION.SDK_INT >= 21) {
+//            TypedValue typedValue = new TypedValue();
+//            Resources.Theme theme = getTheme();
+//            theme.resolveAttribute(R.attr.colorPrimary, typedValue, true);
+//            getWindow().setStatusBarColor(getResources().getColor(typedValue.resourceId));
+//        }
+//    }
+//
+//    /**
+//     * 展示一个切换动画
+//     */
+//    private void showAnimation() {
+//        final View decorView = getWindow().getDecorView();
+//        Bitmap cacheBitmap = getCacheBitmapFromView(decorView);
+//        if (decorView instanceof ViewGroup && cacheBitmap != null) {
+//            final View view = new View(this);
+//            view.setBackground(new BitmapDrawable(getResources(), cacheBitmap));
+//            ViewGroup.LayoutParams layoutParam = new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
+//                    ViewGroup.LayoutParams.MATCH_PARENT);
+//            ((ViewGroup) decorView).addView(view, layoutParam);
+//            ObjectAnimator objectAnimator = ObjectAnimator.ofFloat(view, "alpha", 1f, 0f);
+//            objectAnimator.setDuration(300);
+//            objectAnimator.addListener(new AnimatorListenerAdapter() {
+//                @Override
+//                public void onAnimationEnd(Animator animation) {
+//                    super.onAnimationEnd(animation);
+//                    ((ViewGroup) decorView).removeView(view);
+//                }
+//            });
+//            objectAnimator.start();
+//        }
+//    }
+//
+//    /**
+//     * 获取一个 View 的缓存视图
+//     *
+//     * @param view
+//     * @return
+//     */
+//    private Bitmap getCacheBitmapFromView(View view) {
+//        final boolean drawingCacheEnabled = true;
+//        view.setDrawingCacheEnabled(drawingCacheEnabled);
+//        view.buildDrawingCache(drawingCacheEnabled);
+//        final Bitmap drawingCache = view.getDrawingCache();
+//        Bitmap bitmap;
+//        if (drawingCache != null) {
+//            bitmap = Bitmap.createBitmap(drawingCache);
+//            view.setDrawingCacheEnabled(false);
+//        } else {
+//            bitmap = null;
+//        }
+//        return bitmap;
+//    }
+
+//    Colorful mColorful;
+//    /**
+//     * 设置各个视图与颜色属性的关联
+//     */
+//    private void setupColorful() {
+//        ViewGroupSetter listViewSetter = new ViewGroupSetter(mNewsListView);
+//        // 绑定ListView的Item View中的news_title视图，在换肤时修改它的text_color属性
+//        listViewSetter.childViewTextColor(R.id.news_title, R.attr.text_color);
+//
+//        // 构建Colorful对象来绑定View与属性的对象关系
+//        mColorful = new Colorful.Builder(this)
+//                .backgroundDrawable(R.id.root_view, R.attr.root_view_bg)
+//                // 设置view的背景图片
+//                .backgroundColor(R.id.change_btn, R.attr.btn_bg)
+//                // 设置背景色
+//                .textColor(R.id.textview, R.attr.text_color)
+//                .setter(listViewSetter) // 手动设置setter
+//                .create(); // 设置文本颜色
+//    }
+
+
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -93,6 +282,7 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
         initView();
 //        KLog.i("【一】" + toolbar.getTitle() );
         initData();
+
 //        KLog.i("【二】" + toolbar.getTitle());
 //        initLogService();
     }
@@ -329,7 +519,7 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
                     }else {
                         // 为了得到分组名，及排序
                         vToolbarHint.setText(R.string.main_toolbar_hint_sync_tag);
-                        mNeter.getWithAuth(API.U_TAGS_LIST);
+                        mNeter.getWithAuth(API.HOST + API.U_TAGS_LIST);
                         KLog.i("【开始同步分组信息：TAGS_LIST】");
                     }
                     KLog.i("【获取1】");
@@ -338,11 +528,11 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
                     Parser.instance().parseTagList(info);
                     if(isOrderTagFeed){
                         vToolbarHint.setText(R.string.main_toolbar_hint_sync_tag_order);
-                        mNeter.getWithAuth(API.U_STREAM_PREFS);// 有了这份数据才可以对 tagslist feedlist 进行排序，并储存下来
+                        mNeter.getWithAuth(API.HOST + API.U_STREAM_PREFS);// 有了这份数据才可以对 tagslist feedlist 进行排序，并储存下来
                     }else {
                         Parser.instance().orderTags();
                         vToolbarHint.setText(R.string.main_toolbar_hint_sync_unread_count);
-                        mNeter.getWithAuth(API.U_UNREAD_COUNTS);
+                        mNeter.getWithAuth(API.HOST + API.U_UNREAD_COUNTS);
                     }
                     break;
                 case API.S_SUBSCRIPTION_LIST: // 订阅列表
@@ -355,7 +545,7 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
                 case API.S_STREAM_PREFS:
                     Parser.instance().parseStreamPrefList(info, mUserID);
                     vToolbarHint.setText(R.string.main_toolbar_hint_sync_unread_count);
-                    mNeter.getWithAuth(API.U_UNREAD_COUNTS);
+                    mNeter.getWithAuth(API.HOST + API.U_UNREAD_COUNTS);
                     break;
                 case API.S_UNREAD_COUNTS:
                     Parser.instance().parseUnreadCounts(info);
@@ -419,7 +609,7 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
 //                            KLog.i("【获取 ITEM_CONTENTS 3】" + num + "--" + afterItemRefs.size());
                         }
                         getNumForArts = getNumForArts + num;
-                        mNeter.postWithAuth(API.U_ITEM_CONTENTS);
+                        mNeter.postWithAuth( API.HOST + API.U_ITEM_CONTENTS);
                     }else {
                         if(urlState == 0){
                             urlState = 1;
@@ -429,7 +619,7 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
                             urlState = 3;
                         }else if(urlState == 3){
                             urlState = 0;
-                            handler.sendEmptyMessage(API.SUCCESS);
+                            handler.sendEmptyMessage( API.SUCCESS);
                             return false;
                         }
                         handler.sendEmptyMessage(API.S_ITEM_CONTENTS);
@@ -446,7 +636,7 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
                         hadSyncAllStarredList = true;
                         WithSet.getInstance().setHadSyncAllStarred( hadSyncAllStarredList );
                         vToolbarHint.setText(R.string.main_toolbar_hint_sync_tag);
-                        mNeter.getWithAuth(API.U_TAGS_LIST); // 接着继续
+                        mNeter.getWithAuth(API.HOST + API.U_TAGS_LIST); // 接着继续
                     }
                     break;
                 case API.S_EDIT_TAG:
@@ -481,7 +671,7 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
                     mSwipeRefreshLayout.setRefreshing(false);
                     mSwipeRefreshLayout.setEnabled(true);
                     vToolbarHint.setText("");
-                    saveRequestLog();
+                    saveRequestLog( msg.getData().getLong("logTime") );
 //                    UToast.showShort("网络不好，更新中断");// Note: 没必要，因为已经做了离线环境下，网络操作的保存
                     break;
                 case 88:
@@ -499,10 +689,6 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
         }
     });
 
-
-
-
-
     private ArrayMap<Long,RequestLog> requestMap = new ArrayMap<>();
     @Override
     public void logRequest(RequestLog requestLog){
@@ -510,22 +696,17 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
             requestMap.put( requestLog.getLogTime(),requestLog );
         }
     }
-    public void delRequestLog(long index){
+    public void delRequestLog(long key){
         if( requestMap != null){
             if(requestMap.size()!=0){
-                requestMap.remove(index); // 因为最后一次使用 handleMessage(100) 时也会调用
+                requestMap.remove( key ); // 因为最后一次使用 handleMessage(100) 时也会调用
             }
         }
     }
-    private void saveRequestLog(){
+    private void saveRequestLog( long logTime ){
         if(requestMap==null){return;}
-        KLog.i("【saveRequestList0】" );
-        ArrayList<RequestLog> commitRequestList = new ArrayList<>( requestMap.size() );
-        for( Map.Entry<Long,RequestLog> entry : requestMap.entrySet()) {
-            commitRequestList.add(entry.getValue());
-        }
-        WithDB.getInstance().saveRequestLogList(commitRequestList);
-        requestMap = new ArrayMap<>();
+        KLog.i("【saveRequest】" );
+        WithDB.getInstance().saveRequestLog( requestMap.get(logTime) );
     }
 
 
@@ -534,9 +715,12 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
         if( requestLogs.size()==0){
             return false;
         }
+        if(requestMap.size()!=requestLogs.size()){
+            for( RequestLog requestLog:requestLogs){
+                requestMap.put(requestLog.getLogTime(),requestLog);
+            }
+        }
         vToolbarHint.setText( R.string.main_toolbar_hint_sync_log );
-        WithDB.getInstance().delRequestListAll();  // TODO: 2016/10/20 不能先删除，可能删除后，手机退出，那么这些记录就丢失了
-        hadSyncLogRequest = false;
         // TODO: 2016/5/26 将这个改为 json 格式来持久化 RequestLog 对象 ？貌似也不好
         for( RequestLog requestLog:requestLogs){
             requestMap.put(requestLog.getLogTime(),requestLog);
@@ -546,12 +730,16 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
             mNeter.addBody( UString.formStringToParamList(bodyParamString));
             KLog.d("同步错误：" + headParamString + " = " + bodyParamString);
             if( requestLog.getMethod().equals("post")){
-                mNeter.post( requestLog.getUrl(), requestLog.getLogTime() );
+                mNeter.postCallback( requestLog.getUrl(), requestLog.getLogTime() );
             }
         }
+        WithDB.getInstance().delRequestListAll();  // TODO: 2016/10/20 不能先删除，可能删除后，手机退出，那么这些记录就丢失了
+        hadSyncLogRequest = false;
         KLog.d("读取到的数目： " +  requestLogs.size());
         return true;
     }
+
+
 
     public void clearArticles(int days){
         long clearTime = System.currentTimeMillis() - days*24*3600*1000L;
@@ -782,7 +970,7 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
                 tagName = intent.getExtras().getString("tagName");
                 break;
             case 2:
-                mNeter.getWithAuth(API.U_SUSCRIPTION_LIST);
+                mNeter.getWithAuth(API.HOST + API.U_SUSCRIPTION_LIST);
         }
 //        KLog.i("【== onActivityResult 】" + tagId + "----" + sListTag);
         if( tagId == null){
