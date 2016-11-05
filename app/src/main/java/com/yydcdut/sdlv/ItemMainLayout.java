@@ -11,6 +11,7 @@ import android.widget.FrameLayout;
 import android.widget.Scroller;
 
 /**
+ *
  * Created by yuyidong on 15/9/24.
  */
 class ItemMainLayout extends FrameLayout {
@@ -277,7 +278,6 @@ class ItemMainLayout extends FrameLayout {
                                 mOnItemSlideListenerProxy.onSlideOpen(this, MenuItem.DIRECTION_RIGHT);
                             }
 //                            mScrollState = SCROLL_STATE_OPEN;
-//                            System.out.println("【scrollBack 4 】" + mScrollState);
                         } else {
                             mIntention = INTENTION_RIGHT_CLOSE;
                             mScroller.startScroll(mItemCustomLayout.getLeft(), 0, -mItemCustomLayout.getLeft(), 0, SCROLL_TIME);

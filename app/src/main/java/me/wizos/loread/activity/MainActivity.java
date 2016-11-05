@@ -41,6 +41,7 @@ import me.wizos.loread.net.Parser;
 import me.wizos.loread.presenter.adapter.MainSlvAdapter;
 import me.wizos.loread.presenter.adapter.MaterialSimpleListAdapter;
 import me.wizos.loread.presenter.adapter.MaterialSimpleListItem;
+import me.wizos.loread.utils.Tool;
 import me.wizos.loread.utils.UDensity;
 import me.wizos.loread.utils.UFile;
 import me.wizos.loread.utils.ULog;
@@ -65,7 +66,7 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
     private boolean hadSyncAllStarredList = false;
     private boolean setSyncAllStarredList = false;
     private boolean syncFirstOpen = true;
-    private boolean hadSyncLogRequest = false;
+    private boolean hadSyncLogRequest = true;
     private boolean isOrderTagFeed;
     private int clearBeforeDay;
     public static long mUserID;
@@ -78,7 +79,7 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
 //    protected Parser mParser;
 
 //    /**用于将主题设置保存到SharePreferences的工具类**/
-////    private AppThemeHelper mAppThemeHelper;
+////    private Tool mAppThemeHelper;
 //    private void initTheme() {
 //        if ( WithSet.getInstance().getThemeMode().equals(WithSet.themeDay) ) {
 //            setTheme(R.style.AppTheme);
@@ -357,7 +358,7 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
         if(!mSwipeRefreshLayout.isEnabled()){return;}
         mSwipeRefreshLayout.setEnabled(false);
         mSwipeRefreshLayout.setRefreshing(false);  // 调用 setRefreshing(false) 去取消任何刷新的视觉迹象。如果活动只是希望展示一个进度条的动画，他应该条用 setRefreshing(true) 。 关闭手势和进度条动画，调用该 View 的 setEnable(false)
-
+//        Tool.printCallStatck();
         handler.sendEmptyMessage(API.M_BEGIN_SYNC);
         KLog.i("【刷新中】" + hadSyncLogRequest);
     }
@@ -375,7 +376,7 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
     protected void notifyDataChanged(){
         mSwipeRefreshLayout.setRefreshing(false);
         mSwipeRefreshLayout.setEnabled(true);
-        UToast.showLong("刷新完成");
+        UToast.showShort("刷新完成");
         reloadData();
     }
 
@@ -387,13 +388,13 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
             mSwipeRefreshLayout.setEnabled(false);
             handler.sendEmptyMessage(API.M_BEGIN_SYNC);
             KLog.i("首次开启同步");
-            UToast.showLong("首次开启同步");
+            UToast.showShort("首次开启同步");
         }else {
             List<Article> allArts = WithDB.getInstance().loadArtAll();  //  速度更快，用时更短，这里耗时 43,43
             if(allArts.size() == 0 && hadSyncLogRequest ){
                 // 显示一个没有内容正在加载的样子
                 handler.sendEmptyMessage(API.M_BEGIN_SYNC);
-                UToast.showLong("首次同步");
+                UToast.showShort("首次同步");
             }
         }
         KLog.i("列表数目：" + articleList.size() + "  当前状态：" + sListState);
@@ -418,7 +419,7 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
         if(UString.isBlank(articleList)){
             vPlaceHolder.setVisibility(View.VISIBLE);
             slv.setVisibility(View.GONE);
-            UToast.showLong("没有文章"); // 弹出一个提示框，询问是否同步
+            UToast.showShort("没有文章"); // 弹出一个提示框，询问是否同步
         }else {
             vPlaceHolder.setVisibility(View.GONE);
             slv.setVisibility(View.VISIBLE);
@@ -472,7 +473,6 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
         noLabel.addAll( exist );
         return noLabel;
     }
-
 
 
     /**
@@ -912,6 +912,18 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
         mainSlvAdapter.notifyDataSetChanged();
     }
     private void changeReadState(Article article){
+        Throwable ex = new Throwable();
+        StackTraceElement[] stackElements = ex.getStackTrace();
+        if (stackElements != null) {
+            for (int i = 0; i < stackElements.length; i++) {
+                System.out.print(stackElements[i].getClassName()+"_");
+                System.out.print(stackElements[i].getFileName()+"_");
+                System.out.print(stackElements[i].getLineNumber()+"_");
+                System.out.println(stackElements[i].getMethodName());
+                System.out.println("-----------------------------------");
+            }
+        }
+
         if(article.getReadState().equals(API.ART_READ)){
             article.setReadState(API.ART_READING);
             mNeter.postUnReadArticle(article.getId());
@@ -938,8 +950,6 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
         WithDB.getInstance().saveArticle(article);
         mainSlvAdapter.notifyDataSetChanged();
     }
-
-
 
 
     @Override
@@ -1001,7 +1011,7 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
     public void onStarIconClicked(View view){
         KLog.d( sListTag + sListState + tagName );
         if(sListState.equals(API.LIST_STAR)){
-            UToast.showLong("已经在收藏列表了");
+            UToast.showShort("已经在收藏列表了");
         }else {
             vReadIcon.setImageDrawable(getDrawable(R.drawable.ic_vector_all));
             vStarIcon.setImageDrawable(getDrawable(R.drawable.ic_vector_star));

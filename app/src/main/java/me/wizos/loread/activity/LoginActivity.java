@@ -165,18 +165,18 @@ public class LoginActivity extends BaseActivity implements View.OnLayoutChangeLi
         mAccountPD = vPD.getText().toString();
 
         if(mAccountID==null) {
-            UToast.showLong("账号为空");
+            UToast.showShort("账号为空");
             return;
         }else if(mAccountID.length()<4)
             if(!mAccountID.contains("@") || mAccountID.contains(" ")) {
-                UToast.showLong("账号输入错误");
+                UToast.showShort("账号输入错误");
                 return;
             }
         if(mAccountPD==null) {
-            UToast.showLong("密码为空");
+            UToast.showShort("密码为空");
             return;
         }else if(mAccountID.length()<4){
-            UToast.showLong("密码输入错误");
+            UToast.showShort("密码输入错误");
             return;
         }
 

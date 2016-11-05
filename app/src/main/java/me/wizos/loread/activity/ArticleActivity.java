@@ -12,7 +12,7 @@ import android.support.v4.widget.NestedScrollView;
 import android.support.v7.widget.Toolbar;
 import android.text.Html;
 import android.text.Spanned;
-import android.util.SparseArray;
+import android.util.SparseIntArray;
 import android.view.View;
 import android.view.ViewConfiguration;
 import android.webkit.JavascriptInterface;
@@ -35,17 +35,17 @@ import java.util.List;
 
 import me.wizos.loread.App;
 import me.wizos.loread.R;
-import me.wizos.loread.presenter.adapter.MaterialSimpleListAdapter;
-import me.wizos.loread.presenter.adapter.MaterialSimpleListItem;
 import me.wizos.loread.bean.Article;
 import me.wizos.loread.bean.Feed;
 import me.wizos.loread.bean.Tag;
-import me.wizos.loread.data.WithDB;
 import me.wizos.loread.bean.gson.ExtraImg;
 import me.wizos.loread.bean.gson.SrcPair;
+import me.wizos.loread.data.WithDB;
 import me.wizos.loread.net.API;
 import me.wizos.loread.net.Neter;
 import me.wizos.loread.net.Parser;
+import me.wizos.loread.presenter.adapter.MaterialSimpleListAdapter;
+import me.wizos.loread.presenter.adapter.MaterialSimpleListItem;
 import me.wizos.loread.utils.HttpUtil;
 import me.wizos.loread.utils.UFile;
 import me.wizos.loread.utils.UString;
@@ -76,7 +76,7 @@ public class ArticleActivity extends BaseActivity {
     private String htmlState = "";
     private String fileNameInMD5 = "";
     private ArrayMap<Integer,SrcPair> lossSrcList, obtainSrcList ;
-    private SparseArray<Integer> failImgList;
+    private SparseIntArray failImgList;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -212,7 +212,6 @@ public class ArticleActivity extends BaseActivity {
                     }
                     logImgStatus(ExtraImg.DOWNLOAD_ING);
 //                    KLog.d("检测 obtainSrcList " + lossSrcList.size());
-//                    KLog.d( "【判断ImgState是否为空】" + article.getImgState());
                     UFile.saveCacheHtml( fileNameInMD5, showContent );
                 }else {
                     article.setImgState("");
@@ -225,12 +224,10 @@ public class ArticleActivity extends BaseActivity {
                     extraImg = gson.fromJson(imgState, type);
                     lossSrcList = extraImg.getLossImgs();
                     obtainSrcList = extraImg.getObtainImgs();
-
 //                    KLog.e("重新进入获取到的imgState记录" + imgState + extraImg +  lossSrcList + obtainSrcList);
                 }catch (RuntimeException e){
                     imgState = "";
                 }
-
             }
 
 //            <img src="占位符图片" data="/static/images/logo.png" id="img">
@@ -283,7 +280,7 @@ public class ArticleActivity extends BaseActivity {
                     script +  "</head><body>";
             String contentFooter = "</body></html>";
             showContent = contentHeader + showContent + contentFooter;
-            numOfImgs = mNeter.getBitmapList(lossSrcList);
+            numOfImgs = mNeter.getBitmapList( lossSrcList );
 
             if (fileNameInMD5!= null){
                 vArticleNum.setText( fileNameInMD5.substring(0,10) ); // FIXME: 2016/5/3 测试
@@ -291,7 +288,6 @@ public class ArticleActivity extends BaseActivity {
                 String numStr = String.valueOf(articleNo) + " / " + String.valueOf(articleCount);
                 vArticleNum.setText( numStr );
             }
-
             notifyDataChanged();
         }
         initStateView();
@@ -359,9 +355,6 @@ public class ArticleActivity extends BaseActivity {
             // 下载图片
             // 打开大图
         }
-
-
-
     }
 
     private void openImgMenuDialog(final int imgNo){
@@ -407,7 +400,7 @@ public class ArticleActivity extends BaseActivity {
     private void restartDownloadImg(int imgNo){
         imgNo = imgNo + 1 ;
         KLog.d(imgNo);
-        SrcPair imgSrc=null;
+        SrcPair imgSrc;
         if( lossSrcList!=null ){
             imgSrc = lossSrcList.get(imgNo);
             if( imgSrc==null){
@@ -429,38 +422,52 @@ public class ArticleActivity extends BaseActivity {
                 return;
             }
         }else {
-            UToast.showShort("没有找到图片4");
+            UToast.showShort("lossSrcList与obtainSrcList都为null");
             KLog.d("--");
-//            return;
-        }
-
-        if(lossSrcList != null ){
-            for(ArrayMap.Entry<Integer, SrcPair> entry: lossSrcList.entrySet()){
-                KLog.d("【获取loss图片的key为：" + entry.getKey() );
-            }
-        }
-        if( obtainSrcList != null ){
-            for(ArrayMap.Entry<Integer, SrcPair> entry: obtainSrcList.entrySet()){
-                KLog.d("【获取obtain图片的key为：" + entry.getKey() );
-            }
-        }
-        if( lossSrcList ==null && obtainSrcList==null){
             return;
         }
+
+//        if(lossSrcList != null ){
+//            for(ArrayMap.Entry<Integer, SrcPair> entry: lossSrcList.entrySet()){
+//                KLog.d("【获取loss图片的key为：" + entry.getKey() );
+//            }
+//        }
+//        if( obtainSrcList != null ){
+//            for(ArrayMap.Entry<Integer, SrcPair> entry: obtainSrcList.entrySet()){
+//                KLog.d("【获取obtain图片的key为：" + entry.getKey() );
+//            }
+//        }
+//        if( lossSrcList ==null && obtainSrcList==null){
+//            return;
+//        }
 
         if(!HttpUtil.isWifiEnabled(context)){
             handler.sendEmptyMessage(API.F_Request);
             return ;}
         String srcBaseUrl = "";
-        if (htmlState.equals("cache")){ //
-            srcBaseUrl = App.cacheRelativePath + fileNameInMD5 + "_files" + File.separator;
-        }else if(htmlState.equals("cacheFolder")){
-            srcBaseUrl = App.cacheRelativePath + fileNameInMD5 + File.separator + fileNameInMD5 + "_files" + File.separator;
-        }else if(htmlState.equals("box")){
-            srcBaseUrl = App.boxRelativePath + article.getTitle() + "_files" + File.separator;
-        }else if(htmlState.equals("cacheBox")){
-            srcBaseUrl = App.cacheRelativePath + article.getTitle() + "_files" + File.separator;
+        switch (htmlState){
+            case "cache":
+                srcBaseUrl = App.cacheRelativePath + fileNameInMD5 + "_files" + File.separator;
+                break;
+            case "cacheFolder":
+                srcBaseUrl = App.cacheRelativePath + fileNameInMD5 + "_files" + File.separator;
+                break;
+            case "box":
+                srcBaseUrl = App.boxRelativePath + article.getTitle() + "_files" + File.separator;
+                break;
+            case "cacheBox":
+                srcBaseUrl = App.cacheRelativePath + article.getTitle() + "_files" + File.separator;
+                break;
         }
+//        if (htmlState.equals("cache")){ //
+//            srcBaseUrl = App.cacheRelativePath + fileNameInMD5 + "_files" + File.separator;
+//        }else if(htmlState.equals("cacheFolder")){
+//            srcBaseUrl = App.cacheRelativePath + fileNameInMD5 + File.separator + fileNameInMD5 + "_files" + File.separator;
+//        }else if(htmlState.equals("box")){
+//            srcBaseUrl = App.boxRelativePath + article.getTitle() + "_files" + File.separator;
+//        }else if(htmlState.equals("cacheBox")){
+//            srcBaseUrl = App.cacheRelativePath + article.getTitle() + "_files" + File.separator;
+//        }
 //        KLog.d("修改后的src保存地址为："  + lossSrcList.size() + imgNo );
 //        KLog.d("修改后的src保存地址为："  + srcBaseUrl + UString.getFileNameExtByUrl(imgSrc.getSaveSrc()) );
         mNeter.getBitmap(imgSrc.getNetSrc(), srcBaseUrl + UString.getFileNameExtByUrl(imgSrc.getSaveSrc()) ,imgNo);
@@ -702,8 +709,6 @@ public class ArticleActivity extends BaseActivity {
                         KLog.i("【 API.S_BITMAP 】==");
                         imgSrc = obtainSrcList.get(imgNo);
                     }
-
-                    KLog.i("【 API.S_BITMAP 】111");
                     obtainSrcList.put(imgNo, lossSrcList.get(imgNo) );
                     lossSrcList.remove(imgNo);
                     replaceSrc( imgNo, imgSrc.getLocalSrc() );
@@ -721,7 +726,7 @@ public class ArticleActivity extends BaseActivity {
                 case API.F_BITMAP:
                     imgNo = msg.getData().getInt("imgNo");
                     if (failImgList == null){
-                        failImgList = new SparseArray<>(numOfImgs);
+                        failImgList = new SparseIntArray(numOfImgs);
                     }
                     numOfFailureImg = failImgList.get(imgNo,0);
                     failImgList.put( imgNo, numOfFailureImg + 1 );

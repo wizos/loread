@@ -282,7 +282,7 @@ public class Neter {
 
         RequestBody body = bodyBuilder.build();
         final Request request = headBuilder.post(body).build();
-        KLog.d("【开始请求】 "+ logTime + "--" + urlx);
+        KLog.d("【开始请求离线数据】 "+ logTime + "--" + urlx);
 
         final String url = urlx;
 
@@ -334,7 +334,7 @@ public class Neter {
         bundle.putString("res", res);
         message.setData(bundle);
         handler.sendMessage(message);
-        KLog.d("【makeMsg】" + url   + " -- " + res );
+        KLog.d("【makeMsg】" + url   + " -- " );
     }
 
 

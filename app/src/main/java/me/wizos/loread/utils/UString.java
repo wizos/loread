@@ -17,6 +17,7 @@ import me.wizos.loread.bean.gson.SrcPair;
 import me.wizos.loread.net.API;
 
 /**
+ * 字符处理工具类
  * Created by Wizos on 2016/3/16.
  */
 public class UString {
@@ -27,8 +28,8 @@ public class UString {
     /**
      * 将字符串转成MD5值
      *
-     * @param string
-     * @return
+     * @param string 字符串
+     * @return MD5 后的字符串
      */
     public static String stringToMD5(String string) {
         byte[] hash;
@@ -60,10 +61,9 @@ public class UString {
     public static boolean isBlank(List list){return  list==null || list.isEmpty() || list.size()==0;}
 
     /**
-     * 修改 原始 html ，获得 src 的下载地址和保存地址 + 修改后的 html
      * @param oldHtml 原始 html
      * @param fileNameInMD5 MD5 加密后的文件名，用于有图片的文章内 src 的 **FileName_files 路径
-     * @return
+     * @return 修改后的 src 下载地址和保存地址 + 修改后的 html
      */
     public static ArrayMap<Integer,SrcPair> getListOfSrcAndHtml(String oldHtml, String fileNameInMD5) {
         if (UString.isBlank(oldHtml))
@@ -85,10 +85,10 @@ public class UString {
 //                indexA = tempHtml.indexOf("<img ", indexB);
                 break;
             }
-            imgExt = UString.getFileExtByUrl( srcNet );
-            imgName = UString.getFileNameByUrl( srcNet );
-            KLog.d("【获取src和html】" + imgExt + num );
             num++;
+            imgExt = UString.getFileExtByUrl( srcNet );
+            imgName = UString.getFileNameByUrl( srcNet )+ "_" + num; // 之所以要加 num ，是为了防止有些图片url是 /img.php?1212 等参数形式，导致得到的文件名都为 img
+            KLog.d("【获取src和html】" + imgExt + num );
 //            srcLocal = App.cacheAbsolutePath + fileNameInMD5  + File.separator + fileNameInMD5 + "_files" + File.separator + fileNameInMD5 + "_" + num + fileExt + API.MyFileType;
 //            srcLoading  = App.cacheRelativePath  + fileNameInMD5 + File.separator + fileNameInMD5 + "_files" + File.separator + fileNameInMD5 + "_" + num + fileExt + API.MyFileType;
             srcLocal = "./" + fileNameInMD5 + "_files"  + File.separator + imgName + imgExt + API.MyFileType;
@@ -202,15 +202,16 @@ public class UString {
         String fileName;
         int separatorIndex = url.lastIndexOf("/") + 1;
         fileName = url.substring(separatorIndex, url.length() );
-        fileName.replace("\\","");
-        fileName.replace("/","");
-        fileName.replace(":","");
-        fileName.replace("*","");
-        fileName.replace("?","");
-        fileName.replace("\"","");
-        fileName.replace("<","");
-        fileName.replace(">","");
-        fileName.replace("|","");
+        fileName = fileName.replace("\\","");
+        fileName = fileName.replace("/","");
+        fileName = fileName.replace(":","");
+        fileName = fileName.replace("*","");
+        fileName = fileName.replace("?","");
+        fileName = fileName.replace("\"","");
+        fileName = fileName.replace("<","");
+        fileName = fileName.replace(">","");
+        fileName = fileName.replace("|","");
+        fileName = fileName.replace("%","_");
         KLog.e("【文件名与后缀名】" + fileName);
         return fileName;
     }
