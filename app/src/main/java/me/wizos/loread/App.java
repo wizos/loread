@@ -3,7 +3,6 @@ package me.wizos.loread;
 import android.app.Activity;
 import android.app.Application;
 
-import com.facebook.stetho.Stetho;
 import com.socks.library.KLog;
 import com.tencent.bugly.crashreport.CrashReport;
 
@@ -22,7 +21,7 @@ import me.wizos.loread.net.API;
  */
 public class App extends Application{
     public static final String DB_NAME = "loread_DB";
-    public static String cacheRelativePath,cacheAbsolutePath ,boxRelativePath, boxAbsolutePath;
+    public static String cacheRelativePath,cacheAbsolutePath ,boxRelativePath, boxAbsolutePath, storeRelativePath, storeAbsolutePath ;
     public static String logRelativePath,logAbsolutePath;
     public static List<Activity> activities = new ArrayList<>();
 
@@ -40,7 +39,15 @@ public class App extends Application{
     public void onCreate() {
         super.onCreate();
         App.instance = this;
-        KLog.init( false );// TEST，测试环境下应该注释掉
+//         TEST，正式环境下应该启用
+        KLog.init( false );
+        CrashReport.initCrashReport( App.getInstance() , "900044326", true);
+        // TEST，正式环境应该注释掉
+//        Stetho.initialize(
+//                Stetho.newInitializerBuilder(this)
+//                        .enableDumpapp(Stetho.defaultDumperPluginsProvider(this))
+//                        .enableWebKitInspector(Stetho.defaultInspectorModulesProvider(this))
+//                        .build());
         if( !WithSet.getInstance().isInoreaderProxy()){
             API.HOST = API.HOST_OFFICIAL;
         }else {
@@ -52,18 +59,12 @@ public class App extends Application{
         boxRelativePath = getExternalFilesDir(null) + File.separator + "box" + File.separator;
         boxAbsolutePath = "file:"+ File.separator + File.separator + boxRelativePath;
 
+        storeRelativePath = getExternalFilesDir(null) + File.separator + "store" + File.separator;
+        storeAbsolutePath = "file:"+ File.separator + File.separator + storeRelativePath;
+
         logRelativePath = getExternalFilesDir(null) + File.separator + "log" + File.separator;
         logAbsolutePath = "file:"+ File.separator + File.separator + logRelativePath;
 
-        // TEST，应该注释掉
-        Stetho.initialize(
-                Stetho.newInitializerBuilder(this)
-                        .enableDumpapp(Stetho.defaultDumperPluginsProvider(this))
-                        .enableWebKitInspector(Stetho.defaultInspectorModulesProvider(this))
-                        .build());
-//        Stetho.initializeWithDefaults(this);
-
-        CrashReport.initCrashReport( App.getInstance() , "900044326", true);
     }
 
 

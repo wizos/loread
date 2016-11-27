@@ -2,7 +2,7 @@
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/slv_item"
+    android:id="@+id/tag_slv_item"
     android:layout_width="match_parent"
     android:layout_height="@dimen/slv_item_height"
     android:paddingTop="6dp"
@@ -13,36 +13,35 @@
     <!--MarginStart指的是控件距离开头View部分的间距大小，MarginLeft则指的是控件距离左边View部分的间距大小，MarginEnd和MarginRight同理。-->
     <!--一般情况下，View开始部分就是左边，但是有的语言目前为止还是按照从右往左的顺序来书写的-->
 
-    <ImageView
-        android:id="@+id/icon_expand"
+    <me.wizos.loread.view.IconFontView
+        android:id="@+id/tag_slv_item_icon"
         android:layout_width="32dp"
         android:layout_height="32dp"
-        android:layout_marginLeft="18dp"
-        android:layout_gravity="center_vertical"
-        tools:background="@drawable/payout_0"/>
+        android:layout_marginStart="18dp"
+        android:text="@string/font_tag_class"
+        android:gravity="center"
+        android:layout_gravity="center_vertical"/>
 
     <TextView
-        android:id="@+id/tag_title"
+        android:id="@+id/tag_slv_item_title"
         android:layout_width="0dp"
         android:layout_height="match_parent"
         android:layout_weight="1"
         android:layout_marginStart="12dp"
         android:gravity="center_vertical"
-        android:alpha="0.87"
         android:lines="1"
-        android:textColor="@android:color/black"
         android:textSize="16sp"
-        tools:text="文件夹名字"/>
+        tools:text="文件夹名字"
+        tools:textColor="@android:color/black"/>
     <TextView
-        android:id="@+id/tag_count"
+        android:id="@+id/tag_slv_item_count"
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
         android:layout_marginEnd="18dp"
         android:gravity="center_vertical"
-        android:alpha="0.87"
-        android:lines="2"
-        android:textColor="@android:color/black"
+        android:lines="1"
         android:textSize="12sp"
-        tools:text="0"/>
+        tools:text="0"
+        tools:textColor="@android:color/black"/>
 
 </LinearLayout>

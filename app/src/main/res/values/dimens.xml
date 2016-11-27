@@ -8,4 +8,9 @@
     <dimen name="slv_menu_left_width">36dp</dimen>
     <dimen name="slv_menu_right_width">36dp</dimen>
     <dimen name="bottom_bar_height">40dp</dimen>
+
+
+
+
+    <dimen name="md_colorchooser_circlesize">40dp</dimen>
 </resources>

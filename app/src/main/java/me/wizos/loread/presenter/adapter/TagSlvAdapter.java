@@ -10,6 +10,7 @@ import android.widget.TextView;
 import java.util.ArrayList;
 import java.util.List;
 
+import me.wizos.loread.R;
 import me.wizos.loread.bean.Tag;
 
 
@@ -50,8 +51,8 @@ public class TagSlvAdapter extends ArrayAdapter<Tag>{
         CustomViewHolder cvh;
         if (convertView == null) {
             cvh = new CustomViewHolder();
-            convertView = LayoutInflater.from(context).inflate(me.wizos.loread.R.layout.tagslv_item, null);
-            cvh.tagTitle = (TextView) convertView.findViewById(me.wizos.loread.R.id.tag_title);
+            convertView = LayoutInflater.from(context).inflate(R.layout.tag_slv_item, null);
+            cvh.tagTitle = (TextView) convertView.findViewById(R.id.tag_slv_item_title);
             convertView.setTag(cvh);
         } else {
             cvh = (CustomViewHolder) convertView.getTag();

@@ -46,6 +46,7 @@ html {
 /**
  * Remove default margin.
     max-width: 100%
+
  */
 
 img {
@@ -53,7 +54,10 @@ img {
 	max-width: 98%;
 	width: auto;
 	height: auto;
+	display:flex;
 	text-align:center;
+    justify-content:center;
+    align-items:center;
 }
 
 
@@ -80,13 +84,11 @@ h1 tt, h1 code, h2 tt, h2 code, h3 tt, h3 code, h4 tt, h4 code, h5 tt, h5 code, 
 
 h1 {
     font-size: 28px;
-    color: #000;
 }
 
 h2 {
     font-size: 24px;
-    border-bottom: 1px solid #ccc;
-    color: #000;
+    border-bottom: 1px solid #ccc; // 灰白
 }
 
 h3 {
@@ -110,7 +112,7 @@ h6 {
 =============================================================================*/
 
 a {
-    color: #4183C4;
+    color: #4183C4; // 蓝色
     text-decoration: none;
 }
 
@@ -184,8 +186,6 @@ code, tt {
     margin: 0 0px;
     padding: 0px 0px;
     white-space: nowrap;
-    border: 1px solid #eaeaea;
-    background-color: #f8f8f8;
     border-radius: 3px;
 }
 
@@ -198,8 +198,6 @@ pre > code {
 }
 
 pre {
-    background-color: #f8f8f8;
-    border: 1px solid #ccc;
     font-size: 13px;
     line-height: 19px;
     overflow: auto;
@@ -268,16 +266,6 @@ table th {
     font-weight: bold;
 }
 
-table th, table td {
-    border: 1px solid #ccc;
-    padding: 6px 13px;
-}
 
-table tr {
-    border-top: 1px solid #ccc;
-    background-color: #fff;
-}
 
-table tr:nth-child(2n) {
-    background-color: #f8f8f8;
-}
+

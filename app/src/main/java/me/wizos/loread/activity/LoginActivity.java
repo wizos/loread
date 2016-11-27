@@ -55,6 +55,7 @@ public class LoginActivity extends BaseActivity implements View.OnLayoutChangeLi
     protected Neter mNeter;
 //    protected Parser mParser = new Parser();
 
+    protected void initColorful(){}
     private SwitchButton inoreaderProxy;
     private void initView(){
         vID = (EditText)findViewById(R.id.edittext_id);
@@ -140,7 +141,7 @@ public class LoginActivity extends BaseActivity implements View.OnLayoutChangeLi
         activityRootView.addOnLayoutChangeListener(this);
     }
     private void forInput(){
-        activityRootView = findViewById(R.id.login_root_layout);
+        activityRootView = findViewById(R.id.login_scroll);
         screenHeight = this.getWindowManager().getDefaultDisplay().getHeight();//获取屏幕高度
         keyHeight = screenHeight/3; //阀值设置为屏幕高度的1/3
     }

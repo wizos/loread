@@ -22,6 +22,8 @@ import java.util.List;
 
 import me.wizos.loread.R;
 import me.wizos.loread.bean.Tag;
+import me.wizos.loread.colorful.Colorful;
+import me.wizos.loread.colorful.setter.ViewGroupSetter;
 import me.wizos.loread.data.WithDB;
 import me.wizos.loread.data.WithSet;
 import me.wizos.loread.net.API;
@@ -52,6 +54,7 @@ public class TagActivity extends BaseActivity implements SlideAndDragListView.On
         initToolbar();
         initSlvListener();
         initData();
+        initColorful();
     }
     @Override
     protected Context getActivity(){
@@ -69,6 +72,29 @@ public class TagActivity extends BaseActivity implements SlideAndDragListView.On
         super.onResume();
     }
 
+
+    protected void initColorful(){
+        ViewGroupSetter listViewSetter = new ViewGroupSetter(slv);
+        // 绑定ListView的Item View中的news_title视图，在换肤时修改它的text_color属性
+        listViewSetter.childViewTextColor(R.id.tag_slv_item_icon, R.attr.tag_slv_item_icon);
+        listViewSetter.childViewTextColor(R.id.tag_slv_item_title, R.attr.lv_item_title_color);
+        listViewSetter.childViewTextColor(R.id.tag_slv_item_count, R.attr.lv_item_desc_color);
+        listViewSetter.childViewBgColor(R.id.tag_slv_item, R.attr.root_view_bg);
+        listViewSetter.childViewBgColor(R.id.tag_slv, R.attr.root_view_bg);
+
+        mColorful = new Colorful.Builder(this)
+                // 设置view的背景图片
+                .backgroundColor(R.id.tag_coordinator, R.attr.root_view_bg)
+                // 设置 toolbar
+                .backgroundColor(R.id.tag_toolbar, R.attr.topbar_bg)
+                .textColor(R.id.tag_toolbar_count, R.attr.topbar_fg)
+
+                // 设置 bottombar
+                .backgroundColor(R.id.tag_bottombar, R.attr.bottombar_bg)
+                .textColor(R.id.tag_bottombar_main, R.attr.bottombar_fg)
+                .create(); // 创建Colorful对象
+        autoToggleThemeSetting();
+    }
 
     private long userID;
     private Tag rootTag;
@@ -244,9 +270,9 @@ public class TagActivity extends BaseActivity implements SlideAndDragListView.On
             CustomViewHolder cvh;
             if (convertView == null) {
                 cvh = new CustomViewHolder();
-                convertView = LayoutInflater.from(TagActivity.this).inflate(R.layout.tagslv_item, null);
-                cvh.tagTitle = (TextView) convertView.findViewById(R.id.tag_title);
-                cvh.tagCount = (TextView) convertView.findViewById(R.id.tag_count);
+                convertView = LayoutInflater.from(TagActivity.this).inflate(R.layout.tag_slv_item, null);
+                cvh.tagTitle = (TextView) convertView.findViewById(R.id.tag_slv_item_title);
+                cvh.tagCount = (TextView) convertView.findViewById(R.id.tag_slv_item_count);
                 convertView.setTag(cvh);
             } else {
                 cvh = (CustomViewHolder) convertView.getTag();

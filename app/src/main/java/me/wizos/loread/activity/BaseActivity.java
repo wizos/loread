@@ -12,6 +12,8 @@ import android.view.WindowManager;
 import com.readystatesoftware.systembartint.SystemBarTintManager;
 
 import me.wizos.loread.R;
+import me.wizos.loread.colorful.Colorful;
+import me.wizos.loread.data.WithSet;
 
 /**
  * Created by Wizos on 2016/3/12.
@@ -28,7 +30,7 @@ public abstract class BaseActivity extends AppCompatActivity implements View.OnC
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        initSystemBar();
+//        initSystemBar();
     }
 
     @Override
@@ -70,6 +72,37 @@ public abstract class BaseActivity extends AppCompatActivity implements View.OnC
     public void onBottombarClicked(View view){
         return;
     }
+
+
+
+
+
+    Colorful mColorful;
+    protected void autoToggleThemeSetting() {
+        if ( WithSet.getInstance().getThemeMode()==WithSet.themeDay ) {
+            mColorful.setTheme(R.style.AppTheme);
+        } else {
+            mColorful.setTheme(R.style.AppTheme_Dark);
+        }
+    }
+
+    /**
+     * 切换主题设置
+     */
+    protected void toggleThemeSetting() {
+        if ( WithSet.getInstance().getThemeMode()==WithSet.themeDay ) {
+            WithSet.getInstance().setThemeMode(WithSet.themeNight);
+            mColorful.setTheme(R.style.AppTheme_Dark);
+        } else {
+            WithSet.getInstance().setThemeMode(WithSet.themeDay);
+            mColorful.setTheme(R.style.AppTheme);
+        }
+    }
+    /**
+     * 设置各个视图与颜色属性的关联
+     */
+    protected abstract void initColorful();
+
 
     protected void initSystemBar() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {

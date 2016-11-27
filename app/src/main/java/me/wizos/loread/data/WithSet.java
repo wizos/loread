@@ -27,8 +27,8 @@ public class WithSet {
 
     public final static String spName = "loread";
     public final static String syncFirstOpen = "SyncFirstOpen";
-    public final static String themeDay = "Day";
-    public final static String themeNight = "Night";
+    public final static int themeDay = 0;
+    public final static int themeNight = 1;
 
 
     private WithSet() {
@@ -216,10 +216,10 @@ public class WithSet {
     }
 
 
-    public String getThemeMode() {
+    public int getThemeMode() {
         return readPref("ThemeMode", themeDay);
     }
-    public void setThemeMode(String themeMode) {
+    public void setThemeMode(int themeMode) {
         savePref("ThemeMode", themeMode);
     }
 

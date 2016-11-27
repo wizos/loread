@@ -1,4 +1,4 @@
-package me.wizos.loread.view.common;
+package me.wizos.loread.view;
 
 import android.content.Context;
 import android.support.v4.widget.SwipeRefreshLayout;

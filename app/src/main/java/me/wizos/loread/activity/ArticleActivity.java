@@ -19,7 +19,6 @@ import android.webkit.JavascriptInterface;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
-import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
@@ -40,7 +39,9 @@ import me.wizos.loread.bean.Feed;
 import me.wizos.loread.bean.Tag;
 import me.wizos.loread.bean.gson.ExtraImg;
 import me.wizos.loread.bean.gson.SrcPair;
+import me.wizos.loread.colorful.Colorful;
 import me.wizos.loread.data.WithDB;
+import me.wizos.loread.data.WithSet;
 import me.wizos.loread.net.API;
 import me.wizos.loread.net.Neter;
 import me.wizos.loread.net.Parser;
@@ -51,6 +52,7 @@ import me.wizos.loread.utils.UFile;
 import me.wizos.loread.utils.UString;
 import me.wizos.loread.utils.UTime;
 import me.wizos.loread.utils.UToast;
+import me.wizos.loread.view.IconFontView;
 
 @SuppressLint("SetJavaScriptEnabled")
 public class ArticleActivity extends BaseActivity {
@@ -60,7 +62,7 @@ public class ArticleActivity extends BaseActivity {
     protected Neter mNeter;
 //    protected Parser mParser;
     protected TextView vTitle ,vDate ,vTime, vFeed;
-    protected ImageView vStar , vRead;
+    protected IconFontView vStar , vRead;
     protected NestedScrollView vScrolllayout ;
     protected TextView vArticleNum;
 
@@ -87,9 +89,39 @@ public class ArticleActivity extends BaseActivity {
         mNeter = new Neter(handler,this);
 //        mNeter.setLogRequestListener(this);
 //        mParser = new Parser();
+        initColorful();
         initView();
         initData();
     }
+
+    protected void initColorful(){
+        mColorful = new Colorful.Builder(this)
+//                .backgroundDrawable(R.id.swipe_layout, R.attr.root_view_bg)
+                // 设置view的背景图片
+                .backgroundColor(R.id.art_coordinator, R.attr.root_view_bg)
+                // 设置 toolbar
+                .backgroundColor(R.id.art_toolbar, R.attr.topbar_bg)
+                .textColor(R.id.art_toolbar_num, R.attr.topbar_fg)
+                // 设置文章信息
+                .textColor(R.id.art_title, R.attr.art_title)
+                .textColor(R.id.art_feed, R.attr.art_feed)
+                .textColor(R.id.art_date, R.attr.art_date)
+                .textColor(R.id.art_time, R.attr.art_time)
+
+                // 设置 bottombar
+                .backgroundColor(R.id.art_bottombar, R.attr.bottombar_bg)
+                .textColor(R.id.art_bottombar_read, R.attr.bottombar_fg)
+                .textColor(R.id.art_bottombar_star, R.attr.bottombar_fg)
+                .textColor(R.id.art_bottombar_label, R.attr.bottombar_fg)
+                .textColor(R.id.art_bottombar_save, R.attr.bottombar_fg)
+
+                .create(); // 创建Colorful对象
+        autoToggleThemeSetting();
+    }
+
+
+
+
 
     @Override
     protected void onResume(){
@@ -120,13 +152,13 @@ public class ArticleActivity extends BaseActivity {
     private void initView() {
         initToolbar();
         initWebView();
-        vTitle = (TextView) findViewById(R.id.article_title);
-        vDate = (TextView) findViewById(R.id.article_date);
-//        vTime = (TextView) findViewById(R.id.article_time);
-        vFeed = (TextView) findViewById(R.id.article_feed);
-        vStar = (ImageView) findViewById(R.id.art_star);
-        vRead = (ImageView) findViewById(R.id.art_read);
-        vArticleNum =  (TextView)findViewById(R.id.article_num);
+        vTitle = (TextView) findViewById(R.id.art_title);
+        vDate = (TextView) findViewById(R.id.art_date);
+//        vTime = (TextView) findViewById(R.id.art_time);
+        vFeed = (TextView) findViewById(R.id.art_feed);
+        vStar = (IconFontView) findViewById(R.id.art_bottombar_star);
+        vRead = (IconFontView) findViewById(R.id.art_bottombar_read);
+        vArticleNum =  (TextView)findViewById(R.id.art_toolbar_num);
         vScrolllayout = (NestedScrollView) findViewById(R.id.art_scroll);
     }
     private void initToolbar() {
@@ -256,7 +288,7 @@ public class ArticleActivity extends BaseActivity {
                             "function initImgPlaceholder(){" +
                             "var imgList = document.getElementsByTagName(\"img\"); " +
                             "for(var i=0; i<imgList.length; i++) {" +
-                            "    imgList[i].src = \"file:///android_asset/placeholder.png\";"+
+                            "    imgList[i].src = \"file:///android_asset/down.svg\";"+
                             "}" +
                             "}" +
                             "function appointImgPlaceholder(number){" +
@@ -264,19 +296,25 @@ public class ArticleActivity extends BaseActivity {
                             "var imgList = document.getElementsByTagName(\"img\"); " +
                             "for(var i=0; i<array.length; i++) {" +
                             "    var n = array[i];" +
-                            "    imgList[n].src = \"file:///android_asset/placeholder.png\";"+
+                            "    imgList[n].src = \"file:///android_asset/down.svg\";"+
                             "}" +
                             "}" +
                             "</script>";
-            // 加载内部css样式
+            // 加载内部css样式 placeholder.png
             String cssPath = "file:"+ File.separator + File.separator + getExternalFilesDir(null)+ File.separator + "config" + File.separator + "article.css";
             if(!UFile.isFileExists(cssPath)){
                 cssPath = "file:///android_asset/article.css";
                 KLog.d("自定义的 css 文件不存在");
             }
+            String cssPathTheme;
+            if(WithSet.getInstance().getThemeMode()==WithSet.themeDay){
+                cssPathTheme = "file:///android_asset/article_theme_day.css";
+            }else {
+                cssPathTheme = "file:///android_asset/article_theme_night.css";
+            }
             String contentHeader = "<html xmlns=\"http://www.w3.org/1999/xhtml\"><head>" +
                     "<link rel=\"stylesheet\" href=\"" + cssPath +"\" type=\"text/css\"/>" +
-                    "<link rel=\"stylesheet\" href=\"file:///android_asset/article_color_dark.css\" type=\"text/css\"/>" +
+                    "<link rel=\"stylesheet\" href=\"" + cssPathTheme + "\" type=\"text/css\"/>" +
                     script +  "</head><body>";
             String contentFooter = "</body></html>";
             showContent = contentHeader + showContent + contentFooter;
@@ -427,20 +465,6 @@ public class ArticleActivity extends BaseActivity {
             return;
         }
 
-//        if(lossSrcList != null ){
-//            for(ArrayMap.Entry<Integer, SrcPair> entry: lossSrcList.entrySet()){
-//                KLog.d("【获取loss图片的key为：" + entry.getKey() );
-//            }
-//        }
-//        if( obtainSrcList != null ){
-//            for(ArrayMap.Entry<Integer, SrcPair> entry: obtainSrcList.entrySet()){
-//                KLog.d("【获取obtain图片的key为：" + entry.getKey() );
-//            }
-//        }
-//        if( lossSrcList ==null && obtainSrcList==null){
-//            return;
-//        }
-
         if(!HttpUtil.isWifiEnabled(context)){
             handler.sendEmptyMessage(API.F_Request);
             return ;}
@@ -459,15 +483,7 @@ public class ArticleActivity extends BaseActivity {
                 srcBaseUrl = App.cacheRelativePath + article.getTitle() + "_files" + File.separator;
                 break;
         }
-//        if (htmlState.equals("cache")){ //
-//            srcBaseUrl = App.cacheRelativePath + fileNameInMD5 + "_files" + File.separator;
-//        }else if(htmlState.equals("cacheFolder")){
-//            srcBaseUrl = App.cacheRelativePath + fileNameInMD5 + File.separator + fileNameInMD5 + "_files" + File.separator;
-//        }else if(htmlState.equals("box")){
-//            srcBaseUrl = App.boxRelativePath + article.getTitle() + "_files" + File.separator;
-//        }else if(htmlState.equals("cacheBox")){
-//            srcBaseUrl = App.cacheRelativePath + article.getTitle() + "_files" + File.separator;
-//        }
+
 //        KLog.d("修改后的src保存地址为："  + lossSrcList.size() + imgNo );
 //        KLog.d("修改后的src保存地址为："  + srcBaseUrl + UString.getFileNameExtByUrl(imgSrc.getSaveSrc()) );
         mNeter.getBitmap(imgSrc.getNetSrc(), srcBaseUrl + UString.getFileNameExtByUrl(imgSrc.getSaveSrc()) ,imgNo);
@@ -546,21 +562,26 @@ public class ArticleActivity extends BaseActivity {
 
     private void initStateView(){
         if(sReadState.equals(API.ART_UNREAD)) {
-            vRead.setImageDrawable(getDrawable(R.drawable.ic_vector_all));
+//            vRead.setImageDrawable(getDrawable(R.drawable.ic_vector_all));
+            vRead.setText(getString(R.string.font_readed));
             sReadState = API.ART_READ;
             article.setReadState(API.ART_READ);
             WithDB.getInstance().saveArticle(article);
             mNeter.postReadArticle(articleID);
             KLog.d("【 ReadState 】" + WithDB.getInstance().getArticle(articleID).getReadState());
         }else if(sReadState.equals(API.ART_READ)){
-            vRead.setImageDrawable(getDrawable(R.drawable.ic_vector_all));
+//            vRead.setImageDrawable(getDrawable(R.drawable.ic_vector_all));
+            vRead.setText(getString(R.string.font_readed));
         }else if(sReadState.equals(API.ART_READING)){
-            vRead.setImageDrawable(getDrawable(R.drawable.ic_vector_unread));
+//            vRead.setImageDrawable(getDrawable(R.drawable.ic_vector_unread));
+            vRead.setText(getString(R.string.font_unread));
         }
         if(sStarState.equals(API.ART_UNSTAR)){
-            vStar.setImageDrawable(getDrawable(R.drawable.ic_vector_unstar));
+//            vStar.setImageDrawable(getDrawable(R.drawable.ic_vector_unstar));
+            vStar.setText(getString(R.string.font_unstar));
         } else {
-            vStar.setImageDrawable(getDrawable(R.drawable.ic_vector_star));
+//            vStar.setImageDrawable(getDrawable(R.drawable.ic_vector_star));
+            vStar.setText(getString(R.string.font_stared));
         }
     }
 
@@ -578,104 +599,6 @@ public class ArticleActivity extends BaseActivity {
     // 非静态匿名内部类的实例，所以它持有外部类Activity的引用
     // 所以此处的 handler 会持有外部类 Activity 的引用，消息队列是在一个Looper线程中不断轮询处理消息。
     // 那么当这个Activity退出时消息队列中还有未处理的消息或者正在处理消息，而消息队列中的Message持有mHandler实例的引用，mHandler又持有Activity的引用，所以导致该Activity的内存资源无法及时回收，引发内存泄漏
-
-//    private MyHandler handler = new MyHandler(this);
-//    private static class MyHandler extends Handler {
-//        private WeakReference<Context> reference;
-//        public MyHandler(Context context) {
-//            reference = new WeakReference<>(context);
-//        }
-//
-//        @Override
-//        public void handleMessage(Message msg) {
-//            MainActivity activity = (MainActivity) reference.get();
-//            if(activity != null){
-////                activity.mTextView.setText("");
-//            }
-//            String info = msg.getData().getString("res");
-//            String url = msg.getData().getString("url");
-//            String filePath ="";
-//            int imgNo;
-//            if ( info == null ){
-//                info = "";
-//            }
-//            KLog.d("【handler】" +  msg.what + handler + url );
-//            switch (msg.what) {
-//                case API.S_EDIT_TAG:
-//                    long logTime = msg.getData().getLong("logTime");
-//                    if(!info.equals("OK")){
-//                        mNeter.forData(url,API.request,logTime);
-//                        KLog.d("【返回的不是 ok");
-//                    }
-//                    break;
-//                case API.S_ARTICLE_CONTENTS:
-//                    Parser.instance().parseArticleContents(info);
-//                    initData(); // 内容重载
-//                    break;
-//                case API.S_BITMAP:
-//                    imgNo = msg.getData().getInt("imgNo");
-//                    numOfGetImgs = numOfGetImgs + 1;
-//                    KLog.i("【 API.S_BITMAP 】" + imgNo + "=" + numOfGetImgs + "--" + numOfImgs);
-//                    SrcPair imgSrc = lossSrcList.get(imgNo);
-//                    if(imgSrc==null){
-//                        KLog.i("【 API.S_BITMAP 】==");
-//                        imgSrc = obtainSrcList.get(imgNo);
-//                    }
-//
-//                    KLog.i("【 API.S_BITMAP 】111");
-//                    obtainSrcList.put(imgNo, lossSrcList.get(imgNo) );
-//                    lossSrcList.remove(imgNo);
-//                    replaceSrc( imgNo, imgSrc.getLocalSrc() );
-////                    KLog.i("【】" + lossSrcList.size() +  lossSrcList.get(imgNo).getNetSrc()  );
-//
-//                    if( numOfGetImgs >= numOfImgs ) { // || numOfGetImgs % 5 == 0
-//                        KLog.i("【图片全部下载完成】" + numOfGetImgs  );
-//                        webView.clearCache(true);
-//                        lossSrcList.clear();
-//                        logImgStatus(ExtraImg.DOWNLOAD_OVER);
-////                        webView.notify();
-//                    }else {
-//                        logImgStatus(ExtraImg.DOWNLOAD_ING);
-//                    }
-//                    break;
-//                case API.F_BITMAP:
-//                    imgNo = msg.getData().getInt("imgNo");
-//                    if (failImgList == null){
-//                        failImgList = new SparseArray<>(numOfImgs);
-//                    }
-//                    numOfFailureImg = failImgList.get(imgNo,0);
-//                    failImgList.put( imgNo, numOfFailureImg + 1 );
-////                    numOfFailureImg = numOfFailureImg + 1;
-//                    KLog.i("【 API.F_BITMAP 】" + imgNo + "=" + numOfFailureImg + "--" + numOfImgs);
-//                    if ( numOfFailureImg > numOfFailures ){
-//                        UToast.showShort( "图片无法下载，请稍候再试" );
-//                        break;
-//                    }
-//                    filePath = msg.getData().getString("filePath");
-//                    mNeter.getBitmap(url, filePath, imgNo);
-//                    break;
-//                case API.F_Request:
-//                case API.F_Response:
-//                    if( info.equals("Authorization Required")){
-//                        UToast.showShort("没有Authorization，请重新登录");
-//                        finish();
-//                        goTo(LoginActivity.TAG,"Login For Authorization");
-//                        break;
-//                    }
-//                    numOfFailure = numOfFailure + 1;
-//                    if (numOfFailure < 3){
-//                        mNeter.forData(url,API.request,0);
-//                        break;
-//                    }
-//                    UToast.showShort("网络不好，中断");
-//                    break;
-//                case API.F_NoMsg:
-//                    break;
-//            }
-//            return false;
-//        }
-//    }
-
 
     protected Handler handler = new Handler(new Handler.Callback() {
         @Override
@@ -706,15 +629,18 @@ public class ArticleActivity extends BaseActivity {
                     KLog.i("【 API.S_BITMAP 】" + imgNo + "=" + numOfGetImgs + "--" + numOfImgs);
                     SrcPair imgSrc = lossSrcList.get(imgNo);
                     if(imgSrc==null){
-                        KLog.i("【 API.S_BITMAP 】==");
+//                        KLog.i("【 imgSrc为空 】==");
+//                        UToast.showShort("");
                         imgSrc = obtainSrcList.get(imgNo);
+                    }else {
+                        obtainSrcList.put(imgNo, lossSrcList.get(imgNo) );
+                        lossSrcList.remove(imgNo);
                     }
-                    obtainSrcList.put(imgNo, lossSrcList.get(imgNo) );
-                    lossSrcList.remove(imgNo);
+                    KLog.i("【1】" +  imgSrc );
                     replaceSrc( imgNo, imgSrc.getLocalSrc() );
-//                    KLog.i("【】" + lossSrcList.size() +  lossSrcList.get(imgNo).getNetSrc()  );
+                    KLog.i("【2】" + lossSrcList.size()  + obtainSrcList.get(imgNo)  );
                     if( numOfGetImgs >= numOfImgs ) { // || numOfGetImgs % 5 == 0
-                        KLog.i("【图片全部下载完成】" + numOfGetImgs  );
+                        KLog.i("【图片全部下载完成】" + numOfGetImgs + "=" +  numOfImgs );
                         webView.clearCache(true);
                         lossSrcList.clear();
                         logImgStatus(ExtraImg.DOWNLOAD_OVER);
@@ -773,8 +699,8 @@ public class ArticleActivity extends BaseActivity {
             extraImg = new ExtraImg();
         }
         extraImg.setImgStatus(imgStatus);
-        extraImg.setLossImgs(lossSrcList);
         extraImg.setObtainImgs(obtainSrcList);
+        extraImg.setLossImgs(lossSrcList);
         article.setImgState( new Gson().toJson(extraImg) );
         KLog.e("【储存的imgState】" +  new Gson().toJson(extraImg) );
         WithDB.getInstance().saveArticle(article);
@@ -787,7 +713,7 @@ public class ArticleActivity extends BaseActivity {
     public void onClick(View v) {
         KLog.d( "【 toolbar 是否双击 】" );
         switch (v.getId()) {
-            case R.id.article_num:
+            case R.id.art_toolbar_num:
             case R.id.art_toolbar:
                 if (mHandler.hasMessages(API.MSG_DOUBLE_TAP)) {
                     mHandler.removeMessages(API.MSG_DOUBLE_TAP);
@@ -877,9 +803,17 @@ public class ArticleActivity extends BaseActivity {
         }else if(htmlState.equals("cacheBox")){
             UFile.moveFile( App.cacheRelativePath + fileName + ".html", App.boxRelativePath  + fileName + ".html" );// 移动文件
             UFile.moveDir( App.cacheRelativePath + fileName + "_files" , App.boxRelativePath + fileName + "_files" );// 移动目录
-            UToast.showShort("文件导出成功");
+            UToast.showShort("文件移动成功");
         }
     }
+
+//    private String getBoxHtml(String encoding, String fileName ){
+//
+//        getString(R.string.box_html);
+//    }
+
+
+
 
     private void moveTobox(String filePath,String fileName, String content){
         String boxHtml = UString.reviseHtmlForBox( content ,fileName ) ;
@@ -916,7 +850,8 @@ public class ArticleActivity extends BaseActivity {
     private void changeReadIcon(String iconState){
         sReadState = iconState; // 在使用过程中，只会 涉及 read 与 reading 的转换。unread 仅作为用户未主动修改文章状态是的默认状态，reading 不参与勾选为已读
         if(iconState.equals(API.ART_READ)){
-            vRead.setImageDrawable(getDrawable(R.drawable.ic_vector_all));
+//            vRead.setImageDrawable(getDrawable(R.drawable.ic_vector_all));
+            vRead.setText(getString(R.string.font_readed));
 
             article.setReadState(API.ART_READ);
             WithDB.getInstance().saveArticle(article);
@@ -924,7 +859,8 @@ public class ArticleActivity extends BaseActivity {
             mNeter.postReadArticle(articleID);
             KLog.d("【 标为已读 】");
         }else {
-            vRead.setImageDrawable(getDrawable(R.drawable.ic_vector_unread));
+//            vRead.setImageDrawable(getDrawable(R.drawable.ic_vector_unread));
+            vRead.setText(getString(R.string.font_unread));
             article.setReadState(API.ART_READING);
             WithDB.getInstance().saveArticle(article);
             mNeter.postUnReadArticle(articleID);
@@ -934,12 +870,14 @@ public class ArticleActivity extends BaseActivity {
     private void changeStarState(String iconState){
         sStarState = iconState;
         if(iconState.equals(API.ART_STAR)){
-            vStar.setImageDrawable(getDrawable(R.drawable.ic_vector_star));
+//            vStar.setImageDrawable(getDrawable(R.drawable.ic_vector_star));
+            vStar.setText(getString(R.string.font_stared));
             article.setStarState(API.ART_STAR);
             WithDB.getInstance().saveArticle(article);
             mNeter.postStarArticle(articleID);
         }else {
-            vStar.setImageDrawable(getDrawable(R.drawable.ic_vector_unstar));
+//            vStar.setImageDrawable(getDrawable(R.drawable.ic_vector_unstar));
+            vStar.setText(getString(R.string.font_unstar));
             article.setStarState(API.ART_UNSTAR);
             WithDB.getInstance().saveArticle(article);
             mNeter.postUnStarArticle(articleID);

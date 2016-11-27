@@ -57,32 +57,35 @@ public class UFile {
 //        return fileNameInMD5;
 //    }
 
-
+    public static void deleteHtmlDirList(ArrayList<String> fileNameInMD5List) {
+        for (String fileNameInMD5:fileNameInMD5List){
+            File folder =  new File( App.cacheRelativePath + fileNameInMD5 + "_files" ) ;
+            File file =   new File( App.cacheRelativePath + fileNameInMD5 + ".html") ;
+            deleteHtmlDir( folder );
+            deleteHtmlDir( file );
+        }
+    }
     /**
      * 递归删除应用下的缓存
      * @param dir 需要删除的文件或者文件目录
      * @return 文件是否删除
      */
-    public static boolean deleteHtmlDir(File dir) {
-        if (dir != null && dir.isDirectory()) {
-            String[] children = dir.list();
-            for (int i = 0; i < children.length; i++) {
-                boolean isSuccess = deleteHtmlDir(new File(dir, children[i]));
-                if (!isSuccess) {
-                    return false;
-                }
+    public static boolean deleteHtmlDir( File dir ) {
+
+        if ( dir.isDirectory() ) {
+            KLog.i( dir + "是文件夹");
+            File[] files = dir.listFiles();
+            for (File file : files) {
+                deleteHtmlDir( file );
             }
+            return dir.delete();
+        }else{
+            KLog.i( dir + "只是文件");
+            return dir.delete();
         }
-//        KLog.i("删除：" + dir.delete());
-        return dir.delete();
     }
 
-    public static void deleteHtmlDirList(ArrayList<String> fileNameInMD5List) {
-        for (String fileNameInMD5:fileNameInMD5List){
-            File folder =  new File( App.cacheRelativePath + fileNameInMD5 ) ;
-            deleteHtmlDir( folder );
-        }
-    }
+
 
 //    public static boolean copyFile(String srcFileName, String destFileName){
 //
@@ -279,6 +282,14 @@ public class UFile {
 //            KLog.d("【saveFromStream 8】" );
 
             byte[] buff = new byte[8192];
+            /**
+             * 这个取决于硬盘的扇区大小是512byte/sec.
+             8192/512 = 16，表明写入了16扇区。
+             write 在底层是调用scsi write （10)来写入数据的。
+             这个可能协议有关，系统做了优化。
+
+             所以你在写入数据的时候最好是512字节的倍数。
+             */
             int size = 0;
             os = new FileOutputStream( file );
             bos = new BufferedOutputStream(os);
@@ -288,6 +299,8 @@ public class UFile {
             bos.flush();
             return true;
         } finally {
+            // 关闭通道使用close()方法，调用close()方法根据操作系统的网络实现不同可能会出现阻塞，可以在任何时候多次调用close()；若出现阻塞，第一次调用close()后会一直等待；
+            // 若第一次调用close()成功关闭后，之后再调用close()会立即返回，不会执行任何操作。
             if (is != null) {
                 is.close();
             }

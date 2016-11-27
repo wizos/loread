@@ -1,115 +1,118 @@
 <?xml version="1.0" encoding="utf-8"?>
-<me.wizos.loread.view.common.SwipeRefresh
+<RelativeLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/swipe_layout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fitsSystemWindows="true"
     android:addStatesFromChildren="true"
-    app:layout_behavior="@string/appbar_scrolling_view_behavior"
-    tools:context=".activity.MainActivity">
-    <RelativeLayout
+    android:windowDrawsSystemBarBackgrounds="true">
+    <android.support.design.widget.AppBarLayout
+        android:id="@+id/main_appBarLayout"
+        android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <android.support.v7.widget.Toolbar
+            android:id="@+id/main_toolbar"
+            app:layout_scrollFlags="scroll|enterAlways"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            android:background="?attr/topbar_bg">
+            <TextView
+                android:id="@+id/main_toolbar_hint"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_gravity="center"
+                android:gravity="center"
+                tools:text="@string/box_html"
+                android:textSize="12sp"/>
+            <me.wizos.loread.view.IconFontView
+                android:id="@+id/main_toolbar_readability"
+                style="@style/top_bar_iconfont"
+                android:layout_gravity="end|center"
+                android:text="@string/font_readability" />
+        </android.support.v7.widget.Toolbar>
+    </android.support.design.widget.AppBarLayout>
+    <me.wizos.loread.view.SwipeRefresh
+        android:id="@+id/main_swipe"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:orientation="vertical">
-        <android.support.design.widget.AppBarLayout
-            android:id="@+id/main_appBarLayout"
-            android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
+        android:layout_below="@+id/main_appBarLayout"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior"
+        tools:context=".activity.MainActivity"
+        tools:background="@color/article_dark_background">
+        <RelativeLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
-            <android.support.v7.widget.Toolbar
-                android:id="@+id/main_toolbar"
-                app:layout_scrollFlags="scroll|enterAlways"
+            android:layout_height="match_parent"
+            android:orientation="vertical">
+            <com.yydcdut.sdlv.SlideAndDragListView
+                android:id="@+id/main_slv"
+                app:layout_behavior="@string/appbar_scrolling_view_behavior"
                 android:layout_width="match_parent"
-                android:layout_height="?attr/actionBarSize"
-                android:background="@color/main_grey_dark" >
-                <TextView
-                    android:id="@+id/main_toolbar_hint"
-                    android:layout_width="wrap_content"
-                    android:layout_height="match_parent"
-                    android:layout_gravity="center"
-                    android:gravity="center_vertical"
-                    android:alpha="0.6"
-                    tools:text="小提示"
-                    android:textSize="12sp"/>
-                <TextView
-                    android:id="@+id/main_toolbar_count"
-                    android:layout_width="wrap_content"
-                    android:layout_height="match_parent"
-                    android:layout_marginEnd="16dp"
-                    android:layout_gravity="end|center"
-                    android:gravity="center_vertical"
-                    tools:text="计数"
-                    android:textSize="16sp"/>
-            </android.support.v7.widget.Toolbar>
-        </android.support.design.widget.AppBarLayout>
+                android:layout_height="match_parent"
+                android:layout_marginLeft="12dp"
+                android:layout_marginRight="12dp"
+                android:background="@android:color/transparent"
+                android:animateLayoutChanges="true"
+                android:headerDividersEnabled="false"
+                android:layout_above="@+id/main_bottombar">
+            </com.yydcdut.sdlv.SlideAndDragListView>
 
-        <com.yydcdut.sdlv.SlideAndDragListView
-            android:id="@+id/main_slv"
-            app:layout_behavior="@string/appbar_scrolling_view_behavior"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_marginLeft="12dp"
-            android:layout_marginRight="12dp"
-            android:background="@android:color/transparent"
-            android:divider="#d1d1d1"
-            android:dividerHeight="0.01dp"
-            android:animateLayoutChanges="true"
-            android:headerDividersEnabled="false"
-            android:layout_above="@+id/bottombar"
-            android:layout_below="@+id/main_appBarLayout">
-        </com.yydcdut.sdlv.SlideAndDragListView>
 
-        <!--android:animateLayoutChanges="true" 属性只能用在ViewGroup控件里，表示容器里面布局改变时有默认的动画效果，比如说添加控件，删除控件的时候就是默认的动画效果。-->
-        <!--或者创建一个LayoutTransition对象，并在容器布局调用setLayoutTransition(LayoutTransition)方法-->
-        <ImageView
-            android:id="@+id/main_placeholder"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:paddingLeft="88dp"
-            android:paddingRight="88dp"
-            android:visibility="gone"
-            android:src="@drawable/ic_vector_unread"
-            android:layout_below="@+id/main_appBarLayout"
-            android:layout_above="@+id/bottombar" />
-        <LinearLayout
-            android:id="@+id/bottombar"
-            android:layout_width="match_parent"
-            android:layout_height="@dimen/bottom_bar_height"
-            android:gravity="center"
-            android:background="@color/white"
-            android:onClick="onBottombarClicked"
-            android:layout_gravity="center_vertical|bottom"
-            android:layout_alignParentBottom="true">
+            <!--android:animateLayoutChanges="true" 属性只能用在ViewGroup控件里，表示容器里面布局改变时有默认的动画效果，比如说添加控件，删除控件的时候就是默认的动画效果。-->
+            <!--或者创建一个LayoutTransition对象，并在容器布局调用setLayoutTransition(LayoutTransition)方法-->
             <ImageView
-                android:id="@+id/main_star"
-                style="@style/bottom_bar_icon"
-                android:onClick="onStarIconClicked"
-                android:src="@drawable/ic_vector_unstar"/>
-            <ImageView
-                android:id="@+id/main_tag"
-                style="@style/bottom_bar_icon"
-                android:onClick="onTagIconClicked"
-                android:src="@drawable/ic_vector_menu"/>
-            <ImageView
-                android:id="@+id/main_read"
-                style="@style/bottom_bar_icon"
-                android:onClick="onReadIconClicked"
-                android:src="@drawable/ic_vector_unread"/>
-        </LinearLayout>
-        <ImageView
-            android:id="@+id/tag_setting"
-            android:layout_width="@dimen/bottom_bar_height"
-            android:layout_height="@dimen/bottom_bar_height"
-            android:paddingTop="9dp"
-            android:paddingBottom="9dp"
-            android:layout_marginLeft="22dp"
-            android:layout_marginRight="22dp"
-            android:layout_gravity="center|left|bottom"
-            android:onClick="onSettingIconClicked"
-            android:src="@drawable/ic_vector_setting"
-            android:layout_alignBottom="@+id/bottombar" />
-    </RelativeLayout>
-</me.wizos.loread.view.common.SwipeRefresh>
+                android:id="@+id/main_placeholder"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:paddingLeft="88dp"
+                android:paddingRight="88dp"
+                android:visibility="gone"
+                android:src="@drawable/ic_vector_unread"
+                android:layout_above="@+id/main_bottombar" />
+
+
+            <RelativeLayout
+                android:id="@+id/main_bottombar"
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/bottom_bar_height"
+                android:background="?attr/bottombar_bg"
+                android:onClick="onBottombarClicked"
+                android:layout_gravity="center_vertical|bottom"
+                android:layout_alignParentBottom="true">
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:gravity="center">
+                    <me.wizos.loread.view.IconFontView
+                        android:id="@+id/main_bottombar_star"
+                        style="@style/bottom_bar_iconfont"
+                        android:text="@string/font_unstar"
+                        android:onClick="onStarIconClicked"/>
+
+                    <me.wizos.loread.view.IconFontView
+                        android:id="@+id/main_bottombar_tag"
+                        style="@style/bottom_bar_iconfont"
+                        android:text="@string/font_tag"
+                        android:onClick="onTagIconClicked"/>
+                    <me.wizos.loread.view.IconFontView
+                        android:id="@+id/main_bottombar_read"
+                        style="@style/bottom_bar_iconfont"
+                        android:text="@string/font_unread"
+                        android:onClick="onReadIconClicked"/>
+                </LinearLayout>
+                <me.wizos.loread.view.IconFontView
+                    android:id="@+id/main_bottombar_setting"
+                    style="@style/bottom_bar_iconfont"
+                    android:text="@string/font_setting"
+                    android:layout_gravity="center|start|bottom"
+                    android:layout_alignParentStart="true"
+                    android:onClick="onSettingIconClicked"/>
+
+            </RelativeLayout>
+        </RelativeLayout>
+    </me.wizos.loread.view.SwipeRefresh>
+</RelativeLayout>
+

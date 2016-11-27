@@ -3,11 +3,11 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/coordinatorLayout"
+    android:id="@+id/art_coordinator"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fitsSystemWindows="true"
-    android:background="@color/article_dark_background"
+    tools:background="@color/article_dark_background"
     tools:context=".activity.ArticleActivity">
     <!-- android:fitsSystemWindows="true" 简单的讲：设置应用布局时是否考虑系统窗口布局；如果为true，将调整系统窗口布局以适应你自定义的布局。比如系统有状态栏，应用也有状态栏时。 -->
 
@@ -22,15 +22,15 @@
             app:popupTheme="@style/AppTheme.PopupOverlay"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
-            android:background="@color/main_grey_dark" >
+            android:background="?attr/topbar_bg" >
             <TextView
-                android:id="@+id/article_num"
+                android:id="@+id/art_toolbar_num"
                 android:layout_gravity="end|center"
                 android:gravity="center_vertical"
                 android:layout_marginEnd="16dp"
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
-                android:text="12"
+                tools:text="12"
                 android:textSize="16dp"/>
         </android.support.v7.widget.Toolbar>
     </android.support.design.widget.AppBarLayout>
@@ -55,12 +55,11 @@
             android:paddingTop="36dp"
             android:padding="12dp">
             <TextView
-                android:id="@+id/article_title"
-                android:background="@color/article_dark_background"
+                android:id="@+id/art_title"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:gravity="center_horizontal"
-                tools:text="adfdfdfdfdf"
+                tools:text="这里是文章的标题"
                 android:textSize="20sp" />
             <LinearLayout
                 android:id="@+id/article_meta"
@@ -69,28 +68,28 @@
                 android:layout_marginTop="22dp"
                 android:layout_marginBottom="12dp">
                 <TextView
-                    android:id="@+id/article_feed"
+                    android:id="@+id/art_feed"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:alpha="0.54"
-                    android:textColor="@color/main_grey_light"
+                    android:textColor="?attr/lv_item_title_color"
                     android:textSize="12sp" />
                 <TextView
-                    android:id="@+id/article_date"
+                    android:id="@+id/art_date"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:alpha="0.54"
-                    android:textColor="@color/main_grey_light"
+                    android:textColor="?attr/lv_item_title_color"
                     android:textSize="12sp" />
 
                 <TextView
-                    android:id="@+id/article_time"
+                    android:id="@+id/art_time"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginLeft="8dp"
                     android:alpha="0.54"
-                    android:textColor="@color/main_grey_light"
+                    android:textColor="?attr/lv_item_title_color"
                     android:textAppearance="@android:style/TextAppearance.Small"
                     android:textSize="12sp" />
             </LinearLayout>
@@ -107,33 +106,33 @@
         </LinearLayout>
     </android.support.v4.widget.NestedScrollView>
 
-    <!--android:background="@color/white"-->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="@dimen/bottom_bar_height"
         android:gravity="center"
-        android:background="@color/article_dark_background"
+        android:id="@+id/art_bottombar"
+        android:background="?attr/bottombar_bg"
         android:layout_gravity="center_vertical|bottom"
         android:layout_alignParentBottom="true">
-        <ImageView
-            android:id="@+id/art_star"
-            style="@style/bottom_bar_icon"
-            android:src="@drawable/ic_vector_unstar"
+        <me.wizos.loread.view.IconFontView
+            android:id="@+id/art_bottombar_star"
+            style="@style/bottom_bar_iconfont"
+            android:text="@string/font_unstar"
             android:onClick="onStarClick"/>
-        <ImageView
-            android:id="@+id/art_label"
-            style="@style/bottom_bar_icon"
-            android:src="@drawable/ic_vector_label"
+        <me.wizos.loread.view.IconFontView
+            android:id="@+id/art_bottombar_label"
+            style="@style/bottom_bar_iconfont"
+            android:text="@string/font_label"
             android:onClick="onLabelClick"/>
-        <ImageView
-            android:id="@+id/art_save"
-            style="@style/bottom_bar_icon"
-            android:src="@drawable/ic_vector_file_download"
+        <me.wizos.loread.view.IconFontView
+            android:id="@+id/art_bottombar_save"
+            style="@style/bottom_bar_iconfont"
+            android:text="@string/font_down"
             android:onClick="onSaveClick"/>
-        <ImageView
-            android:id="@+id/art_read"
-            style="@style/bottom_bar_icon"
-            android:src="@drawable/ic_vector_all"
+        <me.wizos.loread.view.IconFontView
+            android:id="@+id/art_bottombar_read"
+            style="@style/bottom_bar_iconfont"
+            android:text="@string/font_readed"
             android:onClick="onReadClick"/>
     </LinearLayout>
     <!--<include layout="@layout/tool_art"-->

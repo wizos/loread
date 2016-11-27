@@ -1,6 +1,8 @@
 package me.wizos.loread.utils;
 
 import android.content.Context;
+import android.content.res.TypedArray;
+import android.support.annotation.AttrRes;
 import android.support.annotation.ColorRes;
 import android.support.annotation.DimenRes;
 import android.util.DisplayMetrics;
@@ -28,6 +30,19 @@ public class UDensity {
 //        final int dimen = (int)context.getResources().getDimension(id);
         return (int) App.getInstance().getResources().getColor(id);
     }
+    public static int resolveColor(Context context, @AttrRes int attr) {
+        return resolveColor(context, attr, 0);
+    }
+
+    public static int resolveColor(Context context, @AttrRes int attr, int fallback) {
+        TypedArray a = context.getTheme().obtainStyledAttributes(new int[]{attr});
+        try {
+            return a.getColor(0, fallback);
+        } finally {
+            a.recycle();
+        }
+    }
+
     /**
      * 根据手机的分辨率从 dp 的单位 转成为 px(像素)
      */

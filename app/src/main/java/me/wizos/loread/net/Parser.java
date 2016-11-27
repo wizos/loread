@@ -204,14 +204,18 @@ public class Parser {
         Gson gson = new Gson();
         ItemIDs itemIDs = gson.fromJson(info, ItemIDs.class);
         ArrayList<ItemRefs> partStarredRefs = itemIDs.getItemRefs();
-        allStarredRefs.addAll( partStarredRefs );
+        if(partStarredRefs!=null){
+            allStarredRefs.addAll( partStarredRefs );
+        }
         return itemIDs.getContinuation();
     }
     public String parseItemIDsUnread(String info){
         Gson gson = new Gson();
         ItemIDs itemIDs = gson.fromJson(info, ItemIDs.class);
         ArrayList<ItemRefs> partUnreadRefs = itemIDs.getItemRefs();
-        allUnreadRefs.addAll( partUnreadRefs );
+        if(partUnreadRefs!=null){
+            allUnreadRefs.addAll( partUnreadRefs );
+        }
         return itemIDs.getContinuation();
     }
 
@@ -243,12 +247,14 @@ public class Parser {
 
         KLog.d("【reUnreadRefs】"+  beforeArticleArray.size() + "==" + allUnreadRefs.size() );
 
+        // 数据量大的一方
         for ( Article item : beforeArticleArray ) {
             String articleId = item.getId();
             map.put(articleId, 1);
             mapArticle.put(articleId,item);
         }
-        for ( ItemRefs item : allUnreadRefs) {
+        // 数据量小的一方
+        for ( ItemRefs item : allUnreadRefs ) {
             String articleId = UString.toLongID(item.getId());
             Integer cc = map.get( articleId );
             if(cc!=null) {

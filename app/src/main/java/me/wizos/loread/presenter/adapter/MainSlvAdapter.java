@@ -2,6 +2,7 @@ package me.wizos.loread.presenter.adapter;
 
 import android.content.Context;
 import android.text.Html;
+import android.text.TextPaint;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -14,13 +15,13 @@ import com.google.gson.Gson;
 
 import java.util.List;
 
-import me.wizos.loread.App;
 import me.wizos.loread.R;
 import me.wizos.loread.activity.MainActivity;
 import me.wizos.loread.bean.Article;
 import me.wizos.loread.bean.gson.itemContents.Origin;
 import me.wizos.loread.net.API;
 import me.wizos.loread.utils.UTime;
+import me.wizos.loread.view.IconFontView;
 
 /**
  * Created by Wizos on 2016/3/15.
@@ -55,14 +56,16 @@ public class MainSlvAdapter extends ArrayAdapter<Article> {
         Article article = this.getItem(position);
         if (convertView == null) {
             cvh = new CustomViewHolder();
-            convertView = LayoutInflater.from(context).inflate(R.layout.articleslv_item, null);
-            cvh.articleTitle = (TextView) convertView.findViewById(R.id.articleslv_item_title);
-            cvh.articleSummary =  (TextView) convertView.findViewById(R.id.articleslv_item_summary);
-            cvh.articleFeed = (TextView) convertView.findViewById(R.id.articleslv_item_author);
-            cvh.articleImg = (ImageView) convertView.findViewById(R.id.articleslv_item_img);
-            cvh.articleTime = (TextView) convertView.findViewById(R.id.articleslv_item_time);
-            cvh.articleStar = (ImageView)convertView.findViewById(R.id.articleslv_item_star);
-            cvh.articleReading = (ImageView)convertView.findViewById(R.id.articleslv_item_reading);
+            convertView = LayoutInflater.from(context).inflate(R.layout.main_slv_item, null);
+            cvh.articleTitle = (TextView) convertView.findViewById(R.id.main_slv_item_title);
+            TextPaint tp = cvh.articleTitle.getPaint();
+            tp.setFakeBoldText(true);
+            cvh.articleSummary =  (TextView) convertView.findViewById(R.id.main_slv_item_summary);
+            cvh.articleFeed = (TextView) convertView.findViewById(R.id.main_slv_item_author);
+            cvh.articleImg = (ImageView) convertView.findViewById(R.id.main_slv_item_img);
+            cvh.articleTime = (TextView) convertView.findViewById(R.id.main_slv_item_time);
+            cvh.articleStar = (IconFontView)convertView.findViewById(R.id.main_slv_item_icon_star);
+            cvh.articleReading = (IconFontView)convertView.findViewById(R.id.main_slv_item_icon_reading);
             convertView.setTag(cvh);
         } else {
             cvh = (CustomViewHolder) convertView.getTag();
@@ -77,7 +80,6 @@ public class MainSlvAdapter extends ArrayAdapter<Article> {
 //        if(bitmap!=null){
         if(article.getCoverSrc()!=null){
             cvh.articleImg.setVisibility(View.VISIBLE);
-//            cvh.articleImg.setImageBitmap(bitmap);
             Glide.with(context).load(article.getCoverSrc()).centerCrop().into(cvh.articleImg);
         }else {
             cvh.articleImg.setVisibility(View.GONE);
@@ -89,16 +91,20 @@ public class MainSlvAdapter extends ArrayAdapter<Article> {
         cvh.articleTime.setText(UTime.getFormatDate(article.getCrawlTimeMsec()));
         if ( article.getReadState().equals(API.ART_READ) &  !MainActivity.sListState.equals(API.ART_STAR) ) {
 //            System.out.println("【1】" + article.getTitle());
-            cvh.articleTitle.setAlpha(0.50f);
-            cvh.articleTitle.setTextColor(App.getInstance().getResources().getColor(R.color.main_grey_light));
-            cvh.articleSummary.setAlpha(0.50f);
-            cvh.articleSummary.setTextColor(App.getInstance().getResources().getColor(R.color.main_grey_light));
+            cvh.articleTitle.setAlpha(0.40f);
+//            cvh.articleTitle.setTextColor(App.getInstance().getResources().getColor(R.color.main_grey_light));
+            cvh.articleSummary.setAlpha(0.40f);
+            cvh.articleFeed.setAlpha(0.40f);
+            cvh.articleTime.setAlpha(0.40f);
+//            cvh.articleSummary.setTextColor(App.getInstance().getResources().getColor(R.color.main_grey_light));
         } else {
 //            System.out.println("【2】" + article.getTitle());
-            cvh.articleTitle.setAlpha(0.90f);
-            cvh.articleTitle.setTextColor(App.getInstance().getResources().getColor(R.color.main_grey_dark));
-            cvh.articleSummary.setAlpha(0.65f);
-            cvh.articleSummary.setTextColor(App.getInstance().getResources().getColor(R.color.main_grey_dark));
+            cvh.articleTitle.setAlpha(1f);
+//            cvh.articleTitle.setTextColor(App.getInstance().getResources().getColor(R.color.main_grey_dark));
+            cvh.articleSummary.setAlpha(1f);
+            cvh.articleFeed.setAlpha(1f);
+            cvh.articleTime.setAlpha(1f);
+//            cvh.articleSummary.setTextColor(App.getInstance().getResources().getColor(R.color.main_grey_dark));
         }
         if( article.getReadState().equals(API.ART_READING)){
             cvh.articleReading.setVisibility(View.VISIBLE);
@@ -116,14 +122,14 @@ public class MainSlvAdapter extends ArrayAdapter<Article> {
 
         return convertView;
     }
-    class CustomViewHolder {
-        public TextView articleTitle;
-        public TextView articleSummary;
-        public TextView articleFeed;
-        public TextView articleTime;
-        public ImageView articleStar;
-        public ImageView articleReading;
-        public ImageView articleImg;
+    private class CustomViewHolder {
+        TextView articleTitle;
+        TextView articleSummary;
+        TextView articleFeed;
+        TextView articleTime;
+        IconFontView articleStar;
+        IconFontView articleReading;
+        ImageView articleImg;
     }
     
 }

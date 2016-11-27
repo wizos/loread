@@ -24,6 +24,7 @@ public class SplashActivity extends BaseActivity {
             goTo(MainActivity.TAG);
         }
         notifyDataChanged();
+        initColorful();
     }
     protected static final String TAG = "SplashActivity";
 
@@ -43,4 +44,6 @@ public class SplashActivity extends BaseActivity {
     @Override
     public void onClick(View v) {
     }
+
+    protected void initColorful(){}
 }

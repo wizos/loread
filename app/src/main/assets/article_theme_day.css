@@ -1,0 +1,41 @@
+/* RESET
+/********/
+
+body {
+    color: #333;
+    background-color:rgba(0,0,0,0);
+    background-color: #FFFFFF;
+}
+
+/* TABLES
+=============================================================================*/
+
+table ,table tr:nth-child(2n){
+    background-color: #fff;
+}
+
+h1 {
+    color: #000;
+}
+h2 {
+    border-bottom: 1px solid #ccc;
+    color: #000;
+}
+
+hr {
+    background-color:#f8f8f8; // 灰白
+}
+
+code, tt ,pre ,img {
+    border: 1px solid #eaeaea;
+    background-color: #f8f8f8;
+}
+table tr {
+    background-color: #f8f8f8; // 灰白
+    border-top: 1px solid #eaeaea;
+}
+
+table th, table td {
+    border: 1px solid #ccc;
+    padding: 6px 13px;
+}

@@ -42,6 +42,7 @@
 
 
     <string name="setting_clear_log_title">清除错误记录</string>
+    <string name="setting_clear_error_cache">清除错误遗留的文章</string>
     <string name="setting_update_article_tag_title">更新离线文章的分组信息</string>
     <string name="setting_esc_title">退出</string>
     <string name="setting_about_title">关于</string>
@@ -67,13 +68,39 @@
     <string name="article_choose_tag_dialog_title">选择标签</string>
 
     <string-array name="setting_clear_day_dialog_item_array">
+        <item>0 天</item>
         <item>1 天</item>
         <item>7 天</item>
         <item>15 天</item>
         <item>30 天</item>
         <item>60 天</item>
     </string-array>
-    <string name="box_html_format">&lt;!DOCTYPE html&gt;\n&lt;html&gt;\n&lt;head&gt;\n&lt;meta charset=&quot;%1$s&quot;&gt;\n&lt;title&gt;%2$s&lt;/title&gt;\n    &lt;link rel=&quot;stylesheet&quot;  type=&quot;text/css&quot;  href=&quot;./normalize.css&quot; /&gt;\n    &lt;link rel=&quot;stylesheet&quot;  type=&quot;text/css&quot;  href=&quot;./markdown.css&quot; /&gt;\n    &lt;link rel=&quot;stylesheet&quot;  type=&quot;text/css&quot;  href=&quot;./customer.css&quot; /&gt;\n&lt;/head&gt;\n&lt;body&gt;\n&lt;div class=&quot;info&quot;&gt;\n&lt;div class=&quot;info-title&quot;&gt;&lt;h1&gt;&lt;a href=&quot;%3$s&quot; target=&quot;_blank&quot;&gt;%2$s&lt;/a&gt;&lt;/h1&gt;&lt;/div&gt;\n&lt;div class=&quot;info-author&quot;&gt;%4$s&lt;/div&gt;\n&lt;div class=&quot;info-pubDate&quot;&gt;%5$s&lt;/div&gt;\n&lt;/div&gt;\n&lt;div class=&quot;content&quot;&gt;%6$s&lt;/div&gt;\n&lt;/body&gt;\n&lt;/html&gt;</string>
+    <!--<string name="box_html_format">&lt;!DOCTYPE html&gt;\n&lt;html&gt;\n&lt;head&gt;\n&lt;meta charset=&quot;%1$s&quot;&gt;\n&lt;title&gt;%2$s&lt;/title&gt;\n    &lt;link rel=&quot;stylesheet&quot;  type=&quot;text/css&quot;  href=&quot;./normalize.css&quot; /&gt;\n    &lt;link rel=&quot;stylesheet&quot;  type=&quot;text/css&quot;  href=&quot;./markdown.css&quot; /&gt;\n    &lt;link rel=&quot;stylesheet&quot;  type=&quot;text/css&quot;  href=&quot;./customer.css&quot; /&gt;\n&lt;/head&gt;\n&lt;body&gt;\n&lt;div class=&quot;info&quot;&gt;\n&lt;div class=&quot;info-title&quot;&gt;&lt;h1&gt;&lt;a href=&quot;%3$s&quot; target=&quot;_blank&quot;&gt;%2$s&lt;/a&gt;&lt;/h1&gt;&lt;/div&gt;\n&lt;div class=&quot;info-author&quot;&gt;%4$s&lt;/div&gt;\n&lt;div class=&quot;info-pubDate&quot;&gt;%5$s&lt;/div&gt;\n&lt;/div&gt;\n&lt;div class=&quot;content&quot;&gt;%6$s&lt;/div&gt;\n&lt;/body&gt;\n&lt;/html&gt;</string>-->
+    <string name="box_html_format">&lt;!DOCTYPE html&gt;\n&lt;html&gt;\n&lt;head&gt;\n&lt;meta charset=\&quot;%1$s\&quot;&gt;\n&lt;title&gt;%2$s&lt;/title&gt;\n    &lt;link rel=\&quot;stylesheet\&quot;  type=\&quot;text/css\&quot;  href=\&quot;./normalize.css\&quot; /&gt;\n    &lt;link rel=\&quot;stylesheet\&quot;  type=\&quot;text/css\&quot;  href=\&quot;./markdown.css\&quot; /&gt;\n    &lt;link rel=\&quot;stylesheet\&quot;  type=\&quot;text/css\&quot;  href=\&quot;./customer.css\&quot; /&gt;\n&lt;/head&gt;\n&lt;body&gt;\n&lt;div class=\&quot;info\&quot;&gt;\n&lt;div class=\&quot;info-title\&quot;&gt;&lt;h1&gt;&lt;a href=\&quot;%3$s\&quot; target=\&quot;_blank\&quot;&gt;%2$s&lt;/a&gt;&lt;/h1&gt;&lt;/div&gt;\n&lt;div class=\&quot;info-author\&quot;&gt;%4$s&lt;/div&gt;\n&lt;div class=\&quot;info-pubDate\&quot;&gt;%5$s&lt;/div&gt;\n&lt;/div&gt;\n&lt;div class=\&quot;content\&quot;&gt;%6$s&lt;/div&gt;\n&lt;/body&gt;\n&lt;/html&gt;</string>
+    <!--<string name="box_html">&lt;charset=\&quot;&quot;%1$s</string>-->
 
+
+    <string name="readability_dialog_title">主题设置</string>
+
+    <string name="md_back_label">返回</string>
+    <string name="md_done_label">完成</string>
+    <string name="md_cancel_label">取消</string>
+    <string name="md_choose_label">选择</string>
+    <string name="md_custom_label">自定义</string>
+    <string name="md_error_label">Error</string>
+    <string name="md_storage_perm_error">Your app has not been granted the READ_EXTERNAL_STORAGE permission.</string>
+    <string name="md_presets_label">Presets</string>
+
+    <string name="font_unstar">&#xe64c;</string>
+    <string name="font_stared">&#xe64b;</string>
+    <string name="font_readed">&#xe72f;</string>
+    <string name="font_unread">&#xe656;</string>
+    <string name="font_tag">&#xe6d5;</string>
+    <string name="font_label">&#xe7c5;</string>
+    <string name="font_setting">&#xe61f;</string>
+    <string name="font_readability">&#xe65a;</string>
+    <string name="font_down">&#xe609;</string>
+    <string name="font_main">&#xe60c;</string>
+    <string name="font_tag_class">&#xe7c4;</string>
 
 </resources>

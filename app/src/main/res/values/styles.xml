@@ -1,47 +1,87 @@
 <resources>
-    <!-- Base App theme. --><!--白天主题-->
-    <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
-        <!-- Customize your theme here. -->
-        <!--<item name="colorPrimary">@color/colorPrimary</item>-->
-        <!--<item name="colorPrimaryDark">@color/colorPrimaryDark</item>-->
-        <item name="android:windowBackground">@color/white</item>
-        <!--<item name="c_topbarBg">@color/main_grey_dark</item>-->
-        <!--<item name="c_topbarIcon">@color/white</item>-->
-        <!--<item name="c_screenBg">@color/white</item>-->
-        <!--<item name="c_bottombarBg">@color/main_grey_dark</item>-->
-        <!--<item name="c_bottombarIcon">@color/white</item>-->
+    <style name="AppBaseTheme" parent="Theme.AppCompat.Light.DarkActionBar">
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+        <!--<item name="android:windowDrawsSystemBarBackgrounds">true</item>-->
+        <!--<item name="android:statusBarColor">@android:color/transparent</item>-->
+        <!--<item name="android:fitsSystemWindows">true</item>-->
+        <!--<item name="android:addStatesFromChildren">true</item>-->
+        <!--<item name="android:windowBackground">@null</item>-->
+    </style>
 
-        <!--<item name="c_listitemBg">@color/white</item>-->
-        <!--<item name="c_listitemIcon">@color/main_grey_dark</item>-->
-        <!--<item name="c_listitemTitle">@color/main_grey_dark</item>-->
-        <!--<item name="c_listitemDesc">@color/main_grey_dark</item>-->
+    <!-- Base App theme. --><!--白天主题-->
+    <style name="AppTheme" parent="AppBaseTheme">
+        <!-- Customize your theme here. -->
+        <item name="status_bar">@color/main_day_dark</item>
+        <!--<item name="colorPrimary">@color/main_day_dark</item>-->
+        <!--<item name="colorPrimaryDark">@color/main_day_dark</item>-->
+
+        <item name="root_view_bg">@color/white</item>
+        <item name="topbar_bg">@color/main_day_dark</item>
+        <item name="topbar_fg">@color/white</item>
+
+        <item name="bottombar_bg">@color/white</item>
+        <item name="bottombar_fg">@color/main_day_light</item>
+
+        <item name="lv_item_bg">@color/white</item>
+        <item name="lv_item_fg">@color/main_day_dark</item>
+
+        <item name="tag_slv_item_icon">@color/main_day_dark</item>
+        <item name="lv_item_title_color">@color/main_day_dark</item>
+        <item name="lv_item_desc_color">@color/main_day_light</item>
+        <item name="lv_item_info_color">@color/main_day_info</item>
+        <item name="lv_item_divider">@color/light_lv_divider</item>
+
+        <item name="art_title">@color/main_day_dark</item>
+        <item name="art_feed">@color/main_day_light</item>
+        <item name="art_date">@color/main_day_light</item>
+        <item name="art_time">@color/main_day_light</item>
+
+        <item name="setting_title">@color/main_day_dark</item>
+        <item name="setting_tips">@color/main_day_info</item>
+
+
+    </style>
+    <!--夜间主题-->
+    <style name="AppTheme.Dark" parent="AppBaseTheme">
+        <!-- Customize your theme here. -->
+
+        <item name="status_bar">@color/dark_foreground</item>
+        <!--<item name="colorPrimary">@color/dark_foreground</item>-->
+        <!--<item name="colorPrimaryDark">@color/dark_foreground</item>-->
+        <item name="root_view_bg">@color/article_dark_background</item>
+        <item name="topbar_bg">@color/dark_foreground</item>
+        <item name="topbar_fg">@color/main_night_dark</item>
+
+        <item name="bottombar_bg">@color/article_dark_background</item>
+        <item name="bottombar_fg">@color/main_night_info</item>
+
+        <item name="lv_item_bg">@color/article_dark_background</item>
+        <item name="lv_item_fg">@color/dark_foreground</item>
+
+        <item name="tag_slv_item_icon">@color/main_night_light</item>
+        <item name="lv_item_title_color">@color/main_night_light</item>
+        <item name="lv_item_desc_color">@color/main_night_dark</item>
+        <item name="lv_item_info_color">@color/main_night_info</item>
+        <item name="lv_item_divider">@color/black_lv_divider</item>
+
+        <item name="art_title">#039586</item>
+        <item name="art_feed">#057971</item>
+        <item name="art_date">#057971</item>
+        <item name="art_time">#057971</item>
+
+        <item name="setting_title">@color/main_night_light</item>
+        <item name="setting_tips">@color/main_night_info</item>
+
     </style>
     <style name="AppTheme.NoActionBar">
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
     </style>
+
+
     <style name="AppTheme.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />
     <style name="AppTheme.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" />
-
-    <!--夜间主题-->
-    <style name="AppTheme.Dark" parent="Theme.AppCompat.Light.DarkActionBar">
-        <!-- Customize your theme here. -->
-        <item name="colorPrimary">@color/colorPrimary</item>
-        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
-        <!--<item name="c_topbarBg">@color/dark_foreground</item>-->
-        <!--<item name="c_topbarIcon">@color/main_grey_light</item>-->
-        <!--<item name="c_screenBg">@color/article_dark_background</item>-->
-        <!--<item name="c_bottombarBg">@color/dark_foreground</item>-->
-        <!--<item name="c_bottombarIcon">@color/main_grey_light</item>-->
-
-        <!--<item name="c_listitemBg">@color/article_dark_background</item>-->
-        <!--<item name="c_listitemIcon">@color/main_grey_light</item>-->
-        <!--<item name="c_listitemTitle">@color/main_grey_light</item>-->
-        <!--<item name="c_listitemDesc">@color/main_grey_dark</item>-->
-
-        <!--<item name="android:windowBackground">@color/article_dark_background</item>-->
-    </style>
-
 
 
     <style name="SettingItem">
@@ -72,7 +112,7 @@
         <item name="android:layout_gravity">center</item>
         <item name="android:gravity">center_vertical</item>
     </style>
-    <style name="SettingItemTitleTwo">
+    <style name="SettingItemTitleHorizontal">
         <item name="android:layout_width">0dp</item>
         <item name="android:layout_weight">1</item>
         <item name="android:layout_height">38dp</item>
@@ -81,8 +121,7 @@
         <item name="android:gravity">center_vertical</item>
     </style>
     <style name="SettingItemTips">
-        <item name="android:alpha">0.36</item>
-        <item name="android:textColor">@color/main_grey_dark</item>
+        <!--<item name="android:alpha">0.80</item>-->
         <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">wrap_content</item>
         <item name="android:layout_marginStart">0dp</item>
@@ -91,8 +130,7 @@
         <item name="android:gravity">center_vertical</item>
     </style>
     <style name="SettingItemSummary">
-        <item name="android:alpha">0.36</item>
-        <item name="android:textColor">@color/main_grey_dark</item>
+        <!--<item name="android:alpha">0.80</item>-->
         <item name="android:layout_width">90dp</item>
         <item name="android:layout_height">wrap_content</item>
         <item name="android:layout_marginRight">8dp</item>
@@ -111,6 +149,26 @@
         <item name="android:paddingBottom">9dp</item>
         <item name="android:layout_marginStart">9dp</item>
         <item name="android:layout_marginEnd">9dp</item>
+    </style>
+    <style name="bottom_bar_iconfont">
+        <item name="android:layout_width">@dimen/bottom_bar_height</item>
+        <item name="android:layout_height">match_parent</item>
+        <item name="android:gravity">center</item>
+        <item name="android:padding">6dp</item>
+        <item name="android:textSize">20sp</item>
+        <item name="android:layout_marginStart">8dp</item>
+        <item name="android:layout_marginEnd">8dp</item>
+        <item name="android:textColor">?attr/bottombar_fg</item>
+    </style>
+    <style name="top_bar_iconfont">
+        <item name="android:layout_width">@dimen/bottom_bar_height</item>
+        <item name="android:layout_height">match_parent</item>
+        <item name="android:gravity">center</item>
+        <item name="android:padding">6dp</item>
+        <item name="android:textSize">20sp</item>
+        <item name="android:layout_marginStart">8dp</item>
+        <item name="android:layout_marginEnd">8dp</item>
+        <item name="android:textColor">?attr/topbar_fg</item>
     </style>
 
 </resources>
