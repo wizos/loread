@@ -58,7 +58,7 @@ public class Neter {
         getWithAuth( API.HOST + API.U_ITEM_IDS );
     }
 
-    public void getStarredRefs( long mUserID){
+    public void getStarredRefs( long mUserID ){
         addHeader("n","160");
         addHeader("ot","0");
         addHeader("s", "user/" + mUserID + "/state/com.google/starred");

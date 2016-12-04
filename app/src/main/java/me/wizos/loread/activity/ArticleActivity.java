@@ -262,18 +262,6 @@ public class ArticleActivity extends BaseActivity {
                 }
             }
 
-//            <img src="占位符图片" data="/static/images/logo.png" id="img">
-//            <script type="text/javascript">
-//                window.onload = function () {
-//                var i = document.getElementById('img');
-//                var img = new Image();
-//                img.src = i.getAttribute('data');
-//                img.onload = function () {
-//                    alert(1);
-//                    i.src = img.src;
-//                }
-//            }
-//            </script>
             String script =
                     "<script type=\"text/javascript\">" +
                             "function initImgClick(){" +
@@ -347,20 +335,6 @@ public class ArticleActivity extends BaseActivity {
         KLog.d("正在加载完成js函数" );
         // 这段js函数的功能就是，遍历所有的img几点，并添加onclick函数，函数的功能是在图片点击的时候调用本地java接口并传递url过去
 
-//        webView.loadUrl("javascript:(function(){" +
-//                "var imgList = document.getElementsByTagName(\"img\"); " +
-//                "for(var i=0; i<imgList.length; i++) {" +
-//                "var image = imageList[i];"+
-//                "    imgList[i].href = imgList[i].src;" +
-//                "    imgList[i].src = \"file:///android_asset/placeholder.png\";"+
-//                "    imgList[i].alt = \"点击加载图片\";" +
-//                "    imgList[i].state = \"0\";" +
-//                "    imgList[i].onclick = function() {" +
-//                "    imgList[i].src = \"file:///android_asset/placeholder.png\";"+
-////                "        window.imagelistner.listen( this.state ,this.netsrc );  " +
-//                "    }  " +
-//                "}" +
-//                "})()");
         webView.loadUrl("javascript:initImgList()");
     }
 

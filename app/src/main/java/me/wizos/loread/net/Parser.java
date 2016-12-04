@@ -174,13 +174,13 @@ public class Parser {
     public void parseUnreadCounts(String info){
         Gson gson = new Gson();
         ArrayList<UnreadCounts> unreadCountList = gson.fromJson(info, GsUnreadCount.class).getUnreadcounts();
-//        int unreadCountMax = gsUnreadCount.getMax();
-        int numOfTagList = reTagList.size();
-        int numOfUnreadList = unreadCountList.size();
+
+        int numOfTags = reTagList.size();
+        int numOfUnreads = unreadCountList.size();
         String temp;
-        for (int i=0; i<numOfTagList; i++){
-            temp = reTagList.get(i).getId();
-            for (int t=0; t<numOfUnreadList; t++){
+        for (int i=0; i<numOfTags; i++){
+            temp = reTagList.get(i).getId(); // 获取 tag 的 id
+            for (int t=0; t<numOfUnreads; t++){
                 if(temp.equals(unreadCountList.get(t).getId())){
                     reTagList.get(i).setUnreadcount(unreadCountList.get(t).getCount());
 //                    System.out.println("【次数】" + unreadCountList.get(t).getCount() );
@@ -189,6 +189,11 @@ public class Parser {
             }
         }
         WithDB.getInstance().saveTagList(reTagList);
+
+        unreadCounts = unreadCountList.get(0).getCount();
+        starredCounts = unreadCountList.get(1).getCount();
+        allUnreadRefs = new ArrayList<>( unreadCounts );
+        allStarredRefs = new ArrayList<>( starredCounts );
     }
 
 
@@ -197,9 +202,10 @@ public class Parser {
         return subs;
     }
 
-
-    private ArrayList<ItemRefs> allStarredRefs = new ArrayList<>( 500 );
-    private ArrayList<ItemRefs> allUnreadRefs = new ArrayList<>( 1000 );
+    private int unreadCounts;
+    private int starredCounts;
+    private ArrayList<ItemRefs> allUnreadRefs ;
+    private ArrayList<ItemRefs> allStarredRefs ;
     public String parseItemIDsStarred(String info){
         Gson gson = new Gson();
         ItemIDs itemIDs = gson.fromJson(info, ItemIDs.class);
@@ -239,11 +245,49 @@ public class Parser {
      * */
     public ArrayList<ItemRefs> reUnreadRefs(){
         long xx = System.currentTimeMillis();
-        List<Article> beforeArticleArray = WithDB.getInstance().loadReadList(API.LIST_UNREAD, "");
+        List<Article> beforeArticleArray = WithDB.getInstance().loadTagRead( API.LIST_UNREAD, "");
         Map<String,Integer> map = new ArrayMap<>( beforeArticleArray.size() + allUnreadRefs.size() );
         Map<String,Article> mapArticle = new ArrayMap<>( beforeArticleArray.size() );
         ArrayList<Article> readList =  new ArrayList<>( beforeArticleArray.size() );
         ArrayList<ItemRefs> unreadRefs = new ArrayList<>( allUnreadRefs.size() );
+
+//        new Thread(new Runnable(){
+//            public void run(){
+//
+//                KLog.d("【reUnreadRefs】"+  beforeArticleArray.size() + "==" + allUnreadRefs.size() );
+//
+//                // 数据量大的一方
+//                for ( Article item : beforeArticleArray ) {
+//                    String articleId = item.getId();
+//                    map.put(articleId, 1);
+//                    mapArticle.put(articleId,item);
+//                }
+//                // 数据量小的一方
+//                for ( ItemRefs item : allUnreadRefs ) {
+//                    String articleId = UString.toLongID(item.getId());
+//                    Integer cc = map.get( articleId );
+//                    if(cc!=null) {
+//                        map.put( articleId , ++cc);  // 1，去掉“本地有，状态为未读”的
+//                    }else {
+//                        // FIXME: 2016/5/1 这里对数据库一条条的查询也可以优化
+//                        Article article = WithDB.getInstance().getArticle( articleId );
+//                        if(article!=null){
+//                            article.setReadState( API.ART_UNREAD );// 2，去掉“本地有，状态为已读”的
+//                            readList.add(article);
+//                        }else {
+//                            unreadRefs.add(item);// 3，就剩云端的，要请求的未读资源
+//                        }
+//                    }
+//                }
+//                for( Map.Entry<String, Integer> entry: map.entrySet()) {
+//                    if(entry.getValue()==1) {
+//                        Article article = mapArticle.get(entry.getKey());
+//                        article.setReadState(API.ART_READ); // 本地未读设为已读
+//                        readList.add(article);
+//                    }
+//                }
+//            }
+//        }).start();
 
         KLog.d("【reUnreadRefs】"+  beforeArticleArray.size() + "==" + allUnreadRefs.size() );
 
@@ -279,20 +323,50 @@ public class Parser {
         }
 
         long yy = System.currentTimeMillis() - xx;
-
         KLog.d("【reUnreadRefs】测试"+ yy + " - " + beforeArticleArray.size() + "==" + allUnreadRefs.size() +"=="+ readList.size()  + "==" + unreadRefs.size() );
         WithDB.getInstance().saveArticleList(readList);
-        allUnreadRefs =  new ArrayList<>();
         return unreadRefs;
     }
 
     public ArrayList<ItemRefs> reStarredRefs(){
         List<Article> beforeStarredList = WithDB.getInstance().loadStarAll();
-//        IDataModel.getInstance().loadStarAllOrder();
         Map<String,Integer> map = new ArrayMap<>( beforeStarredList.size() + allStarredRefs.size());
         Map<String,Article> mapArticle = new ArrayMap<>( beforeStarredList.size() );
         ArrayList<Article> starList =  new ArrayList<>( beforeStarredList.size() );
         ArrayList<ItemRefs> starredRefs = new ArrayList<>( allStarredRefs.size() );
+
+
+//        new Thread(new Runnable(){
+//            public void run(){
+//                for ( Article item : beforeStarredList ) {
+//                    String articleId = item.getId();
+//                    map.put(articleId, 1);
+//                    mapArticle.put(articleId,item);
+//                }
+//                for ( ItemRefs item : allStarredRefs ) {
+//                    String articleId = UString.toLongID(item.getId());
+//                    Integer cc = map.get( articleId );
+//                    if(cc!=null) {
+//                        map.put( articleId , ++cc);// 1，去掉“本地有，状态为加星”的
+//                    }else {
+//                        Article article = WithDB.getInstance().getArticle( articleId );
+//                        if(article!=null){
+//                            article.setStarState(API.ART_STAR);// 2，去掉“本地有，状态为未加星”的
+//                            starList.add(article);
+//                        }else {
+//                            starredRefs.add(item);// 3，就剩云端的，要请求的加星资源（但是还是含有一些要请求的未读资源）
+//                        }
+//                    }
+//                }
+//                for( Map.Entry<String, Integer> entry: map.entrySet()) {
+//                    if(entry.getValue()==1) {
+//                        Article article = mapArticle.get(entry.getKey());
+//                        article.setStarState(API.ART_UNSTAR);
+//                        starList.add(article);// 取消加星
+//                    }
+//                }
+//            }
+//        }).start();
 
         for ( Article item : beforeStarredList ) {
             String articleId = item.getId();
@@ -323,7 +397,6 @@ public class Parser {
         }
         KLog.d("【reStarredList】" + beforeStarredList.size() + "==" + allStarredRefs.size() +"==" + starList.size() +"=="+ starredRefs.size());
         WithDB.getInstance().saveArticleList(starList);
-        allStarredRefs = new ArrayList<>();
         return starredRefs;
     }
 
@@ -331,7 +404,57 @@ public class Parser {
     public ArrayList<ItemRefs> reUnreadUnstarRefs;
     public ArrayList<ItemRefs> reUnreadStarredRefs;
     public ArrayList<ItemRefs> reReadStarredRefs;
-    public int reRefs( ArrayList<ItemRefs> unreadRefs,ArrayList<ItemRefs> starredRefs){
+    private int checkResult;
+    public int reRefs( final ArrayList<ItemRefs> unreadRefs, final ArrayList<ItemRefs> starredRefs){
+//        checkResult = -1;
+//        new Thread(new Runnable(){
+//            public void run(){
+//                if (!checkCounts()){ checkResult = -1;}
+//                allUnreadRefs =  new ArrayList<>();
+//                allStarredRefs = new ArrayList<>();
+//
+//                int arrayCapacity = 0;
+//                if(unreadRefs.size() > starredRefs.size()){
+//                    arrayCapacity = starredRefs.size();
+//                }else {
+//                    arrayCapacity = unreadRefs.size();
+//                }
+//                reUnreadUnstarRefs = new ArrayList<>( unreadRefs.size() );
+//                reReadStarredRefs = new ArrayList<>( starredRefs.size() );
+//                reUnreadStarredRefs = new ArrayList<>( arrayCapacity );
+//                Map<String,Integer> map = new ArrayMap<>( unreadRefs.size() + starredRefs.size() );
+//                Map<String,ItemRefs> mapArray = new ArrayMap<>( unreadRefs.size() );
+//                for ( ItemRefs item : unreadRefs ) {
+//                    map.put( item.getId() ,1 ); //  String articleId = item.getId();
+//                    mapArray.put( item.getId() ,item );
+//                }
+//                for ( ItemRefs item : starredRefs ) {
+//                    Integer cc = map.get( item.getId() );
+//                    if( cc!=null ) {
+//                        map.put( item.getId() ,+cc );
+//                        reUnreadStarredRefs.add(item);
+//                    }else {
+//                        reReadStarredRefs.add(item);
+//                    }
+//                }
+//                for( Map.Entry<String, Integer> entry: map.entrySet()) {
+//                    if(entry.getValue()==1) {
+//                        reUnreadUnstarRefs.add( mapArray.get( entry.getKey() ));
+//                    }
+//                }
+//                KLog.d("【reRefs】测试" + reUnreadUnstarRefs.size() + "--" + reReadStarredRefs.size() + "--" + reUnreadStarredRefs.size() );
+//                checkResult = reUnreadUnstarRefs.size() + reReadStarredRefs.size() + reUnreadStarredRefs.size();
+//            }
+//        }
+//        ).start();
+//        KLog.d( checkResult + "【reRefs】测试" + reUnreadUnstarRefs.size() + "--" + reReadStarredRefs.size() + "--" + reUnreadStarredRefs.size() );
+//        return checkResult;
+
+
+        if (!checkCounts()){return -1;}
+        allUnreadRefs =  new ArrayList<>();
+        allStarredRefs = new ArrayList<>();
+
         int arrayCapacity = 0;
         if(unreadRefs.size() > starredRefs.size()){
             arrayCapacity = starredRefs.size();
@@ -339,8 +462,8 @@ public class Parser {
             arrayCapacity = unreadRefs.size();
         }
         reUnreadUnstarRefs = new ArrayList<>( unreadRefs.size() );
-        reUnreadStarredRefs = new ArrayList<>( arrayCapacity );
         reReadStarredRefs = new ArrayList<>( starredRefs.size() );
+        reUnreadStarredRefs = new ArrayList<>( arrayCapacity );
         Map<String,Integer> map = new ArrayMap<>( unreadRefs.size() + starredRefs.size() );
         Map<String,ItemRefs> mapArray = new ArrayMap<>( unreadRefs.size() );
         for ( ItemRefs item : unreadRefs ) {
@@ -365,6 +488,145 @@ public class Parser {
         return reUnreadUnstarRefs.size() + reReadStarredRefs.size() + reUnreadStarredRefs.size();
     }
 
+
+//    public boolean classifyRefs(){
+//        if (!checkCounts()){return false;}
+//
+//        Map<String,Integer> map = new ArrayMap<>( unreadCounts + starredCounts );
+//
+//        reUnreadUnstarRefs = new ArrayList<>( unreadCounts + starredCounts );
+//        reReadStarredRefs = new ArrayList<>( unreadCounts + starredCounts );
+//        reUnreadStarredRefs = new ArrayList<>( unreadCounts + starredCounts );
+//
+//        // 1，先将 Refs 去重
+//        Map<String,ItemRefs> starredMap = new ArrayMap<>( allStarredRefs.size() );
+//        for ( ItemRefs item : allStarredRefs ) {
+//            map.put( item.getId() ,1 ); //  String articleId = item.getId();
+//            starredMap.put( item.getId() ,item );
+//        }
+//        for ( ItemRefs item : allUnreadRefs ) {
+//            Integer cc = map.get( item.getId() );
+//            if( cc!=null ) {
+//                map.put( item.getId() ,+cc );
+//                reUnreadStarredRefs.add(item);
+//            }else {
+//                reUnreadUnstarRefs.add(item);
+//            }
+//        }
+//        for( Map.Entry<String, Integer> entry: map.entrySet()) {
+//            if(entry.getValue()==1) {
+//                reReadStarredRefs.add( starredMap.get( entry.getKey() ));
+//            }
+//        }
+//
+//
+//
+//        // 2，再将 Refs 与 本地 Articles 去重
+//        reUnreadUnstarRefs = deDuplicate(reUnreadUnstarRefs, WithDB.getInstance().loadUnreadUnstarred(), new ArticleChanger() {
+//            @Override
+//            public Article change(Article article) {
+//                article.setReadState(API.ART_UNREAD);
+//                article.setStarState(API.ART_UNSTAR);
+//                return article;
+//            }
+//        }, new ArticleChanger() {
+//            @Override
+//            public Article change(Article article) {
+//                article.setReadState(API.ART_READ);
+//                article.setStarState(API.ART_STAR);
+//                return article;
+//            }
+//        });
+//
+//        reUnreadStarredRefs = deDuplicate(reUnreadStarredRefs, WithDB.getInstance().loadUnreadStarred(), new ArticleChanger() {
+//            @Override
+//            public Article change(Article article) {
+//                article.setReadState(API.ART_UNREAD);
+//                article.setStarState(API.ART_STAR);
+//                return article;
+//            }
+//        }, new ArticleChanger() {
+//            @Override
+//            public Article change(Article article) {
+//                article.setReadState(API.ART_READ);
+//                article.setStarState(API.ART_UNSTAR);
+//                return article;
+//            }
+//        });
+//        reReadStarredRefs = deDuplicate(reReadStarredRefs, WithDB.getInstance().loadReadUnstarred(), new ArticleChanger() {
+//            @Override
+//            public Article change(Article article) {
+//                article.setReadState(API.ART_READ);
+//                article.setStarState(API.ART_STAR);
+//                return article;
+//            }
+//        }, new ArticleChanger() {
+//            @Override
+//            public Article change(Article article) {
+//                article.setReadState(API.ART_UNREAD);
+//                article.setStarState(API.ART_UNSTAR);
+//                return article;
+//            }
+//        });
+//        return true;
+//    }
+
+
+
+    private ArrayList<ItemRefs> deDuplicate( List<ItemRefs> refs , List<Article> articles , ArticleChanger changer1, ArticleChanger changer2 ){
+
+//        Duplicate.deDuplicate( refs, articles );
+
+        Map<String,Integer> map = new ArrayMap<>( refs.size() + articles.size());
+        Map<String,Article> articleMap = new ArrayMap<>( articles.size() );
+        ArrayList<Article> articleList =  new ArrayList<>( articles.size() );
+        ArrayList<ItemRefs> articleRefs = new ArrayList<>( refs.size() );
+
+        for ( Article item : articles ) {
+            String articleId = item.getId();
+            map.put(articleId, 1);
+            articleMap.put( articleId,item );
+        }
+        for ( ItemRefs item : refs ) {
+            String articleId = UString.toLongID(item.getId());
+            Integer cc = map.get( articleId );
+            if( cc!=null ) {
+                map.put( articleId , ++cc);// 存在重复
+            }else {
+                Article article = WithDB.getInstance().getArticle( articleId );// 必须保留
+                if(article!= null){ // 2，去掉“本地有，但是非此状态”的
+                    article = changer1.change(article);
+//                    article.setStarState(API.ART_STAR);
+//                    article.setStarState( state1 );
+                    articleList.add(article);
+                }else {
+                    articleRefs.add(item);// 3，就剩云端的，要请求的资源（但是还是含有一些要请求的未读资源）
+                }
+            }
+        }
+        for( Map.Entry<String, Integer> entry: map.entrySet()) {
+            if(entry.getValue()==1) {
+                Article article = articleMap.get(entry.getKey());
+                article = changer2.change(article);
+//                article.setStarState( state2 );
+//                article.setStarState(API.ART_UNSTAR);
+                articleList.add(article);// 取消加星
+            }
+        }
+        WithDB.getInstance().saveArticleList( articleList );
+        return articleRefs;
+    }
+
+
+    private boolean checkCounts(){
+        return ( unreadCounts <= allUnreadRefs.size() ) && ( starredCounts <= allStarredRefs.size() );
+    }
+//    private boolean checkUnreadCounts(){
+//        return unreadCounts <= allUnreadRefs.size();  // 因为 unreadCounts 有个最多显示为 1000
+//    }
+//    private boolean checkStarredCounts(){
+//        return starredCounts <= allStarredRefs.size();  // 因为 starredCounts 有个最多显示为 1000
+//    }
 
     public void parseItemContentsUnreadUnstar(String info){
         parseItemContents(info, new ArticleChanger() {

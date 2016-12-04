@@ -57,31 +57,43 @@ public class API {
 //    public static final int ID_UPDATE_UI = 4;
 //    public static final int ID_FROM_CACHE = 5;
 
-    public static final int M_BEGIN_SYNC = 66;
-    public static final int S_CLIENTLOGIN = 10;
-    public static final int S_USER_INFO = 11;
-    public static final int S_TAGS_LIST = 12;
-    public static final int S_STREAM_PREFS = 13;
-    public static final int S_SUBSCRIPTION_LIST = 22;
-    public static final int S_UNREAD_COUNTS = 23;
-    public static final int S_ITEM_IDS = 20;
-    public static final int S_ITEM_IDS_STARRED = 28;
-    public static final int S_STREAM_CONTENTS_STARRED = 31;
-    public static final int S_ITEM_CONTENTS = 24;
-    public static final int S_READING_LIST = 21;
-    public static final int S_EDIT_TAG = 25;
-    public static final int S_BITMAP = 26;
-    public static final int S_Contents = 19;
-    public static final int S_ARTICLE_CONTENTS = 27;
-
-
-    public static final int S_ALL_STARRED = 30;
-    public static final int SUCCESS = 100;
     public static final int MSG_DOUBLE_TAP = -1;
     public static final int F_NoMsg = 00;
     public static final int F_Request = 01;
     public static final int F_Response = 02;
     public static final int F_BITMAP = 03;
+    public static final int SUCCESS = 100;
+
+
+    public static final int M_BEGIN_SYNC = 10;
+    public static final int S_CLIENTLOGIN = 11;
+    public static final int S_USER_INFO = 12;
+    public static final int S_TAGS_LIST = 13;
+    public static final int S_STREAM_PREFS = 14;
+    public static final int S_SUBSCRIPTION_LIST = 15;
+
+    public static final int S_UNREAD_COUNTS = 30;
+
+
+    public static final int S_ITEM_IDS = 31;
+    public static final int S_ITEM_IDS_UNREAD = 32;
+    public static final int S_ITEM_IDS_UNREAD_LOOP = 33;
+    public static final int S_ITEM_IDS_STARRED = 35;
+    public static final int S_ITEM_IDS_STARRED_LOOP = 36;
+
+    public static final int S_STREAM_CONTENTS_STARRED = 38;
+
+
+    public static final int S_READING_LIST = 39;
+
+    public static final int S_ITEM_CONTENTS = 40;
+
+    public static final int S_EDIT_TAG = 60;
+    public static final int S_ARTICLE_CONTENTS = 61;
+
+    public static final int S_BITMAP = 62;
+    public static final int S_Contents = 63;
+
     public static ArrayList<Item> itemlist;
 
 

@@ -3,9 +3,6 @@ package me.wizos.loread;
 import android.app.Activity;
 import android.app.Application;
 
-import com.socks.library.KLog;
-import com.tencent.bugly.crashreport.CrashReport;
-
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
@@ -40,8 +37,9 @@ public class App extends Application{
         super.onCreate();
         App.instance = this;
 //         TEST，正式环境下应该启用
-        KLog.init( false );
-        CrashReport.initCrashReport( App.getInstance() , "900044326", true);
+//        KLog.init( false );
+//        CrashReport.initCrashReport( App.getInstance() , "900044326", true);
+
         // TEST，正式环境应该注释掉
 //        Stetho.initialize(
 //                Stetho.newInitializerBuilder(this)

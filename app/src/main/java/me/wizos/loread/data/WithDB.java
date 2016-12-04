@@ -150,7 +150,7 @@ public class WithDB {
        return articleList;
    }
 
-    public List<Article> loadReadList(String readState, String listTag){
+    public List<Article> loadTagRead(String readState, String listTag){
         long xx = System.currentTimeMillis();
         Query query = articleDao.queryBuilder()
                 .where(ArticleDao.Properties.ReadState.like(readState + "%"), ArticleDao.Properties.Categories.like("%" + listTag + "%")) /** Creates an "equal ('=')" condition  for this property. */
@@ -199,6 +199,24 @@ public class WithDB {
                 .build();
         return query.list();
     }
+//    public List<Article> loadUnreadStarred(){
+//        Query query = articleDao.queryBuilder()
+//                .where(ArticleDao.Properties.ReadState.eq(API.ART_UNREAD), ArticleDao.Properties.StarState.eq(API.ART_STAR)) /**  Creates an "equal ('=')" condition  for this property. */
+//                .build();
+//        return query.list();
+//    }
+//    public List<Article> loadUnreadUnstarred(){
+//        Query query = articleDao.queryBuilder()
+//                .where(ArticleDao.Properties.ReadState.eq(API.ART_UNREAD), ArticleDao.Properties.StarState.eq(API.ART_UNREAD)) /**  Creates an "equal ('=')" condition  for this property. */
+//                .build();
+//        return query.list();
+//    }
+//    public List<Article> loadReadUnstarred(){
+//        Query query = articleDao.queryBuilder()
+//                .where(ArticleDao.Properties.ReadState.eq(API.ART_READ), ArticleDao.Properties.StarState.eq(API.ART_UNREAD)) /**  Creates an "equal ('=')" condition  for this property. */
+//                .build();
+//        return query.list();
+//    }
 
     public List<Article> loadStarAllOrder(){
         Query query = articleDao.queryBuilder()
@@ -208,7 +226,12 @@ public class WithDB {
         return query.list();
     }
 
-    public List<Article> loadStarList(String listTag){
+    /**
+     * 加载某个 Tag 下的 StarArt
+     * @param listTag
+     * @return
+     */
+    public List<Article> loadTagStar(String listTag){
         Query query = articleDao.queryBuilder()
                 .where(ArticleDao.Properties.StarState.eq(API.LIST_STAR),ArticleDao.Properties.Categories.like("%"+ listTag + "%")) /**  Creates an "equal ('=')" condition  for this property. */
                 .orderDesc(ArticleDao.Properties.TimestampUsec)

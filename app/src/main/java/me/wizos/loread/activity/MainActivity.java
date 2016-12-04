@@ -240,9 +240,9 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
             articleList = getNoLabelList( );  // FIXME: 2016/5/7 这里的未分类暂时无法使用，因为在云端订阅源的分类是可能会变的，导致本地缓存的文章分类错误
         }else {
             if( sListState.equals(API.LIST_STAR) ){
-                articleList = WithDB.getInstance().loadStarList(sListTag);
+                articleList = WithDB.getInstance().loadTagStar(sListTag);
             }else{
-                articleList = WithDB.getInstance().loadReadList(sListState,sListTag); // 590-55
+                articleList = WithDB.getInstance().loadTagRead(sListState,sListTag); // 590-55
             }
         }
         KLog.i("【】" + articleList.size() + sListState + "--" + sListTag);
@@ -336,6 +336,7 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
             if ( info == null ){
                 info = "";
             }
+            String con;
             switch (msg.what) {
                 case API.M_BEGIN_SYNC:
                     if( syncRequestLog()){
@@ -385,6 +386,45 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
                     urlState = 1;
                     KLog.d("【未读数】");
                     break;
+//                case API.S_ITEM_IDS_UNREAD_LOOP:
+//                    con = Parser.instance().parseItemIDsUnread(info);
+//                    if(con!=null){
+//                        mNeter.addHeader("c", con );
+//                        mNeter.getUnReadRefs(mUserID);
+//                        KLog.i("【获取 ITEM_IDS 还可继续】" + con );
+//                    }else {
+//                        handler.sendEmptyMessage( API.S_ITEM_IDS_UNREAD );
+//                    }
+//                    break;
+//                case API.S_ITEM_IDS_UNREAD:
+//                    vToolbarHint.setText( R.string.main_toolbar_hint_sync_stared_refs);
+//                    mNeter.getStarredRefs( mUserID);
+//                    con =null;
+//                    break;
+//                case API.S_ITEM_IDS_STARRED_LOOP:
+//                    con = Parser.instance().parseItemIDsStarred(info);
+//                    if( con!=null){
+//                        mNeter.addHeader("c", con );
+//                        mNeter.getStarredRefs( mUserID);
+//                    }else {
+//                        handler.sendEmptyMessage( API.S_ITEM_IDS_STARRED );
+//                    }
+//                    break;
+//                case API.S_ITEM_IDS_STARRED:
+//                    ArrayList<ItemRefs> unreadRefs = Parser.instance().reUnreadRefs();
+//                    ArrayList<ItemRefs> starredRefs = Parser.instance().reStarredRefs();
+//                    Parser.instance().reRefs(unreadRefs, starredRefs);
+//                    break;
+//                case API.S_ITEM_IDS_REREFS:
+//                    int capacity = msg.getData().getInt("capacity");
+//                    if ( capacity == -1 ){
+//                        UToast.showShort( "同步时数据出错，请重试" );
+//                        break;
+//                    }
+//                    afterItemRefs = new ArrayList<>( capacity );
+//                    handler.sendEmptyMessage(API.S_ITEM_CONTENTS);// 开始获取所有列表的内容
+//                    KLog.i("解析完成所有 Refs ");
+//                    break;
                 case API.S_ITEM_IDS:
                     if (urlState == 1){
                         String continuation = Parser.instance().parseItemIDsUnread(info);
@@ -406,6 +446,10 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
                             ArrayList<ItemRefs> unreadRefs = Parser.instance().reUnreadRefs();
                             ArrayList<ItemRefs> starredRefs = Parser.instance().reStarredRefs();
                             capacity = Parser.instance().reRefs(unreadRefs, starredRefs);
+                            if ( capacity == -1 ){
+                                UToast.showShort( "同步时数据出错，请重试" );
+                                break;
+                            }
                             afterItemRefs = new ArrayList<>( capacity );
                             handler.sendEmptyMessage(API.S_ITEM_CONTENTS);// 开始获取所有列表的内容
                             urlState = 1;
