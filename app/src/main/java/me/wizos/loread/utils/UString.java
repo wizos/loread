@@ -71,10 +71,11 @@ public class UString {
         int num = 0;
         StringBuilder tempHtml = new StringBuilder(oldHtml);
 
+        tempHtml = reviseHtmlNoAd(tempHtml);
         String srcLocal,srcNet,srcSavePath,imgExt,imgName,temp;
         ArrayMap<Integer,SrcPair> srcMap = new ArrayMap<>();
         srcMap.put(0, new SrcPair("","","")); // 先存一个空的，方便后面把修改后的正文放进来
-        int indexA = tempHtml.indexOf("<img ", 0), indexB;
+        int indexB, indexA = tempHtml.indexOf("<img ", 0);
         while (indexA != -1) {
             indexA = tempHtml.indexOf(" src=\"", indexA);
             if(indexA == -1){break;}
@@ -107,6 +108,20 @@ public class UString {
         KLog.d("【文章2】" + srcMap.size() );
         return srcMap;
     }
+
+    private static StringBuilder reviseHtmlNoAd(StringBuilder tempHtml) {
+        int indexA = tempHtml.indexOf("<center>", 0);
+        int indexB = tempHtml.indexOf("</center>", indexA);
+        if (indexA < 0 || indexB < 0) {
+            return tempHtml;
+        }
+        String temp = tempHtml.substring(indexA + 8, indexB);
+        if (temp.contains("Ads") && temp.contains("Inoreader")) {
+            tempHtml = tempHtml.replace(indexA, indexB + 9, "");
+        }
+        return tempHtml;
+    }
+
 
 
 

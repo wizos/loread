@@ -2,18 +2,15 @@ package me.wizos.loread.activity;
 
 import android.content.Context;
 import android.content.Intent;
-import android.os.Build;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.view.KeyEvent;
 import android.view.View;
-import android.view.Window;
-import android.view.WindowManager;
 
-import com.readystatesoftware.systembartint.SystemBarTintManager;
-
+import me.wizos.loread.App;
 import me.wizos.loread.R;
-import me.wizos.loread.colorful.Colorful;
 import me.wizos.loread.data.WithSet;
+import me.wizos.loread.utils.colorful.Colorful;
 
 /**
  * Created by Wizos on 2016/3/12.
@@ -69,8 +66,7 @@ public abstract class BaseActivity extends AppCompatActivity implements View.OnC
 
     protected abstract void notifyDataChanged();
 
-    public void onBottombarClicked(View view){
-        return;
+    public void onBottombarClicked(View view) {
     }
 
 
@@ -104,26 +100,14 @@ public abstract class BaseActivity extends AppCompatActivity implements View.OnC
     protected abstract void initColorful();
 
 
-    protected void initSystemBar() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-            setTranslucentStatus(true);
-            SystemBarTintManager tintManager = new SystemBarTintManager(this);
-            tintManager.setStatusBarTintColor(getResources().getColor(R.color.main_grey_dark));
-            tintManager.setStatusBarTintEnabled(true);
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        if (keyCode == KeyEvent.KEYCODE_BACK && event.getRepeatCount() == 0) { // 后者为短期内按下的次数
+            App.finishActivity(this);// 移除这个 Activity
+            return true;//返回真表示返回键被屏蔽掉
         }
+        return super.onKeyDown(keyCode, event);
     }
-    protected void setTranslucentStatus(boolean on) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-            Window win = getWindow();
-            WindowManager.LayoutParams winParams = win.getAttributes();
-            final int bits = WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS;
-            if (on) {
-                winParams.flags |= bits;
-            } else {
-                winParams.flags &= ~bits;
-            }
-            win.setAttributes(winParams);
-        }
-    }
+
 
 }

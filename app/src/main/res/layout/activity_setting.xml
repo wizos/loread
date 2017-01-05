@@ -99,7 +99,6 @@
                 <com.kyleduo.switchbutton.SwitchButton
                     android:id="@+id/setting_sync_all_starred_sb_flyme"
                     style="@style/SwitchButtonStyle"
-                    android:checked="true"
                     android:onClick="onSBClick" />
             </LinearLayout>
             <LinearLayout
@@ -291,19 +290,21 @@
                     android:layout_marginBottom="6dp"
                     android:text="@string/setting_clear_log_title" />
                 <Button
-                    android:id="@+id/setting_update_article_tag_button"
-                    android:layout_width="wrap_content"
-                    android:layout_height="match_parent"
-                    android:onClick="onClickUpdateArticle"
-                    android:layout_marginBottom="6dp"
-                    android:text="@string/setting_update_article_tag_title" />
-                <Button
                     android:id="@+id/setting_clear_error_cache"
                     android:layout_width="wrap_content"
                     android:layout_height="match_parent"
                     android:onClick="onClickClearErrorCache"
                     android:layout_marginBottom="6dp"
                     android:text="@string/setting_clear_error_cache" />
+
+                <Button
+                    android:id="@+id/setting_update_article_tag_button"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:onClick="onClickUpdateArticle"
+                    android:layout_marginBottom="6dp"
+                    android:text="@string/setting_update_article_tag_title" />
+
             </LinearLayout>
             <LinearLayout
                 android:id="@+id/setting_esc"

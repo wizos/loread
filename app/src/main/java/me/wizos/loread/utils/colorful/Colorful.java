@@ -1,4 +1,4 @@
-package me.wizos.loread.colorful;
+package me.wizos.loread.utils.colorful;
 
 import android.app.Activity;
 import android.content.res.Resources.Theme;
@@ -13,10 +13,10 @@ import java.util.HashSet;
 import java.util.Set;
 
 import me.wizos.loread.R;
-import me.wizos.loread.colorful.setter.TextColorSetter;
-import me.wizos.loread.colorful.setter.ViewBackgroundColorSetter;
-import me.wizos.loread.colorful.setter.ViewBackgroundDrawableSetter;
-import me.wizos.loread.colorful.setter.ViewSetter;
+import me.wizos.loread.utils.colorful.setter.TextColorSetter;
+import me.wizos.loread.utils.colorful.setter.ViewBackgroundColorSetter;
+import me.wizos.loread.utils.colorful.setter.ViewBackgroundDrawableSetter;
+import me.wizos.loread.utils.colorful.setter.ViewSetter;
 
 /**
  * 主题切换控制类

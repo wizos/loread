@@ -2,6 +2,9 @@ package me.wizos.loread;
 
 import android.app.Activity;
 import android.app.Application;
+import android.os.Handler;
+
+import com.squareup.leakcanary.LeakCanary;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -24,13 +27,12 @@ public class App extends Application{
 
 
     private  static DaoSession daoSession;
+    public static Handler mHandler;
     public static App instance; // 此处的单例不会造成内存泄露，因为 App 本身就是全局的单例
     public static App getInstance() {
         return instance;
     }
-    public static void addActivity(Activity activity){
-        activities.add(activity);
-    }
+
 
     @Override
     public void onCreate() {
@@ -40,6 +42,11 @@ public class App extends Application{
 //        KLog.init( false );
 //        CrashReport.initCrashReport( App.getInstance() , "900044326", true);
 
+        //  内存泄漏检测工具
+        if (LeakCanary.isInAnalyzerProcess(this)) {
+            return;
+        }
+        LeakCanary.install(this);
         // TEST，正式环境应该注释掉
 //        Stetho.initialize(
 //                Stetho.newInitializerBuilder(this)
@@ -65,7 +72,9 @@ public class App extends Application{
 
     }
 
-
+    public static void addActivity(Activity activity) {
+        activities.add(activity);
+    }
 
     public static void finishActivity(Activity activity){
         activities.remove(activity);

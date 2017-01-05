@@ -19,12 +19,12 @@
     <!-- Strings related to Settings -->
     <string name="main_toolbar_hint_sync">同步%1$s</string>
     <string name="main_toolbar_hint_clear_article">1 - 清除 %1$s 天之前的文章</string>
-    <string name="main_toolbar_hint_sync_article_content">1 - 同步文章内容[%1$d : %2$d]</string>
+    <string name="main_toolbar_hint_sync_article_content">1 - 同步文章内容[%1$d : %2$d ( %3$d - %4$d )]</string>
     <string name="main_toolbar_hint_sync_stared_refs">2 - 同步收藏信息</string>
     <string name="main_toolbar_hint_sync_unread_refs">3 - 同步未读信息</string>
     <string name="main_toolbar_hint_sync_unread_count">4 - 获取未读数目</string>
     <string name="main_toolbar_hint_sync_tag_order">5 - 同步分组排序信息</string>
-    <string name="main_toolbar_hint_sync_all_stared_content">5 - 同步所有加星文章</string>
+    <string name="main_toolbar_hint_sync_all_stared_content">同步所有加星文章</string>
     <string name="main_toolbar_hint_sync_tag">6 - 同步分组信息</string>
     <string name="main_toolbar_hint_sync_log">7 - 同步离线操作信息</string>
 
@@ -42,8 +42,9 @@
 
 
     <string name="setting_clear_log_title">清除错误记录</string>
-    <string name="setting_clear_error_cache">清除错误遗留的文章</string>
+    <string name="setting_clear_error_cache">删除错误遗留的文章</string>
     <string name="setting_update_article_tag_title">更新离线文章的分组信息</string>
+    <string name="setting_sync_all_starred_article_button">加载</string>
     <string name="setting_esc_title">退出</string>
     <string name="setting_about_title">关于</string>
     <string name="setting_license_title">许可</string>

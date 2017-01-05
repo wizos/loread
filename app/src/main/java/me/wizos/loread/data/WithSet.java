@@ -133,11 +133,11 @@ public class WithSet {
     public boolean isSyncAllStarred() {
         return readPref("SyncAllStarred", false);
     }
-
     public void setSyncAllStarred(boolean syncAllStarred) {
         savePref("SyncAllStarred", syncAllStarred);
     }
-    public boolean getHadSyncAllStarred() {
+
+    public boolean isHadSyncAllStarred() {
         return readPref("HadSyncAllStarred", false);
     }
     public void setHadSyncAllStarred(boolean had) {

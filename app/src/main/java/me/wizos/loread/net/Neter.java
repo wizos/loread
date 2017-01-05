@@ -5,6 +5,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.support.v4.util.ArrayMap;
+import android.util.SparseIntArray;
 
 import com.socks.library.KLog;
 import com.squareup.okhttp.Callback;
@@ -16,6 +17,8 @@ import com.squareup.okhttp.Response;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import me.wizos.loread.bean.RequestLog;
 import me.wizos.loread.bean.gson.SrcPair;
@@ -35,6 +38,9 @@ public class Neter {
         KLog.i("【Neter构造函数】" + handler );
         this.handler = handler;
         this.context = context;
+        this.taskList = new SparseIntArray();
+        // 创建线程数
+        this.threadPool = Executors.newFixedThreadPool(10);
     }
 
 
@@ -66,8 +72,8 @@ public class Neter {
     }
     public void getStarredContents(){
         addHeader("n","20");
-        addHeader("ot", "0");
-        getWithAuth( API.HOST + API.U_STREAM_CONTENTS + API.U_STARRED);
+        addHeader("r", "o");
+        getWithAuth(API.HOST + API.U_STREAM_CONTENTS + API.U_STARRED);
     }
 
 //    public void postArticle( List<String> articleIDList ){
@@ -452,7 +458,7 @@ public class Neter {
 //                                }
 //                            })
                                 inputStream = response.body().byteStream();
-                                if( UFile.saveFromStream(inputStream, filePath) ){
+                                if (!UFile.saveFromStream(inputStream, filePath)) {
                                     state = API.F_BITMAP;
                                 }
                             } catch (IOException e) {
@@ -490,64 +496,111 @@ public class Neter {
     }
 
 
+    /**
+     * 保存正在下载或等待下载的URL和相应失败下载次数（初始为0），防止滚动时多次下载
+     */
+    private SparseIntArray taskList;
+    /**
+     * 线程池
+     */
+    private ExecutorService threadPool;
+    /**
+     * 图片下载失败重试次数
+     */
+    private static final int FAIL_TIMES = 2;
 
-    private String convertPostUrlForProxy( String url ){
-        String action = "";
-        if(url.equals(API.HOST + API.U_CLIENTLOGIN)){
-            action = "login";
-        }else if( url.equals(API.HOST + API.U_ITEM_CONTENTS) ){
-            action = "item_contents";
-        }else if( url.equals(API.HOST + API.U_EDIT_TAG) ){
-            action = "edit_tag";
-        }
-        return action;
-    }
-    private String convertGetUrlForProxy( String url ){
-        String action = "";
-        if(url.equals(API.HOST + API.U_USER_INFO)){
-            action = "user_info";
-        }else if( url.equals(API.HOST + API.U_TAGS_LIST) ){
-            action = "tag_list";
-        }else if( url.equals(API.HOST + API.U_STREAM_PREFS) ){
-            action = "stream_prefs";
-        }else if( url.equals(API.HOST + API.U_SUSCRIPTION_LIST) ){
-            action = "suscription_list";
-        }else if( url.equals(API.HOST + API.U_UNREAD_COUNTS) ){
-            action = "unread_counts";
-        }else if( url.equals(API.HOST + API.U_ITEM_IDS) ){
-            action = "item_ids";
-        }else if( url.equals(API.HOST + API.U_ARTICLE_CONTENTS) ){
-            action = "article_contents";
-        }else if( url.equals(API.HOST + API.U_STREAM_CONTENTS) ){
-            action = "stream_contents";
-        }
-        return action;
+    /**
+     * 异步下载图片，并按指定宽度和高度压缩图片
+     * <p>
+     * 图片下载完成后调用接口
+     */
+    private void loadImg(String imgUrl, String filePath, int imgNo) {
+//        final ImageHandler handler = new ImageHandler(listener);
+        taskList.put(imgNo, 0);
+        threadPool.execute(new Task(imgUrl, filePath, imgNo));
     }
 
+    public int loadImg(ArrayMap<Integer, SrcPair> imgSrcList) {
+        if (!HttpUtil.isWifiEnabled(context)) {
+            handler.sendEmptyMessage(API.F_NoMsg);
+            return 0;
+        }
+        if (imgSrcList == null || imgSrcList.size() == 0) {
+            return 0;
+        }
+        int length = imgSrcList.size();
+        for (ArrayMap.Entry<Integer, SrcPair> entry : imgSrcList.entrySet()) {
+            loadImg(entry.getValue().getNetSrc(), entry.getValue().getSaveSrc(), entry.getKey());
+            KLog.d("【获取图片的key为：" + entry.getKey() );
+        }
+        return length;
+    }
 
+    private class Task implements Runnable {
+        String imgUrl, filePath;
+        int imgNo;
 
-//    public void downImg(String url,String filePath ,final int imgNum){
-//        String path = filePath.substring(filePath.lastIndexOf(File.separator));
-//        String name = filePath.substring(filePath.lastIndexOf(File.separator),filePath.length());
-//        OkHttpUtils
-//                .get()
-//                .url(url)
-//                .build()
-//                .execute(new FileCallBack(path, name)//
-//                {
-//                    @Override
-//                    public void inProgress(float progress, long f) {
-//                    }
-//
-//                    @Override
-//                    public void onError(Call xx, Exception e) {
-//                    }
-//
-//                    @Override
-//                    public void onResponse(File file) {
-//                        makeMsgForImg(null, null, imgNum);
-//                    }
-//                });
-//    }
+        Task(String imgUrl, String filePath, int imgNo) {
+            this.imgUrl = imgUrl;
+            this.filePath = filePath;
+            this.imgNo = imgNo;
+        }
+
+        @Override
+        public void run() {
+            Request.Builder builder = new Request.Builder();
+            builder.url(imgUrl);
+            final Request request = builder.build();
+            HttpUtil.enqueue(request, new Callback() {
+                @Override
+                public void onFailure(Request request, IOException e) {
+                    KLog.d("【图片请求失败 = " + imgUrl + "】");
+                    makeMsgForImg(API.F_BITMAP, imgUrl, filePath, imgNo);
+                }
+
+                @Override
+                public void onResponse(Response response) throws IOException {
+                    if (!response.isSuccessful()) {
+//                        KLog.d("【图片响应失败】" + response);
+                        makeMsgForImg(API.F_BITMAP, imgUrl, filePath, imgNo);
+                    } else {
+                        InputStream inputStream = null;
+                        int state = API.S_BITMAP;
+                        try {
+                            inputStream = response.body().byteStream();
+                            if (!UFile.saveFromStream(inputStream, filePath)) {
+                                state = API.F_BITMAP;
+                            }
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        } finally {
+                            response.body().close();
+                        }
+
+                        KLog.d("【成功保存图片】" + imgUrl + "==" + filePath);
+                        makeMsgForImg(state, imgUrl, filePath, imgNo);
+                    }
+                }
+            });
+        }
+    }
+
+    /**
+     * 取消正在下载的任务
+     */
+    public synchronized void cancelTasks() {
+        if (threadPool != null) {
+            threadPool.shutdownNow();
+            threadPool = null;
+        }
+    }
+
+    /**
+     * 获取任务列表
+     */
+    public SparseIntArray getTaskList() {
+        return taskList;
+    }
+
 
 }

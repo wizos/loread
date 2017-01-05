@@ -3,9 +3,9 @@ package me.wizos.loread.bean;
 import com.google.gson.annotations.SerializedName;
 
 import java.util.List;
-import me.wizos.loread.data.dao.DaoSession;
-import de.greenrobot.dao.DaoException;
 
+import de.greenrobot.dao.DaoException;
+import me.wizos.loread.data.dao.DaoSession;
 import me.wizos.loread.data.dao.FeedDao;
 import me.wizos.loread.data.dao.TagDao;
 
@@ -21,6 +21,7 @@ public class Tag {
     private String sortid;
     @SerializedName("title")
     private String title;
+    @SerializedName("unreadcount")
     private Integer unreadcount;
 
     /** Used to resolve relations */

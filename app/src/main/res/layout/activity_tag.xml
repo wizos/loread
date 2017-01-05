@@ -1,11 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.design.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/tag_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fitsSystemWindows="true"
-    android:id="@+id/tag_coordinator"
+    android:addStatesFromChildren="true"
+    android:windowDrawsSystemBarBackgrounds="true"
+    tools:background="@color/article_dark_background"
     tools:context=".activity.TagActivity">
 
     <android.support.design.widget.AppBarLayout
@@ -34,17 +37,17 @@
     <com.yydcdut.sdlv.SlideAndDragListView
         android:id="@+id/tag_slv"
         android:divider="#bababa"
-        tools:divider="#bababa"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_marginLeft="12dp"
         android:layout_marginRight="12dp"
-        android:layout_marginBottom="50dp"
-        android:layout_marginTop="58dp"
-        >
+        android:background="@android:color/transparent"
+        android:animateLayoutChanges="true"
+        android:headerDividersEnabled="false"
+        android:layout_below="@id/tag_appBarLayout"
+        android:layout_above="@+id/tag_bottombar">
     </com.yydcdut.sdlv.SlideAndDragListView>
-
-
 
     <LinearLayout
         android:id="@+id/tag_bottombar"
@@ -52,13 +55,9 @@
         android:layout_height="@dimen/bottom_bar_height"
         android:background="@color/white"
         android:gravity="center"
-        android:layout_gravity="center_vertical|bottom">
-        <!--<ImageView-->
-            <!--android:id="@+id/tag_star"-->
-            <!--android:layout_width="22dp"-->
-            <!--android:layout_height="22dp"-->
-            <!--android:onClick="onStarlistClicked"-->
-            <!--android:src="@drawable/ic_vector_unstar"/>-->
+        android:layout_gravity="center_vertical|bottom"
+        android:layout_alignParentBottom="true">
+
         <me.wizos.loread.view.IconFontView
             android:id="@+id/tag_bottombar_main"
             style="@style/bottom_bar_iconfont"
@@ -66,5 +65,14 @@
             android:onClick="onMainListClicked"/>
 
     </LinearLayout>
+    <!---->
+    <!--<RelativeLayout-->
+    <!--android:layout_width="match_parent"-->
+    <!--android:layout_height="match_parent"-->
+    <!--android:orientation="vertical">-->
 
-</android.support.design.widget.CoordinatorLayout>
+
+    <!--</RelativeLayout>-->
+
+
+</RelativeLayout>

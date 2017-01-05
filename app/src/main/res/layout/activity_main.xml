@@ -26,7 +26,6 @@
                 android:layout_height="match_parent"
                 android:layout_gravity="center"
                 android:gravity="center"
-                tools:text="@string/box_html"
                 android:textSize="12sp"/>
             <me.wizos.loread.view.IconFontView
                 android:id="@+id/main_toolbar_readability"

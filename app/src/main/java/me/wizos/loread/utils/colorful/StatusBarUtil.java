@@ -1,4 +1,4 @@
-package me.wizos.loread.colorful;
+package me.wizos.loread.utils.colorful;
 
 import android.annotation.TargetApi;
 import android.app.Activity;

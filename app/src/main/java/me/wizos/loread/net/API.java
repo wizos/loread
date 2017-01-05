@@ -62,6 +62,7 @@ public class API {
     public static final int F_Request = 01;
     public static final int F_Response = 02;
     public static final int F_BITMAP = 03;
+    public static final int FAILURE = 00;
     public static final int SUCCESS = 100;
 
 
@@ -81,11 +82,11 @@ public class API {
     public static final int S_ITEM_IDS_STARRED = 35;
     public static final int S_ITEM_IDS_STARRED_LOOP = 36;
 
+    public static final int S_STARRED = 37;
     public static final int S_STREAM_CONTENTS_STARRED = 38;
 
 
     public static final int S_READING_LIST = 39;
-
     public static final int S_ITEM_CONTENTS = 40;
 
     public static final int S_EDIT_TAG = 60;

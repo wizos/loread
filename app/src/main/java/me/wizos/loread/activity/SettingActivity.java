@@ -25,18 +25,19 @@ import butterknife.OnClick;
 import me.wizos.loread.App;
 import me.wizos.loread.R;
 import me.wizos.loread.bean.Article;
-import me.wizos.loread.colorful.Colorful;
 import me.wizos.loread.data.WithDB;
 import me.wizos.loread.data.WithSet;
+import me.wizos.loread.net.API;
 import me.wizos.loread.utils.UFile;
 import me.wizos.loread.utils.UString;
+import me.wizos.loread.utils.colorful.Colorful;
 
 public class SettingActivity extends BaseActivity {
     protected static final String TAG = "SettingActivity";
     private Context context;
     private Toolbar toolbar;
 
-    private Thread mThread;
+//    private Thread mThread;
 
 
     @Override
@@ -103,15 +104,15 @@ public class SettingActivity extends BaseActivity {
     @Override
     protected void onPause() {
         super.onPause();
-        if (mThread != null && !mThread.isInterrupted() && mThread.isAlive())
-            mThread.interrupt();
+//        if (mThread != null && !mThread.isInterrupted() && mThread.isAlive())
+//            mThread.interrupt();
     }
     @Override
     public void onClick(View v) {
     }
 
 
-    private SwitchButton syncFirstOpen,syncAllStarred,downImgWifi,inoreaderProxy,scrollMark,orderTagFeed;
+    private SwitchButton syncFirstOpen, downImgWifi, inoreaderProxy, scrollMark, orderTagFeed, syncAllStarred;
     private TextView clearBeforeDaySummary;
     private Button clearLog;
     private int clearBeforeDayIndex, clearBeforeDay;
@@ -159,6 +160,7 @@ public class SettingActivity extends BaseActivity {
                 break;
             case R.id.setting_sync_all_starred_sb_flyme:
                 WithSet.getInstance().setSyncAllStarred(v.isChecked());
+                syncAllStarred();
                 break;
             case R.id.setting_down_img_sb_flyme:
                 WithSet.getInstance().setDownImgWifi(v.isChecked());
@@ -173,7 +175,15 @@ public class SettingActivity extends BaseActivity {
                 WithSet.getInstance().setOrderTagFeed(v.isChecked());
                 break;
         }
-        KLog.d("Switch: " , v.isChecked() );
+//        KLog.d("Switch: " , v.isChecked() );
+    }
+
+    private void syncAllStarred() {
+        KLog.i("【获取所有加星文章1】");
+        if (!WithSet.getInstance().isHadSyncAllStarred() && WithSet.getInstance().isSyncAllStarred()) {
+            App.mHandler.sendEmptyMessage(API.S_STREAM_CONTENTS_STARRED);
+            KLog.i("【获取所有加星文章2】");
+        }
     }
     public void onClickUpdateArticle(View view){
 //        Intent data = new Intent();

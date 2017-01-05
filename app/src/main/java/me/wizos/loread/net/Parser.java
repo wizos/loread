@@ -30,7 +30,6 @@ import me.wizos.loread.bean.gson.SubCategories;
 import me.wizos.loread.bean.gson.UnreadCounts;
 import me.wizos.loread.bean.gson.UserInfo;
 import me.wizos.loread.bean.gson.itemContents.Items;
-import me.wizos.loread.bean.gson.itemContents.Origin;
 import me.wizos.loread.data.WithDB;
 import me.wizos.loread.data.WithSet;
 import me.wizos.loread.utils.UFile;
@@ -64,7 +63,7 @@ public class Parser {
     public long parseUserInfo(String info){
         UserInfo userInfo = gson.fromJson(info, UserInfo.class);
 //        System.out.println("【parseUserInfo】" + userInfo.toString());
-        WithSet.getInstance().setUseId(Long.valueOf( userInfo.getUserId() ));
+        WithSet.getInstance().setUseId(userInfo.getUserId());
         return userInfo.getUserId();
 //        mUserID = userInfo.getUserId();
 //        mUserName = userInfo.getUserName();
@@ -83,9 +82,9 @@ public class Parser {
         API.itemlist = sContents.getItems();
     }
 
-    public void parseReadingList(String info){
-        GsItemContents readingList = gson.fromJson(info, GsItemContents.class);
-    }
+//    public void parseReadingList(String info){
+//        GsItemContents readingList = gson.fromJson(info, GsItemContents.class);
+//    }
 
     private ArrayList<Tag> tagList ;
     private ArrayList<String> tagIdArray;
@@ -123,7 +122,7 @@ public class Parser {
     public void parseStreamPrefList( String info,long mUserID){
         if(mUserID == 0){
             mUserID = Long.valueOf(tagIdArray.get(0).split("/")[1]);
-            WithSet.getInstance().setUseId(Long.valueOf(mUserID));
+            WithSet.getInstance().setUseId(mUserID);
         }
         Gson gson = new Gson();
         StreamPrefs streamPrefs = gson.fromJson(info, StreamPrefs.class);
@@ -183,7 +182,7 @@ public class Parser {
             for (int t=0; t<numOfUnreads; t++){
                 if(temp.equals(unreadCountList.get(t).getId())){
                     reTagList.get(i).setUnreadcount(unreadCountList.get(t).getCount());
-//                    System.out.println("【次数】" + unreadCountList.get(t).getCount() );
+//                    KLog.d("【次数】" + unreadCountList.get(t).getCount() );
                     break;
                 }
             }
@@ -198,8 +197,8 @@ public class Parser {
 
 
     public ArrayList<Sub> parseSubscriptionList(String info){
-        ArrayList<Sub> subs = gson.fromJson(info, GsSubscriptions.class).getSubscriptions();
-        return subs;
+//        ArrayList<Sub> subs = gson.fromJson(info, GsSubscriptions.class).getSubscriptions();
+        return gson.fromJson(info, GsSubscriptions.class).getSubscriptions();
     }
 
     private int unreadCounts;
@@ -335,7 +334,6 @@ public class Parser {
         ArrayList<Article> starList =  new ArrayList<>( beforeStarredList.size() );
         ArrayList<ItemRefs> starredRefs = new ArrayList<>( allStarredRefs.size() );
 
-
 //        new Thread(new Runnable(){
 //            public void run(){
 //                for ( Article item : beforeStarredList ) {
@@ -404,7 +402,8 @@ public class Parser {
     public ArrayList<ItemRefs> reUnreadUnstarRefs;
     public ArrayList<ItemRefs> reUnreadStarredRefs;
     public ArrayList<ItemRefs> reReadStarredRefs;
-    private int checkResult;
+
+    //    private int checkResult;
     public int reRefs( final ArrayList<ItemRefs> unreadRefs, final ArrayList<ItemRefs> starredRefs){
 //        checkResult = -1;
 //        new Thread(new Runnable(){
@@ -519,8 +518,6 @@ public class Parser {
 //            }
 //        }
 //
-//
-//
 //        // 2，再将 Refs 与 本地 Articles 去重
 //        reUnreadUnstarRefs = deDuplicate(reUnreadUnstarRefs, WithDB.getInstance().loadUnreadUnstarred(), new ArticleChanger() {
 //            @Override
@@ -571,8 +568,6 @@ public class Parser {
 //        return true;
 //    }
 
-
-
     private ArrayList<ItemRefs> deDuplicate( List<ItemRefs> refs , List<Article> articles , ArticleChanger changer1, ArticleChanger changer2 ){
 
 //        Duplicate.deDuplicate( refs, articles );
@@ -621,12 +616,6 @@ public class Parser {
     private boolean checkCounts(){
         return ( unreadCounts <= allUnreadRefs.size() ) && ( starredCounts <= allStarredRefs.size() );
     }
-//    private boolean checkUnreadCounts(){
-//        return unreadCounts <= allUnreadRefs.size();  // 因为 unreadCounts 有个最多显示为 1000
-//    }
-//    private boolean checkStarredCounts(){
-//        return starredCounts <= allStarredRefs.size();  // 因为 starredCounts 有个最多显示为 1000
-//    }
 
     public void parseItemContentsUnreadUnstar(String info){
         parseItemContents(info, new ArticleChanger() {
@@ -681,7 +670,10 @@ public class Parser {
      * @param articleChanger 回调，用于修改 Article 对象
      */
     private String parseItemContents( String info, ArticleChanger articleChanger ){
-        if(info==null || info.equals("")){return "";}// 如果返回 null 会与正常获取到流末端时返回 continuation = null 相同，导致调用该函数的那端误以为是正常的 continuation = null
+        // 如果返回 null 会与正常获取到流末端时返回 continuation = null 相同，导致调用该函数的那端误以为是正常的 continuation = null
+        if (info == null || info.equals("")) {
+            return "";
+        }
         Gson gson = new Gson();
         GsItemContents gsItemContents = gson.fromJson(info, GsItemContents.class);
         ArrayList<Items> currentItemsArray = gsItemContents.getItems();
@@ -693,13 +685,15 @@ public class Parser {
             article.setCrawlTimeMsec(items.getCrawlTimeMsec());
             article.setTimestampUsec(items.getTimestampUsec());
             article.setCategories(items.getCategories().toString());
-            article.setTitle(items.getTitle().replace(File.separator,"-"));
+            article.setTitle(items.getTitle().replace(File.separator, "-").replace("\r", "").replace("\n", ""));
             article.setPublished(items.getPublished());
             article.setUpdated(items.getUpdated());
             article.setCanonical(items.getCanonical().get(0).getHref());
             article.setAlternate(items.getAlternate().toString());
             article.setAuthor(items.getAuthor());
-            article.setOrigin(items.getOrigin().toString());
+            article.setOriginStreamId(items.getOrigin().getStreamId());
+            article.setOriginHtmlUrl(items.getOrigin().getHtmlUrl());
+            article.setOriginTitle(items.getOrigin().getTitle());
 
             html = items.getSummary().getContent();
             summary = Html.fromHtml(html).toString();
@@ -734,8 +728,6 @@ public class Parser {
     public void updateArticles(ArrayList<Sub> subs){
         List<Article> allStarArts = WithDB.getInstance().loadStarAll();
         List<Tag> allTags = WithDB.getInstance().loadTags();
-        Gson gson = new Gson();
-        Origin origin;
         Map<String,Sub> mapSub = new ArrayMap<>(subs.size());
         Map<String,String> mapTag = new ArrayMap<>(allTags.size());
         // 此处比较是否存在有个性能疑问，是用字符串是否包含还是map是否包含来判断呢？
@@ -747,8 +739,7 @@ public class Parser {
         }
 
         for ( Article article : allStarArts ){
-            origin  = gson.fromJson( article.getOrigin() ,Origin.class );
-            String streamIdOfArticle = origin.getStreamId();
+            String streamIdOfArticle = article.getOriginStreamId();
 
             if ( mapSub.containsKey( streamIdOfArticle )){ // 判断是否还订阅着这篇文章的站点
                 // 情况1，还在订阅着，但是云端分组名已变（一个订阅源可能属于多个分组）

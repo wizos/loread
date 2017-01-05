@@ -205,17 +205,18 @@ public class UFile {
                 file = new File( App.boxRelativePath + fileName + ".html");
                 html.set(0,"box");
                 if(!file.exists()){
-                    // 读取 一级层、有加密的 cacheHtml （为了兼容版本与数据，暂时这么用着）
-                    file = new File(  App.cacheRelativePath + fileNameInMD5 + File.separator + fileNameInMD5 + ".html");
-                    html.set(0,"cacheFolder");
+                    // 读取 二级层、无加密的 storeHtml
+                    file = new File(App.storeRelativePath + fileName + ".html");
+                    html.set(0, "store");
                     if(!file.exists()){
-                        // 读取 而级层、无加密的 boxHtmlInCache
-                        file = new File( App.cacheRelativePath + fileName + ".html");
-                        html.set(0,"cacheBox");
-                        if(!file.exists()){
-                            return null;
-                        }
+                        return null;
                     }
+//                    // 读取 一级层、有加密的 cacheHtml （为了兼容版本与数据，暂时这么用着）
+//                    file = new File(  App.cacheRelativePath + fileNameInMD5 + File.separator + fileNameInMD5 + ".html");
+//                    html.set(0,"cacheFolder");
+//                    if(!file.exists()){
+//
+//                    }
                 }
             }
 
@@ -276,7 +277,7 @@ public class UFile {
 //        KLog.d("【 saveFromStream 4】");
         // TODO 保存文件，会遇到存储空间满的问题，如果批量保存文件，会一直尝试保存
         try {
-            if (file.exists()) { return false;}
+//            if (file.exists()) { return false;}
             File dir = file.getParentFile();
             dir.mkdirs();
 //            KLog.d("【saveFromStream 8】" );
@@ -313,7 +314,7 @@ public class UFile {
             if (os != null) {
                 os.close();
             }
-            return false;
+//            return false;
         }
 
 

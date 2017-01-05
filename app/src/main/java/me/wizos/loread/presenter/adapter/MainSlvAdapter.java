@@ -11,14 +11,13 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
-import com.google.gson.Gson;
+import com.socks.library.KLog;
 
 import java.util.List;
 
 import me.wizos.loread.R;
 import me.wizos.loread.activity.MainActivity;
 import me.wizos.loread.bean.Article;
-import me.wizos.loread.bean.gson.itemContents.Origin;
 import me.wizos.loread.net.API;
 import me.wizos.loread.utils.UTime;
 import me.wizos.loread.view.IconFontView;
@@ -76,35 +75,30 @@ public class MainSlvAdapter extends ArrayAdapter<Article> {
         if(summary!=null){
             cvh.articleSummary.setText(summary);
         }
-//        Bitmap bitmap = UFile.getBitmap(article.getCoverSrc());
-//        if(bitmap!=null){
+
         if(article.getCoverSrc()!=null){
             cvh.articleImg.setVisibility(View.VISIBLE);
             Glide.with(context).load(article.getCoverSrc()).centerCrop().into(cvh.articleImg);
         }else {
             cvh.articleImg.setVisibility(View.GONE);
         }
-
-        Gson gson = new Gson();
-        Origin origin = gson.fromJson(article.getOrigin(), Origin.class);
-        cvh.articleFeed.setText(Html.fromHtml(origin.getTitle()));
+        KLog.d("【====】");
+        if (article.getOriginTitle() != null) {
+            cvh.articleFeed.setText(Html.fromHtml(article.getOriginTitle()));
+        }
         cvh.articleTime.setText(UTime.getFormatDate(article.getCrawlTimeMsec()));
         if ( article.getReadState().equals(API.ART_READ) &  !MainActivity.sListState.equals(API.ART_STAR) ) {
-//            System.out.println("【1】" + article.getTitle());
+            KLog.d("【1】" + article.getTitle());
             cvh.articleTitle.setAlpha(0.40f);
-//            cvh.articleTitle.setTextColor(App.getInstance().getResources().getColor(R.color.main_grey_light));
             cvh.articleSummary.setAlpha(0.40f);
             cvh.articleFeed.setAlpha(0.40f);
             cvh.articleTime.setAlpha(0.40f);
-//            cvh.articleSummary.setTextColor(App.getInstance().getResources().getColor(R.color.main_grey_light));
         } else {
-//            System.out.println("【2】" + article.getTitle());
+            KLog.d("【2】" + article.getTitle());
             cvh.articleTitle.setAlpha(1f);
-//            cvh.articleTitle.setTextColor(App.getInstance().getResources().getColor(R.color.main_grey_dark));
             cvh.articleSummary.setAlpha(1f);
             cvh.articleFeed.setAlpha(1f);
             cvh.articleTime.setAlpha(1f);
-//            cvh.articleSummary.setTextColor(App.getInstance().getResources().getColor(R.color.main_grey_dark));
         }
         if( article.getReadState().equals(API.ART_READING)){
             cvh.articleReading.setVisibility(View.VISIBLE);
@@ -116,10 +110,6 @@ public class MainSlvAdapter extends ArrayAdapter<Article> {
         }else {
             cvh.articleStar.setVisibility(View.GONE);
         }
-
-
-//        System.out.println("【MainSlvAdapter】" + article.getTitle()  + article.getCategories());
-
         return convertView;
     }
     private class CustomViewHolder {

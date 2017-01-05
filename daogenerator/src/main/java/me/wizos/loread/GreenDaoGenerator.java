@@ -10,11 +10,9 @@ public class GreenDaoGenerator {
     public static void main(String[] args) throws Exception {
         // http://www.open-open.com/lib/view/open1438065400878.html
         // 现在创建一个用于添加实体（Entity）的模式（Schema）对象，两个参数分别代表：数据库版本号与自动生成代码的包路径。
+//      如果要分别指定生成的 Bean 与 DAO 类所在的目录，只要：
         Schema schema = new Schema(1, "me.wizos.loread.bean");
         schema.setDefaultJavaPackageDao("me.wizos.loread.data.dao");
-//      如果要分别指定生成的 Bean 与 DAO 类所在的目录，只要：
-//      Schema schema = new Schema(1, "me.wizos.loread.bean");
-//      schema.setDefaultJavaPackageDao("me.wizos.loread.greendao");
 
         // 模式（Schema）同时也拥有两个默认的 flags，分别用来标示 entity 是否是 activie 以及是否使用 keep sections。
         // schema2.enableActiveEntitiesByDefault();
@@ -45,14 +43,14 @@ public class GreenDaoGenerator {
 //        tag.addStringProperty("feedssortid");
 //        tag.addLongProperty("feedsnum");
 
-        /**
-         *    @SerializedName("id")
-         *    private String id;
-         *    @SerializedName("sortid")
-         *    private String sortid;
-         *    @SerializedName("title")
-         *    private String title;
-         */
+//        @SerializedName("id")
+//        private String id;
+//        @SerializedName("sortid")
+//        private String sortid;
+//        @SerializedName("title")
+//        private String title;
+//        @SerializedName("unreadcount")
+//        private Integer unreadcount;
 
         Entity feed = schema.addEntity("Feed");
         feed.addStringProperty("id").notNull().primaryKey();
@@ -83,7 +81,10 @@ public class GreenDaoGenerator {
         article.addStringProperty("starState"); // star , unstar
         article.addStringProperty("imgState"); // ok 代表所有图片下载完成，空就要去加载图片，或者为加载失败的图片src
         article.addStringProperty("coverSrc");
-        article.addStringProperty("origin");
+//        article.addStringProperty("origin");
+        article.addStringProperty("originStreamId");
+        article.addStringProperty("originTitle");
+        article.addStringProperty("originHtmlUrl");
 
 
         article.addToOne(feed, articleCategory);

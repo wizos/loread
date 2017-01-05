@@ -22,13 +22,13 @@ import java.util.List;
 
 import me.wizos.loread.R;
 import me.wizos.loread.bean.Tag;
-import me.wizos.loread.colorful.Colorful;
-import me.wizos.loread.colorful.setter.ViewGroupSetter;
 import me.wizos.loread.data.WithDB;
 import me.wizos.loread.data.WithSet;
 import me.wizos.loread.net.API;
 import me.wizos.loread.utils.UDensity;
 import me.wizos.loread.utils.UToast;
+import me.wizos.loread.utils.colorful.Colorful;
+import me.wizos.loread.utils.colorful.setter.ViewGroupSetter;
 
 //import TagSlvAdapter;
 
@@ -53,8 +53,8 @@ public class TagActivity extends BaseActivity implements SlideAndDragListView.On
         userID = WithSet.getInstance().getUseId();
         initToolbar();
         initSlvListener();
-        initData();
         initColorful();
+        initData();
     }
     @Override
     protected Context getActivity(){
@@ -84,7 +84,7 @@ public class TagActivity extends BaseActivity implements SlideAndDragListView.On
 
         mColorful = new Colorful.Builder(this)
                 // 设置view的背景图片
-                .backgroundColor(R.id.tag_coordinator, R.attr.root_view_bg)
+                .backgroundColor(R.id.tag_root, R.attr.root_view_bg)
                 // 设置 toolbar
                 .backgroundColor(R.id.tag_toolbar, R.attr.topbar_bg)
                 .textColor(R.id.tag_toolbar_count, R.attr.topbar_fg)
@@ -92,16 +92,20 @@ public class TagActivity extends BaseActivity implements SlideAndDragListView.On
                 // 设置 bottombar
                 .backgroundColor(R.id.tag_bottombar, R.attr.bottombar_bg)
                 .textColor(R.id.tag_bottombar_main, R.attr.bottombar_fg)
+
+                // 设置 listview 背景色
+                .setter(listViewSetter) // 手动设置setter
                 .create(); // 创建Colorful对象
         autoToggleThemeSetting();
     }
 
     private long userID;
-    private Tag rootTag;
-    private Tag noLabelTag;
+
+    //    private Tag rootTag;
+//    private Tag noLabelTag;
     private Tag getRootTag(){
-        rootTag = new Tag();
-        noLabelTag = new Tag();
+        Tag rootTag = new Tag();
+        Tag noLabelTag = new Tag();
         userID = WithSet.getInstance().getUseId();
         if( listState.equals(API.LIST_STAR) ){
             rootTag.setTitle("所有加星");
@@ -142,9 +146,6 @@ public class TagActivity extends BaseActivity implements SlideAndDragListView.On
             slv.setVisibility(View.GONE);
             UToast.showShort("没有数据");
         }
-//        for(Tag tag:tagListTemp){
-//            KLog.d( tag.getId() );
-//        }
     }
 
 
@@ -286,8 +287,8 @@ public class TagActivity extends BaseActivity implements SlideAndDragListView.On
 
         class CustomViewHolder {
             //        public ImageView imgIcon;
-            public TextView tagTitle;
-            public TextView tagCount;
+            protected TextView tagTitle;
+            protected TextView tagCount;
         }
     };
     @Override
