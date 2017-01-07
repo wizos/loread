@@ -70,7 +70,7 @@ public class UString {
             return null;
         int num = 0;
         StringBuilder tempHtml = new StringBuilder(oldHtml);
-
+        KLog.d("getListOfSrcAndHtml");
         tempHtml = reviseHtmlNoAd(tempHtml);
         String srcLocal,srcNet,srcSavePath,imgExt,imgName,temp;
         ArrayMap<Integer,SrcPair> srcMap = new ArrayMap<>();
@@ -109,16 +109,20 @@ public class UString {
         return srcMap;
     }
 
-    private static StringBuilder reviseHtmlNoAd(StringBuilder tempHtml) {
+    public static StringBuilder reviseHtmlNoAd(StringBuilder tempHtml) {
+        KLog.d("去广告" + tempHtml);
         int indexA = tempHtml.indexOf("<center>", 0);
         int indexB = tempHtml.indexOf("</center>", indexA);
+        KLog.d("去广告 = " + indexA + ":" + indexB);
         if (indexA < 0 || indexB < 0) {
             return tempHtml;
         }
         String temp = tempHtml.substring(indexA + 8, indexB);
+        KLog.d("广告" + temp);
         if (temp.contains("Ads") && temp.contains("Inoreader")) {
             tempHtml = tempHtml.replace(indexA, indexB + 9, "");
         }
+        KLog.d("修正后的文章" + tempHtml);
         return tempHtml;
     }
 

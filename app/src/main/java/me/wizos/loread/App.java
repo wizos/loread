@@ -4,7 +4,8 @@ import android.app.Activity;
 import android.app.Application;
 import android.os.Handler;
 
-import com.squareup.leakcanary.LeakCanary;
+import com.socks.library.KLog;
+import com.tencent.bugly.crashreport.CrashReport;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -38,15 +39,16 @@ public class App extends Application{
     public void onCreate() {
         super.onCreate();
         App.instance = this;
+        WithSet.getInstance().setHadSyncAllStarred(false);
 //         TEST，正式环境下应该启用
-//        KLog.init( false );
-//        CrashReport.initCrashReport( App.getInstance() , "900044326", true);
+        KLog.init(false);
+        CrashReport.initCrashReport(App.getInstance(), "900044326", true);
 
-        //  内存泄漏检测工具
-        if (LeakCanary.isInAnalyzerProcess(this)) {
-            return;
-        }
-        LeakCanary.install(this);
+//        //  内存泄漏检测工具
+//        if (LeakCanary.isInAnalyzerProcess(this)) {
+//            return;
+//        }
+//        LeakCanary.install(this);
         // TEST，正式环境应该注释掉
 //        Stetho.initialize(
 //                Stetho.newInitializerBuilder(this)

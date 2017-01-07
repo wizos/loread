@@ -93,6 +93,17 @@ public class WithDB {
             return null;
         }
     }
+
+    public Article getStarredArticle(String articleId) {
+//        if (articleID == null) {return null;}
+        List<Article> articles = articleDao.queryBuilder().where(ArticleDao.Properties.Id.eq(articleId), ArticleDao.Properties.StarState.eq(API.ART_STAR)).list();
+        if (articles.size() != 0) {
+            return articles.get(0);
+        } else {
+            return null;
+        }
+    }
+
     public boolean hasTag(String id) {
         return tagDao.queryBuilder().where(TagDao.Properties.Id.eq(id)).list().size() > 0;
     }

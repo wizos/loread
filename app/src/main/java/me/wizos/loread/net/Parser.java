@@ -680,6 +680,9 @@ public class Parser {
         ArrayList<Article> saveList = new ArrayList<>( currentItemsArray.size() ) ;
         String summary = "",html = "";
         for ( Items items: currentItemsArray  ) {
+            if (WithDB.getInstance().getStarredArticle(items.getId()) != null) {
+                continue;
+            }
             Article article = new Article();
             article.setId(items.getId());
             article.setCrawlTimeMsec(items.getCrawlTimeMsec());

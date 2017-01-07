@@ -71,7 +71,7 @@ public class Neter {
         getWithAuth( API.HOST + API.U_ITEM_IDS );
     }
     public void getStarredContents(){
-        addHeader("n","20");
+        addHeader("n", "15");
         addHeader("r", "o");
         getWithAuth(API.HOST + API.U_STREAM_CONTENTS + API.U_STARRED);
     }
@@ -514,7 +514,7 @@ public class Neter {
      * <p>
      * 图片下载完成后调用接口
      */
-    private void loadImg(String imgUrl, String filePath, int imgNo) {
+    public void loadImg(String imgUrl, String filePath, int imgNo) {
 //        final ImageHandler handler = new ImageHandler(listener);
         taskList.put(imgNo, 0);
         threadPool.execute(new Task(imgUrl, filePath, imgNo));

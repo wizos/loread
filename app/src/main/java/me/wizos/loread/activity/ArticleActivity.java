@@ -56,7 +56,8 @@ import me.wizos.loread.view.IconFontView;
 @SuppressLint("SetJavaScriptEnabled")
 public class ArticleActivity extends BaseActivity {
     protected static final String TAG = "ArticleActivityView";
-    protected WebView webView; // implements Html.ImageGetter
+    private WebView webView; // implements Html.ImageGetter
+    private LinearLayout mll;
     protected Context context;
     protected Neter mNeter;
 //    protected Parser mParser;
@@ -130,8 +131,10 @@ public class ArticleActivity extends BaseActivity {
         // 这样做的好处是在Acticity退出的时候，可以避免内存泄露。因为 handler 内可能引用 Activity ，导致 Activity 退出后，内存泄漏
         mHandler.removeCallbacksAndMessages(null);
         handler.removeCallbacksAndMessages(null);
+        article = null;
         webView.removeAllViews();
         webView.destroy();
+        mll.removeView(webView);
     }
 
 
@@ -171,7 +174,7 @@ public class ArticleActivity extends BaseActivity {
     private void initWebView(){
 //        webView = (WebView) findViewById(R.id.article_content);
         webView = new WebView( getApplicationContext() );
-        LinearLayout mll = (LinearLayout) findViewById(R.id.article_webview);
+        mll = (LinearLayout) findViewById(R.id.article_webview);
         mll.addView(webView);
         WebSettings webSettings = webView.getSettings();
 //        webSettings.setCacheMode(WebSettings.LOAD_NO_CACHE); // 默认不使用缓存
@@ -228,6 +231,7 @@ public class ArticleActivity extends BaseActivity {
         }else {
             if( imgState == null){ // 文章没有被打开过
 //                KLog.d( "【imgState为null】");
+                showContent = UString.reviseHtmlNoAd(new StringBuilder(showContent)).toString();
                 lossSrcList = UString.getListOfSrcAndHtml(showContent, fileNameInMD5);
                 if( lossSrcList!= null){
                     showContent = lossSrcList.get(0).getSaveSrc();
@@ -454,7 +458,7 @@ public class ArticleActivity extends BaseActivity {
 
 //        KLog.d("修改后的src保存地址为："  + lossSrcList.size() + imgNo );
 //        KLog.d("修改后的src保存地址为："  + srcBaseUrl + UString.getFileNameExtByUrl(imgSrc.getSaveSrc()) );
-        mNeter.getBitmap(imgSrc.getNetSrc(), srcBaseUrl + UString.getFileNameExtByUrl(imgSrc.getSaveSrc()) ,imgNo);
+        mNeter.loadImg(imgSrc.getNetSrc(), srcBaseUrl + UString.getFileNameExtByUrl(imgSrc.getSaveSrc()), imgNo);
     }
 
 
@@ -627,7 +631,7 @@ public class ArticleActivity extends BaseActivity {
                         break;
                     }
                     filePath = msg.getData().getString("filePath");
-                    mNeter.getBitmap(url, filePath, imgNo);
+                    mNeter.loadImg(url, filePath, imgNo);
                     break;
                 case API.F_Request:
                 case API.F_Response:
