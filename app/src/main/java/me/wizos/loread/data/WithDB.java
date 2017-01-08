@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import de.greenrobot.dao.query.Query;
+import de.greenrobot.dao.query.QueryBuilder;
 import me.wizos.loread.App;
 import me.wizos.loread.bean.Article;
 import me.wizos.loread.bean.Feed;
@@ -28,6 +29,7 @@ public class WithDB {
     private RequestLogDao requestLogDao;
 
     private WithDB() {}
+
 
     public static WithDB getInstance() {
         if (withDB == null) { // 双重锁定，只有在 withDB 还没被初始化的时候才会进入到下一行，然后加上同步锁
@@ -84,8 +86,27 @@ public class WithDB {
             articleDao.insertOrReplaceInTx(articleList);
         }
     }
+
+
+    //    public Article getArticle(List articleIds) {
+////        if (articleID == null) {return null;}
+//        List<Article> articles = articleDao.queryBuilder().where(ArticleDao.Properties.Id.eq(articleId)).list();
+//        if ( articles.size() != 0) {
+//            return articles.get(0);
+//        }else {
+//            return null;
+//        }
+//    }
+    public void up(String id) {
+        String newid = "";
+        newid = id.replace("tag:google.com,2005:reader/item/0000000", "tag:google.com,2005:reader/item/00000000");
+        KLog.d(" = " + newid);
+        App.getDaoSession().getDatabase().execSQL("update Article set id=\"" + newid + "\"" + "where id=\"" + id + "\"");
+    }
+
     public Article getArticle(String articleId) {
 //        if (articleID == null) {return null;}
+
         List<Article> articles = articleDao.queryBuilder().where(ArticleDao.Properties.Id.eq(articleId)).list();
         if ( articles.size() != 0) {
             return articles.get(0);
@@ -154,11 +175,15 @@ public class WithDB {
     }
 
    public List<Article> loadArtsBeforeTime(long time){
-       Query query = articleDao.queryBuilder()
-               .where(ArticleDao.Properties.ReadState.eq(API.ART_READ),ArticleDao.Properties.StarState.eq(API.ART_UNSTAR),ArticleDao.Properties.CrawlTimeMsec.lt(time)) /** Creates an "less than ('<')" condition  for this property. */
-               .build();
-       List<Article> articleList = query.list();
-       return articleList;
+       App.getDaoSession().getFeedDao().queryBuilder().list();
+       QueryBuilder<Article> q = articleDao.queryBuilder();
+       q.where(q.and(ArticleDao.Properties.ReadState.eq(API.ART_READ), ArticleDao.Properties.StarState.eq(API.ART_UNSTAR), ArticleDao.Properties.CrawlTimeMsec.lt(time)));
+       q.list();
+//       Query query = articleDao.queryBuilder()
+//               .where(ArticleDao.Properties.ReadState.eq(API.ART_READ), ArticleDao.Properties.StarState.eq(API.ART_UNSTAR), ArticleDao.Properties.CrawlTimeMsec.lt(time)) /** Creates an "less than ('<')" condition  for this property. */
+//               .build();
+//       List<Article> articleList = query.list();
+       return q.listLazy();
    }
 
     public List<Article> loadTagRead(String readState, String listTag){
@@ -167,7 +192,7 @@ public class WithDB {
                 .where(ArticleDao.Properties.ReadState.like(readState + "%"), ArticleDao.Properties.Categories.like("%" + listTag + "%")) /** Creates an "equal ('=')" condition  for this property. */
                 .orderDesc(ArticleDao.Properties.TimestampUsec)
                 .build();
-        List<Article> articlelist = query.list();
+        List<Article> articlelist = query.listLazy();
         KLog.d("【loadReadList】用时"+ (System.currentTimeMillis() - xx) + "--" + articlelist.size()  + readState + listTag  );
         // 590-55 , 590-73,635-79, 34--612 , 82--612,83--612
         return articlelist;
@@ -179,7 +204,7 @@ public class WithDB {
                 .where(ArticleDao.Properties.ReadState.like(readState)) /** Creates an "equal ('=')" condition  for this property. */
                 .orderDesc(ArticleDao.Properties.TimestampUsec)
                 .build();
-        List<Article> articleList = query.list();
+        List<Article> articleList = query.listLazy();
         KLog.d("【loadReadListAll】用时"+ (System.currentTimeMillis() - xx) + "--" + articleList.size()  + readState );
         // 1473-25
         return articleList;
@@ -208,6 +233,7 @@ public class WithDB {
         Query query = articleDao.queryBuilder()
                 .where(ArticleDao.Properties.StarState.eq(API.LIST_STAR)) /**  Creates an "equal ('=')" condition  for this property. */
                 .build();
+        KLog.d("【loadStarAll】" + query.list().size());
         return query.list();
     }
 //    public List<Article> loadUnreadStarred(){

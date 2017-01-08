@@ -2,7 +2,6 @@ package me.wizos.loread;
 
 import android.app.Activity;
 import android.app.Application;
-import android.os.Handler;
 
 import com.socks.library.KLog;
 import com.tencent.bugly.crashreport.CrashReport;
@@ -25,26 +24,29 @@ public class App extends Application{
     public static String cacheRelativePath,cacheAbsolutePath ,boxRelativePath, boxAbsolutePath, storeRelativePath, storeAbsolutePath ;
     public static String logRelativePath,logAbsolutePath;
     public static List<Activity> activities = new ArrayList<>();
+    public static long mUserID;
 
 
     private  static DaoSession daoSession;
-    public static Handler mHandler;
+    //    public static Handler mHandler;
     public static App instance; // 此处的单例不会造成内存泄露，因为 App 本身就是全局的单例
-    public static App getInstance() {
+
+    public static synchronized App getInstance() {
         return instance;
     }
+
 
 
     @Override
     public void onCreate() {
         super.onCreate();
         App.instance = this;
-        WithSet.getInstance().setHadSyncAllStarred(false);
+//        WithSet.getInstance().setHadSyncAllStarred(false);
 //         TEST，正式环境下应该启用
         KLog.init(false);
         CrashReport.initCrashReport(App.getInstance(), "900044326", true);
-
-//        //  内存泄漏检测工具
+//
+        //  内存泄漏检测工具
 //        if (LeakCanary.isInAnalyzerProcess(this)) {
 //            return;
 //        }

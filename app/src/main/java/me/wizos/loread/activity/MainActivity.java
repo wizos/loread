@@ -1,13 +1,16 @@
 package me.wizos.loread.activity;
 
 import android.app.AlertDialog;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.IBinder;
 import android.os.Message;
 import android.support.annotation.ColorInt;
 import android.support.annotation.NonNull;
@@ -32,14 +35,10 @@ import java.util.Map;
 import me.wizos.loread.App;
 import me.wizos.loread.R;
 import me.wizos.loread.bean.Article;
-import me.wizos.loread.bean.RequestLog;
-import me.wizos.loread.bean.gson.ItemRefs;
-import me.wizos.loread.bean.gson.Sub;
 import me.wizos.loread.data.WithDB;
 import me.wizos.loread.data.WithSet;
 import me.wizos.loread.net.API;
 import me.wizos.loread.net.Neter;
-import me.wizos.loread.net.Parser;
 import me.wizos.loread.presenter.adapter.MainSlvAdapter;
 import me.wizos.loread.presenter.adapter.MaterialSimpleListAdapter;
 import me.wizos.loread.presenter.adapter.MaterialSimpleListItem;
@@ -54,7 +53,7 @@ import me.wizos.loread.view.IconFontView;
 import me.wizos.loread.view.SwipeRefresh;
 import me.wizos.loread.view.common.color.ColorChooserDialog;
 
-public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefreshListener ,Neter.RequestLogger<RequestLog> , ColorChooserDialog.ColorCallback{
+public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefreshListener, ColorChooserDialog.ColorCallback {
 
     protected static final String TAG = "MainActivity";
     private Context context;
@@ -68,18 +67,35 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
 
     public static String sListState;
     public static String sListTag;
-    //    private boolean hadSyncAllStarredList = false;
-//    private boolean setSyncAllStarredList = false;
     private boolean syncFirstOpen = true;
-    private boolean hadSyncLogRequest = true;
+    //    private boolean hadSyncLogRequest = true;
     private boolean isOrderTagFeed;
-    private int clearBeforeDay;
-    public static long mUserID;
     private MainSlvAdapter mainSlvAdapter;
     private List<Article> articleList;
 //    private String sListTagCount = "";
 
-    protected Neter mNeter;
+    private Neter mNeter;
+
+    /* 通过Binder，实现Activity与Service通信 */
+    private MainService.ServiceBinder mBinderService;
+    // 先创建一个 ServiceConnection 匿名类，重写 onServiceConnected()、onServiceDisconnected()。这两个方法分别会在Activity与Service建立关联和解除关联的时候调用。
+    // 在onServiceConnected()方法中，我们又通过向下转型得到了MyBinder的实例，有了这个实例，Activity和Service之间的关系就变得非常紧密了。
+    private ServiceConnection connection = new ServiceConnection() {
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+            KLog.d("连接断开");
+        }
+
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+            mBinderService = (MainService.ServiceBinder) service;
+            MainService mainService = mBinderService.getService();
+            mainService.regHandler(mHandler);//TODO:考虑内存泄露
+            mNeter = mainService.getNeter();
+            KLog.d("连接开始");
+        }
+    };
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -89,20 +105,21 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
 //        UpdateDB.start(this); // 不会用
         UFile.setContext(this);
         App.addActivity(this);
-        mNeter = new Neter(handler,this);
-        mNeter.setLogRequestListener(this);
-        App.mHandler = handler;
+//        mNeter = new Neter(handler,this);
+//        mNeter.setLogRequestListener(this);
+//        App.mHandler = handler;
 //        mParser = new Parser();
         initToolbar();
         initSlvListener();
         initSwipe();
         initView();
         initColorful();
-
-//        KLog.i("【一】" + toolbar.getTitle() );
+        initService();
         initData();
+//        KLog.i("【一】" + toolbar.getTitle() );
 //        initLogService();
     }
+
 
     private void initLogService(){
         Intent intent = new Intent(this, ULog.class);
@@ -128,17 +145,23 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
     @Override
     protected void onStart(){
         super.onStart();
+
+    }
+
+    private void update() {
+        List<Article> art = WithDB.getInstance().loadArtAll();
+        for (Article li : art) {
+            WithDB.getInstance().up(li.getId());
+            KLog.d("开始处理 = " + li.getId());
+        }
     }
 
     protected void readSetting(){
         API.INOREADER_ATUH = WithSet.getInstance().getAuth();
-        mUserID = WithSet.getInstance().getUseId();
+        App.mUserID = WithSet.getInstance().getUseId();
         sListState = WithSet.getInstance().getListState();
-        sListTag = "user/" +  mUserID + "/state/com.google/reading-list";
+        sListTag = "user/" + App.mUserID + "/state/com.google/reading-list";
         syncFirstOpen = WithSet.getInstance().isSyncFirstOpen();
-//        setSyncAllStarredList = WithSet.getInstance().isSyncAllStarred();
-//        hadSyncAllStarredList = WithSet.getInstance().getHadSyncAllStarred();
-        clearBeforeDay = WithSet.getInstance().getClearBeforeDay();
         isOrderTagFeed = WithSet.getInstance().isOrderTagFeed();
         KLog.i("【 readSetting 】ATUH 为" + API.INOREADER_ATUH + syncFirstOpen + "【mUserID为】");
         KLog.i( WithSet.getInstance().getCachePathStarred() + WithSet.getInstance().getUseName() );
@@ -161,7 +184,7 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
     }
     protected void initSwipe(){
         mSwipeRefreshLayout = (SwipeRefresh) findViewById(R.id.main_swipe);
-//        if(mSwipeRefreshLayout==null)return;
+        if (mSwipeRefreshLayout == null) return;
         mSwipeRefreshLayout.setOnRefreshListener(this);
         mSwipeRefreshLayout.setProgressViewOffset(true, 0, 120);//设置样式刷新显示的位置
         mSwipeRefreshLayout.setViewGroup(slv);
@@ -184,8 +207,8 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
         mSwipeRefreshLayout.setEnabled(false);
         mSwipeRefreshLayout.setRefreshing(false);  // 调用 setRefreshing(false) 去取消任何刷新的视觉迹象。如果活动只是希望展示一个进度条的动画，他应该条用 setRefreshing(true) 。 关闭手势和进度条动画，调用该 View 的 setEnable(false)
 //        Tool.printCallStatck();
-        handler.sendEmptyMessage(API.M_BEGIN_SYNC);
-        KLog.i("【刷新中】" + hadSyncLogRequest);
+        startSyncService();
+        KLog.i("【刷新中】");
     }
 
     // 按下back键时会调用onDestroy()销毁当前的activity，重新启动此activity时会调用onCreate()重建；
@@ -194,10 +217,35 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
     protected void onDestroy() {
         // 如果参数为null的话，会将所有的Callbacks和Messages全部清除掉。
         // 这样做的好处是在Acticity退出的时候，可以避免内存泄露。因为 handler 内可能引用 Activity ，导致 Activity 退出后，内存泄漏。
-        handler.removeCallbacksAndMessages(null);
+//        handler.removeCallbacksAndMessages(null);
+        mHandler.removeCallbacksAndMessages(null);
+        unbindService(connection);
         super.onDestroy();
     }
 
+    private void initService() {
+        intent = new Intent(this, MainService.class);
+        bindService(intent, connection, BIND_AUTO_CREATE);
+    }
+
+    private Intent intent;
+
+    private void startSyncService() {
+        intent.setAction("refresh");
+        KLog.d("bindService");
+        startService(intent);
+    }
+//    private void startAction(String action){
+//        intent.setAction("refresh");
+//        KLog.d( "Service = " + action );
+//        startService(intent);
+//    }
+//    private void startAction(String action,String articleId){
+//        intent.setAction("refresh");
+//        intent.putExtra("articleId",articleId);
+//        KLog.d( "Service = " + action );
+//        startService(intent);
+//    }
 
     @Override
     protected void notifyDataChanged(){
@@ -213,13 +261,15 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
         if( syncFirstOpen && articleList.size() !=0 ){
             mSwipeRefreshLayout.setEnabled(false);
             UToast.showShort("首次开启同步");
-            handler.sendEmptyMessage(API.M_BEGIN_SYNC);
+//            handler.sendEmptyMessage(API.M_BEGIN_SYNC);
+            startSyncService();
         }else {
             List<Article> allArts = WithDB.getInstance().loadArtAll();  //  速度更快，用时更短，这里耗时 43,43
-            if (allArts.size() == 0 && hadSyncLogRequest) {
+            if (allArts.size() == 0) {
                 // 显示一个没有内容正在加载的样子
                 UToast.showShort("没有文章，开始同步");
-                handler.sendEmptyMessage(API.M_BEGIN_SYNC);
+//                handler.sendEmptyMessage(API.M_BEGIN_SYNC);
+                startSyncService();
             }
         }
         KLog.i("列表数目：" + articleList.size() + "  当前状态：" + sListState);
@@ -233,19 +283,17 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
         KLog.i("加载数据");
         if(sListTag.contains(API.U_NO_LABEL)){
             articleList = getNoLabelList( );  // FIXME: 2016/5/7 这里的未分类暂时无法使用，因为在云端订阅源的分类是可能会变的，导致本地缓存的文章分类错误
-//            articleList.clear();
-//            articleList.addAll( getNoLabelList() );
-
+            KLog.i("【API.U_NO_LABEL】");
         }else {
             if (sListState.equals(API.LIST_STAR)) {
                 ;
                 articleList = WithDB.getInstance().loadTagStar(sListTag);
-//                articleList.clear();
-//                articleList.addAll(WithDB.getInstance().loadTagStar(sListTag));
+                KLog.i("【API.LIST_STAR】");
             }else{
                 articleList = WithDB.getInstance().loadTagRead(sListState,sListTag); // 590-55
 //                articleList.clear();
 //                articleList.addAll( WithDB.getInstance().loadTagRead(sListState,sListTag) );
+                KLog.i("【API.loadTagRead】" + sListState + sListTag);
             }
         }
         KLog.i("【】" + articleList.size() + sListState + "--" + sListTag);
@@ -273,11 +321,11 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
         List<Article> all,part,exist;
         if( sListState.contains(API.LIST_STAR) ){
             all = WithDB.getInstance().loadStarAll();
-            part = WithDB.getInstance().loadStarListHasLabel(mUserID);
+            part = WithDB.getInstance().loadStarListHasLabel(App.mUserID);
             exist = WithDB.getInstance().loadStarNoLabel();
         }else {
             all = WithDB.getInstance().loadReadAll( sListState );
-            part = WithDB.getInstance().loadReadListHasLabel( sListState,mUserID);
+            part = WithDB.getInstance().loadReadListHasLabel(sListState, App.mUserID);
             exist = WithDB.getInstance().loadReadNoLabel();
        }
 
@@ -298,7 +346,7 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
             }else {
                 sb = new StringBuffer( article.getCategories() );
 //                sb.append(article.getCategories());
-                sb.insert( sb.length()-1 , ", \"user/"+ mUserID + API.U_NO_LABEL +"\"");
+                sb.insert(sb.length() - 1, ", \"user/" + App.mUserID + API.U_NO_LABEL + "\"");
                 article.setCategories( sb.toString() );
                 noLabel.add( article );
             }
@@ -309,332 +357,331 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
     }
 
 
-    /**
-     * 异步类: AsyncTask 和 Handler 对比
-     * 1 ） AsyncTask实现的原理,和适用的优缺点
-     * AsyncTask,是android提供的轻量级的异步类,可以直接继承AsyncTask,在类中实现异步操作,并提供接口反馈当前异步执行的程度(可以通过接口实现UI进度更新),最后反馈执行的结果给UI主线程.
-     * 使用的优点: 1、简单,快捷；2、过程可控
-     * 使用的缺点：在使用多个异步操作和并需要进行Ui变更时,就变得复杂起来.
-     * 2 ）Handler异步实现的原理和适用的优缺点
-     * 在Handler 异步实现时,涉及到 Handler, Looper, Message,Thread 四个对象，实现异步的流程是主线程启动 Thread（子线程）àthread(子线程)运行并生成Message-àLooper获取Message并传递给HandleràHandler逐个获取Looper中的Message，并进行UI变更。
-     * 使用的优点：1、结构清晰，功能定义明确；2、对于多个后台任务时，简单，清晰
-     * 使用的缺点：在单个后台异步处理时，显得代码过多，结构过于复杂（相对性）
-     *
-     *
-     * 采用线程 + Handler实现异步处理时，当每次执行耗时操作都创建一条新线程进行处理，性能开销会比较大。另外，如果耗时操作执行的时间比较长，就有可能同时运行着许多线程，系统将不堪重负。
-     * 为了提高性能，我们可以使用AsynTask实现异步处理，事实上其内部也是采用线程 + Handler来实现异步处理的，只不过是其内部使用了线程池技术，有效的降低了线程创建数量及限定了同时运行的线程数。
-     */
-    private int urlState = 0 ,capacity,getNumForArts = 0,numOfFailure = 0;
-    private int unreadRefsSize, starredRefsSize;
-    private ArrayList<ItemRefs> afterItemRefs = new ArrayList<>();
-    protected Handler handler = new Handler(new Handler.Callback() {
-        @Override
-        public boolean handleMessage(Message msg) {
-            String info = msg.getData().getString("res");
-            String url = msg.getData().getString("url");
-//            KLog.d("[[1111]=="+ info);
-//            long logTime = msg.getData().getLong("logTime");
-            // 虽然可以根据 api 来判断一条请求，但还是需要 时间 logTime ，还有 指定码 code
-            KLog.i("【handler】"  + msg.what +"---"  +"---"  );
+//    private int urlState = 0 ,capacity,getNumForArts = 0,numOfFailure = 0;
+//    private int unreadRefsSize, starredRefsSize;
+//    private ArrayList<ItemRefs> afterItemRefs = new ArrayList<>();
 
-            if ( info == null ){
-                info = "";
-            }
-            String con;
-            switch (msg.what) {
-                case API.M_BEGIN_SYNC:
-                    if( syncRequestLog()){
-                        break;
-                    }
-                    // 为了得到分组名，及排序
-                    vToolbarHint.setText(R.string.main_toolbar_hint_sync_tag);
-                    mNeter.getWithAuth(API.HOST + API.U_TAGS_LIST);
-                    KLog.i("【开始同步分组信息：TAGS_LIST】");
-                    KLog.i("【获取1】");
-                    break;
-                case API.S_TAGS_LIST: // 分组列表
-                    Parser.instance().parseTagList(info);
-                    if(isOrderTagFeed){
-                        vToolbarHint.setText(R.string.main_toolbar_hint_sync_tag_order);
-                        mNeter.getWithAuth(API.HOST + API.U_STREAM_PREFS);// 有了这份数据才可以对 tagslist feedlist 进行排序，并储存下来
-                    }else {
-                        Parser.instance().orderTags();
-                        vToolbarHint.setText(R.string.main_toolbar_hint_sync_unread_count);
-                        mNeter.getWithAuth(API.HOST + API.U_UNREAD_COUNTS);
-                    }
-                    break;
-                case API.S_SUBSCRIPTION_LIST: // 订阅列表
-                    ArrayList<Sub> subs = Parser.instance().parseSubscriptionList(info);
-                    Parser.instance().updateArticles(subs);
-                    reloadData();
-                    // 获取所有加星文章
-                    // 比对streamId
-                    break;
-                case API.S_STREAM_PREFS:
-                    Parser.instance().parseStreamPrefList(info, mUserID);
-                    vToolbarHint.setText(R.string.main_toolbar_hint_sync_unread_count);
-                    mNeter.getWithAuth(API.HOST + API.U_UNREAD_COUNTS);
-                    break;
-                case API.S_UNREAD_COUNTS:
-                    Parser.instance().parseUnreadCounts(info);
-                    vToolbarHint.setText( R.string.main_toolbar_hint_sync_unread_refs );
-                    mNeter.getUnReadRefs(mUserID);
-                    urlState = 1;
-                    KLog.d("【未读数】");
-                    break;
-//                case API.S_ITEM_IDS_UNREAD_LOOP:
-//                    con = Parser.instance().parseItemIDsUnread(info);
-//                    if(con!=null){
-//                        mNeter.addHeader("c", con );
-//                        mNeter.getUnReadRefs(mUserID);
-//                        KLog.i("【获取 ITEM_IDS 还可继续】" + con );
-//                    }else {
-//                        handler.sendEmptyMessage( API.S_ITEM_IDS_UNREAD );
-//                    }
-//                    break;
-//                case API.S_ITEM_IDS_UNREAD:
-//                    vToolbarHint.setText( R.string.main_toolbar_hint_sync_stared_refs);
-//                    mNeter.getStarredRefs( mUserID);
-//                    con =null;
-//                    break;
-//                case API.S_ITEM_IDS_STARRED_LOOP:
-//                    con = Parser.instance().parseItemIDsStarred(info);
-//                    if( con!=null){
-//                        mNeter.addHeader("c", con );
-//                        mNeter.getStarredRefs( mUserID);
-//                    }else {
-//                        handler.sendEmptyMessage( API.S_ITEM_IDS_STARRED );
-//                    }
-//                    break;
-//                case API.S_ITEM_IDS_STARRED:
-//                    ArrayList<ItemRefs> unreadRefs = Parser.instance().reUnreadRefs();
-//                    ArrayList<ItemRefs> starredRefs = Parser.instance().reStarredRefs();
-//                    Parser.instance().reRefs(unreadRefs, starredRefs);
-//                    break;
-//                case API.S_ITEM_IDS_REREFS:
-//                    int capacity = msg.getData().getInt("capacity");
-//                    if ( capacity == -1 ){
-//                        UToast.showShort( "同步时数据出错，请重试" );
+//    protected Handler handler = new Handler(new Handler.Callback() {
+//        @Override
+//        public boolean handleMessage(Message msg) {
+//            String info = msg.getData().getString("res");
+//            String url = msg.getData().getString("url");
+////            KLog.d("[[1111]=="+ info);
+////            long logTime = msg.getData().getLong("logTime");
+//            // 虽然可以根据 api 来判断一条请求，但还是需要 时间 logTime ，还有 指定码 code
+//            KLog.i("【handler】"  + msg.what +"---"  +"---"  );
+//
+//            if ( info == null ){
+//                info = "";
+//            }
+//            String con;
+//            switch (msg.what) {
+//                case API.M_BEGIN_SYNC:
+//                    if( syncRequestLog()){
 //                        break;
 //                    }
-//                    afterItemRefs = new ArrayList<>( capacity );
-//                    handler.sendEmptyMessage(API.S_ITEM_CONTENTS);// 开始获取所有列表的内容
-//                    KLog.i("解析完成所有 Refs ");
+//                    // 为了得到分组名，及排序
+//                    vToolbarHint.setText(R.string.main_toolbar_hint_sync_tag);
+//                    mNeter.getWithAuth(API.HOST + API.U_TAGS_LIST);
+//                    KLog.i("【开始同步分组信息：TAGS_LIST】");
+//                    KLog.i("【获取1】");
 //                    break;
-                case API.S_ITEM_IDS:
-                    if (urlState == 1){
-                        String continuation = Parser.instance().parseItemIDsUnread(info);
-                        if(continuation!=null){
-                            mNeter.addHeader("c", continuation);
-                            mNeter.getUnReadRefs(mUserID);
-                            KLog.i("【获取 ITEM_IDS 还可继续】" + continuation);
-                        }else {
-                            urlState = 2;
-                            vToolbarHint.setText( R.string.main_toolbar_hint_sync_stared_refs);
-                            mNeter.getStarredRefs( mUserID);
-                        }
-                    }else if(urlState ==2){
-                        String continuation = Parser.instance().parseItemIDsStarred(info);
-                        if(continuation!=null){
-                            mNeter.addHeader("c", continuation);
-                            mNeter.getStarredRefs( mUserID);
-                        }else {
-                            ArrayList<ItemRefs> unreadRefs = Parser.instance().reUnreadRefs();
-                            ArrayList<ItemRefs> starredRefs = Parser.instance().reStarredRefs();
-                            unreadRefsSize = unreadRefs.size();
-                            starredRefsSize = starredRefs.size();
-                            capacity = Parser.instance().reRefs(unreadRefs, starredRefs);
-                            if ( capacity == -1 ){
-                                UToast.showShort( "同步时数据出错，请重试" );
-                                handler.sendEmptyMessage(API.F_NoMsg);
-                                break;
-                            }
-                            afterItemRefs = new ArrayList<>( capacity );
-                            handler.sendEmptyMessage(API.S_ITEM_CONTENTS);// 开始获取所有列表的内容
-                            urlState = 1;
-                            KLog.i("【BaseActivity 获取 reUnreadList】");
-                        }
-                    }
-                    break;
-                case API.S_ITEM_CONTENTS:
-                    KLog.i("【Main 解析 ITEM_CONTENTS 】" + urlState );
-                    if(urlState == 1){
-                        afterItemRefs = Parser.instance().reUnreadUnstarRefs;
-                        Parser.instance().parseItemContentsUnreadUnstar(info);
-                    }else if(urlState == 2){
-                        afterItemRefs = Parser.instance().reUnreadStarredRefs;
-                        Parser.instance().parseItemContentsUnreadStarred(info);
-                    }else if(urlState == 3){
-                        afterItemRefs = Parser.instance().reReadStarredRefs;
-                        Parser.instance().parseItemContentsReadStarred(info);
-                    }
+//                case API.S_TAGS_LIST: // 分组列表
+//                    Parser.instance().parseTagList(info);
+//                    if(isOrderTagFeed){
+//                        vToolbarHint.setText(R.string.main_toolbar_hint_sync_tag_order);
+//                        mNeter.getWithAuth(API.HOST + API.U_STREAM_PREFS);// 有了这份数据才可以对 tagslist feedlist 进行排序，并储存下来
+//                    }else {
+//                        Parser.instance().orderTags();
+//                        vToolbarHint.setText(R.string.main_toolbar_hint_sync_unread_count);
+//                        mNeter.getWithAuth(API.HOST + API.U_UNREAD_COUNTS);
+//                    }
+//                    break;
+//                case API.S_SUBSCRIPTION_LIST: // 订阅列表
+//                    ArrayList<Sub> subs = Parser.instance().parseSubscriptionList(info);
+//                    Parser.instance().updateArticles(subs);
+//                    reloadData();
+//                    // 获取所有加星文章
+//                    // 比对streamId
+//                    break;
+//                case API.S_STREAM_PREFS:
+//                    Parser.instance().parseStreamPrefList(info, mUserID);
+//                    vToolbarHint.setText(R.string.main_toolbar_hint_sync_unread_count);
+//                    mNeter.getWithAuth(API.HOST + API.U_UNREAD_COUNTS);
+//                    break;
+//                case API.S_UNREAD_COUNTS:
+//                    Parser.instance().parseUnreadCounts(info);
+//                    vToolbarHint.setText( R.string.main_toolbar_hint_sync_unread_refs );
+//                    mNeter.getUnReadRefs(mUserID);
+//                    urlState = 1;
+//                    KLog.d("【未读数】");
+//                    break;
+////                case API.S_ITEM_IDS_UNREAD_LOOP:
+////                    con = Parser.instance().parseItemIDsUnread(info);
+////                    if(con!=null){
+////                        mNeter.addHeader("c", con );
+////                        mNeter.getUnReadRefs(mUserID);
+////                        KLog.i("【获取 ITEM_IDS 还可继续】" + con );
+////                    }else {
+////                        handler.sendEmptyMessage( API.S_ITEM_IDS_UNREAD );
+////                    }
+////                    break;
+////                case API.S_ITEM_IDS_UNREAD:
+////                    vToolbarHint.setText( R.string.main_toolbar_hint_sync_stared_refs);
+////                    mNeter.getStarredRefs( mUserID);
+////                    con =null;
+////                    break;
+////                case API.S_ITEM_IDS_STARRED_LOOP:
+////                    con = Parser.instance().parseItemIDsStarred(info);
+////                    if( con!=null){
+////                        mNeter.addHeader("c", con );
+////                        mNeter.getStarredRefs( mUserID);
+////                    }else {
+////                        handler.sendEmptyMessage( API.S_ITEM_IDS_STARRED );
+////                    }
+////                    break;
+////                case API.S_ITEM_IDS_STARRED:
+////                    ArrayList<ItemRefs> unreadRefs = Parser.instance().reUnreadRefs();
+////                    ArrayList<ItemRefs> starredRefs = Parser.instance().reStarredRefs();
+////                    Parser.instance().reRefs(unreadRefs, starredRefs);
+////                    break;
+////                case API.S_ITEM_IDS_REREFS:
+////                    int capacity = msg.getData().getInt("capacity");
+////                    if ( capacity == -1 ){
+////                        UToast.showShort( "同步时数据出错，请重试" );
+////                        break;
+////                    }
+////                    afterItemRefs = new ArrayList<>( capacity );
+////                    handler.sendEmptyMessage(API.S_ITEM_CONTENTS);// 开始获取所有列表的内容
+////                    KLog.i("解析完成所有 Refs ");
+////                    break;
+//                case API.S_ITEM_IDS:
+//                    if (urlState == 1){
+//                        String continuation = Parser.instance().parseItemIDsUnread(info);
+//                        if(continuation!=null){
+//                            mNeter.addHeader("c", continuation);
+//                            mNeter.getUnReadRefs(mUserID);
+//                            KLog.i("【获取 ITEM_IDS 还可继续】" + continuation);
+//                        }else {
+//                            urlState = 2;
+//                            vToolbarHint.setText( R.string.main_toolbar_hint_sync_stared_refs);
+//                            mNeter.getStarredRefs( mUserID);
+//                        }
+//                    }else if(urlState ==2){
+//                        String continuation = Parser.instance().parseItemIDsStarred(info);
+//                        if(continuation!=null){
+//                            mNeter.addHeader("c", continuation);
+//                            mNeter.getStarredRefs( mUserID);
+//                        }else {
+//                            ArrayList<ItemRefs> unreadRefs = Parser.instance().reUnreadRefs();
+//                            ArrayList<ItemRefs> starredRefs = Parser.instance().reStarredRefs();
+//                            unreadRefsSize = unreadRefs.size();
+//                            starredRefsSize = starredRefs.size();
+//                            capacity = Parser.instance().reRefs(unreadRefs, starredRefs);
+//                            if ( capacity == -1 ){
+//                                UToast.showShort( "同步时数据出错，请重试" );
+//                                handler.sendEmptyMessage(API.F_NoMsg);
+//                                break;
+//                            }
+//                            afterItemRefs = new ArrayList<>( capacity );
+//                            handler.sendEmptyMessage(API.S_ITEM_CONTENTS);// 开始获取所有列表的内容
+//                            urlState = 1;
+//                            KLog.i("【BaseActivity 获取 reUnreadList】");
+//                        }
+//                    }
+//                    break;
+//                case API.S_ITEM_CONTENTS:
+//                    KLog.i("【Main 解析 ITEM_CONTENTS 】" + urlState );
+//                    if(urlState == 1){
+//                        afterItemRefs = Parser.instance().reUnreadUnstarRefs;
+//                        Parser.instance().parseItemContentsUnreadUnstar(info);
+//                    }else if(urlState == 2){
+//                        afterItemRefs = Parser.instance().reUnreadStarredRefs;
+//                        Parser.instance().parseItemContentsUnreadStarred(info);
+//                    }else if(urlState == 3){
+//                        afterItemRefs = Parser.instance().reReadStarredRefs;
+//                        Parser.instance().parseItemContentsReadStarred(info);
+//                    }
+//
+//                    vToolbarHint.setText(getString(R.string.main_toolbar_hint_sync_article_content, getNumForArts, capacity, unreadRefsSize, starredRefsSize));
+//                    ArrayList<ItemRefs> beforeItemRefs = new ArrayList<>( afterItemRefs );
+//                    int num = beforeItemRefs.size();
+////                    KLog.i("【获取 ITEM_CONTENTS 1】" + urlState +" - "+ afterItemRefs.size() + "--" + num);
+//                    if(num!=0){
+//                        if( beforeItemRefs.size()==0){return false;}
+//                        if(num>50){ num = 50; }
+//                        for(int i=0; i<num; i++){ // 给即将获取 item 正文 的请求构造包含 item 地址 的头部
+//                            String value = beforeItemRefs.get(i).getId();
+//                            mNeter.addBody("i", value);
+//                            afterItemRefs.remove(0);
+////                            KLog.i("【获取 ITEM_CONTENTS 3】" + num + "--" + afterItemRefs.size());
+//                        }
+//                        getNumForArts = getNumForArts + num;
+//                        mNeter.postWithAuth( API.HOST + API.U_ITEM_CONTENTS);
+//                    }else {
+//                        if(urlState == 0){
+//                            urlState = 1;
+//                        }else if(urlState == 1){
+//                            urlState = 2;
+//                        }else if(urlState == 2){
+//                            urlState = 3;
+//                        }else if(urlState == 3){
+//                            urlState = 0;
+//                            handler.sendEmptyMessage(API.SUCCESS);
+//                            return false;
+//                        }
+//                        handler.sendEmptyMessage(API.S_ITEM_CONTENTS);
+//                    }
+//                    break;
+//                case API.S_STREAM_CONTENTS_STARRED:
+//                    String continuation = Parser.instance().parseStreamContentsStarred(info); // 可能为空""
+//                    KLog.i("【解析所有加星文章1】" + urlState  + "---" + continuation);
+//                    if(continuation!=null){
+//                        mNeter.addHeader("c", continuation);
+////                        vToolbarHint.setText(R.string.main_toolbar_hint_sync_all_stared_content);
+//                        mNeter.getStarredContents();
+//                        KLog.i("【获取 StarredContents 】" );
+//                    }else {
+//                        WithSet.getInstance().setHadSyncAllStarred(true);
+//                        vToolbarHint.setText(R.string.main_toolbar_hint_sync_tag);
+////                        mNeter.getWithAuth(API.HOST + API.U_TAGS_LIST); // 接着继续
+//                    }
+//                    break;
+//                case API.S_EDIT_TAG:
+//                    long logTime = msg.getData().getLong("logTime");
+////                    KLog.d("==" + logTime + info );
+//                    delRequestLog(logTime);
+//                    if(!info.equals("OK")){
+//                        mNeter.forData(url,API.request,logTime);
+//                        KLog.i("返回的不是 ok");
+//                    }
+//                    if( !hadSyncLogRequest && requestMap.size()==0 ){
+//                        handler.sendEmptyMessage(API.M_BEGIN_SYNC) ;
+//                        hadSyncLogRequest = true;}
+//                    break;
+//                case API.S_Contents:
+//                    Parser.instance().parseStreamContents(info);
+//                    break;
+//                case API.F_Request:
+//                case API.F_Response:
+//                    if(info.equals("Authorization Required")){
+//                        UToast.showShort("没有Authorization，请重新登录");
+//                        finish();
+//                        goTo(LoginActivity.TAG,"Login For Authorization");
+//                        break;
+//                    }
+//                    numOfFailure = numOfFailure + 1;
+//                    if (numOfFailure < 3){
+//                        mNeter.forData(url, API.request, msg.getData().getLong("logTime"));
+//                        break;
+//                    }
+//                    mSwipeRefreshLayout.setRefreshing(false);
+//                    mSwipeRefreshLayout.setEnabled(true);
+//                    vToolbarHint.setText(String.valueOf( tagCount ));
+//                    saveRequestLog( msg.getData().getLong("logTime") );
+////                    UToast.showShort("网络不好，更新中断");// Note: 没必要，因为已经做了离线环境下，网络操作的保存
+//                    break;
+//                case 88:
+//                    Parser.instance().parseStreamContents(info);
+//                    break;
+//                case API.F_NoMsg:
+//                    mSwipeRefreshLayout.setRefreshing(false);
+//                    mSwipeRefreshLayout.setEnabled(true);
+//                    getNumForArts = 0;
+//                    vToolbarHint.setText("");
+//                    break;
+//                case API.SUCCESS: // 文章获取完成
+//                    clearArticles(clearBeforeDay);
+//                    notifyDataChanged();
+//                    getNumForArts = 0;
+//                    vToolbarHint.setText( String.valueOf( articleList.size() ));
+////                    UToast.showShort("刷新完成");
+////                    KLog.i("【文章列表获取完成】" );
+//                    break;
+//            }
+//            return false;
+//        }
+//    });
 
-                    vToolbarHint.setText(getString(R.string.main_toolbar_hint_sync_article_content, getNumForArts, capacity, unreadRefsSize, starredRefsSize));
-                    ArrayList<ItemRefs> beforeItemRefs = new ArrayList<>( afterItemRefs );
-                    int num = beforeItemRefs.size();
-//                    KLog.i("【获取 ITEM_CONTENTS 1】" + urlState +" - "+ afterItemRefs.size() + "--" + num);
-                    if(num!=0){
-                        if( beforeItemRefs.size()==0){return false;}
-                        if(num>50){ num = 50; }
-                        for(int i=0; i<num; i++){ // 给即将获取 item 正文 的请求构造包含 item 地址 的头部
-                            String value = beforeItemRefs.get(i).getId();
-                            mNeter.addBody("i", value);
-                            afterItemRefs.remove(0);
-//                            KLog.i("【获取 ITEM_CONTENTS 3】" + num + "--" + afterItemRefs.size());
-                        }
-                        getNumForArts = getNumForArts + num;
-                        mNeter.postWithAuth( API.HOST + API.U_ITEM_CONTENTS);
-                    }else {
-                        if(urlState == 0){
-                            urlState = 1;
-                        }else if(urlState == 1){
-                            urlState = 2;
-                        }else if(urlState == 2){
-                            urlState = 3;
-                        }else if(urlState == 3){
-                            urlState = 0;
-                            handler.sendEmptyMessage(API.SUCCESS);
-                            return false;
-                        }
-                        handler.sendEmptyMessage(API.S_ITEM_CONTENTS);
-                    }
-                    break;
-                case API.S_STREAM_CONTENTS_STARRED:
-                    String continuation = Parser.instance().parseStreamContentsStarred(info); // 可能为空""
-                    KLog.i("【解析所有加星文章1】" + urlState  + "---" + continuation);
-                    if(continuation!=null){
-                        mNeter.addHeader("c", continuation);
-//                        vToolbarHint.setText(R.string.main_toolbar_hint_sync_all_stared_content);
-                        mNeter.getStarredContents();
-                        KLog.i("【获取 StarredContents 】" );
-                    }else {
-                        WithSet.getInstance().setHadSyncAllStarred(true);
-                        vToolbarHint.setText(R.string.main_toolbar_hint_sync_tag);
-//                        mNeter.getWithAuth(API.HOST + API.U_TAGS_LIST); // 接着继续
-                    }
-                    break;
-                case API.S_EDIT_TAG:
-                    long logTime = msg.getData().getLong("logTime");
-//                    KLog.d("==" + logTime + info );
-                    delRequestLog(logTime);
-                    if(!info.equals("OK")){
-                        mNeter.forData(url,API.request,logTime);
-                        KLog.i("返回的不是 ok");
-                    }
-                    if( !hadSyncLogRequest && requestMap.size()==0 ){
-                        handler.sendEmptyMessage(API.M_BEGIN_SYNC) ;
-                        hadSyncLogRequest = true;}
-                    break;
-                case API.S_Contents:
-                    Parser.instance().parseStreamContents(info);
-                    break;
-                case API.F_Request:
-                case API.F_Response:
-                    if(info.equals("Authorization Required")){
-                        UToast.showShort("没有Authorization，请重新登录");
-                        finish();
-                        goTo(LoginActivity.TAG,"Login For Authorization");
-                        break;
-                    }
-                    numOfFailure = numOfFailure + 1;
-                    if (numOfFailure < 3){
-                        mNeter.forData(url, API.request, msg.getData().getLong("logTime"));
-                        break;
-                    }
+//    private ArrayMap<Long,RequestLog> requestMap = new ArrayMap<>();
+//    @Override
+//    public void logRequest(RequestLog requestLog){
+//        if(!requestLog.getHeadParamString().contains("c=")){
+//            requestMap.put( requestLog.getLogTime(),requestLog );
+//        }
+//    }
+//    public void delRequestLog(long key){
+//        if( requestMap != null){
+//            if(requestMap.size()!=0){
+//                requestMap.remove( key ); // 因为最后一次使用 handleMessage(100) 时也会调用
+//            }
+//        }
+//    }
+//    private void saveRequestLog( long logTime ){
+//        if(requestMap==null){return;}
+//        KLog.i("【saveRequest】" );
+//        WithDB.getInstance().saveRequestLog( requestMap.get(logTime) );
+//    }
+//    private boolean syncRequestLog(){
+//        List<RequestLog> requestLogs = WithDB.getInstance().loadRequestListAll();
+//        if( requestLogs.size()==0){
+//            return false;
+//        }
+//        if(requestMap.size()!=requestLogs.size()){
+//            for( RequestLog requestLog:requestLogs){
+//                requestMap.put(requestLog.getLogTime(),requestLog);
+//            }
+//        }
+//        vToolbarHint.setText( R.string.main_toolbar_hint_sync_log );
+//        // TODO: 2016/5/26 将这个改为 json 格式来持久化 RequestLog 对象 ？貌似也不好
+//        for( RequestLog requestLog:requestLogs){
+//            requestMap.put(requestLog.getLogTime(),requestLog);
+//            String headParamString = requestLog.getHeadParamString();
+//            String bodyParamString = requestLog.getBodyParamString();
+//            mNeter.addHeader( UString.formStringToParamList(headParamString));
+//            mNeter.addBody( UString.formStringToParamList(bodyParamString));
+//            KLog.d("同步错误：" + headParamString + " = " + bodyParamString);
+//            if( requestLog.getMethod().equals("post")){
+//                mNeter.postCallback( requestLog.getUrl(), requestLog.getLogTime() );
+//            }
+//        }
+//        WithDB.getInstance().delRequestListAll();  // TODO: 2016/10/20 不能先删除，可能删除后，手机退出，那么这些记录就丢失了
+//        hadSyncLogRequest = false;
+//        KLog.d("读取到的数目： " +  requestLogs.size());
+//        return true;
+//    }
+
+
+    // TEST:
+    protected Handler mHandler = new Handler(new Handler.Callback() {
+        @Override
+        public boolean handleMessage(Message msg) {
+            String tips = msg.getData().getString("tips");
+            KLog.i("【handler】" + msg.what + "---" + "---");
+
+            switch (msg.what) {
+                case API.SUCCESS:
                     mSwipeRefreshLayout.setRefreshing(false);
                     mSwipeRefreshLayout.setEnabled(true);
-                    vToolbarHint.setText(String.valueOf( tagCount ));
-                    saveRequestLog( msg.getData().getLong("logTime") );
-//                    UToast.showShort("网络不好，更新中断");// Note: 没必要，因为已经做了离线环境下，网络操作的保存
-                    break;
-                case 88:
-                    Parser.instance().parseStreamContents(info);
-                    break;
-                case API.F_NoMsg:
-                    mSwipeRefreshLayout.setRefreshing(false);
-                    mSwipeRefreshLayout.setEnabled(true);
-                    getNumForArts = 0;
-                    vToolbarHint.setText("");
-                    break;
-                case API.SUCCESS: // 文章获取完成
-                    clearArticles(clearBeforeDay);
+                    vToolbarHint.setText(String.valueOf(articleList.size()));
                     notifyDataChanged();
-                    getNumForArts = 0;
-                    vToolbarHint.setText("");
-                    UToast.showShort("刷新完成");
 //                    KLog.i("【文章列表获取完成】" );
+                    break;
+                case API.FAILURE: // 文章获取失败
+                    mSwipeRefreshLayout.setRefreshing(false);
+                    mSwipeRefreshLayout.setEnabled(true);
+                    vToolbarHint.setText(String.valueOf(articleList.size()));
+                    UToast.showShort("同步失败");
+                    break;
+                case API.PROCESS:
+                    vToolbarHint.setText(tips);
                     break;
             }
             return false;
         }
     });
 
-    private ArrayMap<Long,RequestLog> requestMap = new ArrayMap<>();
-    @Override
-    public void logRequest(RequestLog requestLog){
-        if(!requestLog.getHeadParamString().contains("c=")){
-            requestMap.put( requestLog.getLogTime(),requestLog );
-        }
-    }
-    public void delRequestLog(long key){
-        if( requestMap != null){
-            if(requestMap.size()!=0){
-                requestMap.remove( key ); // 因为最后一次使用 handleMessage(100) 时也会调用
-            }
-        }
-    }
-    private void saveRequestLog( long logTime ){
-        if(requestMap==null){return;}
-        KLog.i("【saveRequest】" );
-        WithDB.getInstance().saveRequestLog( requestMap.get(logTime) );
-    }
 
-
-    private boolean syncRequestLog(){
-        List<RequestLog> requestLogs = WithDB.getInstance().loadRequestListAll();
-        if( requestLogs.size()==0){
-            return false;
-        }
-        if(requestMap.size()!=requestLogs.size()){
-            for( RequestLog requestLog:requestLogs){
-                requestMap.put(requestLog.getLogTime(),requestLog);
-            }
-        }
-        vToolbarHint.setText( R.string.main_toolbar_hint_sync_log );
-        // TODO: 2016/5/26 将这个改为 json 格式来持久化 RequestLog 对象 ？貌似也不好
-        for( RequestLog requestLog:requestLogs){
-            requestMap.put(requestLog.getLogTime(),requestLog);
-            String headParamString = requestLog.getHeadParamString();
-            String bodyParamString = requestLog.getBodyParamString();
-            mNeter.addHeader( UString.formStringToParamList(headParamString));
-            mNeter.addBody( UString.formStringToParamList(bodyParamString));
-            KLog.d("同步错误：" + headParamString + " = " + bodyParamString);
-            if( requestLog.getMethod().equals("post")){
-                mNeter.postCallback( requestLog.getUrl(), requestLog.getLogTime() );
-            }
-        }
-        WithDB.getInstance().delRequestListAll();  // TODO: 2016/10/20 不能先删除，可能删除后，手机退出，那么这些记录就丢失了
-        hadSyncLogRequest = false;
-        KLog.d("读取到的数目： " +  requestLogs.size());
-        return true;
-    }
-
-
-
-    public void clearArticles(int days){
-        long clearTime = System.currentTimeMillis() - days*24*3600*1000L;
-        List<Article> allArtsBeforeTime = WithDB.getInstance().loadArtsBeforeTime(clearTime);
-        KLog.i("清除" + clearTime + "--"+  allArtsBeforeTime.size()  + "--"+  days );
-//        UToast.showShort( "清除 " + days + " 天前的 " + allArtsBeforeTime.size() + " 篇文章");
-
-        if( allArtsBeforeTime.size()==0){return;}
-        ArrayList<String> idListMD5 = new ArrayList<>( allArtsBeforeTime.size() );
-        for(Article article:allArtsBeforeTime){
-            idListMD5.add(UString.stringToMD5(article.getId()));
-        }
-        UFile.deleteHtmlDirList(idListMD5);
-        WithDB.getInstance().delArtAll(allArtsBeforeTime);
-    }
 
 
     private int tagCount;
@@ -761,8 +808,9 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
                                         break;
                                     case 2:
                                         Article article = articleList.get(position);
-                                        article.setReadState(API.ART_READING);
+//                                        startAction("unreadArticle",article.getId());
                                         mNeter.postUnReadArticle( article.getId() );
+                                        article.setReadState(API.ART_READING);
                                         WithDB.getInstance().saveArticle(article);
                                         mainSlvAdapter.notifyDataSetChanged();
                                         break;
@@ -787,8 +835,8 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
 
     private void addReadedList(ArrayList<Article> artList){
         if(artList.size() == 0){return;}
-        for(Article artId: artList){
-            mNeter.postReadArticle(artId.getId());
+        for (Article article : artList) {
+            mNeter.postReadArticle(article.getId());
             changeItemNum( - artList.size() );
         }
         WithDB.getInstance().saveArticleList(artList);
@@ -827,11 +875,11 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
     public void onClick(View v) {
         switch (v.getId()) {
             case R.id.main_toolbar:
-                if (handler.hasMessages(API.MSG_DOUBLE_TAP)) {
-                    handler.removeMessages(API.MSG_DOUBLE_TAP);
+                if (mHandler.hasMessages(API.MSG_DOUBLE_TAP)) {
+                    mHandler.removeMessages(API.MSG_DOUBLE_TAP);
                     slv.smoothScrollToPosition(0);
                 } else {
-                    handler.sendEmptyMessageDelayed(API.MSG_DOUBLE_TAP, ViewConfiguration.getDoubleTapTimeout());
+                    mHandler.sendEmptyMessageDelayed(API.MSG_DOUBLE_TAP, ViewConfiguration.getDoubleTapTimeout());
                 }
                 break;
         }
@@ -932,6 +980,7 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
 
     public void onStarIconClicked(View view){
         KLog.d( sListTag + sListState + tagName );
+        KLog.d("收藏列表" + sListTag + sListState + tagName);
         if(sListState.equals(API.LIST_STAR)){
             UToast.showShort("已经在收藏列表了");
         }else {

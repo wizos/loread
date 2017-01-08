@@ -82,7 +82,7 @@ public class MainSlvAdapter extends ArrayAdapter<Article> {
         }else {
             cvh.articleImg.setVisibility(View.GONE);
         }
-        KLog.d("【====】");
+//        KLog.d("【====】");
         if (article.getOriginTitle() != null) {
             cvh.articleFeed.setText(Html.fromHtml(article.getOriginTitle()));
         }

@@ -13,8 +13,9 @@ import com.squareup.okhttp.Response;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
+import me.wizos.loread.App;
+
 //import okhttp3.Callback;
-//import okhttp3.OkHttpClient;
 //import okhttp3.Request;
 //import okhttp3.Response;
 
@@ -27,7 +28,7 @@ import java.util.concurrent.TimeUnit;
 public class HttpUtil {
     private static final OkHttpClient mOkHttpClient = new OkHttpClient();
     static{
-        mOkHttpClient.setConnectTimeout(300, TimeUnit.SECONDS); // 初始为30
+        mOkHttpClient.setConnectTimeout(120, TimeUnit.SECONDS); // 初始为30
         mOkHttpClient.setReadTimeout(300, TimeUnit.SECONDS);// 初始为30
         mOkHttpClient.setWriteTimeout(300, TimeUnit.SECONDS);// 初始为30
     }
@@ -68,15 +69,16 @@ public class HttpUtil {
         });
     }
 
-    public static boolean isWifiEnabled(Context context) {
-        if (!isNetworkEnabled(context)) {
+    public static boolean isWifiEnabled() {
+        if (!isNetworkEnabled()) {
             return false;
         }
-        return ((WifiManager) context.getSystemService(Context.WIFI_SERVICE)).isWifiEnabled();
+        return ((WifiManager) App.getInstance().getSystemService(Context.WIFI_SERVICE)).isWifiEnabled();
     }
-    public static boolean isNetworkEnabled(Context context) {
+
+    public static boolean isNetworkEnabled() {
         ConnectivityManager cm =
-                (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+                (ConnectivityManager) App.getInstance().getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo netInfo = cm.getActiveNetworkInfo();
         return netInfo != null && netInfo.isConnectedOrConnecting();
     }

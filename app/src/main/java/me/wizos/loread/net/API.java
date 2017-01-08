@@ -64,6 +64,7 @@ public class API {
     public static final int F_BITMAP = 03;
     public static final int FAILURE = 00;
     public static final int SUCCESS = 100;
+    public static final int PROCESS = -100;
 
 
     public static final int M_BEGIN_SYNC = 10;

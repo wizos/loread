@@ -22,7 +22,7 @@ import me.wizos.loread.net.API;
  */
 public class UString {
     public static String toLongID(String id) {
-       return  "tag:google.com,2005:reader/item/0000000"+ Long.toHexString( Long.valueOf(id));
+        return "tag:google.com,2005:reader/item/00000000" + Long.toHexString(Long.valueOf(id));
     }
 
     /**

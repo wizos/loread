@@ -63,9 +63,8 @@
             android:label="@string/setting_activity_title"
             android:parentActivityName=".activity.MainActivity"
             android:theme="@style/AppTheme.NoActionBar"/>
-        <service android:name=".utils.ULog">
 
-        </service>
+        <service android:name=".activity.MainService" />
     </application>
 
 </manifest>

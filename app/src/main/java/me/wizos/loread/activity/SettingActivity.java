@@ -1,6 +1,7 @@
 package me.wizos.loread.activity;
 
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.support.v4.util.ArrayMap;
@@ -27,7 +28,6 @@ import me.wizos.loread.R;
 import me.wizos.loread.bean.Article;
 import me.wizos.loread.data.WithDB;
 import me.wizos.loread.data.WithSet;
-import me.wizos.loread.net.API;
 import me.wizos.loread.utils.UFile;
 import me.wizos.loread.utils.UString;
 import me.wizos.loread.utils.colorful.Colorful;
@@ -181,7 +181,10 @@ public class SettingActivity extends BaseActivity {
     private void syncAllStarred() {
         KLog.i("【获取所有加星文章1】");
         if (!WithSet.getInstance().isHadSyncAllStarred() && WithSet.getInstance().isSyncAllStarred()) {
-            App.mHandler.sendEmptyMessage(API.S_STREAM_CONTENTS_STARRED);
+//            App.mHandler.sendEmptyMessage(API.S_STREAM_CONTENTS_STARRED);
+            Intent intent = new Intent(this, MainService.class);
+            intent.setAction("syncAllStarred");
+            startService(intent);
             KLog.i("【获取所有加星文章2】");
         }
     }

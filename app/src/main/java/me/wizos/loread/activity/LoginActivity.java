@@ -33,7 +33,7 @@ public class LoginActivity extends BaseActivity implements View.OnLayoutChangeLi
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
         App.addActivity(this);
-        mNeter = new Neter(handler,this);
+        mNeter = new Neter(handler);
         KLog.d("【未登录】" + handler);
         forInput();
         initView();

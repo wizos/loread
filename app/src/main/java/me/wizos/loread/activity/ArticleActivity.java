@@ -86,7 +86,7 @@ public class ArticleActivity extends BaseActivity {
         setContentView(R.layout.activity_article);
         context = this;
         App.addActivity(this);
-        mNeter = new Neter(handler,this);
+        mNeter = new Neter(handler);
 //        mNeter.setLogRequestListener(this);
 //        mParser = new Parser();
         initColorful();
@@ -131,7 +131,7 @@ public class ArticleActivity extends BaseActivity {
         // 这样做的好处是在Acticity退出的时候，可以避免内存泄露。因为 handler 内可能引用 Activity ，导致 Activity 退出后，内存泄漏
         mHandler.removeCallbacksAndMessages(null);
         handler.removeCallbacksAndMessages(null);
-        article = null;
+//        article = null;
         webView.removeAllViews();
         webView.destroy();
         mll.removeView(webView);
@@ -437,7 +437,7 @@ public class ArticleActivity extends BaseActivity {
             return;
         }
 
-        if(!HttpUtil.isWifiEnabled(context)){
+        if (!HttpUtil.isWifiEnabled()) {
             handler.sendEmptyMessage(API.F_Request);
             return ;}
         String srcBaseUrl = "";
@@ -725,7 +725,7 @@ public class ArticleActivity extends BaseActivity {
                         StringBuilder newCategories = new StringBuilder(  article.getCategories().length()  );
                         String[] cateArray = article.getCategories().replace("]","").replace("[","").split(", ");
                         for (String cate:cateArray){
-                            if (cate.contains( "user/"+ MainActivity.mUserID + "/label/" )){
+                            if (cate.contains("user/" + App.mUserID + "/label/")) {
                                 mNeter.postRemoveArticleTags( articleID,cate);
                                 KLog.d("【-】" + cate );
                             }else {
