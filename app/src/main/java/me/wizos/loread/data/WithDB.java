@@ -104,9 +104,17 @@ public class WithDB {
         App.getDaoSession().getDatabase().execSQL("update Article set id=\"" + newid + "\"" + "where id=\"" + id + "\"");
     }
 
+    //    public Article getArticle(String articleId) {
+//        articleId = articleId.substring( articleId.length()- 34,articleId.length());
+//        List<Article> articles = articleDao.queryBuilder().where(ArticleDao.Properties.Id.like( "%" + articleId) ).list();
+//        if ( articles.size() != 0) {
+//            return articles.get(0);
+//        }else {
+//            return null;
+//        }
+//    }
     public Article getArticle(String articleId) {
 //        if (articleID == null) {return null;}
-
         List<Article> articles = articleDao.queryBuilder().where(ArticleDao.Properties.Id.eq(articleId)).list();
         if ( articles.size() != 0) {
             return articles.get(0);
@@ -233,7 +241,7 @@ public class WithDB {
         Query query = articleDao.queryBuilder()
                 .where(ArticleDao.Properties.StarState.eq(API.LIST_STAR)) /**  Creates an "equal ('=')" condition  for this property. */
                 .build();
-        KLog.d("【loadStarAll】" + query.list().size());
+//        KLog.d("【loadStarAll】" + query.list().size());
         return query.list();
     }
 //    public List<Article> loadUnreadStarred(){

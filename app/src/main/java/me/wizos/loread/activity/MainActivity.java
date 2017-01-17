@@ -837,7 +837,7 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
         if(artList.size() == 0){return;}
         for (Article article : artList) {
             mNeter.postReadArticle(article.getId());
-            changeItemNum( - artList.size() );
+            changeItemNum(-1);
         }
         WithDB.getInstance().saveArticleList(artList);
         mainSlvAdapter.notifyDataSetChanged();

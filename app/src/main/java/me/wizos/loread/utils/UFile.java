@@ -220,7 +220,7 @@ public class UFile {
                 }
             }
 
-            KLog.d("【】" + file.toString() + "--" );
+            KLog.d("【】" + file.toString());
 
             FileReader fileReader = new FileReader(file);
             BufferedReader br = new BufferedReader( fileReader );//一行一行读取 。在电子书程序上经常会用到。

@@ -13,7 +13,6 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
-import de.greenrobot.dao.query.WhereCondition;
 import me.wizos.loread.App;
 import me.wizos.loread.bean.Article;
 import me.wizos.loread.bean.Tag;
@@ -193,8 +192,8 @@ public class Parser {
 
         unreadCounts = unreadCountList.get(0).getCount();
         starredCounts = unreadCountList.get(1).getCount();
-        allUnreadRefs = new ArrayList<>( unreadCounts );
-        allStarredRefs = new ArrayList<>( starredCounts );
+        remoteUnreadRefs = new ArrayList<>(unreadCounts);
+        remoteStarredRefs = new ArrayList<>(starredCounts);
     }
 
 
@@ -205,14 +204,14 @@ public class Parser {
 
     private int unreadCounts;
     private int starredCounts;
-    private ArrayList<ItemRefs> allUnreadRefs ;
-    private ArrayList<ItemRefs> allStarredRefs ;
+    private ArrayList<ItemRefs> remoteUnreadRefs;
+    private ArrayList<ItemRefs> remoteStarredRefs;
     public String parseItemIDsStarred(String info){
         Gson gson = new Gson();
         ItemIDs itemIDs = gson.fromJson(info, ItemIDs.class);
         ArrayList<ItemRefs> partStarredRefs = itemIDs.getItemRefs();
         if(partStarredRefs!=null){
-            allStarredRefs.addAll( partStarredRefs );
+            remoteStarredRefs.addAll(partStarredRefs);
         }
         return itemIDs.getContinuation();
     }
@@ -221,7 +220,7 @@ public class Parser {
         ItemIDs itemIDs = gson.fromJson(info, ItemIDs.class);
         ArrayList<ItemRefs> partUnreadRefs = itemIDs.getItemRefs();
         if(partUnreadRefs!=null){
-            allUnreadRefs.addAll( partUnreadRefs );
+            remoteUnreadRefs.addAll(partUnreadRefs);
         }
         return itemIDs.getContinuation();
     }
@@ -246,24 +245,32 @@ public class Parser {
      * */
     public ArrayList<ItemRefs> reUnreadRefs(){
         long xx = System.currentTimeMillis();
-        List<Article> beforeArticleArray = WithDB.getInstance().loadTagRead( API.LIST_UNREAD, "");
-        Map<String,Integer> map = new ArrayMap<>( beforeArticleArray.size() + allUnreadRefs.size() );
-        Map<String,Article> mapArticle = new ArrayMap<>( beforeArticleArray.size() );
-        ArrayList<Article> readList =  new ArrayList<>( beforeArticleArray.size() );
-        ArrayList<ItemRefs> unreadRefs = new ArrayList<>( allUnreadRefs.size() );
+        List<Article> localUnreadArticles = WithDB.getInstance().loadTagRead(API.LIST_UNREAD, "");
+        Map<String, Integer> map = new ArrayMap<>(localUnreadArticles.size() + remoteUnreadRefs.size());
+        Map<String, Article> mapArticle = new ArrayMap<>(localUnreadArticles.size());
+        ArrayList<Article> readList = new ArrayList<>(localUnreadArticles.size());
+        ArrayList<ItemRefs> unreadRefs = new ArrayList<>(remoteUnreadRefs.size());
 
-        KLog.d("【reUnreadRefs】"+  beforeArticleArray.size() + "==" + allUnreadRefs.size() );
+        KLog.d("【reUnreadRefs】" + localUnreadArticles.size() + "==" + remoteUnreadRefs.size());
 
         // 数据量大的一方
-        for ( Article item : beforeArticleArray ) {
+//        String articleId;
+//        Article article;
+        for (Article item : localUnreadArticles) {
             String articleId = item.getId();
             map.put(articleId, 1);
             mapArticle.put(articleId,item);
         }
         // 数据量小的一方
-        for ( ItemRefs item : allUnreadRefs ) {
+        for (ItemRefs item : remoteUnreadRefs) {
             String articleId = UString.toLongID(item.getId());
             Integer cc = map.get( articleId );
+//            // ====
+//            if (cc==null){
+//                articleId = UString.toLongID15(item.getId());
+//                cc = map.get( articleId );
+//            }
+//            // ====
             if(cc!=null) {
                 map.put( articleId , ++cc);  // 1，去掉“本地有，状态为未读”的
             }else {
@@ -286,65 +293,38 @@ public class Parser {
         }
 
         long yy = System.currentTimeMillis() - xx;
-        KLog.d("【reUnreadRefs】测试"+ yy + " - " + beforeArticleArray.size() + "==" + allUnreadRefs.size() +"=="+ readList.size()  + "==" + unreadRefs.size() );
+        KLog.d("【reUnreadRefs】测试" + yy + " - " + localUnreadArticles.size() + "==" + remoteUnreadRefs.size() + "==" + readList.size() + "==" + unreadRefs.size());
         WithDB.getInstance().saveArticleList(readList);
         return unreadRefs;
     }
 
     public ArrayList<ItemRefs> reStarredRefs(){
-        List<Article> beforeStarredList = WithDB.getInstance().loadStarAll();
-        Map<String,Integer> map = new ArrayMap<>( beforeStarredList.size() + allStarredRefs.size());
-        Map<String,Article> mapArticle = new ArrayMap<>( beforeStarredList.size() );
-        ArrayList<Article> starList =  new ArrayList<>( beforeStarredList.size() );
-        ArrayList<ItemRefs> starredRefs = new ArrayList<>( allStarredRefs.size() );
+        List<Article> localStarredArticles = WithDB.getInstance().loadStarAll();
+        Map<String, Integer> map = new ArrayMap<>(localStarredArticles.size() + remoteStarredRefs.size());
+        Map<String, Article> mapArticle = new ArrayMap<>(localStarredArticles.size());
+        ArrayList<Article> starList = new ArrayList<>(localStarredArticles.size());
+        ArrayList<ItemRefs> starredRefs = new ArrayList<>(remoteStarredRefs.size());
+//        KLog.d(  WithDB.getInstance().loadStarAll().size() + "个");
 //        WhereCondition[] query = new WhereCondition[allStarredRefs.size()];
-        ArrayList<WhereCondition> artIds = new ArrayList<>(allStarredRefs.size());
-//        new Thread(new Runnable(){
-//            public void run(){
-//                for ( Article item : beforeStarredList ) {
-//                    String articleId = item.getId();
-//                    map.put(articleId, 1);
-//                    mapArticle.put(articleId,item);
-//                }
-//                for ( ItemRefs item : allStarredRefs ) {
-//                    String articleId = UString.toLongID(item.getId());
-//                    Integer cc = map.get( articleId );
-//                    if(cc!=null) {
-//                        map.put( articleId , ++cc);// 1，去掉“本地有，状态为加星”的
-//                    }else {
-//                        Article article = WithDB.getInstance().getArticle( articleId );
-//                        if(article!=null){
-//                            article.setStarState(API.ART_STAR);// 2，去掉“本地有，状态为未加星”的
-//                            starList.add(article);
-//                        }else {
-//                            starredRefs.add(item);// 3，就剩云端的，要请求的加星资源（但是还是含有一些要请求的未读资源）
-//                        }
-//                    }
-//                }
-//                for( Map.Entry<String, Integer> entry: map.entrySet()) {
-//                    if(entry.getValue()==1) {
-//                        Article article = mapArticle.get(entry.getKey());
-//                        article.setStarState(API.ART_UNSTAR);
-//                        starList.add(article);// 取消加星
-//                    }
-//                }
-//            }
-//        }).start();
+//        ArrayList<WhereCondition> artIds = new ArrayList<>(allStarredRefs.size());
 
         int i = 0;
-        for ( Article item : beforeStarredList ) {
+        // 数据量大的一方
+//        String articleId;
+//        Article article;
+        for (Article item : localStarredArticles) {
             String articleId = item.getId();
             map.put(articleId, 1);
             mapArticle.put(articleId,item);
             KLog.i("【本地star文章】" + articleId);
         }
-        for ( ItemRefs item : allStarredRefs ) {
+        KLog.d(WithDB.getInstance().loadStarAll().size() + "个");
+        // 数据量小的一方
+        for (ItemRefs item : remoteStarredRefs) {
             String articleId = UString.toLongID(item.getId());
-
-//            KLog.i("【增加】" + item.getId() );
-//            KLog.i("【增加star文章】" + articleId );
-//            continue;
             Integer cc = map.get( articleId );
+//            KLog.i("【增加star文章】" + articleId + "=" + item.getId());
+//            continue;
             if(cc!=null) {
                 map.put(articleId, ++cc);// 1，去掉“本地有(状态为加星)”的，但是 ref 内没有的
             }else {
@@ -357,20 +337,19 @@ public class Parser {
                     starredRefs.add(item);// 3，就剩云端的，要请求的加星资源（但是还是含有一些要请求的未读资源）
                 }
             }
-
         }
 
         for( Map.Entry<String, Integer> entry: map.entrySet()) {
             if(entry.getValue()==1) {
                 Article article = mapArticle.get(entry.getKey());
-                i++;
-//                KLog.d("查询数据库的次数：" + entry.getKey() );
                 article.setStarState(API.ART_UNSTAR);
                 starList.add(article);// 取消加星
+//                i++;
+//                KLog.i("【本地star云端unstar】" + entry.getKey() );
             }
         }
-        KLog.d("查询数据库的次数：" + i);
-        KLog.d("【reStarredList】" + beforeStarredList.size() + "==" + allStarredRefs.size() +"==" + starList.size() +"=="+ starredRefs.size());
+        KLog.d("嘉欣的数量" + localStarredArticles.size());
+        KLog.d("【reStarredList】" + localStarredArticles.size() + "==" + remoteStarredRefs.size() + "==" + starList.size() + "==" + starredRefs.size());
         WithDB.getInstance().saveArticleList(starList);
         return starredRefs;
     }
@@ -380,11 +359,23 @@ public class Parser {
     public ArrayList<ItemRefs> reUnreadStarredRefs;
     public ArrayList<ItemRefs> reReadStarredRefs;
 
+
+    public ArrayList<ItemRefs> getReUnreadUnstarRefs() {
+        return reUnreadUnstarRefs;
+    }
+
+    public ArrayList<ItemRefs> getReUnreadStarredRefs() {
+        return reUnreadStarredRefs;
+    }
+
+    public ArrayList<ItemRefs> getReReadStarredRefs() {
+        return reReadStarredRefs;
+    }
     public int reRefs( final ArrayList<ItemRefs> unreadRefs, final ArrayList<ItemRefs> starredRefs){
 
         if (!checkCounts()){return -1;}
-        allUnreadRefs =  new ArrayList<>();
-        allStarredRefs = new ArrayList<>();
+        remoteUnreadRefs = new ArrayList<>();
+        remoteStarredRefs = new ArrayList<>();
 
         int arrayCapacity = 0;
         if(unreadRefs.size() > starredRefs.size()){
@@ -546,7 +537,7 @@ public class Parser {
 
 
     private boolean checkCounts(){
-        return ( unreadCounts <= allUnreadRefs.size() ) && ( starredCounts <= allStarredRefs.size() );
+        return (unreadCounts <= remoteUnreadRefs.size()) && (starredCounts <= remoteStarredRefs.size());
     }
 
     public void parseItemContentsUnreadUnstar(String info){

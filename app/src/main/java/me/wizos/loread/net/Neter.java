@@ -81,7 +81,7 @@ public class Neter {
         getWithAuth( API.HOST + API.U_ITEM_IDS );
     }
     public void getStarredContents(){
-        addHeader("n", "20");
+        addHeader("n", "15");
         addHeader("r", "o");
         getWithAuth(API.HOST + API.U_STREAM_CONTENTS + API.U_STARRED);
     }

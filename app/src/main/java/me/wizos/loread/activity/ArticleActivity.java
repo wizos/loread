@@ -242,10 +242,10 @@ public class ArticleActivity extends BaseActivity {
                     }
                     logImgStatus(ExtraImg.DOWNLOAD_ING);
 //                    KLog.d("检测 obtainSrcList " + lossSrcList.size());
-                    UFile.saveCacheHtml( fileNameInMD5, showContent );
                 }else {
                     article.setImgState("");
                 }
+                UFile.saveCacheHtml(fileNameInMD5, showContent);
                 WithDB.getInstance().saveArticle(article);
             }else if( !imgState.equals("")){
                 Gson gson = new Gson();
@@ -287,10 +287,10 @@ public class ArticleActivity extends BaseActivity {
                             "}" +
                             "</script>";
             // 加载内部css样式 placeholder.png
-            String cssPath = "file:"+ File.separator + File.separator + getExternalFilesDir(null)+ File.separator + "config" + File.separator + "article.css";
+
+            String cssPath = getExternalFilesDir(null) + File.separator + "config" + File.separator + "article.css";
             if(!UFile.isFileExists(cssPath)){
                 cssPath = "file:///android_asset/article.css";
-                KLog.d("自定义的 css 文件不存在");
             }
             String cssPathTheme;
             if(WithSet.getInstance().getThemeMode()==WithSet.themeDay){

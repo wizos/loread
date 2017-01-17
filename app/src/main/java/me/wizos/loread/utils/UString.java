@@ -22,7 +22,14 @@ import me.wizos.loread.net.API;
  */
 public class UString {
     public static String toLongID(String id) {
-        return "tag:google.com,2005:reader/item/00000000" + Long.toHexString(Long.valueOf(id));
+        id = Long.toHexString(Long.valueOf(id));
+        return "tag:google.com,2005:reader/item/" + String.format("%0" + (16 - id.length()) + "d", 0) + id;
+//        return "tag:google.com,2005:reader/item/" + String.format("%1$0"+( 16 -id.length())+"d",0)   ;
+    }
+
+    public static String toLongID15(String id) {
+        id = Long.toHexString(Long.valueOf(id));
+        return "tag:google.com,2005:reader/item/" + String.format("%0" + (14 - id.length()) + "d", 0) + id;
     }
 
     /**
@@ -110,7 +117,7 @@ public class UString {
     }
 
     public static StringBuilder reviseHtmlNoAd(StringBuilder tempHtml) {
-        KLog.d("去广告" + tempHtml);
+//        KLog.d("去广告" + tempHtml);
         int indexA = tempHtml.indexOf("<center>", 0);
         int indexB = tempHtml.indexOf("</center>", indexA);
         KLog.d("去广告 = " + indexA + ":" + indexB);
@@ -118,11 +125,11 @@ public class UString {
             return tempHtml;
         }
         String temp = tempHtml.substring(indexA + 8, indexB);
-        KLog.d("广告" + temp);
+//        KLog.d("广告" + temp);
         if (temp.contains("Ads") && temp.contains("Inoreader")) {
             tempHtml = tempHtml.replace(indexA, indexB + 9, "");
         }
-        KLog.d("修正后的文章" + tempHtml);
+//        KLog.d("修正后的文章" + tempHtml);
         return tempHtml;
     }
 

@@ -62,6 +62,7 @@ public class App extends Application{
         }else {
             API.HOST = API.HOST_PROXY;
         }
+
         cacheRelativePath = getExternalFilesDir(null) + File.separator + "cache" + File.separator;
         cacheAbsolutePath = "file:"+ File.separator + File.separator + cacheRelativePath; // 仅在储存于 html 时使用
 

@@ -44,7 +44,7 @@ public class MainService extends IntentService {
     }
 
     private Handler mHandler; // MainHandler
-    private Handler cHandler; // ChildHandler
+    private Handler sHandler; // ChildHandler
     private Handler mUIHandler = new Handler(Looper.getMainLooper());
 
     // 使用 startService(intent); 多次启动IntentService，但IntentService的实例只有一个，这跟传统的Service是一样的，最终IntentService会去调用onHandleIntent执行异步任务。这里可能我们还会担心for循环去启动任务，而实例又只有一个，那么任务会不会被覆盖掉呢？其实是不会的，因为IntentService真正执行异步任务的是HandlerThread+Handler
@@ -67,11 +67,11 @@ public class MainService extends IntentService {
     }
 
     public void refresh() {
-        cHandler.sendEmptyMessage(API.M_BEGIN_SYNC);
+        sHandler.sendEmptyMessage(API.M_BEGIN_SYNC);
     }
 
     public void syncAllStarred() {
-        cHandler.sendEmptyMessage(API.S_STREAM_CONTENTS_STARRED);
+        sHandler.sendEmptyMessage(API.S_STREAM_CONTENTS_STARRED);
     }
 
     private Record recorder = new Record() {
@@ -136,12 +136,11 @@ public class MainService extends IntentService {
                         break;
                     }
                     // 为了得到分组名，及排序
+                    // updateTip，updateView，updateData
                     sendProcess(getResources().getString(R.string.main_toolbar_hint_sync_tag));
 //                    mHandler.sendEmptyMessage( 0 ); // TODO: 2017/1/8
-                    // updateTip，updateView，updateData
                     mNeter.getWithAuth(API.HOST + API.U_TAGS_LIST);
                     KLog.i("【开始同步分组信息：TAGS_LIST】");
-                    KLog.i("【获取1】");
                     break;
                 case API.S_TAGS_LIST: // 分组列表
                     Parser.instance().parseTagList(info);
@@ -157,9 +156,7 @@ public class MainService extends IntentService {
                 case API.S_SUBSCRIPTION_LIST: // 订阅列表
                     ArrayList<Sub> subs = Parser.instance().parseSubscriptionList(info);
                     Parser.instance().updateArticles(subs);
-                    sendSuccess();
-                    // 获取所有加星文章
-                    // 比对streamId
+//                    sendSuccess();
                     break;
                 case API.S_STREAM_PREFS:
                     Parser.instance().parseStreamPrefList(info, App.mUserID);
@@ -198,11 +195,11 @@ public class MainService extends IntentService {
                             capacity = Parser.instance().reRefs(unreadRefs, starredRefs);
                             if (capacity == -1) {
                                 UToast.showShort("同步时数据出错，请重试");
-                                cHandler.sendEmptyMessage(API.F_NoMsg);
+                                sHandler.sendEmptyMessage(API.F_NoMsg);
                                 break;
                             }
                             afterItemRefs = new ArrayList<>(capacity);
-                            cHandler.sendEmptyMessage(API.S_ITEM_CONTENTS);// 开始获取所有列表的内容
+                            sHandler.sendEmptyMessage(API.S_ITEM_CONTENTS);// 开始获取所有列表的内容
                             urlState = 1;
                             KLog.i("【BaseActivity 获取 reUnreadList】");
                         }
@@ -227,14 +224,14 @@ public class MainService extends IntentService {
                     int num = beforeItemRefs.size();
 //                    KLog.i("【获取 ITEM_CONTENTS 1】" + urlState +" - "+ afterItemRefs.size() + "--" + num);
                     if (num != 0) {
-                        if (beforeItemRefs.size() == 0) {
-                            return false;
-                        }
+//                        if (beforeItemRefs.size() == 0) {
+//                            return false;}
                         if (num > 50) {
                             num = 50;
                         }
+                        String value;
                         for (int i = 0; i < num; i++) { // 给即将获取 item 正文 的请求构造包含 item 地址 的头部
-                            String value = beforeItemRefs.get(i).getId();
+                            value = beforeItemRefs.get(i).getId();
                             mNeter.addBody("i", value);
                             afterItemRefs.remove(0);
 //                            KLog.i("【获取 ITEM_CONTENTS 3】" + num + "--" + afterItemRefs.size());
@@ -250,10 +247,11 @@ public class MainService extends IntentService {
                             urlState = 3;
                         } else if (urlState == 3) {
                             urlState = 0;
-                            sendSuccess();
+//                            sendSuccess();
+                            sHandler.sendEmptyMessage(API.SUCCESS);
                             return false;
                         }
-                        cHandler.sendEmptyMessage(API.S_ITEM_CONTENTS);
+                        sHandler.sendEmptyMessage(API.S_ITEM_CONTENTS);
                     }
                     break;
                 case API.S_STREAM_CONTENTS_STARRED:
@@ -266,7 +264,7 @@ public class MainService extends IntentService {
                         KLog.i("【获取 StarredContents 】");
                     } else {
                         WithSet.getInstance().setHadSyncAllStarred(true);
-                        sendProcess(getResources().getString(R.string.main_toolbar_hint_sync_tag));
+//                        sendProcess(getResources().getString(R.string.main_toolbar_hint_sync_tag));
 //                        mNeter.getWithAuth(API.HOST + API.U_TAGS_LIST); // 接着继续
                     }
                     break;
@@ -279,11 +277,14 @@ public class MainService extends IntentService {
                         KLog.i("返回的不是 ok");
                     }
 //                    if (!hadSyncLogRequest && requestMap.size() == 0) {
-//                        cHandler.sendEmptyMessage(API.M_BEGIN_SYNC);
+//                        sHandler.sendEmptyMessage(API.M_BEGIN_SYNC);
 //                        hadSyncLogRequest = true;
 //                    }
                     break;
                 case API.S_Contents:
+                    Parser.instance().parseStreamContents(info);
+                    break;
+                case 88:
                     Parser.instance().parseStreamContents(info);
                     break;
                 case API.F_Request:
@@ -291,7 +292,6 @@ public class MainService extends IntentService {
                     if (info.equals("Authorization Required")) {
                         UToast.showShort("没有Authorization，请重新登录");
                         startActivity(new Intent(MainService.this, LoginActivity.class));
-//                    goTo(LoginActivity.TAG, "Login For Authorization");
                         break;
                     }
                     numOfFailure = numOfFailure + 1;
@@ -300,11 +300,9 @@ public class MainService extends IntentService {
                         mNeter.forData(url, API.request, msg.getData().getLong("logTime"));
                         break;
                     }
-                    sendFailure();
+                    sHandler.sendEmptyMessage(API.F_NoMsg);
+                    getNumForArts = 0;
                     saveRequestLog(msg.getData().getLong("logTime"));
-                    break;
-                case 88:
-                    Parser.instance().parseStreamContents(info);
                     break;
                 case API.F_NoMsg:
                     sendFailure();
@@ -314,9 +312,7 @@ public class MainService extends IntentService {
                     sendSuccess();
                     clearArticles(WithSet.getInstance().getClearBeforeDay());
                     getNumForArts = 0;
-
                     break;
-
                 // 处理同步逻辑
             }
             return false;
@@ -326,7 +322,7 @@ public class MainService extends IntentService {
     public void clearArticles(int days) {
         long clearTime = System.currentTimeMillis() - days * 24 * 3600 * 1000L;
         List<Article> allArtsBeforeTime = WithDB.getInstance().loadArtsBeforeTime(clearTime);
-        KLog.i("清除" + clearTime + "--" + allArtsBeforeTime.size() + "--" + days);
+        KLog.i("清除a" + clearTime + "--" + allArtsBeforeTime.size() + "--" + days);
         UToast.showShort("清除 " + days + " 天前的 " + allArtsBeforeTime.size() + " 篇文章");
 
         if (allArtsBeforeTime.size() == 0) {
@@ -336,6 +332,7 @@ public class MainService extends IntentService {
         for (Article article : allArtsBeforeTime) {
             idListMD5.add(UString.stringToMD5(article.getId()));
         }
+        KLog.i("清除b" + clearTime + "--" + allArtsBeforeTime.size() + "--" + days);
         UFile.deleteHtmlDirList(idListMD5);
         WithDB.getInstance().delArtAll(allArtsBeforeTime);
     }
@@ -371,8 +368,8 @@ public class MainService extends IntentService {
     @Override
     public void onCreate() {
         super.onCreate();
-        cHandler = new Handler(Looper.myLooper(), new ChildCallback());
-        mNeter = new Neter(cHandler);
+        sHandler = new Handler(Looper.myLooper(), new ChildCallback());
+        mNeter = new Neter(sHandler);
         mNeter.setReord(recorder);
     }
 

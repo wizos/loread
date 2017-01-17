@@ -28,9 +28,9 @@ import me.wizos.loread.App;
 public class HttpUtil {
     private static final OkHttpClient mOkHttpClient = new OkHttpClient();
     static{
-        mOkHttpClient.setConnectTimeout(120, TimeUnit.SECONDS); // 初始为30
-        mOkHttpClient.setReadTimeout(300, TimeUnit.SECONDS);// 初始为30
-        mOkHttpClient.setWriteTimeout(300, TimeUnit.SECONDS);// 初始为30
+        mOkHttpClient.setConnectTimeout(60, TimeUnit.SECONDS); // 初始为30
+        mOkHttpClient.setReadTimeout(120, TimeUnit.SECONDS);// 初始为30
+        mOkHttpClient.setWriteTimeout(120, TimeUnit.SECONDS);// 初始为30
     }
     /**
      * 该不会开启异步线程。

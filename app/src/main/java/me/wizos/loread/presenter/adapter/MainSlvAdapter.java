@@ -71,10 +71,7 @@ public class MainSlvAdapter extends ArrayAdapter<Article> {
         }
 
         cvh.articleTitle.setText(Html.fromHtml(article.getTitle()));
-        String summary = article.getSummary();
-        if(summary!=null){
-            cvh.articleSummary.setText(summary);
-        }
+        cvh.articleSummary.setText(article.getSummary());
 
         if(article.getCoverSrc()!=null){
             cvh.articleImg.setVisibility(View.VISIBLE);
@@ -88,18 +85,17 @@ public class MainSlvAdapter extends ArrayAdapter<Article> {
         }
         cvh.articleTime.setText(UTime.getFormatDate(article.getCrawlTimeMsec()));
         if ( article.getReadState().equals(API.ART_READ) &  !MainActivity.sListState.equals(API.ART_STAR) ) {
-            KLog.d("【1】" + article.getTitle());
             cvh.articleTitle.setAlpha(0.40f);
             cvh.articleSummary.setAlpha(0.40f);
             cvh.articleFeed.setAlpha(0.40f);
             cvh.articleTime.setAlpha(0.40f);
         } else {
-            KLog.d("【2】" + article.getTitle());
             cvh.articleTitle.setAlpha(1f);
             cvh.articleSummary.setAlpha(1f);
             cvh.articleFeed.setAlpha(1f);
             cvh.articleTime.setAlpha(1f);
         }
+        KLog.d("【1】" + article.getTitle());
         if( article.getReadState().equals(API.ART_READING)){
             cvh.articleReading.setVisibility(View.VISIBLE);
         }else {
