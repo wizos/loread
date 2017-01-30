@@ -218,7 +218,7 @@ public class MainService extends IntentService {
                         Parser.instance().parseItemContentsReadStarred(info);
                     }
 
-                    sendProcess(getResources().getString(R.string.main_toolbar_hint_sync_article_content, getNumForArts, capacity, unreadRefsSize, starredRefsSize));
+                    sendProcess(getResources().getString(R.string.main_toolbar_hint_sync_article_content, getNumForArts, capacity));
 
                     ArrayList<ItemRefs> beforeItemRefs = new ArrayList<>(afterItemRefs);
                     int num = beforeItemRefs.size();

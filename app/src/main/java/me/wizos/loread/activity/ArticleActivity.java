@@ -207,11 +207,16 @@ public class ArticleActivity extends BaseActivity {
 //        String articleUrl = article.getCanonical();
         Spanned titleWithUrl = Html.fromHtml("<a href=\"" + article.getCanonical() +"\">" + article.getTitle() + "</a>");
         vTitle.setText( titleWithUrl );
-        vDate.setText(UTime.getFormatDate(article.getCrawlTimeMsec()));
-        vFeed.setText(article.getOriginTitle());
-//        Feed feed = article.getFeed();
-//        if(feed!=null){
-//        }
+        vDate.setText(UTime.getFormatDate(article.getTimestampUsec()));
+        String author = article.getAuthor();
+        if (author != null && !author.equals("")) {
+            author = article.getOriginTitle() + "@" + article.getAuthor();
+        } else {
+            author = article.getOriginTitle();
+        }
+
+        vFeed.setText(author);
+
 
         fileNameInMD5 = UString.stringToMD5(articleID);
         ArrayList<String> htmlMsg = UFile.readHtml( fileNameInMD5 ,article.getTitle());
@@ -305,12 +310,12 @@ public class ArticleActivity extends BaseActivity {
             String contentFooter = "</body></html>";
             showContent = contentHeader + showContent + contentFooter;
 
-            if (fileNameInMD5!= null){
-                vArticleNum.setText( fileNameInMD5.substring(0,10) ); // FIXME: 2016/5/3 测试
-            }else {
-                String numStr = String.valueOf(articleNo) + " / " + String.valueOf(articleCount);
-                vArticleNum.setText( numStr );
-            }
+//            if (fileNameInMD5!= null){
+//                vArticleNum.setText( fileNameInMD5.substring(0,10) ); // FIXME: 2016/5/3 测试
+//            }
+            String numStr = String.valueOf(articleNo) + " / " + String.valueOf(articleCount);
+            vArticleNum.setText(numStr);
+
             notifyDataChanged();
         }
         initStateView();
@@ -451,9 +456,6 @@ public class ArticleActivity extends BaseActivity {
             case "box":
                 srcBaseUrl = App.boxRelativePath + article.getTitle() + "_files" + File.separator;
                 break;
-//            case "cacheBox":
-//                srcBaseUrl = App.cacheRelativePath + article.getTitle() + "_files" + File.separator;
-//                break;
         }
 
 //        KLog.d("修改后的src保存地址为："  + lossSrcList.size() + imgNo );
@@ -694,12 +696,33 @@ public class ArticleActivity extends BaseActivity {
     }
 
     public void onStarClick(View view){
+        String fileName = article.getTitle();
+        ArrayList<String> htmlMsg = UFile.readHtml(fileNameInMD5, fileName);
+
         if(sStarState.equals(API.ART_UNSTAR)){
             changeStarState(API.ART_STAR);
             UToast.showShort("已收藏");
+
+            if (htmlMsg == null) {
+                return;
+            }
+            if (htmlMsg.get(0).equals("box")) {
+                UFile.moveFile(App.boxRelativePath + fileName + ".html", App.storeRelativePath + fileName + ".html");// 移动文件
+                UFile.moveDir(App.boxRelativePath + fileName + "_files", App.storeRelativePath + fileName + "_files");// 移动目录
+                article.setCoverSrc(App.storeAbsolutePath + fileName + "_files" + File.separator + UString.getFileNameExtByUrl(article.getCoverSrc()));
+            }
         }else {
             changeStarState(API.ART_UNSTAR);
             UToast.showShort("取消收藏");
+
+            if (htmlMsg == null) {
+                return;
+            }
+            if (htmlMsg.get(0).equals("store")) {
+                UFile.moveFile(App.storeRelativePath + fileName + ".html", App.boxRelativePath + fileName + ".html");// 移动文件
+                UFile.moveDir(App.storeRelativePath + fileName + "_files", App.boxRelativePath + fileName + "_files");// 移动目录
+                article.setCoverSrc(App.boxAbsolutePath + fileName + "_files" + File.separator + UString.getFileNameExtByUrl(article.getCoverSrc()));
+            }
         }
     }
     public void onLabelClick(View view){
@@ -747,20 +770,30 @@ public class ArticleActivity extends BaseActivity {
 //        WithDB.getInstance().saveArticle( article );
     }
 
+
     public void onSaveClick(View view){
         String fileName = article.getTitle();
-//        KLog.e("【getExternalFilesDir】" + getExternalFilesDir(null) );
         ArrayList<String> htmlMsg = UFile.readHtml(fileNameInMD5 ,fileName);
-        String content="", htmlState ="", filePath = "";
-        if(htmlMsg!=null){
-            htmlState = htmlMsg.get(0);
-            content = htmlMsg.get(1);
+//        KLog.e("【getExternalFilesDir】" + getExternalFilesDir(null) );
+        if (htmlMsg == null) {
+            return;
         }
+        String content = "", htmlState = "", filePath = "";
+        htmlState = htmlMsg.get(0);
+        content = htmlMsg.get(1);
         if (htmlState.equals("cache")){
-            filePath = App.cacheRelativePath + fileNameInMD5;
-            moveTobox(filePath, fileName, content);
-//        }
-//        else if(htmlState.equals("store")){
+            if (article.getStarState().equals(API.ART_STAR)) {
+//                filePath = App.storeRelativePath + fileNameInMD5;
+                saveToStore(fileNameInMD5, fileName, content);
+            } else {
+//                filePath = App.cacheRelativePath + fileNameInMD5;
+                saveTobox(fileNameInMD5, fileName, content);
+            }
+
+//        }else if(htmlState.equals("star")){
+//            if( article.getStarState().equals(API.ART_STAR)){
+//
+//            }
 //            filePath = App.cacheRelativePath + fileNameInMD5 + File.separator + fileNameInMD5;
 //            moveTobox(filePath, fileName, content);
         }else if(htmlState.equals("box")){
@@ -773,16 +806,23 @@ public class ArticleActivity extends BaseActivity {
     }
 
 
-    private void moveTobox(String filePath,String fileName, String content){
+    private void saveTobox(String fileNameInMD5, String fileName, String content) {
+        String filePath = App.cacheRelativePath + fileNameInMD5;
         String boxHtml = UString.reviseHtmlForBox( content ,fileName ) ;
         String fileContent = String.format( getResources().getString(R.string.box_html_format), "UTF-8",fileName, article.getCanonical() ,article.getAuthor(), UTime.getFormatDate( article.getCrawlTimeMsec() ),  boxHtml );
-        UFile.saveBoxHtml(  fileName, fileContent  );
+//        UFile.saveBoxHtml(  fileName, fileContent  );
 
-        String sourceFilePath = filePath + ".html";
-        File cacheHtmlfile = new File(sourceFilePath);
-        cacheHtmlfile.delete();
+        // 保存修正后的 html
+        UFile.saveHtml(App.boxRelativePath + fileName + ".html", fileContent);
 //        String targetFilePath = App.boxRelativePath  + fileName + ".html";
 //        UFile.moveFile( sourceFilePath, targetFilePath );
+
+        // 删除之前的 html
+        new File(filePath + ".html").delete();
+//        String sourceFilePath = filePath + ".html";
+//        File cacheHtmlfile = new File(sourceFilePath);
+//        cacheHtmlfile.delete();
+
 
         String soureDir = filePath + "_files";
         String targetDir = App.boxRelativePath + fileName + "_files";
@@ -794,7 +834,33 @@ public class ArticleActivity extends BaseActivity {
         WithDB.getInstance().saveArticle(article);
     }
 
+    private void saveToStore(String fileNameInMD5, String fileName, String content) {
+        String filePath = App.cacheRelativePath + fileNameInMD5;
+        String storeHtml = UString.reviseHtmlForBox(content, fileName);
+        String fileContent = String.format(getResources().getString(R.string.box_html_format), "UTF-8", fileName, article.getCanonical(), article.getAuthor(), UTime.getFormatDate(article.getCrawlTimeMsec()), storeHtml);
+//        UFile.saveBoxHtml(  fileName, fileContent  );
 
+        // 保存修正后的 html
+        UFile.saveHtml(App.storeRelativePath + fileName + ".html", fileContent);
+//        String targetFilePath = App.boxRelativePath  + fileName + ".html";
+//        UFile.moveFile( sourceFilePath, targetFilePath );
+
+        // 删除之前的 html
+        new File(filePath + ".html").delete();
+//        String sourceFilePath = filePath + ".html";
+//        File cacheHtmlfile = new File(sourceFilePath);
+//        cacheHtmlfile.delete();
+
+
+        String soureDir = filePath + "_files";
+        String targetDir = App.storeRelativePath + fileName + "_files";
+        UFile.moveDir(soureDir, targetDir);// 移动文件
+
+        KLog.e("目录" + htmlState + filePath);
+        UToast.showShort("文件导出成功");
+        article.setCoverSrc(App.storeAbsolutePath + fileName + "_files" + File.separator + UString.getFileNameExtByUrl(article.getCoverSrc()));
+        WithDB.getInstance().saveArticle(article);
+    }
 
     public void onReadClick(View view){
         if(sReadState.equals(API.ART_READ)){

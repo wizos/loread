@@ -11,7 +11,7 @@ android {
         minSdkVersion 21
         targetSdkVersion 23
         versionCode 1
-        versionName "1.1.15"
+        versionName "1.1.16"
     }
     buildTypes {
         release {
@@ -67,7 +67,7 @@ dependencies {
     //    compile 'org.greenrobot:greendao:3.2.0'
     //    compile 'com.github.yuweiguocn:GreenDaoUpgradeHelper:v1.3.0'
     compile 'de.greenrobot:greendao:2.1.0'
-    compile 'com.github.yuweiguocn:GreenDaoUpgradeHelper:v0.0.5'
+//    compile 'com.github.yuweiguocn:GreenDaoUpgradeHelper:v1.0.1'
     // 序列化数据
     compile 'com.google.code.gson:gson:2.6.2'
     compile 'org.parceler:parceler-api:1.1.1'

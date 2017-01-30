@@ -143,11 +143,16 @@ public class UFile {
     }
     public static void saveBoxHtml( String fileName ,String fileContent){
         String filePathName =  App.boxRelativePath + fileName + ".html";
-//        String folderPathName =  App.boxRelativePath;
         saveHtml(filePathName,fileContent);
     }
 
-    protected static void saveHtml( String filePath ,String fileContent){
+    public static void saveHtmltoStar(String fileName, String fileContent) {
+        String filePathName = App.storeRelativePath + fileName + ".html";
+        saveHtml(filePathName, fileContent);
+    }
+
+
+    public static void saveHtml(String filePath, String fileContent) {
         if( !isExternalStorageWritable() ){return;}
 //        添加文件写入和创建的权限
 //        String aaa = Environment.getExternalStorageDirectory() + File.separator + "aaa.txt";
