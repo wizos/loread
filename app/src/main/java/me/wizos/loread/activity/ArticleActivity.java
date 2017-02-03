@@ -28,6 +28,7 @@ import com.google.gson.reflect.TypeToken;
 import com.socks.library.KLog;
 
 import java.io.File;
+import java.lang.ref.WeakReference;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
@@ -59,7 +60,6 @@ public class ArticleActivity extends BaseActivity {
     private WebView webView; // implements Html.ImageGetter
     private LinearLayout mll;
     protected Context context;
-    protected Neter mNeter;
 //    protected Parser mParser;
     protected TextView vTitle ,vDate ,vTime, vFeed;
     protected IconFontView vStar , vRead;
@@ -80,13 +80,15 @@ public class ArticleActivity extends BaseActivity {
     private ArrayMap<Integer,SrcPair> lossSrcList, obtainSrcList ;
     private SparseIntArray failImgList;
 
+    protected Neter mNeter;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_article);
         context = this;
         App.addActivity(this);
-        mNeter = new Neter(handler);
+        mNeter = new Neter(artHandler);
 //        mNeter.setLogRequestListener(this);
 //        mParser = new Parser();
         initColorful();
@@ -130,11 +132,12 @@ public class ArticleActivity extends BaseActivity {
         // 如果参数为null的话，会将所有的Callbacks和Messages全部清除掉。
         // 这样做的好处是在Acticity退出的时候，可以避免内存泄露。因为 handler 内可能引用 Activity ，导致 Activity 退出后，内存泄漏
         mHandler.removeCallbacksAndMessages(null);
-        handler.removeCallbacksAndMessages(null);
+        artHandler.removeCallbacksAndMessages(null);
 //        article = null;
         webView.removeAllViews();
         webView.destroy();
         mll.removeView(webView);
+        this.context = null;
     }
 
 
@@ -207,15 +210,15 @@ public class ArticleActivity extends BaseActivity {
 //        String articleUrl = article.getCanonical();
         Spanned titleWithUrl = Html.fromHtml("<a href=\"" + article.getCanonical() +"\">" + article.getTitle() + "</a>");
         vTitle.setText( titleWithUrl );
-        vDate.setText(UTime.getFormatDate(article.getTimestampUsec()));
+        vDate.setText("发布 | " + UTime.getDateSec(article.getPublished())); // + '=' +  String.valueOf( article.getPublished())
         String author = article.getAuthor();
-        if (author != null && !author.equals("")) {
+        if (author != null && !author.equals("") && article.getOriginTitle().equals(author)) {
             author = article.getOriginTitle() + "@" + article.getAuthor();
         } else {
             author = article.getOriginTitle();
         }
 
-        vFeed.setText(author);
+        vFeed.setText("作者 | " + author);
 
 
         fileNameInMD5 = UString.stringToMD5(articleID);
@@ -443,7 +446,7 @@ public class ArticleActivity extends BaseActivity {
         }
 
         if (!HttpUtil.isWifiEnabled()) {
-            handler.sendEmptyMessage(API.F_Request);
+            artHandler.sendEmptyMessage(API.F_Request);
             return ;}
         String srcBaseUrl = "";
         switch (htmlState){
@@ -567,9 +570,23 @@ public class ArticleActivity extends BaseActivity {
     // 所以此处的 handler 会持有外部类 Activity 的引用，消息队列是在一个Looper线程中不断轮询处理消息。
     // 那么当这个Activity退出时消息队列中还有未处理的消息或者正在处理消息，而消息队列中的Message持有mHandler实例的引用，mHandler又持有Activity的引用，所以导致该Activity的内存资源无法及时回收，引发内存泄漏
 
-    protected Handler handler = new Handler(new Handler.Callback() {
+    private final Handler artHandler = new ArtHandler(this);
+
+    private static class ArtHandler extends Handler {
+        private final WeakReference<ArticleActivity> mActivity;
+        private final Neter mNeter;
+
+        public ArtHandler(ArticleActivity activity) {
+            mActivity = new WeakReference<ArticleActivity>(activity);
+            mNeter = new Neter(this);
+        }
+
         @Override
-        public boolean handleMessage(Message msg) {
+        public void handleMessage(Message msg) {
+            KLog.d(msg);
+            if (mActivity.get() == null) { // 返回引用对象的引用
+                return;
+            }
             String info = msg.getData().getString("res");
             String url = msg.getData().getString("url");
             String filePath ="";
@@ -577,7 +594,7 @@ public class ArticleActivity extends BaseActivity {
             if ( info == null ){
                 info = "";
             }
-            KLog.d("【handler】" +  msg.what + handler + url );
+            KLog.d("【handler】" + msg.what + url);
             switch (msg.what) {
                 case API.S_EDIT_TAG:
                     long logTime = msg.getData().getLong("logTime");
@@ -588,47 +605,47 @@ public class ArticleActivity extends BaseActivity {
                     break;
                 case API.S_ARTICLE_CONTENTS:
                     Parser.instance().parseArticleContents(info);
-                    initData(); // 内容重载
+                    mActivity.get().initData(); // 内容重载
                     break;
                 case API.S_BITMAP:
                     imgNo = msg.getData().getInt("imgNo");
-                    SrcPair imgSrcPair = lossSrcList.get(imgNo);
+                    SrcPair imgSrcPair = mActivity.get().lossSrcList.get(imgNo);
                     if (imgSrcPair == null) {
 //                        KLog.i("【 imgSrc为空 】==");
 //                        UToast.showShort("");
-                        imgSrcPair = obtainSrcList.get(imgNo);
+                        imgSrcPair = mActivity.get().obtainSrcList.get(imgNo);
                     }else {
-                        obtainSrcList.put(imgNo, lossSrcList.get(imgNo) );
-                        lossSrcList.remove(imgNo);
+                        mActivity.get().obtainSrcList.put(imgNo, mActivity.get().lossSrcList.get(imgNo));
+                        mActivity.get().lossSrcList.remove(imgNo);
                     }
-                    KLog.i("【2】" + lossSrcList.size()  + obtainSrcList.get(imgNo)  );
-                    numOfGetImgs = numOfGetImgs + 1;
-                    KLog.i("【 API.S_BITMAP 】" + imgNo + "=" + numOfGetImgs + "--" + numOfImgs);
-                    if( numOfGetImgs >= numOfImgs ) { // || numOfGetImgs % 5 == 0
-                        KLog.i("【图片全部下载完成】" + numOfGetImgs + "=" +  numOfImgs );
-                        webView.clearCache(true);
-                        lossSrcList.clear();
-                        logImgStatus(ExtraImg.DOWNLOAD_OVER);
+                    KLog.i("【2】" + mActivity.get().lossSrcList.size() + mActivity.get().obtainSrcList.get(imgNo));
+                    mActivity.get().numOfGetImgs = mActivity.get().numOfGetImgs + 1;
+                    KLog.i("【 API.S_BITMAP 】" + imgNo + "=" + mActivity.get().numOfGetImgs + "--" + mActivity.get().numOfImgs);
+                    if (mActivity.get().numOfGetImgs >= mActivity.get().numOfImgs) { // || numOfGetImgs % 5 == 0
+                        KLog.i("【图片全部下载完成】" + mActivity.get().numOfGetImgs + "=" + mActivity.get().numOfImgs);
+                        mActivity.get().webView.clearCache(true);
+                        mActivity.get().lossSrcList.clear();
+                        mActivity.get().logImgStatus(ExtraImg.DOWNLOAD_OVER);
                         UToast.showShort("图片全部下载完成");
 //                        webView.notify();
                     }else {
-                        logImgStatus(ExtraImg.DOWNLOAD_ING);
+                        mActivity.get().logImgStatus(ExtraImg.DOWNLOAD_ING);
                     }
                     KLog.i("【1】" + imgSrcPair);
                     if (imgSrcPair != null) {
-                        replaceSrc(imgNo, imgSrcPair.getLocalSrc());
+                        mActivity.get().replaceSrc(imgNo, imgSrcPair.getLocalSrc());
                     }
                     break;
                 case API.F_BITMAP:
                     imgNo = msg.getData().getInt("imgNo");
-                    if (failImgList == null){
-                        failImgList = new SparseIntArray(numOfImgs);
+                    if (mActivity.get().failImgList == null) {
+                        mActivity.get().failImgList = new SparseIntArray(mActivity.get().numOfImgs);
                     }
-                    numOfFailureImg = failImgList.get(imgNo,0);
-                    failImgList.put( imgNo, numOfFailureImg + 1 );
+                    mActivity.get().numOfFailureImg = mActivity.get().failImgList.get(imgNo, 0);
+                    mActivity.get().failImgList.put(imgNo, mActivity.get().numOfFailureImg + 1);
 //                    numOfFailureImg = numOfFailureImg + 1;
-                    KLog.i("【 API.F_BITMAP 】" + imgNo + "=" + numOfFailureImg + "--" + numOfImgs);
-                    if ( numOfFailureImg > numOfFailures ){
+                    KLog.i("【 API.F_BITMAP 】" + imgNo + "=" + mActivity.get().numOfFailureImg + "--" + mActivity.get().numOfImgs);
+                    if (mActivity.get().numOfFailureImg > mActivity.get().numOfFailures) {
                         UToast.showShort( "图片无法下载，请稍候再试" );
                         break;
                     }
@@ -639,12 +656,12 @@ public class ArticleActivity extends BaseActivity {
                 case API.F_Response:
                     if( info.equals("Authorization Required")){
                         UToast.showShort("没有Authorization，请重新登录");
-                        finish();
-                        goTo(LoginActivity.TAG,"Login For Authorization");
+                        mActivity.get().finish();
+                        mActivity.get().goTo(LoginActivity.TAG, "Login For Authorization");
                         break;
                     }
-                    numOfFailure = numOfFailure + 1;
-                    if (numOfFailure < 3){
+                    mActivity.get().numOfFailure = mActivity.get().numOfFailure + 1;
+                    if (mActivity.get().numOfFailure < 3) {
                         mNeter.forData(url,API.request,0);
                         break;
                     }
@@ -653,9 +670,100 @@ public class ArticleActivity extends BaseActivity {
                 case API.F_NoMsg:
                     break;
             }
-            return false;
+//            return false;
         }
-    });
+    }
+
+//
+//    private Handler mmhandler = new Handler(new Handler.Callback() {
+//        @Override
+//        public boolean handleMessage(Message msg) {
+//            String info = msg.getData().getString("res");
+//            String url = msg.getData().getString("url");
+//            String filePath ="";
+//            int imgNo;
+//            if ( info == null ){
+//                info = "";
+//            }
+//            KLog.d("【handler】" +  msg.what + url );
+//            switch (msg.what) {
+//                case API.S_EDIT_TAG:
+//                    long logTime = msg.getData().getLong("logTime");
+//                    if(!info.equals("OK")){
+//                        mNeter.forData(url,API.request,logTime);
+//                        KLog.d("【返回的不是 ok");
+//                    }
+//                    break;
+//                case API.S_ARTICLE_CONTENTS:
+//                    Parser.instance().parseArticleContents(info);
+//                    initData(); // 内容重载
+//                    break;
+//                case API.S_BITMAP:
+//                    imgNo = msg.getData().getInt("imgNo");
+//                    SrcPair imgSrcPair = lossSrcList.get(imgNo);
+//                    if (imgSrcPair == null) {
+////                        KLog.i("【 imgSrc为空 】==");
+////                        UToast.showShort("");
+//                        imgSrcPair = obtainSrcList.get(imgNo);
+//                    }else {
+//                        obtainSrcList.put(imgNo, lossSrcList.get(imgNo) );
+//                        lossSrcList.remove(imgNo);
+//                    }
+//                    KLog.i("【2】" + lossSrcList.size()  + obtainSrcList.get(imgNo)  );
+//                    numOfGetImgs = numOfGetImgs + 1;
+//                    KLog.i("【 API.S_BITMAP 】" + imgNo + "=" + numOfGetImgs + "--" + numOfImgs);
+//                    if( numOfGetImgs >= numOfImgs ) { // || numOfGetImgs % 5 == 0
+//                        KLog.i("【图片全部下载完成】" + numOfGetImgs + "=" +  numOfImgs );
+//                        webView.clearCache(true);
+//                        lossSrcList.clear();
+//                        logImgStatus(ExtraImg.DOWNLOAD_OVER);
+//                        UToast.showShort("图片全部下载完成");
+////                        webView.notify();
+//                    }else {
+//                        logImgStatus(ExtraImg.DOWNLOAD_ING);
+//                    }
+//                    KLog.i("【1】" + imgSrcPair);
+//                    if (imgSrcPair != null) {
+//                        replaceSrc(imgNo, imgSrcPair.getLocalSrc());
+//                    }
+//                    break;
+//                case API.F_BITMAP:
+//                    imgNo = msg.getData().getInt("imgNo");
+//                    if (failImgList == null){
+//                        failImgList = new SparseIntArray(numOfImgs);
+//                    }
+//                    numOfFailureImg = failImgList.get(imgNo,0);
+//                    failImgList.put( imgNo, numOfFailureImg + 1 );
+////                    numOfFailureImg = numOfFailureImg + 1;
+//                    KLog.i("【 API.F_BITMAP 】" + imgNo + "=" + numOfFailureImg + "--" + numOfImgs);
+//                    if ( numOfFailureImg > numOfFailures ){
+//                        UToast.showShort( "图片无法下载，请稍候再试" );
+//                        break;
+//                    }
+//                    filePath = msg.getData().getString("filePath");
+//                    mNeter.loadImg(url, filePath, imgNo);
+//                    break;
+//                case API.F_Request:
+//                case API.F_Response:
+//                    if( info.equals("Authorization Required")){
+//                        UToast.showShort("没有Authorization，请重新登录");
+//                        finish();
+//                        goTo(LoginActivity.TAG,"Login For Authorization");
+//                        break;
+//                    }
+//                    numOfFailure = numOfFailure + 1;
+//                    if (numOfFailure < 3){
+//                        mNeter.forData(url,API.request,0);
+//                        break;
+//                    }
+//                    UToast.showShort("网络不好，中断");
+//                    break;
+//                case API.F_NoMsg:
+//                    break;
+//            }
+//            return false;
+//        }
+//    });
 
 
     /**
@@ -710,6 +818,7 @@ public class ArticleActivity extends BaseActivity {
                 UFile.moveFile(App.boxRelativePath + fileName + ".html", App.storeRelativePath + fileName + ".html");// 移动文件
                 UFile.moveDir(App.boxRelativePath + fileName + "_files", App.storeRelativePath + fileName + "_files");// 移动目录
                 article.setCoverSrc(App.storeAbsolutePath + fileName + "_files" + File.separator + UString.getFileNameExtByUrl(article.getCoverSrc()));
+                WithDB.getInstance().saveArticle(article);
             }
         }else {
             changeStarState(API.ART_UNSTAR);
@@ -722,6 +831,7 @@ public class ArticleActivity extends BaseActivity {
                 UFile.moveFile(App.storeRelativePath + fileName + ".html", App.boxRelativePath + fileName + ".html");// 移动文件
                 UFile.moveDir(App.storeRelativePath + fileName + "_files", App.boxRelativePath + fileName + "_files");// 移动目录
                 article.setCoverSrc(App.boxAbsolutePath + fileName + "_files" + File.separator + UString.getFileNameExtByUrl(article.getCoverSrc()));
+                WithDB.getInstance().saveArticle(article);
             }
         }
     }
@@ -807,9 +917,12 @@ public class ArticleActivity extends BaseActivity {
 
 
     private void saveTobox(String fileNameInMD5, String fileName, String content) {
+        fileName = UString.handleSpecialChar(fileName);
+        article.setTitle(fileName);
+
         String filePath = App.cacheRelativePath + fileNameInMD5;
         String boxHtml = UString.reviseHtmlForBox( content ,fileName ) ;
-        String fileContent = String.format( getResources().getString(R.string.box_html_format), "UTF-8",fileName, article.getCanonical() ,article.getAuthor(), UTime.getFormatDate( article.getCrawlTimeMsec() ),  boxHtml );
+        String fileContent = String.format(getResources().getString(R.string.box_html_format), "UTF-8", fileName, article.getCanonical(), article.getAuthor(), UTime.getDateSec(article.getPublished()), boxHtml);
 //        UFile.saveBoxHtml(  fileName, fileContent  );
 
         // 保存修正后的 html
@@ -823,7 +936,6 @@ public class ArticleActivity extends BaseActivity {
 //        File cacheHtmlfile = new File(sourceFilePath);
 //        cacheHtmlfile.delete();
 
-
         String soureDir = filePath + "_files";
         String targetDir = App.boxRelativePath + fileName + "_files";
         UFile.moveDir( soureDir , targetDir );// 移动文件
@@ -835,9 +947,13 @@ public class ArticleActivity extends BaseActivity {
     }
 
     private void saveToStore(String fileNameInMD5, String fileName, String content) {
+
+        fileName = UString.handleSpecialChar(fileName);
+        article.setTitle(fileName);
+
         String filePath = App.cacheRelativePath + fileNameInMD5;
         String storeHtml = UString.reviseHtmlForBox(content, fileName);
-        String fileContent = String.format(getResources().getString(R.string.box_html_format), "UTF-8", fileName, article.getCanonical(), article.getAuthor(), UTime.getFormatDate(article.getCrawlTimeMsec()), storeHtml);
+        String fileContent = String.format(getResources().getString(R.string.box_html_format), "UTF-8", fileName, article.getCanonical(), article.getAuthor(), UTime.getDateSec(article.getPublished()), storeHtml);
 //        UFile.saveBoxHtml(  fileName, fileContent  );
 
         // 保存修正后的 html

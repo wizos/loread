@@ -337,6 +337,31 @@ public class MainService extends IntentService {
         WithDB.getInstance().delArtAll(allArtsBeforeTime);
     }
 
+    /**
+     * 移动保存了，但是置为已读了的文章至一个新的文件夹
+     */
+//    public void moveArticles() {
+//        long timeMillis = System.currentTimeMillis();
+//        List<Article> allArtsBeforeTime = WithDB.getInstance().loadArtsBeforeTime(timeMillis);
+//        KLog.i("移动" + timeMillis + "--" + allArtsBeforeTime.size() + "--" );
+//
+//        if (allArtsBeforeTime.size() == 0) {
+//            return;
+//        }
+//        ArrayList<String> titleList = new ArrayList<>(allArtsBeforeTime.size());
+//        String fileName;
+//        for (Article article : allArtsBeforeTime) {
+////            titleList.add( article.getTitle() );
+//            fileName = article.getTitle();
+//            UFile.moveFile(App.boxRelativePath + fileName + ".html", App.boxReadRelativePath + fileName + ".html");// 移动文件
+//            UFile.moveDir(App.boxRelativePath + fileName + "_files", App.boxReadRelativePath + fileName + "_files");// 移动目录
+////            article.setCoverSrc(App.boxReadAbsolutePath + fileName + "_files" + File.separator + UString.getFileNameExtByUrl(article.getCoverSrc()));
+//            WithDB.getInstance().saveArticle(article);
+//        }
+//        KLog.i("清除b" + timeMillis + "--" + allArtsBeforeTime.size() + "--" );
+////        UFile.deleteHtmlDirList(idListMD5);
+//        WithDB.getInstance().delArtAll(allArtsBeforeTime);
+//    }
 
     private void sendSuccess() {
         Message message = new Message();
@@ -456,4 +481,39 @@ public class MainService extends IntentService {
     }
 
     private boolean hadSyncLogRequest = true;
+
+//
+//    private ArrayMap<String,ArrayList> imgRecord;
+//    private ArrayMap<Integer,SrcPair> lossSrcList, obtainSrcList ;
+//
+//    public void regImgRecord(String articleID, ExtraImg extraImg ){
+//        ArrayList<ArrayMap> pair = new ArrayList<>(2);
+//        pair.add(lossSrcList);
+//        pair.add(obtainSrcList);
+//        imgRecord.put( articleID, pair );
+//    }
+//
+//    static ExtraImg extraImg = new ExtraImg();
+////    static Article currArticle = new Article();
+//    /**
+//     * 在初次进入 html 获得 imgList 时，记录值 DOWNLOAD_ING。
+//     * 在每次成功下载到图片时，记录 DOWNLOAD_ING。
+//     * 在所有下载完成时，记录 DOWNLOAD_OVER。
+//     * @param imgStatus 有两个值：DOWNLOAD_ING(下载中) 和 DOWNLOAD_OVER(下载完成)
+//     */
+//    private void logImgStatus( String articleID, int imgStatus){
+////        if(extraImg==null){
+////            extraImg = new ExtraImg();
+////        }
+//        extraImg.setImgStatus(imgStatus);
+//        extraImg.setObtainImgs(obtainSrcList);
+//        extraImg.setLossImgs(lossSrcList);
+//        Article article = WithDB.getInstance().getArticle(articleID);
+//        article.setImgState( new Gson().toJson(extraImg) );
+//        WithDB.getInstance().saveArticle( article );
+//        KLog.e("【储存的imgState】" +  new Gson().toJson(extraImg) );
+//        WithDB.getInstance().saveArticle(article);
+//    }
+
+
 }

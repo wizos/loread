@@ -83,7 +83,7 @@ public class MainSlvAdapter extends ArrayAdapter<Article> {
         if (article.getOriginTitle() != null) {
             cvh.articleFeed.setText(Html.fromHtml(article.getOriginTitle()));
         }
-        cvh.articleTime.setText(UTime.getFormatDate(article.getCrawlTimeMsec()));
+        cvh.articleTime.setText(UTime.getDateMSec(article.getCrawlTimeMsec()));
         if ( article.getReadState().equals(API.ART_READ) &  !MainActivity.sListState.equals(API.ART_STAR) ) {
             cvh.articleTitle.setAlpha(0.40f);
             cvh.articleSummary.setAlpha(0.40f);

@@ -22,6 +22,7 @@ import me.wizos.loread.net.API;
 public class App extends Application{
     public static final String DB_NAME = "loread_DB";
     public static String cacheRelativePath,cacheAbsolutePath ,boxRelativePath, boxAbsolutePath, storeRelativePath, storeAbsolutePath ;
+    public static String boxReadRelativePath, storeReadRelativePath;
     public static String logRelativePath,logAbsolutePath;
     public static List<Activity> activities = new ArrayList<>();
     public static long mUserID;
@@ -68,9 +69,11 @@ public class App extends Application{
 
         boxRelativePath = getExternalFilesDir(null) + File.separator + "box" + File.separator;
         boxAbsolutePath = "file:"+ File.separator + File.separator + boxRelativePath;
+        boxReadRelativePath = getExternalFilesDir(null) + File.separator + "boxRead" + File.separator;
 
         storeRelativePath = getExternalFilesDir(null) + File.separator + "store" + File.separator;
         storeAbsolutePath = "file:"+ File.separator + File.separator + storeRelativePath;
+        storeReadRelativePath = getExternalFilesDir(null) + File.separator + "storeRead" + File.separator;
 
         logRelativePath = getExternalFilesDir(null) + File.separator + "log" + File.separator;
         logAbsolutePath = "file:"+ File.separator + File.separator + logRelativePath;

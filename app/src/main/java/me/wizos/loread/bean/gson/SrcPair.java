@@ -32,7 +32,6 @@ public class SrcPair {
     public void setSaveSrc(String saveSrc) {
         this.saveSrc = saveSrc;
     }
-
     public String getLocalSrc() {
         return localSrc;
     }

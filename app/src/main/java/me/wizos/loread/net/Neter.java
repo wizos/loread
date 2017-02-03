@@ -29,7 +29,10 @@ import me.wizos.loread.utils.UString;
  * Created by Wizos on 2016/3/10.
  */
 public class Neter {
-
+    /**
+     * 线程池
+     */
+    private static ExecutorService threadPool = Executors.newFixedThreadPool(10);
     public Handler handler;
 //    private Context context;
 
@@ -38,21 +41,25 @@ public class Neter {
         this.handler = handler;
         this.taskList = new SparseIntArray();
         // 创建线程数
-        this.threadPool = Executors.newFixedThreadPool(10);
+//        this.threadPool = Executors.newFixedThreadPool(10);
     }
-//    private static Neter mNeter;
-//    private Neter(){}
-//    private static Neter i(){
-//        if( mNeter != null ){
-//            return mNeter;
-//        }
-//        synchronized (Neter.class){
-//            if ( mNeter==null ){
-//                mNeter = new Neter();
-//            }
-//        }
-//        return mNeter;
-//    }
+
+    private static Neter mNeter;
+
+    private Neter() {
+    }
+
+    private static Neter i() {
+        if (mNeter != null) {
+            return mNeter;
+        }
+        synchronized (Neter.class) {
+            if (mNeter == null) {
+                mNeter = new Neter();
+            }
+        }
+        return mNeter;
+    }
 
 
     /**
@@ -471,10 +478,7 @@ public class Neter {
      * 保存正在下载或等待下载的URL和相应失败下载次数（初始为0），防止滚动时多次下载
      */
     private SparseIntArray taskList;
-    /**
-     * 线程池
-     */
-    private ExecutorService threadPool;
+
 
     /**
      * 异步下载图片，并按指定宽度和高度压缩图片

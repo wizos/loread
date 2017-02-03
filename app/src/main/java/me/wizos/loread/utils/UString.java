@@ -194,6 +194,12 @@ public class UString {
         return fileExt;
     }
 
+    /**
+     * 从 url 中获取文件名(不含后缀)
+     *
+     * @param url 网址
+     * @return 文件名
+     */
     public static String getFileNameByUrl(String url){
         if(UString.isBlank(url)){
             return null;
@@ -208,26 +214,35 @@ public class UString {
             dotIndex = url.length();
         }
         fileName = url.substring(separatorIndex, dotIndex);
-        fileName = fileName.replace("\\","");
-        fileName = fileName.replace("/","");
-        fileName = fileName.replace(":","");
-        fileName = fileName.replace("*","");
-        fileName = fileName.replace("?","");
-        fileName = fileName.replace("\"","");
-        fileName = fileName.replace("<","");
-        fileName = fileName.replace(">","");
-        fileName = fileName.replace("|","");
-        fileName = fileName.replace("%","_");
+        fileName = handleSpecialChar(fileName );
         KLog.e("【文件名】" + fileName);
         return fileName;
     }
+
+    /**
+     * 从 url 中获取文件名(含后缀)
+     * @param url 网址
+     * @return 文件名
+     */
     public static String getFileNameExtByUrl(String url){
         if(UString.isBlank(url)){
             return null;
         }
         String fileName;
         int separatorIndex = url.lastIndexOf("/") + 1;
-        fileName = url.substring(separatorIndex, url.length() );
+        fileName = url.substring(separatorIndex, url.length());
+        fileName = handleSpecialChar(fileName);
+        KLog.e("【文件名与后缀名】" + fileName);
+        return fileName;
+    }
+
+    /**
+     * 处理文件名中的特殊字符和表情
+     *
+     * @param fileName 文件名
+     * @return 处理后的文件名
+     */
+    public static String handleSpecialChar(String fileName ){
         fileName = fileName.replace("\\","");
         fileName = fileName.replace("/","");
         fileName = fileName.replace(":","");
@@ -238,11 +253,8 @@ public class UString {
         fileName = fileName.replace(">","");
         fileName = fileName.replace("|","");
         fileName = fileName.replace("%","_");
-        KLog.e("【文件名与后缀名】" + fileName);
         return fileName;
     }
-
-
 
 
     public static ArrayList<String[]> asList(String[] array){

@@ -133,8 +133,22 @@ public class UTime {
         return dateYMD.format(date);
     }
 
-    public static String getFormatDate(Long stringDate){
+    public static String getDateMSec(Long stringDate) {
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm",Locale.CHINA);
+        Date date = new Date(stringDate);
+//        Timestamp date = new Timestamp( stringDate );
+        return dateFormat.format(date);
+    }
+
+    public static String getDateSec(Long stringDate) {
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.CHINA);
+        Date date = new Date(stringDate * 1000);
+//        Timestamp date = new Timestamp( stringDate );
+        return dateFormat.format(date);
+    }
+
+    public static String getFormatDateSec(Long stringDate) {
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.CHINA);
         Date date = new Date(stringDate);
         return dateFormat.format(date);
     }

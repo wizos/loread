@@ -11,7 +11,7 @@ android {
         minSdkVersion 21
         targetSdkVersion 23
         versionCode 1
-        versionName "1.1.16"
+        versionName "1.1.18"
     }
     buildTypes {
         release {
@@ -45,7 +45,7 @@ dependencies {
     compile('com.github.afollestad.material-dialogs:core:0.8.5.8@aar') {
         transitive = true
     }
-    //        compile 'com.afollestad.material-dialogs:core:0.9.0.1'
+    //    compile 'com.afollestad.material-dialogs:core:0.9.0.1'
     //    compile 'org.sufficientlysecure:html-textview:1.4'
     //    compile 'org.greenrobot:eventbus:3.0.0'
     // 内存泄漏检测工具
