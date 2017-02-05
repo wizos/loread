@@ -101,9 +101,7 @@ public class UFile {
         if ( destFile.exists() && destFile.getParent()!=null){
             destFile.getParentFile().mkdirs();
         }
-
         return srcFile.renameTo( destFile );
-//        return srcFile.renameTo(new File(destDirName + File.separator + srcFile.getName()));
     }
 
     /**
@@ -113,6 +111,7 @@ public class UFile {
      * @return 目录移动成功返回true，否则返回false
      */
     public static boolean moveDir(String srcDirName, String destDirName) {
+        KLog.d("移动文件夹a");
         File srcDir = new File(srcDirName);
         if(!srcDir.exists() || !srcDir.isDirectory())
             return false;
@@ -120,7 +119,7 @@ public class UFile {
         File destDir = new File(destDirName);
         if(!destDir.exists())
             destDir.mkdirs();
-
+        KLog.d("移动文件夹b");
         /**
          * 如果是文件则移动，否则递归移动文件夹。删除最终的空源文件夹
          * 注意移动文件夹时保持文件夹的树状结构
@@ -172,61 +171,13 @@ public class UFile {
             e.printStackTrace();
         }
     }
-    public static String judgeHtmlPath( String fileNameInMD5, String fileName){
-        File file;
-
-        file = new File(  App.cacheRelativePath + fileNameInMD5  + ".html" );
-        if(file.exists()){
-            return "cache";
-        }
-        file = new File( App.boxRelativePath + fileName + ".html" );
-        if(file.exists()){
-            return "box";
-        }
-        file = new File( App.cacheRelativePath + fileNameInMD5 + File.separator + fileNameInMD5 + ".html" );
-        if(file.exists()){
-            return "cacheFolder";
-        }
-        file = new File( App.cacheRelativePath + fileName + ".html" );
-        if(file.exists()){
-            return "cacheBox";
-        }
-        return null;
-    }
 
 
-    public static ArrayList<String> readHtml( String fileNameInMD5, String fileName){
-        if( !isExternalStorageWritable() ){return null;}
+    public static String readHtml(String dir) {
+        File file = new File(dir);
         String fileContent ="" , temp = "";
-        ArrayList<String> html = new ArrayList<>(2);
-        html.add("");
 
-        // 读取 一级层、有加密的 cacheHtml
         try {
-            File file = new File(  App.cacheRelativePath + fileNameInMD5  + ".html" );
-            html.set(0,"cache");
-            if(!file.exists()){
-                // 读取 一级层、无加密的 boxHtml
-                file = new File( App.boxRelativePath + fileName + ".html");
-                html.set(0,"box");
-                if(!file.exists()){
-                    // 读取 二级层、无加密的 storeHtml
-                    file = new File(App.storeRelativePath + fileName + ".html");
-                    html.set(0, "store");
-                    if(!file.exists()){
-                        return null;
-                    }
-//                    // 读取 一级层、有加密的 cacheHtml （为了兼容版本与数据，暂时这么用着）
-//                    file = new File(  App.cacheRelativePath + fileNameInMD5 + File.separator + fileNameInMD5 + ".html");
-//                    html.set(0,"cacheFolder");
-//                    if(!file.exists()){
-//
-//                    }
-                }
-            }
-
-            KLog.d("【】" + file.toString());
-
             FileReader fileReader = new FileReader(file);
             BufferedReader br = new BufferedReader( fileReader );//一行一行读取 。在电子书程序上经常会用到。
             while(( temp = br.readLine())!= null){
@@ -237,13 +188,94 @@ public class UFile {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        html.add(fileContent);
-        return html;
+        return fileContent;
+    }
+//
+//    public static ArrayList<String> readHtml( String fileNameInMD5, String fileName){
+////        if( !isExternalStorageWritable() ){return null;}
+//        String fileContent ="" , temp = "";
+//        ArrayList<String> html = new ArrayList<>(2);
+//        html.add("");
+//
+//        // 读取 一级层、有加密的 cacheHtml
+//        try {
+//            File file = new File(  App.cacheRelativePath + fileNameInMD5  + ".html" );
+//            html.set(0,"cache");
+//            if(!file.exists()){
+//                // 读取 一级层、无加密的 boxHtml
+//                file = new File( App.boxRelativePath + fileName + ".html");
+//                html.set(0,"box");
+//                if(!file.exists()){
+//                    // 读取 二级层、无加密的 storeHtml
+//                    file = new File(App.storeRelativePath + fileName + ".html");
+//                    html.set(0, "store");
+//                    if(!file.exists()){
+//                        return null;
+//                    }
+//                }
+//            }
+//            KLog.d("【】" + file.toString());
+//
+//            FileReader fileReader = new FileReader(file);
+//            BufferedReader br = new BufferedReader( fileReader );//一行一行读取 。在电子书程序上经常会用到。
+//            while(( temp = br.readLine())!= null){
+//                fileContent += temp+"\r\n";
+//            }
+//            fileReader.close();
+//            br.close();
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
+//        html.add(fileContent);
+//        return html;
+//    }
+
+    public static String getSaveDir(String fileNameInMD5, String fileName) {
+        fileNameInMD5 = UString.stringToMD5(fileNameInMD5);
+        String dir;
+        File file = new File(App.cacheRelativePath + fileNameInMD5 + ".html");
+        dir = "cache";
+        if (!file.exists()) {
+            file = new File(App.boxRelativePath + fileName + ".html");
+            dir = "box";
+            if (!file.exists()) {
+                file = new File(App.storeRelativePath + fileName + ".html");
+                dir = "store";
+                if (!file.exists()) {
+                    return null;
+                }
+            }
+        }
+        return dir;
     }
 
+    public static String getRelativeFile(String dir, String fileNameInMD5, String fileName) {
+        switch (dir) {
+            case "cache":
+                return App.cacheRelativePath + fileNameInMD5 + ".html";
+            case "box":
+                return App.boxRelativePath + fileName + ".html";
+            case "store":
+                return App.storeRelativePath + fileName + ".html";
+            case "boxRead":
+                return App.boxReadRelativePath + fileName + ".html";
+            case "storeRead":
+                return App.storeReadRelativePath + fileName + ".html";
+        }
+        return null;
+    }
 
+    /**
+     * @param dir 目录名称
+     * @return 带有完整的相对路径的 path
+     */
+    public static String getRelativeDir(String dir) {
+        return App.externalFilesDir + dir + File.separator;
+    }
 
-
+    public static String getAbsoluteDir(String dir) {
+        return "file:" + File.separator + File.separator + App.externalFilesDir + dir + File.separator;
+    }
 
     public static android.graphics.Bitmap getBitmap(String filePath){
         if(filePath==null)

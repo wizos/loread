@@ -29,6 +29,7 @@ public class Article {
     private String author;
     private String readState;
     private String starState;
+    private String saveDir;
     private String imgState;
     private String coverSrc;
     private String originStreamId;
@@ -55,7 +56,7 @@ public class Article {
         this.id = id;
     }
 
-    public Article(String id, Long crawlTimeMsec, Long timestampUsec, String categories, String title, Long published, Long updated, String enclosure, String canonical, String alternate, String summary, String author, String readState, String starState, String imgState, String coverSrc, String originStreamId, String originTitle, String originHtmlUrl) {
+    public Article(String id, Long crawlTimeMsec, Long timestampUsec, String categories, String title, Long published, Long updated, String enclosure, String canonical, String alternate, String summary, String author, String readState, String starState, String saveDir, String imgState, String coverSrc, String originStreamId, String originTitle, String originHtmlUrl) {
         this.id = id;
         this.crawlTimeMsec = crawlTimeMsec;
         this.timestampUsec = timestampUsec;
@@ -70,6 +71,7 @@ public class Article {
         this.author = author;
         this.readState = readState;
         this.starState = starState;
+        this.saveDir = saveDir;
         this.imgState = imgState;
         this.coverSrc = coverSrc;
         this.originStreamId = originStreamId;
@@ -195,6 +197,14 @@ public class Article {
 
     public void setStarState(String starState) {
         this.starState = starState;
+    }
+
+    public String getSaveDir() {
+        return saveDir;
+    }
+
+    public void setSaveDir(String saveDir) {
+        this.saveDir = saveDir;
     }
 
     public String getImgState() {

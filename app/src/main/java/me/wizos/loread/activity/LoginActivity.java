@@ -113,7 +113,7 @@ public class LoginActivity extends BaseActivity implements View.OnLayoutChangeLi
                 case API.S_USER_INFO:
                     long mUserID = Parser.instance().parseUserInfo(info);
                     WithSet.getInstance().setUseId(mUserID);
-                    finish();
+                    App.finishActivity(LoginActivity.this);
                     goTo(MainActivity.TAG,"syncAll");
                     break;
                 case API.F_NoMsg:
@@ -183,7 +183,7 @@ public class LoginActivity extends BaseActivity implements View.OnLayoutChangeLi
 
         mNeter.addBody("Email", mAccountID);
         mNeter.addBody("Passwd", mAccountPD);
-        mNeter.post(API.HOST + API.U_CLIENTLOGIN ,0);
+        mNeter.postWithAuth(API.HOST + API.U_CLIENTLOGIN);
         KLog.d("【handler】" + mNeter + "-" );
     }
 

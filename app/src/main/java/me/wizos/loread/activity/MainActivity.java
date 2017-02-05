@@ -35,6 +35,7 @@ import java.util.Map;
 import me.wizos.loread.App;
 import me.wizos.loread.R;
 import me.wizos.loread.bean.Article;
+import me.wizos.loread.data.UpdateDB;
 import me.wizos.loread.data.WithDB;
 import me.wizos.loread.data.WithSet;
 import me.wizos.loread.net.API;
@@ -102,7 +103,7 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         context = this ;
-//        UpdateDB.start(this); // 不会用
+        UpdateDB.start(this); // 不会用
         UFile.setContext(this);
         App.addActivity(this);
 //        mNeter = new Neter(handler,this);
@@ -116,6 +117,7 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
         initColorful();
         initService();
         initData();
+//        updatexx();
 //        KLog.i("【一】" + toolbar.getTitle() );
 //        initLogService();
     }
@@ -148,13 +150,7 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
 
     }
 
-    private void update() {
-        List<Article> art = WithDB.getInstance().loadArtAll();
-        for (Article li : art) {
-            WithDB.getInstance().up(li.getId());
-            KLog.d("开始处理 = " + li.getId());
-        }
-    }
+
 
     protected void readSetting(){
         API.INOREADER_ATUH = WithSet.getInstance().getAuth();
@@ -357,13 +353,41 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
     }
 
 
+//    public boolean updatexx(){
+//        new Thread(new Runnable() {
+//            @Override
+//            public void run() {
+//                List<Article> arts = WithDB.getInstance().loadArtSaveDirIsNull();
+//                if(arts.size()==0){
+//                    return;
+//                }
+//                String htmlState;
+//                for (Article article: arts){
+//                    htmlState = UFile.getSaveDir( article.getId(), article.getTitle() );
+//                    if( htmlState == null ){
+//                        continue;
+//                    }else if (htmlState.equals( API.SAVE_DIR_CACHE)){
+//                        article.setSaveDir( API.SAVE_DIR_CACHE );
+//                    }else if(htmlState.equals( API.SAVE_DIR_BOX )){
+//                        article.setSaveDir( API.SAVE_DIR_BOX );
+//                    } else if (htmlState.equals( API.SAVE_DIR_STORE )) {
+//                        article.setSaveDir( API.SAVE_DIR_STORE );
+//                    }
+//                    WithDB.getInstance().saveArticle( article );
+//                }
+//                mHandler.sendEmptyMessage(1000);
+//            }
+//        }).start();
+////        KLog.d( "升级完成" );
+//        return true;
+//    }
+
     // TEST:
     protected Handler mHandler = new Handler(new Handler.Callback() {
         @Override
         public boolean handleMessage(Message msg) {
             String tips = msg.getData().getString("tips");
             KLog.i("【handler】" + msg.what + "---" + "---");
-
             switch (msg.what) {
                 case API.SUCCESS:
                     mSwipeRefreshLayout.setRefreshing(false);
@@ -380,6 +404,9 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
                     break;
                 case API.PROCESS:
                     vToolbarHint.setText(tips);
+                    break;
+                case 1000:
+                    vToolbarHint.setText("升级完成");
                     break;
             }
             return false;

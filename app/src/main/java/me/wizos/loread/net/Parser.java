@@ -620,6 +620,7 @@ public class Parser {
             article.setOriginStreamId(items.getOrigin().getStreamId());
             article.setOriginHtmlUrl(items.getOrigin().getHtmlUrl());
             article.setOriginTitle(items.getOrigin().getTitle());
+            article.setSaveDir("cache");
 
             KLog.i("【增加文章】" + article.getId());
             html = items.getSummary().getContent();

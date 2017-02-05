@@ -61,6 +61,7 @@ public class API {
     public static final int F_NoMsg = 00;
     public static final int F_Request = 01;
     public static final int F_Response = 02;
+
     public static final int F_BITMAP = 03;
     public static final int FAILURE = 00;
     public static final int SUCCESS = 100;
@@ -137,6 +138,12 @@ public class API {
     public static final String ART_UNREAD = "UnRead"; // 0 未读
     public static final String ART_STAR = "Stared"; // 1
     public static final String ART_UNSTAR = "UnStar"; // 0
+
+    public static final String SAVE_DIR_CACHE = "cache";
+    public static final String SAVE_DIR_BOX = "box";
+    public static final String SAVE_DIR_STORE = "store";
+    public static final String SAVE_DIR_BOXREAD = "boxRead";
+    public static final String SAVE_DIR_STOREREAD = "storeRead";
 
     public static final String LIST_ALL = "%";
     public static final String LIST_STAR = "Stared";

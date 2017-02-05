@@ -11,7 +11,7 @@ public class GreenDaoGenerator {
         // http://www.open-open.com/lib/view/open1438065400878.html
         // 现在创建一个用于添加实体（Entity）的模式（Schema）对象，两个参数分别代表：数据库版本号与自动生成代码的包路径。
 //      如果要分别指定生成的 Bean 与 DAO 类所在的目录，只要：
-        Schema schema = new Schema(1, "me.wizos.loread.bean");
+        Schema schema = new Schema(2, "me.wizos.loread.bean");
         schema.setDefaultJavaPackageDao("me.wizos.loread.data.dao");
 
         // 模式（Schema）同时也拥有两个默认的 flags，分别用来标示 entity 是否是 activie 以及是否使用 keep sections。
@@ -26,6 +26,7 @@ public class GreenDaoGenerator {
         // 其实，输出目录的路径可以在 build.gradle 中设置，有兴趣的朋友可以自行搜索，这里就不再详解。
         new DaoGenerator().generateAll(schema, "app/src/main/java");
     }
+
 
     /**
      * @param schema
@@ -79,6 +80,7 @@ public class GreenDaoGenerator {
         article.addStringProperty("author");
         article.addStringProperty("readState"); // read , unread .reading 保持未读（在读）
         article.addStringProperty("starState"); // star , unstar
+        article.addStringProperty("saveDir");
         article.addStringProperty("imgState"); // ok 代表所有图片下载完成，空就要去加载图片，或者为加载失败的图片src
         article.addStringProperty("coverSrc");
 //        article.addStringProperty("origin");
@@ -98,6 +100,13 @@ public class GreenDaoGenerator {
         tagTofeeds.orderDesc(categoryid);
         // 与在 Java 中使用驼峰命名法不同，默认数据库中的命名是使用大写和下划线来分割单词的。
         // For example, a property called “creationDate” will become a database column “CREATION_DATE”.
+
+//        Entity img = schema.addEntity("Img");
+//        img.addStringProperty("id").notNull().primaryKey();
+//        img.addIntProperty("number");
+//        img.addStringProperty("name");
+//        img.addStringProperty("downState");
+
     }
 
     private static void addRequestLog(Schema schema) {

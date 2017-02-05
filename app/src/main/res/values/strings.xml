@@ -104,4 +104,9 @@
     <string name="font_main">&#xe60c;</string>
     <string name="font_tag_class">&#xe7c4;</string>
 
+
+    <string name="article_activity_author_format">作者 | %1$s</string>
+    <string name="article_activity_time_format">发布 | %1$s</string>
+
+
 </resources>

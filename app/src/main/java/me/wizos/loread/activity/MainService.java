@@ -12,6 +12,7 @@ import android.support.v4.util.ArrayMap;
 
 import com.socks.library.KLog;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -26,7 +27,6 @@ import me.wizos.loread.data.WithSet;
 import me.wizos.loread.net.API;
 import me.wizos.loread.net.Neter;
 import me.wizos.loread.net.Parser;
-import me.wizos.loread.net.Record;
 import me.wizos.loread.utils.UFile;
 import me.wizos.loread.utils.UString;
 import me.wizos.loread.utils.UToast;
@@ -47,13 +47,47 @@ public class MainService extends IntentService {
     private Handler sHandler; // ChildHandler
     private Handler mUIHandler = new Handler(Looper.getMainLooper());
 
-    // 使用 startService(intent); 多次启动IntentService，但IntentService的实例只有一个，这跟传统的Service是一样的，最终IntentService会去调用onHandleIntent执行异步任务。这里可能我们还会担心for循环去启动任务，而实例又只有一个，那么任务会不会被覆盖掉呢？其实是不会的，因为IntentService真正执行异步任务的是HandlerThread+Handler
 
+    @Override
+    public void onCreate() {
+        super.onCreate();
+        sHandler = new Handler(Looper.myLooper(), new ChildCallback());
+        mNeter = new Neter(sHandler);
+
+        mNeter.setReord(recorder);
+        requestMap = new ArrayMap<>();
+    }
+
+    @Override
+    protected void onHandleIntent(Intent intent) {
+        if (intent == null) {
+            return;
+        }
+
+        String action = intent.getAction();
+        if (action.equals("syncAllStarred")) {
+            syncAllStarred();
+        } else if (action.equals("unreadArticle")) {
+            mNeter.postUnReadArticle(intent.getExtras().getString("articleId"));
+        } else if (action.equals("readedArticle")) {
+            mNeter.postReadArticle(intent.getExtras().getString("articleId"));
+        } else {
+            refresh();
+        }
+        int result = intent.getFlags();
+//        String info = intent.getStringExtra("res");
+//        String url = intent.getStringExtra("url");
+//        KLog.d("开始处理 = 内容：" + info);
+//        KLog.d("开始处理 = url：" + url);
+        KLog.d("开始处理 = 结果：" + result);
+    }
+
+    // 使用 startService(intent); 多次启动IntentService，但IntentService的实例只有一个，这跟传统的Service是一样的，最终IntentService会去调用onHandleIntent执行异步任务。这里可能我们还会担心for循环去启动任务，而实例又只有一个，那么任务会不会被覆盖掉呢？其实是不会的，因为IntentService真正执行异步任务的是HandlerThread+Handler
     public ServiceBinder mBinder = new ServiceBinder(); /* 数据通信的桥梁 */
 
     /* 第一种模式通信：Binder */
     public class ServiceBinder extends Binder {
-        public MainService getService() {
+        MainService getService() {
             return MainService.this;
         }
     }
@@ -74,12 +108,6 @@ public class MainService extends IntentService {
         sHandler.sendEmptyMessage(API.S_STREAM_CONTENTS_STARRED);
     }
 
-    private Record recorder = new Record() {
-        @Override
-        public void log(Object entry) {
-
-        }
-    };
 
     /* 重写Binder的onBind函数，返回派生类 */
     @Override
@@ -118,10 +146,8 @@ public class MainService extends IntentService {
     class ChildCallback implements Handler.Callback {
         @Override
         public boolean handleMessage(Message msg) {
-
             String info = msg.getData().getString("res");
             String url = msg.getData().getString("url");
-//            KLog.d("开始处理 = 内容：" + info);
             KLog.d("开始处理 = url：" + url);
             KLog.d("开始处理 = 结果：" + msg.what);
 
@@ -135,6 +161,8 @@ public class MainService extends IntentService {
                     if (syncRequestLog()) {
                         break;
                     }
+//                    sHandler.sendEmptyMessage(API.SUCCESS);
+
                     // 为了得到分组名，及排序
                     // updateTip，updateView，updateData
                     sendProcess(getResources().getString(R.string.main_toolbar_hint_sync_tag));
@@ -156,7 +184,6 @@ public class MainService extends IntentService {
                 case API.S_SUBSCRIPTION_LIST: // 订阅列表
                     ArrayList<Sub> subs = Parser.instance().parseSubscriptionList(info);
                     Parser.instance().updateArticles(subs);
-//                    sendSuccess();
                     break;
                 case API.S_STREAM_PREFS:
                     Parser.instance().parseStreamPrefList(info, App.mUserID);
@@ -247,7 +274,6 @@ public class MainService extends IntentService {
                             urlState = 3;
                         } else if (urlState == 3) {
                             urlState = 0;
-//                            sendSuccess();
                             sHandler.sendEmptyMessage(API.SUCCESS);
                             return false;
                         }
@@ -291,7 +317,9 @@ public class MainService extends IntentService {
                 case API.F_Response:
                     if (info.equals("Authorization Required")) {
                         UToast.showShort("没有Authorization，请重新登录");
-                        startActivity(new Intent(MainService.this, LoginActivity.class));
+                        Intent loginIntent = new Intent(MainService.this, LoginActivity.class);
+                        loginIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                        startActivity(loginIntent);
                         break;
                     }
                     numOfFailure = numOfFailure + 1;
@@ -302,14 +330,18 @@ public class MainService extends IntentService {
                     }
                     sHandler.sendEmptyMessage(API.F_NoMsg);
                     getNumForArts = 0;
-                    saveRequestLog(msg.getData().getLong("logTime"));
                     break;
                 case API.F_NoMsg:
                     sendFailure();
+                    if (url != null && url.contains(API.U_ARTICLE_CONTENTS)) {
+                        UToast.showShort("修改该文章的状态失败");
+                        saveRequestLog(msg.getData().getLong("logTime"));
+                    }
                     getNumForArts = 0;
                     break;
                 case API.SUCCESS: // 文章获取完成
                     sendSuccess();
+                    moveArticles();
                     clearArticles(WithSet.getInstance().getClearBeforeDay());
                     getNumForArts = 0;
                     break;
@@ -322,7 +354,7 @@ public class MainService extends IntentService {
     public void clearArticles(int days) {
         long clearTime = System.currentTimeMillis() - days * 24 * 3600 * 1000L;
         List<Article> allArtsBeforeTime = WithDB.getInstance().loadArtsBeforeTime(clearTime);
-        KLog.i("清除a" + clearTime + "--" + allArtsBeforeTime.size() + "--" + days);
+        KLog.i("清除" + clearTime + "--" + allArtsBeforeTime.size() + "--" + days);
         UToast.showShort("清除 " + days + " 天前的 " + allArtsBeforeTime.size() + " 篇文章");
 
         if (allArtsBeforeTime.size() == 0) {
@@ -338,30 +370,32 @@ public class MainService extends IntentService {
     }
 
     /**
-     * 移动保存了，但是置为已读了的文章至一个新的文件夹
+     * 移动“保存且已读”的文章至一个新的文件夹
      */
-//    public void moveArticles() {
-//        long timeMillis = System.currentTimeMillis();
-//        List<Article> allArtsBeforeTime = WithDB.getInstance().loadArtsBeforeTime(timeMillis);
-//        KLog.i("移动" + timeMillis + "--" + allArtsBeforeTime.size() + "--" );
-//
-//        if (allArtsBeforeTime.size() == 0) {
-//            return;
-//        }
-//        ArrayList<String> titleList = new ArrayList<>(allArtsBeforeTime.size());
-//        String fileName;
-//        for (Article article : allArtsBeforeTime) {
-////            titleList.add( article.getTitle() );
-//            fileName = article.getTitle();
-//            UFile.moveFile(App.boxRelativePath + fileName + ".html", App.boxReadRelativePath + fileName + ".html");// 移动文件
-//            UFile.moveDir(App.boxRelativePath + fileName + "_files", App.boxReadRelativePath + fileName + "_files");// 移动目录
-////            article.setCoverSrc(App.boxReadAbsolutePath + fileName + "_files" + File.separator + UString.getFileNameExtByUrl(article.getCoverSrc()));
-//            WithDB.getInstance().saveArticle(article);
-//        }
-//        KLog.i("清除b" + timeMillis + "--" + allArtsBeforeTime.size() + "--" );
-////        UFile.deleteHtmlDirList(idListMD5);
-//        WithDB.getInstance().delArtAll(allArtsBeforeTime);
-//    }
+    public void moveArticles() {
+        List<Article> boxReadArts = WithDB.getInstance().loadArtsSavedBox();
+        List<Article> storeReadArts = WithDB.getInstance().loadArtsSavedStore();
+        KLog.i("移动文章" + boxReadArts.size() + "=" + storeReadArts.size());
+
+        for (Article article : boxReadArts) {
+            UFile.moveFile(App.boxRelativePath + article.getTitle() + ".html", App.boxReadRelativePath + article.getTitle() + ".html");// 移动文件
+            UFile.moveDir(App.boxRelativePath + article.getTitle() + "_files", App.boxReadRelativePath + article.getTitle() + "_files");// 移动目录
+            article.setCoverSrc(UFile.getAbsoluteDir("boxRead") + article.getTitle() + "_files" + File.separator + UString.getFileNameExtByUrl(article.getCoverSrc()));
+            article.setSaveDir("boxRead");
+            KLog.i("移动了A");
+        }
+        WithDB.getInstance().saveArticleList(boxReadArts);
+        for (Article article : storeReadArts) {
+            UFile.moveFile(App.storeRelativePath + article.getTitle() + ".html", App.storeReadRelativePath + article.getTitle() + ".html");// 移动文件
+            UFile.moveDir(App.storeRelativePath + article.getTitle() + "_files", App.storeReadRelativePath + article.getTitle() + "_files");// 移动目录
+            article.setCoverSrc(UFile.getAbsoluteDir("storeRead") + article.getTitle() + "_files" + File.separator + UString.getFileNameExtByUrl(article.getCoverSrc()));
+            article.setSaveDir("storeRead");
+            KLog.i("移动了B" + App.storeRelativePath + article.getTitle() + "_files |||| " + App.storeReadRelativePath + article.getTitle() + "_files");
+        }
+        WithDB.getInstance().saveArticleList(storeReadArts);
+    }
+
+
 
     private void sendSuccess() {
         Message message = new Message();
@@ -390,45 +424,13 @@ public class MainService extends IntentService {
         mHandler.sendMessage(message);
     }
 
-    @Override
-    public void onCreate() {
-        super.onCreate();
-        sHandler = new Handler(Looper.myLooper(), new ChildCallback());
-        mNeter = new Neter(sHandler);
-        mNeter.setReord(recorder);
-    }
 
-    @Override
-    protected void onHandleIntent(Intent intent) {
-        if (intent == null) {
-            return;
-        }
-
-        String action = intent.getAction();
-        if (action.equals("syncAllStarred")) {
-            syncAllStarred();
-        } else if (action.equals("unreadArticle")) {
-            mNeter.postUnReadArticle(intent.getExtras().getString("articleId"));
-        } else if (action.equals("readedArticle")) {
-            mNeter.postReadArticle(intent.getExtras().getString("articleId"));
-        } else {
-            refresh();
-        }
-        int result = intent.getFlags();
-//        String info = intent.getStringExtra("res");
-//        String url = intent.getStringExtra("url");
-//        KLog.d("开始处理 = 内容：" + info);
-//        KLog.d("开始处理 = url：" + url);
-        KLog.d("开始处理 = 结果：" + result);
-    }
-
-
-    private ArrayMap<Long, RequestLog> requestMap = new ArrayMap<>();
-    //    Neter.RequestLogger<RequestLog> loger;
-    Record<RequestLog> myRequestRecord = new Record<RequestLog>() {
+    private ArrayMap<Long, RequestLog> requestMap;
+    private Neter.Record<RequestLog> recorder = new Neter.Record<RequestLog>() {
         @Override
         public void log(RequestLog entry) {
-            if (!entry.getHeadParamString().contains("c=")) {
+            KLog.d(" 记录 log");
+            if (entry.getHeadParamString() != null && !entry.getHeadParamString().contains("c=")) {
                 requestMap.put(entry.getLogTime(), entry);
             }
         }
@@ -443,10 +445,11 @@ public class MainService extends IntentService {
     }
 
     private void saveRequestLog(long logTime) {
+        KLog.i("【saveRequest1】");
         if (requestMap == null) {
             return;
         }
-        KLog.i("【saveRequest】");
+        KLog.i("【saveRequest2】" + requestMap.get(logTime));
         WithDB.getInstance().saveRequestLog(requestMap.get(logTime));
     }
 
@@ -471,7 +474,7 @@ public class MainService extends IntentService {
             mNeter.addBody(UString.formStringToParamList(bodyParamString));
             KLog.d("同步错误：" + headParamString + " = " + bodyParamString);
             if (requestLog.getMethod().equals("post")) {
-                mNeter.postCallback(requestLog.getUrl(), requestLog.getLogTime());
+                mNeter.postWithAuth(requestLog.getUrl(), requestLog.getLogTime());
             }
         }
         WithDB.getInstance().delRequestListAll();  // TODO: 2016/10/20 不能先删除，可能删除后，手机退出，那么这些记录就丢失了

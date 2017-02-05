@@ -81,7 +81,8 @@ public class WithDB {
             articleDao.insertOrReplace(article);
         }
     }
-    public void saveArticleList(ArrayList<Article> articleList) {
+
+    public void saveArticleList(List<Article> articleList) {
         if (articleList.size() != 0) { // new fetch
             articleDao.insertOrReplaceInTx(articleList);
         }
@@ -97,22 +98,8 @@ public class WithDB {
 //            return null;
 //        }
 //    }
-    public void up(String id) {
-        String newid = "";
-        newid = id.replace("tag:google.com,2005:reader/item/0000000", "tag:google.com,2005:reader/item/00000000");
-        KLog.d(" = " + newid);
-        App.getDaoSession().getDatabase().execSQL("update Article set id=\"" + newid + "\"" + "where id=\"" + id + "\"");
-    }
 
-    //    public Article getArticle(String articleId) {
-//        articleId = articleId.substring( articleId.length()- 34,articleId.length());
-//        List<Article> articles = articleDao.queryBuilder().where(ArticleDao.Properties.Id.like( "%" + articleId) ).list();
-//        if ( articles.size() != 0) {
-//            return articles.get(0);
-//        }else {
-//            return null;
-//        }
-//    }
+
     public Article getArticle(String articleId) {
 //        if (articleID == null) {return null;}
         List<Article> articles = articleDao.queryBuilder().where(ArticleDao.Properties.Id.eq(articleId)).list();
@@ -183,16 +170,24 @@ public class WithDB {
     }
 
    public List<Article> loadArtsBeforeTime(long time){
-       App.getDaoSession().getFeedDao().queryBuilder().list();
        QueryBuilder<Article> q = articleDao.queryBuilder();
        q.where(q.and(ArticleDao.Properties.ReadState.eq(API.ART_READ), ArticleDao.Properties.StarState.eq(API.ART_UNSTAR), ArticleDao.Properties.CrawlTimeMsec.lt(time)));
-       q.list();
-//       Query query = articleDao.queryBuilder()
-//               .where(ArticleDao.Properties.ReadState.eq(API.ART_READ), ArticleDao.Properties.StarState.eq(API.ART_UNSTAR), ArticleDao.Properties.CrawlTimeMsec.lt(time)) /** Creates an "less than ('<')" condition  for this property. */
-//               .build();
-//       List<Article> articleList = query.list();
+//       q.list();
        return q.listLazy();
    }
+
+    public List<Article> loadArtsSavedBox() {
+        QueryBuilder<Article> q = articleDao.queryBuilder()
+                .where(ArticleDao.Properties.ReadState.eq(API.ART_READ), ArticleDao.Properties.SaveDir.eq(API.SAVE_DIR_BOX));
+//        q.list();
+        return q.list();
+    }
+
+    public List<Article> loadArtsSavedStore() {
+        QueryBuilder<Article> q = articleDao.queryBuilder()
+                .where(ArticleDao.Properties.ReadState.eq(API.ART_READ), ArticleDao.Properties.SaveDir.eq(API.SAVE_DIR_STORE));
+        return q.list();
+    }
 
     public List<Article> loadTagRead(String readState, String listTag){
         long xx = System.currentTimeMillis();
@@ -218,13 +213,19 @@ public class WithDB {
         return articleList;
     }
     public List<Article> loadArtAll(){ // 速度比要排序的全文更快
-        long xx = System.currentTimeMillis();
-        List<Article> articleList = articleDao.loadAll();
-        KLog.d("【加载所有文章无排序】用时" + (System.currentTimeMillis() - xx) +"--" +articleList.size());
+//        long xx = System.currentTimeMillis();
+//        List<Article> articleList = articleDao.loadAll();
+//        KLog.d("【加载所有文章无排序】用时" + (System.currentTimeMillis() - xx) +"--" +articleList.size());
         // 1473-45,1473-44,1523-67, 1527-155, 1527-49, 29--1527 , 59--1527,57--1527,65--1527,79--1527
-        return articleList;
+        return articleDao.loadAll();
     }
 
+    public List<Article> loadArtSaveDirIsNull() { // 速度比要排序的全文更快
+        Query query = articleDao.queryBuilder()
+                .where(ArticleDao.Properties.SaveDir.isNull()) /** Creates an "equal ('=')" condition  for this property. */
+                .build();
+        return query.list();
+    }
     public List<Article> loadArtAllOrder(){
         long xx = System.currentTimeMillis();
         Query query = articleDao.queryBuilder()

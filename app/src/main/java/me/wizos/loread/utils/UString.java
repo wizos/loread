@@ -287,39 +287,6 @@ public class UString {
     }
 
 
-//    public interface Con<V>{
-//        Object inputKey(V key);
-//    }
-//    public static <K,V> List<V> mapToList(Map<K,V> map){
-//        ArrayList<V> list = new ArrayList<>(map.size());
-//        for( Map.Entry<K,V> entry: map.entrySet()) {
-//            list.add(entry.getValue());
-//        }
-//        return list;
-//    }
-//    public static <V> Map<Object,V> listToMap(ArrayList<V> arrayList, Con<? super V> con){
-//        Map<Object,V> map = new HashMap<>(arrayList.size());
-//        for(V item:arrayList){
-//            map.put(con.inputKey(item),item);
-//        }
-//        return map;
-//    }
-
-
-//    public static String beanListSort(ArrayList<Tag> list){
-//        int listSize = list.size()-1;
-//        for(int i=0; i<listSize; i++){
-//            char[] chars1 = list.get(i).getTitle().toCharArray();
-//            char[] chars2 = list.get(i+1).getTitle().toCharArray();
-//            int x =0, y=0;
-//            while (chars1[x]>=chars2[x]){
-//                if(chars1[x]==chars2[x]){
-//                    x = x + 1;
-//                }
-//            }
-//        }
-//    }
-
 
 
     public static ArrayList<String[]> formStringToParamList(String paramString){
@@ -340,10 +307,10 @@ public class UString {
 
     public static String formParamListToString(ArrayList<String[]> paramList){
         if( paramList==null){
-            return null;
+            return "";
         }
         if(paramList.size()==0){
-            return null;
+            return "";
         }
         StringBuilder sb = new StringBuilder("");
         for( String[] paramPair:paramList){
@@ -351,20 +318,6 @@ public class UString {
         }
         sb.deleteCharAt(sb.length() - 1);
         return sb.toString();
-    }
-
-    public static String sort(String str){
-        char[] charArray = str.toCharArray();
-        for(int i=0;i<charArray.length;i++){
-            for(int j=0;j<i;j++){
-                if(charArray[i]<charArray[j]){
-                    char temp = charArray[i];
-                    charArray[i] = charArray[j];
-                    charArray[j] = temp;
-                }
-            }
-        }
-        return String.valueOf(charArray);
     }
 
 

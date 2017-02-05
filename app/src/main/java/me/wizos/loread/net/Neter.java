@@ -115,16 +115,16 @@ public class Neter {
         postWithAuthLog( API.HOST + API.U_ARTICLE_CONTENTS);
     }
     public void postUnReadArticle( String articleID ){
+        KLog.d("【post】1记录 " + headParamList.size());
         addBody("r", "user/-/state/com.google/read");
         addBody("i", articleID);
         postWithAuthLog( API.HOST + API.U_EDIT_TAG);
-        KLog.d("【post】1记录 "+ headParamList.size());
     }
     public void postReadArticle( String articleID ){
+        KLog.d("【post】2记录 " + headParamList.size());
         addBody("a", "user/-/state/com.google/read");
         addBody("i", articleID);
         postWithAuthLog( API.HOST + API.U_EDIT_TAG);
-        KLog.d("【post】2记录 "+ headParamList.size());
     }
     public void postUnStarArticle( String articleID ){
         addBody("r", "user/-/state/com.google/starred");
@@ -141,61 +141,51 @@ public class Neter {
 
     public void getWithAuth(String url) {
         KLog.d("【执行 getWithAuth 】" + url);
-        if (!HttpUtil.isNetworkEnabled()) {
-            headParamList.clear();
-//            headersMap.clear();
-            handler.sendEmptyMessage(API.F_NoMsg);
-            return;}
-
-        Request.Builder builder = new Request.Builder();
+//        if (!HttpUtil.isNetworkEnabled()) {
+//            headParamList.clear();
+//            handler.sendEmptyMessage(API.F_NoMsg);
+//            return;}
         String paraString = "?";
         for ( String[] param : headParamList) {
             paraString = paraString + param[0] + "=" + param[1] + "&";
         }
         headParamList.clear(); // headParamList = new ArrayList<>();
 
-
         if (paraString.equals("?")) {
             paraString = "";
         }
         url = url + paraString;
-        builder.url(url)
+
+        Request request = new Request.Builder().url(url)
                 .addHeader("AppId", API.INOREADER_APP_ID)
-                .addHeader("AppKey", API.INOREADER_APP_KEY);
-        builder.addHeader("Authorization", API.INOREADER_ATUH);
-        Request request = builder.build();
+                .addHeader("AppKey", API.INOREADER_APP_KEY)
+                .addHeader("Authorization", API.INOREADER_ATUH)
+                .build();
         forData(url, request,0);
     }
 
-    public void postWithAuthLog(final String url) {
-        addHeader("AppId", API.INOREADER_APP_ID);
-        addHeader("AppKey", API.INOREADER_APP_KEY);
-        addHeader("Authorization", API.INOREADER_ATUH);
+    private void postWithAuthLog(final String url) {
         long logTime = System.currentTimeMillis();
-
 //        if(requestlogger!=null){
 //            requestlogger.logRequest( toRequest( API.HOST + API.U_EDIT_TAG, "post", logTime, headParamList, bodyParamList) );
 //        }
         if (record != null) {
             record.log(toRequest(API.HOST + API.U_EDIT_TAG, "post", logTime, headParamList, bodyParamList));
         }
-        post(url,logTime);
+        postWithAuth(url, logTime);
     }
     public void postWithAuth(final String url) {
-        addHeader("AppId", API.INOREADER_APP_ID);
-        addHeader("AppKey", API.INOREADER_APP_KEY);
-        addHeader("Authorization", API.INOREADER_ATUH);
-        post(url,System.currentTimeMillis());
+        postWithAuth(url, 0);
     }
-    public void post( String url, long logTime) { // just for login
+
+    public void postWithAuth(String url, long logTime) { // just for login
         KLog.d("【执行 = " + url + "】");
-        if (!HttpUtil.isNetworkEnabled()) {
-            headParamList.clear();
-            bodyParamList.clear();
-//            headersMap.clear();
-//            bodyParamsMap.clear();
-            handler.sendEmptyMessage(API.F_NoMsg);
-            return;}
+//        if (!HttpUtil.isNetworkEnabled()) {
+//            headParamList.clear();
+//            bodyParamList.clear();
+//            handler.sendEmptyMessage(API.F_NoMsg);
+//            return;}
+
         // 构建请求头
         Request.Builder headBuilder = new Request.Builder().url(url);
         for ( String[] param : headParamList) {
@@ -203,11 +193,9 @@ public class Neter {
             headBuilder.addHeader( param[0], param[1] );
         }
         headParamList.clear();
-//        for( Map.Entry<String,String> entry : headersMap.entrySet() ){
-//            KLog.d( entry.getKey() + entry.getValue() );
-//            headBuilder.addHeader( entry.getKey(), entry.getValue() );
-//        }
-//        headersMap.clear();
+        headBuilder.addHeader("AppId", API.INOREADER_APP_ID);
+        headBuilder.addHeader("AppKey", API.INOREADER_APP_KEY);
+        headBuilder.addHeader("Authorization", API.INOREADER_ATUH);
 
         KLog.d("----");
         // 构建请求体
@@ -218,69 +206,63 @@ public class Neter {
         }
         bodyParamList.clear();
 
-//        for( Map.Entry<String,String> entry : bodyParamsMap.entrySet() ){
-//            KLog.d( entry.getKey() + entry.getValue() );
-//            headBuilder.addHeader( entry.getKey(), entry.getValue() );
-//        }
-//        bodyParamsMap.clear();
-
-
         RequestBody body = bodyBuilder.build();
         Request request = headBuilder.post(body).build();
         forData(url, request, logTime);
     }
 
-
-    public void forDatax(final String url, final Request request, final long logTime) {
-        if (!HttpUtil.isNetworkEnabled()) {
-            handler.sendEmptyMessage(API.F_NoMsg);
-            return ;}
-        KLog.d("【开始请求】 "+ logTime + "--" + url);
-
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                HttpUtil.enqueue(request, new Callback() {
-                    @Override
-                    public void onFailure(Request request, IOException e) {
-                        KLog.d("【请求失败】" + url );
-                        API.request = request;
-                        makeMsg(API.F_Request, url, "noRequest",logTime);
-                    }
-                    @Override
-                    public void onResponse(Response response) throws IOException {
-                        if (!response.isSuccessful()) {
-                            KLog.d("【响应失败】" + response.message() + response.body().string());
-                            API.request = request;
-                            makeMsg(API.F_Response, url, response.message(),logTime);
-                            return;
-                        }
-                        try {
-                            String res = response.body().string();
-                            KLog.d("【forData】" + res.length());
-                            makeMsg( API.url2int(url), url, res,logTime);
-                        }catch (IOException e){
-                            KLog.d("【超时】");
-                            API.request = request;
-                            makeMsg( API.F_Response, url, response.message(), logTime);
-                            e.printStackTrace();
-                            response.body().close();
-                        }
-//                        catch (SocketTimeoutException e) {
+//
+//    public void forDatax(final String url, final Request request, final long logTime) {
+//        if (!HttpUtil.isNetworkEnabled()) {
+//            handler.sendEmptyMessage(API.F_NoMsg);
+//            return ;}
+//        KLog.d("【开始请求】 "+ logTime + "--" + url);
+//
+//        new Thread(new Runnable() {
+//            @Override
+//            public void run() {
+//                HttpUtil.enqueue(request, new Callback() {
+//                    @Override
+//                    public void onFailure(Request request, IOException e) {
+//                        KLog.d("【请求失败】" + url );
+//                        API.request = request;
+//                        makeMsg(API.F_Request, url, "noRequest",logTime);
+//                    }
+//                    @Override
+//                    public void onResponse(Response response) throws IOException {
+//                        if (!response.isSuccessful()) {
+//                            KLog.d("【响应失败】" + response.message() + response.body().string());
+//                            API.request = request;
+//                            makeMsg(API.F_Response, url, response.message(),logTime);
+//                            return;
+//                        }
+//                        try {
+//                            String res = response.body().string();
+//                            KLog.d("【forData】" + res.length());
+//                            makeMsg( API.url2int(url), url, res,logTime);
+//                        }catch (IOException e){
 //                            KLog.d("【超时】");
 //                            API.request = request;
-//                            makeMsg(url, "noResponse", logTime);
+//                            makeMsg( API.F_Response, url, response.message(), logTime);
 //                            e.printStackTrace();
+//                            response.body().close();
 //                        }
-                    }
-                });
-            }
-        }).start();
-    }
+////                        catch (SocketTimeoutException e) {
+////                            KLog.d("【超时】");
+////                            API.request = request;
+////                            makeMsg(url, "noResponse", logTime);
+////                            e.printStackTrace();
+////                        }
+//                    }
+//                });
+//            }
+//        }).start();
+//    }
 
     public void forData(final String url, final Request request, final long logTime) {
         if (!HttpUtil.isNetworkEnabled()) {
-            handler.sendEmptyMessage(API.F_NoMsg);
+//            handler.sendEmptyMessage(API.F_NoMsg);
+            makeMsg(API.F_NoMsg, url, "noNet", logTime);
             return;
         }
         KLog.d("【开始请求】 " + logTime + "--" + url);
@@ -305,7 +287,7 @@ public class Neter {
                     String res = response.body().string();
                     KLog.d("【forData】" + res.length());
                     makeMsg(API.url2int(url), url, res, logTime);
-                } catch (IOException e) {
+                } catch (Exception e) {
                     KLog.d("【超时】");
                     API.request = request;
                     makeMsg(API.F_Response, url, response.message(), logTime);
@@ -317,73 +299,73 @@ public class Neter {
     }
 
 
-
-    public void postCallback( String urlx, final long logTime) { // just for login
-        KLog.d("【执行 = " + urlx + "】");
-        if (!HttpUtil.isNetworkEnabled()) {
-            headParamList.clear();
-            bodyParamList.clear();
-            handler.sendEmptyMessage(API.F_NoMsg);
-            return;}
-
-        // 构建请求头
-        Request.Builder headBuilder = new Request.Builder().url(urlx);
-        for ( String[] param : headParamList) {
-            KLog.d(param[0] + param[1]);
-            headBuilder.addHeader( param[0], param[1] );
-        }
-        headParamList.clear();
-
-        KLog.d("----");
-        // 构建请求体
-        FormEncodingBuilder bodyBuilder = new FormEncodingBuilder();
-        for ( String[] param : bodyParamList ) {
-            bodyBuilder.add( param[0], param[1] );
-            KLog.d(param[0] + param[1]);
-        }
-        bodyParamList.clear();
-
-
-        RequestBody body = bodyBuilder.build();
-        final Request request = headBuilder.post(body).build();
-        KLog.d("【开始请求离线数据】 "+ logTime + "--" + urlx);
-
-        final String url = urlx;
-
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                HttpUtil.enqueue(request, new Callback() {
-                    @Override
-                    public void onFailure(Request request, IOException e) {
-                        KLog.d("【请求失败2】" + url );
-                        API.request = request;
-                        makeMsg(API.F_Request, url, "noRequest",logTime);
-                    }
-                    @Override
-                    public void onResponse(Response response) throws IOException {
-                        if (!response.isSuccessful()) {
-                            KLog.d("【响应失败2】" + response.message() + response.body().string());
-                            API.request = request;
-                            makeMsg(API.F_Response, url, response.message(),logTime);
-                            return;
-                        }
-                        try {
-                            String res = response.body().string();
-                            KLog.d("【forData2】" + res.length());
-                            handler.sendEmptyMessage(API.M_BEGIN_SYNC);
-                        }catch (IOException e){
-                            KLog.d("【超时2】");
-                            API.request = request;
-                            makeMsg( API.F_Response, url, response.message(), logTime);
-                            e.printStackTrace();
-                            response.body().close();
-                        }
-                    }
-                });
-            }
-        }).start();
-    }
+//
+//    public void postCallback( String urlx, final long logTime) { // just for login
+//        KLog.d("【执行 = " + urlx + "】");
+//        if (!HttpUtil.isNetworkEnabled()) {
+//            headParamList.clear();
+//            bodyParamList.clear();
+//            handler.sendEmptyMessage(API.F_NoMsg);
+//            return;}
+//
+//        // 构建请求头
+//        Request.Builder headBuilder = new Request.Builder().url(urlx);
+//        for ( String[] param : headParamList) {
+//            KLog.d(param[0] + param[1]);
+//            headBuilder.addHeader( param[0], param[1] );
+//        }
+//        headParamList.clear();
+//
+//        KLog.d("----");
+//        // 构建请求体
+//        FormEncodingBuilder bodyBuilder = new FormEncodingBuilder();
+//        for ( String[] param : bodyParamList ) {
+//            bodyBuilder.add( param[0], param[1] );
+//            KLog.d(param[0] + param[1]);
+//        }
+//        bodyParamList.clear();
+//
+//
+//        RequestBody body = bodyBuilder.build();
+//        final Request request = headBuilder.post(body).build();
+//        KLog.d("【开始请求离线数据】 "+ logTime + "--" + urlx);
+//
+//        final String url = urlx;
+//
+//        new Thread(new Runnable() {
+//            @Override
+//            public void run() {
+//                HttpUtil.enqueue(request, new Callback() {
+//                    @Override
+//                    public void onFailure(Request request, IOException e) {
+//                        KLog.d("【请求失败2】" + url );
+//                        API.request = request;
+//                        makeMsg(API.F_Request, url, "noRequest",logTime);
+//                    }
+//                    @Override
+//                    public void onResponse(Response response) throws IOException {
+//                        if (!response.isSuccessful()) {
+//                            KLog.d("【响应失败2】" + response.message() + response.body().string());
+//                            API.request = request;
+//                            makeMsg(API.F_Response, url, response.message(),logTime);
+//                            return;
+//                        }
+//                        try {
+//                            String res = response.body().string();
+//                            KLog.d("【forData2】" + res.length());
+//                            handler.sendEmptyMessage(API.M_BEGIN_SYNC);
+//                        }catch (IOException e){
+//                            KLog.d("【超时2】");
+//                            API.request = request;
+//                            makeMsg( API.F_Response, url, response.message(), logTime);
+//                            e.printStackTrace();
+//                            response.body().close();
+//                        }
+//                    }
+//                });
+//            }
+//        }).start();
+//    }
 
 
 
@@ -450,14 +432,18 @@ public class Neter {
 
     /**
      * 此处设置了一个回调，使得调用者可以获得想要 cache 的 request。
-     *
      */
-    public void setLogRequestListener( RequestLogger requestlogger ) {
-        this.requestlogger = requestlogger;
+
+
+    // TODO: 2017/1/7  以一个接口形式做回调
+    private Record record;
+
+    public void setReord(Record record) {
+        this.record = record;
     }
-    private RequestLogger requestlogger ;
-    public interface RequestLogger<T> {
-        void logRequest(T entry);
+
+    public interface Record<T> {
+        void log(T entry);
     }
     private RequestLog toRequest(String url, String method, long logTime, ArrayList<String[]> headParamList, ArrayList<String[]> bodyParamList){
         String headParamString = UString.formParamListToString(headParamList);
@@ -465,14 +451,13 @@ public class Neter {
         return new RequestLog(logTime,url,method,headParamString,bodyParamString);
     }
 
-    // TODO: 2017/1/7  以一个接口形式做回调
-    public void setReord(Record record) {
-        this.record = record;
-    }
-
-    private Record record;
-
-
+//    public void setRecordListener( RequestLogger requestlogger ) {
+//        this.requestlogger = requestlogger;
+//    }
+//    private RequestLogger requestlogger ;
+//    public interface RequestLogger<T> {
+//        void logRequest(T entry);
+//    }
 
     /**
      * 保存正在下载或等待下载的URL和相应失败下载次数（初始为0），防止滚动时多次下载

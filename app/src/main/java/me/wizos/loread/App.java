@@ -14,6 +14,7 @@ import me.wizos.loread.data.WithSet;
 import me.wizos.loread.data.dao.DaoMaster;
 import me.wizos.loread.data.dao.DaoSession;
 import me.wizos.loread.net.API;
+import me.wizos.loread.utils.UFile;
 
 /**
  * Created by Wizos on 2015/12/24.
@@ -24,6 +25,7 @@ public class App extends Application{
     public static String cacheRelativePath,cacheAbsolutePath ,boxRelativePath, boxAbsolutePath, storeRelativePath, storeAbsolutePath ;
     public static String boxReadRelativePath, storeReadRelativePath;
     public static String logRelativePath,logAbsolutePath;
+    public static String externalFilesDir;
     public static List<Activity> activities = new ArrayList<>();
     public static long mUserID;
 
@@ -42,7 +44,6 @@ public class App extends Application{
     public void onCreate() {
         super.onCreate();
         App.instance = this;
-//        WithSet.getInstance().setHadSyncAllStarred(false);
 //         TEST，正式环境下应该启用
         KLog.init(false);
         CrashReport.initCrashReport(App.getInstance(), "900044326", true);
@@ -63,22 +64,28 @@ public class App extends Application{
         }else {
             API.HOST = API.HOST_PROXY;
         }
+        externalFilesDir = getExternalFilesDir(null) + File.separator;
 
-        cacheRelativePath = getExternalFilesDir(null) + File.separator + "cache" + File.separator;
-        cacheAbsolutePath = "file:"+ File.separator + File.separator + cacheRelativePath; // 仅在储存于 html 时使用
+        cacheRelativePath = UFile.getRelativeDir(API.SAVE_DIR_CACHE);
+        cacheAbsolutePath = UFile.getAbsoluteDir(API.SAVE_DIR_CACHE); // 仅在储存于 html 时使用
 
-        boxRelativePath = getExternalFilesDir(null) + File.separator + "box" + File.separator;
-        boxAbsolutePath = "file:"+ File.separator + File.separator + boxRelativePath;
-        boxReadRelativePath = getExternalFilesDir(null) + File.separator + "boxRead" + File.separator;
+        boxRelativePath = UFile.getRelativeDir(API.SAVE_DIR_BOX);
+        boxAbsolutePath = UFile.getAbsoluteDir(API.SAVE_DIR_BOX);
 
-        storeRelativePath = getExternalFilesDir(null) + File.separator + "store" + File.separator;
-        storeAbsolutePath = "file:"+ File.separator + File.separator + storeRelativePath;
-        storeReadRelativePath = getExternalFilesDir(null) + File.separator + "storeRead" + File.separator;
+        storeRelativePath = UFile.getRelativeDir(API.SAVE_DIR_STORE);
+        storeAbsolutePath = UFile.getAbsoluteDir(API.SAVE_DIR_STORE);
 
-        logRelativePath = getExternalFilesDir(null) + File.separator + "log" + File.separator;
-        logAbsolutePath = "file:"+ File.separator + File.separator + logRelativePath;
+        logRelativePath = UFile.getRelativeDir("log");
+        logAbsolutePath = UFile.getAbsoluteDir("log");
+
+        boxReadRelativePath = UFile.getRelativeDir("boxRead");
+//        boxReadAbsolutePath = UFile.getAbsoluteDir( "boxRead" );
+
+        storeReadRelativePath = UFile.getRelativeDir("storeRead");
+//        storeReadAbsolutePath = UFile.getAbsoluteDir( "storeRead" );
 
     }
+
 
     public static void addActivity(Activity activity) {
         activities.add(activity);
