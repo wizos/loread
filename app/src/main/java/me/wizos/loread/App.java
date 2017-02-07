@@ -7,9 +7,11 @@ import com.socks.library.KLog;
 import com.tencent.bugly.crashreport.CrashReport;
 
 import java.io.File;
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
 
+import me.wizos.loread.activity.BaseActivity;
 import me.wizos.loread.data.WithSet;
 import me.wizos.loread.data.dao.DaoMaster;
 import me.wizos.loread.data.dao.DaoSession;
@@ -26,7 +28,6 @@ public class App extends Application{
     public static String boxReadRelativePath, storeReadRelativePath;
     public static String logRelativePath,logAbsolutePath;
     public static String externalFilesDir;
-    public static List<Activity> activities = new ArrayList<>();
     public static long mUserID;
 
 
@@ -86,9 +87,12 @@ public class App extends Application{
 
     }
 
+    //    private static WeakReference<BaseActivity> activities;
+    public static List<WeakReference<BaseActivity>> activities = new ArrayList<>();
 
-    public static void addActivity(Activity activity) {
-        activities.add(activity);
+    public static void addActivity(BaseActivity activity) {
+        WeakReference<BaseActivity> rArticle = new WeakReference<BaseActivity>(activity);
+        activities.add(rArticle);
     }
 
     public static void finishActivity(Activity activity){
@@ -96,9 +100,9 @@ public class App extends Application{
         activity.finish();
     }
     public static void finishAll(){
-        for (Activity activity : activities){
-            if (!activity.isFinishing()){
-                activity.finish();
+        for (WeakReference<BaseActivity> activity : activities) {
+            if (!activity.get().isFinishing()) {
+                activity.get().finish();
             }
         }
     }

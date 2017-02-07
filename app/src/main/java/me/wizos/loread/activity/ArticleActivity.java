@@ -2,16 +2,16 @@ package me.wizos.loread.activity;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Color;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.support.v4.util.ArrayMap;
 import android.support.v4.widget.NestedScrollView;
 import android.support.v7.widget.Toolbar;
-import android.text.Html;
-import android.text.Spanned;
 import android.util.SparseIntArray;
 import android.view.KeyEvent;
 import android.view.View;
@@ -69,14 +69,13 @@ public class ArticleActivity extends BaseActivity {
 
     private int numOfImgs,numOfGetImgs = 0 ,numOfFailureImg = 0 ,numOfFailure = 0 ,numOfFailures = 4;
     private Article article;
-    private int articleNo, articleCount;
     private String imgState; // 根据此值可以判断文章是否有被打开：null = 未打开；"" = 无图；其他为有图，图的信息在 extraImg中
     private ExtraImg extraImg;
-    private String showContent = "";
+    private String articleHtml = "";
     private String articleID = "";
     private String sReadState = "";
     private String sStarState = "";
-    private String SaveRelativePath = "";
+    //    private String SaveRelativePath = "";
     private String fileNameInMD5 = "";
     private ArrayMap<Integer,SrcPair> lossSrcList, obtainSrcList ;
     private SparseIntArray failImgList;
@@ -106,10 +105,10 @@ public class ArticleActivity extends BaseActivity {
                 .backgroundColor(R.id.art_toolbar, R.attr.topbar_bg)
                 .textColor(R.id.art_toolbar_num, R.attr.topbar_fg)
                 // 设置文章信息
-                .textColor(R.id.art_title, R.attr.art_title)
-                .textColor(R.id.art_feed, R.attr.art_feed)
-                .textColor(R.id.art_date, R.attr.art_date)
-                .textColor(R.id.art_time, R.attr.art_time)
+//                .textColor(R.id.art_title, R.attr.art_title)
+//                .textColor(R.id.art_feed, R.attr.art_feed)
+//                .textColor(R.id.art_date, R.attr.art_date)
+//                .textColor(R.id.art_time, R.attr.art_time)
 
                 // 设置 bottombar
                 .backgroundColor(R.id.art_bottombar, R.attr.bottombar_bg)
@@ -153,10 +152,10 @@ public class ArticleActivity extends BaseActivity {
     private void initView() {
         initToolbar();
         initWebView();
-        vTitle = (TextView) findViewById(R.id.art_title);
-        vDate = (TextView) findViewById(R.id.art_date);
+//        vTitle = (TextView) findViewById(R.id.art_title);
+//        vDate = (TextView) findViewById(R.id.art_date);
 //        vTime = (TextView) findViewById(R.id.art_time);
-        vFeed = (TextView) findViewById(R.id.art_feed);
+//        vFeed = (TextView) findViewById(R.id.art_feed);
         vStar = (IconFontView) findViewById(R.id.art_bottombar_star);
         vRead = (IconFontView) findViewById(R.id.art_bottombar_read);
         vArticleNum =  (TextView)findViewById(R.id.art_toolbar_num);
@@ -196,122 +195,113 @@ public class ArticleActivity extends BaseActivity {
 
     private void initData(){
         articleID = getIntent().getExtras().getString("articleID");
-        articleNo = getIntent().getExtras().getInt("articleNum"); // 文章在列表中的位置编号
-        articleCount = getIntent().getExtras().getInt("articleCount"); // 列表中所有的文章数目
-
         KLog.d("【article】" + articleID);
         article = WithDB.getInstance().getArticle(articleID);
         if ( article == null ){
             KLog.d("【article为空】");
+            UToast.showShort("【article为空】");
             // 重新下载
             return;
         }
+
         sReadState = article.getReadState();
         sStarState = article.getStarState();
 
-        Spanned titleWithUrl = Html.fromHtml("<a href=\"" + article.getCanonical() +"\">" + article.getTitle() + "</a>");
-        vTitle.setText( titleWithUrl );
-        String author = article.getAuthor();
-        if (author != null && !author.equals("") && article.getOriginTitle().equals(author)) {
-            author = article.getOriginTitle() + "@" + article.getAuthor();
-        } else {
-            author = article.getOriginTitle();
-        }
 
-        vFeed.setText(String.format(getResources().getString(R.string.article_activity_author_format), author));
-
-        vDate.setText(String.format(getResources().getString(R.string.article_activity_time_format), UTime.getDateSec(article.getPublished())));
-
-
-        KLog.d("【article状态为】" + sReadState + SaveRelativePath + "=" + article.getSaveDir());
 
         fileNameInMD5 = UString.stringToMD5(articleID);
-        SaveRelativePath = UFile.getRelativeDir(article.getSaveDir());
-        showContent = UFile.readHtml(UFile.getRelativeFile(article.getSaveDir(), fileNameInMD5, article.getTitle()));
 
-        numOfGetImgs = 0;
-        imgState = article.getImgState();// 读取失败 imgSrc 的字段 , 有4类值：
-        // 1，null（未打开）；2，"" （无图且被打开）； 3，ok（有图且加载完成）；4，src list (代表要提取正文与srcList加载图片)
-        KLog.d( "文章内容：" + showContent.length() );
-        if(UString.isBlank(showContent)){
-//            KLog.d( "【文章内容被删，再去加载获取内容】" );
-            mNeter.postArticleContents(articleID);
-        }else {
-            if (imgState == null) { // 文章没有被打开过
-//                KLog.d( "【imgState为null】");
-                showContent = UString.reviseHtmlNoAd(new StringBuilder(showContent)).toString();
-                lossSrcList = UString.getListOfSrcAndHtml(showContent, fileNameInMD5);
-                if( lossSrcList!= null){
-                    showContent = lossSrcList.get(0).getSaveSrc();
-                    lossSrcList.remove(0);
-                    if( lossSrcList.size()!=0){
-                        article.setCoverSrc( lossSrcList.get(1).getSaveSrc());
-                        obtainSrcList = new ArrayMap<>(lossSrcList.size());
-                    }
-                    logImgStatus(ExtraImg.DOWNLOAD_ING);
-//                    KLog.d("检测 obtainSrcList " + lossSrcList.size());
-                }else {
-                    article.setImgState("");
-                }
-                UFile.saveCacheHtml(fileNameInMD5, showContent);
-                WithDB.getInstance().saveArticle(article);
-            }else if( !imgState.equals("")){
-                Gson gson = new Gson();
-                Type type = new TypeToken<ExtraImg>() {}.getType();
-                try{
-                    extraImg = gson.fromJson(imgState, type);
-                    lossSrcList = extraImg.getLossImgs();
-                    obtainSrcList = extraImg.getObtainImgs();
-//                    KLog.e("重新进入获取到的imgState记录" + imgState + extraImg +  lossSrcList + obtainSrcList);
-                }catch (RuntimeException e){
-                    imgState = "";
-                }
-            }
-
-//            if (fileNameInMD5!= null){
-//                vArticleNum.setText( fileNameInMD5.substring(0,10) ); // FIXME: 2016/5/3 测试
-//            }
-            String numStr = String.valueOf(articleNo) + " / " + String.valueOf(articleCount);
-            vArticleNum.setText(numStr);
-            notifyDataChanged();
-        }
+        KLog.d("【article状态为】" + sReadState + "=" + article.getSaveDir());
+        loadArticle();
         initStateView();
     }
 
-
-    private String getShowContent() {
-        // 加载内部css样式 placeholder.png
-        String script =
-                "<script type=\"text/javascript\">" +
-                        "function initImgClick(){" +
-                        "var imgList = document.getElementsByTagName(\"img\"); " +
-                        "for(var i=0; i<imgList.length; i++) {" +
-                        "    imgList[i].no = i;" +
-                        "    imgList[i].onclick = function() {" +
-                        "        window.imagelistner.listen( this.no, this.src );  " +
-                        "    }  " +
-                        "}" +
-                        "}" +
-                        "function initImgPlaceholder(){" +
-                        "var imgList = document.getElementsByTagName(\"img\"); " +
-                        "for(var i=0; i<imgList.length; i++) {" +
-                        "    imgList[i].src = \"file:///android_asset/down.svg\";" +
-                        "}" +
-                        "}" +
-                        "function appointImgPlaceholder(number){" +
-                        "var array = number.split(\"_\");" +
-                        "var imgList = document.getElementsByTagName(\"img\"); " +
-                        "for(var i=0; i<array.length; i++) {" +
-                        "    var n = array[i];" +
-                        "    imgList[n].src = \"file:///android_asset/down.svg\";" +
-                        "}" +
-                        "}" +
-                        "</script>";
-
-        String cssPath = getExternalFilesDir(null) + File.separator + "config" + File.separator + "article.css";
-        if (!UFile.isFileExists(cssPath)) {
-            cssPath = "file:///android_asset/article.css";
+    private void loadArticle() {
+        articleHtml = UFile.readHtml(UFile.getRelativeFile(article.getSaveDir(), fileNameInMD5, article.getTitle()));
+        KLog.d("文章内容：" + articleHtml.length());
+        if (UString.isBlank(articleHtml)) {
+//            KLog.d( "【文章内容被删，再去加载获取内容】" );
+            mNeter.postArticleContents(articleID);
+            return;
         }
+
+        numOfGetImgs = 0;
+        imgState = article.getImgState();// 读取失败 imgSrc 的字段 , 有4类值： 1，null（未打开）；2，"" （无图且被打开）； 3，ok（有图且加载完成）；4，src list (代表要提取正文与srcList加载图片)
+        if (imgState == null) { // 文章没有被打开过
+//                KLog.d( "【imgState为null】");
+            articleHtml = UString.reviseHtmlNoAd(new StringBuilder(articleHtml)).toString();
+            lossSrcList = UString.getListOfSrcAndHtml(articleHtml, fileNameInMD5);
+            if (lossSrcList != null) {
+                articleHtml = lossSrcList.get(0).getSaveSrc();
+                lossSrcList.remove(0);
+                if (lossSrcList.size() != 0) {
+                    article.setCoverSrc(lossSrcList.get(1).getSaveSrc());
+                    obtainSrcList = new ArrayMap<>(lossSrcList.size());
+                }
+                logImgStatus(ExtraImg.DOWNLOAD_ING);
+//                    KLog.d("检测 obtainSrcList " + lossSrcList.size());
+            } else {
+                article.setImgState("");
+            }
+            UFile.saveCacheHtml(fileNameInMD5, articleHtml);
+            WithDB.getInstance().saveArticle(article);
+        } else if (!imgState.equals("")) { // 有图且打开过
+            Gson gson = new Gson();
+            Type type = new TypeToken<ExtraImg>() {
+            }.getType();
+            try {
+                extraImg = gson.fromJson(imgState, type);
+                lossSrcList = extraImg.getLossImgs();
+                obtainSrcList = extraImg.getObtainImgs();
+//                    KLog.e("重新进入获取到的imgState记录" + imgState + extraImg +  lossSrcList + obtainSrcList);
+            } catch (RuntimeException e) {
+                imgState = "";
+            }
+        }
+//        if (fileNameInMD5!= null){
+//            vArticleNum.setText( fileNameInMD5.substring(0,10) ); // FIXME: 2016/5/3 测试
+//        }
+        notifyDataChanged();
+    }
+
+
+    private String getArtScript() {
+        return "<script type=\"text/javascript\">" +
+                "function initImgClick(){" +
+                "var imgList = document.getElementsByTagName(\"img\"); " +
+                "for(var i=0; i<imgList.length; i++) {" +
+                "    imgList[i].no = i;" +
+                "    imgList[i].onclick = function() {" +
+                "        window.imagelistner.listen( this.no, this.src );  " +
+                "    }  " +
+                "}" +
+                "}" +
+                "function initImgPlaceholder(){" +
+                "var imgList = document.getElementsByTagName(\"img\"); " +
+                "for(var i=0; i<imgList.length; i++) {" +
+                "    imgList[i].src = \"file:///android_asset/down.svg\";" +
+                "}" +
+                "}" +
+                "function appointImgPlaceholder(number){" +
+                "var array = number.split(\"_\");" +
+                "var imgList = document.getElementsByTagName(\"img\"); " +
+                "for(var i=0; i<array.length; i++) {" +
+                "    var n = array[i];" +
+                "    imgList[n].src = \"file:///android_asset/down.svg\";" +
+                "}" +
+                "}" +
+                "</script>";
+    }
+
+    private String getTypesettingCssPath() {
+        String typesettingCssPath = getExternalFilesDir(null) + File.separator + "config" + File.separator + "article.css";
+        if (!UFile.isFileExists(typesettingCssPath)) {
+            typesettingCssPath = "file:///android_asset/article.css";
+        }
+        return typesettingCssPath;
+    }
+
+    private String getThemeCssPath() {
         String cssPathTheme;
         if (WithSet.getInstance().getThemeMode() == WithSet.themeDay) {
             cssPathTheme = "file:///android_asset/article_theme_day.css";
@@ -319,19 +309,44 @@ public class ArticleActivity extends BaseActivity {
             cssPathTheme = "file:///android_asset/article_theme_night.css";
         }
         KLog.d("主题：" + cssPathTheme + "==" + this.toString());
-        String contentHeader = "<html xmlns=\"http://www.w3.org/1999/xhtml\"><head>" +
-                "<link rel=\"stylesheet\" href=\"" + cssPath + "\" type=\"text/css\"/>" +
-                "<link rel=\"stylesheet\" href=\"" + cssPathTheme + "\" type=\"text/css\"/>" +
-                script + "</head><body>";
+        return cssPathTheme;
+    }
+
+    private String getShowContent() {
+//        Spanned titleWithUrl = Html.fromHtml("<a href=\"" + article.getCanonical() +"\">" + article.getTitle() + "</a>");
+//        vTitle.setText( titleWithUrl );
+//        vFeed.setText(String.format(getResources().getString(R.string.article_activity_author_format), author));
+//        vDate.setText(String.format(getResources().getString(R.string.article_activity_time_format), UTime.getDateSec(article.getPublished())));
+
+        String contentHeader = "<html><head><meta http-equiv=\"charset=UTF-8\">" +
+                "<link rel=\"stylesheet\" href=\"" + getTypesettingCssPath() + "\" type=\"text/css\" />" +
+                "<link rel=\"stylesheet\" href=\"" + getThemeCssPath() + "\" type=\"text/css\" />" +
+                getArtScript() + "</head><body>";
         String contentFooter = "</body></html>";
-        return contentHeader + showContent + contentFooter;
+
+        String author = article.getAuthor();
+        if (author != null && !author.equals("") && article.getOriginTitle().equals(author)) {
+            author = article.getOriginTitle() + "@" + article.getAuthor();
+        } else {
+            author = article.getOriginTitle();
+        }
+
+        String contentArticle = "<article id=\"art\">" +
+                "<header id=\"art_header\">" +
+                "<h1 id=\"art_h1\"><a href=\"" + article.getCanonical() + "\">" + article.getTitle() + "</a></h1>" +
+                "<p id=\"art_author\">" + author + "</p><p id=\"art_pubDate\">" + UTime.getDateSec(article.getPublished()) + "</p>" +
+                "</header>" +
+                "<hr id=\"art_hr\">" +
+                "<section id=\"art_section\">" + articleHtml + "</section>" +
+                "</article>" +
+                "</body></html>";
+        return contentHeader + contentArticle + contentFooter;
     }
 
     // 注入js函数监听
     private void addImageClickListner() {
         KLog.d("正在加载完成js函数" );
         // 这段js函数的功能就是，遍历所有的img几点，并添加onclick函数，函数的功能是在图片点击的时候调用本地java接口并传递url过去
-
         webView.loadUrl("javascript:initImgList()");
     }
 
@@ -439,7 +454,9 @@ public class ArticleActivity extends BaseActivity {
         if (!HttpUtil.isWifiEnabled()) {
             artHandler.sendEmptyMessage(API.F_Request);
             return ;}
-        mNeter.loadImg(imgSrc.getNetSrc(), SaveRelativePath + UString.getFileNameExtByUrl(imgSrc.getSaveSrc()), imgNo);
+        String saveRelativePath = UFile.getRelativeDir(article.getSaveDir());
+        KLog.d("图片的保存目录为：" + saveRelativePath);
+        mNeter.loadImg(imgSrc.getNetSrc(), saveRelativePath + UString.getFileNameExtByUrl(imgSrc.getSaveSrc()), imgNo);
     }
 
 
@@ -463,7 +480,18 @@ public class ArticleActivity extends BaseActivity {
     // 监听
     private class MyWebViewClient extends WebViewClient {
         @Override
+        //  重写此方法表明点击网页里面的链接还是在当前的webview里跳转，不跳到浏览器那边
         public boolean shouldOverrideUrlLoading(WebView view, String url) {
+            KLog.d("==========" + WithSet.getInstance().isSysBrowserOpenLink());
+
+            if (WithSet.getInstance().isSysBrowserOpenLink()) {
+                Intent intent = new Intent();
+                intent.setAction("android.intent.action.VIEW");
+                Uri content_url = Uri.parse(url);
+                intent.setData(content_url);
+                startActivity(intent);
+                return true;
+            }
             return super.shouldOverrideUrlLoading(view, url);
         }
 
@@ -529,18 +557,18 @@ public class ArticleActivity extends BaseActivity {
         } else {
             vStar.setText(getString(R.string.font_stared));
         }
+        int articleNo, articleCount;
+        articleNo = getIntent().getExtras().getInt("articleNum"); // 文章在列表中的位置编号
+        articleCount = getIntent().getExtras().getInt("articleCount"); // 列表中所有的文章数目
+        String numStr = String.valueOf(articleNo) + " / " + String.valueOf(articleCount);
+        vArticleNum.setText(numStr);
     }
 
 
     @Override
     protected void notifyDataChanged(){
-        if(showContent==null || showContent.equals("")){
-            KLog.d("【重载 initData 】" );
-            initData();
-        }else {
-            webView.loadDataWithBaseURL(UFile.getAbsoluteDir(article.getSaveDir()), getShowContent(), "text/html", "utf-8", null);  //  contentView.reload();这种刷新方法无效
-            KLog.d("【重载】");
-        }
+        KLog.d("【重载】");
+        webView.loadDataWithBaseURL(UFile.getAbsoluteDir(article.getSaveDir()), getShowContent(), "text/html", "utf-8", null);  //  contentView.reload();这种刷新方法无效
     }
     // 非静态匿名内部类的实例，所以它持有外部类Activity的引用
     // 所以此处的 handler 会持有外部类 Activity 的引用，消息队列是在一个Looper线程中不断轮询处理消息。
@@ -865,11 +893,11 @@ public class ArticleActivity extends BaseActivity {
 //        String content = "";
 //        content = htmlMsg.get(1);
 //        UFile.readHtml(SaveRelativePath);
-        if (article.getSaveDir().equals("cache")) {
+        if (article.getSaveDir().equals(API.SAVE_DIR_CACHE)) {
             if (article.getStarState().equals(API.ART_STAR)) {
-                saveToStore(fileNameInMD5, fileName, showContent);
+                saveToStore(fileNameInMD5, fileName, articleHtml);
             } else {
-                saveTobox(fileNameInMD5, fileName, showContent);
+                saveTobox(fileNameInMD5, fileName, articleHtml);
             }
         } else if (article.getSaveDir().equals(API.SAVE_DIR_BOX) || article.getSaveDir().equals(API.SAVE_DIR_BOXREAD)) {
             UToast.showShort("文件已存在于box目录");
@@ -903,7 +931,7 @@ public class ArticleActivity extends BaseActivity {
         String targetDir = App.boxRelativePath + fileName + "_files";
         UFile.moveDir( soureDir , targetDir );// 移动文件
 
-        KLog.e("目录" + SaveRelativePath + filePath);
+        KLog.e("目录" + filePath);
         UToast.showShort("文件导出成功");
         article.setCoverSrc(  App.boxAbsolutePath + fileName + "_files" + File.separator + UString.getFileNameExtByUrl(article.getCoverSrc()) );
         article.setSaveDir(API.SAVE_DIR_BOX);
@@ -927,7 +955,7 @@ public class ArticleActivity extends BaseActivity {
         String targetDir = App.storeRelativePath + fileName + "_files";
         UFile.moveDir(soureDir, targetDir);// 移动文件
 
-        KLog.e("目录" + SaveRelativePath + filePath);
+        KLog.e("目录" + filePath);
         UToast.showShort("文件导出成功");
         article.setCoverSrc(App.storeAbsolutePath + fileName + "_files" + File.separator + UString.getFileNameExtByUrl(article.getCoverSrc()));
         article.setSaveDir(API.SAVE_DIR_STORE);

@@ -471,6 +471,7 @@ public class Neter {
      * 图片下载完成后调用接口
      */
     public void loadImg(String imgUrl, String filePath, int imgNo) {
+        KLog.d("下载图片的保存路径为：" + filePath);
         taskList.put(imgNo, 0);
         threadPool.execute(new Task(imgUrl, filePath, imgNo));
     }

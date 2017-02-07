@@ -51,6 +51,10 @@
     <string name="setting_cache_path_starred_title">加星文章保存位置</string>
     <string name="setting_order_tagfeed_title">是否同步分组与源的排序？</string>
     <string name="setting_order_tagfeed_tips">开启后费流量，费时间，还没多大用</string>
+    <string name="setting_link_open_mode_title">使用系统浏览器打开链接？</string>
+    <string name="setting_link_open_mode_tips">测试功能</string>
+
+
     <string name="setting_scroll_mark_title">滚动标记为已读</string>
     <string name="setting_scroll_mark_tips">开启后，左滑置为未读</string>
     <string name="setting_down_img_title">省流量下载图片</string>

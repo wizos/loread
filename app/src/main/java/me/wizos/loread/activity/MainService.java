@@ -45,7 +45,7 @@ public class MainService extends IntentService {
 
     private Handler mHandler; // MainHandler
     private Handler sHandler; // ChildHandler
-    private Handler mUIHandler = new Handler(Looper.getMainLooper());
+//    private Handler mUIHandler = new Handler(Looper.getMainLooper());
 
 
     @Override
@@ -395,7 +395,45 @@ public class MainService extends IntentService {
         WithDB.getInstance().saveArticleList(storeReadArts);
     }
 
-
+//    public void movefiles( ArrayList<String> filelist ){
+//        for (String fileName:filelist){
+//            if( WithDB.getInstance().hasArticle(fileName) == 0 ){
+//                UFile.moveFile(App.boxRelativePath + fileName + ".html", App.boxReadRelativePath + fileName + ".html");// 移动文件
+//                UFile.moveDir(App.boxRelativePath + fileName + "_files", App.boxReadRelativePath + fileName + "_files");// 移动目录
+//            }
+//        }
+//    }
+//
+//    protected void move(){
+//        new Thread(new Runnable() {
+//            @Override
+//            public void run() {
+//                movefiles ( getFileList( App.boxRelativePath ) );
+//                mHandler.sendEmptyMessage(1000);
+//            }
+//        }).start();
+//    }
+//
+//    public static ArrayList<String> getFileList( String path ){
+//        File dir = new File(path);
+//        File[] files = dir.listFiles(); // 该文件目录下文件全部放入数组
+//        KLog.d("---" + path);
+//        ArrayList<String> filelist = new ArrayList<>( files.length );
+//        String fileName;
+//        if (files != null) {
+//            for (int i = 0; i < files.length; i++) {
+//                if (files[i].isDirectory()) { // 判断是文件还是文件夹
+//                    getFileList(files[i].getAbsolutePath()); // 获取文件绝对路径
+//                } else { // 判断文件名是否以.avi结尾
+//                    fileName = files[i].getName();
+//                    fileName = fileName.replace(".html", "");
+//                    KLog.d("---" + fileName);
+//                    filelist.add( fileName );
+//                }
+//            }
+//        }
+//        return filelist;
+//    }
 
     private void sendSuccess() {
         Message message = new Message();

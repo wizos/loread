@@ -86,12 +86,6 @@ public class UFile {
     }
 
 
-
-//    public static boolean copyFile(String srcFileName, String destFileName){
-//
-//    }
-
-
     public static boolean moveFile(String srcFileName, String destFileName) {
         File srcFile = new File(srcFileName);
         if(!srcFile.exists() || !srcFile.isFile())
@@ -190,46 +184,14 @@ public class UFile {
         }
         return fileContent;
     }
-//
-//    public static ArrayList<String> readHtml( String fileNameInMD5, String fileName){
-////        if( !isExternalStorageWritable() ){return null;}
-//        String fileContent ="" , temp = "";
-//        ArrayList<String> html = new ArrayList<>(2);
-//        html.add("");
-//
-//        // 读取 一级层、有加密的 cacheHtml
-//        try {
-//            File file = new File(  App.cacheRelativePath + fileNameInMD5  + ".html" );
-//            html.set(0,"cache");
-//            if(!file.exists()){
-//                // 读取 一级层、无加密的 boxHtml
-//                file = new File( App.boxRelativePath + fileName + ".html");
-//                html.set(0,"box");
-//                if(!file.exists()){
-//                    // 读取 二级层、无加密的 storeHtml
-//                    file = new File(App.storeRelativePath + fileName + ".html");
-//                    html.set(0, "store");
-//                    if(!file.exists()){
-//                        return null;
-//                    }
-//                }
-//            }
-//            KLog.d("【】" + file.toString());
-//
-//            FileReader fileReader = new FileReader(file);
-//            BufferedReader br = new BufferedReader( fileReader );//一行一行读取 。在电子书程序上经常会用到。
-//            while(( temp = br.readLine())!= null){
-//                fileContent += temp+"\r\n";
-//            }
-//            fileReader.close();
-//            br.close();
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
-//        html.add(fileContent);
-//        return html;
-//    }
 
+    /**
+     * 获取当前文件被保存在那个目录
+     *
+     * @param fileNameInMD5
+     * @param fileName
+     * @return
+     */
     public static String getSaveDir(String fileNameInMD5, String fileName) {
         fileNameInMD5 = UString.stringToMD5(fileNameInMD5);
         String dir;

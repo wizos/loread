@@ -45,7 +45,6 @@ import me.wizos.loread.presenter.adapter.MaterialSimpleListAdapter;
 import me.wizos.loread.presenter.adapter.MaterialSimpleListItem;
 import me.wizos.loread.utils.UDensity;
 import me.wizos.loread.utils.UFile;
-import me.wizos.loread.utils.ULog;
 import me.wizos.loread.utils.UString;
 import me.wizos.loread.utils.UToast;
 import me.wizos.loread.utils.colorful.Colorful;
@@ -93,6 +92,7 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
             MainService mainService = mBinderService.getService();
             mainService.regHandler(mHandler);//TODO:考虑内存泄露
             mNeter = mainService.getNeter();
+//            mainService.move();
             KLog.d("连接开始");
         }
     };
@@ -106,10 +106,6 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
         UpdateDB.start(this); // 不会用
         UFile.setContext(this);
         App.addActivity(this);
-//        mNeter = new Neter(handler,this);
-//        mNeter.setLogRequestListener(this);
-//        App.mHandler = handler;
-//        mParser = new Parser();
         initToolbar();
         initSlvListener();
         initSwipe();
@@ -117,16 +113,12 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
         initColorful();
         initService();
         initData();
-//        updatexx();
 //        KLog.i("【一】" + toolbar.getTitle() );
 //        initLogService();
     }
 
 
-    private void initLogService(){
-        Intent intent = new Intent(this, ULog.class);
-        startService(intent);
-    }
+
 
     @Override
     protected void onResume(){
@@ -231,17 +223,6 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
         KLog.d("bindService");
         startService(intent);
     }
-//    private void startAction(String action){
-//        intent.setAction("refresh");
-//        KLog.d( "Service = " + action );
-//        startService(intent);
-//    }
-//    private void startAction(String action,String articleId){
-//        intent.setAction("refresh");
-//        intent.putExtra("articleId",articleId);
-//        KLog.d( "Service = " + action );
-//        startService(intent);
-//    }
 
     @Override
     protected void notifyDataChanged(){
@@ -352,35 +333,6 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
         return noLabel;
     }
 
-
-//    public boolean updatexx(){
-//        new Thread(new Runnable() {
-//            @Override
-//            public void run() {
-//                List<Article> arts = WithDB.getInstance().loadArtSaveDirIsNull();
-//                if(arts.size()==0){
-//                    return;
-//                }
-//                String htmlState;
-//                for (Article article: arts){
-//                    htmlState = UFile.getSaveDir( article.getId(), article.getTitle() );
-//                    if( htmlState == null ){
-//                        continue;
-//                    }else if (htmlState.equals( API.SAVE_DIR_CACHE)){
-//                        article.setSaveDir( API.SAVE_DIR_CACHE );
-//                    }else if(htmlState.equals( API.SAVE_DIR_BOX )){
-//                        article.setSaveDir( API.SAVE_DIR_BOX );
-//                    } else if (htmlState.equals( API.SAVE_DIR_STORE )) {
-//                        article.setSaveDir( API.SAVE_DIR_STORE );
-//                    }
-//                    WithDB.getInstance().saveArticle( article );
-//                }
-//                mHandler.sendEmptyMessage(1000);
-//            }
-//        }).start();
-////        KLog.d( "升级完成" );
-//        return true;
-//    }
 
     // TEST:
     protected Handler mHandler = new Handler(new Handler.Callback() {
@@ -800,5 +752,51 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
                 .build());
         mMenu.getItemBackGroundDrawable();
     }
+
+
+//    private void startAction(String action){
+//        intent.setAction("refresh");
+//        KLog.d( "Service = " + action );
+//        startService(intent);
+//    }
+//    private void startAction(String action,String articleId){
+//        intent.setAction("refresh");
+//        intent.putExtra("articleId",articleId);
+//        KLog.d( "Service = " + action );
+//        startService(intent);
+//    }
+
+//    private void initLogService(){
+//        Intent intent = new Intent(this, ULog.class);
+//        startService(intent);
+//    }
+//    public boolean updatexx(){
+//        new Thread(new Runnable() {
+//            @Override
+//            public void run() {
+//                List<Article> arts = WithDB.getInstance().loadArtSaveDirIsNull();
+//                if(arts.size()==0){
+//                    return;
+//                }
+//                String htmlState;
+//                for (Article article: arts){
+//                    htmlState = UFile.getSaveDir( article.getId(), article.getTitle() );
+//                    if( htmlState == null ){
+//                        continue;
+//                    }else if (htmlState.equals( API.SAVE_DIR_CACHE)){
+//                        article.setSaveDir( API.SAVE_DIR_CACHE );
+//                    }else if(htmlState.equals( API.SAVE_DIR_BOX )){
+//                        article.setSaveDir( API.SAVE_DIR_BOX );
+//                    } else if (htmlState.equals( API.SAVE_DIR_STORE )) {
+//                        article.setSaveDir( API.SAVE_DIR_STORE );
+//                    }
+//                    WithDB.getInstance().saveArticle( article );
+//                }
+//                mHandler.sendEmptyMessage(1000);
+//            }
+//        }).start();
+////        KLog.d( "升级完成" );
+//        return true;
+//    }
 
 }

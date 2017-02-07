@@ -98,7 +98,9 @@ public class WithDB {
 //            return null;
 //        }
 //    }
-
+    public Long hasArticle(String articleName) {
+        return articleDao.queryBuilder().where(ArticleDao.Properties.Title.eq(articleName)).count();
+    }
 
     public Article getArticle(String articleId) {
 //        if (articleID == null) {return null;}
