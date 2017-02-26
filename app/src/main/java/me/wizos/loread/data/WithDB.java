@@ -1,11 +1,8 @@
 package me.wizos.loread.data;
 
-import com.socks.library.KLog;
-
 import java.util.ArrayList;
 import java.util.List;
 
-import de.greenrobot.dao.query.Query;
 import de.greenrobot.dao.query.QueryBuilder;
 import me.wizos.loread.App;
 import me.wizos.loread.bean.Article;
@@ -69,8 +66,6 @@ public class WithDB {
         if (feed.getId() == null) { // new fetch
             if (feedDao.queryBuilder().where(FeedDao.Properties.Title.eq(feed.getTitle())).list().size() == 0) {
                 feedDao.insertOrReplace(feed);
-            } else { // Has same
-
             }
         } else { // already exist
             feedDao.update(feed);
@@ -175,7 +170,7 @@ public class WithDB {
        QueryBuilder<Article> q = articleDao.queryBuilder();
        q.where(q.and(ArticleDao.Properties.ReadState.eq(API.ART_READ), ArticleDao.Properties.StarState.eq(API.ART_UNSTAR), ArticleDao.Properties.CrawlTimeMsec.lt(time)));
 //       q.list();
-       return q.listLazy();
+       return q.list();
    }
 
     public List<Article> loadArtsSavedBox() {
@@ -192,27 +187,36 @@ public class WithDB {
     }
 
     public List<Article> loadTagRead(String readState, String listTag){
-        long xx = System.currentTimeMillis();
-        Query query = articleDao.queryBuilder()
+        QueryBuilder<Article> q = articleDao.queryBuilder()
                 .where(ArticleDao.Properties.ReadState.like(readState + "%"), ArticleDao.Properties.Categories.like("%" + listTag + "%")) /** Creates an "equal ('=')" condition  for this property. */
-                .orderDesc(ArticleDao.Properties.TimestampUsec)
-                .build();
-        List<Article> articlelist = query.listLazy();
-        KLog.d("【loadReadList】用时"+ (System.currentTimeMillis() - xx) + "--" + articlelist.size()  + readState + listTag  );
-        // 590-55 , 590-73,635-79, 34--612 , 82--612,83--612
-        return articlelist;
+                .orderDesc(ArticleDao.Properties.TimestampUsec);
+        return q.list();
+//        long xx = System.currentTimeMillis();
+//        Query query = articleDao.queryBuilder()
+//                .where(ArticleDao.Properties.ReadState.like(readState + "%"), ArticleDao.Properties.Categories.like("%" + listTag + "%")) /** Creates an "equal ('=')" condition  for this property. */
+//                .orderDesc(ArticleDao.Properties.TimestampUsec)
+//                .build();
+//        List<Article> articlelist = query.list();
+//        KLog.d("【loadReadList】用时"+ (System.currentTimeMillis() - xx) + "--" + articlelist.size()  + readState + listTag  );
+//        // 590-55 , 590-73,635-79, 34--612 , 82--612,83--612
+//        return articlelist;
     }
 
     public List<Article> loadReadAll(String readState){
-        long xx = System.currentTimeMillis();
-        Query query = articleDao.queryBuilder()
+//        long xx = System.currentTimeMillis();
+//        Query query = articleDao.queryBuilder()
+//                .where(ArticleDao.Properties.ReadState.like(readState)) /** Creates an "equal ('=')" condition  for this property. */
+//                .orderDesc(ArticleDao.Properties.TimestampUsec)
+//                .build();
+
+
+        QueryBuilder<Article> q = articleDao.queryBuilder()
                 .where(ArticleDao.Properties.ReadState.like(readState)) /** Creates an "equal ('=')" condition  for this property. */
-                .orderDesc(ArticleDao.Properties.TimestampUsec)
-                .build();
-        List<Article> articleList = query.listLazy();
-        KLog.d("【loadReadListAll】用时"+ (System.currentTimeMillis() - xx) + "--" + articleList.size()  + readState );
+                .orderDesc(ArticleDao.Properties.TimestampUsec);
+//        List<Article> articleList = query.list();
+//        KLog.d("【loadReadListAll】用时"+ (System.currentTimeMillis() - xx) + "--" + articleList.size()  + readState );
         // 1473-25
-        return articleList;
+        return q.list();
     }
     public List<Article> loadArtAll(){ // 速度比要排序的全文更快
 //        long xx = System.currentTimeMillis();
@@ -222,57 +226,34 @@ public class WithDB {
         return articleDao.loadAll();
     }
 
-    public List<Article> loadArtSaveDirIsNull() { // 速度比要排序的全文更快
-        Query query = articleDao.queryBuilder()
-                .where(ArticleDao.Properties.SaveDir.isNull()) /** Creates an "equal ('=')" condition  for this property. */
-                .build();
-        return query.list();
-    }
-    public List<Article> loadArtAllOrder(){
-        long xx = System.currentTimeMillis();
-        Query query = articleDao.queryBuilder()
-                .where(ArticleDao.Properties.ReadState.like("%")) /** Creates an "equal ('=')" condition  for this property. */
-                .orderDesc(ArticleDao.Properties.TimestampUsec)
-                .build();
-        List<Article> articleList = query.list();
-        System.out.println("【加载所有文章】" + (System.currentTimeMillis() - xx) +"--" +articleList.size());
-        return articleList;
-    }
+    public List<Article> loadArtWhere() { // 速度比要排序的全文更快
+        QueryBuilder<Article> q = articleDao.queryBuilder()
+                .where(ArticleDao.Properties.ImgState.isNotNull()); /** Creates an "equal ('=')" condition  for this property. */
+        return q.list();
 
-
-    public List<Article> loadStarAll(){
-        Query query = articleDao.queryBuilder()
-                .where(ArticleDao.Properties.StarState.eq(API.LIST_STAR)) /**  Creates an "equal ('=')" condition  for this property. */
-                .build();
-//        KLog.d("【loadStarAll】" + query.list().size());
-        return query.list();
-    }
-//    public List<Article> loadUnreadStarred(){
 //        Query query = articleDao.queryBuilder()
-//                .where(ArticleDao.Properties.ReadState.eq(API.ART_UNREAD), ArticleDao.Properties.StarState.eq(API.ART_STAR)) /**  Creates an "equal ('=')" condition  for this property. */
+//                .where(ArticleDao.Properties.ImgState.isNotNull()) /** Creates an "equal ('=')" condition  for this property. */
 //                .build();
 //        return query.list();
-//    }
-//    public List<Article> loadUnreadUnstarred(){
+    }
+//    public List<Article> loadArtAllOrder(){
+//        long xx = System.currentTimeMillis();
 //        Query query = articleDao.queryBuilder()
-//                .where(ArticleDao.Properties.ReadState.eq(API.ART_UNREAD), ArticleDao.Properties.StarState.eq(API.ART_UNREAD)) /**  Creates an "equal ('=')" condition  for this property. */
+//                .where(ArticleDao.Properties.ReadState.like("%")) /** Creates an "equal ('=')" condition  for this property. */
+//                .orderDesc(ArticleDao.Properties.TimestampUsec)
 //                .build();
-//        return query.list();
-//    }
-//    public List<Article> loadReadUnstarred(){
-//        Query query = articleDao.queryBuilder()
-//                .where(ArticleDao.Properties.ReadState.eq(API.ART_READ), ArticleDao.Properties.StarState.eq(API.ART_UNREAD)) /**  Creates an "equal ('=')" condition  for this property. */
-//                .build();
-//        return query.list();
+//        List<Article> articleList = query.list();
+//        System.out.println("【加载所有文章】" + (System.currentTimeMillis() - xx) +"--" +articleList.size());
+//        return articleList;
 //    }
 
-    public List<Article> loadStarAllOrder(){
-        Query query = articleDao.queryBuilder()
-                .where(ArticleDao.Properties.StarState.eq(API.LIST_STAR)) /**  Creates an "equal ('=')" condition  for this property. */
-                .orderDesc(ArticleDao.Properties.TimestampUsec)
-                .build();
-        return query.list();
+
+    public List<Article> loadStarAll() {
+        QueryBuilder<Article> q = articleDao.queryBuilder()
+                .where(ArticleDao.Properties.StarState.eq(API.LIST_STAR)); /**  Creates an "equal ('=')" condition  for this property. */
+        return q.list();
     }
+
 
     /**
      * 加载某个 Tag 下的 StarArt
@@ -280,41 +261,60 @@ public class WithDB {
      * @return
      */
     public List<Article> loadTagStar(String listTag){
-        Query query = articleDao.queryBuilder()
+        QueryBuilder<Article> q = articleDao.queryBuilder()
                 .where(ArticleDao.Properties.StarState.eq(API.LIST_STAR),ArticleDao.Properties.Categories.like("%"+ listTag + "%")) /**  Creates an "equal ('=')" condition  for this property. */
-                .orderDesc(ArticleDao.Properties.TimestampUsec)
-                .build();
-        return query.list();
+                .orderDesc(ArticleDao.Properties.TimestampUsec);
+        return q.list();
+
+//        Query query = articleDao.queryBuilder()
+//                .where(ArticleDao.Properties.StarState.eq(API.LIST_STAR),ArticleDao.Properties.Categories.like("%"+ listTag + "%")) /**  Creates an "equal ('=')" condition  for this property. */
+//                .orderDesc(ArticleDao.Properties.TimestampUsec)
+//                .build();
+//        return query.list();
     }
     public List<Article> loadStarNoLabel(){
-        Query query = articleDao.queryBuilder()
-                .where(ArticleDao.Properties.StarState.eq(API.LIST_STAR),ArticleDao.Properties.Categories.like( "%" + API.U_NO_LABEL + "%" )) /**  Creates an "equal ('=')" condition  for this property. */
-                .build();
-        KLog.d("Star无标签：" + query.list().size());
-        return query.list();
+        QueryBuilder<Article> q = articleDao.queryBuilder()
+                .where(ArticleDao.Properties.StarState.eq(API.LIST_STAR), ArticleDao.Properties.Categories.like("%" + API.U_NO_LABEL + "%")); /**  Creates an "equal ('=')" condition  for this property. */
+        return q.list();
+//
+//        Query query = articleDao.queryBuilder()
+//                .where(ArticleDao.Properties.StarState.eq(API.LIST_STAR),ArticleDao.Properties.Categories.like( "%" + API.U_NO_LABEL + "%" )) /**  Creates an "equal ('=')" condition  for this property. */
+//                .build();
+//        KLog.d("Star无标签：" + query.list().size());
+//        return query.list();
     }
 
     public List<Article> loadStarListHasLabel(long userId){
-        Query query = articleDao.queryBuilder()
-                .where(ArticleDao.Properties.StarState.eq(API.LIST_STAR),ArticleDao.Properties.Categories.like("%" + "user/"+ userId+ "/label/" + "%")) /**  Creates an "equal ('=')" condition  for this property. */
-                .build();
-        KLog.d("Star有标签：" + query.list().size() +" " + userId );
-        return query.list();
+        QueryBuilder<Article> q = articleDao.queryBuilder()
+                .where(ArticleDao.Properties.StarState.eq(API.LIST_STAR), ArticleDao.Properties.Categories.like("%" + "user/" + userId + "/label/" + "%")); /**  Creates an "equal ('=')" condition  for this property. */
+        return q.list();
+//
+//        Query query = articleDao.queryBuilder()
+//                .where(ArticleDao.Properties.StarState.eq(API.LIST_STAR),ArticleDao.Properties.Categories.like("%" + "user/"+ userId+ "/label/" + "%")) /**  Creates an "equal ('=')" condition  for this property. */
+//                .build();
+//        KLog.d("Star有标签：" + query.list().size() +" " + userId );
+//        return query.list();
     }
     public List<Article> loadReadListHasLabel(String readState,long userId){
-        Query query = articleDao.queryBuilder()
-                .where(ArticleDao.Properties.ReadState.like( readState ),ArticleDao.Properties.Categories.like("%" + "user/"+ userId+ "/label/" + "%")) /**  Creates an "equal ('=')" condition  for this property. */
-                .build();
-        KLog.d("Read有标签：" + query.list().size());
-        return query.list();
+        QueryBuilder<Article> q = articleDao.queryBuilder()
+                .where(ArticleDao.Properties.ReadState.like(readState), ArticleDao.Properties.Categories.like("%" + "user/" + userId + "/label/" + "%"));
+        return q.list();
+//        Query query = articleDao.queryBuilder()
+//                .where(ArticleDao.Properties.ReadState.like( readState ),ArticleDao.Properties.Categories.like("%" + "user/"+ userId+ "/label/" + "%")) /**  Creates an "equal ('=')" condition  for this property. */
+//                .build();
+//        KLog.d("Read有标签：" + query.list().size());
+//        return query.list();
     }
 
     public List<Article> loadReadNoLabel(){
-        Query query = articleDao.queryBuilder()
-                .where(ArticleDao.Properties.ReadState.eq( API.ART_UNREAD ),ArticleDao.Properties.Categories.like( "%" + API.U_NO_LABEL + "%" )) /**  Creates an "equal ('=')" condition  for this property. */
-                .build();
-        KLog.d("Read无标签：" + query.list().size());
-        return query.list();
+        QueryBuilder<Article> q = articleDao.queryBuilder()
+                .where(ArticleDao.Properties.ReadState.eq(API.ART_UNREAD), ArticleDao.Properties.Categories.like("%" + API.U_NO_LABEL + "%"));
+        return q.list();
+//        Query query = articleDao.queryBuilder()
+//                .where(ArticleDao.Properties.ReadState.eq( API.ART_UNREAD ),ArticleDao.Properties.Categories.like( "%" + API.U_NO_LABEL + "%" )) /**  Creates an "equal ('=')" condition  for this property. */
+//                .build();
+//        KLog.d("Read无标签：" + query.list().size());
+//        return query.list();
     }
 
 

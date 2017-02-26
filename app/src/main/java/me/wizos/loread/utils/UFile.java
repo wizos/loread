@@ -20,6 +20,7 @@ import java.io.InputStream;
 import java.util.ArrayList;
 
 import me.wizos.loread.App;
+import me.wizos.loread.net.API;
 
 /**
  * Created by Wizos on 2016/3/19.
@@ -71,7 +72,6 @@ public class UFile {
      * @return 文件是否删除
      */
     public static boolean deleteHtmlDir( File dir ) {
-
         if ( dir.isDirectory() ) {
             KLog.i( dir + "是文件夹");
             File[] files = dir.listFiles();
@@ -85,6 +85,16 @@ public class UFile {
         }
     }
 
+
+//    public static void renameFile( String sourceRelativeFileName, String targetRelativeFileName ){
+//        File oldFile = new File( sourceRelativeFileName );
+//        File newFile = new File( targetRelativeFileName );
+//        if( oldFile.renameTo( newFile )) {
+//            System.out.println("修改成功!");
+//        } else {
+//            System.out.println("修改失败");
+//        }
+//    }
 
     public static boolean moveFile(String srcFileName, String destFileName) {
         File srcFile = new File(srcFileName);
@@ -128,10 +138,14 @@ public class UFile {
         return srcDir.delete();
     }
 
+    public static void moveHtmlAndFiles(String sourceRelativePathFileName, String targetRelativePathFileName) {
+        moveFile(sourceRelativePathFileName + ".html", targetRelativePathFileName + ".html");// 移动文件
+        moveDir(sourceRelativePathFileName + "_files", targetRelativePathFileName + "_files");// 移动目录
+    }
+
+
     public static void saveCacheHtml( String fileNameInMD5 ,String fileContent){
         String filePathName =  App.cacheRelativePath + fileNameInMD5 + ".html";
-//        String filePathName =  App.cacheRelativePath + fileNameInMD5 + File.separator + fileNameInMD5 + ".html";
-//        String folderPathName =  App.cacheRelativePath + fileNameInMD5;
         saveHtml(filePathName,fileContent);
     }
     public static void saveBoxHtml( String fileName ,String fileContent){
@@ -166,7 +180,6 @@ public class UFile {
         }
     }
 
-
     public static String readHtml(String dir) {
         File file = new File(dir);
         String fileContent ="" , temp = "";
@@ -185,51 +198,48 @@ public class UFile {
         return fileContent;
     }
 
-    /**
-     * 获取当前文件被保存在那个目录
-     *
-     * @param fileNameInMD5
-     * @param fileName
-     * @return
-     */
-    public static String getSaveDir(String fileNameInMD5, String fileName) {
-        fileNameInMD5 = UString.stringToMD5(fileNameInMD5);
-        String dir;
-        File file = new File(App.cacheRelativePath + fileNameInMD5 + ".html");
-        dir = "cache";
-        if (!file.exists()) {
-            file = new File(App.boxRelativePath + fileName + ".html");
-            dir = "box";
-            if (!file.exists()) {
-                file = new File(App.storeRelativePath + fileName + ".html");
-                dir = "store";
-                if (!file.exists()) {
-                    return null;
-                }
-            }
-        }
-        return dir;
-    }
-
-    public static String getRelativeFile(String dir, String fileNameInMD5, String fileName) {
+    public static String getFolder(String dir, String fileNameInMD5, String fileName) {
         switch (dir) {
-            case "cache":
-                return App.cacheRelativePath + fileNameInMD5 + ".html";
-            case "box":
-                return App.boxRelativePath + fileName + ".html";
-            case "store":
-                return App.storeRelativePath + fileName + ".html";
-            case "boxRead":
-                return App.boxReadRelativePath + fileName + ".html";
-            case "storeRead":
-                return App.storeReadRelativePath + fileName + ".html";
+            case API.SAVE_DIR_CACHE:
+                return fileNameInMD5;
+            case API.SAVE_DIR_BOX:
+            case API.SAVE_DIR_STORE:
+            case API.SAVE_DIR_BOXREAD:
+            case API.SAVE_DIR_STOREREAD:
+                return fileName;
         }
         return null;
     }
 
+
+//    /**
+//     * 获取到文件的相对路径，类似：
+//     * "/storage/emulated/0/Android/data/me.wizos.loread/files/" + Dir + "/folderName" + "_files / .html"
+//     *
+//     * @param dir 保存到的目录名称
+//     * @param fileNameInMD5 MD5 加密后的文件名（用文章的 id 加密）
+//     * @param fileName 未加密的文件名
+//     * @return 相对路径
+//     */
+//    public static String getRelativeFilePath(String dir, String fileNameInMD5, String fileName) {
+//        switch (dir) {
+//            case API.SAVE_DIR_CACHE:
+//                return App.cacheRelativePath + fileNameInMD5;
+//            case API.SAVE_DIR_BOX:
+//                return App.boxRelativePath + fileName;
+//            case API.SAVE_DIR_STORE:
+//                return App.storeRelativePath + fileName;
+//            case API.SAVE_DIR_BOXREAD:
+//                return App.boxReadRelativePath + fileName;
+//            case API.SAVE_DIR_STOREREAD:
+//                return App.storeReadRelativePath + fileName;
+//        }
+//        return null;
+//    }
     /**
      * @param dir 目录名称
      * @return 带有完整的相对路径的 path
+     * "/storage/emulated/0/Android/data/me.wizos.loread/files/" + Dir + "/"
      */
     public static String getRelativeDir(String dir) {
         return App.externalFilesDir + dir + File.separator;
@@ -238,6 +248,7 @@ public class UFile {
     public static String getAbsoluteDir(String dir) {
         return "file:" + File.separator + File.separator + App.externalFilesDir + dir + File.separator;
     }
+
 
     public static android.graphics.Bitmap getBitmap(String filePath){
         if(filePath==null)

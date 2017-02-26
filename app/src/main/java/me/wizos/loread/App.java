@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import me.wizos.loread.activity.BaseActivity;
+import me.wizos.loread.bean.Article;
 import me.wizos.loread.data.WithSet;
 import me.wizos.loread.data.dao.DaoMaster;
 import me.wizos.loread.data.dao.DaoSession;
@@ -29,6 +30,7 @@ public class App extends Application{
     public static String logRelativePath,logAbsolutePath;
     public static String externalFilesDir;
     public static long mUserID;
+    public static List<Article> articleList;
 
 
     private  static DaoSession daoSession;
@@ -68,7 +70,7 @@ public class App extends Application{
         externalFilesDir = getExternalFilesDir(null) + File.separator;
 
         cacheRelativePath = UFile.getRelativeDir(API.SAVE_DIR_CACHE);
-        cacheAbsolutePath = UFile.getAbsoluteDir(API.SAVE_DIR_CACHE); // 仅在储存于 html 时使用
+//        cacheAbsolutePath = UFile.getAbsoluteDir(API.SAVE_DIR_CACHE); // 仅在储存于 html 时使用
 
         boxRelativePath = UFile.getRelativeDir(API.SAVE_DIR_BOX);
         boxAbsolutePath = UFile.getAbsoluteDir(API.SAVE_DIR_BOX);
@@ -101,7 +103,7 @@ public class App extends Application{
     }
     public static void finishAll(){
         for (WeakReference<BaseActivity> activity : activities) {
-            if (!activity.get().isFinishing()) {
+            if (activity.get() != null && !activity.get().isFinishing()) {
                 activity.get().finish();
             }
         }

@@ -436,7 +436,8 @@ public class MainService extends IntentService {
 //    }
 
     private void sendSuccess() {
-        Message message = new Message();
+//        Message message = new Message();
+        Message message = mHandler.obtainMessage();
         Bundle bundle = new Bundle();
         bundle.putString("tips", "");
         message.what = API.SUCCESS;

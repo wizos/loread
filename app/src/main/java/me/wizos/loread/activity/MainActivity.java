@@ -31,11 +31,12 @@ import com.yydcdut.sdlv.SlideAndDragListView;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import me.wizos.loread.App;
 import me.wizos.loread.R;
 import me.wizos.loread.bean.Article;
-import me.wizos.loread.data.UpdateDB;
 import me.wizos.loread.data.WithDB;
 import me.wizos.loread.data.WithSet;
 import me.wizos.loread.net.API;
@@ -69,15 +70,15 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
     public static String sListTag;
     private boolean syncFirstOpen = true;
     //    private boolean hadSyncLogRequest = true;
-    private boolean isOrderTagFeed;
+//    private boolean isOrderTagFeed;
     private MainSlvAdapter mainSlvAdapter;
-    private List<Article> articleList;
+//    private List<Article> App.articleList;
 //    private String sListTagCount = "";
 
     private Neter mNeter;
 
     /* 通过Binder，实现Activity与Service通信 */
-    private MainService.ServiceBinder mBinderService;
+//    private MainService.ServiceBinder mBinderService;
     // 先创建一个 ServiceConnection 匿名类，重写 onServiceConnected()、onServiceDisconnected()。这两个方法分别会在Activity与Service建立关联和解除关联的时候调用。
     // 在onServiceConnected()方法中，我们又通过向下转型得到了MyBinder的实例，有了这个实例，Activity和Service之间的关系就变得非常紧密了。
     private ServiceConnection connection = new ServiceConnection() {
@@ -88,7 +89,7 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
 
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
-            mBinderService = (MainService.ServiceBinder) service;
+            MainService.ServiceBinder mBinderService = (MainService.ServiceBinder) service;
             MainService mainService = mBinderService.getService();
             mainService.regHandler(mHandler);//TODO:考虑内存泄露
             mNeter = mainService.getNeter();
@@ -103,7 +104,7 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         context = this ;
-        UpdateDB.start(this); // 不会用
+//        UpdateDB.start(this); // 不会用
         UFile.setContext(this);
         App.addActivity(this);
         initToolbar();
@@ -113,8 +114,8 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
         initColorful();
         initService();
         initData();
+//        update();
 //        KLog.i("【一】" + toolbar.getTitle() );
-//        initLogService();
     }
 
 
@@ -150,7 +151,7 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
         sListState = WithSet.getInstance().getListState();
         sListTag = "user/" + App.mUserID + "/state/com.google/reading-list";
         syncFirstOpen = WithSet.getInstance().isSyncFirstOpen();
-        isOrderTagFeed = WithSet.getInstance().isOrderTagFeed();
+//        isOrderTagFeed = WithSet.getInstance().isOrderTagFeed();
         KLog.i("【 readSetting 】ATUH 为" + API.INOREADER_ATUH + syncFirstOpen + "【mUserID为】");
         KLog.i( WithSet.getInstance().getCachePathStarred() + WithSet.getInstance().getUseName() );
     }
@@ -235,7 +236,7 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
         readSetting();
         initBottombarIcon();
         reloadData();  // 先加载已有数据
-        if( syncFirstOpen && articleList.size() !=0 ){
+        if (syncFirstOpen && App.articleList.size() != 0) {
             mSwipeRefreshLayout.setEnabled(false);
             UToast.showShort("首次开启同步");
 //            handler.sendEmptyMessage(API.M_BEGIN_SYNC);
@@ -249,33 +250,33 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
                 startSyncService();
             }
         }
-        KLog.i("列表数目：" + articleList.size() + "  当前状态：" + sListState);
+        KLog.i("列表数目：" + App.articleList.size() + "  当前状态：" + sListState);
     }
 
     /**
      * sListState 包含 3 个状态：All，Unread，Stared
      * sListTag 至少包含 1 个状态： Reading-list
      * */
-    protected void reloadData(){ // 获取 articleList , 并且根据 articleList 的到未读数目
+    protected void reloadData() { // 获取 App.articleList , 并且根据 App.articleList 的到未读数目
         KLog.i("加载数据");
         if(sListTag.contains(API.U_NO_LABEL)){
-            articleList = getNoLabelList( );  // FIXME: 2016/5/7 这里的未分类暂时无法使用，因为在云端订阅源的分类是可能会变的，导致本地缓存的文章分类错误
+            App.articleList = getNoLabelList();  // FIXME: 2016/5/7 这里的未分类暂时无法使用，因为在云端订阅源的分类是可能会变的，导致本地缓存的文章分类错误
             KLog.i("【API.U_NO_LABEL】");
         }else {
             if (sListState.equals(API.LIST_STAR)) {
                 ;
-                articleList = WithDB.getInstance().loadTagStar(sListTag);
+                App.articleList = WithDB.getInstance().loadTagStar(sListTag);
                 KLog.i("【API.LIST_STAR】");
             }else{
-                articleList = WithDB.getInstance().loadTagRead(sListState,sListTag); // 590-55
-//                articleList.clear();
-//                articleList.addAll( WithDB.getInstance().loadTagRead(sListState,sListTag) );
+                App.articleList = WithDB.getInstance().loadTagRead(sListState, sListTag); // 590-55
+//                App.articleList.clear();
+//                App.articleList.addAll( WithDB.getInstance().loadTagRead(sListState,sListTag) );
                 KLog.i("【API.loadTagRead】" + sListState + sListTag);
             }
         }
-        KLog.i("【】" + articleList.size() + sListState + "--" + sListTag);
+        KLog.i("【】" + App.articleList.size() + sListState + "--" + sListTag);
 
-        if(UString.isBlank(articleList)){
+        if (UString.isBlank(App.articleList)) {
             vPlaceHolder.setVisibility(View.VISIBLE);
             slv.setVisibility(View.GONE);
             UToast.showShort("没有文章"); // 弹出一个提示框，询问是否同步
@@ -283,13 +284,13 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
             vPlaceHolder.setVisibility(View.GONE);
             slv.setVisibility(View.VISIBLE);
         }
-        KLog.i("【notify1】" + sListState + sListTag  + toolbar.getTitle() + articleList.size());
-        mainSlvAdapter = new MainSlvAdapter(this, articleList);
+        KLog.i("【notify1】" + sListState + sListTag + toolbar.getTitle() + App.articleList.size());
+        mainSlvAdapter = new MainSlvAdapter(this, App.articleList);
         slv.setAdapter(mainSlvAdapter);
         mainSlvAdapter.notifyDataSetChanged();
-        KLog.i("【notify2】" + articleList.size() + "--" + mainSlvAdapter.getCount());
+        KLog.i("【notify2】" + App.articleList.size() + "--" + mainSlvAdapter.getCount());
         changeToolbarTitle();
-        tagCount = articleList.size();
+        tagCount = App.articleList.size();
         setItemNum( tagCount );
     }
 
@@ -344,14 +345,14 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
                 case API.SUCCESS:
                     mSwipeRefreshLayout.setRefreshing(false);
                     mSwipeRefreshLayout.setEnabled(true);
-                    vToolbarHint.setText(String.valueOf(articleList.size()));
+                    vToolbarHint.setText(String.valueOf(App.articleList.size()));
                     notifyDataChanged();
 //                    KLog.i("【文章列表获取完成】" );
                     break;
                 case API.FAILURE: // 文章获取失败
                     mSwipeRefreshLayout.setRefreshing(false);
                     mSwipeRefreshLayout.setEnabled(true);
-                    vToolbarHint.setText(String.valueOf(articleList.size()));
+                    vToolbarHint.setText(String.valueOf(App.articleList.size()));
                     UToast.showShort("同步失败");
                     break;
                 case API.PROCESS:
@@ -399,6 +400,7 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
         KLog.d( sListTag + sListState + tagName );
     }
 
+
     private void initBottombarIcon(){
         if( sListState.equals(API.LIST_STAR) ){
             vStarIcon.setText(getString(R.string.font_stared));
@@ -423,12 +425,13 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
             @Override
             public void onListItemClick(View v, int position) {
                 if(position==-1){return;}
-                String articleID = articleList.get( position ).getId();
+                String articleID = App.articleList.get(position).getId();
                 Intent intent = new Intent(MainActivity.this , ArticleActivity.class);
                 intent.putExtra("articleID", articleID);
                 intent.putExtra("articleNum", position + 1);
-                intent.putExtra("articleCount", articleList.size());
+                intent.putExtra("articleCount", App.articleList.size());
                 startActivity(intent);
+                App.articleList = App.articleList;
             }
         });
         slv.setOnSlideListener(new SlideAndDragListView.OnSlideListener() {
@@ -437,7 +440,7 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
                 if (position == -1) {
                     return Menu.ITEM_NOTHING;
                 }
-                Article article = articleList.get(position);
+                Article article = App.articleList.get(position);
                 switch (direction) {
                     case MenuItem.DIRECTION_LEFT:
                         changeStarState(article);
@@ -487,11 +490,11 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
                                         break;
                                     case 1:
                                         i= position;
-                                        num = articleList.size();
+                                        num = App.articleList.size();
                                         artList = new ArrayList<>( num - position - 1 );
                                         break;
                                     case 2:
-                                        Article article = articleList.get(position);
+                                        Article article = App.articleList.get(position);
 //                                        startAction("unreadArticle",article.getId());
                                         mNeter.postUnReadArticle( article.getId() );
                                         article.setReadState(API.ART_READING);
@@ -501,9 +504,9 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
                                 }
 
                                 for(int n = i; n< num; n++){
-                                    if( articleList.get(n).getReadState().equals(API.ART_UNREAD)){
-                                        articleList.get(n).setReadState(API.ART_READ);
-                                        artList.add( articleList.get(n) );
+                                    if (App.articleList.get(n).getReadState().equals(API.ART_UNREAD)) {
+                                        App.articleList.get(n).setReadState(API.ART_READ);
+                                        artList.add(App.articleList.get(n));
                                     }
                                 }
                                 addReadedList(artList);
@@ -586,10 +589,8 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
                 mNeter.getWithAuth(API.HOST + API.U_SUSCRIPTION_LIST);
         }
 //        KLog.i("【== onActivityResult 】" + tagId + "----" + sListTag);
-        if( tagId == null){
-            return;
-        }
-        if( !tagId.equals("")){
+
+        if (tagId != null && !tagId.equals("")) {
             sListTag = tagId;
 //            sListTagCount = tagCount;
             KLog.i("【onActivityResult】" + sListTag + sListState);
@@ -657,7 +658,7 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
         Intent intent = new Intent(MainActivity.this,TagActivity.class);
         intent.putExtra("ListState",sListState);
         intent.putExtra("ListTag",sListTag);
-        intent.putExtra("ListCount",articleList.size());
+        intent.putExtra("ListCount", App.articleList.size());
 //        intent.putExtra("NoLabelCount",getNoLabelList().size());
         startActivityForResult(intent, 0);
     }
@@ -754,49 +755,94 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
     }
 
 
-//    private void startAction(String action){
-//        intent.setAction("refresh");
-//        KLog.d( "Service = " + action );
-//        startService(intent);
-//    }
-//    private void startAction(String action,String articleId){
-//        intent.setAction("refresh");
-//        intent.putExtra("articleId",articleId);
-//        KLog.d( "Service = " + action );
-//        startService(intent);
-//    }
+    public boolean update() {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                List<Article> arts = WithDB.getInstance().loadArtWhere();
+                KLog.d("升级文章数量：" + arts.size());
+                if (arts.size() == 0) {
+                    return;
+                }
+                String imgState, folder;
+                Pattern r;
+                Matcher m;
+                for (Article article : arts) {
+                    imgState = article.getImgState();
+                    if (imgState.equals("") || imgState.equals("OK") || imgState.equals("ok")) {
+                        continue;
+                    } else {
+                        // 验证规则
+//                        String filter = ",\"saveSrc\":.*?loread\"";
+//                        // 编译正则表达式
+//                        pattern = Pattern.compile(filter, Pattern.CASE_INSENSITIVE); // 忽略大小写的写法
+//                        matcher = pattern.matcher( imgState );
+//                        matcher.replaceAll(""); // 字符串是否与正则表达式相匹配
+//
+//                        pattern = Pattern.compile(filter, Pattern.CASE_INSENSITIVE); // 忽略大小写的写法
+//                        matcher = pattern.matcher( imgState );
+//                        matcher.replaceAll(""); // 字符串是否与正则表达式相匹配
+                        if (imgState.contains("\"folder\":\"")) {
+                            continue;
+                        }
+                        if (article.getSaveDir() == null) {
+                            article.setSaveDir(API.SAVE_DIR_CACHE);
+                        }
+                        folder = UFile.getFolder(article.getSaveDir(), UString.stringToMD5(article.getId()), article.getTitle());
 
-//    private void initLogService(){
-//        Intent intent = new Intent(this, ULog.class);
-//        startService(intent);
-//    }
-//    public boolean updatexx(){
-//        new Thread(new Runnable() {
-//            @Override
-//            public void run() {
-//                List<Article> arts = WithDB.getInstance().loadArtSaveDirIsNull();
-//                if(arts.size()==0){
-//                    return;
-//                }
-//                String htmlState;
-//                for (Article article: arts){
-//                    htmlState = UFile.getSaveDir( article.getId(), article.getTitle() );
-//                    if( htmlState == null ){
-//                        continue;
-//                    }else if (htmlState.equals( API.SAVE_DIR_CACHE)){
-//                        article.setSaveDir( API.SAVE_DIR_CACHE );
-//                    }else if(htmlState.equals( API.SAVE_DIR_BOX )){
-//                        article.setSaveDir( API.SAVE_DIR_BOX );
-//                    } else if (htmlState.equals( API.SAVE_DIR_STORE )) {
-//                        article.setSaveDir( API.SAVE_DIR_STORE );
-//                    }
-//                    WithDB.getInstance().saveArticle( article );
-//                }
-//                mHandler.sendEmptyMessage(1000);
-//            }
-//        }).start();
-////        KLog.d( "升级完成" );
-//        return true;
-//    }
+                        r = Pattern.compile(",\"saveSrc\":.*?loread\"");// 创建 Pattern 对象
+                        m = r.matcher(imgState);// 现在创建 matcher 对象
+                        imgState = m.replaceAll("");
+
+                        r = Pattern.compile("\"localSrc\":.*?_files\\/(.*?)loread\"");// 创建 Pattern 对象
+                        m = r.matcher(imgState);// 现在创建 matcher 对象
+                        imgState = m.replaceAll("\"imgName\":\"$1loread\"");
+
+//                        imgState.replaceAll(",\"saveSrc\":.*?loread\"", "" );
+//                        imgState.replaceAll("\"localSrc\":.*?_files\\/(.*?)loread\"", "\"imgName\":\"$1loread\"" );
+                        KLog.d("升级文章含有：" + imgState.contains("\"imgStatus\":1,"));
+                        if (imgState.contains("\"imgStatus\":1,")) {
+//                            int p = imgState.indexOf("\"imgStatus\":1,");
+                            imgState = imgState.replace("\"imgStatus\":1,", "\"imgStatus\":1,\"folder\":\"" + folder + "_files\",");
+                        }
+                        if (imgState.contains("\"imgStatus\":0,")) {
+                            imgState = imgState.replace("\"imgStatus\":0,", "\"imgStatus\":0,\"folder\":\"" + folder + "_files\",");
+                        }
+
+                        KLog.d("升级文章内容：" + imgState);
+//                        try {
+//                            Thread.sleep(21000);
+//                        }catch (Exception e){
+//
+//                        }
+//                        Gson gson = new Gson();
+//                        Type type = new TypeToken<ExtraImg>() {}.getType();
+//                        try {
+//                            extraImg = gson.fromJson(imgState, type);
+//                            if ( extraImg.getFolder()==null ){
+//                                extraImg.setFolder( UFile.getFolder( article.getSaveDir(), UString.stringToMD5(article.getId()), article.getTitle() ) );
+//                            }
+//                            folder = extraImg.getFolder();
+//                            lossSrcList = extraImg.getLossImgs();
+//                            obtainSrcList = extraImg.getObtainImgs();
+////                    KLog.e("重新进入获取到的imgState记录" + imgState + extraImg +  lossSrcList + obtainSrcList);
+//                        } catch (RuntimeException e) {
+//                            continue;
+//                        }
+                    }
+                    article.setImgState(imgState);
+                    WithDB.getInstance().saveArticle(article);
+                }
+                mHandler.sendEmptyMessage(1000);
+            }
+        }).start();
+//        KLog.d( "升级完成" );
+        return true;
+    }
+
+
+
+
+
 
 }

@@ -104,7 +104,8 @@
     <string name="font_label">&#xe7c5;</string>
     <string name="font_setting">&#xe61f;</string>
     <string name="font_readability">&#xe65a;</string>
-    <string name="font_down">&#xe609;</string>
+    <string name="font_unsave">&#xe604;</string>
+    <string name="font_saved">&#xe605;</string>
     <string name="font_main">&#xe60c;</string>
     <string name="font_tag_class">&#xe7c4;</string>
 

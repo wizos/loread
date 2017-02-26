@@ -4,7 +4,6 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.support.v4.util.ArrayMap;
-import android.util.SparseIntArray;
 
 import com.socks.library.KLog;
 import com.squareup.okhttp.Callback;
@@ -39,7 +38,7 @@ public class Neter {
     public Neter(Handler handler) {
         KLog.i("【Neter构造函数】" + handler );
         this.handler = handler;
-        this.taskList = new SparseIntArray();
+        this.taskList = new ArrayMap<>();
         // 创建线程数
 //        this.threadPool = Executors.newFixedThreadPool(10);
     }
@@ -141,7 +140,7 @@ public class Neter {
 
     public void getWithAuth(String url) {
         KLog.d("【执行 getWithAuth 】" + url);
-//        if (!HttpUtil.isNetworkEnabled()) {
+//        if (!HttpUtil.isNetworkAvailable()) {
 //            headParamList.clear();
 //            handler.sendEmptyMessage(API.F_NoMsg);
 //            return;}
@@ -180,7 +179,7 @@ public class Neter {
 
     public void postWithAuth(String url, long logTime) { // just for login
         KLog.d("【执行 = " + url + "】");
-//        if (!HttpUtil.isNetworkEnabled()) {
+//        if (!HttpUtil.isNetworkAvailable()) {
 //            headParamList.clear();
 //            bodyParamList.clear();
 //            handler.sendEmptyMessage(API.F_NoMsg);
@@ -213,7 +212,7 @@ public class Neter {
 
 //
 //    public void forDatax(final String url, final Request request, final long logTime) {
-//        if (!HttpUtil.isNetworkEnabled()) {
+//        if (!HttpUtil.isNetworkAvailable()) {
 //            handler.sendEmptyMessage(API.F_NoMsg);
 //            return ;}
 //        KLog.d("【开始请求】 "+ logTime + "--" + url);
@@ -260,7 +259,7 @@ public class Neter {
 //    }
 
     public void forData(final String url, final Request request, final long logTime) {
-        if (!HttpUtil.isNetworkEnabled()) {
+        if (!HttpUtil.isNetworkAvailable()) {
 //            handler.sendEmptyMessage(API.F_NoMsg);
             makeMsg(API.F_NoMsg, url, "noNet", logTime);
             return;
@@ -302,7 +301,7 @@ public class Neter {
 //
 //    public void postCallback( String urlx, final long logTime) { // just for login
 //        KLog.d("【执行 = " + urlx + "】");
-//        if (!HttpUtil.isNetworkEnabled()) {
+//        if (!HttpUtil.isNetworkAvailable()) {
 //            headParamList.clear();
 //            bodyParamList.clear();
 //            handler.sendEmptyMessage(API.F_NoMsg);
@@ -462,8 +461,25 @@ public class Neter {
     /**
      * 保存正在下载或等待下载的URL和相应失败下载次数（初始为0），防止滚动时多次下载
      */
-    private SparseIntArray taskList;
+    private ArrayMap<String, Integer> taskList;
+    private ArrayMap<String, String> taskMap;
 
+    /**
+     * 获取任务列表
+     */
+    public ArrayMap<String, Integer> getTaskList() {
+        return taskList;
+    }
+
+    /**
+     * 取消正在下载的任务
+     */
+    public synchronized void cancelTasks() {
+        if (threadPool != null) {
+            threadPool.shutdownNow();
+            threadPool = null;
+        }
+    }
 
     /**
      * 异步下载图片，并按指定宽度和高度压缩图片
@@ -472,12 +488,23 @@ public class Neter {
      */
     public void loadImg(String imgUrl, String filePath, int imgNo) {
         KLog.d("下载图片的保存路径为：" + filePath);
-        taskList.put(imgNo, 0);
-        threadPool.execute(new Task(imgUrl, filePath, imgNo));
+        if (taskList.get(filePath) == null) {
+            taskList.put(filePath, 0);
+            threadPool.execute(new Task(imgUrl, filePath, imgNo));
+        }
     }
 
-    public int loadImg(ArrayMap<Integer, SrcPair> imgSrcList) {
-        if (!HttpUtil.isWifiEnabled()) {
+    public void loadImg(String imgUrl, String filePath, String articleID, int imgNo) {
+        KLog.d("下载图片的网址：" + imgUrl + "，保存路径：" + filePath + "，所属文章：" + articleID + "，编号：" + imgNo);
+        if (taskMap.get(filePath) == null) {
+            taskMap.put(filePath, articleID);
+            threadPool.execute(new Task(imgUrl, filePath, imgNo));
+        }
+    }
+
+    public int loadImgs(ArrayMap<Integer, SrcPair> imgSrcList, String parentPath) {
+        // article.getSaveDir() ) + imgsMeta.getFolder() + File.separator
+        if (!HttpUtil.canDownImg()) {
             handler.sendEmptyMessage(API.F_NoMsg);
             return 0;
         }
@@ -486,7 +513,7 @@ public class Neter {
         }
         int length = imgSrcList.size();
         for (ArrayMap.Entry<Integer, SrcPair> entry : imgSrcList.entrySet()) {
-            loadImg(entry.getValue().getNetSrc(), entry.getValue().getSaveSrc(), entry.getKey());
+            loadImg(entry.getValue().getNetSrc(), parentPath + entry.getValue().getImgName(), entry.getKey());
             KLog.d("【获取图片的key为：" + entry.getKey() );
         }
         return length;
@@ -527,10 +554,12 @@ public class Neter {
                             if (!UFile.saveFromStream(inputStream, filePath)) {
                                 state = API.F_BITMAP;
                             }
-                        } catch (IOException e) {
-                            e.printStackTrace();
                         } finally {
-                            response.body().close();
+                            try {
+                                response.body().close();
+                            } catch (final IOException ex) {
+                                KLog.e("Problem while cleaning up.", ex);
+                            }
                         }
 
                         KLog.d("【成功保存图片】" + imgUrl + "==" + filePath);
@@ -552,22 +581,6 @@ public class Neter {
         handler.sendMessage(message);
     }
 
-    /**
-     * 取消正在下载的任务
-     */
-    public synchronized void cancelTasks() {
-        if (threadPool != null) {
-            threadPool.shutdownNow();
-            threadPool = null;
-        }
-    }
-
-    /**
-     * 获取任务列表
-     */
-    public SparseIntArray getTaskList() {
-        return taskList;
-    }
 
 
 }
