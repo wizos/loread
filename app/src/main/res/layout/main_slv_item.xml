@@ -48,15 +48,27 @@
                 android:textSize="12sp"
                 android:text="@string/font_unread"/>
 
+            <me.wizos.loread.view.IconFontView
+                android:id="@+id/main_slv_item_icon_save"
+                android:layout_width="16dp"
+                android:layout_height="16dp"
+                android:layout_toEndOf="@id/main_slv_item_icon_reading"
+                android:visibility="gone"
+                tools:visibility="visible"
+                android:textColor="#5a8fca"
+                android:gravity="center"
+                android:textSize="12sp"
+                android:text="@string/font_saved" />
+            <!--android:maxLines="1"-->
             <TextView
                 android:id="@+id/main_slv_item_title"
-                android:layout_toEndOf="@id/main_slv_item_icon_reading"
+                android:layout_toEndOf="@id/main_slv_item_icon_save"
                 android:layout_width="wrap_content"
-                android:layout_height="17dp"
+                android:layout_height="wrap_content"
                 android:gravity="center_vertical"
                 android:fontFamily="sans-serif"
-                android:maxLines="1"
                 android:includeFontPadding="false"
+                android:maxLines="2"
                 android:ellipsize="end"
                 android:textColor="?attr/lv_item_title_color"
                 android:textSize="15sp"
@@ -69,7 +81,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:fontFamily="sans-serif"
-                android:lines="2"
+                android:maxLines="2"
                 android:ellipsize="end"
                 android:textColor="?attr/lv_item_desc_color"
                 android:textSize="13sp"

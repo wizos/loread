@@ -381,7 +381,7 @@ public class MainService extends IntentService {
             UFile.moveFile(App.boxRelativePath + article.getTitle() + ".html", App.boxReadRelativePath + article.getTitle() + ".html");// 移动文件
             UFile.moveDir(App.boxRelativePath + article.getTitle() + "_files", App.boxReadRelativePath + article.getTitle() + "_files");// 移动目录
             article.setCoverSrc(UFile.getAbsoluteDir("boxRead") + article.getTitle() + "_files" + File.separator + UString.getFileNameExtByUrl(article.getCoverSrc()));
-            article.setSaveDir("boxRead");
+            article.setSaveDir(API.SAVE_DIR_BOXREAD);
             KLog.i("移动了A");
         }
         WithDB.getInstance().saveArticleList(boxReadArts);
@@ -389,7 +389,7 @@ public class MainService extends IntentService {
             UFile.moveFile(App.storeRelativePath + article.getTitle() + ".html", App.storeReadRelativePath + article.getTitle() + ".html");// 移动文件
             UFile.moveDir(App.storeRelativePath + article.getTitle() + "_files", App.storeReadRelativePath + article.getTitle() + "_files");// 移动目录
             article.setCoverSrc(UFile.getAbsoluteDir("storeRead") + article.getTitle() + "_files" + File.separator + UString.getFileNameExtByUrl(article.getCoverSrc()));
-            article.setSaveDir("storeRead");
+            article.setSaveDir(API.SAVE_DIR_STOREREAD);
             KLog.i("移动了B" + App.storeRelativePath + article.getTitle() + "_files |||| " + App.storeReadRelativePath + article.getTitle() + "_files");
         }
         WithDB.getInstance().saveArticleList(storeReadArts);

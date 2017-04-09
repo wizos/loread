@@ -234,6 +234,35 @@
             </LinearLayout>
 
             <LinearLayout
+                android:id="@+id/setting_link_open_mode"
+                style="@style/SettingItem"
+                android:gravity="center_vertical">
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/setting_link_open_mode_title"
+                        style="@style/SettingItemTitle"
+                        android:text="@string/setting_link_open_mode_title" />
+
+                    <TextView
+                        android:id="@+id/setting_link_open_mode_tips"
+                        style="@style/SettingItemTips"
+                        android:text="@string/setting_link_open_mode_tips" />
+                </LinearLayout>
+
+                <com.kyleduo.switchbutton.SwitchButton
+                    android:id="@+id/setting_link_open_mode_sb_flyme"
+                    style="@style/SwitchButtonStyle"
+                    android:checked="false"
+                    android:onClick="onSBClick" />
+            </LinearLayout>
+
+            <LinearLayout
                 android:id="@+id/setting_cache_path_starred"
                 style="@style/SettingItem"
                 android:orientation="horizontal">

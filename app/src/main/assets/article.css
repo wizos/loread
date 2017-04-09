@@ -23,9 +23,9 @@ body > *:last-child {
 }
 
 
+
 /* IMAGES
 =============================================================================*/
-
 
 /* 清除浮动 */
 div.clear-float {
@@ -59,8 +59,6 @@ img {
     justify-content:center;
     align-items:center;
 }
-
-
 /* BLOCKS
 =============================================================================*/
 
@@ -83,7 +81,7 @@ h1 tt, h1 code, h2 tt, h2 code, h3 tt, h3 code, h4 tt, h4 code, h5 tt, h5 code, 
 }
 
 h1 {
-    font-size: 28px;
+    font-size: 26px;
 }
 
 h2 {
@@ -250,7 +248,7 @@ blockquote > :last-child {
 
 hr {
     clear: both;
-    margin: 15px 0;
+    margin: 10px 0;
     height: 0px;
     overflow: hidden;
     border: none;
@@ -267,5 +265,19 @@ table th {
 }
 
 
-
+#art{
+    padding: 20px 20px 20px 20px;
+}
+#art_h1{
+    text-align:center;font-size: 22px;
+}
+#art_author{
+    float:left;width:50%;font-size: 14px;
+}
+#art_pubDate{
+    float:left;width:50%;text-align:right;font-size: 14px;
+}
+#art_hr{
+    margin: 10px 0px 10px 0px;
+}
 

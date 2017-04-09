@@ -1,16 +1,23 @@
 package me.wizos.loread.data;
 
+import android.support.v4.util.ArrayMap;
+
+import com.socks.library.KLog;
+
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import de.greenrobot.dao.query.QueryBuilder;
 import me.wizos.loread.App;
 import me.wizos.loread.bean.Article;
 import me.wizos.loread.bean.Feed;
+import me.wizos.loread.bean.Img;
 import me.wizos.loread.bean.RequestLog;
 import me.wizos.loread.bean.Tag;
 import me.wizos.loread.data.dao.ArticleDao;
 import me.wizos.loread.data.dao.FeedDao;
+import me.wizos.loread.data.dao.ImgDao;
 import me.wizos.loread.data.dao.RequestLogDao;
 import me.wizos.loread.data.dao.TagDao;
 import me.wizos.loread.net.API;
@@ -24,6 +31,7 @@ public class WithDB {
     private FeedDao feedDao;
     private ArticleDao articleDao;
     private RequestLogDao requestLogDao;
+    private ImgDao imgDao;
 
     private WithDB() {}
 
@@ -38,6 +46,7 @@ public class WithDB {
                     withDB.feedDao = App.getDaoSession().getFeedDao();
                     withDB.articleDao = App.getDaoSession().getArticleDao();
                     withDB.requestLogDao = App.getDaoSession().getRequestLogDao();
+                    withDB.imgDao = App.getDaoSession().getImgDao();
                 }
             }
         }
@@ -49,8 +58,9 @@ public class WithDB {
         if (tag.getId() != null) {return;}
         if (tagDao.queryBuilder().where(TagDao.Properties.Id.eq(tag.getId())).list().size() == 0) {
             tagDao.insertOrReplace(tag);
+        } else { // already exist
+            tagDao.update(tag);
         }
-        tagDao.insertOrReplace(tag);
     }
     // 自己写的
     public void saveTagList(ArrayList<Tag> tags) {
@@ -71,6 +81,49 @@ public class WithDB {
             feedDao.update(feed);
         }
     }
+
+    //    public void saveImgs( List<Img> imgList) {
+//        for (Img img : imgList ){
+//            if ( imgDao.queryBuilder().where(ImgDao.Properties.ArticleId.eq(img.getArticleId()), ImgDao.Properties.No.eq(img.getNo())).list().size() == 0 ){
+//                imgDao.insertOrReplace(img);
+//            }else {
+//                imgDao.update( img );
+//            }
+//        }
+////        imgDao.insertInTx(imgList);
+//    }
+    public void saveImgs(ArrayMap<Integer, Img> imgMap) {
+        for (Map.Entry<Integer, Img> entry : imgMap.entrySet()) {
+            if (imgDao.queryBuilder().where(ImgDao.Properties.ArticleId.eq(entry.getValue().getArticleId()), ImgDao.Properties.No.eq(entry.getValue().getNo())).list().size() == 0) {
+                imgDao.insertOrReplace(entry.getValue());
+            }
+//            else {
+//                imgDao.update( entry.getValue() );
+//            }
+        }
+    }
+
+    public void saveImg(Img img) {
+        imgDao.insertOrReplace(img);
+    }
+
+    //    public List<Img> getLossImgs( String articleId ) {
+//        QueryBuilder<Img> q = imgDao.queryBuilder()
+//                .where(ImgDao.Properties.ArticleId.eq(articleId), ImgDao.Properties.DownState.eq(0));
+//        return q.list();
+//    }
+    public ArrayMap<Integer, Img> getLossImgs(String articleId) {
+        QueryBuilder<Img> q = imgDao.queryBuilder()
+                .where(ImgDao.Properties.ArticleId.eq(articleId), ImgDao.Properties.DownState.eq(0));
+        List<Img> imgList = q.list();
+        ArrayMap<Integer, Img> imgMap = new ArrayMap<>();
+        for (Img img : imgList) {
+            imgMap.put(img.getNo(), img);
+        }
+        KLog.d("==" + articleId + imgMap.size());
+        return imgMap;
+    }
+
     public void saveArticle(Article article) {
         if (article.getId() != null) {
             articleDao.insertOrReplace(article);
@@ -230,11 +283,6 @@ public class WithDB {
         QueryBuilder<Article> q = articleDao.queryBuilder()
                 .where(ArticleDao.Properties.ImgState.isNotNull()); /** Creates an "equal ('=')" condition  for this property. */
         return q.list();
-
-//        Query query = articleDao.queryBuilder()
-//                .where(ArticleDao.Properties.ImgState.isNotNull()) /** Creates an "equal ('=')" condition  for this property. */
-//                .build();
-//        return query.list();
     }
 //    public List<Article> loadArtAllOrder(){
 //        long xx = System.currentTimeMillis();
@@ -247,6 +295,11 @@ public class WithDB {
 //        return articleList;
 //    }
 
+    public List<Article> loadStarRead() {
+        QueryBuilder<Article> q = articleDao.queryBuilder()
+                .where(ArticleDao.Properties.StarState.eq(API.LIST_STAR), ArticleDao.Properties.SaveDir.eq(API.SAVE_DIR_CACHE)); /**  Creates an "equal ('=')" condition  for this property. */
+        return q.list();
+    }
 
     public List<Article> loadStarAll() {
         QueryBuilder<Article> q = articleDao.queryBuilder()

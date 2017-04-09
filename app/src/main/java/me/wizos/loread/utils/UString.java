@@ -2,6 +2,7 @@ package me.wizos.loread.utils;
 
 
 import android.support.v4.util.ArrayMap;
+import android.text.TextUtils;
 
 import com.socks.library.KLog;
 
@@ -13,7 +14,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import me.wizos.loread.App;
-import me.wizos.loread.bean.gson.SrcPair;
+import me.wizos.loread.bean.Article;
+import me.wizos.loread.bean.Img;
+import me.wizos.loread.data.WithSet;
 import me.wizos.loread.net.API;
 
 /**
@@ -24,13 +27,8 @@ public class UString {
     public static String toLongID(String id) {
         id = Long.toHexString(Long.valueOf(id));
         return "tag:google.com,2005:reader/item/" + String.format("%0" + (16 - id.length()) + "d", 0) + id;
-//        return "tag:google.com,2005:reader/item/" + String.format("%1$0"+( 16 -id.length())+"d",0)   ;
     }
 
-    public static String toLongID15(String id) {
-        id = Long.toHexString(Long.valueOf(id));
-        return "tag:google.com,2005:reader/item/" + String.format("%0" + (14 - id.length()) + "d", 0) + id;
-    }
 
     /**
      * 将字符串转成MD5值
@@ -40,7 +38,6 @@ public class UString {
      */
     public static String stringToMD5(String string) {
         byte[] hash;
-
         try {
             hash = MessageDigest.getInstance("MD5").digest(string.getBytes("UTF-8"));
         } catch (NoSuchAlgorithmException e) {
@@ -59,30 +56,102 @@ public class UString {
         return hex.toString();
     }
 
-//    public static String tagIdToName(String content){
-//    }
 
-    public static boolean isBlank(String content){
-        return content==null || content.isEmpty() || content.equals("");
-    }
+
     public static boolean isBlank(List list){return  list==null || list.isEmpty() || list.size()==0;}
+
+
+    public static String getHtmlHeader() {
+        // 获取排版文件路径（支持自定义的文件）
+        String typesettingCssPath = App.getInstance().getExternalFilesDir(null) + File.separator + "config" + File.separator + "article.css";
+        if (!UFile.isFileExists(typesettingCssPath)) {
+            typesettingCssPath = "file:///android_asset/article.css";
+        }
+        // 获取主题文件路径
+        String themeCssPath;
+        if (WithSet.getInstance().getThemeMode() == WithSet.themeDay) {
+            themeCssPath = "file:///android_asset/article_theme_day.css";
+        } else {
+            themeCssPath = "file:///android_asset/article_theme_night.css";
+        }
+
+        // 获取脚本函数
+        String script = "<script type=\"text/javascript\">" +
+                "function initImgClick(){" +
+                "var imgList = document.getElementsByTagName(\"img\"); " +
+                "for(var i=0; i<imgList.length; i++) {" +
+                "    imgList[i].no = i;" +
+                "    imgList[i].onclick = function() {" +
+                "        window.imagelistner.listen( this.no, this.src );  " +
+                "    }  " +
+                "}" +
+                "}" +
+                "function initImgPlaceholder(){" +
+                "var imgList = document.getElementsByTagName(\"img\"); " +
+                "for(var i=0; i<imgList.length; i++) {" +
+                "    imgList[i].src = \"file:///android_asset/down.svg\";" +
+                "}" +
+                "}" +
+                "function appointImgPlaceholder(number){" +
+                "var array = number.split(\"_\");" +
+                "var imgList = document.getElementsByTagName(\"img\"); " +
+                "for(var i=0; i<array.length; i++) {" +
+                "    var n = array[i];" +
+                "    imgList[n].src = \"file:///android_asset/down.svg\";" +
+                "}" +
+                "}" +
+                "</script>";
+
+        return "<!DOCTYPE html><html><head><meta charset=\"UTF-8\">" +
+                "<link rel=\"stylesheet\" type=\"text/css\" href=\"" + typesettingCssPath + "\" />" +
+                "<link rel=\"stylesheet\" type=\"text/css\" href=\"" + themeCssPath + "\" />" +
+                script + "</head><body>";
+    }
+
+
+    public static String getModHtml(Article article, String articleHtml) {
+        String author = article.getAuthor();
+        if (author != null && !author.equals("") && !article.getOriginTitle().contains(author)) {
+            author = article.getOriginTitle() + "@" + article.getAuthor();
+        } else {
+            author = article.getOriginTitle();
+        }
+        return "<!DOCTYPE html><html><head><meta charset=\"UTF-8\">" +
+                "<link rel=\"stylesheet\" type=\"text/css\" href=\"./normalize.css\" />" +
+                "<link rel=\"stylesheet\" type=\"text/css\" href=\"./markdown.css\" />" +
+                "<link rel=\"stylesheet\" type=\"text/css\" href=\"./customer.css\" />" +
+                "</head><body>" +
+                "<article id=\"art\">" +
+                "<header id=\"art_header\">" +
+                "<h1 id=\"art_h1\"><a href=\"" + article.getCanonical() + "\">" + article.getTitle() + "</a></h1>" +
+                "<p id=\"art_author\">" + author + "</p><p id=\"art_pubDate\">" + UTime.getDateSec(article.getPublished()) + "</p>" +
+                "</header>" +
+                "<hr id=\"art_hr\">" +
+                "<section id=\"art_section\">" + articleHtml + "</section>" +
+                "</article>" +
+                "</body></html>";
+    }
 
     /**
      * @param oldHtml 原始 html
-     * @param fileNameInMD5 MD5 加密后的文件名，用于有图片的文章内 src 的 **FileName_files 路径
+     * @param fileName MD5 加密后的文件名，用于有图片的文章内 src 的 **FileName_files 路径
      * @return 修改后的 src 下载地址和保存地址 + 修改后的 html
+     *  有 2 种情况会返回 null：1，传入的文章为空；2，文章中没有图片
      */
-    public static ArrayMap<Integer,SrcPair> getListOfSrcAndHtml(String oldHtml, String fileNameInMD5) {
-        if (UString.isBlank(oldHtml))
-            return null;
-        int num = 0;
-        StringBuilder tempHtml = new StringBuilder(oldHtml);
-        KLog.d("getListOfSrcAndHtml");
-        tempHtml = reviseHtmlNoAd(tempHtml);
-        String srcLocal,srcNet,srcSavePath,imgExt,imgName,temp;
-        ArrayMap<Integer,SrcPair> srcMap = new ArrayMap<>();
-        srcMap.put(0, new SrcPair("","","")); // 先存一个空的，方便后面把修改后的正文放进来
-        int indexB, indexA = tempHtml.indexOf("<img ", 0);
+    public static ArrayMap<Integer, Img> getListOfSrcAndHtml(String articleId, String oldHtml, String fileName) {
+        ArrayMap<Integer, Img> imgMap = new ArrayMap<>();
+        imgMap.put(0, new Img(0L, 0, "", oldHtml, "", 0));// 先存一个空的，方便后面把修改后的正文放进来
+
+        if (TextUtils.isEmpty(oldHtml))
+            return imgMap;
+
+        KLog.d("getListOfSrcAndHtml修饰文章：" + articleId);
+        Img imgMeta;
+        // 先去广告
+        StringBuilder tempHtml = UString.reviseHtmlNoAd(oldHtml);
+
+        int num = 0, indexB, indexA = tempHtml.indexOf("<img ", 0);
+        String srcLocal, srcNet, temp, FileNameExt;// imgExt,imgName,
         while (indexA != -1) {
             indexA = tempHtml.indexOf(" src=\"", indexA);
             if(indexA == -1){break;}
@@ -91,33 +160,45 @@ public class UString {
             srcNet = tempHtml.substring( indexA + 6, indexB );
             if ( srcNet.substring(0,3).equals("file")){  // 这段代码可以优化，没必要每次都判断相等
 //                indexA = tempHtml.indexOf("<img ", indexB);
+                KLog.d("判断是否存在 file 开头的图片");
                 break;
             }
             num++;
-            imgExt = UString.getFileExtByUrl( srcNet );
-            imgName = UString.getFileNameByUrl( srcNet )+ "_" + num; // 之所以要加 num ，是为了防止有些图片url是 /img.php?1212 等参数形式，导致得到的文件名都为 img
-            KLog.d("【获取src和html】" + imgExt + num );
-//            srcLocal = App.cacheAbsolutePath + fileNameInMD5  + File.separator + fileNameInMD5 + "_files" + File.separator + fileNameInMD5 + "_" + num + fileExt + API.MyFileType;
-//            srcLoading  = App.cacheRelativePath  + fileNameInMD5 + File.separator + fileNameInMD5 + "_files" + File.separator + fileNameInMD5 + "_" + num + fileExt + API.MyFileType;
-            srcLocal = "./" + fileNameInMD5 + "_files"  + File.separator + imgName + imgExt + API.MyFileType;
-            srcSavePath  = App.cacheRelativePath  + fileNameInMD5 + "_files" + File.separator + imgName + imgExt + API.MyFileType;
+//            imgExt = UString.getFileExtByUrl( srcNet );
+//            imgName = UString.getFileNameByUrl( srcNet );
+            FileNameExt = getFileNameExtByUrl(srcNet) + "_" + num + API.MyFileType;
+//            KLog.d("【获取src和html】" + imgExt + num );
+//            srcLocal = "./" + fileName + "_files"  + File.separator + imgName +  "_" + num  + imgExt  + API.MyFileType;
+            srcLocal = "./" + fileName + "_files" + File.separator + FileNameExt;  // 之所以要加 num ，是为了防止有些图片url是 /img.php?1212 等参数形式，导致得到的文件名都为 img
 
-            srcMap.put( num , new SrcPair( srcNet,srcSavePath ,srcLocal ));
-//            temp = " src=\"" + srcLocal + "\"" + " netsrc=\"" + srcNet + "\"";
+//            srcMap.put( num , new SrcPair( srcNet,imgName ));
+            imgMeta = new Img();
+            imgMeta.setNo(num);
+            imgMeta.setName(FileNameExt);
+            imgMeta.setSrc(srcNet);
+            imgMeta.setArticleId(articleId);
+            imgMeta.setDownState(0);
+            imgMap.put(num, imgMeta);
+
             temp = " src=\"" + srcLocal + "\"" + " netsrc=\"" + srcNet + "\"";
             tempHtml = tempHtml.replace( indexA, indexB + 1, temp ) ;
             indexB = indexA + 6 + srcLocal.length() + srcNet.length() + 10;
             indexA = tempHtml.indexOf("<img ", indexB);
         }
-        if(srcMap.size()==1){return null;}
-        srcMap.put(0,new SrcPair( String.valueOf(srcMap.size()-1),tempHtml.toString() ,""));
+//        map.put( tempHtml.toString(), imgList);
+        if (imgMap.size() == 1) {
+            imgMap.put(0, new Img(0L, 0, "", tempHtml.toString(), "", 0));
+            return imgMap;
+        }
+        imgMap.put(0, new Img(0L, imgMap.size() - 1, "", tempHtml.toString(), "", 0));
 
-        KLog.d("【文章2】" + srcMap.size() );
-        return srcMap;
+        KLog.d("【文章2】" + imgMap.size());
+        return imgMap;
     }
 
-    public static StringBuilder reviseHtmlNoAd(StringBuilder tempHtml) {
+    public static StringBuilder reviseHtmlNoAd(String oldHtml) {
 //        KLog.d("去广告" + tempHtml);
+        StringBuilder tempHtml = new StringBuilder(oldHtml);
         int indexA = tempHtml.indexOf("<center>", 0);
         int indexB = tempHtml.indexOf("</center>", indexA);
         KLog.d("去广告 = " + indexA + ":" + indexB);
@@ -134,16 +215,14 @@ public class UString {
     }
 
 
-
-
     /**
      * 将 cache html 中的 src 的 **MD5_files 文件夹由 MD5 加密，改为正常的 **Name_files，防止图片不能显示
      *
-     * @param oldHtml
      * @param fileName
+     * @param oldHtml
      * @return
      */
-    public static String reviseHtmlForBox(String oldHtml, String fileName  ){
+    public static String reviseHtmlForBox(String fileName, String oldHtml) {
         StringBuilder boxHtml = new StringBuilder(oldHtml);
         String srcPath, boxSrcPath;
         int indexB = 0,indexA;
@@ -167,31 +246,29 @@ public class UString {
         return boxHtml.toString();
     }
 
-
-
-    public static String getFileExtByUrl(String url){
-        int dotIndex = url.lastIndexOf(".");
-        int extLength = url.length() - dotIndex;
-        String fileExt = "";
-        if(extLength<6){
-            fileExt = url.substring( dotIndex ,url.length());
+    public static String getSummary(String summary) {
+        if (summary.length() > 92) {
+            return summary.substring(0, 92);
         }else {
-//            fileExt = url.substring( typeIndex ,url.length());
-            if(url.contains(".jpg")){
-                fileExt = ".jpg";
-            }else if(url.contains(".jpeg")){
-                fileExt = ".jpeg";
-            }else if(url.contains(".png")){
-                fileExt = ".png";
-            }else if(url.contains(".gif")){
-                fileExt = ".gif";
-            }else {
-                fileExt = "";
-            }
+            return summary.substring(0, summary.length());
         }
-        KLog.d( "【获取 FileExtByUrl 】" + url.substring( dotIndex ,url.length()) + extLength );
-        KLog.d( "【修正正文内的SRC】的格式" + fileExt + url );
-        return fileExt;
+    }
+
+    /**
+     * 从 url 中获取文件名(含后缀)
+     * @param url 网址
+     * @return 文件名(含后缀)
+     */
+    public static String getFileNameExtByUrl(String url) {
+        if (TextUtils.isEmpty(url)) {
+            return null;
+        }
+        String fileName;
+        int separatorIndex = url.lastIndexOf("/") + 1;
+        fileName = url.substring(separatorIndex, url.length());
+        fileName = handleSpecialChar(fileName);
+//        KLog.e("【文件名与后缀名】" + fileName);
+        return fileName;
     }
 
     /**
@@ -201,40 +278,55 @@ public class UString {
      * @return 文件名
      */
     public static String getFileNameByUrl(String url){
-        if(UString.isBlank(url)){
+        if (TextUtils.isEmpty(url)) {
             return null;
         }
-        String fileName;
         int dotIndex = url.lastIndexOf(".");
         int separatorIndex = url.lastIndexOf("/") + 1;
-//        int extLength = separatorIndex - dotIndex; extLength +
-        KLog.e("【文件名】" + dotIndex + '='+ separatorIndex + '='+ '=' + url.length() );
-
+        String fileName;
         if( separatorIndex > dotIndex ){
             dotIndex = url.length();
         }
         fileName = url.substring(separatorIndex, dotIndex);
         fileName = handleSpecialChar(fileName );
-        KLog.e("【文件名】" + fileName);
+//        KLog.e("【文件名】" + fileName);
+//        int extLength = separatorIndex - dotIndex; extLength +
+//        KLog.e("【文件名】" + dotIndex + '='+ separatorIndex + '='+ '=' + url.length() );
         return fileName;
     }
 
     /**
-     * 从 url 中获取文件名(含后缀)
+     * 从 url 中获取文件后缀名
      * @param url 网址
-     * @return 文件名
+     * @return 文件后缀名
      */
-    public static String getFileNameExtByUrl(String url){
-        if(UString.isBlank(url)){
+    public static String getFileExtByUrl(String url) {
+        if (TextUtils.isEmpty(url)) {
             return null;
         }
-        String fileName;
-        int separatorIndex = url.lastIndexOf("/") + 1;
-        fileName = url.substring(separatorIndex, url.length());
-        fileName = handleSpecialChar(fileName);
-        KLog.e("【文件名与后缀名】" + fileName);
-        return fileName;
+        int dotIndex = url.lastIndexOf(".");
+        int extLength = url.length() - dotIndex;
+        String fileExt;
+        if (extLength < 6) {
+            fileExt = url.substring(dotIndex, url.length());
+        } else {
+            if (url.contains(".jpg")) {
+                fileExt = ".jpg";
+            } else if (url.contains(".jpeg")) {
+                fileExt = ".jpeg";
+            } else if (url.contains(".png")) {
+                fileExt = ".png";
+            } else if (url.contains(".gif")) {
+                fileExt = ".gif";
+            } else {
+                fileExt = "";
+            }
+        }
+//        KLog.d( "【获取 FileExtByUrl 】" + url.substring( dotIndex ,url.length()) + extLength );
+//        KLog.d( "【修正正文内的SRC】的格式" + fileExt + url );
+        return fileExt;
     }
+
 
     /**
      * 处理文件名中的特殊字符和表情
@@ -243,54 +335,24 @@ public class UString {
      * @return 处理后的文件名
      */
     public static String handleSpecialChar(String fileName ){
-        fileName = fileName.replace("\\","");
-        fileName = fileName.replace("/","");
-        fileName = fileName.replace(":","");
-        fileName = fileName.replace("*","");
-        fileName = fileName.replace("?","");
-        fileName = fileName.replace("\"","");
-        fileName = fileName.replace("<","");
-        fileName = fileName.replace(">","");
-        fileName = fileName.replace("|","");
-        fileName = fileName.replace("%","_");
-        return fileName;
+        return fileName
+                .replace("\\", "")
+                .replace("/", "")
+                .replace(":", "")
+                .replace("*", "")
+                .replace("?", "")
+                .replace("\"", "")
+                .replace("<", "")
+                .replace(">", "")
+                .replace("|", "")
+                .replace("%", "_")
+                .replace("#", "_")
+                .replace("\n", "_");
     }
-
-
-    public static ArrayList<String[]> asList(String[] array){
-        if(array==null || array.length==0){return null;}
-        long xx = System.currentTimeMillis();
-        ArrayList<String[]> arrayList = new ArrayList<>(array.length);
-        String[] srcPair;
-        for(String s:array){
-            srcPair = s.split("|");
-            arrayList.add( srcPair );
-            KLog.d("【测试】" + s );
-            KLog.d("【测试】" + srcPair[0] );
-            KLog.d("【测试】" + srcPair[1] );
-        }
-        KLog.d("【时间】1测试" + (System.currentTimeMillis() - xx));
-        return arrayList;
-    }
-    public static String[][] asArray(String[] array){
-        if(array==null || array.length==0){return null;}
-        long xx = System.currentTimeMillis();
-        String[][] arrayList = new String[array.length][2];
-        String[] srcPair;
-        int num = array.length;
-        for(int i=0 ; i<num ; i++){
-            srcPair = array[i].split("|");
-            arrayList[i] = srcPair;
-        }
-        KLog.d("【时间】2测试" + (System.currentTimeMillis() - xx));
-        return arrayList;
-    }
-
-
 
 
     public static ArrayList<String[]> formStringToParamList(String paramString){
-        if( paramString == null || isBlank(paramString) ){
+        if (TextUtils.isEmpty(paramString)) {
             return null;
         }
         String[] paramStringArray = paramString.split("_");

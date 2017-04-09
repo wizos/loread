@@ -1,0 +1,59 @@
+//package me.wizos.loread.bean.gson;
+//
+//import android.support.v4.util.ArrayMap;
+//
+//import com.google.gson.annotations.SerializedName;
+//
+///**
+// * 主要是将文章中“待下”和“已下”的图片转为 json ，放在 Article 数据库中<br/>
+// * Created by Wizos on 2016/10/7.
+// */
+//public class ImgsMeta {
+//    // -1 是无图，0 是在还有待下载的， 1 是全部下载完成
+//    public final static int DOWNLOAD_ING = 0;
+//    public final static int DOWNLOAD_OVER = 1;
+//
+//    @SerializedName("imgStatus")
+//    private int imgStatus;
+//
+//    @SerializedName("folder")
+//    private String folder;
+//
+//    // 每个src要记录，网络src和要保存到本地的src
+//    @SerializedName("lossImgs")
+//    private ArrayMap<Integer,SrcPair> lossImgs;
+//
+//    @SerializedName("obtainImgs")
+//    private ArrayMap<Integer,SrcPair> obtainImgs;
+//
+//    public int getImgStatus() {
+//        return imgStatus;
+//    }
+//
+//    public void setImgStatus(int imgStatus) {
+//        this.imgStatus = imgStatus;
+//    }
+//
+//    public String getFolder() {
+//        return folder;
+//    }
+//    public void setFolder(String folder) {
+//        this.folder = folder;
+//    }
+//
+//    public ArrayMap<Integer,SrcPair> getLossImgs() {
+//        return lossImgs;
+//    }
+//
+//    public void setLossImgs(ArrayMap<Integer,SrcPair> lossImgs) {
+//        this.lossImgs = lossImgs;
+//    }
+//
+//    public ArrayMap<Integer,SrcPair> getObtainImgs() {
+//        return obtainImgs;
+//    }
+//
+//    public void setObtainImgs(ArrayMap<Integer,SrcPair> obtainImgs) {
+//        this.obtainImgs = obtainImgs;
+//    }
+//}

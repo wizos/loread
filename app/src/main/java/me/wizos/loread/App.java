@@ -2,6 +2,7 @@ package me.wizos.loread;
 
 import android.app.Activity;
 import android.app.Application;
+import android.support.v4.util.ArrayMap;
 
 import com.socks.library.KLog;
 import com.tencent.bugly.crashreport.CrashReport;
@@ -13,6 +14,7 @@ import java.util.List;
 
 import me.wizos.loread.activity.BaseActivity;
 import me.wizos.loread.bean.Article;
+import me.wizos.loread.bean.Img;
 import me.wizos.loread.data.WithSet;
 import me.wizos.loread.data.dao.DaoMaster;
 import me.wizos.loread.data.dao.DaoSession;
@@ -31,6 +33,7 @@ public class App extends Application{
     public static String externalFilesDir;
     public static long mUserID;
     public static List<Article> articleList;
+    public static ArrayMap<String, ArrayMap<Integer, Img>> lossImgListArray;
 
 
     private  static DaoSession daoSession;
@@ -86,6 +89,10 @@ public class App extends Application{
 
         storeReadRelativePath = UFile.getRelativeDir("storeRead");
 //        storeReadAbsolutePath = UFile.getAbsoluteDir( "storeRead" );
+        lossImgListArray = new ArrayMap<>();
+
+
+
 
     }
 
