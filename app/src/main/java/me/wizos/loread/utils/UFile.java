@@ -183,7 +183,6 @@ public class UFile {
     public static String readHtml(String dir) {
         File file = new File(dir);
         String fileContent ="" , temp = "";
-
         try {
             FileReader fileReader = new FileReader(file);
             BufferedReader br = new BufferedReader( fileReader );//一行一行读取 。在电子书程序上经常会用到。

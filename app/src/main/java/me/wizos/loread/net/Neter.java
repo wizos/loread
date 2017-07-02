@@ -18,8 +18,9 @@ import java.util.ArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import me.wizos.loread.bean.Img;
 import me.wizos.loread.bean.RequestLog;
-import me.wizos.loread.bean.gson.SrcPair;
+import me.wizos.loread.data.WithSet;
 import me.wizos.loread.utils.HttpUtil;
 import me.wizos.loread.utils.UFile;
 import me.wizos.loread.utils.UString;
@@ -38,27 +39,27 @@ public class Neter {
     public Neter(Handler handler) {
         KLog.i("【Neter构造函数】" + handler );
         this.handler = handler;
-        this.taskList = new ArrayMap<>();
+        this.taskMap = new ArrayMap<>();
         // 创建线程数
 //        this.threadPool = Executors.newFixedThreadPool(10);
     }
 
-    private static Neter mNeter;
+//    private static Neter mNeter;
 
-    private Neter() {
-    }
+//    private Neter() {
+//    }
 
-    private static Neter i() {
-        if (mNeter != null) {
-            return mNeter;
-        }
-        synchronized (Neter.class) {
-            if (mNeter == null) {
-                mNeter = new Neter();
-            }
-        }
-        return mNeter;
-    }
+//    private static Neter i() {
+//        if (mNeter != null) {
+//            return mNeter;
+//        }
+//        synchronized (Neter.class) {
+//            if (mNeter == null) {
+//                mNeter = new Neter();
+//            }
+//        }
+//        return mNeter;
+//    }
 
 
     /**
@@ -278,6 +279,7 @@ public class Neter {
             public void onResponse(Response response) throws IOException {
                 if (!response.isSuccessful()) {
                     KLog.d("【响应失败】" + response.message() + response.body().string());
+                    forData(url, request, logTime); // 响应失败直接重试一次
                     API.request = request;
                     makeMsg(API.F_Response, url, response.message(), logTime);
                     return;
@@ -481,49 +483,49 @@ public class Neter {
         }
     }
 
-    /**
-     * 异步下载图片，并按指定宽度和高度压缩图片
-     * <p>
-     * 图片下载完成后调用接口
-     */
-    public void loadImg(String imgUrl, String filePath, int imgNo) {
-        KLog.d("下载图片的保存路径为：" + filePath);
-        if (taskList.get(filePath) == null) {
-            taskList.put(filePath, 0);
-            threadPool.execute(new Task(imgUrl, filePath, imgNo));
-        }
-    }
+    public void loadImg(String articleID, int imgNo, String imgUrl, String filePath) {
+        KLog.i("下载图片的网址：" + imgUrl + "，保存路径：" + filePath + "，所属文章：" + articleID + "，编号：" + imgNo);
+        KLog.i(taskMap.get(filePath) + "====" + imgUrl.trim().indexOf("/"));
 
-    public void loadImg(String imgUrl, String filePath, String articleID, int imgNo) {
-        KLog.d("下载图片的网址：" + imgUrl + "，保存路径：" + filePath + "，所属文章：" + articleID + "，编号：" + imgNo);
-        if (taskMap.get(filePath) == null) {
+        if (taskMap.get(filePath) == null && imgUrl.trim().indexOf("/") != 0) {
+            KLog.i("===");
             taskMap.put(filePath, articleID);
-            threadPool.execute(new Task(imgUrl, filePath, imgNo));
+            threadPool.execute(new Task(articleID, imgNo, imgUrl, filePath));
         }
     }
 
-    public int loadImgs(ArrayMap<Integer, SrcPair> imgSrcList, String parentPath) {
+
+    public int downImgs(String articleID, ArrayMap<Integer, Img> imgMap, String parentPath) {
         // article.getSaveDir() ) + imgsMeta.getFolder() + File.separator
-        if (!HttpUtil.canDownImg()) {
-            handler.sendEmptyMessage(API.F_NoMsg);
+        KLog.d("批量下图片" + imgMap);
+//        if (!HttpUtil.canDownImg()) {
+////            handler.sendEmptyMessage(API.F_NoMsg);
+//            return 0;
+//        }
+        if (WithSet.getInstance().isDownImgWifi() && !HttpUtil.isWiFiActive()) {
+            return 0;
+        } else if (!WithSet.getInstance().isDownImgWifi() && !HttpUtil.isNetworkAvailable()) {
             return 0;
         }
-        if (imgSrcList == null || imgSrcList.size() == 0) {
-            return 0;
-        }
-        int length = imgSrcList.size();
-        for (ArrayMap.Entry<Integer, SrcPair> entry : imgSrcList.entrySet()) {
-            loadImg(entry.getValue().getNetSrc(), parentPath + entry.getValue().getImgName(), entry.getKey());
+//        if (imgMap == null || imgMap.size() == 0) {
+//            return 0;
+//        }
+        int length = imgMap.size();
+        for (ArrayMap.Entry<Integer, Img> entry : imgMap.entrySet()) {
+            loadImg(articleID, entry.getKey(), entry.getValue().getSrc(), parentPath + entry.getValue().getName());
             KLog.d("【获取图片的key为：" + entry.getKey() );
         }
+        KLog.d("批量下图片b" + length);
         return length;
     }
 
+
     private class Task implements Runnable {
-        String imgUrl, filePath;
+        String articleID, imgUrl, filePath;
         int imgNo;
 
-        Task(String imgUrl, String filePath, int imgNo) {
+        Task(String articleID, int imgNo, String imgUrl, String filePath) {
+            this.articleID = articleID;
             this.imgUrl = imgUrl;
             this.filePath = filePath;
             this.imgNo = imgNo;
@@ -537,15 +539,15 @@ public class Neter {
             HttpUtil.enqueue(request, new Callback() {
                 @Override
                 public void onFailure(Request request, IOException e) {
-                    KLog.d("【图片请求失败 = " + imgUrl + "】");
-                    makeMsgForImg(API.F_BITMAP, imgUrl, filePath, imgNo);
+                    KLog.i("【图片请求失败 = " + imgUrl + "】");
+                    makeMsgForImg(articleID, imgNo, API.F_BITMAP);
                 }
 
                 @Override
                 public void onResponse(Response response) throws IOException {
                     if (!response.isSuccessful()) {
 //                        KLog.d("【图片响应失败】" + response);
-                        makeMsgForImg(API.F_BITMAP, imgUrl, filePath, imgNo);
+                        makeMsgForImg(articleID, imgNo, API.F_BITMAP);
                     } else {
                         InputStream inputStream = null;
                         int state = API.S_BITMAP;
@@ -562,24 +564,37 @@ public class Neter {
                             }
                         }
 
-                        KLog.d("【成功保存图片】" + imgUrl + "==" + filePath);
-                        makeMsgForImg(state, imgUrl, filePath, imgNo);
+                        KLog.i("【成功保存图片】" + imgUrl + "==" + filePath);
+                        makeMsgForImg(articleID, imgNo, state);
                     }
                 }
             });
         }
     }
 
-    private void makeMsgForImg(int msg, String url, String filePath, int imgNo) {
+    private void makeMsgForImg(String articleID, int imgNo, int msg) {
         Message message = new Message();
         Bundle bundle = new Bundle();
-        bundle.putString("url", url);
-        bundle.putString("filePath", filePath);
+        bundle.putString("articleID", articleID);
+//        bundle.putString("url", url);
+//        bundle.putString("filePath", filePath);
         bundle.putInt("imgNo", imgNo);
         message.what = msg;
         message.setData(bundle);
         handler.sendMessage(message);
     }
+
+//    private void makeMsgForImg(String articleID, String url, String filePath, int imgNo, int msg) {
+//        Message message = new Message();
+//        Bundle bundle = new Bundle();
+//        bundle.putString("articleID", articleID);
+////        bundle.putString("url", url);
+////        bundle.putString("filePath", filePath);
+//        bundle.putInt("imgNo", imgNo);
+//        message.what = msg;
+//        message.setData(bundle);
+//        handler.sendMessage(message);
+//    }
 
 
 

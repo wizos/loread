@@ -215,6 +215,13 @@ public class WithSet {
         savePref("OrderTagFeed", is);
     }
 
+    public boolean isSysBrowserOpenLink() {
+        return readPref("SysBrowserOpenLink", false);
+    }
+
+    public void setSysBrowserOpenLink(boolean is) {
+        savePref("SysBrowserOpenLink", is);
+    }
 
     public int getThemeMode() {
         return readPref("ThemeMode", themeDay);

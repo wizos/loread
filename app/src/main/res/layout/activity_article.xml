@@ -31,7 +31,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
                 tools:text="12"
-                android:textSize="16dp"/>
+                android:textSize="16sp" />
         </android.support.v7.widget.Toolbar>
     </android.support.design.widget.AppBarLayout>
 
@@ -39,73 +39,28 @@
     <!--CoordinatorLayout必须作为整个布局的父布局容器。 给需要滑动的组件设置 app:layout_scrollFlags=”scroll|enterAlways” 属性。-->
     <!--给你的可滑动的组件，也就是RecyclerView 或者 NestedScrollView 设置如下属性：-->
     <!--app:layout_behavior="@string/appbar_scrolling_view_behavior"-->
-    <!--app:layout_behavior="me.wizos.loread.list.Behavior"-->
-    <android.support.v4.widget.NestedScrollView
-        android:id="@+id/art_scroll"
+
+
+    <!--<me.wizos.loread.view.MViewPager.MViewPager-->
+    <!--android:id="@+id/art_viewpager"-->
+    <!--android:layout_below="@id/art_appBarLayout"-->
+    <!--app:layout_behavior="@string/appbar_scrolling_view_behavior"-->
+    <!--android:layout_width="match_parent"-->
+    <!--android:layout_height="match_parent"-->
+    <!--android:layout_marginBottom="@dimen/bottom_bar_height"-->
+    <!--android:paddingBottom="40dp"-->
+    <!--android:persistentDrawingCache="animation"-->
+    <!--android:background="#fcfcfc" />-->
+    <android.support.v4.view.ViewPager
+        android:id="@+id/art_viewpager"
+        android:layout_below="@id/art_appBarLayout"
         app:layout_behavior="@string/appbar_scrolling_view_behavior"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:textColor="@color/article_dark_text"
-        android:paddingBottom="@dimen/bottom_bar_height">
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:gravity="center_horizontal"
-            android:orientation="vertical"
-            android:paddingTop="36dp"
-            android:padding="12dp">
-            <TextView
-                android:id="@+id/art_title"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:gravity="center_horizontal"
-                tools:text="这里是文章的标题"
-                android:textSize="20sp" />
-            <LinearLayout
-                android:id="@+id/article_meta"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="22dp"
-                android:layout_marginBottom="12dp">
-                <TextView
-                    android:id="@+id/art_feed"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:alpha="0.54"
-                    android:textColor="?attr/lv_item_title_color"
-                    android:textSize="12sp" />
-                <TextView
-                    android:id="@+id/art_date"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:alpha="0.54"
-                    android:textColor="?attr/lv_item_title_color"
-                    android:textSize="12sp" />
-
-                <TextView
-                    android:id="@+id/art_time"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginLeft="8dp"
-                    android:alpha="0.54"
-                    android:textColor="?attr/lv_item_title_color"
-                    android:textAppearance="@android:style/TextAppearance.Small"
-                    android:textSize="12sp" />
-            </LinearLayout>
-            <LinearLayout
-                android:id="@+id/article_webview"
-                android:orientation="vertical"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent">
-            </LinearLayout>
-            <!--<WebView-->
-                <!--android:id="@+id/article_content"-->
-                <!--android:layout_width="match_parent"-->
-                <!--android:layout_height="match_parent"/>-->
-        </LinearLayout>
-    </android.support.v4.widget.NestedScrollView>
-
+        android:layout_height="match_parent"
+        android:layout_marginBottom="@dimen/bottom_bar_height"
+        android:paddingBottom="40dp"
+        android:persistentDrawingCache="animation"
+        android:background="#fcfcfc" />
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="@dimen/bottom_bar_height"
@@ -127,7 +82,7 @@
         <me.wizos.loread.view.IconFontView
             android:id="@+id/art_bottombar_save"
             style="@style/bottom_bar_iconfont"
-            android:text="@string/font_down"
+            android:text="@string/font_unsave"
             android:onClick="onSaveClick"/>
         <me.wizos.loread.view.IconFontView
             android:id="@+id/art_bottombar_read"

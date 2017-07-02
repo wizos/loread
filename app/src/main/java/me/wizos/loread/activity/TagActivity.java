@@ -20,6 +20,7 @@ import com.yydcdut.sdlv.SlideAndDragListView;
 import java.util.ArrayList;
 import java.util.List;
 
+import me.wizos.loread.App;
 import me.wizos.loread.R;
 import me.wizos.loread.bean.Tag;
 import me.wizos.loread.data.WithDB;
@@ -219,7 +220,8 @@ public class TagActivity extends BaseActivity implements SlideAndDragListView.On
         data.putExtra("tagCount", tagList.get(position).getUnreadcount() );
         data.putExtra("tagName", tagList.get(position).getTitle() );
         TagActivity.this.setResult(RESULT_OK, data);//注意下面的RESULT_OK常量要与回传接收的Activity中onActivityResult（）方法一致
-        TagActivity.this.finish();//关闭当前activity
+//        TagActivity.this.finish();//关闭当前activity
+        App.finishActivity(this);
         KLog.d("【 TagList 被点击】" + tagId );
     }
 

@@ -37,9 +37,6 @@ public class SettingActivity extends BaseActivity {
     private Context context;
     private Toolbar toolbar;
 
-//    private Thread mThread;
-
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -89,6 +86,8 @@ public class SettingActivity extends BaseActivity {
                 .textColor(R.id.setting_scroll_mark_tips, R.attr.setting_tips)
                 .textColor(R.id.setting_order_tagfeed_title, R.attr.setting_title)
                 .textColor(R.id.setting_order_tagfeed_tips, R.attr.setting_tips)
+                .textColor(R.id.setting_link_open_mode_title, R.attr.setting_title)
+                .textColor(R.id.setting_link_open_mode_tips, R.attr.setting_tips)
                 .textColor(R.id.setting_cache_path_starred_title, R.attr.setting_title)
                 .textColor(R.id.setting_cache_path_starred_summary, R.attr.setting_tips)
                 .textColor(R.id.setting_license_title, R.attr.setting_title)
@@ -112,7 +111,7 @@ public class SettingActivity extends BaseActivity {
     }
 
 
-    private SwitchButton syncFirstOpen, downImgWifi, inoreaderProxy, scrollMark, orderTagFeed, syncAllStarred;
+    private SwitchButton syncFirstOpen, downImgWifi, inoreaderProxy, scrollMark, orderTagFeed, syncAllStarred, sysBrowserOpenLink;
     private TextView clearBeforeDaySummary;
     private Button clearLog;
     private int clearBeforeDayIndex, clearBeforeDay;
@@ -125,6 +124,7 @@ public class SettingActivity extends BaseActivity {
         scrollMark = (SwitchButton) findViewById(R.id.setting_scroll_mark_sb_flyme);
         orderTagFeed = (SwitchButton) findViewById(R.id.setting_order_tagfeed_sb_flyme);
         clearBeforeDaySummary = (TextView) findViewById(R.id.setting_clear_day_summary);
+        sysBrowserOpenLink = (SwitchButton) findViewById(R.id.setting_link_open_mode_sb_flyme);
 //        clearLog = (Button)findViewById(R.id.setting_clear_log_button);
     }
 
@@ -136,6 +136,7 @@ public class SettingActivity extends BaseActivity {
         scrollMark.setChecked(WithSet.getInstance().isScrollMark());
         orderTagFeed.setChecked(WithSet.getInstance().isOrderTagFeed());
         clearBeforeDay = WithSet.getInstance().getClearBeforeDay();
+        sysBrowserOpenLink.setChecked(WithSet.getInstance().isSysBrowserOpenLink());
         changeViewSummary();
         KLog.d( "读取默认的选项"+  clearBeforeDayIndex );
     }
@@ -173,6 +174,9 @@ public class SettingActivity extends BaseActivity {
                 break;
             case R.id.setting_order_tagfeed_sb_flyme:
                 WithSet.getInstance().setOrderTagFeed(v.isChecked());
+                break;
+            case R.id.setting_link_open_mode_sb_flyme:
+                WithSet.getInstance().setSysBrowserOpenLink(v.isChecked());
                 break;
         }
 //        KLog.d("Switch: " , v.isChecked() );

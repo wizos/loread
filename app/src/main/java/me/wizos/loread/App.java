@@ -2,9 +2,9 @@ package me.wizos.loread;
 
 import android.app.Activity;
 import android.app.Application;
+import android.os.Handler;
 
-import com.socks.library.KLog;
-import com.tencent.bugly.crashreport.CrashReport;
+import com.squareup.leakcanary.LeakCanary;
 
 import java.io.File;
 import java.lang.ref.WeakReference;
@@ -17,6 +17,7 @@ import me.wizos.loread.data.WithSet;
 import me.wizos.loread.data.dao.DaoMaster;
 import me.wizos.loread.data.dao.DaoSession;
 import me.wizos.loread.net.API;
+import me.wizos.loread.net.Neter;
 import me.wizos.loread.utils.UFile;
 
 /**
@@ -31,10 +32,13 @@ public class App extends Application{
     public static String externalFilesDir;
     public static long mUserID;
     public static List<Article> articleList;
+    //    public static ArrayMap<String, ArrayMap<Integer, Img>> lossImgListArray;
+    public static Handler artHandler;
+    public static String currentArticleID;
+    public static Neter mNeter;
 
 
     private  static DaoSession daoSession;
-    //    public static Handler mHandler;
     public static App instance; // 此处的单例不会造成内存泄露，因为 App 本身就是全局的单例
 
     public static synchronized App getInstance() {
@@ -47,15 +51,16 @@ public class App extends Application{
     public void onCreate() {
         super.onCreate();
         App.instance = this;
+
 //         TEST，正式环境下应该启用
-        KLog.init(false);
-        CrashReport.initCrashReport(App.getInstance(), "900044326", true);
-//
+//        KLog.init(false);
+//        CrashReport.initCrashReport(App.getInstance(), "900044326", true);
+
         //  内存泄漏检测工具
-//        if (LeakCanary.isInAnalyzerProcess(this)) {
-//            return;
-//        }
-//        LeakCanary.install(this);
+        if (LeakCanary.isInAnalyzerProcess(this)) {
+            return;
+        }
+        LeakCanary.install(this);
         // TEST，正式环境应该注释掉
 //        Stetho.initialize(
 //                Stetho.newInitializerBuilder(this)
@@ -86,6 +91,8 @@ public class App extends Application{
 
         storeReadRelativePath = UFile.getRelativeDir("storeRead");
 //        storeReadAbsolutePath = UFile.getAbsoluteDir( "storeRead" );
+//        lossImgListArray = new ArrayMap<>();
+
 
     }
 

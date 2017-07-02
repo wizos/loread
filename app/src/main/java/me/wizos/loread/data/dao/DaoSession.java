@@ -10,6 +10,7 @@ import de.greenrobot.dao.identityscope.IdentityScopeType;
 import de.greenrobot.dao.internal.DaoConfig;
 import me.wizos.loread.bean.Article;
 import me.wizos.loread.bean.Feed;
+import me.wizos.loread.bean.Img;
 import me.wizos.loread.bean.RequestLog;
 import me.wizos.loread.bean.Tag;
 
@@ -25,11 +26,13 @@ public class DaoSession extends AbstractDaoSession {
     private final DaoConfig tagDaoConfig;
     private final DaoConfig feedDaoConfig;
     private final DaoConfig articleDaoConfig;
+    private final DaoConfig imgDaoConfig;
     private final DaoConfig requestLogDaoConfig;
 
     private final TagDao tagDao;
     private final FeedDao feedDao;
     private final ArticleDao articleDao;
+    private final ImgDao imgDao;
     private final RequestLogDao requestLogDao;
 
     public DaoSession(SQLiteDatabase db, IdentityScopeType type, Map<Class<? extends AbstractDao<?, ?>>, DaoConfig>
@@ -45,17 +48,22 @@ public class DaoSession extends AbstractDaoSession {
         articleDaoConfig = daoConfigMap.get(ArticleDao.class).clone();
         articleDaoConfig.initIdentityScope(type);
 
+        imgDaoConfig = daoConfigMap.get(ImgDao.class).clone();
+        imgDaoConfig.initIdentityScope(type);
+
         requestLogDaoConfig = daoConfigMap.get(RequestLogDao.class).clone();
         requestLogDaoConfig.initIdentityScope(type);
 
         tagDao = new TagDao(tagDaoConfig, this);
         feedDao = new FeedDao(feedDaoConfig, this);
         articleDao = new ArticleDao(articleDaoConfig, this);
+        imgDao = new ImgDao(imgDaoConfig, this);
         requestLogDao = new RequestLogDao(requestLogDaoConfig, this);
 
         registerDao(Tag.class, tagDao);
         registerDao(Feed.class, feedDao);
         registerDao(Article.class, articleDao);
+        registerDao(Img.class, imgDao);
         registerDao(RequestLog.class, requestLogDao);
     }
     
@@ -63,6 +71,7 @@ public class DaoSession extends AbstractDaoSession {
         tagDaoConfig.getIdentityScope().clear();
         feedDaoConfig.getIdentityScope().clear();
         articleDaoConfig.getIdentityScope().clear();
+        imgDaoConfig.getIdentityScope().clear();
         requestLogDaoConfig.getIdentityScope().clear();
     }
 
@@ -76,6 +85,10 @@ public class DaoSession extends AbstractDaoSession {
 
     public ArticleDao getArticleDao() {
         return articleDao;
+    }
+
+    public ImgDao getImgDao() {
+        return imgDao;
     }
 
     public RequestLogDao getRequestLogDao() {

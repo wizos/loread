@@ -19,6 +19,7 @@ import java.util.List;
 import me.wizos.loread.App;
 import me.wizos.loread.R;
 import me.wizos.loread.bean.Article;
+import me.wizos.loread.bean.Img;
 import me.wizos.loread.bean.RequestLog;
 import me.wizos.loread.bean.gson.ItemRefs;
 import me.wizos.loread.bean.gson.Sub;
@@ -53,6 +54,7 @@ public class MainService extends IntentService {
         super.onCreate();
         sHandler = new Handler(Looper.myLooper(), new ChildCallback());
         mNeter = new Neter(sHandler);
+        App.mNeter = mNeter;
 
         mNeter.setReord(recorder);
         requestMap = new ArrayMap<>();
@@ -118,7 +120,7 @@ public class MainService extends IntentService {
 
 
     private int urlState = 0, capacity, getNumForArts = 0, numOfFailure = 0;
-    private int unreadRefsSize, starredRefsSize;
+    //    private int unreadRefsSize, starredRefsSize;
     private ArrayList<ItemRefs> afterItemRefs = new ArrayList<>();
     private Neter mNeter;
 
@@ -217,8 +219,8 @@ public class MainService extends IntentService {
                         } else {
                             ArrayList<ItemRefs> unreadRefs = Parser.instance().reUnreadRefs();
                             ArrayList<ItemRefs> starredRefs = Parser.instance().reStarredRefs();
-                            unreadRefsSize = unreadRefs.size();
-                            starredRefsSize = starredRefs.size();
+//                            unreadRefsSize = unreadRefs.size();
+//                            starredRefsSize = starredRefs.size();
                             capacity = Parser.instance().reRefs(unreadRefs, starredRefs);
                             if (capacity == -1) {
                                 UToast.showShort("同步时数据出错，请重试");
@@ -322,12 +324,12 @@ public class MainService extends IntentService {
                         startActivity(loginIntent);
                         break;
                     }
-                    numOfFailure = numOfFailure + 1;
-                    KLog.d("网络错误");
-                    if (numOfFailure < 3) {
-                        mNeter.forData(url, API.request, msg.getData().getLong("logTime"));
-                        break;
-                    }
+//                    numOfFailure = numOfFailure + 1;
+//                    KLog.d("网络错误");
+//                    if (numOfFailure < 3) {
+//                        mNeter.forData(url, API.request, msg.getData().getLong("logTime"));
+//                        break;
+//                    }
                     sHandler.sendEmptyMessage(API.F_NoMsg);
                     getNumForArts = 0;
                     break;
@@ -345,7 +347,34 @@ public class MainService extends IntentService {
                     clearArticles(WithSet.getInstance().getClearBeforeDay());
                     getNumForArts = 0;
                     break;
-                // 处理同步逻辑
+
+
+                case API.S_BITMAP:
+                    int imgNo;
+                    String articleID;
+
+                    articleID = msg.getData().getString("articleID");
+                    imgNo = msg.getData().getInt("imgNo");
+
+                    Img imgMeta = WithDB.getInstance().getImg(articleID, imgNo);
+                    if (imgMeta == null) {
+                        break;
+                    }
+                    imgMeta.setDownState(API.ImgState_Over);
+                    WithDB.getInstance().saveImg(imgMeta);
+
+                    if (App.currentArticleID != null & App.currentArticleID.equals(articleID)) {
+                        Bundle bundle = msg.getData();
+                        bundle.putString("imgName", imgMeta.getName());
+                        Message message = Message.obtain();
+                        message.what = API.ReplaceImgSrc;
+                        message.setData(bundle);
+                        App.artHandler.sendMessage(message);
+                    }
+                    break;
+                case API.F_BITMAP:
+                    // Note:  图片下载失败的重试逻辑应该放到 neter 中。此处只管结果“下载失败”了，通知具体的 activity 去更换占位图。
+                    // TODO: 2017/6/6
             }
             return false;
         }
@@ -381,7 +410,7 @@ public class MainService extends IntentService {
             UFile.moveFile(App.boxRelativePath + article.getTitle() + ".html", App.boxReadRelativePath + article.getTitle() + ".html");// 移动文件
             UFile.moveDir(App.boxRelativePath + article.getTitle() + "_files", App.boxReadRelativePath + article.getTitle() + "_files");// 移动目录
             article.setCoverSrc(UFile.getAbsoluteDir("boxRead") + article.getTitle() + "_files" + File.separator + UString.getFileNameExtByUrl(article.getCoverSrc()));
-            article.setSaveDir("boxRead");
+            article.setSaveDir(API.SAVE_DIR_BOXREAD);
             KLog.i("移动了A");
         }
         WithDB.getInstance().saveArticleList(boxReadArts);
@@ -389,7 +418,7 @@ public class MainService extends IntentService {
             UFile.moveFile(App.storeRelativePath + article.getTitle() + ".html", App.storeReadRelativePath + article.getTitle() + ".html");// 移动文件
             UFile.moveDir(App.storeRelativePath + article.getTitle() + "_files", App.storeReadRelativePath + article.getTitle() + "_files");// 移动目录
             article.setCoverSrc(UFile.getAbsoluteDir("storeRead") + article.getTitle() + "_files" + File.separator + UString.getFileNameExtByUrl(article.getCoverSrc()));
-            article.setSaveDir("storeRead");
+            article.setSaveDir(API.SAVE_DIR_STOREREAD);
             KLog.i("移动了B" + App.storeRelativePath + article.getTitle() + "_files |||| " + App.storeReadRelativePath + article.getTitle() + "_files");
         }
         WithDB.getInstance().saveArticleList(storeReadArts);

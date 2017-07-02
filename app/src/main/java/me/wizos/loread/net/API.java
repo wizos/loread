@@ -58,6 +58,9 @@ public class API {
 //    public static final int ID_FROM_CACHE = 5;
 
     public static final int MSG_DOUBLE_TAP = -1;
+    public static final int H_WEB = -2;
+
+
     public static final int F_NoMsg = 00;
     public static final int F_Request = 01;
     public static final int F_Response = 02;
@@ -66,7 +69,6 @@ public class API {
     public static final int FAILURE = 00;
     public static final int SUCCESS = 100;
     public static final int PROCESS = -100;
-
 
     public static final int M_BEGIN_SYNC = 10;
     public static final int S_CLIENTLOGIN = 11;
@@ -77,7 +79,6 @@ public class API {
 
     public static final int S_UNREAD_COUNTS = 30;
 
-
     public static final int S_ITEM_IDS = 31;
     public static final int S_ITEM_IDS_UNREAD = 32;
     public static final int S_ITEM_IDS_UNREAD_LOOP = 33;
@@ -86,7 +87,6 @@ public class API {
 
     public static final int S_STARRED = 37;
     public static final int S_STREAM_CONTENTS_STARRED = 38;
-
 
     public static final int S_READING_LIST = 39;
     public static final int S_ITEM_CONTENTS = 40;
@@ -97,7 +97,19 @@ public class API {
     public static final int S_BITMAP = 62;
     public static final int S_Contents = 63;
 
+
     public static ArrayList<Item> itemlist;
+
+    public static final int ReplaceImgSrc = 69;
+
+    public static final String ImgState_Downing = "0";
+    public static final String ImgState_NoImg = "";
+    public static final String ImgState_Down_Over = "1";
+    //    public static final String ImgState_Over = "1";
+    public static final int ImgState_Over = 1;
+
+
+
 
 
 

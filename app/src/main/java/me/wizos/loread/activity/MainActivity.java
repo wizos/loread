@@ -31,8 +31,6 @@ import com.yydcdut.sdlv.SlideAndDragListView;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import me.wizos.loread.App;
 import me.wizos.loread.R;
@@ -91,7 +89,7 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
         public void onServiceConnected(ComponentName name, IBinder service) {
             MainService.ServiceBinder mBinderService = (MainService.ServiceBinder) service;
             MainService mainService = mBinderService.getService();
-            mainService.regHandler(mHandler);//TODO:考虑内存泄露
+            mainService.regHandler(mainHandler);//TODO:考虑内存泄露
             mNeter = mainService.getNeter();
 //            mainService.move();
             KLog.d("连接开始");
@@ -207,7 +205,7 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
         // 如果参数为null的话，会将所有的Callbacks和Messages全部清除掉。
         // 这样做的好处是在Acticity退出的时候，可以避免内存泄露。因为 handler 内可能引用 Activity ，导致 Activity 退出后，内存泄漏。
 //        handler.removeCallbacksAndMessages(null);
-        mHandler.removeCallbacksAndMessages(null);
+        mainHandler.removeCallbacksAndMessages(null);
         unbindService(connection);
         super.onDestroy();
     }
@@ -336,15 +334,15 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
 
 
     // TEST:
-    protected Handler mHandler = new Handler(new Handler.Callback() {
+    protected Handler mainHandler = new Handler(new Handler.Callback() {
         @Override
         public boolean handleMessage(Message msg) {
             String tips = msg.getData().getString("tips");
             KLog.i("【handler】" + msg.what + "---" + "---");
             switch (msg.what) {
                 case API.SUCCESS:
-                    mSwipeRefreshLayout.setRefreshing(false);
-                    mSwipeRefreshLayout.setEnabled(true);
+                    //mSwipeRefreshLayout.setRefreshing(false);
+                    //mSwipeRefreshLayout.setEnabled(true);
                     vToolbarHint.setText(String.valueOf(App.articleList.size()));
                     notifyDataChanged();
 //                    KLog.i("【文章列表获取完成】" );
@@ -428,10 +426,9 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
                 String articleID = App.articleList.get(position).getId();
                 Intent intent = new Intent(MainActivity.this , ArticleActivity.class);
                 intent.putExtra("articleID", articleID);
-                intent.putExtra("articleNum", position + 1);
+                intent.putExtra("articleNo", position); // 下标从 0 开始
                 intent.putExtra("articleCount", App.articleList.size());
                 startActivity(intent);
-                App.articleList = App.articleList;
             }
         });
         slv.setOnSlideListener(new SlideAndDragListView.OnSlideListener() {
@@ -562,11 +559,11 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
     public void onClick(View v) {
         switch (v.getId()) {
             case R.id.main_toolbar:
-                if (mHandler.hasMessages(API.MSG_DOUBLE_TAP)) {
-                    mHandler.removeMessages(API.MSG_DOUBLE_TAP);
+                if (mainHandler.hasMessages(API.MSG_DOUBLE_TAP)) {
+                    mainHandler.removeMessages(API.MSG_DOUBLE_TAP);
                     slv.smoothScrollToPosition(0);
                 } else {
-                    mHandler.sendEmptyMessageDelayed(API.MSG_DOUBLE_TAP, ViewConfiguration.getDoubleTapTimeout());
+                    mainHandler.sendEmptyMessageDelayed(API.MSG_DOUBLE_TAP, ViewConfiguration.getDoubleTapTimeout());
                 }
                 break;
         }
@@ -579,23 +576,28 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
     protected void onActivityResult(int requestCode , int resultCode , Intent intent){
         String tagId = "";
         int tagCount = 0 ;
+        int articleNo = 0;
         switch (resultCode){
             case RESULT_OK:
                 tagId = intent.getExtras().getString("tagId");
                 tagCount = intent.getExtras().getInt("tagCount");
                 tagName = intent.getExtras().getString("tagName");
+                if (tagId != null && !tagId.equals("")) {
+                    sListTag = tagId;
+//                    sListTagCount = tagCount;
+                    KLog.i("【onActivityResult】" + sListTag + sListState);
+                    reloadData();
+                }
                 break;
             case 2:
                 mNeter.getWithAuth(API.HOST + API.U_SUSCRIPTION_LIST);
+                break;
+            case 3:
+                articleNo = intent.getExtras().getInt("articleNo");
+                slv.smoothScrollToPosition(articleNo);
+                break;
         }
 //        KLog.i("【== onActivityResult 】" + tagId + "----" + sListTag);
-
-        if (tagId != null && !tagId.equals("")) {
-            sListTag = tagId;
-//            sListTagCount = tagCount;
-            KLog.i("【onActivityResult】" + sListTag + sListState);
-            reloadData();
-        }
     }
 
     /**
@@ -754,91 +756,91 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
         mMenu.getItemBackGroundDrawable();
     }
 
-
-    public boolean update() {
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                List<Article> arts = WithDB.getInstance().loadArtWhere();
-                KLog.d("升级文章数量：" + arts.size());
-                if (arts.size() == 0) {
-                    return;
-                }
-                String imgState, folder;
-                Pattern r;
-                Matcher m;
-                for (Article article : arts) {
-                    imgState = article.getImgState();
-                    if (imgState.equals("") || imgState.equals("OK") || imgState.equals("ok")) {
-                        continue;
-                    } else {
-                        // 验证规则
-//                        String filter = ",\"saveSrc\":.*?loread\"";
-//                        // 编译正则表达式
-//                        pattern = Pattern.compile(filter, Pattern.CASE_INSENSITIVE); // 忽略大小写的写法
-//                        matcher = pattern.matcher( imgState );
-//                        matcher.replaceAll(""); // 字符串是否与正则表达式相匹配
 //
-//                        pattern = Pattern.compile(filter, Pattern.CASE_INSENSITIVE); // 忽略大小写的写法
-//                        matcher = pattern.matcher( imgState );
-//                        matcher.replaceAll(""); // 字符串是否与正则表达式相匹配
-                        if (imgState.contains("\"folder\":\"")) {
-                            continue;
-                        }
-                        if (article.getSaveDir() == null) {
-                            article.setSaveDir(API.SAVE_DIR_CACHE);
-                        }
-                        folder = UFile.getFolder(article.getSaveDir(), UString.stringToMD5(article.getId()), article.getTitle());
-
-                        r = Pattern.compile(",\"saveSrc\":.*?loread\"");// 创建 Pattern 对象
-                        m = r.matcher(imgState);// 现在创建 matcher 对象
-                        imgState = m.replaceAll("");
-
-                        r = Pattern.compile("\"localSrc\":.*?_files\\/(.*?)loread\"");// 创建 Pattern 对象
-                        m = r.matcher(imgState);// 现在创建 matcher 对象
-                        imgState = m.replaceAll("\"imgName\":\"$1loread\"");
-
-//                        imgState.replaceAll(",\"saveSrc\":.*?loread\"", "" );
-//                        imgState.replaceAll("\"localSrc\":.*?_files\\/(.*?)loread\"", "\"imgName\":\"$1loread\"" );
-                        KLog.d("升级文章含有：" + imgState.contains("\"imgStatus\":1,"));
-                        if (imgState.contains("\"imgStatus\":1,")) {
-//                            int p = imgState.indexOf("\"imgStatus\":1,");
-                            imgState = imgState.replace("\"imgStatus\":1,", "\"imgStatus\":1,\"folder\":\"" + folder + "_files\",");
-                        }
-                        if (imgState.contains("\"imgStatus\":0,")) {
-                            imgState = imgState.replace("\"imgStatus\":0,", "\"imgStatus\":0,\"folder\":\"" + folder + "_files\",");
-                        }
-
-                        KLog.d("升级文章内容：" + imgState);
-//                        try {
-//                            Thread.sleep(21000);
-//                        }catch (Exception e){
-//
-//                        }
-//                        Gson gson = new Gson();
-//                        Type type = new TypeToken<ExtraImg>() {}.getType();
-//                        try {
-//                            extraImg = gson.fromJson(imgState, type);
-//                            if ( extraImg.getFolder()==null ){
-//                                extraImg.setFolder( UFile.getFolder( article.getSaveDir(), UString.stringToMD5(article.getId()), article.getTitle() ) );
-//                            }
-//                            folder = extraImg.getFolder();
-//                            lossSrcList = extraImg.getLossImgs();
-//                            obtainSrcList = extraImg.getObtainImgs();
-////                    KLog.e("重新进入获取到的imgState记录" + imgState + extraImg +  lossSrcList + obtainSrcList);
-//                        } catch (RuntimeException e) {
+//    public boolean update() {
+//        new Thread(new Runnable() {
+//            @Override
+//            public void run() {
+//                List<Article> arts = WithDB.getInstance().loadArtWhere();
+//                KLog.d("升级文章数量：" + arts.size());
+//                if (arts.size() == 0) {
+//                    return;
+//                }
+//                String imgState, folder;
+//                Pattern r;
+//                Matcher m;
+//                for (Article article : arts) {
+//                    imgState = article.getImgState();
+//                    if (imgState.equals("") || imgState.equals("OK") || imgState.equals("ok")) {
+//                        continue;
+//                    } else {
+//                        // 验证规则
+////                        String filter = ",\"saveSrc\":.*?loread\"";
+////                        // 编译正则表达式
+////                        pattern = Pattern.compile(filter, Pattern.CASE_INSENSITIVE); // 忽略大小写的写法
+////                        matcher = pattern.matcher( imgState );
+////                        matcher.replaceAll(""); // 字符串是否与正则表达式相匹配
+////
+////                        pattern = Pattern.compile(filter, Pattern.CASE_INSENSITIVE); // 忽略大小写的写法
+////                        matcher = pattern.matcher( imgState );
+////                        matcher.replaceAll(""); // 字符串是否与正则表达式相匹配
+//                        if (imgState.contains("\"folder\":\"")) {
 //                            continue;
 //                        }
-                    }
-                    article.setImgState(imgState);
-                    WithDB.getInstance().saveArticle(article);
-                }
-                mHandler.sendEmptyMessage(1000);
-            }
-        }).start();
-//        KLog.d( "升级完成" );
-        return true;
-    }
+//                        if (article.getSaveDir() == null) {
+//                            article.setSaveDir(API.SAVE_DIR_CACHE);
+//                        }
+//                        folder = UFile.getFolder(article.getSaveDir(), UString.stringToMD5(article.getId()), article.getTitle());
+//
+//                        r = Pattern.compile(",\"saveSrc\":.*?loread\"");// 创建 Pattern 对象
+//                        m = r.matcher(imgState);// 现在创建 matcher 对象
+//                        imgState = m.replaceAll("");
+//
+//                        r = Pattern.compile("\"localSrc\":.*?_files\\/(.*?)loread\"");// 创建 Pattern 对象
+//                        m = r.matcher(imgState);// 现在创建 matcher 对象
+//                        imgState = m.replaceAll("\"imgName\":\"$1loread\"");
+//
+////                        imgState.replaceAll(",\"saveSrc\":.*?loread\"", "" );
+////                        imgState.replaceAll("\"localSrc\":.*?_files\\/(.*?)loread\"", "\"imgName\":\"$1loread\"" );
+//                        KLog.d("升级文章含有：" + imgState.contains("\"imgStatus\":1,"));
+//                        if (imgState.contains("\"imgStatus\":1,")) {
+////                            int p = imgState.indexOf("\"imgStatus\":1,");
+//                            imgState = imgState.replace("\"imgStatus\":1,", "\"imgStatus\":1,\"folder\":\"" + folder + "_files\",");
+//                        }
+//                        if (imgState.contains("\"imgStatus\":0,")) {
+//                            imgState = imgState.replace("\"imgStatus\":0,", "\"imgStatus\":0,\"folder\":\"" + folder + "_files\",");
+//                        }
+//
+//                        KLog.d("升级文章内容：" + imgState);
+////                        try {
+////                            Thread.sleep(21000);
+////                        }catch (Exception e){
+////
+////                        }
+////                        Gson gson = new Gson();
+////                        Type type = new TypeToken<ExtraImg>() {}.getType();
+////                        try {
+////                            extraImg = gson.fromJson(imgState, type);
+////                            if ( extraImg.getFolder()==null ){
+////                                extraImg.setFolder( UFile.getFolder( article.getSaveDir(), UString.stringToMD5(article.getId()), article.getTitle() ) );
+////                            }
+////                            folder = extraImg.getFolder();
+////                            lossSrcList = extraImg.getLossImgs();
+////                            obtainSrcList = extraImg.getObtainImgs();
+//////                    KLog.e("重新进入获取到的imgState记录" + imgState + extraImg +  lossSrcList + obtainSrcList);
+////                        } catch (RuntimeException e) {
+////                            continue;
+////                        }
+//                    }
+//                    article.setImgState(imgState);
+//                    WithDB.getInstance().saveArticle(article);
+//                }
+//                mainHandler.sendEmptyMessage(1000);
+//            }
+//        }).start();
+////        KLog.d( "升级完成" );
+//        return true;
+//    }
 
 
 

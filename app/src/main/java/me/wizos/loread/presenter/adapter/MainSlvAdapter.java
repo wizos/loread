@@ -26,7 +26,8 @@ import me.wizos.loread.view.IconFontView;
  * Created by Wizos on 2016/3/15.
  */
 public class MainSlvAdapter extends ArrayAdapter<Article> {
-
+    List<Article> articleList;
+    Context context;
 
     public MainSlvAdapter(Context context, List<Article> itemArray){
         super(context, 0 , itemArray);
@@ -34,8 +35,7 @@ public class MainSlvAdapter extends ArrayAdapter<Article> {
         this.context = context;
     }
 
-    List<Article> articleList;
-    Context context;
+
 
     @Override
     public int getCount() {
@@ -55,7 +55,7 @@ public class MainSlvAdapter extends ArrayAdapter<Article> {
         Article article = this.getItem(position);
         if (convertView == null) {
             cvh = new CustomViewHolder();
-            convertView = LayoutInflater.from(context).inflate(R.layout.main_slv_item, null);
+            convertView = LayoutInflater.from(context).inflate(R.layout.activity_main_slv_item, null);
             cvh.articleTitle = (TextView) convertView.findViewById(R.id.main_slv_item_title);
             TextPaint tp = cvh.articleTitle.getPaint();
             tp.setFakeBoldText(true);
@@ -65,6 +65,7 @@ public class MainSlvAdapter extends ArrayAdapter<Article> {
             cvh.articleTime = (TextView) convertView.findViewById(R.id.main_slv_item_time);
             cvh.articleStar = (IconFontView)convertView.findViewById(R.id.main_slv_item_icon_star);
             cvh.articleReading = (IconFontView)convertView.findViewById(R.id.main_slv_item_icon_reading);
+            cvh.articleSave = (IconFontView) convertView.findViewById(R.id.main_slv_item_icon_save);
             convertView.setTag(cvh);
         } else {
             cvh = (CustomViewHolder) convertView.getTag();
@@ -83,7 +84,7 @@ public class MainSlvAdapter extends ArrayAdapter<Article> {
         if (article.getOriginTitle() != null) {
             cvh.articleFeed.setText(Html.fromHtml(article.getOriginTitle()));
         }
-        cvh.articleTime.setText(UTime.getDateMSec(article.getCrawlTimeMsec()));
+        cvh.articleTime.setText(UTime.getDateSec(article.getPublished()));
         if ( article.getReadState().equals(API.ART_READ) &  !MainActivity.sListState.equals(API.ART_STAR) ) {
             cvh.articleTitle.setAlpha(0.40f);
             cvh.articleSummary.setAlpha(0.40f);
@@ -106,6 +107,11 @@ public class MainSlvAdapter extends ArrayAdapter<Article> {
         }else {
             cvh.articleStar.setVisibility(View.GONE);
         }
+        if (API.SAVE_DIR_CACHE.equals(article.getSaveDir())) {
+            cvh.articleSave.setVisibility(View.GONE);
+        } else {
+            cvh.articleSave.setVisibility(View.VISIBLE);
+        }
         return convertView;
     }
     private class CustomViewHolder {
@@ -115,6 +121,7 @@ public class MainSlvAdapter extends ArrayAdapter<Article> {
         TextView articleTime;
         IconFontView articleStar;
         IconFontView articleReading;
+        IconFontView articleSave;
         ImageView articleImg;
     }
     
