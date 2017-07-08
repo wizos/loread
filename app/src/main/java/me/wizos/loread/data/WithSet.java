@@ -7,25 +7,13 @@ import me.wizos.loread.App;
 import me.wizos.loread.net.API;
 
 /**
+ * 内部设置
  * Created by Wizos on 2016/4/30.
  */
 public class WithSet {
     private static WithSet withSet;
     private static SharedPreferences mySharedPreferences;
     private static SharedPreferences.Editor editor;
-//    private static Context context;
-
-//    private String table;
-//    private String useId;
-//    private String useName;
-//    private boolean syncFirstOpen;
-//    private boolean syncAllStarred;
-//    private String syncFrequency;
-//    private boolean downImgMode;
-//    private boolean scrollMark;
-//    private String cachePathStarred;
-
-
 
 
     private WithSet() {
@@ -45,35 +33,39 @@ public class WithSet {
     }
 
 
-    public String readPref(String key,String defaultValue){
+    private String readPref(String key, String defaultValue) {
         return mySharedPreferences.getString(key, defaultValue);//getString()第二个参数为缺省值，如果preference中不存在该key，将返回缺省值
     }
-    public void savePref(String key,String value){
+
+    private void savePref(String key, String value) {
 //        SharedPreferences.Editor editor = mySharedPreferences.edit();//实例化SharedPreferences.Editor对象
         editor.putString(key, value); //用putString的方法保存数据
         editor.apply(); //提交当前数据
     }
 
-    public boolean readPref(String key,boolean defaultValue ){
+    private boolean readPref(String key, boolean defaultValue) {
         return mySharedPreferences.getBoolean(key, defaultValue);
     }
-    public void savePref(String key,boolean value){
+
+    private void savePref(String key, boolean value) {
         editor.putBoolean(key, value); //用putString的方法保存数据
         editor.apply(); //提交当前数据
     }
 
-    public int readPref(String key,int value){
+    private int readPref(String key, int value) {
         return mySharedPreferences.getInt(key, value);
     }
-    public void savePref(String key,int value){
+
+    private void savePref(String key, int value) {
         editor.putInt(key, value);
         editor.apply();
     }
 
-    public long readPref(String key,long value){
+    private long readPref(String key, long value) {
         return mySharedPreferences.getLong(key, value);
     }
-    public void savePref(String key,long value){
+
+    private void savePref(String key, long value) {
         editor.putLong(key, value);
         editor.apply();
     }
@@ -232,13 +224,5 @@ public class WithSet {
     public void setThemeMode(int themeMode) {
         savePref("ThemeMode", themeMode);
     }
-
-
-//    public int getThemeId() {
-//        return readPref("ThemeId", App.theme_Day);
-//    }
-//    public void setThemeId(int themeId) {
-//        savePref("ThemeId", themeId);
-//    }
 
 }
