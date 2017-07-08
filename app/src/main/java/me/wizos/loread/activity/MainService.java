@@ -28,9 +28,9 @@ import me.wizos.loread.data.WithSet;
 import me.wizos.loread.net.API;
 import me.wizos.loread.net.Neter;
 import me.wizos.loread.net.Parser;
-import me.wizos.loread.utils.UFile;
-import me.wizos.loread.utils.UString;
-import me.wizos.loread.utils.UToast;
+import me.wizos.loread.utils.FileUtil;
+import me.wizos.loread.utils.StringUtil;
+import me.wizos.loread.utils.ToastUtil;
 
 /**
  * Created by Wizos on 2017/1/7.
@@ -39,7 +39,6 @@ import me.wizos.loread.utils.UToast;
 public class MainService extends IntentService {
     private String TAG = "MainService";
 
-    //    private MainService mainService;
     public MainService() {
         super("MainService");
     }
@@ -67,21 +66,22 @@ public class MainService extends IntentService {
         }
 
         String action = intent.getAction();
-        if (action.equals("syncAllStarred")) {
+        if (action.equals("syncAllStarred")) {  // 这个是在 SettingActivity 中实现的
             syncAllStarred();
         } else if (action.equals("unreadArticle")) {
-            mNeter.postUnReadArticle(intent.getExtras().getString("articleId"));
+            mNeter.markArticleUnread(intent.getExtras().getString("articleId"));
         } else if (action.equals("readedArticle")) {
-            mNeter.postReadArticle(intent.getExtras().getString("articleId"));
+            mNeter.markArticleReaded(intent.getExtras().getString("articleId"));
         } else {
             refresh();
         }
+
         int result = intent.getFlags();
 //        String info = intent.getStringExtra("res");
 //        String url = intent.getStringExtra("url");
 //        KLog.d("开始处理 = 内容：" + info);
 //        KLog.d("开始处理 = url：" + url);
-        KLog.d("开始处理 = 结果：" + result);
+        KLog.e(" 开始处理 = 结果：" + result);
     }
 
     // 使用 startService(intent); 多次启动IntentService，但IntentService的实例只有一个，这跟传统的Service是一样的，最终IntentService会去调用onHandleIntent执行异步任务。这里可能我们还会担心for循环去启动任务，而实例又只有一个，那么任务会不会被覆盖掉呢？其实是不会的，因为IntentService真正执行异步任务的是HandlerThread+Handler
@@ -145,7 +145,7 @@ public class MainService extends IntentService {
      */
 
 
-    class ChildCallback implements Handler.Callback {
+    private class ChildCallback implements Handler.Callback {
         @Override
         public boolean handleMessage(Message msg) {
             String info = msg.getData().getString("res");
@@ -156,15 +156,12 @@ public class MainService extends IntentService {
             if (info == null) {
                 info = "";
             }
-
-            String con;
             switch (msg.what) {
                 case API.M_BEGIN_SYNC:
                     if (syncRequestLog()) {
                         break;
                     }
 //                    sHandler.sendEmptyMessage(API.SUCCESS);
-
                     // 为了得到分组名，及排序
                     // updateTip，updateView，updateData
                     sendProcess(getResources().getString(R.string.main_toolbar_hint_sync_tag));
@@ -174,7 +171,7 @@ public class MainService extends IntentService {
                     break;
                 case API.S_TAGS_LIST: // 分组列表
                     Parser.instance().parseTagList(info);
-                    if (WithSet.getInstance().isOrderTagFeed()) {
+                    if (WithSet.i().isOrderTagFeed()) {
                         sendProcess(getResources().getString(R.string.main_toolbar_hint_sync_tag_order));
                         mNeter.getWithAuth(API.HOST + API.U_STREAM_PREFS);// 有了这份数据才可以对 tagslist feedlist 进行排序，并储存下来
                     } else {
@@ -219,11 +216,9 @@ public class MainService extends IntentService {
                         } else {
                             ArrayList<ItemRefs> unreadRefs = Parser.instance().reUnreadRefs();
                             ArrayList<ItemRefs> starredRefs = Parser.instance().reStarredRefs();
-//                            unreadRefsSize = unreadRefs.size();
-//                            starredRefsSize = starredRefs.size();
                             capacity = Parser.instance().reRefs(unreadRefs, starredRefs);
                             if (capacity == -1) {
-                                UToast.showShort("同步时数据出错，请重试");
+                                ToastUtil.showShort("同步时数据出错，请重试");
                                 sHandler.sendEmptyMessage(API.F_NoMsg);
                                 break;
                             }
@@ -287,13 +282,11 @@ public class MainService extends IntentService {
                     KLog.i("【解析所有加星文章1】" + urlState + "---" + continuation);
                     if (continuation != null) {
                         mNeter.addHeader("c", continuation);
-//                        vToolbarHint.setText(R.string.main_toolbar_hint_sync_all_stared_content);
+                        sendProcess(getResources().getString(R.string.main_toolbar_hint_sync_all_stared_content));
                         mNeter.getStarredContents();
                         KLog.i("【获取 StarredContents 】");
                     } else {
-                        WithSet.getInstance().setHadSyncAllStarred(true);
-//                        sendProcess(getResources().getString(R.string.main_toolbar_hint_sync_tag));
-//                        mNeter.getWithAuth(API.HOST + API.U_TAGS_LIST); // 接着继续
+                        WithSet.i().setHadSyncAllStarred(true);
                     }
                     break;
                 case API.S_EDIT_TAG:
@@ -318,25 +311,19 @@ public class MainService extends IntentService {
                 case API.F_Request:
                 case API.F_Response:
                     if (info.equals("Authorization Required")) {
-                        UToast.showShort("没有Authorization，请重新登录");
+                        ToastUtil.showShort("没有Authorization，请重新登录");
                         Intent loginIntent = new Intent(MainService.this, LoginActivity.class);
                         loginIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                         startActivity(loginIntent);
                         break;
                     }
-//                    numOfFailure = numOfFailure + 1;
-//                    KLog.d("网络错误");
-//                    if (numOfFailure < 3) {
-//                        mNeter.forData(url, API.request, msg.getData().getLong("logTime"));
-//                        break;
-//                    }
                     sHandler.sendEmptyMessage(API.F_NoMsg);
                     getNumForArts = 0;
                     break;
                 case API.F_NoMsg:
                     sendFailure();
                     if (url != null && url.contains(API.U_ARTICLE_CONTENTS)) {
-                        UToast.showShort("修改该文章的状态失败");
+                        ToastUtil.showShort("修改该文章的状态失败");
                         saveRequestLog(msg.getData().getLong("logTime"));
                     }
                     getNumForArts = 0;
@@ -344,7 +331,7 @@ public class MainService extends IntentService {
                 case API.SUCCESS: // 文章获取完成
                     sendSuccess();
                     moveArticles();
-                    clearArticles(WithSet.getInstance().getClearBeforeDay());
+                    clearArticles(WithSet.i().getClearBeforeDay());
                     getNumForArts = 0;
                     break;
 
@@ -356,12 +343,12 @@ public class MainService extends IntentService {
                     articleID = msg.getData().getString("articleID");
                     imgNo = msg.getData().getInt("imgNo");
 
-                    Img imgMeta = WithDB.getInstance().getImg(articleID, imgNo);
+                    Img imgMeta = WithDB.i().getImg(articleID, imgNo);
                     if (imgMeta == null) {
                         break;
                     }
                     imgMeta.setDownState(API.ImgState_Over);
-                    WithDB.getInstance().saveImg(imgMeta);
+                    WithDB.i().saveImg(imgMeta);
 
                     if (App.currentArticleID != null & App.currentArticleID.equals(articleID)) {
                         Bundle bundle = msg.getData();
@@ -382,87 +369,47 @@ public class MainService extends IntentService {
 
     public void clearArticles(int days) {
         long clearTime = System.currentTimeMillis() - days * 24 * 3600 * 1000L;
-        List<Article> allArtsBeforeTime = WithDB.getInstance().loadArtsBeforeTime(clearTime);
+        List<Article> allArtsBeforeTime = WithDB.i().getArtInReadedUnstarLtTime(clearTime);
         KLog.i("清除" + clearTime + "--" + allArtsBeforeTime.size() + "--" + days);
-        UToast.showShort("清除 " + days + " 天前的 " + allArtsBeforeTime.size() + " 篇文章");
+        ToastUtil.showShort("清除 " + days + " 天前的 " + allArtsBeforeTime.size() + " 篇文章");
 
         if (allArtsBeforeTime.size() == 0) {
             return;
         }
         ArrayList<String> idListMD5 = new ArrayList<>(allArtsBeforeTime.size());
         for (Article article : allArtsBeforeTime) {
-            idListMD5.add(UString.stringToMD5(article.getId()));
+            idListMD5.add(StringUtil.stringToMD5(article.getId()));
         }
         KLog.i("清除b" + clearTime + "--" + allArtsBeforeTime.size() + "--" + days);
-        UFile.deleteHtmlDirList(idListMD5);
-        WithDB.getInstance().delArtAll(allArtsBeforeTime);
+        FileUtil.deleteHtmlDirList(idListMD5);
+        WithDB.i().delArt(allArtsBeforeTime);
     }
 
     /**
      * 移动“保存且已读”的文章至一个新的文件夹
      */
     public void moveArticles() {
-        List<Article> boxReadArts = WithDB.getInstance().loadArtsSavedBox();
-        List<Article> storeReadArts = WithDB.getInstance().loadArtsSavedStore();
+        List<Article> boxReadArts = WithDB.i().getArtInReadedBox();
+        List<Article> storeReadArts = WithDB.i().getArtInReadedStore();
         KLog.i("移动文章" + boxReadArts.size() + "=" + storeReadArts.size());
 
         for (Article article : boxReadArts) {
-            UFile.moveFile(App.boxRelativePath + article.getTitle() + ".html", App.boxReadRelativePath + article.getTitle() + ".html");// 移动文件
-            UFile.moveDir(App.boxRelativePath + article.getTitle() + "_files", App.boxReadRelativePath + article.getTitle() + "_files");// 移动目录
-            article.setCoverSrc(UFile.getAbsoluteDir("boxRead") + article.getTitle() + "_files" + File.separator + UString.getFileNameExtByUrl(article.getCoverSrc()));
+            FileUtil.moveFile(App.boxRelativePath + article.getTitle() + ".html", App.boxReadRelativePath + article.getTitle() + ".html");// 移动文件
+            FileUtil.moveDir(App.boxRelativePath + article.getTitle() + "_files", App.boxReadRelativePath + article.getTitle() + "_files");// 移动目录
+            article.setCoverSrc(FileUtil.getAbsoluteDir("boxRead") + article.getTitle() + "_files" + File.separator + StringUtil.getFileNameExtByUrl(article.getCoverSrc()));
             article.setSaveDir(API.SAVE_DIR_BOXREAD);
             KLog.i("移动了A");
         }
-        WithDB.getInstance().saveArticleList(boxReadArts);
+        WithDB.i().saveArticleList(boxReadArts);
         for (Article article : storeReadArts) {
-            UFile.moveFile(App.storeRelativePath + article.getTitle() + ".html", App.storeReadRelativePath + article.getTitle() + ".html");// 移动文件
-            UFile.moveDir(App.storeRelativePath + article.getTitle() + "_files", App.storeReadRelativePath + article.getTitle() + "_files");// 移动目录
-            article.setCoverSrc(UFile.getAbsoluteDir("storeRead") + article.getTitle() + "_files" + File.separator + UString.getFileNameExtByUrl(article.getCoverSrc()));
+            FileUtil.moveFile(App.storeRelativePath + article.getTitle() + ".html", App.storeReadRelativePath + article.getTitle() + ".html");// 移动文件
+            FileUtil.moveDir(App.storeRelativePath + article.getTitle() + "_files", App.storeReadRelativePath + article.getTitle() + "_files");// 移动目录
+            article.setCoverSrc(FileUtil.getAbsoluteDir("storeRead") + article.getTitle() + "_files" + File.separator + StringUtil.getFileNameExtByUrl(article.getCoverSrc()));
             article.setSaveDir(API.SAVE_DIR_STOREREAD);
             KLog.i("移动了B" + App.storeRelativePath + article.getTitle() + "_files |||| " + App.storeReadRelativePath + article.getTitle() + "_files");
         }
-        WithDB.getInstance().saveArticleList(storeReadArts);
+        WithDB.i().saveArticleList(storeReadArts);
     }
-
-//    public void movefiles( ArrayList<String> filelist ){
-//        for (String fileName:filelist){
-//            if( WithDB.getInstance().hasArticle(fileName) == 0 ){
-//                UFile.moveFile(App.boxRelativePath + fileName + ".html", App.boxReadRelativePath + fileName + ".html");// 移动文件
-//                UFile.moveDir(App.boxRelativePath + fileName + "_files", App.boxReadRelativePath + fileName + "_files");// 移动目录
-//            }
-//        }
-//    }
-//
-//    protected void move(){
-//        new Thread(new Runnable() {
-//            @Override
-//            public void run() {
-//                movefiles ( getFileList( App.boxRelativePath ) );
-//                mHandler.sendEmptyMessage(1000);
-//            }
-//        }).start();
-//    }
-//
-//    public static ArrayList<String> getFileList( String path ){
-//        File dir = new File(path);
-//        File[] files = dir.listFiles(); // 该文件目录下文件全部放入数组
-//        KLog.d("---" + path);
-//        ArrayList<String> filelist = new ArrayList<>( files.length );
-//        String fileName;
-//        if (files != null) {
-//            for (int i = 0; i < files.length; i++) {
-//                if (files[i].isDirectory()) { // 判断是文件还是文件夹
-//                    getFileList(files[i].getAbsolutePath()); // 获取文件绝对路径
-//                } else { // 判断文件名是否以.avi结尾
-//                    fileName = files[i].getName();
-//                    fileName = fileName.replace(".html", "");
-//                    KLog.d("---" + fileName);
-//                    filelist.add( fileName );
-//                }
-//            }
-//        }
-//        return filelist;
-//    }
 
     private void sendSuccess() {
 //        Message message = new Message();
@@ -518,11 +465,11 @@ public class MainService extends IntentService {
             return;
         }
         KLog.i("【saveRequest2】" + requestMap.get(logTime));
-        WithDB.getInstance().saveRequestLog(requestMap.get(logTime));
+        WithDB.i().saveRequestLog(requestMap.get(logTime));
     }
 
     private boolean syncRequestLog() {
-        List<RequestLog> requestLogs = WithDB.getInstance().loadRequestListAll();
+        List<RequestLog> requestLogs = WithDB.i().loadRequestListAll();
         if (requestLogs.size() == 0) {
             return false;
         }
@@ -538,20 +485,20 @@ public class MainService extends IntentService {
             requestMap.put(requestLog.getLogTime(), requestLog);
             String headParamString = requestLog.getHeadParamString();
             String bodyParamString = requestLog.getBodyParamString();
-            mNeter.addHeader(UString.formStringToParamList(headParamString));
-            mNeter.addBody(UString.formStringToParamList(bodyParamString));
+            mNeter.addHeader(StringUtil.formStringToParamList(headParamString));
+            mNeter.addBody(StringUtil.formStringToParamList(bodyParamString));
             KLog.d("同步错误：" + headParamString + " = " + bodyParamString);
             if (requestLog.getMethod().equals("post")) {
                 mNeter.postWithAuth(requestLog.getUrl(), requestLog.getLogTime());
             }
         }
-        WithDB.getInstance().delRequestListAll();  // TODO: 2016/10/20 不能先删除，可能删除后，手机退出，那么这些记录就丢失了
-        hadSyncLogRequest = true;
+        WithDB.i().delRequestListAll();  // TODO: 2016/10/20 不能先删除，可能删除后，手机退出，那么这些记录就丢失了
+//        hadSyncLogRequest = true;
         KLog.d("读取到的数目： " + requestLogs.size());
         return true;
     }
 
-    private boolean hadSyncLogRequest = true;
+//    private boolean hadSyncLogRequest = true;
 
 //
 //    private ArrayMap<String,ArrayList> imgRecord;
@@ -579,11 +526,11 @@ public class MainService extends IntentService {
 //        extraImg.setImgStatus(imgStatus);
 //        extraImg.setObtainImgs(obtainSrcList);
 //        extraImg.setLossImgs(lossSrcList);
-//        Article article = WithDB.getInstance().getArticle(articleID);
+//        Article article = WithDB.i().getArticle(articleID);
 //        article.setImgState( new Gson().toJson(extraImg) );
-//        WithDB.getInstance().saveArticle( article );
+//        WithDB.i().saveArticle( article );
 //        KLog.e("【储存的imgState】" +  new Gson().toJson(extraImg) );
-//        WithDB.getInstance().saveArticle(article);
+//        WithDB.i().saveArticle(article);
 //    }
 
 

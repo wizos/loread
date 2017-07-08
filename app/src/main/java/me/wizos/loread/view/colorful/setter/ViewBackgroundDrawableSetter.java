@@ -1,4 +1,4 @@
-package me.wizos.loread.utils.colorful.setter;
+package me.wizos.loread.view.colorful.setter;
 
 import android.content.res.Resources.Theme;
 import android.content.res.TypedArray;

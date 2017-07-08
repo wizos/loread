@@ -79,7 +79,7 @@ public class HttpUtil {
 //        if (!isNetworkAvailable()) {
 //            return false;
 //        }
-//        return ((WifiManager) App.getInstance().getSystemService(Context.WIFI_SERVICE)).isWifiEnabled();
+//        return ((WifiManager) App.i().getSystemService(Context.WIFI_SERVICE)).isWifiEnabled();
 //    }
 
     /**
@@ -92,12 +92,12 @@ public class HttpUtil {
      * @return
      */
     public static boolean canDownImg() {
-        if (WithSet.getInstance().isDownImgWifi() && !isWiFiActive()) {
-            UToast.showShort("你开启了省流量模式，非 Wifi 不能下图片啦");
+        if (WithSet.i().isDownImgWifi() && !isWiFiActive()) {
+            ToastUtil.showShort("你开启了省流量模式，非 Wifi 不能下图片啦");
             return false;
         }
-        if (!WithSet.getInstance().isDownImgWifi() && !isNetworkAvailable()) {
-            UToast.showShort("小伙子，你的网络无法使用啊");
+        if (!WithSet.i().isDownImgWifi() && !isNetworkAvailable()) {
+            ToastUtil.showShort("小伙子，你的网络无法使用啊");
             return false;
         }
         return true;
@@ -107,7 +107,7 @@ public class HttpUtil {
      * 判断网络是否可用
      */
     public static boolean isNetworkAvailable() {
-        ConnectivityManager connectivity = (ConnectivityManager) App.getInstance().getSystemService(Context.CONNECTIVITY_SERVICE);
+        ConnectivityManager connectivity = (ConnectivityManager) App.i().getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo info = connectivity.getActiveNetworkInfo();
         return (info != null && info.isConnected());
     }
@@ -116,7 +116,7 @@ public class HttpUtil {
      * 判断WIFI是否可用
      */
     public static boolean isWiFiActive() {
-        ConnectivityManager connectivity = (ConnectivityManager) App.getInstance().getSystemService(Context.CONNECTIVITY_SERVICE);
+        ConnectivityManager connectivity = (ConnectivityManager) App.i().getSystemService(Context.CONNECTIVITY_SERVICE);
         if (connectivity == null) {
             return false;
         }
@@ -143,7 +143,7 @@ public class HttpUtil {
             for (NetworkInfo networkInfo : networkInfos) {
                 //此处请务必使用NetworkInfo对象下的isAvailable（）方法，isConnected()是检测当前是否连接到了wifi
                 if (networkInfo.getType() != ConnectivityManager.TYPE_WIFI) continue;
-                KLog.e("Wifi==", networkInfo.isConnected());
+                KLog.i("Wifi==", networkInfo.isConnected());
                 return networkInfo.isConnected();
             }
         }

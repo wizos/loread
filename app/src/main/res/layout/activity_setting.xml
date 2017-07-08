@@ -119,6 +119,7 @@
             <LinearLayout
                 android:id="@+id/setting_clear_day"
                 style="@style/SettingItem"
+                android:onClick="showClearBeforeDay"
                 android:orientation="horizontal">
                 <TextView
                     android:id="@+id/setting_clear_day_title"
@@ -293,6 +294,7 @@
             <LinearLayout
                 android:id="@+id/setting_about"
                 style="@style/SettingItem"
+                android:onClick="showAbout"
                 android:orientation="horizontal">
                 <TextView
                     android:id="@+id/setting_about_title"
@@ -317,6 +319,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="match_parent"
                     android:layout_marginBottom="6dp"
+                    android:onClick="clearLog"
                     android:text="@string/setting_clear_log_title" />
                 <Button
                     android:id="@+id/setting_clear_error_cache"

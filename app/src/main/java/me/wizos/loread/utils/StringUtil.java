@@ -13,6 +13,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 import me.wizos.loread.App;
 import me.wizos.loread.bean.Article;
@@ -25,7 +26,7 @@ import me.wizos.loread.net.API;
  * 字符处理工具类
  * Created by Wizos on 2016/3/16.
  */
-public class UString {
+public class StringUtil {
     public static String toLongID(String id) {
         id = Long.toHexString(Long.valueOf(id));
         return "tag:google.com,2005:reader/item/" + String.format("%0" + (16 - id.length()) + "d", 0) + id;
@@ -65,13 +66,17 @@ public class UString {
 
     public static String getHtmlHeader() {
         // 获取排版文件路径（支持自定义的文件）
-        String typesettingCssPath = App.getInstance().getExternalFilesDir(null) + File.separator + "config" + File.separator + "article.css";
-        if (!UFile.isFileExists(typesettingCssPath)) {
+        String typesettingCssPath = App.i().getExternalFilesDir(null) + File.separator + "config" + File.separator + "article.css";
+//        if (!FileUtil.isFileExists(typesettingCssPath)) {
+//            typesettingCssPath = "file:///android_asset/article.css";
+//        }
+        if (!new File(typesettingCssPath).exists()) {
             typesettingCssPath = "file:///android_asset/article.css";
         }
+
         // 获取主题文件路径
         String themeCssPath;
-        if (WithSet.getInstance().getThemeMode() == WithSet.themeDay) {
+        if (WithSet.i().getThemeMode() == App.theme_Day) {
             themeCssPath = "file:///android_asset/article_theme_day.css";
         } else {
             themeCssPath = "file:///android_asset/article_theme_night.css";
@@ -84,7 +89,7 @@ public class UString {
                 "for(var i=0; i<imgList.length; i++) {" +
                 "    imgList[i].no = i;" +
                 "    imgList[i].onclick = function() {" +
-                "        window.imagelistner.listen( this.no, this.src );  " +
+                "        window.imagelistner.onImgClicked( this.no, this.src );  " +
                 "    }  " +
                 "}" +
                 "}" +
@@ -103,7 +108,6 @@ public class UString {
                 "}" +
                 "}" +
                 "</script>";
-
         return "<!DOCTYPE html><html><head><meta charset=\"UTF-8\">" +
                 "<link rel=\"stylesheet\" type=\"text/css\" href=\"" + typesettingCssPath + "\" />" +
                 "<link rel=\"stylesheet\" type=\"text/css\" href=\"" + themeCssPath + "\" />" +
@@ -111,7 +115,7 @@ public class UString {
     }
 
 
-    public static String getModHtml(Article article, String articleHtml) {
+    private static String getModHtml(Article article, String articleHtml) {
         String author = article.getAuthor();
         if (author != null && !author.equals("") && !article.getOriginTitle().contains(author)) {
             author = article.getOriginTitle() + "@" + article.getAuthor();
@@ -126,13 +130,74 @@ public class UString {
                 "<article id=\"art\">" +
                 "<header id=\"art_header\">" +
                 "<h1 id=\"art_h1\"><a href=\"" + article.getCanonical() + "\">" + article.getTitle() + "</a></h1>" +
-                "<p id=\"art_author\">" + author + "</p><p id=\"art_pubDate\">" + UTime.getDateSec(article.getPublished()) + "</p>" +
+                "<p id=\"art_author\">" + author + "</p><p id=\"art_pubDate\">" + TimeUtil.getDateSec(article.getPublished()) + "</p>" +
                 "</header>" +
                 "<hr id=\"art_hr\">" +
                 "<section id=\"art_section\">" + articleHtml + "</section>" +
                 "</article>" +
                 "</body></html>";
     }
+
+
+    /**
+     * 获取文章正文（并修饰）
+     *
+     * @param article
+     * @return
+     */
+    public static String getArticleHtml(Article article) {
+        long xx = System.currentTimeMillis();
+//            KLog.d("====" + article.getTitle() + "----"+  article.getSummary());
+        if (article == null) {
+            // TODO: 2017/2/19  加载没有正文的占位画面
+            KLog.d("Article为null");
+            return "";
+        }
+        if (article.getSummary().length() == 0) {
+            // TODO: 2017/2/19  加载没有正文的占位画面
+            KLog.d("正文内容为空");
+//            return "";
+        }
+
+        // 获取 文章的 fileTitle
+        String fileTitle;
+        if (article.getSaveDir().equals(API.SAVE_DIR_CACHE)) {
+            fileTitle = StringUtil.stringToMD5(article.getId());
+        } else {
+            fileTitle = article.getTitle();
+        }
+
+        String articleHtml = FileUtil.readHtml(FileUtil.getRelativeDir(article.getSaveDir()) + fileTitle + ".html");
+
+        if (articleHtml.length() == 0) {
+            // TODO: 2017/2/19  加载等待获取正文的占位画面
+            // TODO: 2017/4/8 重新获取文章正文
+        } else if (article.getImgState() == null) { // 文章没有被打开过
+            ArrayMap<Integer, Img> lossSrcList = StringUtil.getListOfSrcAndHtml(article.getId(), articleHtml, fileTitle);
+            articleHtml = lossSrcList.get(0).getSrc();
+            articleHtml = StringUtil.getModHtml(article, articleHtml);
+            lossSrcList.remove(0);
+            if (lossSrcList.size() != 0) {
+                article.setCoverSrc(FileUtil.getAbsoluteDir(API.SAVE_DIR_CACHE) + fileTitle + "_files" + File.separator + lossSrcList.get(1).getName());
+                WithDB.i().saveImgs(lossSrcList);
+                article.setImgState(API.ImgState_Downing);
+            } else {
+                article.setImgState(API.ImgState_NoImg);
+                KLog.d("为空");
+            }
+            KLog.d("获取文章正文getArticleHtml：" + article.getId() + lossSrcList);
+            article.setTitle(StringUtil.filterTitle(article.getTitle()));
+
+            String summary = Html.fromHtml(articleHtml).toString(); // 可以去掉标签
+            article.setSummary(StringUtil.getSummary(summary));
+
+            FileUtil.saveCacheHtml(fileTitle, articleHtml);
+            WithDB.i().saveArticle(article);
+        }
+        KLog.e("测速articleHtml", (System.currentTimeMillis() - xx));
+        return articleHtml;
+    }
+
 
     /**
      * @param oldHtml 原始 html
@@ -150,7 +215,7 @@ public class UString {
         KLog.d("getListOfSrcAndHtml修饰文章：" + articleId);
         Img imgMeta;
         // 先去广告
-        StringBuilder tempHtml = UString.reviseHtmlNoAd(oldHtml);
+        StringBuilder tempHtml = StringUtil.reviseHtmlNoAd(oldHtml);
 
         int num = 0, indexB, indexA = tempHtml.indexOf("<img ", 0);
         String srcLocal, srcNet, temp, FileNameExt;// imgExt,imgName,
@@ -166,8 +231,8 @@ public class UString {
                 break;
             }
             num++;
-//            imgExt = UString.getFileExtByUrl( srcNet );
-//            imgName = UString.getFileNameByUrl( srcNet );
+//            imgExt = StringUtil.getFileExtByUrl( srcNet );
+//            imgName = StringUtil.getFileNameByUrl( srcNet );
             FileNameExt = getFileNameExtByUrl(srcNet) + "_" + num + API.MyFileType;
 //            KLog.d("【获取src和html】" + imgExt + num );
 //            srcLocal = "./" + fileName + "_files"  + File.separator + imgName +  "_" + num  + imgExt  + API.MyFileType;
@@ -256,6 +321,7 @@ public class UString {
         }
     }
 
+
     /**
      * 从 url 中获取文件名(含后缀)
      * @param url 网址
@@ -268,66 +334,66 @@ public class UString {
         String fileName;
         int separatorIndex = url.lastIndexOf("/") + 1;
         fileName = url.substring(separatorIndex, url.length());
-        fileName = handleSpecialChar(fileName);
+        fileName = filterTitle(fileName);
 //        KLog.e("【文件名与后缀名】" + fileName);
         return fileName;
     }
 
-    /**
-     * 从 url 中获取文件名(不含后缀)
-     *
-     * @param url 网址
-     * @return 文件名
-     */
-    public static String getFileNameByUrl(String url){
-        if (TextUtils.isEmpty(url)) {
-            return null;
-        }
-        int dotIndex = url.lastIndexOf(".");
-        int separatorIndex = url.lastIndexOf("/") + 1;
-        String fileName;
-        if( separatorIndex > dotIndex ){
-            dotIndex = url.length();
-        }
-        fileName = url.substring(separatorIndex, dotIndex);
-        fileName = handleSpecialChar(fileName );
-//        KLog.e("【文件名】" + fileName);
-//        int extLength = separatorIndex - dotIndex; extLength +
-//        KLog.e("【文件名】" + dotIndex + '='+ separatorIndex + '='+ '=' + url.length() );
-        return fileName;
-    }
+//    /**
+//     * 从 url 中获取文件名(不含后缀)
+//     *
+//     * @param url 网址
+//     * @return 文件名
+//     */
+//    public static String getFileNameByUrl(String url){
+//        if (TextUtils.isEmpty(url)) {
+//            return null;
+//        }
+//        int dotIndex = url.lastIndexOf(".");
+//        int separatorIndex = url.lastIndexOf("/") + 1;
+//        String fileName;
+//        if( separatorIndex > dotIndex ){
+//            dotIndex = url.length();
+//        }
+//        fileName = url.substring(separatorIndex, dotIndex);
+//        fileName = handleSpecialChar(fileName );
+////        KLog.e("【文件名】" + fileName);
+////        int extLength = separatorIndex - dotIndex; extLength +
+////        KLog.e("【文件名】" + dotIndex + '='+ separatorIndex + '='+ '=' + url.length() );
+//        return fileName;
+//    }
 
-    /**
-     * 从 url 中获取文件后缀名
-     * @param url 网址
-     * @return 文件后缀名
-     */
-    public static String getFileExtByUrl(String url) {
-        if (TextUtils.isEmpty(url)) {
-            return null;
-        }
-        int dotIndex = url.lastIndexOf(".");
-        int extLength = url.length() - dotIndex;
-        String fileExt;
-        if (extLength < 6) {
-            fileExt = url.substring(dotIndex, url.length());
-        } else {
-            if (url.contains(".jpg")) {
-                fileExt = ".jpg";
-            } else if (url.contains(".jpeg")) {
-                fileExt = ".jpeg";
-            } else if (url.contains(".png")) {
-                fileExt = ".png";
-            } else if (url.contains(".gif")) {
-                fileExt = ".gif";
-            } else {
-                fileExt = "";
-            }
-        }
-//        KLog.d( "【获取 FileExtByUrl 】" + url.substring( dotIndex ,url.length()) + extLength );
-//        KLog.d( "【修正正文内的SRC】的格式" + fileExt + url );
-        return fileExt;
-    }
+//    /**
+//     * 从 url 中获取文件后缀名
+//     * @param url 网址
+//     * @return 文件后缀名
+//     */
+//    public static String getFileExtByUrl(String url) {
+//        if (TextUtils.isEmpty(url)) {
+//            return null;
+//        }
+//        int dotIndex = url.lastIndexOf(".");
+//        int extLength = url.length() - dotIndex;
+//        String fileExt;
+//        if (extLength < 6) {
+//            fileExt = url.substring(dotIndex, url.length());
+//        } else {
+//            if (url.contains(".jpg")) {
+//                fileExt = ".jpg";
+//            } else if (url.contains(".jpeg")) {
+//                fileExt = ".jpeg";
+//            } else if (url.contains(".png")) {
+//                fileExt = ".png";
+//            } else if (url.contains(".gif")) {
+//                fileExt = ".gif";
+//            } else {
+//                fileExt = "";
+//            }
+//        }
+////        KLog.d( "【获取 FileExtByUrl 】" + url.substring( dotIndex ,url.length()) + extLength );
+////        KLog.d( "【修正正文内的SRC】的格式" + fileExt + url );
+//        return fileExt;
+//    }
 
 
     /**
@@ -336,8 +402,12 @@ public class UString {
      * @param fileName 文件名
      * @return 处理后的文件名
      */
-    public static String handleSpecialChar(String fileName ){
-        return fileName
+    public static String filterTitle(String fileName) {
+        return EmojiUtil.filterEmoji(filterChar(fileName));
+    }
+
+    private static String filterChar(String source) {
+        return source
                 .replace("\\", "")
                 .replace("/", "")
                 .replace(":", "")
@@ -349,9 +419,58 @@ public class UString {
                 .replace("|", "")
                 .replace("%", "_")
                 .replace("#", "_")
-                .replace("\n", "_");
+                .replace("\n", "_")
+                .trim();
     }
 
+
+    /**
+     * 获取字符串编码格式
+     *
+     * @param str
+     * @return
+     */
+    public static String getEncode(String str) {
+        final String[] encodes = new String[]{"UTF-8", "GBK", "GB2312", "ISO-8859-1", "ISO-8859-2"};
+        byte[] data = str.getBytes();
+        byte[] b = null;
+        a:
+        for (int i = 0; i < encodes.length; i++) {
+            try {
+                b = str.getBytes(encodes[i]);
+                if (b.length != data.length)
+                    continue;
+                for (int j = 0; j < b.length; j++) {
+                    if (b[j] != data[j]) {
+                        continue a;
+                    }
+                }
+                return encodes[i];
+            } catch (UnsupportedEncodingException e) {
+                continue;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * 将字符串转换成指定编码格式
+     *
+     * @param str
+     * @param encode
+     * @return
+     */
+    public static String transcoding(String str, String encode) {
+        String df = "ISO-8859-1";
+        try {
+            String en = getEncode(str);
+            if (en == null)
+                en = df;
+            return new String(str.getBytes(en), encode);
+        } catch (UnsupportedEncodingException e) {
+            return null;
+        }
+    }
 
     public static ArrayList<String[]> formStringToParamList(String paramString){
         if (TextUtils.isEmpty(paramString)) {
@@ -384,64 +503,14 @@ public class UString {
         return sb.toString();
     }
 
-
-    /**
-     * 获取文章正文（并修饰）
-     *
-     * @param article
-     * @return
-     */
-    public static String getArticleHtml(Article article) {
-//            KLog.d("====" + article.getTitle() + "----"+  article.getSummary());
-        if (article == null) {
-            // TODO: 2017/2/19  加载没有正文的占位画面
-            KLog.d("Article为null");
-            return "";
+    public static String getRandomString(int length) {
+        String str = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+        Random random = new Random();
+        StringBuffer sb = new StringBuffer();
+        for (int i = 0; i < length; i++) {
+            int number = random.nextInt(62);
+            sb.append(str.charAt(number));
         }
-        if (article.getSummary().length() == 0) {
-            // TODO: 2017/2/19  加载没有正文的占位画面
-            KLog.d("正文内容为空");
-//            return "";
-        }
-
-        // 获取 文章的 fileTitle
-        String fileTitle;
-        if (article.getSaveDir().equals(API.SAVE_DIR_CACHE)) {
-            fileTitle = UString.stringToMD5(article.getId());
-        } else {
-            fileTitle = article.getTitle();
-        }
-
-        String articleHtml = UFile.readHtml(UFile.getRelativeDir(article.getSaveDir()) + fileTitle + ".html");
-
-        if (articleHtml.length() == 0) {
-            // TODO: 2017/2/19  加载等待获取正文的占位画面
-            // TODO: 2017/4/8 重新获取文章正文
-        } else if (article.getImgState() == null) { // 文章没有被打开过
-            ArrayMap<Integer, Img> lossSrcList = UString.getListOfSrcAndHtml(article.getId(), articleHtml, fileTitle);
-            articleHtml = lossSrcList.get(0).getSrc();
-            articleHtml = UString.getModHtml(article, articleHtml);
-            lossSrcList.remove(0);
-            if (lossSrcList.size() != 0) {
-                article.setCoverSrc(UFile.getAbsoluteDir(API.SAVE_DIR_CACHE) + fileTitle + "_files" + File.separator + lossSrcList.get(1).getName());
-                WithDB.getInstance().saveImgs(lossSrcList);
-                article.setImgState(API.ImgState_Downing);
-            } else {
-                article.setImgState(API.ImgState_NoImg);
-                KLog.d("为空");
-            }
-            KLog.d("获取文章正文getArticleHtml：" + article.getId() + lossSrcList);
-            article.setTitle(UString.handleSpecialChar(article.getTitle()));
-
-            String summary = Html.fromHtml(articleHtml).toString(); // 可以去掉标签
-            article.setSummary(UString.getSummary(summary));
-
-            UFile.saveCacheHtml(fileTitle, articleHtml);
-            WithDB.getInstance().saveArticle(article);
-        }
-        return articleHtml;
+        return sb.toString();
     }
-
-
-
 }

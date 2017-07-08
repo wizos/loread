@@ -101,6 +101,7 @@ public class API {
     public static ArrayList<Item> itemlist;
 
     public static final int ReplaceImgSrc = 69;
+//    public static final int ReplaceImgSrcAgain = 68;
 
     public static final String ImgState_Downing = "0";
     public static final String ImgState_NoImg = "";
@@ -145,10 +146,10 @@ public class API {
     /**
      * 是否需要改变这个为 int 以方便比较呢？
      */
-    public static final String ART_READ = "Readed";// 1 已读
-    public static final String ART_READING = "UnReading"; // 00 强制未读
+    public static final String ART_READED = "Readed";// 1 已读
+    public static final String ART_UNREADING = "UnReading"; // 00 强制未读
     public static final String ART_UNREAD = "UnRead"; // 0 未读
-    public static final String ART_STAR = "Stared"; // 1
+    public static final String ART_STARED = "Stared"; // 1
     public static final String ART_UNSTAR = "UnStar"; // 0
 
     public static final String SAVE_DIR_CACHE = "cache";
@@ -158,13 +159,12 @@ public class API {
     public static final String SAVE_DIR_STOREREAD = "storeRead";
 
     public static final String LIST_ALL = "%";
-    public static final String LIST_STAR = "Stared";
-    public static final String LIST_UNREAD = "UnRead";
+    public static final String LIST_STARED = "Stared";
+    public static final String LIST_UNREAD = "Unread";
 
 //    public static final String LIST_READ = "Readed";
 //    public static final String LIST_UNREADING = "UnReading";
 //    public static final String LIST_UNSTAR = "UnStar";
-
 
 //    public static final String ARTICLE_HEADER = "UnRead";
 

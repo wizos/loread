@@ -1,6 +1,5 @@
 package me.wizos.loread.utils;
 
-import android.content.Context;
 import android.graphics.BitmapFactory;
 import android.os.Environment;
 
@@ -25,17 +24,15 @@ import me.wizos.loread.net.API;
 /**
  * Created by Wizos on 2016/3/19.
  */
-public class UFile {
+public class FileUtil {
 
-    protected static Context mContext;
-
-    public static void setContext(Context context){
-        mContext = context;
-    }
-    protected Context getContext(){
-        return mContext;
-    }
-
+//    protected static Context mContext;
+//    public static void setContext(Context context){
+//        mContext = context;
+//    }
+//    protected Context getContext(){
+//        return mContext;
+//    }
 
     //判断外部存储(SD卡)是否可以读写
     public static boolean isExternalStorageWritable() {
@@ -78,23 +75,14 @@ public class UFile {
             for (File file : files) {
                 deleteHtmlDir( file );
             }
-            return dir.delete();
+            return dir.delete(); // 删除目录
         }else{
             KLog.i( dir + "只是文件");
-            return dir.delete();
+            return dir.delete(); // 删除文件
         }
     }
 
 
-//    public static void renameFile( String sourceRelativeFileName, String targetRelativeFileName ){
-//        File oldFile = new File( sourceRelativeFileName );
-//        File newFile = new File( targetRelativeFileName );
-//        if( oldFile.renameTo( newFile )) {
-//            System.out.println("修改成功!");
-//        } else {
-//            System.out.println("修改失败");
-//        }
-//    }
 
     public static boolean moveFile(String srcFileName, String destFileName) {
         File srcFile = new File(srcFileName);
@@ -138,10 +126,10 @@ public class UFile {
         return srcDir.delete();
     }
 
-    public static void moveHtmlAndFiles(String sourceRelativePathFileName, String targetRelativePathFileName) {
-        moveFile(sourceRelativePathFileName + ".html", targetRelativePathFileName + ".html");// 移动文件
-        moveDir(sourceRelativePathFileName + "_files", targetRelativePathFileName + "_files");// 移动目录
-    }
+//    public static void moveHtmlAndFiles(String sourceRelativePathFileName, String targetRelativePathFileName) {
+//        moveFile(sourceRelativePathFileName + ".html", targetRelativePathFileName + ".html");// 移动文件
+//        moveDir(sourceRelativePathFileName + "_files", targetRelativePathFileName + "_files");// 移动目录
+//    }
 
 
     public static void saveCacheHtml( String fileNameInMD5 ,String fileContent){
@@ -210,31 +198,6 @@ public class UFile {
         return null;
     }
 
-
-//    /**
-//     * 获取到文件的相对路径，类似：
-//     * "/storage/emulated/0/Android/data/me.wizos.loread/files/" + Dir + "/folderName" + "_files / .html"
-//     *
-//     * @param dir 保存到的目录名称
-//     * @param fileNameInMD5 MD5 加密后的文件名（用文章的 id 加密）
-//     * @param fileName 未加密的文件名
-//     * @return 相对路径
-//     */
-//    public static String getRelativeFilePath(String dir, String fileNameInMD5, String fileName) {
-//        switch (dir) {
-//            case API.SAVE_DIR_CACHE:
-//                return App.cacheRelativePath + fileNameInMD5;
-//            case API.SAVE_DIR_BOX:
-//                return App.boxRelativePath + fileName;
-//            case API.SAVE_DIR_STORE:
-//                return App.storeRelativePath + fileName;
-//            case API.SAVE_DIR_BOXREAD:
-//                return App.boxReadRelativePath + fileName;
-//            case API.SAVE_DIR_STOREREAD:
-//                return App.storeReadRelativePath + fileName;
-//        }
-//        return null;
-//    }
     /**
      * @param dir 目录名称
      * @return 带有完整的相对路径的 path
@@ -325,9 +288,6 @@ public class UFile {
             }
 //            return false;
         }
-
-
-
     }
 //
 //    public static void savaBitmap(File dir, String fileName, Bitmap bitmap) {

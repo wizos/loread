@@ -9,14 +9,14 @@ import me.wizos.loread.App;
 /**
  * Created by xdsjs on 2015/11/27.
  */
-public class UToast {
+public class ToastUtil {
     public static Toast toast;
     public static void showLong(String msg) {
         if (toast != null) {
             toast.cancel();
             toast = null;
         }
-        toast = Toast.makeText(App.getInstance(), msg, Toast.LENGTH_LONG);
+        toast = Toast.makeText(App.i(), msg, Toast.LENGTH_LONG);
         KLog.d(msg);
         toast.show();
     }
@@ -25,7 +25,7 @@ public class UToast {
             toast.cancel();
             toast = null;
         }
-        toast = Toast.makeText(App.getInstance(), msg, Toast.LENGTH_SHORT);
+        toast = Toast.makeText(App.i(), msg, Toast.LENGTH_SHORT);
         KLog.d(msg);
         toast.show();
     }

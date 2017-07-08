@@ -75,10 +75,10 @@
             android:text="@string/font_unstar"
             android:onClick="onStarClick"/>
         <me.wizos.loread.view.IconFontView
-            android:id="@+id/art_bottombar_label"
+            android:id="@+id/art_bottombar_tag"
             style="@style/bottom_bar_iconfont"
             android:text="@string/font_label"
-            android:onClick="onLabelClick"/>
+            android:onClick="onTagClick" />
         <me.wizos.loread.view.IconFontView
             android:id="@+id/art_bottombar_save"
             style="@style/bottom_bar_iconfont"

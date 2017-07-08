@@ -7,6 +7,12 @@ html, body, div, span, applet, object, iframe, h1, h2, h3, h4, h5, h6, p, blockq
     border: 0;
 }
 
+html {
+  font-family: sans-serif; /* 1 */
+  -ms-text-size-adjust: 100%; /* 2 */
+  -webkit-text-size-adjust: 100%; /* iPhone 和 Android 的浏览器纵向 (Portrate mode) 和橫向 (Landscape mode) 模式皆有自动调整字体大小的功能。控制它的就是 CSS 中的 -webkit-text-size-adjust */
+}
+
 body {
     font-family: Helvetica, arial, freesans, clean, sans-serif;
     font-size: 16px;
@@ -14,18 +20,17 @@ body {
     margin: 0 auto;
 }
 /*    color: #333;   */
-body > *:first-child {
+/*body > *:first-child {
     margin-top: 0 !important;
 }
 
 body > *:last-child {
     margin-bottom: 0 !important;
 }
+*/
 
 
-
-/* IMAGES
-=============================================================================*/
+/* IMAGES */
 
 /* 清除浮动 */
 div.clear-float {
@@ -37,11 +42,6 @@ img[src=''], img[src$='./images/'] {
     display: none;
 }
 
-html {
-  font-family: sans-serif; /* 1 */
-  -ms-text-size-adjust: 100%; /* 2 */
-  -webkit-text-size-adjust: 100%; /* 2 */
-}
 
 /**
  * Remove default margin.

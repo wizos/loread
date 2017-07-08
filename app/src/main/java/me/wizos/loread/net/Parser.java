@@ -32,8 +32,8 @@ import me.wizos.loread.bean.gson.UserInfo;
 import me.wizos.loread.bean.gson.itemContents.Items;
 import me.wizos.loread.data.WithDB;
 import me.wizos.loread.data.WithSet;
-import me.wizos.loread.utils.UFile;
-import me.wizos.loread.utils.UString;
+import me.wizos.loread.utils.FileUtil;
+import me.wizos.loread.utils.StringUtil;
 
 /**
  * Created by Wizos on 2016/3/10.
@@ -49,7 +49,7 @@ public class Parser {
         }
     }
 
-    // 懒汉式的单例模式：在调用 getInstance 的时候才会创建实例
+    // 懒汉式的单例模式：在调用 i 的时候才会创建实例
     public static Parser instance(){
         if (parser == null) { // 双重锁定，只有在 parser 还没被初始化的时候才会进入到下一行，然后加上同步锁
             synchronized (Parser.class) { // 同步锁，避免多线程时可能 new 出两个实例的情况
@@ -65,7 +65,7 @@ public class Parser {
     public long parseUserInfo(String info){
         UserInfo userInfo = gson.fromJson(info, UserInfo.class);
 //        System.out.println("【parseUserInfo】" + userInfo.toString());
-        WithSet.getInstance().setUseId(userInfo.getUserId());
+        WithSet.i().setUseId(userInfo.getUserId());
         return userInfo.getUserId();
 //        mUserID = userInfo.getUserId();
 //        mUserName = userInfo.getUserName();
@@ -124,7 +124,7 @@ public class Parser {
     public void parseStreamPrefList( String info,long mUserID){
         if(mUserID == 0){
             mUserID = Long.valueOf(tagIdArray.get(0).split("/")[1]);
-            WithSet.getInstance().setUseId(mUserID);
+            WithSet.i().setUseId(mUserID);
         }
         Gson gson = new Gson();
         StreamPrefs streamPrefs = gson.fromJson(info, StreamPrefs.class);
@@ -166,7 +166,7 @@ public class Parser {
 //            KLog.d("【orderTags】" +tag.getTitle());
 //        }
         reTagList = tagList;
-        WithDB.getInstance().saveTagList( reTagList );
+        WithDB.i().saveTagList(reTagList);
     }
 
 
@@ -188,7 +188,7 @@ public class Parser {
                 }
             }
         }
-        WithDB.getInstance().saveTagList(reTagList);
+        WithDB.i().saveTagList(reTagList);
 
         unreadCounts = unreadCountList.get(0).getCount();
         starredCounts = unreadCountList.get(1).getCount();
@@ -245,7 +245,7 @@ public class Parser {
      * */
     public ArrayList<ItemRefs> reUnreadRefs(){
         long xx = System.currentTimeMillis();
-        List<Article> localUnreadArticles = WithDB.getInstance().loadTagRead(API.LIST_UNREAD, "");
+        List<Article> localUnreadArticles = WithDB.i().getArt(API.LIST_UNREAD);
         Map<String, Integer> map = new ArrayMap<>(localUnreadArticles.size() + remoteUnreadRefs.size());
         Map<String, Article> mapArticle = new ArrayMap<>(localUnreadArticles.size());
         ArrayList<Article> readList = new ArrayList<>(localUnreadArticles.size());
@@ -263,11 +263,11 @@ public class Parser {
         }
         // 数据量小的一方
         for (ItemRefs item : remoteUnreadRefs) {
-            String articleId = UString.toLongID(item.getId());
+            String articleId = StringUtil.toLongID(item.getId());
             Integer cc = map.get( articleId );
 //            // ====
 //            if (cc==null){
-//                articleId = UString.toLongID15(item.getId());
+//                articleId = StringUtil.toLongID15(item.getId());
 //                cc = map.get( articleId );
 //            }
 //            // ====
@@ -275,7 +275,7 @@ public class Parser {
                 map.put( articleId , ++cc);  // 1，去掉“本地有，状态为未读”的
             }else {
                 // FIXME: 2016/5/1 这里对数据库一条条的查询也可以优化
-                Article article = WithDB.getInstance().getArticle( articleId );
+                Article article = WithDB.i().getArticle(articleId);
                 if(article!=null){
                     article.setReadState( API.ART_UNREAD );// 2，去掉“本地有，状态为已读”的
                     readList.add(article);
@@ -287,24 +287,24 @@ public class Parser {
         for( Map.Entry<String, Integer> entry: map.entrySet()) {
             if(entry.getValue()==1) {
                 Article article = mapArticle.get(entry.getKey());
-                article.setReadState(API.ART_READ); // 本地未读设为已读
+                article.setReadState(API.ART_READED); // 本地未读设为已读
                 readList.add(article);
             }
         }
 
         long yy = System.currentTimeMillis() - xx;
         KLog.d("【reUnreadRefs】测试" + yy + " - " + localUnreadArticles.size() + "==" + remoteUnreadRefs.size() + "==" + readList.size() + "==" + unreadRefs.size());
-        WithDB.getInstance().saveArticleList(readList);
+        WithDB.i().saveArticleList(readList);
         return unreadRefs;
     }
 
     public ArrayList<ItemRefs> reStarredRefs(){
-        List<Article> localStarredArticles = WithDB.getInstance().loadStarAll();
+        List<Article> localStarredArticles = WithDB.i().getStaredArt();
         Map<String, Integer> map = new ArrayMap<>(localStarredArticles.size() + remoteStarredRefs.size());
         Map<String, Article> mapArticle = new ArrayMap<>(localStarredArticles.size());
         ArrayList<Article> starList = new ArrayList<>(localStarredArticles.size());
         ArrayList<ItemRefs> starredRefs = new ArrayList<>(remoteStarredRefs.size());
-//        KLog.d(  WithDB.getInstance().loadStarAll().size() + "个");
+//        KLog.d(  WithDB.i().getStaredArt().size() + "个");
 //        WhereCondition[] query = new WhereCondition[allStarredRefs.size()];
 //        ArrayList<WhereCondition> artIds = new ArrayList<>(allStarredRefs.size());
 
@@ -318,10 +318,10 @@ public class Parser {
             mapArticle.put(articleId,item);
             KLog.i("【本地star文章】" + articleId);
         }
-        KLog.d(WithDB.getInstance().loadStarAll().size() + "个");
+        KLog.d(WithDB.i().getStaredArt().size() + "个");
         // 数据量小的一方
         for (ItemRefs item : remoteStarredRefs) {
-            String articleId = UString.toLongID(item.getId());
+            String articleId = StringUtil.toLongID(item.getId());
             Integer cc = map.get( articleId );
 //            KLog.i("【增加star文章】" + articleId + "=" + item.getId());
 //            continue;
@@ -329,9 +329,9 @@ public class Parser {
                 map.put(articleId, ++cc);// 1，去掉“本地有(状态为加星)”的，但是 ref 内没有的
             }else {
 //                artIds.add( ArticleDao.Properties.Id.eq(articleId) );
-                Article article = WithDB.getInstance().getArticle( articleId );
+                Article article = WithDB.i().getArticle(articleId);
                 if(article!=null){
-                    article.setStarState(API.ART_STAR);// 2，去掉“本地有，状态为未加星”的
+                    article.setStarState(API.ART_STARED);// 2，去掉“本地有，状态为未加星”的
                     starList.add(article);
                 }else {
                     starredRefs.add(item);// 3，就剩云端的，要请求的加星资源（但是还是含有一些要请求的未读资源）
@@ -350,7 +350,7 @@ public class Parser {
         }
         KLog.d("嘉欣的数量" + localStarredArticles.size());
         KLog.d("【reStarredList】" + localStarredArticles.size() + "==" + remoteStarredRefs.size() + "==" + starList.size() + "==" + starredRefs.size());
-        WithDB.getInstance().saveArticleList(starList);
+        WithDB.i().saveArticleList(starList);
         return starredRefs;
     }
 
@@ -442,7 +442,7 @@ public class Parser {
 //        }
 //
 //        // 2，再将 Refs 与 本地 Articles 去重
-//        reUnreadUnstarRefs = deDuplicate(reUnreadUnstarRefs, WithDB.getInstance().loadUnreadUnstarred(), new ArticleChanger() {
+//        reUnreadUnstarRefs = deDuplicate(reUnreadUnstarRefs, WithDB.i().loadUnreadUnstarred(), new ArticleChanger() {
 //            @Override
 //            public Article change(Article article) {
 //                article.setReadState(API.ART_UNREAD);
@@ -452,32 +452,32 @@ public class Parser {
 //        }, new ArticleChanger() {
 //            @Override
 //            public Article change(Article article) {
-//                article.setReadState(API.ART_READ);
-//                article.setStarState(API.ART_STAR);
+//                article.setReadState(API.ART_READED);
+//                article.setStarState(API.ART_STARED);
 //                return article;
 //            }
 //        });
 //
-//        reUnreadStarredRefs = deDuplicate(reUnreadStarredRefs, WithDB.getInstance().loadUnreadStarred(), new ArticleChanger() {
+//        reUnreadStarredRefs = deDuplicate(reUnreadStarredRefs, WithDB.i().loadUnreadStarred(), new ArticleChanger() {
 //            @Override
 //            public Article change(Article article) {
 //                article.setReadState(API.ART_UNREAD);
-//                article.setStarState(API.ART_STAR);
+//                article.setStarState(API.ART_STARED);
 //                return article;
 //            }
 //        }, new ArticleChanger() {
 //            @Override
 //            public Article change(Article article) {
-//                article.setReadState(API.ART_READ);
+//                article.setReadState(API.ART_READED);
 //                article.setStarState(API.ART_UNSTAR);
 //                return article;
 //            }
 //        });
-//        reReadStarredRefs = deDuplicate(reReadStarredRefs, WithDB.getInstance().loadReadUnstarred(), new ArticleChanger() {
+//        reReadStarredRefs = deDuplicate(reReadStarredRefs, WithDB.i().loadReadUnstarred(), new ArticleChanger() {
 //            @Override
 //            public Article change(Article article) {
-//                article.setReadState(API.ART_READ);
-//                article.setStarState(API.ART_STAR);
+//                article.setReadState(API.ART_READED);
+//                article.setStarState(API.ART_STARED);
 //                return article;
 //            }
 //        }, new ArticleChanger() {
@@ -506,15 +506,15 @@ public class Parser {
 //            articleMap.put( articleId,item );
 //        }
 //        for ( ItemRefs item : refs ) {
-//            String articleId = UString.toLongID(item.getId());
+//            String articleId = StringUtil.toLongID(item.getId());
 //            Integer cc = map.get( articleId );
 //            if( cc!=null ) {
 //                map.put( articleId , ++cc);// 存在重复
 //            }else {
-//                Article article = WithDB.getInstance().getArticle( articleId );// 必须保留
+//                Article article = WithDB.i().getArticle( articleId );// 必须保留
 //                if(article!= null){ // 2，去掉“本地有，但是非此状态”的
 //                    article = changer1.change(article);
-////                    article.setStarState(API.ART_STAR);
+////                    article.setStarState(API.ART_STARED);
 ////                    article.setStarState( state1 );
 //                    articleList.add(article);
 //                }else {
@@ -531,7 +531,7 @@ public class Parser {
 //                articleList.add(article);// 取消加星
 //            }
 //        }
-//        WithDB.getInstance().saveArticleList( articleList );
+//        WithDB.i().saveArticleList( articleList );
 //        return articleRefs;
 //    }
 
@@ -555,7 +555,7 @@ public class Parser {
             @Override
             public Article change(Article article) {
                 article.setReadState(API.ART_UNREAD);
-                article.setStarState(API.ART_STAR);
+                article.setStarState(API.ART_STARED);
                 return article;
             }
         });
@@ -564,8 +564,8 @@ public class Parser {
         parseItemContents(info, new ArticleChanger() {
             @Override
             public Article change(Article article) {
-                article.setReadState(API.ART_READ);
-                article.setStarState(API.ART_STAR);
+                article.setReadState(API.ART_READED);
+                article.setStarState(API.ART_STARED);
                 return article;
             }
         });
@@ -574,8 +574,8 @@ public class Parser {
         return parseItemContents(info, new ArticleChanger() {
             @Override
             public Article change(Article article) {
-                article.setReadState(API.ART_READ);
-                article.setStarState(API.ART_STAR);
+                article.setReadState(API.ART_READED);
+                article.setStarState(API.ART_STARED);
                 return article;
             }
         });
@@ -603,7 +603,7 @@ public class Parser {
         ArrayList<Article> saveList = new ArrayList<>( currentItemsArray.size() ) ;
         String summary = "",html = "";
         for ( Items items: currentItemsArray  ) {
-            if (WithDB.getInstance().getStarredArticle(items.getId()) != null) {
+            if (WithDB.i().getStarredArticle(items.getId()) != null) {
                 continue;
             }
             Article article = new Article();
@@ -632,10 +632,10 @@ public class Parser {
             }
             article = articleChanger.change(article);
 
-            UFile.saveCacheHtml(UString.stringToMD5(article.getId()), html);
+            FileUtil.saveCacheHtml(StringUtil.stringToMD5(article.getId()), html);
             saveList.add(article);
         }
-        WithDB.getInstance().saveArticleList(saveList);
+        WithDB.i().saveArticleList(saveList);
         return gsItemContents.getContinuation();
     }
 
@@ -643,8 +643,8 @@ public class Parser {
         Gson gson = new Gson();
         ArrayList<Items> itemArticles = gson.fromJson(info, GsItemContents.class).getItems();
         Items items = itemArticles.get(0);
-        if( itemArticles.size()!=0 && WithDB.getInstance().getArticle( items.getId()) != null ){
-            UFile.saveCacheHtml(UString.stringToMD5(items.getId()), items.getSummary().getContent()  );
+        if (itemArticles.size() != 0 && WithDB.i().getArticle(items.getId()) != null) {
+            FileUtil.saveCacheHtml(StringUtil.stringToMD5(items.getId()), items.getSummary().getContent());
         }
     }
 
@@ -654,8 +654,8 @@ public class Parser {
      * @param subs
      */
     public void updateArticles(ArrayList<Sub> subs){
-        List<Article> allStarArts = WithDB.getInstance().loadStarAll();
-        List<Tag> allTags = WithDB.getInstance().loadTags();
+        List<Article> allStarArts = WithDB.i().getStaredArt();
+        List<Tag> allTags = WithDB.i().getTags();
         Map<String,Sub> mapSub = new ArrayMap<>(subs.size());
         Map<String,String> mapTag = new ArrayMap<>(allTags.size());
         // 此处比较是否存在有个性能疑问，是用字符串是否包含还是map是否包含来判断呢？
@@ -711,7 +711,7 @@ public class Parser {
                 newCategories.deleteCharAt(newCategories.length()-2);
                 article.setCategories( newCategories.toString() );
             }
-            WithDB.getInstance().saveArticle( article );
+            WithDB.i().saveArticle(article);
         }
     }
 

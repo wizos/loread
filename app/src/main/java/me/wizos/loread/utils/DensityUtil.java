@@ -13,7 +13,7 @@ import me.wizos.loread.App;
 /**
  * Created by Wizos on 2016/2/13.
  */
-public class UDensity {
+public class DensityUtil {
     /**
      * 从 R.dimen 文件中获取到数值，再根据手机的分辨率转成为 px(像素)
      */
@@ -28,11 +28,9 @@ public class UDensity {
     }
     public static int getColor(@ColorRes int id) {
 //        final int dimen = (int)context.getResources().getDimension(id);
-        return (int) App.getInstance().getResources().getColor(id);
+        return (int) App.i().getResources().getColor(id);
     }
-    public static int resolveColor(Context context, @AttrRes int attr) {
-        return resolveColor(context, attr, 0);
-    }
+
 
     public static int resolveColor(Context context, @AttrRes int attr, int fallback) {
         TypedArray a = context.getTheme().obtainStyledAttributes(new int[]{attr});
@@ -51,7 +49,7 @@ public class UDensity {
         return (int) (dpValue * scale + 0.5f);
     }
     public static int dpToPx(int dp) {
-        DisplayMetrics displayMetrics = App.getInstance().getResources().getDisplayMetrics();
+        DisplayMetrics displayMetrics = App.i().getResources().getDisplayMetrics();
         int px = Math.round(dp * (displayMetrics.xdpi / DisplayMetrics.DENSITY_DEFAULT));
         return px;
     }

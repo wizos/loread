@@ -1,6 +1,5 @@
 package me.wizos.loread.activity;
 
-import android.content.Context;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -18,13 +17,14 @@ import me.wizos.loread.data.WithSet;
 import me.wizos.loread.net.API;
 import me.wizos.loread.net.Neter;
 import me.wizos.loread.net.Parser;
-import me.wizos.loread.utils.UToast;
+import me.wizos.loread.utils.ToastUtil;
+import me.wizos.loread.view.colorful.Colorful;
 
 /**
  * Created by Wizos on 2016/3/5.
  */
 public class LoginActivity extends BaseActivity implements View.OnLayoutChangeListener{
-    protected Context context;
+    protected static final String TAG = "LoginActivity";
     protected String mAccountID = "";
     protected String mAccountPD = "";
 
@@ -32,49 +32,27 @@ public class LoginActivity extends BaseActivity implements View.OnLayoutChangeLi
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
-        App.addActivity(this);
         mNeter = new Neter(handler);
         KLog.d("【未登录】" + handler);
         forInput();
         initView();
-//        EditText vID = (EditText)findViewById(R.id.edittext_id);
-//        EditText vPD = (EditText)findViewById(R.id.edittext_pd);
-//        vPD.setOnEditorActionListener(new TextView.OnEditorActionListener() {
-//            @Override
-//            public boolean onEditorAction(TextView textView, int id, KeyEvent keyEvent) {
-//                if (id == R.id.ime_login || id == EditorInfo.IME_ACTION_DONE
-//                        || id == EditorInfo.IME_NULL) {
-//                    attemptStartAuth();
-//                    return true;
-//                }
-//                return false;
-//            }
-//        });
-
+        recoverData();
     }
     protected Neter mNeter;
-//    protected Parser mParser = new Parser();
 
-    protected void initColorful(){}
-    private SwitchButton inoreaderProxy;
+    @Override
+    protected Colorful.Builder buildColorful(Colorful.Builder mColorfulBuilder) {
+        return mColorfulBuilder;
+    }
+
     private void initView(){
         vID = (EditText)findViewById(R.id.edittext_id);
         vPD = (EditText)findViewById(R.id.edittext_pd);
-        inoreaderProxy = (SwitchButton) findViewById(R.id.setting_inoreader_proxy_sb_flyme) ;
-        inoreaderProxy.setChecked(WithSet.getInstance().isInoreaderProxy());
+        SwitchButton inoreaderProxy = (SwitchButton) findViewById(R.id.setting_inoreader_proxy_sb_flyme);
+        inoreaderProxy.setChecked(WithSet.i().isInoreaderProxy());
     }
 
 
-
-    @Override
-    protected Context getActivity(){
-        return LoginActivity.this;
-    }
-    protected static final String TAG = "LoginActivity";
-    @Override
-    public String getTAG(){
-        return TAG;
-    }
 
     @Override
     protected void onDestroy() {
@@ -84,9 +62,12 @@ public class LoginActivity extends BaseActivity implements View.OnLayoutChangeLi
         super.onDestroy();
     }
 
+    /**
+     * 默认填充密码
+     */
     private void recoverData(){
-        mAccountID = WithSet.getInstance().getAccountID();
-        mAccountPD = WithSet.getInstance().getAccountPD();
+        mAccountID = WithSet.i().getAccountID();
+        mAccountPD = WithSet.i().getAccountPD();
         if (!TextUtils.isEmpty(mAccountID)) {
             vID.setText(mAccountID);
         }
@@ -102,17 +83,17 @@ public class LoginActivity extends BaseActivity implements View.OnLayoutChangeLi
         public boolean handleMessage(Message msg) {
             String info = msg.getData().getString("res");
             String url = msg.getData().getString("url");
-            KLog.d(getActivity().toString() + "【handler】开始" + msg.what + handler + url );
+            KLog.d("【handler】开始" + msg.what + handler + url);
             switch (msg.what) {
                 case API.S_CLIENTLOGIN:
                     if (info==null){ return false; }
                     API.INOREADER_ATUH = "GoogleLogin auth=" + info.split("Auth=")[1].replaceAll("\n", "");
-                    WithSet.getInstance().setAuth(API.INOREADER_ATUH);
+                    WithSet.i().setAuth(API.INOREADER_ATUH);
                     mNeter.getWithAuth(API.HOST + API.U_USER_INFO);
                     break;
                 case API.S_USER_INFO:
                     long mUserID = Parser.instance().parseUserInfo(info);
-                    WithSet.getInstance().setUseId(mUserID);
+                    WithSet.i().setUseId(mUserID);
                     App.finishActivity(LoginActivity.this);
                     goTo(MainActivity.TAG,"syncAll");
                     break;
@@ -120,7 +101,7 @@ public class LoginActivity extends BaseActivity implements View.OnLayoutChangeLi
                 case API.F_Request:
                 case API.F_Response:
                     KLog.d(info);
-                    UToast.showShort("登录失败");
+                    ToastUtil.showShort("登录失败");
                     break;
             }
             return false;
@@ -145,6 +126,7 @@ public class LoginActivity extends BaseActivity implements View.OnLayoutChangeLi
         screenHeight = this.getWindowManager().getDefaultDisplay().getHeight();//获取屏幕高度
         keyHeight = screenHeight/3; //阀值设置为屏幕高度的1/3
     }
+
     @Override
     public void onLayoutChange(View v, int left, int top, int right,int bottom, int oldLeft, int oldTop, int oldRight, int oldBottom) {
         Space space = (Space)findViewById(R.id.login_space_a);
@@ -166,18 +148,18 @@ public class LoginActivity extends BaseActivity implements View.OnLayoutChangeLi
         mAccountPD = vPD.getText().toString();
 
         if(mAccountID==null) {
-            UToast.showShort("账号为空");
+            ToastUtil.showShort("账号为空");
             return;
         }else if(mAccountID.length()<4)
             if(!mAccountID.contains("@") || mAccountID.contains(" ")) {
-                UToast.showShort("账号输入错误");
+                ToastUtil.showShort("账号输入错误");
                 return;
             }
         if(mAccountPD==null) {
-            UToast.showShort("密码为空");
+            ToastUtil.showShort("密码为空");
             return;
         }else if(mAccountID.length()<4){
-            UToast.showShort("密码输入错误");
+            ToastUtil.showShort("密码输入错误");
             return;
         }
 
@@ -187,17 +169,12 @@ public class LoginActivity extends BaseActivity implements View.OnLayoutChangeLi
         KLog.d("【handler】" + mNeter + "-" );
     }
 
-
-    @Override
-    public void onClick(View v) {
-    }
-
     public void onSBClick(View view){
         SwitchButton v = (SwitchButton)view;
         KLog.d( "点击" );
         switch (v.getId()) {
             case R.id.setting_inoreader_proxy_sb_flyme:
-                WithSet.getInstance().setInoreaderProxy(v.isChecked());
+                WithSet.i().setInoreaderProxy(v.isChecked());
                 break;
         }
         KLog.d("Switch: " , v.isChecked() );
@@ -206,13 +183,5 @@ public class LoginActivity extends BaseActivity implements View.OnLayoutChangeLi
     @Override
     protected void notifyDataChanged(){
     }
-
-
-    private void onStartAuth() {
-    }
-
-    private void onAuthResponse(boolean successful, int result, boolean error) {
-    }
-
 
 }

@@ -10,7 +10,7 @@ import java.util.Locale;
  * 关于时间操作的工具类
  * Created by xdsjs on 2015/10/14.
  */
-public class UTime {
+public class TimeUtil {
 
     /**
      * 获取当天的开始时间

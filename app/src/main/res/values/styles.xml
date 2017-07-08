@@ -10,12 +10,11 @@
     </style>
 
     <!-- Base App theme. --><!--白天主题-->
-    <style name="AppTheme" parent="AppBaseTheme">
+    <style name="AppTheme.Day" parent="AppBaseTheme">
         <!-- Customize your theme here. -->
         <item name="status_bar">@color/main_day_dark</item>
         <!--<item name="colorPrimary">@color/main_day_dark</item>-->
         <!--<item name="colorPrimaryDark">@color/main_day_dark</item>-->
-
         <item name="root_view_bg">@color/white</item>
         <item name="topbar_bg">@color/main_day_dark</item>
         <item name="topbar_fg">@color/white</item>
@@ -39,13 +38,12 @@
 
         <item name="setting_title">@color/main_day_dark</item>
         <item name="setting_tips">@color/main_day_info</item>
-
-
     </style>
-    <!--夜间主题-->
-    <style name="AppTheme.Dark" parent="AppBaseTheme">
-        <!-- Customize your theme here. -->
 
+
+    <!--夜间主题-->
+    <style name="AppTheme.Night" parent="AppBaseTheme">
+        <!-- Customize your theme here. -->
         <item name="status_bar">@color/dark_foreground</item>
         <!--<item name="colorPrimary">@color/dark_foreground</item>-->
         <!--<item name="colorPrimaryDark">@color/dark_foreground</item>-->
@@ -72,17 +70,15 @@
 
         <item name="setting_title">@color/main_night_light</item>
         <item name="setting_tips">@color/main_night_info</item>
-
     </style>
-    <style name="AppTheme.NoActionBar">
+
+    <style name="AppTheme.Day.NoActionBar">
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
     </style>
 
-
     <style name="AppTheme.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />
     <style name="AppTheme.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" />
-
 
     <style name="SettingItem">
         <item name="android:layout_width">match_parent</item>

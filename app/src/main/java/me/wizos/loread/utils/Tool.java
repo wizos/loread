@@ -31,8 +31,8 @@ public class Tool {
     }
 
     public static void setBackgroundColor(View object) {
-        if (WithSet.getInstance().getThemeMode() == WithSet.themeNight) {
-            object.setBackgroundColor(App.getInstance().getResources().getColor(R.color.article_dark_background));
+        if (WithSet.i().getThemeMode() == App.theme_Night) {
+            object.setBackgroundColor(App.i().getResources().getColor(R.color.article_dark_background));
         }
     }
 

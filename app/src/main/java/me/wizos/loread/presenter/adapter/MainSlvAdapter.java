@@ -19,7 +19,7 @@ import me.wizos.loread.R;
 import me.wizos.loread.activity.MainActivity;
 import me.wizos.loread.bean.Article;
 import me.wizos.loread.net.API;
-import me.wizos.loread.utils.UTime;
+import me.wizos.loread.utils.TimeUtil;
 import me.wizos.loread.view.IconFontView;
 
 /**
@@ -84,8 +84,8 @@ public class MainSlvAdapter extends ArrayAdapter<Article> {
         if (article.getOriginTitle() != null) {
             cvh.articleFeed.setText(Html.fromHtml(article.getOriginTitle()));
         }
-        cvh.articleTime.setText(UTime.getDateSec(article.getPublished()));
-        if ( article.getReadState().equals(API.ART_READ) &  !MainActivity.sListState.equals(API.ART_STAR) ) {
+        cvh.articleTime.setText(TimeUtil.getDateSec(article.getPublished()));
+        if (article.getReadState().equals(API.ART_READED) & !MainActivity.listTabState.equals(API.ART_STARED)) {
             cvh.articleTitle.setAlpha(0.40f);
             cvh.articleSummary.setAlpha(0.40f);
             cvh.articleFeed.setAlpha(0.40f);
@@ -97,12 +97,12 @@ public class MainSlvAdapter extends ArrayAdapter<Article> {
             cvh.articleTime.setAlpha(1f);
         }
         KLog.d("【1】" + article.getTitle());
-        if( article.getReadState().equals(API.ART_READING)){
+        if (article.getReadState().equals(API.ART_UNREADING)) {
             cvh.articleReading.setVisibility(View.VISIBLE);
         }else {
             cvh.articleReading.setVisibility(View.GONE);
         }
-        if (article.getStarState().equals(API.ART_STAR)) {
+        if (article.getStarState().equals(API.ART_STARED)) {
             cvh.articleStar.setVisibility(View.VISIBLE);
         }else {
             cvh.articleStar.setVisibility(View.GONE);

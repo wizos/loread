@@ -6,7 +6,7 @@
     <!--&lt;!&ndash;<item name="android:windowTranslucentNavigation">true</item>&ndash;&gt;-->
     <!--</style>-->
 
-    <style name="AppTheme.NoActionBar">
+    <style name="AppTheme.Day.NoActionBar">
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
         <!--<item name="android:windowDrawsSystemBarBackgrounds">true</item>-->

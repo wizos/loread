@@ -21,9 +21,9 @@ import java.util.concurrent.Executors;
 import me.wizos.loread.bean.Img;
 import me.wizos.loread.bean.RequestLog;
 import me.wizos.loread.data.WithSet;
+import me.wizos.loread.utils.FileUtil;
 import me.wizos.loread.utils.HttpUtil;
-import me.wizos.loread.utils.UFile;
-import me.wizos.loread.utils.UString;
+import me.wizos.loread.utils.StringUtil;
 
 /**
  * Created by Wizos on 2016/3/10.
@@ -32,7 +32,7 @@ public class Neter {
     /**
      * 线程池
      */
-    private static ExecutorService threadPool = Executors.newFixedThreadPool(10);
+    private static ExecutorService threadPool = Executors.newFixedThreadPool(5);
     public Handler handler;
 //    private Context context;
 
@@ -100,38 +100,44 @@ public class Neter {
 //        postWithAuth(API.U_ARTICLE_CONTENTS,logTime);
 //    }
 
-    public void postRemoveArticleTags( String articleID ,String tagId ){
+    public void removeArticleTags(String articleID, String tagId) {
         addBody("r", tagId );
         addBody("i", articleID);
         postWithAuthLog( API.HOST + API.U_EDIT_TAG);
     }
-    public void postAddArticleTags( String articleID ,String tagId ){
+
+    public void addArticleTags(String articleID, String tagId) {
         addBody("a", tagId );
         addBody("i", articleID);
         postWithAuthLog( API.HOST + API.U_EDIT_TAG);
     }
-    public void postArticleContents( String articleID ){
+
+    public void getArticleContents(String articleID) {
         addBody("i", articleID);
         postWithAuthLog( API.HOST + API.U_ARTICLE_CONTENTS);
     }
-    public void postUnReadArticle( String articleID ){
+
+    public void markArticleUnread(String articleID) {
         KLog.d("【post】1记录 " + headParamList.size());
         addBody("r", "user/-/state/com.google/read");
         addBody("i", articleID);
         postWithAuthLog( API.HOST + API.U_EDIT_TAG);
     }
-    public void postReadArticle( String articleID ){
+
+    public void markArticleReaded(String articleID) {
         KLog.d("【post】2记录 " + headParamList.size());
         addBody("a", "user/-/state/com.google/read");
         addBody("i", articleID);
         postWithAuthLog( API.HOST + API.U_EDIT_TAG);
     }
-    public void postUnStarArticle( String articleID ){
+
+    public void markArticleUnstar(String articleID) {
         addBody("r", "user/-/state/com.google/starred");
         addBody("i", articleID);
         postWithAuthLog( API.HOST + API.U_EDIT_TAG);
     }
-    public void postStarArticle( String articleID ){
+
+    public void markArticleStared(String articleID) {
         addBody("a", "user/-/state/com.google/starred");
         addBody("i", articleID);
         postWithAuthLog( API.HOST + API.U_EDIT_TAG);
@@ -447,8 +453,8 @@ public class Neter {
         void log(T entry);
     }
     private RequestLog toRequest(String url, String method, long logTime, ArrayList<String[]> headParamList, ArrayList<String[]> bodyParamList){
-        String headParamString = UString.formParamListToString(headParamList);
-        String bodyParamString = UString.formParamListToString(bodyParamList);
+        String headParamString = StringUtil.formParamListToString(headParamList);
+        String bodyParamString = StringUtil.formParamListToString(bodyParamList);
         return new RequestLog(logTime,url,method,headParamString,bodyParamString);
     }
 
@@ -485,10 +491,10 @@ public class Neter {
 
     public void loadImg(String articleID, int imgNo, String imgUrl, String filePath) {
         KLog.i("下载图片的网址：" + imgUrl + "，保存路径：" + filePath + "，所属文章：" + articleID + "，编号：" + imgNo);
-        KLog.i(taskMap.get(filePath) + "====" + imgUrl.trim().indexOf("/"));
+//        KLog.i(taskMap.get(filePath) + "====" + imgUrl.trim().indexOf("/"));
 
         if (taskMap.get(filePath) == null && imgUrl.trim().indexOf("/") != 0) {
-            KLog.i("===");
+//            KLog.i("===");
             taskMap.put(filePath, articleID);
             threadPool.execute(new Task(articleID, imgNo, imgUrl, filePath));
         }
@@ -498,18 +504,13 @@ public class Neter {
     public int downImgs(String articleID, ArrayMap<Integer, Img> imgMap, String parentPath) {
         // article.getSaveDir() ) + imgsMeta.getFolder() + File.separator
         KLog.d("批量下图片" + imgMap);
-//        if (!HttpUtil.canDownImg()) {
-////            handler.sendEmptyMessage(API.F_NoMsg);
-//            return 0;
-//        }
-        if (WithSet.getInstance().isDownImgWifi() && !HttpUtil.isWiFiActive()) {
+
+        if (WithSet.i().isDownImgWifi() && !HttpUtil.isWiFiActive()) {
             return 0;
-        } else if (!WithSet.getInstance().isDownImgWifi() && !HttpUtil.isNetworkAvailable()) {
+        } else if (!WithSet.i().isDownImgWifi() && !HttpUtil.isNetworkAvailable()) {
             return 0;
         }
-//        if (imgMap == null || imgMap.size() == 0) {
-//            return 0;
-//        }
+
         int length = imgMap.size();
         for (ArrayMap.Entry<Integer, Img> entry : imgMap.entrySet()) {
             loadImg(articleID, entry.getKey(), entry.getValue().getSrc(), parentPath + entry.getValue().getName());
@@ -553,7 +554,7 @@ public class Neter {
                         int state = API.S_BITMAP;
                         try {
                             inputStream = response.body().byteStream();
-                            if (!UFile.saveFromStream(inputStream, filePath)) {
+                            if (!FileUtil.saveFromStream(inputStream, filePath)) {
                                 state = API.F_BITMAP;
                             }
                         } finally {

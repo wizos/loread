@@ -10,6 +10,8 @@
 /build
 /captures
 /.idea
-app/src/main/java/me/wizos/loread/Service/
 app/src/test/
 daogenerator/libs/
+app-release.apk
+/app/src/main/java/me/wizos/loread/dump/
+dump/

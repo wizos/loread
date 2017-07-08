@@ -4,7 +4,10 @@ import android.app.Activity;
 import android.app.Application;
 import android.os.Handler;
 
+import com.socks.library.KLog;
 import com.squareup.leakcanary.LeakCanary;
+import com.tencent.bugly.crashreport.CrashReport;
+import com.tencent.smtt.sdk.QbSdk;
 
 import java.io.File;
 import java.lang.ref.WeakReference;
@@ -18,7 +21,7 @@ import me.wizos.loread.data.dao.DaoMaster;
 import me.wizos.loread.data.dao.DaoSession;
 import me.wizos.loread.net.API;
 import me.wizos.loread.net.Neter;
-import me.wizos.loread.utils.UFile;
+import me.wizos.loread.utils.FileUtil;
 
 /**
  * Created by Wizos on 2015/12/24.
@@ -26,22 +29,24 @@ import me.wizos.loread.utils.UFile;
  */
 public class App extends Application{
     public static final String DB_NAME = "loread_DB";
+    public final static int theme_Day = 0;
+    public final static int theme_Night = 1;
+
     public static String cacheRelativePath,cacheAbsolutePath ,boxRelativePath, boxAbsolutePath, storeRelativePath, storeAbsolutePath ;
     public static String boxReadRelativePath, storeReadRelativePath;
     public static String logRelativePath,logAbsolutePath;
     public static String externalFilesDir;
     public static long mUserID;
     public static List<Article> articleList;
-    //    public static ArrayMap<String, ArrayMap<Integer, Img>> lossImgListArray;
     public static Handler artHandler;
     public static String currentArticleID;
     public static Neter mNeter;
-
+    public static long time;
 
     private  static DaoSession daoSession;
     public static App instance; // 此处的单例不会造成内存泄露，因为 App 本身就是全局的单例
 
-    public static synchronized App getInstance() {
+    public static synchronized App i() {
         return instance;
     }
 
@@ -51,56 +56,88 @@ public class App extends Application{
     public void onCreate() {
         super.onCreate();
         App.instance = this;
+        initTBS();
+        initConfig();
+        initRelease(); // 测试时，注释掉
+//        initLeakCanary();
+    }
 
+    private void initRelease() {
 //         TEST，正式环境下应该启用
-//        KLog.init(false);
-//        CrashReport.initCrashReport(App.getInstance(), "900044326", true);
+        KLog.init(false);
+        CrashReport.initCrashReport(App.i(), "900044326", false); // 测试的时候设为 true
+//        initStetho();
+    }
 
-        //  内存泄漏检测工具
+    //  内存泄漏检测工具
+    private void initLeakCanary() {
         if (LeakCanary.isInAnalyzerProcess(this)) {
             return;
         }
         LeakCanary.install(this);
+    }
+
+    private void initStetho() {
         // TEST，正式环境应该注释掉
 //        Stetho.initialize(
 //                Stetho.newInitializerBuilder(this)
 //                        .enableDumpapp(Stetho.defaultDumperPluginsProvider(this))
 //                        .enableWebKitInspector(Stetho.defaultInspectorModulesProvider(this))
 //                        .build());
-        if( !WithSet.getInstance().isInoreaderProxy()){
+    }
+
+
+    private void initTBS() {
+        //搜本地tbs内核信息并上报服务器，服务器返回结果决定使用哪个内核。
+        QbSdk.PreInitCallback cb = new QbSdk.PreInitCallback() {
+            @Override
+            public void onViewInitFinished(boolean arg0) {
+                //x5內核初始化完成的回调，为true表示x5内核加载成功，否则表示x5内核加载失败，会自动切换到系统内核。
+                KLog.d("初始化X5", " onViewInitFinished is " + arg0);
+            }
+
+            @Override
+            public void onCoreInitFinished() {
+                KLog.d("初始化X5", " onCoreInitFinished ");
+            }
+        };
+        //x5内核初始化接口
+        QbSdk.initX5Environment(getApplicationContext(), cb);
+    }
+
+    private void initConfig() {
+        if (!WithSet.i().isInoreaderProxy()) {
             API.HOST = API.HOST_OFFICIAL;
         }else {
             API.HOST = API.HOST_PROXY;
         }
         externalFilesDir = getExternalFilesDir(null) + File.separator;
 
-        cacheRelativePath = UFile.getRelativeDir(API.SAVE_DIR_CACHE);
-//        cacheAbsolutePath = UFile.getAbsoluteDir(API.SAVE_DIR_CACHE); // 仅在储存于 html 时使用
+        cacheRelativePath = FileUtil.getRelativeDir(API.SAVE_DIR_CACHE);
+//        cacheAbsolutePath = FileUtil.getAbsoluteDir(API.SAVE_DIR_CACHE); // 仅在储存于 html 时使用
 
-        boxRelativePath = UFile.getRelativeDir(API.SAVE_DIR_BOX);
-        boxAbsolutePath = UFile.getAbsoluteDir(API.SAVE_DIR_BOX);
+        boxRelativePath = FileUtil.getRelativeDir(API.SAVE_DIR_BOX);
+        boxAbsolutePath = FileUtil.getAbsoluteDir(API.SAVE_DIR_BOX);
 
-        storeRelativePath = UFile.getRelativeDir(API.SAVE_DIR_STORE);
-        storeAbsolutePath = UFile.getAbsoluteDir(API.SAVE_DIR_STORE);
+        storeRelativePath = FileUtil.getRelativeDir(API.SAVE_DIR_STORE);
+        storeAbsolutePath = FileUtil.getAbsoluteDir(API.SAVE_DIR_STORE);
 
-        logRelativePath = UFile.getRelativeDir("log");
-        logAbsolutePath = UFile.getAbsoluteDir("log");
+        logRelativePath = FileUtil.getRelativeDir("log");
+        logAbsolutePath = FileUtil.getAbsoluteDir("log");
 
-        boxReadRelativePath = UFile.getRelativeDir("boxRead");
-//        boxReadAbsolutePath = UFile.getAbsoluteDir( "boxRead" );
+        boxReadRelativePath = FileUtil.getRelativeDir("boxRead");
+//        boxReadAbsolutePath = FileUtil.getAbsoluteDir( "boxRead" );
 
-        storeReadRelativePath = UFile.getRelativeDir("storeRead");
-//        storeReadAbsolutePath = UFile.getAbsoluteDir( "storeRead" );
-//        lossImgListArray = new ArrayMap<>();
-
-
+        storeReadRelativePath = FileUtil.getRelativeDir("storeRead");
+//        storeReadAbsolutePath = FileUtil.getAbsoluteDir( "storeRead" );
     }
+
 
     //    private static WeakReference<BaseActivity> activities;
     public static List<WeakReference<BaseActivity>> activities = new ArrayList<>();
 
     public static void addActivity(BaseActivity activity) {
-        WeakReference<BaseActivity> rArticle = new WeakReference<BaseActivity>(activity);
+        WeakReference<BaseActivity> rArticle = new WeakReference<>(activity);
         activities.add(rArticle);
     }
 
@@ -120,7 +157,7 @@ public class App extends Application{
     // 官方推荐将获取 DaoMaster 对象的方法放到 Application 层，这样将避免多次创建生成 Session 对象
     public static DaoSession getDaoSession() {
         if (daoSession == null) {
-            DaoMaster.OpenHelper helper = new DaoMaster.DevOpenHelper(getInstance(), DB_NAME, null);
+            DaoMaster.OpenHelper helper = new DaoMaster.DevOpenHelper(i(), DB_NAME, null);
             daoSession = new DaoMaster(helper.getWritableDatabase()).newSession();
 //            // 通过 DaoMaster 的内部类 DevOpenHelper，你可以得到一个便利的 SQLiteOpenHelper 对象。
 //            // 可能你已经注意到了，你并不需要去编写「CREATE TABLE」这样的 SQL 语句，因为 greenDAO 已经帮你做了。

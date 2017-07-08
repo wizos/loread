@@ -26,16 +26,16 @@ import me.wizos.loread.bean.Tag;
 import me.wizos.loread.data.WithDB;
 import me.wizos.loread.data.WithSet;
 import me.wizos.loread.net.API;
-import me.wizos.loread.utils.UDensity;
-import me.wizos.loread.utils.UToast;
-import me.wizos.loread.utils.colorful.Colorful;
-import me.wizos.loread.utils.colorful.setter.ViewGroupSetter;
+import me.wizos.loread.utils.DensityUtil;
+import me.wizos.loread.utils.ToastUtil;
+import me.wizos.loread.view.colorful.Colorful;
+import me.wizos.loread.view.colorful.setter.ViewGroupSetter;
 
 //import TagSlvAdapter;
 
 public class TagActivity extends BaseActivity implements SlideAndDragListView.OnListItemLongClickListener, SlideAndDragListView.OnSlideListener,
         SlideAndDragListView.OnListItemClickListener, SlideAndDragListView.OnMenuItemClickListener {
-
+    protected static final String TAG = "TagActivity";
     protected Context context;
     private String listState;
     private int listCount;
@@ -44,37 +44,21 @@ public class TagActivity extends BaseActivity implements SlideAndDragListView.On
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_tag);
         context = this;
         listState = getIntent().getExtras().getString("ListState");
         listTag = getIntent().getExtras().getString("ListTag");
         listCount = getIntent().getExtras().getInt("ListCount");
         noLabelCount = getIntent().getExtras().getInt("NoLabelCount");
-        userID = WithSet.getInstance().getUseId();
+        userID = WithSet.i().getUseId();
         initToolbar();
         initSlvListener();
-        initColorful();
         initData();
-    }
-    @Override
-    protected Context getActivity(){
-        return context;
-    }
-
-    protected static final String TAG = "TagActivity";
-    @Override
-    public String getTAG(){
-        return TAG;
+        super.onCreate(savedInstanceState);
     }
 
     @Override
-    public void onResume(){
-        super.onResume();
-    }
-
-
-    protected void initColorful(){
+    protected Colorful.Builder buildColorful(Colorful.Builder mColorfulBuilder) {
         ViewGroupSetter listViewSetter = new ViewGroupSetter(slv);
         // 绑定ListView的Item View中的news_title视图，在换肤时修改它的text_color属性
         listViewSetter.childViewTextColor(R.id.tag_slv_item_icon, R.attr.tag_slv_item_icon);
@@ -83,7 +67,7 @@ public class TagActivity extends BaseActivity implements SlideAndDragListView.On
         listViewSetter.childViewBgColor(R.id.tag_slv_item, R.attr.root_view_bg);
         listViewSetter.childViewBgColor(R.id.tag_slv, R.attr.root_view_bg);
 
-        mColorful = new Colorful.Builder(this)
+        mColorfulBuilder
                 // 设置view的背景图片
                 .backgroundColor(R.id.tag_root, R.attr.root_view_bg)
                 // 设置 toolbar
@@ -95,20 +79,17 @@ public class TagActivity extends BaseActivity implements SlideAndDragListView.On
                 .textColor(R.id.tag_bottombar_main, R.attr.bottombar_fg)
 
                 // 设置 listview 背景色
-                .setter(listViewSetter) // 手动设置setter
-                .create(); // 创建Colorful对象
-        autoToggleThemeSetting();
+                .setter(listViewSetter); // 手动设置setter
+        return mColorfulBuilder;
     }
 
     private long userID;
 
-    //    private Tag rootTag;
-//    private Tag noLabelTag;
     private Tag getRootTag(){
         Tag rootTag = new Tag();
         Tag noLabelTag = new Tag();
-        userID = WithSet.getInstance().getUseId();
-        if( listState.equals(API.LIST_STAR) ){
+        userID = WithSet.i().getUseId();
+        if (listState.equals(API.LIST_STARED)) {
             rootTag.setTitle("所有加星");
             noLabelTag.setTitle("加星未分类");
         }else if(listState.equals(API.LIST_UNREAD)){
@@ -136,7 +117,7 @@ public class TagActivity extends BaseActivity implements SlideAndDragListView.On
     
     private ArrayList<Tag> tagList;
     protected void initData(){
-        List<Tag> tagListTemp = WithDB.getInstance().loadTags();
+        List<Tag> tagListTemp = WithDB.i().getTags();
         if(!tagListTemp.isEmpty()){
             tagList = new ArrayList<>(tagListTemp.size());
             getRootTag();
@@ -145,7 +126,7 @@ public class TagActivity extends BaseActivity implements SlideAndDragListView.On
             KLog.d("【tag的长度】 " + tagList.size());
         }else {
             slv.setVisibility(View.GONE);
-            UToast.showShort("没有数据");
+            ToastUtil.showShort("没有数据");
         }
     }
 
@@ -154,7 +135,7 @@ public class TagActivity extends BaseActivity implements SlideAndDragListView.On
     public void onMainListClicked(View view){
         goTo(MainActivity.TAG);
         finish(); // 在startActivity后调用的finish()，我想要是finish()放在之前会怎么样，结果结果和之前还是一样。继续google，才知道即使activity调用了finish()，也不会立即调用onDestory方法,而是执行完finish()后面的代码后才会调用onDestory方法。
-        KLog.d("【onMainListClicked 被点击】" + getActivity());
+        KLog.d("【onMainListClicked 被点击】");
     }
 
 
@@ -178,19 +159,19 @@ public class TagActivity extends BaseActivity implements SlideAndDragListView.On
     protected Menu mMenu;
     public void initSlvMenu() {
         mMenu = new Menu(new ColorDrawable(Color.WHITE), true, 0);//第2个参数表示滑动item是否能滑的过量(true表示过量，就像Gif中显示的那样；false表示不过量，就像QQ中的那样)
-        mMenu.addItem(new MenuItem.Builder().setWidth(UDensity.get2Px(this, R.dimen.slv_menu_left_width))
+        mMenu.addItem(new MenuItem.Builder().setWidth(DensityUtil.get2Px(this, R.dimen.slv_menu_left_width))
                 .setBackground(new ColorDrawable(getResources().getColor(R.color.white)))
 //                .setIcon(getResources().getDrawable(R.drawable.ic_launcher)) // 插入图片
                 .setText("删除")
-                .setTextColor(UDensity.getColor(R.color.crimson))
+                .setTextColor(DensityUtil.getColor(R.color.crimson))
                 .setTextSize((int) getResources().getDimension(R.dimen.txt_size))
                 .build());
-        mMenu.addItem(new MenuItem.Builder().setWidth(UDensity.get2Px(this, R.dimen.slv_menu_right_width))
+        mMenu.addItem(new MenuItem.Builder().setWidth(DensityUtil.get2Px(this, R.dimen.slv_menu_right_width))
                 .setBackground(new ColorDrawable(getResources().getColor(R.color.white)))
                 .setDirection(MenuItem.DIRECTION_RIGHT) // 设置是左或右
                 .setTextColor(R.color.white)
                 .setText("编辑")
-                .setTextSize(UDensity.getDimen(this, R.dimen.txt_size))
+                .setTextSize(DensityUtil.getDimen(this, R.dimen.txt_size))
                 .build());
     }
 
@@ -217,10 +198,8 @@ public class TagActivity extends BaseActivity implements SlideAndDragListView.On
         String tagId = tagList.get(position).getId().replace("\"","");
         Intent data = new Intent();
         data.putExtra("tagId", tagId );
-        data.putExtra("tagCount", tagList.get(position).getUnreadcount() );
-        data.putExtra("tagName", tagList.get(position).getTitle() );
-        TagActivity.this.setResult(RESULT_OK, data);//注意下面的RESULT_OK常量要与回传接收的Activity中onActivityResult（）方法一致
-//        TagActivity.this.finish();//关闭当前activity
+        data.putExtra("tagTitle", tagList.get(position).getTitle());
+        TagActivity.this.setResult(1, data);//注意下面的RESULT_OK常量要与回传接收的Activity中onActivityResult（）方法一致
         App.finishActivity(this);
         KLog.d("【 TagList 被点击】" + tagId );
     }
@@ -289,12 +268,9 @@ public class TagActivity extends BaseActivity implements SlideAndDragListView.On
 
         class CustomViewHolder {
             //        public ImageView imgIcon;
-            protected TextView tagTitle;
-            protected TextView tagCount;
+            private TextView tagTitle;
+            private TextView tagCount;
         }
     };
-    @Override
-    public void onClick(View v) {
-    }
 
 }

@@ -1,49 +1,37 @@
 package me.wizos.loread.activity;
 
-import android.content.Context;
 import android.os.Bundle;
-import android.view.View;
 
+import me.wizos.loread.R;
 import me.wizos.loread.data.WithSet;
 import me.wizos.loread.net.API;
-import me.wizos.loread.R;
+import me.wizos.loread.view.colorful.Colorful;
 
 public class SplashActivity extends BaseActivity {
+    protected static final String TAG = "SplashActivity";
 
-    protected Context context;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_splash);
-//        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-//        setSupportActionBar(toolbar);
-        API.INOREADER_ATUH = WithSet.getInstance().getAuth();
+        API.INOREADER_ATUH = WithSet.i().getAuth();
         if(API.INOREADER_ATUH.equals("")){
             goTo(LoginActivity.TAG);
         }else {
             goTo(MainActivity.TAG);
         }
         notifyDataChanged();
-        initColorful();
     }
-    protected static final String TAG = "SplashActivity";
 
-    @Override
-    public String getTAG(){
-        return TAG;
-    }
 
     @Override
     protected void notifyDataChanged(){
         this.finish();
     }
-    @Override
-    protected Context getActivity(){
-        return SplashActivity.this;
-    }
-    @Override
-    public void onClick(View v) {
-    }
 
-    protected void initColorful(){}
+
+    @Override
+    protected Colorful.Builder buildColorful(Colorful.Builder mColorfulBuilder) {
+        return mColorfulBuilder;
+    }
 }

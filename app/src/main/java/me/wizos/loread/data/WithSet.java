@@ -25,20 +25,18 @@ public class WithSet {
 //    private boolean scrollMark;
 //    private String cachePathStarred;
 
-    public final static String spName = "loread";
-    public final static String syncFirstOpen = "SyncFirstOpen";
-    public final static int themeDay = 0;
-    public final static int themeNight = 1;
+
 
 
     private WithSet() {
     }
-    public static WithSet getInstance() {
+
+    public static WithSet i() {
         if (withSet == null) { // 双重锁定，只有在 mySharedPreferences 还没被初始化的时候才会进入到下一行，然后加上同步锁
             synchronized (WithSet.class) {  // 同步锁，避免多线程时可能 new 出两个实例的情况
                 if (withSet == null) {
                     withSet = new WithSet();
-                    mySharedPreferences = App.getInstance().getSharedPreferences("loread", Activity.MODE_PRIVATE);
+                    mySharedPreferences = App.i().getSharedPreferences("loread", Activity.MODE_PRIVATE);
                     editor = mySharedPreferences.edit();
                 }
             }
@@ -180,31 +178,36 @@ public class WithSet {
         }
     }
 
-
+    /**
+     * 是否为滚动标记为已读
+     */
     public boolean isScrollMark() {
         return readPref("ScrollMark", true);
     }
 
+    /**
+     * 设置滚动标记为已读
+     */
     public void setScrollMark(boolean scrollMark) {
         savePref("ScrollMark", scrollMark);
     }
 
-    public String getCachePathStarred() {
-        return readPref("CachePathStarred", "");
+
+    public String getListTabState() {
+        return readPref("ListState", "Unread");
     }
 
-    public void setCachePathStarred(String cachePathStarred) {
-        savePref("CachePathStarred", cachePathStarred);
-    }
-
-
-
-
-    public String getListState() {
-        return readPref("ListState", "UnRead");
-    }
-    public void setListState(String listState) {
+    public void setListTabState(String listState) {
         savePref("ListState", listState);
+    }
+
+
+    public String getListTagId() {
+        return readPref("listTagId", null);
+    }
+
+    public void setListTagId(String listTagId) {
+        savePref("listTagId", listTagId);
     }
 
 
@@ -224,11 +227,18 @@ public class WithSet {
     }
 
     public int getThemeMode() {
-        return readPref("ThemeMode", themeDay);
+        return readPref("ThemeMode", App.theme_Day);
     }
     public void setThemeMode(int themeMode) {
         savePref("ThemeMode", themeMode);
     }
 
+
+//    public int getThemeId() {
+//        return readPref("ThemeId", App.theme_Day);
+//    }
+//    public void setThemeId(int themeId) {
+//        savePref("ThemeId", themeId);
+//    }
 
 }
