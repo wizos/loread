@@ -277,6 +277,10 @@ public class Parser {
                 // FIXME: 2016/5/1 这里对数据库一条条的查询也可以优化
                 Article article = WithDB.i().getArticle(articleId);
                 if(article!=null){
+                    KLog.e("----------------[]------" + article.getReadState());
+                    if (article.getTitle().contains("有没有相同兴趣爱好")) {
+                        KLog.e("========AAA=======" + article.getReadState());
+                    }
                     article.setReadState( API.ART_UNREAD );// 2，去掉“本地有，状态为已读”的
                     readList.add(article);
                 }else {
@@ -544,6 +548,10 @@ public class Parser {
         parseItemContents(info, new ArticleChanger() {
             @Override
             public Article change(Article article) {
+                KLog.e("----------------[]------" + article.getReadState());
+                if (article.getTitle().contains("有没有相同兴趣爱好")) {
+                    KLog.e("========AAA=======" + article.getReadState());
+                }
                 article.setReadState(API.ART_UNREAD);
                 article.setStarState(API.ART_UNSTAR);
                 return article;
@@ -554,6 +562,10 @@ public class Parser {
         parseItemContents(info, new ArticleChanger() {
             @Override
             public Article change(Article article) {
+                KLog.e("----------------[]------" + article.getReadState());
+                if (article.getTitle().contains("有没有相同兴趣爱好")) {
+                    KLog.e("========AAA=======" + article.getReadState());
+                }
                 article.setReadState(API.ART_UNREAD);
                 article.setStarState(API.ART_STARED);
                 return article;

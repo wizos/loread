@@ -59,9 +59,6 @@ public class ArticleActivity extends BaseActivity implements View.OnClickListene
 
     private Article article;
     private static String articleID = "";
-    protected Neter mNeter;
-
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -102,7 +99,7 @@ public class ArticleActivity extends BaseActivity implements View.OnClickListene
                 .textColor(R.id.art_bottombar_star, R.attr.bottombar_fg)
                 .textColor(R.id.art_bottombar_tag, R.attr.bottombar_fg)
                 .textColor(R.id.art_bottombar_save, R.attr.bottombar_fg);
-        KLog.e("这里是Article窗口");
+//        KLog.e("这里是Article窗口");
         return mColorfulBuilder;
     }
 
@@ -217,13 +214,10 @@ public class ArticleActivity extends BaseActivity implements View.OnClickListene
         Img imgMeta;
         imgMeta = WithDB.i().getImg(articleID, imgNo);
         if (imgMeta == null) {
-            ToastUtil.showShort("没有找到图片1");
+            ToastUtil.showShort("没有找到图片");
             return;
         }
 
-//        if (!HttpUtil.canDownImg()) {
-////            artHandler.sendEmptyMessage(API.F_Request);
-//            return ;}
         if (WithSet.i().isDownImgWifi() && !HttpUtil.isWiFiActive()) {
             ToastUtil.showShort("你开启了省流量模式，非 Wifi 不能下图片啦");
             return;
@@ -268,7 +262,6 @@ public class ArticleActivity extends BaseActivity implements View.OnClickListene
     // 所以此处的 handler 会持有外部类 Activity 的引用，消息队列是在一个Looper线程中不断轮询处理消息。
     // 那么当这个Activity退出时消息队列中还有未处理的消息或者正在处理消息，而消息队列中的Message持有mHandler实例的引用，mHandler又持有Activity的引用，所以导致该Activity的内存资源无法及时回收，引发内存泄漏
 
-    //    private Handler mHandler = new Handler();
     @Override
     public void onClick(View v) {
         KLog.d("【 toolbar 是否双击 】 vScrolllayout");
@@ -278,7 +271,6 @@ public class ArticleActivity extends BaseActivity implements View.OnClickListene
                 if (artHandler.hasMessages(API.MSG_DOUBLE_TAP)) {
                     artHandler.removeMessages(API.MSG_DOUBLE_TAP);
 //                    vScrolllayout.smoothScrollTo(0, 0);
-
                 } else {
                     artHandler.sendEmptyMessageDelayed(API.MSG_DOUBLE_TAP, ViewConfiguration.getDoubleTapTimeout());
                 }
@@ -286,16 +278,15 @@ public class ArticleActivity extends BaseActivity implements View.OnClickListene
         }
     }
 
+    private static Neter mNeter;
     public final ArtHandler artHandler = new ArtHandler(this);
-
     // 静态类不持有外部类的对象，所以你的Activity可以随意被回收，不容易造成内存泄漏
     public static class ArtHandler extends Handler {
         private final WeakReference<ArticleActivity> mActivity;
-        private final Neter mNeter;
 
+        //        private final Neter mNeter;
         ArtHandler(ArticleActivity activity) {
             mActivity = new WeakReference<>(activity);
-            mNeter = new Neter(this);
         }
 
         @Override
@@ -350,18 +341,6 @@ public class ArticleActivity extends BaseActivity implements View.OnClickListene
         }
     }
 
-
-//    /**
-//     * 在初次进入 html 获得 imgList 时，记录值 DOWNLOAD_ING。
-//     * 在每次成功下载到图片时，记录 DOWNLOAD_ING。
-//     * 在所有下载完成时，记录 DOWNLOAD_OVER。
-//     * @param downState 有两个值：DOWNLOAD_ING(下载中) 和 DOWNLOAD_OVER(下载完成)
-//     */
-//    private void setImgState(int downState) {
-//        article.setImgState(String.valueOf(downState));
-//        KLog.e("【储存的 setImgStatus 】" + downState);
-//        WithDB.i().saveArticle(article);
-//    }
 
     public void onTagClick(View view) {
         final List<Tag> tagsList = WithDB.i().getTags();
@@ -441,7 +420,6 @@ public class ArticleActivity extends BaseActivity implements View.OnClickListene
             ToastUtil.showShort("文件已保存");
 //            moveArticleDir( article.getSaveDir(), API.SAVE_DIR_CACHE ); // 暂时不能支持从 box/store 撤销保存回 cache，因为文章的正文是被加了修饰的，为 epub 文件做准备的
         }
-//        changeSaveState(article.getSaveDir());
         if (article.getSaveDir().equals(API.SAVE_DIR_CACHE)) {
             vSave.setText(getString(R.string.font_unsave));
         } else {
@@ -468,11 +446,11 @@ public class ArticleActivity extends BaseActivity implements View.OnClickListene
         FileUtil.moveFile(sourceDirPath + sourceTitle + ".html", targetDirPath + fileTitle + ".html");
         FileUtil.moveDir(sourceDirPath + sourceTitle + "_files", targetDirPath + fileTitle + "_files");
 
-        KLog.d("原来文件夹" + sourceDirPath + sourceTitle + "_files");
-        KLog.d("目标文件夹" + targetDirPath + article.getTitle() + "_files");
+//        KLog.d("原来文件夹" + sourceDirPath + sourceTitle + "_files");
+//        KLog.d("目标文件夹" + targetDirPath + article.getTitle() + "_files");
         if (article.getImgState() != null && !article.getImgState().equals("")) {  // (lossSrcList != null && lossSrcList.size() != 0) || ( obtainSrcList!= null && obtainSrcList.size() != 0)
             article.setCoverSrc(targetDirPath + article.getTitle() + "_files" + File.separator + StringUtil.getFileNameExtByUrl(article.getCoverSrc()));
-            KLog.d("封面" + targetDirPath + article.getTitle() + "_files" + File.separator + StringUtil.getFileNameExtByUrl(article.getCoverSrc()));
+//            KLog.d("封面" + targetDirPath + article.getTitle() + "_files" + File.separator + StringUtil.getFileNameExtByUrl(article.getCoverSrc()));
         }
         article.setSaveDir(targetDir);
         WithDB.i().saveArticle(article);
@@ -480,6 +458,7 @@ public class ArticleActivity extends BaseActivity implements View.OnClickListene
 
 
     public void onReadClick(View view) {
+        KLog.e("被点击的是：" + article.getTitle());
         if (article.getReadState().equals(API.ART_READED)) {
             vRead.setText(getString(R.string.font_unread));
             ToastUtil.showShort("未读");
@@ -543,8 +522,8 @@ public class ArticleActivity extends BaseActivity implements View.OnClickListene
     public void showingPageData(Article article, X5WebView webView, int position) {
         this.article = article;
         this.webView = webView;
-        KLog.i("--------------------------------------------------------------------------");
-        KLog.i("显示页面showArticle：" + article.getTitle() + "====" + webView);
+//        KLog.i("--------------------------------------------------------------------------");
+//        KLog.i("显示页面showArticle：" + article.getTitle() + "====" + webView);
         articleID = article.getId();
         App.currentArticleID = articleID;
         initIconState(article, position);
@@ -554,28 +533,8 @@ public class ArticleActivity extends BaseActivity implements View.OnClickListene
         } else {
             fileTitle = article.getTitle();
         }
-//        handleWebViewImg();
         initImgDown();
     }
-
-//
-//    public void initImgPlace( WebView webView ){
-//        final ArrayMap<Integer, Img> imgMap = WithDB.i().getImgs(articleID);
-//        final ArrayMap<Integer, Img> lossImgMap = WithDB.i().getLossImgs(articleID);
-//        int lossImgSize = lossImgMap.size();
-//
-//        if( lossImgSize == imgMap.size() ){
-//            webView.loadUrl("javascript:initImgPlaceholder()"); // 初始化占位图
-//        }else {
-//            StringBuilder imgNoArray = new StringBuilder("");
-//            for (int i = 0; i < lossImgSize; i++) {
-//                imgNoArray.append(lossImgMap.keyAt(i) - 1); // imgState 里的图片下标是从1开始的
-//                imgNoArray.append("_");
-//            }
-//            KLog.i("传递的值" + imgNoArray + webView );
-//            webView.loadUrl("javascript:appointImgPlaceholder(" + "\"" + imgNoArray.toString() + "\"" + ")");
-//        }
-//    }
 
 
     private void initImgDown() {
@@ -587,55 +546,6 @@ public class ArticleActivity extends BaseActivity implements View.OnClickListene
             }
         }, 500);
     }
-
-
-//    private void handleWebViewImg() {
-//        if (article.getImgState() == null) { // 首次打开
-////            KLog.i( "初始化所有图片占位符a" +  webView );
-//            webView.loadUrl("javascript:initImgPlaceholder()"); // 初始化占位图
-//        } else if (article.getImgState().equals(API.ImgState_Downing)) { // 未下载完
-//            final ArrayMap<Integer, Img> lossImgMap = WithDB.i().getLossImgs(articleID);
-//            int lossImgNum = lossImgMap.size();
-//            if (lossImgNum == 0) {
-//                setImgState(API.ImgState_Down_Over);
-//                return;
-//            }
-//            KLog.i("相关信息：" + articleID + "===" + lossImgMap);
-////            App.lossImgListArray.put(articleID, lossImgMap);
-//            StringBuilder imgNoArray = new StringBuilder("");
-//            for (int i = 0; i < lossImgNum; i++) {
-//                imgNoArray.append(lossImgMap.keyAt(i) - 1); // imgState 里的图片下标是从1开始的
-//                imgNoArray.append("_");
-//            }
-//            KLog.d("传递的值" + imgNoArray);
-//            webView.loadUrl("javascript:appointImgPlaceholder(" + "\"" + imgNoArray.toString() + "\"" + ")");
-//            artHandler.postDelayed(new Runnable() {
-//                @Override
-//                public void run() {
-//                    App.mNeter.downImgs(articleID, lossImgMap, FileUtil.getRelativeDir(article.getSaveDir()) + fileTitle + "_files" + File.separator);
-//                }
-//            }, 500);
-//        }
-//    }
-//
-//    public void initImgPlaceholder(){
-//        if (article.getImgState() == null) { // 首次打开
-////            KLog.i( "初始化所有图片占位符a" +  webView );
-//            webView.loadUrl("javascript:initImgPlaceholder()"); // 初始化占位图
-//        } else { // 未下载完
-//            final ArrayMap<Integer, Img> lossImgMap = WithDB.i().getLossImgs(articleID);
-//            int lossImgNum = lossImgMap.size();
-//            KLog.i("相关信息：" + articleID + "===" + lossImgMap);
-//            StringBuilder imgNoArray = new StringBuilder("");
-//            for (int i = 0; i < lossImgNum; i++) {
-//                imgNoArray.append(lossImgMap.keyAt(i) - 1); // imgState 里的图片下标是从1开始的
-//                imgNoArray.append("_");
-//            }
-//            KLog.d("传递的值" + imgNoArray);
-//            webView.loadUrl("javascript:appointImgPlaceholder(" + "\"" + imgNoArray.toString() + "\"" + ")");
-//        }
-//    }
-
 
     private void initIconState(Article article, int position) {
         if (article.getReadState().equals(API.ART_UNREAD)) {
@@ -669,13 +579,14 @@ public class ArticleActivity extends BaseActivity implements View.OnClickListene
 //    private GestureDetector gestureDetector;
 //    public SparseArray<WebView> map = new SparseArray();
     public ViewPager viewPager;
-
     public void initPager() {
         viewPager = (ViewPager) findViewById(R.id.art_viewpager);
         ArticleAdapter articleAdapter = new ArticleAdapter(this, viewPager, App.articleList, artHandler);
         viewPager.setAdapter(articleAdapter);
         viewPager.setCurrentItem(articleNo, false); // 本句放到 ArticleAdapter 的构造器中是无效的。
+//        articleAdapter.judgeDirection(articleNo);
         if (articleNo == 0) {
+            KLog.e("当articleNo为0时，试一次");
             articleAdapter.onPageSelected(0);
         }
 //        KLog.e("初始化ViewPager  "  + ( System.currentTimeMillis() - App.time ) );

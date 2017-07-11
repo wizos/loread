@@ -26,8 +26,8 @@ import me.wizos.loread.view.IconFontView;
  * Created by Wizos on 2016/3/15.
  */
 public class MainSlvAdapter extends ArrayAdapter<Article> {
-    List<Article> articleList;
-    Context context;
+    private List<Article> articleList;
+    private Context context;
 
     public MainSlvAdapter(Context context, List<Article> itemArray){
         super(context, 0 , itemArray);
@@ -112,6 +112,7 @@ public class MainSlvAdapter extends ArrayAdapter<Article> {
         } else {
             cvh.articleSave.setVisibility(View.VISIBLE);
         }
+//        KLog.e("++++++++  "  + article.getTitle() + " - " + article.getReadState() + " - " + article.getStarState() );
         return convertView;
     }
     private class CustomViewHolder {

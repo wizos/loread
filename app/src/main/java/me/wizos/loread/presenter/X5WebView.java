@@ -19,6 +19,11 @@ import me.wizos.loread.data.WithDB;
 import me.wizos.loread.data.WithSet;
 import me.wizos.loread.utils.Tool;
 
+//import android.webkit.WebView;
+//import android.webkit.DownloadListener;
+//import android.webkit.WebSettings;
+//import android.webkit.WebViewClient;
+
 /**
  * Created by Wizos on 2017/7/3.
  */
@@ -33,9 +38,8 @@ public class X5WebView extends WebView {
         this.addJavascriptInterface(activity, "imagelistner");
         this.setWebViewClient(new WebViewClientX(activity));
         this.setDownloadListener(new WebViewDownLoadListener());
-        this.getView().setClickable(true);
+//        this.getView().setClickable(true);
     }
-
 
     private void initWebViewSettings() {
         WebSettings webSetting = this.getSettings();
@@ -65,33 +69,6 @@ public class X5WebView extends WebView {
 //        webSetting.setPluginState(WebSettings.PluginState.ON_DEMAND);
         // this.getSettingsExtension().setPageCacheCapacity(IX5WebSettings.DEFAULT_CACHE_CAPACITY);//extension
     }
-
-//    private WebView getWebView(Activity activity) {
-////        KLog.i( "【getView】 " + position );
-//        WeakReference<Activity> WRArticle = new WeakReference<>(activity);
-//        WebSettings webSetting = this.getSettings();
-////        webSetting.setUseWideViewPort(false);// 设置此属性，可任意比例缩放
-////        webSetting.setDisplayZoomControls(false); //隐藏webview缩放按钮
-////        webSetting.setLayoutAlgorithm(WebSettings.LayoutAlgorithm.SINGLE_COLUMN); // 就是这句使自适应屏幕
-//        webSetting.setLoadWithOverviewMode(true);// 缩放至屏幕的大小
-//        webSetting.setJavaScriptEnabled(true);
-//        webSetting.setDomStorageEnabled(true); // Dom Storage（Web Storage）存储，临时简单的缓存
-//        webSetting.setAllowFileAccess(true); // 允许访问文件
-//        webSetting.setSupportMultipleWindows(false);
-////        webView.setLayerType(View.LAYER_TYPE_HARDWARE, null); // 硬件加速
-//
-//        // 实现 webview 的背景颜色与当前主题色一致
-//        Tool.setBackgroundColor(this);
-////         webView.setPictureListener();
-//        // 添加js交互接口类，并起别名 imagelistner
-//        this.addJavascriptInterface( WRArticle.get(), "imagelistner");
-//        // WebViewClient 用于帮助WebView处理各种通知、请求事件(shouldOverrideUrlLoading，onPageStart，onPageFinish，onReceiveError)
-//        this.setWebViewClient( new WebViewClientX(activity) );
-//        this.setDownloadListener( new WebViewDownLoadListener());
-////        webView.setWebChromeClient( new MyWebChromeClient() );
-//        return this;
-//    }
-
 
     private class WebViewDownLoadListener implements DownloadListener {
         @Override

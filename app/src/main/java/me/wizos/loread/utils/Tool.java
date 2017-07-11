@@ -1,32 +1,28 @@
 package me.wizos.loread.utils;
 
-import android.content.Context;
 import android.view.View;
+
+import com.socks.library.KLog;
 
 import me.wizos.loread.App;
 import me.wizos.loread.R;
 import me.wizos.loread.data.WithSet;
 
 /**
+ * 一些比较杂的工具函数
  * Created by Wizos on 2016/11/1.
  */
 
 public class Tool {
-
-    public Tool(Context context) {
-    }
-
     public static void printCallStatck() {
         Throwable ex = new Throwable();
         StackTraceElement[] stackElements = ex.getStackTrace();
         if (stackElements != null) {
-            for (int i = 0; i < stackElements.length; i++) {
-                System.out.print(stackElements[i].getClassName() + "_");
-                System.out.print(stackElements[i].getFileName() + "_");
-                System.out.print(stackElements[i].getLineNumber() + "_");
-                System.out.println(stackElements[i].getMethodName());
+            KLog.e("-----------------------------------");
+            for (StackTraceElement stackElement : stackElements) {
+                KLog.d(stackElement.getClassName() + "_" + stackElement.getFileName() + "_" + stackElement.getLineNumber() + "_" + stackElement.getMethodName());
             }
-            System.out.println("-----------------------------------");
+            KLog.e("-----------------------------------");
         }
     }
 

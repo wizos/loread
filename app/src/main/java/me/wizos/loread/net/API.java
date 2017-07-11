@@ -7,12 +7,14 @@ import java.util.ArrayList;
 import me.wizos.loread.bean.gson.Item;
 
 /**
+ * 基础的 Activity
  * Created by Wizos on 2016/3/5.
  */
 public class API {
     public static Request request;
-    public static final String INOREADER_APP_ID = "1000001277";
-    public static final String INOREADER_APP_KEY = "8dByWzO4AYi425yx5glICKntEY2g3uJo";
+    public static String MyFileType = ".loread";
+    static final String INOREADER_APP_ID = "1000001277";
+    static final String INOREADER_APP_KEY = "8dByWzO4AYi425yx5glICKntEY2g3uJo";
     public static String INOREADER_ATUH = "";
 
     public static final String HOST_OFFICIAL = "https://www.inoreader.com";
@@ -47,7 +49,6 @@ public class API {
 //    public static String U_LIKED ="user/-/state/com.google/like";
 //    public static String U_SAVED ="user/-/state/com.google/saved-web-pages";
 
-    public static String MyFileType = ".loread";
 
 
 
@@ -61,12 +62,12 @@ public class API {
     public static final int H_WEB = -2;
 
 
-    public static final int F_NoMsg = 00;
-    public static final int F_Request = 01;
-    public static final int F_Response = 02;
+    public static final int F_NoMsg = 0;
+    public static final int F_Request = 1;
+    public static final int F_Response = 2;
 
-    public static final int F_BITMAP = 03;
-    public static final int FAILURE = 00;
+    public static final int F_BITMAP = 3;
+    public static final int FAILURE = 0;
     public static final int SUCCESS = 100;
     public static final int PROCESS = -100;
 
@@ -160,7 +161,7 @@ public class API {
 
     public static final String LIST_ALL = "%";
     public static final String LIST_STARED = "Stared";
-    public static final String LIST_UNREAD = "Unread";
+    public static final String LIST_UNREAD = "UnRead";
 
 //    public static final String LIST_READ = "Readed";
 //    public static final String LIST_UNREADING = "UnReading";

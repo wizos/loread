@@ -7,8 +7,6 @@ import android.util.TypedValue;
 import android.view.View;
 import android.widget.TextView;
 
-import com.socks.library.KLog;
-
 import java.util.HashSet;
 import java.util.Set;
 
@@ -170,8 +168,7 @@ public final class Colorful {
 			Theme theme = mActivity.getTheme();
 			theme.resolveAttribute(R.attr.status_bar, typedValue, true);
 			StatusBarUtil.setColorNoTranslucent(mActivity,mActivity.getResources().getColor(typedValue.resourceId ));
-			KLog.d("【修改状态栏】" + typedValue.resourceId );
-
+//			KLog.d("【修改状态栏】" + typedValue.resourceId );
 		}
 
 //		/**

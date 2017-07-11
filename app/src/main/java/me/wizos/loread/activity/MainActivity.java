@@ -101,13 +101,14 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
         initData();
         if (savedInstanceState != null) {
             final int position = savedInstanceState.getInt("listItemFirstVisiblePosition");
-            mainHandler.post(new Runnable() {
-                @Override
-                public void run() {
-                    // setSelection 没有滚动效果，直接跳到指定位置。smoothScrollToPosition 有滚动效果的
-                    slv.setSelection(position);
-                }
-            });
+            slvSetSelection(position);
+//            mainHandler.post(new Runnable() {
+//                @Override
+//                public void run() {
+//                    // setSelection 没有滚动效果，直接跳到指定位置。smoothScrollToPosition 有滚动效果的
+//                    slv.setSelection(position);
+//                }
+//            });
 //            slv.setSelection( savedInstanceState.getInt("listItemFirstVisiblePosition") ) ; // setSelection 没有滚动效果，直接跳到指定位置。smoothScrollToPosition 有滚动效果的
         }
         super.onCreate(savedInstanceState);
@@ -236,6 +237,7 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
      * */
     protected void reloadData() { // 获取 App.articleList , 并且根据 App.articleList 的到未读数目
         KLog.i("加载数据");
+
         if (listTagId.contains(API.U_NO_LABEL)) {
             App.articleList = getNoTagList();  // FIXME: 2016/5/7 这里的未分类暂时无法使用，因为在云端订阅源的分类是可能会变的，导致本地缓存的文章分类错误
             KLog.i("【API.U_NO_LABEL】");
@@ -396,14 +398,13 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
         slv.setOnListItemClickListener(new SlideAndDragListView.OnListItemClickListener() {
             @Override
             public void onListItemClick(View v, int position) {
-                KLog.e("点击了");
+                KLog.i("点击了");
                 if(position==-1){return;}
                 String articleID = App.articleList.get(position).getId();
                 Intent intent = new Intent(MainActivity.this , ArticleActivity.class);
                 intent.putExtra("articleID", articleID);
                 intent.putExtra("articleNo", position); // 下标从 0 开始
                 intent.putExtra("articleCount", App.articleList.size());
-//                startActivity(intent);
                 startActivityForResult(intent, 0);
             }
         });
@@ -509,6 +510,10 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
             changeItemNum( + 1 );
             ToastUtil.showShort("标为未读");
         }else {
+            if (article.getTitle().contains("有没有相同兴趣爱好")) {
+                KLog.e("========DDD=======" + article.getReadState());
+            }
+            KLog.e("----------------[]------" + article.getReadState());
             article.setReadState(API.ART_READED);
             mNeter.markArticleReaded(article.getId());
             changeItemNum( - 1 );
@@ -549,13 +554,13 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
 
     @Override
     protected void onActivityResult(int requestCode , int resultCode , Intent intent){
-        KLog.e("------------------------------------------" + resultCode + requestCode);
+//        KLog.e("------------------------------------------" + resultCode + requestCode);
         switch (resultCode){
             case 1:
 //                tagCount = intent.getExtras().getInt("tagCount");
                 listTagId = intent.getExtras().getString("tagId");
                 listTitle = intent.getExtras().getString("tagTitle");
-                KLog.e("【onActivityResult】" + listTagId + listTabState);
+//                KLog.e("【onActivityResult】" + listTagId + listTabState);
                 if (listTagId == null || listTagId.equals("")) {
                     listTagId = "user/" + App.mUserID + "/state/com.google/reading-list";
                 }
@@ -567,16 +572,22 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
                 break;
             case 3:
                 final int articleNo = intent.getExtras().getInt("articleNo");
-                mainHandler.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        slv.setSelection(articleNo);
-                    }
-                });
-                KLog.e("【去到某个项目】" + articleNo);
+//                if ( Math.abs(slv.getFirstVisiblePosition() - articleNo) > 3 ){
+//                }
+                slvSetSelection(articleNo);
                 break;
         }
 //        KLog.i("【== onActivityResult 】" + tagId + "----" + listTagId);
+    }
+
+    private void slvSetSelection(final int position) {
+        mainHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                slv.setSelection(position);
+            }
+        });
+        KLog.e("【setSelection】" + position);
     }
 
     /**

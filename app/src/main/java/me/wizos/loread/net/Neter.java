@@ -33,22 +33,21 @@ public class Neter {
      * 线程池
      */
     private static ExecutorService threadPool = Executors.newFixedThreadPool(5);
-    public Handler handler;
+    private Handler handler;
 //    private Context context;
 
     public Neter(Handler handler) {
-        KLog.i("【Neter构造函数】" + handler );
+//        KLog.i("【Neter构造函数】" + handler );
         this.handler = handler;
         this.taskMap = new ArrayMap<>();
         // 创建线程数
 //        this.threadPool = Executors.newFixedThreadPool(10);
+//        Tool.printCallStatck();
     }
 
 //    private static Neter mNeter;
-
 //    private Neter() {
 //    }
-
 //    private static Neter i() {
 //        if (mNeter != null) {
 //            return mNeter;

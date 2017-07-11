@@ -2,6 +2,7 @@ package me.wizos.loread.presenter.adapter;
 
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
+import android.util.SparseIntArray;
 import android.view.View;
 import android.view.ViewGroup;
 
@@ -10,7 +11,6 @@ import com.socks.library.KLog;
 import java.util.ArrayList;
 import java.util.List;
 
-import me.wizos.loread.App;
 import me.wizos.loread.activity.ArticleActivity;
 import me.wizos.loread.bean.Article;
 import me.wizos.loread.presenter.X5WebView;
@@ -59,10 +59,9 @@ public class ArticleAdapter extends PagerAdapter implements ViewPager.OnPageChan
      */
     @Override
     public void onPageSelected(final int pagePosition) {
-        KLog.i("【onPageSelected】 " + "当前position：" + pagePosition + "  之前position：" + currentPosition); //+ this.map.size()
+        KLog.e("【onPageSelected】 " + "当前position：" + pagePosition + "  之前position：" + currentPosition + viewPager.findViewById(pagePosition)); //+ this.map.size()
 //        KLog.i( dataList.get(pagePosition).getImgState() );
         currentPosition = pagePosition;
-//        WithDB.i().getArticle( dataList.get(pagePosition).getId()).getImgState();
         if (viewPager.findViewById(pagePosition) == null) { // && dataList.get(pagePosition).getImgState()==null
             artHandler.postDelayed(new Runnable() {
                 @Override
@@ -72,6 +71,7 @@ public class ArticleAdapter extends PagerAdapter implements ViewPager.OnPageChan
             }, 100);
             return;
         }
+
         activity.showingPageData(dataList.get(pagePosition), (X5WebView) viewPager.findViewById(pagePosition), pagePosition);
     }
 
@@ -79,7 +79,7 @@ public class ArticleAdapter extends PagerAdapter implements ViewPager.OnPageChan
     /**
      * 这个方法会在屏幕滚动过程中不断被调用。
      *
-     * @param pagePosition         当用手指滑动时，如果手指按在页面上不动，position和当前页面index是一致的；
+     * @param pagePosition        当用手指滑动时，如果手指按在页面上不动，position和当前页面index是一致的；
      *                             如果手指向左拖动时（页面向右翻动），position大部分时间和“当前页面”一致，只有翻页成功的情况下最后一次调用才会变为“目标页面”；
      *                             如果手指向右拖动时（页面向左翻动），position大部分时间和“目标页面”一致，只有翻页不成功的情况下最后一次调用才会变为“原页面”。
      *                             <p>
@@ -93,8 +93,47 @@ public class ArticleAdapter extends PagerAdapter implements ViewPager.OnPageChan
      */
     @Override
     public void onPageScrolled(int pagePosition, float positionOffset, int positionOffsetPixels) {
+        KLog.e("方向", "===================================滑动" + pagePosition + "==" + currentPosition);
+        judgeDirection(pagePosition); // TEST:
     }
 
+    private int position = -1;
+    public SparseIntArray map = new SparseIntArray();
+
+    private void judgeDirection(final int pagePosition) {
+        KLog.e("方向", "滑动" + pagePosition + "==" + currentPosition);
+
+        if (pagePosition < currentPosition || position == -1) {
+            KLog.e("方向", "左滑");
+            position = pagePosition;
+        } else {
+            KLog.e("方向", "右滑");
+            position = pagePosition + 1;
+        }
+        if (viewPager.findViewById(position) == null) { // && dataList.get(pagePosition).getImgState()==null
+            KLog.e("【judgeDirection】" + "webView 为空");
+            artHandler.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    judgeDirection(pagePosition);
+                }
+            }, 50);
+            return;
+        }
+
+        if (map.get(position) != 1 && map.get(position) != 2) { //  pagePosition!= currentPosition &&
+            KLog.e("加载页面数据" + position + "--" + currentPosition);
+            artHandler.post(new Runnable() {
+                @Override
+                public void run() {
+                    X5WebView webView = (X5WebView) viewPager.findViewById(position);
+                    webView.loadDataWithBaseURL(FileUtil.getAbsoluteDir(dataList.get(position).getSaveDir()), StringUtil.getHtmlHeader() + StringUtil.getArticleHtml(dataList.get(position)), "text/html", "utf-8", null);
+                }
+            });
+            map.put(position, 1);
+        }
+
+    }
 
     /**
      * state 有三种取值：
@@ -105,11 +144,6 @@ public class ArticleAdapter extends PagerAdapter implements ViewPager.OnPageChan
      */
     @Override
     public void onPageScrollStateChanged(int state) {
-//        KLog.e( "==============滑动状态改变：" +  state );
-//        if( state == 0){
-//            // Note 这段代码原本想放在 viewPager 加载完成之后。因为那时 webview 已经有了。如果放在 onPageSelected 函数中，因为 webview 是在其之后产生的，所以会报错。
-//            activity.showingPageData( dataList.get(currentPosition), this.map.get(currentPosition), currentPosition );
-//        }
     }
 
 
@@ -132,21 +166,14 @@ public class ArticleAdapter extends PagerAdapter implements ViewPager.OnPageChan
             mViewHolderList.remove(0);
         } else {
             webView = new X5WebView(activity);
-            KLog.e("webView：：：" + webView);
+            KLog.e("webView：" + webView);
         }
         webView.setId(position); // 方便在其他地方调用 viewPager.findViewById 来找到 webView
-        webView.setTag(dataList.get(position).getId());
+        webView.setTag(dataList.get(position).getId()); // 方便在webView onPageFinished 的时候调用
         container.addView(webView);
-        artHandler.post(new Runnable() {
-            @Override
-            public void run() {
-                webView.loadDataWithBaseURL(FileUtil.getAbsoluteDir(dataList.get(position).getSaveDir()), StringUtil.getHtmlHeader() + StringUtil.getArticleHtml(dataList.get(position)), "text/html", "utf-8", null);
-            }
-        });
-
-        KLog.i("生成WebView耗时：" + (System.currentTimeMillis() - App.time));
         return webView;
     }
+
 
     // Note: 销毁预加载以外的view对象, 会把需要销毁的对象的索引位置传进来就是position
     @Override
@@ -157,115 +184,13 @@ public class ArticleAdapter extends PagerAdapter implements ViewPager.OnPageChan
         webView.loadDataWithBaseURL(null, "", "text/html", "utf-8", null);
         webView.clearHistory();
         mViewHolderList.add(webView);
+        map.put(position, 0);
     }
-
-
-//    /**
-//     * get View
-//     */
-//    private WebView getView() {
-//        WeakReference<BaseActivity> WRArticle = new WeakReference<BaseActivity>(activity);
-////        KLog.i( "【getView】 " + position );
-//        WebView webView = new WebView( WRArticle.get() );
-//        webView.getSettings().setUseWideViewPort(false);// 设置此属性，可任意比例缩放
-//        webView.getSettings().setDisplayZoomControls(false); //隐藏webview缩放按钮
-//        webView.getSettings().setLayoutAlgorithm(WebSettings.LayoutAlgorithm.SINGLE_COLUMN); // 就是这句使自适应屏幕
-//        webView.getSettings().setLoadWithOverviewMode(true);// 缩放至屏幕的大小
-//        webView.getSettings().setJavaScriptEnabled(true);
-//        webView.getSettings().setDomStorageEnabled(true); // Dom Storage（Web Storage）存储，临时简单的缓存
-//        webView.getSettings().setAllowFileAccess(true);
-//        webView.getSettings().setSupportMultipleWindows(false);
-////        webView.setLayerType(View.LAYER_TYPE_HARDWARE, null); // 硬件加速
-//
-//        // 实现 webview 的背景颜色与当前主题色一致
-//        Tool.setBackgroundColor(webView);
-//        // webView.setPictureListener();
-//        // 添加js交互接口类，并起别名 imagelistner
-//        webView.addJavascriptInterface( WRArticle.get(), "imagelistner");
-//        // WebViewClient 用于帮助WebView处理各种通知、请求事件(shouldOverrideUrlLoading，onPageStart，onPageFinish，onReceiveError)
-//        webView.setWebViewClient( new WebViewClientX() );
-//        webView.setDownloadListener( new WebViewDownLoadListener());
-////        webView.setWebChromeClient( new MyWebChromeClient() );
-//        return webView;
-//    }
-
-//    private class WebViewDownLoadListener implements DownloadListener {
-//        @Override
-//        public void onDownloadStart(String url, String userAgent, String contentDisposition, String mimetype, long contentLength) {
-//            KLog.i("tag", "url="+url + "   userAgent="+userAgent + "   contentDisposition="+contentDisposition);
-//            KLog.i("tag", "mimetype="+mimetype);
-//            KLog.i("tag", "contentLength="+contentLength);
-//            Uri uri = Uri.parse(url);
-//            Intent intent = new Intent(Intent.ACTION_VIEW, uri);
-//            App.i().startActivity(intent);
-//        }
-//    }
-
-
-//    private class WebViewClientX extends WebViewClient {
-//        @Override
-//        //  重写此方法表明点击网页里面的链接还是在当前的webview里跳转，不跳到浏览器那边
-//        public boolean shouldOverrideUrlLoading(WebView view, String url) {
-//            KLog.d("==========" + WithSet.i().isSysBrowserOpenLink());
-//            if (WithSet.i().isSysBrowserOpenLink()) {
-//                Intent intent = new Intent();
-//                intent.setAction("android.intent.action.VIEW");
-//                Uri content_url = Uri.parse(url);
-//                intent.setData(content_url);
-//                activity.startActivity(intent);
-//                return true;
-//            }
-//            return super.shouldOverrideUrlLoading(view, url);
-//        }
-
-//        /**
-//         * 在每次页面加载完数据的时候调用（ loadingPageData 函数）
-//         * 你永远无法确定当 WebView 调用这个方法的时候，网页内容是否真的加载完毕了。
-//         * 所以当你的WebView需要加载各种各样的网页并且需要在页面加载完成时采取一些操作的话，可能WebChromeClient.onProgressChanged()比WebViewClient.onPageFinished()都要靠谱一些。
-//         *
-//         * OnPageFinished 事件会在 Javascript 脚本执行完成之后才会触发。如果在页面中使 用JQuery，会在处理完 DOM 对象，执行完 $(document).ready(function() {}); 事件自会后才会渲染并显示页面。而同样的页面在 iPhone 上却是载入相当的快，因为 iPhone 是显示完页面才会触发脚本的执行。所以我们这边的解决方案延迟 JS 脚本的载入
-//         */
-//        @Override
-//        public void onPageFinished(WebView webView, String url) {
-//            super.onPageFinished(webView, url);
-//            KLog.e("WebView", "onPageFinished   " + (System.currentTimeMillis() - App.time) + webView);
-////        webView.getSettings().setBlockNetworkImage(false);
-//            // Page渲染完成之后，添加图片的Js点击监听函数
-//            webView.loadUrl("javascript:initImgClick()"); // 初始化图片的点击事件
-//            initImgPlace( webView );
-//        }
-
-//        public void initImgPlace(WebView webView) {
-//            final ArrayMap<Integer, Img> imgMap = WithDB.i().getImgs( (String)webView.getTags() );
-//            final ArrayMap<Integer, Img> lossImgMap = WithDB.i().getLossImgs( (String)webView.getTags() ); // dataList.get(webView.getId()).getId()
-//            int lossImgSize = lossImgMap.size();
-//
-//            if (lossImgSize == imgMap.size()) {
-//                webView.loadUrl("javascript:initImgPlaceholder()"); // 初始化占位图
-//            } else {
-//                StringBuilder imgNoArray = new StringBuilder("");
-//                for (int i = 0; i < lossImgSize; i++) {
-//                    imgNoArray.append(lossImgMap.keyAt(i) - 1); // imgState 里的图片下标是从1开始的
-//                    imgNoArray.append("_");
-//                }
-//                KLog.i("传递的值" + imgNoArray + webView);
-//                webView.loadUrl("javascript:appointImgPlaceholder(" + "\"" + imgNoArray.toString() + "\"" + ")");
-//            }
-//        }
-//    }
-
 
     @Override
     public int getCount() {
         return (null == dataList) ? 0 : dataList.size();
     }
 
-//    private void judgeDirection(int pagePosition) {
-//        if (pagePosition > currentPosition) {
-//            KLog.e("方向", "右滑");
-//        } else if (pagePosition < currentPosition) {
-//            KLog.e("方向", "左滑");
-//        }
-//        currentPosition = pagePosition;
-//    }
+
 }
