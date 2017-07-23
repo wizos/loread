@@ -32,7 +32,7 @@ public class Neter {
     /**
      * 线程池
      */
-    private static ExecutorService threadPool = Executors.newFixedThreadPool(5);
+    private static ExecutorService threadPool;
     private Handler handler;
 //    private Context context;
 
@@ -488,6 +488,23 @@ public class Neter {
         }
     }
 
+    /**
+     * 获取线程池的方法，因为涉及到并发的问题，我们加上同步锁
+     *
+     * @return
+     */
+    public ExecutorService getThreadPool() {
+        if (threadPool == null) {
+            synchronized (ExecutorService.class) {
+                if (threadPool == null) {
+                    //为了下载图片更加的流畅，我们用了2个线程来下载图片
+                    threadPool = Executors.newFixedThreadPool(3);
+                }
+            }
+        }
+        return threadPool;
+    }
+
     public void loadImg(String articleID, int imgNo, String imgUrl, String filePath) {
         KLog.i("下载图片的网址：" + imgUrl + "，保存路径：" + filePath + "，所属文章：" + articleID + "，编号：" + imgNo);
 //        KLog.i(taskMap.get(filePath) + "====" + imgUrl.trim().indexOf("/"));
@@ -495,7 +512,7 @@ public class Neter {
         if (taskMap.get(filePath) == null && imgUrl.trim().indexOf("/") != 0) {
 //            KLog.i("===");
             taskMap.put(filePath, articleID);
-            threadPool.execute(new Task(articleID, imgNo, imgUrl, filePath));
+            getThreadPool().execute(new Task(articleID, imgNo, imgUrl, filePath));
         }
     }
 
@@ -509,6 +526,7 @@ public class Neter {
         } else if (!WithSet.i().isDownImgWifi() && !HttpUtil.isNetworkAvailable()) {
             return 0;
         }
+
 
         int length = imgMap.size();
         for (ArrayMap.Entry<Integer, Img> entry : imgMap.entrySet()) {

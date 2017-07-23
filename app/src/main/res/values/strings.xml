@@ -33,7 +33,7 @@
     <string name="disagree">取消</string>
     <string name="more_info">更多</string>
     <string name="setting_about_dialog_title">有些小抑郁</string>
-    <string name="setting_about_dialog_content">路很长，纵然远望，却不知方向。\n抽支烟，思绪无常，奔跑着彷徨。\n逃不脱的苟且，追不到的远方…</string>
+    <string name="setting_about_dialog_content">路很长，纵然远望，却不知方向。\n抽支烟，思绪无常，奔跑着彷徨。\n逃不脱的苟且，到不了的远方…</string>
 
     <string name="auth_username">用户名</string>
     <string name="auth_password">密码</string>

@@ -72,6 +72,7 @@ public class ArticleAdapter extends PagerAdapter implements ViewPager.OnPageChan
             return;
         }
 
+
         activity.showingPageData(dataList.get(pagePosition), (X5WebView) viewPager.findViewById(pagePosition), pagePosition);
     }
 

@@ -252,7 +252,7 @@ public class TagActivity extends BaseActivity implements SlideAndDragListView.On
             CustomViewHolder cvh;
             if (convertView == null) {
                 cvh = new CustomViewHolder();
-                convertView = LayoutInflater.from(TagActivity.this).inflate(R.layout.tag_slv_item, null);
+                convertView = LayoutInflater.from(TagActivity.this).inflate(R.layout.activity_tag_slv_item, null);
                 cvh.tagTitle = (TextView) convertView.findViewById(R.id.tag_slv_item_title);
                 cvh.tagCount = (TextView) convertView.findViewById(R.id.tag_slv_item_count);
                 convertView.setTag(cvh);

@@ -131,7 +131,7 @@ public class MainService extends IntentService {
      * 使用的优点: 1、简单,快捷；2、过程可控
      * 使用的缺点：在使用多个异步操作和并需要进行Ui变更时,就变得复杂起来.
      * 2 ）Handler异步实现的原理和适用的优缺点
-     * 在Handler 异步实现时,涉及到 Handler, Looper, Message,Thread 四个对象，实现异步的流程是主线程启动 Thread（子线程）àthread(子线程)运行并生成Message-àLooper获取Message并传递给HandleràHandler逐个获取Looper中的Message，并进行UI变更。
+     * 在Handler 异步实现时,涉及到 Handler, Looper, Message,Thread 四个对象，实现异步的流程是主线程启动 Thread（子线程）运行并生成Message-Looper获取Message并传递给HandleràHandler逐个获取Looper中的Message，并进行UI变更。
      * 使用的优点：1、结构清晰，功能定义明确；2、对于多个后台任务时，简单，清晰
      * 使用的缺点：在单个后台异步处理时，显得代码过多，结构过于复杂（相对性）
      * ----------

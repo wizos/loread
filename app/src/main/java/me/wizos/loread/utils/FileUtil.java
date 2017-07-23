@@ -37,18 +37,12 @@ public class FileUtil {
     //判断外部存储(SD卡)是否可以读写
     public static boolean isExternalStorageWritable() {
         String state = Environment.getExternalStorageState();
-        if (Environment.MEDIA_MOUNTED.equals(state)) {  // 判断SD卡是否插入
-            return true;
-        }
-        return false;
+        return Environment.MEDIA_MOUNTED.equals(state);
     }
     //判断外部存储是否至少可以读
     public boolean isExternalStorageReadable() {
         String state = Environment.getExternalStorageState();
-        if (Environment.MEDIA_MOUNTED.equals(state) || Environment.MEDIA_MOUNTED_READ_ONLY.equals(state)) {
-            return true;
-        }
-        return false;
+        return Environment.MEDIA_MOUNTED.equals(state) || Environment.MEDIA_MOUNTED_READ_ONLY.equals(state);
     }
 
 //    public static String getCacheFileRelativePath(String fileNameInMD5){
@@ -175,7 +169,7 @@ public class FileUtil {
             FileReader fileReader = new FileReader(file);
             BufferedReader br = new BufferedReader( fileReader );//一行一行读取 。在电子书程序上经常会用到。
             while(( temp = br.readLine())!= null){
-                fileContent += temp+"\r\n";
+                fileContent += temp; // +"\r\n"
             }
             fileReader.close();
             br.close();
@@ -308,10 +302,7 @@ public class FileUtil {
 
     public static boolean isFileExists(String filePath){
         File file = new File(filePath);
-        if (file.exists()) {  //  如果目标文件已存在，不保存
-            return true;
-        }
-        return false;
+        return file.exists();
     }
 
 

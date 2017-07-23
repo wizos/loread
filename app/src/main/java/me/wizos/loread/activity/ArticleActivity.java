@@ -522,8 +522,8 @@ public class ArticleActivity extends BaseActivity implements View.OnClickListene
     public void showingPageData(Article article, X5WebView webView, int position) {
         this.article = article;
         this.webView = webView;
-//        KLog.i("--------------------------------------------------------------------------");
-//        KLog.i("显示页面showArticle：" + article.getTitle() + "====" + webView);
+        KLog.i("--------------------------------------------------------------------------");
+        KLog.i("显示页面showArticle：" + article.getTitle() + "====" + webView);
         articleID = article.getId();
         App.currentArticleID = articleID;
         initIconState(article, position);

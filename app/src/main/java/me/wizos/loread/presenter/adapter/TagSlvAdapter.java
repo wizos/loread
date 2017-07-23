@@ -51,7 +51,7 @@ public class TagSlvAdapter extends ArrayAdapter<Tag>{
         CustomViewHolder cvh;
         if (convertView == null) {
             cvh = new CustomViewHolder();
-            convertView = LayoutInflater.from(context).inflate(R.layout.tag_slv_item, null);
+            convertView = LayoutInflater.from(context).inflate(R.layout.activity_tag_slv_item, null);
             cvh.tagTitle = (TextView) convertView.findViewById(R.id.tag_slv_item_title);
             convertView.setTag(cvh);
         } else {

@@ -179,7 +179,7 @@ public class StringUtil {
             lossSrcList.remove(0);
             if (lossSrcList.size() != 0) {
                 article.setCoverSrc(FileUtil.getAbsoluteDir(API.SAVE_DIR_CACHE) + fileTitle + "_files" + File.separator + lossSrcList.get(1).getName());
-                WithDB.i().saveImgs(lossSrcList);
+                WithDB.i().saveImg(lossSrcList); // Note: 这里保存很慢
                 article.setImgState(API.ImgState_Downing);
             } else {
                 article.setImgState(API.ImgState_NoImg);

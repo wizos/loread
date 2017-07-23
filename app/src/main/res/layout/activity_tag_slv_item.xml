@@ -4,12 +4,12 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/tag_slv_item"
     android:layout_width="match_parent"
-    android:layout_height="@dimen/slv_item_height"
+    android:layout_height="wrap_content"
     android:paddingTop="6dp"
     android:paddingBottom="6dp"
-    android:background="?attr/root_view_bg"
     android:gravity="center_vertical"
-    android:orientation="horizontal">
+    android:orientation="horizontal"
+    android:background="?attr/root_view_bg">
     <!--MarginStart指的是控件距离开头View部分的间距大小，MarginLeft则指的是控件距离左边View部分的间距大小，MarginEnd和MarginRight同理。-->
     <!--一般情况下，View开始部分就是左边，但是有的语言目前为止还是按照从右往左的顺序来书写的-->
 
@@ -26,7 +26,7 @@
     <TextView
         android:id="@+id/tag_slv_item_title"
         android:layout_width="0dp"
-        android:layout_height="match_parent"
+        android:layout_height="wrap_content"
         android:layout_weight="1"
         android:layout_marginStart="12dp"
         android:gravity="center_vertical"

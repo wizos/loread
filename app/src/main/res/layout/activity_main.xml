@@ -53,13 +53,13 @@
                 android:layout_height="match_parent"
                 android:layout_marginLeft="12dp"
                 android:layout_marginRight="12dp"
-                android:background="@android:color/transparent"
                 android:animateLayoutChanges="true"
                 android:headerDividersEnabled="false"
                 android:layout_above="@+id/main_bottombar">
             </com.yydcdut.sdlv.SlideAndDragListView>
 
 
+            <!--android:background="@android:color/transparent"-->
             <!--android:animateLayoutChanges="true" 属性只能用在ViewGroup控件里，表示容器里面布局改变时有默认的动画效果，比如说添加控件，删除控件的时候就是默认的动画效果。-->
             <!--或者创建一个LayoutTransition对象，并在容器布局调用setLayoutTransition(LayoutTransition)方法-->
             <ImageView
@@ -72,44 +72,47 @@
                 android:src="@drawable/ic_vector_unread"
                 android:layout_above="@+id/main_bottombar" />
 
-
             <RelativeLayout
                 android:id="@+id/main_bottombar"
                 android:layout_width="match_parent"
                 android:layout_height="@dimen/bottom_bar_height"
-                android:background="?attr/bottombar_bg"
                 android:onClick="onBottombarClicked"
                 android:layout_gravity="center_vertical|bottom"
-                android:layout_alignParentBottom="true">
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:gravity="center">
-                    <me.wizos.loread.view.IconFontView
-                        android:id="@+id/main_bottombar_star"
-                        style="@style/bottom_bar_iconfont"
-                        android:text="@string/font_unstar"
-                        android:onClick="onStarIconClicked"/>
+                android:layout_alignParentBottom="true"
+                android:background="?attr/bottombar_bg">
+                <!--<LinearLayout-->
+                <!--android:layout_width="match_parent"-->
+                <!--android:layout_height="match_parent"-->
+                <!--android:gravity="center">-->
+                <!---->
+                <!--</LinearLayout>-->
+                <me.wizos.loread.view.IconFontView
+                    android:id="@+id/main_bottombar_star"
+                    style="@style/bottom_bar_iconfont"
+                    android:layout_toStartOf="@+id/main_bottombar_tag"
+                    android:text="@string/font_unstar"
+                    android:onClick="onStarIconClicked" />
 
-                    <me.wizos.loread.view.IconFontView
-                        android:id="@+id/main_bottombar_tag"
-                        style="@style/bottom_bar_iconfont"
-                        android:text="@string/font_tag"
-                        android:onClick="onTagIconClicked"/>
-                    <me.wizos.loread.view.IconFontView
-                        android:id="@+id/main_bottombar_read"
-                        style="@style/bottom_bar_iconfont"
-                        android:text="@string/font_unread"
-                        android:onClick="onReadIconClicked"/>
-                </LinearLayout>
+                <me.wizos.loread.view.IconFontView
+                    android:id="@id/main_bottombar_tag"
+                    style="@style/bottom_bar_iconfont"
+                    android:layout_centerInParent="true"
+                    android:text="@string/font_tag"
+                    android:onClick="onTagIconClicked" />
+
+                <me.wizos.loread.view.IconFontView
+                    android:id="@+id/main_bottombar_read"
+                    style="@style/bottom_bar_iconfont"
+                    android:layout_toEndOf="@id/main_bottombar_tag"
+                    android:text="@string/font_unread"
+                    android:onClick="onReadIconClicked" />
+
                 <me.wizos.loread.view.IconFontView
                     android:id="@+id/main_bottombar_setting"
                     style="@style/bottom_bar_iconfont"
                     android:text="@string/font_setting"
-                    android:layout_gravity="center|start|bottom"
                     android:layout_alignParentStart="true"
                     android:onClick="onSettingIconClicked"/>
-
             </RelativeLayout>
         </RelativeLayout>
     </me.wizos.loread.view.SwipeRefresh>

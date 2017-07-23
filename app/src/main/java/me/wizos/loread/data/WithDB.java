@@ -87,12 +87,18 @@ public class WithDB {
         }
     }
 
-
+    // 这里很慢
     public void saveImgs(ArrayMap<Integer, Img> imgMap) {
         for (Map.Entry<Integer, Img> entry : imgMap.entrySet()) {
             if (imgDao.queryBuilder().where(ImgDao.Properties.ArticleId.eq(entry.getValue().getArticleId()), ImgDao.Properties.No.eq(entry.getValue().getNo())).listLazy().size() == 0) {
                 imgDao.insertOrReplace(entry.getValue());
             }
+        }
+    }
+
+    public void saveImg(ArrayMap<Integer, Img> imgMap) {
+        for (Map.Entry<Integer, Img> entry : imgMap.entrySet()) {
+            imgDao.insertOrReplace(entry.getValue());
         }
     }
 

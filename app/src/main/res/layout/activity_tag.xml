@@ -42,12 +42,12 @@
         android:layout_height="match_parent"
         android:layout_marginLeft="12dp"
         android:layout_marginRight="12dp"
-        android:background="@android:color/transparent"
         android:animateLayoutChanges="true"
         android:headerDividersEnabled="false"
         android:layout_below="@id/tag_appBarLayout"
         android:layout_above="@+id/tag_bottombar">
     </com.yydcdut.sdlv.SlideAndDragListView>
+    <!--android:background="@android:color/transparent"-->
 
     <LinearLayout
         android:id="@+id/tag_bottombar"
@@ -65,14 +65,4 @@
             android:onClick="onMainListClicked"/>
 
     </LinearLayout>
-    <!---->
-    <!--<RelativeLayout-->
-    <!--android:layout_width="match_parent"-->
-    <!--android:layout_height="match_parent"-->
-    <!--android:orientation="vertical">-->
-
-
-    <!--</RelativeLayout>-->
-
-
 </RelativeLayout>
