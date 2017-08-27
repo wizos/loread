@@ -26,7 +26,8 @@
                 android:layout_height="match_parent"
                 android:layout_gravity="center"
                 android:gravity="center"
-                android:textSize="12sp"/>
+                android:textSize="12sp"
+                tools:text="12" />
             <me.wizos.loread.view.IconFontView
                 android:id="@+id/main_toolbar_readability"
                 style="@style/top_bar_iconfont"

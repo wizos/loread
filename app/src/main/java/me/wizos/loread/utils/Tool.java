@@ -20,7 +20,7 @@ public class Tool {
         if (stackElements != null) {
             KLog.e("-----------------------------------");
             for (StackTraceElement stackElement : stackElements) {
-                KLog.d(stackElement.getClassName() + "_" + stackElement.getFileName() + "_" + stackElement.getLineNumber() + "_" + stackElement.getMethodName());
+                KLog.e(stackElement.getClassName() + "_" + stackElement.getFileName() + "_" + stackElement.getLineNumber() + "_" + stackElement.getMethodName());
             }
             KLog.e("-----------------------------------");
         }

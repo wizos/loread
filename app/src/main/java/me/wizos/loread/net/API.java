@@ -29,7 +29,7 @@ public class API {
     public static final String U_STREAM_PREFS ="/reader/api/0/preference/stream/list";
     public static final String U_SUSCRIPTION_LIST ="/reader/api/0/subscription/list";
     public static final String U_UNREAD_COUNTS ="/reader/api/0/unread-count";
-    public static final String U_ITEM_IDS ="/reader/api/0/stream/items/ids";
+    public static final String U_ITEM_IDS = "/reader/api/0/stream/items/ids"; // 获取所有文章的id
     public static final String U_ITEM_CONTENTS ="/reader/api/0/stream/items/contents";
     public static final String U_ARTICLE_CONTENTS ="/reader/api/0/stream/items/contents";
     public static final String U_EDIT_TAG ="/reader/api/0/edit-tag";
@@ -104,11 +104,11 @@ public class API {
     public static final int ReplaceImgSrc = 69;
 //    public static final int ReplaceImgSrcAgain = 68;
 
+    public static final int ImgMeta_Downover = 1; // 下载完成
+    public static final int ImgMeta_Downing = 0; // 未下载
     public static final String ImgState_Downing = "0";
     public static final String ImgState_NoImg = "";
-    public static final String ImgState_Down_Over = "1";
-    //    public static final String ImgState_Over = "1";
-    public static final int ImgState_Over = 1;
+    public static final String ImgState_Over = "1";
 
 
 

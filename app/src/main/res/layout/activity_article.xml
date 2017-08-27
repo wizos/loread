@@ -25,20 +25,27 @@
             android:background="?attr/topbar_bg" >
             <TextView
                 android:id="@+id/art_toolbar_num"
-                android:layout_gravity="end|center"
-                android:gravity="center_vertical"
-                android:layout_marginEnd="16dp"
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
-                tools:text="12"
-                android:textSize="16sp" />
+                android:layout_gravity="center"
+                android:gravity="center"
+                android:textSize="12sp"
+                tools:text="12" />
+
+            <me.wizos.loread.view.IconFontView
+                android:id="@+id/art_bottombar_save"
+                style="@style/top_bar_iconfont"
+                android:layout_gravity="end|center"
+                android:text="@string/font_unsave" />
         </android.support.v7.widget.Toolbar>
     </android.support.design.widget.AppBarLayout>
 
+    <!--android:onClick="onSaveClick"-->
     <!-- Use Nested to make toolbar auto hide enable -->
     <!--CoordinatorLayout必须作为整个布局的父布局容器。 给需要滑动的组件设置 app:layout_scrollFlags=”scroll|enterAlways” 属性。-->
     <!--给你的可滑动的组件，也就是RecyclerView 或者 NestedScrollView 设置如下属性：-->
     <!--app:layout_behavior="@string/appbar_scrolling_view_behavior"-->
+
 
     <android.support.v4.view.ViewPager
         android:id="@+id/art_viewpager"
@@ -68,11 +75,7 @@
             style="@style/bottom_bar_iconfont"
             android:text="@string/font_label"
             android:onClick="onTagClick" />
-        <me.wizos.loread.view.IconFontView
-            android:id="@+id/art_bottombar_save"
-            style="@style/bottom_bar_iconfont"
-            android:text="@string/font_unsave"
-            android:onClick="onSaveClick"/>
+
         <me.wizos.loread.view.IconFontView
             android:id="@+id/art_bottombar_read"
             style="@style/bottom_bar_iconfont"

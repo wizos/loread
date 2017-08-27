@@ -24,6 +24,7 @@ import me.wizos.loread.data.WithSet;
 import me.wizos.loread.utils.FileUtil;
 import me.wizos.loread.utils.HttpUtil;
 import me.wizos.loread.utils.StringUtil;
+import me.wizos.loread.utils.ToastUtil;
 
 /**
  * Created by Wizos on 2016/3/10.
@@ -34,7 +35,6 @@ public class Neter {
      */
     private static ExecutorService threadPool;
     private Handler handler;
-//    private Context context;
 
     public Neter(Handler handler) {
 //        KLog.i("【Neter构造函数】" + handler );
@@ -42,23 +42,7 @@ public class Neter {
         this.taskMap = new ArrayMap<>();
         // 创建线程数
 //        this.threadPool = Executors.newFixedThreadPool(10);
-//        Tool.printCallStatck();
     }
-
-//    private static Neter mNeter;
-//    private Neter() {
-//    }
-//    private static Neter i() {
-//        if (mNeter != null) {
-//            return mNeter;
-//        }
-//        synchronized (Neter.class) {
-//            if (mNeter == null) {
-//                mNeter = new Neter();
-//            }
-//        }
-//        return mNeter;
-//    }
 
 
     /**
@@ -146,10 +130,7 @@ public class Neter {
 
     public void getWithAuth(String url) {
         KLog.d("【执行 getWithAuth 】" + url);
-//        if (!HttpUtil.isNetworkAvailable()) {
-//            headParamList.clear();
-//            handler.sendEmptyMessage(API.F_NoMsg);
-//            return;}
+
         String paraString = "?";
         for ( String[] param : headParamList) {
             paraString = paraString + param[0] + "=" + param[1] + "&";
@@ -185,11 +166,6 @@ public class Neter {
 
     public void postWithAuth(String url, long logTime) { // just for login
         KLog.d("【执行 = " + url + "】");
-//        if (!HttpUtil.isNetworkAvailable()) {
-//            headParamList.clear();
-//            bodyParamList.clear();
-//            handler.sendEmptyMessage(API.F_NoMsg);
-//            return;}
 
         // 构建请求头
         Request.Builder headBuilder = new Request.Builder().url(url);
@@ -215,54 +191,6 @@ public class Neter {
         Request request = headBuilder.post(body).build();
         forData(url, request, logTime);
     }
-
-//
-//    public void forDatax(final String url, final Request request, final long logTime) {
-//        if (!HttpUtil.isNetworkAvailable()) {
-//            handler.sendEmptyMessage(API.F_NoMsg);
-//            return ;}
-//        KLog.d("【开始请求】 "+ logTime + "--" + url);
-//
-//        new Thread(new Runnable() {
-//            @Override
-//            public void run() {
-//                HttpUtil.enqueue(request, new Callback() {
-//                    @Override
-//                    public void onFailure(Request request, IOException e) {
-//                        KLog.d("【请求失败】" + url );
-//                        API.request = request;
-//                        makeMsg(API.F_Request, url, "noRequest",logTime);
-//                    }
-//                    @Override
-//                    public void onResponse(Response response) throws IOException {
-//                        if (!response.isSuccessful()) {
-//                            KLog.d("【响应失败】" + response.message() + response.body().string());
-//                            API.request = request;
-//                            makeMsg(API.F_Response, url, response.message(),logTime);
-//                            return;
-//                        }
-//                        try {
-//                            String res = response.body().string();
-//                            KLog.d("【forData】" + res.length());
-//                            makeMsg( API.url2int(url), url, res,logTime);
-//                        }catch (IOException e){
-//                            KLog.d("【超时】");
-//                            API.request = request;
-//                            makeMsg( API.F_Response, url, response.message(), logTime);
-//                            e.printStackTrace();
-//                            response.body().close();
-//                        }
-////                        catch (SocketTimeoutException e) {
-////                            KLog.d("【超时】");
-////                            API.request = request;
-////                            makeMsg(url, "noResponse", logTime);
-////                            e.printStackTrace();
-////                        }
-//                    }
-//                });
-//            }
-//        }).start();
-//    }
 
     public void forData(final String url, final Request request, final long logTime) {
         if (!HttpUtil.isNetworkAvailable()) {
@@ -305,77 +233,6 @@ public class Neter {
     }
 
 
-//
-//    public void postCallback( String urlx, final long logTime) { // just for login
-//        KLog.d("【执行 = " + urlx + "】");
-//        if (!HttpUtil.isNetworkAvailable()) {
-//            headParamList.clear();
-//            bodyParamList.clear();
-//            handler.sendEmptyMessage(API.F_NoMsg);
-//            return;}
-//
-//        // 构建请求头
-//        Request.Builder headBuilder = new Request.Builder().url(urlx);
-//        for ( String[] param : headParamList) {
-//            KLog.d(param[0] + param[1]);
-//            headBuilder.addHeader( param[0], param[1] );
-//        }
-//        headParamList.clear();
-//
-//        KLog.d("----");
-//        // 构建请求体
-//        FormEncodingBuilder bodyBuilder = new FormEncodingBuilder();
-//        for ( String[] param : bodyParamList ) {
-//            bodyBuilder.add( param[0], param[1] );
-//            KLog.d(param[0] + param[1]);
-//        }
-//        bodyParamList.clear();
-//
-//
-//        RequestBody body = bodyBuilder.build();
-//        final Request request = headBuilder.post(body).build();
-//        KLog.d("【开始请求离线数据】 "+ logTime + "--" + urlx);
-//
-//        final String url = urlx;
-//
-//        new Thread(new Runnable() {
-//            @Override
-//            public void run() {
-//                HttpUtil.enqueue(request, new Callback() {
-//                    @Override
-//                    public void onFailure(Request request, IOException e) {
-//                        KLog.d("【请求失败2】" + url );
-//                        API.request = request;
-//                        makeMsg(API.F_Request, url, "noRequest",logTime);
-//                    }
-//                    @Override
-//                    public void onResponse(Response response) throws IOException {
-//                        if (!response.isSuccessful()) {
-//                            KLog.d("【响应失败2】" + response.message() + response.body().string());
-//                            API.request = request;
-//                            makeMsg(API.F_Response, url, response.message(),logTime);
-//                            return;
-//                        }
-//                        try {
-//                            String res = response.body().string();
-//                            KLog.d("【forData2】" + res.length());
-//                            handler.sendEmptyMessage(API.M_BEGIN_SYNC);
-//                        }catch (IOException e){
-//                            KLog.d("【超时2】");
-//                            API.request = request;
-//                            makeMsg( API.F_Response, url, response.message(), logTime);
-//                            e.printStackTrace();
-//                            response.body().close();
-//                        }
-//                    }
-//                });
-//            }
-//        }).start();
-//    }
-
-
-
-
     private void makeMsg( int msgCode, String url, String res, long logTime) {
         Message message = new Message();
         Bundle bundle = new Bundle();
@@ -413,26 +270,6 @@ public class Neter {
     public void addBody(ArrayList<String[]> params){
         bodyParamList.addAll(params);
     }
-
-
-    /**
-     * 使用 map 替代原有的简单的 数组
-     */
-//    private ArrayMap<String,String> headersMap = new ArrayMap<>();
-//    private ArrayMap<String,String> bodyParamsMap = new ArrayMap<>();
-//    public void addHeader( String key ,String value ){
-//        headersMap.put(key,value);
-//    }
-//    public void addHeader( Map<String,String> headers ){
-//        headersMap.putAll( headers );
-//    }
-//    public void addBodyParam( String key ,String value ){
-//        bodyParamsMap.put( key, value );
-//    }
-//    public void addBodyParam( Map<String,String> bodyParams ){
-//        bodyParamsMap.putAll( bodyParams );
-//    }
-
 
 
 
@@ -493,12 +330,15 @@ public class Neter {
      *
      * @return
      */
-    public ExecutorService getThreadPool() {
+    private ExecutorService getThreadPool() {
+        KLog.e("获取多线程池getThreadPool");
         if (threadPool == null) {
             synchronized (ExecutorService.class) {
                 if (threadPool == null) {
                     //为了下载图片更加的流畅，我们用了2个线程来下载图片
+                    KLog.e("获取多线程池子");
                     threadPool = Executors.newFixedThreadPool(3);
+//                    threadPool = Executors.newCachedThreadPool();
                 }
             }
         }
@@ -508,18 +348,19 @@ public class Neter {
     public void loadImg(String articleID, int imgNo, String imgUrl, String filePath) {
         KLog.i("下载图片的网址：" + imgUrl + "，保存路径：" + filePath + "，所属文章：" + articleID + "，编号：" + imgNo);
 //        KLog.i(taskMap.get(filePath) + "====" + imgUrl.trim().indexOf("/"));
-
-        if (taskMap.get(filePath) == null && imgUrl.trim().indexOf("/") != 0) {
-//            KLog.i("===");
-            taskMap.put(filePath, articleID);
-            getThreadPool().execute(new Task(articleID, imgNo, imgUrl, filePath));
+        if (taskMap.get(imgUrl) == null || imgUrl.trim().indexOf("/") != 0) {
+            KLog.e("===");
+            taskMap.put(imgUrl, articleID);
+//            getThreadPool().execute(new Task(articleID, imgNo, imgUrl, filePath));
+            img(articleID, imgNo, imgUrl, filePath);
+        } else {
+            ToastUtil.showShort("图片正在下载，请不要着急");
         }
     }
 
 
     public int downImgs(String articleID, ArrayMap<Integer, Img> imgMap, String parentPath) {
-        // article.getSaveDir() ) + imgsMeta.getFolder() + File.separator
-        KLog.d("批量下图片" + imgMap);
+        KLog.e("批量下图片" + imgMap);
 
         if (WithSet.i().isDownImgWifi() && !HttpUtil.isWiFiActive()) {
             return 0;
@@ -527,93 +368,66 @@ public class Neter {
             return 0;
         }
 
-
         int length = imgMap.size();
         for (ArrayMap.Entry<Integer, Img> entry : imgMap.entrySet()) {
             loadImg(articleID, entry.getKey(), entry.getValue().getSrc(), parentPath + entry.getValue().getName());
-            KLog.d("【获取图片的key为：" + entry.getKey() );
+            KLog.e("【获取图片的key为：" + entry.getKey());
         }
-        KLog.d("批量下图片b" + length);
+        KLog.e("批量下图片B：" + length);
         return length;
     }
 
+    private void img(final String articleID, final int imgNo, final String imgUrl, final String filePath) {
+        KLog.e("正真的开始下图");
+        Request.Builder builder = new Request.Builder();
+        builder.url(imgUrl);
+        final Request request = builder.build();
+        HttpUtil.enqueue(request, new Callback() {
+            @Override
+            public void onFailure(Request request, IOException e) {
+                KLog.e("【图片请求失败 = " + imgUrl + "】");
+                makeMsgForImg(articleID, imgUrl, imgNo, API.F_BITMAP);
+            }
 
-    private class Task implements Runnable {
-        String articleID, imgUrl, filePath;
-        int imgNo;
-
-        Task(String articleID, int imgNo, String imgUrl, String filePath) {
-            this.articleID = articleID;
-            this.imgUrl = imgUrl;
-            this.filePath = filePath;
-            this.imgNo = imgNo;
-        }
-
-        @Override
-        public void run() {
-            Request.Builder builder = new Request.Builder();
-            builder.url(imgUrl);
-            final Request request = builder.build();
-            HttpUtil.enqueue(request, new Callback() {
-                @Override
-                public void onFailure(Request request, IOException e) {
-                    KLog.i("【图片请求失败 = " + imgUrl + "】");
-                    makeMsgForImg(articleID, imgNo, API.F_BITMAP);
-                }
-
-                @Override
-                public void onResponse(Response response) throws IOException {
-                    if (!response.isSuccessful()) {
-//                        KLog.d("【图片响应失败】" + response);
-                        makeMsgForImg(articleID, imgNo, API.F_BITMAP);
-                    } else {
-                        InputStream inputStream = null;
-                        int state = API.S_BITMAP;
-                        try {
-                            inputStream = response.body().byteStream();
-                            if (!FileUtil.saveFromStream(inputStream, filePath)) {
-                                state = API.F_BITMAP;
-                            }
-                        } finally {
-                            try {
-                                response.body().close();
-                            } catch (final IOException ex) {
-                                KLog.e("Problem while cleaning up.", ex);
-                            }
+            @Override
+            public void onResponse(Response response) throws IOException {
+                if (!response.isSuccessful()) {
+                    KLog.e("【图片响应失败】" + response);
+                    makeMsgForImg(articleID, imgUrl, imgNo, API.F_BITMAP);
+                } else {
+                    InputStream inputStream;
+                    int state = API.S_BITMAP;
+                    try {
+                        inputStream = response.body().byteStream();
+                        if (!FileUtil.saveFromStream(inputStream, filePath)) {
+                            state = API.F_BITMAP;
                         }
-
-                        KLog.i("【成功保存图片】" + imgUrl + "==" + filePath);
-                        makeMsgForImg(articleID, imgNo, state);
+                    } finally {
+                        try {
+                            response.body().close();
+                            KLog.e("【图片无响应】" + response);
+                        } catch (final IOException ex) {
+                            KLog.e("Problem while cleaning up.", ex);
+                        }
                     }
+                    KLog.e("onResponse", "当前线程为：" + Thread.currentThread().getId() + Thread.currentThread().getName() + "==" + filePath);
+//                        KLog.e("onResponse" ,"成功保存图片：" + imgUrl + "==" + filePath);
+                    makeMsgForImg(articleID, imgUrl, imgNo, state);
                 }
-            });
-        }
+            }
+        });
     }
 
-    private void makeMsgForImg(String articleID, int imgNo, int msg) {
+    private void makeMsgForImg(String articleID, String imgSrc, int imgNo, int msg) {
         Message message = new Message();
         Bundle bundle = new Bundle();
         bundle.putString("articleID", articleID);
-//        bundle.putString("url", url);
+        bundle.putString("imgSrc", imgSrc);
 //        bundle.putString("filePath", filePath);
         bundle.putInt("imgNo", imgNo);
         message.what = msg;
         message.setData(bundle);
         handler.sendMessage(message);
+        taskMap.remove(imgSrc);
     }
-
-//    private void makeMsgForImg(String articleID, String url, String filePath, int imgNo, int msg) {
-//        Message message = new Message();
-//        Bundle bundle = new Bundle();
-//        bundle.putString("articleID", articleID);
-////        bundle.putString("url", url);
-////        bundle.putString("filePath", filePath);
-//        bundle.putInt("imgNo", imgNo);
-//        message.what = msg;
-//        message.setData(bundle);
-//        handler.sendMessage(message);
-//    }
-
-
-
 }

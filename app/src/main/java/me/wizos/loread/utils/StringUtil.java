@@ -64,6 +64,61 @@ public class StringUtil {
     public static boolean isBlank(List list){return  list==null || list.isEmpty() || list.size()==0;}
 
 
+//
+//    public static String getHtmlHeader() {
+//        // 获取排版文件路径（支持自定义的文件）
+//        String typesettingCssPath = App.i().getExternalFilesDir(null) + File.separator + "config" + File.separator + "article.css";
+////        if (!FileUtil.isFileExists(typesettingCssPath)) {
+////            typesettingCssPath = "file:///android_asset/article.css";
+////        }
+//        if (!new File(typesettingCssPath).exists()) {
+//            typesettingCssPath = "file:///android_asset/article.css";
+//        }
+//
+//        // 获取主题文件路径
+//        String themeCssPath;
+//        if (WithSet.i().getThemeMode() == App.theme_Day) {
+//            themeCssPath = "file:///android_asset/article_theme_day.css";
+//        } else {
+//            themeCssPath = "file:///android_asset/article_theme_night.css";
+//        }
+//
+//        // 获取脚本函数
+//        String script = "<script type=\"text/javascript\">" +
+//                "function initImgClick(){" +
+//                "var imgList = document.getElementsByTagName(\"img\"); " +
+//                "for(var i=0; i<imgList.length; i++) {" +
+//                "    imgList[i].no = i;" +
+//                "    imgList[i].onclick = function() {" +
+//                "        window.JSBridge.onImgClicked( this.no, this.src );  " +
+//                "    }  " +
+//                "}" +
+//                "}" +
+//                "function initImgPlaceholder(){" +
+//                "var imgList = document.getElementsByTagName(\"img\"); " +
+//                "for(var i=0; i<imgList.length; i++) {" +
+//                "    imgList[i].src = \"file:///android_asset/down.svg\";" +
+//                "}" +
+//                "}" +
+//                "function appointImgPlaceholder(number){" +
+//                "var array = number.split(\"_\");" +
+//                "var imgList = document.getElementsByTagName(\"img\"); " +
+//                "for(var i=0; i<array.length; i++) {" +
+//                "    var n = array[i];" +
+//                "    imgList[n].src = \"file:///android_asset/down.svg\";" +
+//                "}" +
+//                "}" +
+//                "</script>";
+//        return "<!DOCTYPE html><html><head><meta charset=\"UTF-8\" name=\"viewport\" content=\"width=device-width\">" + // , initial-scale=1.0, maximum-scale=4.0, user-scalable=1
+//                "<link rel=\"stylesheet\" type=\"text/css\" href=\"" + typesettingCssPath + "\" />" +
+//                "<link rel=\"stylesheet\" type=\"text/css\" href=\"" + themeCssPath + "\" />" +
+//                script + "</head><body>";
+//    }
+
+
+    public static String getFooter() { // <script src="file:///android_asset/rich_text_view/text.js"></script>
+        return "</div><div id=\"footerspace\"></div><script src=\"file:///android_asset/rich_text_view/zepto.min.js\"></script><script src=\"file:///android_asset/rich_text_view/lazyload.js\"></script><script src=\"file:///android_asset/rich_text_view/javascript.js\"></script></body></html>";
+    }
     public static String getHtmlHeader() {
         // 获取排版文件路径（支持自定义的文件）
         String typesettingCssPath = App.i().getExternalFilesDir(null) + File.separator + "config" + File.separator + "article.css";
@@ -89,31 +144,16 @@ public class StringUtil {
                 "for(var i=0; i<imgList.length; i++) {" +
                 "    imgList[i].no = i;" +
                 "    imgList[i].onclick = function() {" +
-                "        window.imagelistner.onImgClicked( this.no, this.src );  " +
+                "        window.JSBridge.onImgClicked( this.no, this.src );  " +
                 "    }  " +
                 "}" +
                 "}" +
-                "function initImgPlaceholder(){" +
-                "var imgList = document.getElementsByTagName(\"img\"); " +
-                "for(var i=0; i<imgList.length; i++) {" +
-                "    imgList[i].src = \"file:///android_asset/down.svg\";" +
-                "}" +
-                "}" +
-                "function appointImgPlaceholder(number){" +
-                "var array = number.split(\"_\");" +
-                "var imgList = document.getElementsByTagName(\"img\"); " +
-                "for(var i=0; i<array.length; i++) {" +
-                "    var n = array[i];" +
-                "    imgList[n].src = \"file:///android_asset/down.svg\";" +
-                "}" +
-                "}" +
                 "</script>";
-        return "<!DOCTYPE html><html><head><meta charset=\"UTF-8\">" +
+        return "<!DOCTYPE html><html><head><meta charset=\"UTF-8\" name=\"viewport\" content=\"width=device-width\">" + // , initial-scale=1.0, maximum-scale=4.0, user-scalable=1
                 "<link rel=\"stylesheet\" type=\"text/css\" href=\"" + typesettingCssPath + "\" />" +
                 "<link rel=\"stylesheet\" type=\"text/css\" href=\"" + themeCssPath + "\" />" +
                 script + "</head><body>";
     }
-
 
     private static String getModHtml(Article article, String articleHtml) {
         String author = article.getAuthor();
@@ -146,46 +186,45 @@ public class StringUtil {
      * @return
      */
     public static String getArticleHtml(Article article) {
-        long xx = System.currentTimeMillis();
-//            KLog.d("====" + article.getTitle() + "----"+  article.getSummary());
-        if (article == null) {
-            // TODO: 2017/2/19  加载没有正文的占位画面
-            KLog.d("Article为null");
-            return "";
-        }
-        if (article.getSummary().length() == 0) {
-            // TODO: 2017/2/19  加载没有正文的占位画面
-            KLog.d("正文内容为空");
+//        if (article == null) {
+//            // TODO: 2017/2/19  加载没有正文的占位画面
+//            ToastUtil.showShort( "Article为null" );
 //            return "";
-        }
+//        }
 
         // 获取 文章的 fileTitle
-        String fileTitle;
+        String fileTitle, articleHtml;
         if (article.getSaveDir().equals(API.SAVE_DIR_CACHE)) {
             fileTitle = StringUtil.stringToMD5(article.getId());
         } else {
             fileTitle = article.getTitle();
         }
 
-        String articleHtml = FileUtil.readHtml(FileUtil.getRelativeDir(article.getSaveDir()) + fileTitle + ".html");
-
-        if (articleHtml.length() == 0) {
-            // TODO: 2017/2/19  加载等待获取正文的占位画面
-            // TODO: 2017/4/8 重新获取文章正文
-        } else if (article.getImgState() == null) { // 文章没有被打开过
+        articleHtml = FileUtil.readHtml(FileUtil.getRelativeDir(article.getSaveDir()) + fileTitle + ".html");
+        if (article.getSummary().length() == 0) {
+            // TODO: 2017/2/19  加载没有正文的占位画面
+            ToastUtil.showShort("正文内容为空");
+        }
+//        if (articleHtml.length() == 0) {
+//            // TODO: 2017/2/19  加载等待获取正文的占位画面
+//            // TODO: 2017/4/8 重新获取文章正文
+//        }
+        if (article.getImgState() == null) { // 文章没有被打开过
             ArrayMap<Integer, Img> lossSrcList = StringUtil.getListOfSrcAndHtml(article.getId(), articleHtml, fileTitle);
             articleHtml = lossSrcList.get(0).getSrc();
             articleHtml = StringUtil.getModHtml(article, articleHtml);
+
             lossSrcList.remove(0);
             if (lossSrcList.size() != 0) {
                 article.setCoverSrc(FileUtil.getAbsoluteDir(API.SAVE_DIR_CACHE) + fileTitle + "_files" + File.separator + lossSrcList.get(1).getName());
                 WithDB.i().saveImg(lossSrcList); // Note: 这里保存很慢
                 article.setImgState(API.ImgState_Downing);
+//                KLog.e("不为空");
             } else {
                 article.setImgState(API.ImgState_NoImg);
                 KLog.d("为空");
             }
-            KLog.d("获取文章正文getArticleHtml：" + article.getId() + lossSrcList);
+            KLog.e("获取文章正文getArticleHtml：" + article.getId() + lossSrcList);
             article.setTitle(StringUtil.filterTitle(article.getTitle()));
 
             String summary = Html.fromHtml(articleHtml).toString(); // 可以去掉标签
@@ -194,7 +233,7 @@ public class StringUtil {
             FileUtil.saveCacheHtml(fileTitle, articleHtml);
             WithDB.i().saveArticle(article);
         }
-        KLog.e("测速articleHtml", (System.currentTimeMillis() - xx));
+//        KLog.e( "getArticleHtml", "测试" + articleHtml.length() );
         return articleHtml;
     }
 
@@ -244,7 +283,7 @@ public class StringUtil {
             imgMeta.setName(FileNameExt);
             imgMeta.setSrc(srcNet);
             imgMeta.setArticleId(articleId);
-            imgMeta.setDownState(0);
+            imgMeta.setDownState(API.ImgMeta_Downing);
             imgMap.put(num, imgMeta);
 
             temp = " src=\"" + srcLocal + "\"" + " netsrc=\"" + srcNet + "\"";
@@ -263,7 +302,7 @@ public class StringUtil {
         return imgMap;
     }
 
-    public static StringBuilder reviseHtmlNoAd(String oldHtml) {
+    private static StringBuilder reviseHtmlNoAd(String oldHtml) {
 //        KLog.d("去广告" + tempHtml);
         StringBuilder tempHtml = new StringBuilder(oldHtml);
         int indexA = tempHtml.indexOf("<center>", 0);

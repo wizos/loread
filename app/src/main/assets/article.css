@@ -46,6 +46,7 @@ img[src=''], img[src$='./images/'] {
 /**
  * Remove default margin.
     max-width: 100%
+	min-height: 120px;
 
  */
 
@@ -55,7 +56,7 @@ img {
 	width: auto;
 	height: auto;
 	display:flex;
-	text-align:center;
+	vertical-align: middle;
     justify-content:center;
     align-items:center;
 }

@@ -8,11 +8,10 @@ import android.os.Build;
 
 import com.socks.library.KLog;
 import com.squareup.okhttp.Callback;
+import com.squareup.okhttp.Dispatcher;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
-import com.squareup.okhttp.Response;
 
-import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
 import me.wizos.loread.App;
@@ -30,20 +29,15 @@ import me.wizos.loread.data.WithSet;
  */
 public class HttpUtil {
     private static final OkHttpClient mOkHttpClient = new OkHttpClient();
+    private static final Dispatcher dispatcher = new Dispatcher();
     static{
-        mOkHttpClient.setConnectTimeout(60, TimeUnit.SECONDS); // 初始为30
-        mOkHttpClient.setReadTimeout(120, TimeUnit.SECONDS);// 初始为30
-        mOkHttpClient.setWriteTimeout(120, TimeUnit.SECONDS);// 初始为30
+        KLog.e("又来了一个Http链接，当前线程为：" + Thread.currentThread() + "。当前实例为");
+        dispatcher.setMaxRequests(9);
+        mOkHttpClient.setConnectTimeout(30, TimeUnit.SECONDS); // 初始为30
+        mOkHttpClient.setReadTimeout(60, TimeUnit.SECONDS);// 初始为30
+        mOkHttpClient.setWriteTimeout(60, TimeUnit.SECONDS);// 初始为30
     }
-    /**
-     * 该不会开启异步线程。
-     * @param request
-     * @return
-     * @throws IOException
-     */
-    public static Response execute(Request request) throws IOException{
-        return mOkHttpClient.newCall(request).execute();
-    }
+
     /**
      * 开启异步线程访问网络
      * @param request
@@ -55,32 +49,6 @@ public class HttpUtil {
         mOkHttpClient.newCall(request).enqueue(responseCallback);
     }
 
-
-    /**
-     * 开启异步线程访问网络, 且不在意返回结果（实现空callback）
-     * @param request
-     */
-    public static void enqueue(Request request){
-        mOkHttpClient.newCall(request).enqueue(new Callback() {
-            @Override
-            public void onResponse(Response arg0) throws IOException {
-            }
-            @Override
-            public void onFailure(Request arg0, IOException arg1) {
-
-            }
-        });
-    }
-
-//    /**
-//     * 判断 wifi 有没有打开
-//     */
-//    public static boolean isWifiEnabled() {
-//        if (!isNetworkAvailable()) {
-//            return false;
-//        }
-//        return ((WifiManager) App.i().getSystemService(Context.WIFI_SERVICE)).isWifiEnabled();
-//    }
 
     /**
      * 能否下载图片分以下几种情况：

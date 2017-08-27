@@ -323,7 +323,7 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
                 case API.FAILURE: // 文章获取失败
                     mSwipeRefreshLayout.setRefreshing(false);
                     mSwipeRefreshLayout.setEnabled(true);
-                    vToolbarHint.setText(String.valueOf(App.articleList.size()));
+                    vToolbarHint.setText(String.valueOf(App.articleList.size() + "\n同步失败"));
                     ToastUtil.showShort("同步失败");
                     break;
                 case API.PROCESS:
@@ -580,6 +580,7 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
 //        KLog.i("【== onActivityResult 】" + tagId + "----" + listTagId);
     }
 
+    // 滚动到指定位置
     private void slvSetSelection(final int position) {
         mainHandler.post(new Runnable() {
             @Override

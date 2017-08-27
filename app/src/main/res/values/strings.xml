@@ -19,7 +19,7 @@
     <!-- Strings related to Settings -->
     <string name="main_toolbar_hint_sync">同步%1$s</string>
     <string name="main_toolbar_hint_clear_article">1 - 清除 %1$s 天之前的文章</string>
-    <string name="main_toolbar_hint_sync_article_content">1 - 同步文章内容[%1$d : %2$d]</string>
+    <string name="main_toolbar_hint_sync_article_content">1 - 同步文章内容[%1$d / %2$d]</string>
     <string name="main_toolbar_hint_sync_stared_refs">2 - 同步收藏信息</string>
     <string name="main_toolbar_hint_sync_unread_refs">3 - 同步未读信息</string>
     <string name="main_toolbar_hint_sync_unread_count">4 - 获取未读数目</string>
@@ -110,8 +110,8 @@
     <string name="font_tag_class">&#xe7c4;</string>
 
 
-    <string name="article_activity_author_format">作者 | %1$s</string>
-    <string name="article_activity_time_format">发布 | %1$s</string>
+    <!--<string name="article_activity_author_format">作者 | %1$s</string>-->
+    <!--<string name="article_activity_time_format">发布 | %1$s</string>-->
 
 
 </resources>

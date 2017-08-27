@@ -235,21 +235,17 @@ public class FileUtil {
      * @throws IOException
      */
     public static boolean saveFromStream( InputStream is, String filePath) throws IOException {
-        KLog.d("【 saveFromStream 1】" + filePath);
+        KLog.e("saveFromStream", "当前线程为：" + Thread.currentThread().getId() + Thread.currentThread().getName() + "==" + filePath);
         File file = new File(filePath);
         BufferedInputStream bis = new BufferedInputStream(is);
         FileOutputStream os = null;
         BufferedOutputStream bos = null;  // BufferedReader buffered = null.，故此时之关闭了in
-//        KLog.d("【 saveFromStream 4】");
         // TODO 保存文件，会遇到存储空间满的问题，如果批量保存文件，会一直尝试保存
         try {
-//            if (file.exists()) { return false;}
             File dir = file.getParentFile();
             dir.mkdirs();
-//            KLog.d("【saveFromStream 8】" );
-
             byte[] buff = new byte[8192];
-            /**
+            /*
              * 这个取决于硬盘的扇区大小是512byte/sec.
              8192/512 = 16，表明写入了16扇区。
              write 在底层是调用scsi write （10)来写入数据的。
@@ -283,22 +279,6 @@ public class FileUtil {
 //            return false;
         }
     }
-//
-//    public static void savaBitmap(File dir, String fileName, Bitmap bitmap) {
-//        if (bitmap == null) {
-//            return;
-//        }
-//        File file = new File(dir, fileName);
-//        try {
-//            file.createNewFile();
-//            FileOutputStream fos = new FileOutputStream(file);
-//            bitmap.compress(Bitmap.CompressFormat.JPEG, 100, fos);
-//            fos.flush();
-//            fos.close();
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
-//    }
 
     public static boolean isFileExists(String filePath){
         File file = new File(filePath);

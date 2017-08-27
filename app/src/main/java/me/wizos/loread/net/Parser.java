@@ -314,10 +314,10 @@ public class Parser {
 
         int i = 0;
         // 数据量大的一方
-//        String articleId;
+        String articleId;
 //        Article article;
         for (Article item : localStarredArticles) {
-            String articleId = item.getId();
+            articleId = item.getId(); // String
             map.put(articleId, 1);
             mapArticle.put(articleId,item);
             KLog.i("【本地star文章】" + articleId);
@@ -325,7 +325,7 @@ public class Parser {
         KLog.d(WithDB.i().getStaredArt().size() + "个");
         // 数据量小的一方
         for (ItemRefs item : remoteStarredRefs) {
-            String articleId = StringUtil.toLongID(item.getId());
+            articleId = StringUtil.toLongID(item.getId()); // String
             Integer cc = map.get( articleId );
 //            KLog.i("【增加star文章】" + articleId + "=" + item.getId());
 //            continue;
@@ -548,10 +548,6 @@ public class Parser {
         parseItemContents(info, new ArticleChanger() {
             @Override
             public Article change(Article article) {
-                KLog.e("----------------[]------" + article.getReadState());
-                if (article.getTitle().contains("有没有相同兴趣爱好")) {
-                    KLog.e("========AAA=======" + article.getReadState());
-                }
                 article.setReadState(API.ART_UNREAD);
                 article.setStarState(API.ART_UNSTAR);
                 return article;
@@ -562,10 +558,6 @@ public class Parser {
         parseItemContents(info, new ArticleChanger() {
             @Override
             public Article change(Article article) {
-                KLog.e("----------------[]------" + article.getReadState());
-                if (article.getTitle().contains("有没有相同兴趣爱好")) {
-                    KLog.e("========AAA=======" + article.getReadState());
-                }
                 article.setReadState(API.ART_UNREAD);
                 article.setStarState(API.ART_STARED);
                 return article;

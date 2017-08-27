@@ -101,11 +101,7 @@ public class TimeUtil {
         return 0;
     }
 
-    //    public static String getPrettyTime(long time) {
-//        Date date = new Date(time);
-//        SimpleDateFormat sdf2 = new SimpleDateFormat("MM.dd");
-//        return sdf2.format(date);
-//    }
+
     public static String getCurrentDateID(int position) {
         Date dateID = new Date(System.currentTimeMillis() + position*24*3600*1000L); // 因为后面算的数目太大，超出其格式 int 的范围，所以加 L 使用 Long 类型
         SimpleDateFormat dateYMD = new SimpleDateFormat("yyyy-MM-dd", Locale.CHINA);

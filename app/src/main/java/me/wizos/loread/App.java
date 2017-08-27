@@ -55,20 +55,27 @@ public class App extends Application{
     public void onCreate() {
         super.onCreate();
         App.instance = this;
-        initTBS();
         initConfig();
-        initRelease(); // 测试时，注释掉
+//        initTBS();
 //        initLeakCanary();
+//        initDebug();
+        initRelease(); // 测试时，注释掉
     }
 
     private void initRelease() {
 //         TEST，正式环境下应该启用
         KLog.init(false);
         CrashReport.initCrashReport(App.i(), "900044326", false); // 测试的时候设为 true
-//        initStetho();
     }
 
-    //  内存泄漏检测工具
+    private void initDebug() {
+//         TEST 环境下应该启用
+        KLog.init(true);
+        CrashReport.initCrashReport(App.i(), "900044326", true); // 测试的时候设为 true
+//        initStetho(); // 用于浏览器调试网络请求
+    }
+
+//  内存泄漏检测工具
 //    private void initLeakCanary() {
 //        if (LeakCanary.isInAnalyzerProcess(this)) {
 //            return;
@@ -167,7 +174,6 @@ public class App extends Application{
 //            // 注意：该数据库连接属于 DaoMaster，所以多个 Session 指的是相同的数据库连接。
 //            daoMaster = new DaoMaster(db);
 //            daoSession = daoMaster.newSession();
-//
         }
         return daoSession;
     }

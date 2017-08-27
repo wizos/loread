@@ -1,7 +1,6 @@
 package me.wizos.loread.data;
 
 import android.support.v4.util.ArrayMap;
-import android.util.SparseArray;
 
 import com.socks.library.KLog;
 
@@ -116,9 +115,29 @@ public class WithDB {
         }
     }
 
+    public Img getImg(String articleId, String src) {
+        List<Img> imgs = imgDao.queryBuilder()
+                .where(ImgDao.Properties.ArticleId.eq(articleId), ImgDao.Properties.Src.eq(src)).listLazy();
+        if (imgs.size() != 0) {
+            return imgs.get(0);
+        } else {
+            return null;
+        }
+    }
+
+    public Img getImg(String src) {
+        List<Img> imgs = imgDao.queryBuilder()
+                .where(ImgDao.Properties.Src.eq(src)).listLazy();
+        if (imgs.size() != 0) {
+            return imgs.get(0);
+        } else {
+            return null;
+        }
+    }
+
     public ArrayMap<Integer, Img> getLossImgs(String articleId) {
         QueryBuilder<Img> q = imgDao.queryBuilder()
-                .where(ImgDao.Properties.ArticleId.eq(articleId), ImgDao.Properties.DownState.eq(0));
+                .where(ImgDao.Properties.ArticleId.eq(articleId), ImgDao.Properties.DownState.eq(API.ImgMeta_Downing));
         List<Img> imgList = q.listLazy();
         ArrayMap<Integer, Img> imgMap = new ArrayMap<>();
         for (Img img : imgList) {
@@ -128,30 +147,23 @@ public class WithDB {
         return imgMap;
     }
 
-    public SparseArray<Img> getLossImg(String articleId) {
-        QueryBuilder<Img> q = imgDao.queryBuilder()
-                .where(ImgDao.Properties.ArticleId.eq(articleId), ImgDao.Properties.DownState.eq(0));
-        List<Img> imgList = q.listLazy();
-        SparseArray<Img> imgMap = new SparseArray<>();
-        for (Img img : imgList) {
-            imgMap.put(img.getNo(), img);
-        }
-        KLog.d("==" + articleId + imgMap.size());
-        return imgMap;
-    }
-
-    public ArrayMap<Integer, Img> getImgs(String articleId) { // ,int imgType
+    public List<Img> getImgs(String articleId) { // ,int imgType
         QueryBuilder<Img> q = imgDao.queryBuilder()
                 .where(ImgDao.Properties.ArticleId.eq(articleId));
-        List<Img> imgList = q.listLazy();
-        ArrayMap<Integer, Img> imgMap = new ArrayMap<>();
-        for (Img img : imgList) {
-            imgMap.put(img.getNo(), img);
-        }
-        KLog.d("==" + articleId + imgMap.size());
-        return imgMap;
+        return q.listLazy();
     }
 
+//    public ArrayMap<Integer, Img> getImgs(String articleId) { // ,int imgType
+//        QueryBuilder<Img> q = imgDao.queryBuilder()
+//                .where(ImgDao.Properties.ArticleId.eq(articleId));
+//        List<Img> imgList = q.listLazy();
+//        ArrayMap<Integer, Img> imgMap = new ArrayMap<>();
+//        for (Img img : imgList) {
+//            imgMap.put(img.getNo(), img);
+//        }
+//        KLog.d("==" + articleId + imgMap.size());
+//        return imgMap;
+//    }
 
     public void saveArticle(Article article) {
         if (article.getId() != null) {
@@ -165,19 +177,6 @@ public class WithDB {
         }
     }
 
-
-    //    public Article getArticle(List articleIds) {
-////        if (articleID == null) {return null;}
-//        List<Article> articles = articleDao.queryBuilder().where(ArticleDao.Properties.Id.eq(articleId)).listLazy();
-//        if ( articles.size() != 0) {
-//            return articles.get(0);
-//        }else {
-//            return null;
-//        }
-//    }
-    public Long hasArticle(String articleName) {
-        return articleDao.queryBuilder().where(ArticleDao.Properties.Title.eq(articleName)).count();
-    }
 
     public Article getArticle(String articleId) {
 //        if (articleID == null) {return null;}
@@ -242,6 +241,14 @@ public class WithDB {
             articleDao.deleteInTx( articles );
         }
     }
+
+    public void delArticleImgs(List<Article> articles) {
+        for (Article article : articles) {
+            imgDao.deleteInTx(getImgs(article.getId()));
+        }
+    }
+
+
 
     /**
      * 获取所有文章

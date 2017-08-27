@@ -218,7 +218,8 @@ public class MainService extends IntentService {
                             ArrayList<ItemRefs> starredRefs = Parser.instance().reStarredRefs();
                             capacity = Parser.instance().reRefs(unreadRefs, starredRefs);
                             if (capacity == -1) {
-                                ToastUtil.showShort("同步时数据出错，请重试");
+//                                ToastUtil.showShort("同步时数据出错，请重试");
+                                sendProcess("同步时数据出错，请重试");
                                 sHandler.sendEmptyMessage(API.F_NoMsg);
                                 break;
                             }
@@ -279,7 +280,7 @@ public class MainService extends IntentService {
                     break;
                 case API.S_STREAM_CONTENTS_STARRED:
                     String continuation = Parser.instance().parseStreamContentsStarred(info); // 可能为空""
-                    KLog.i("【解析所有加星文章1】" + urlState + "---" + continuation);
+                    KLog.i("【解析所有加星文章】" + urlState + "---" + continuation);
                     if (continuation != null) {
                         mNeter.addHeader("c", continuation);
                         sendProcess(getResources().getString(R.string.main_toolbar_hint_sync_all_stared_content));
@@ -334,32 +335,41 @@ public class MainService extends IntentService {
                     clearArticles(WithSet.i().getClearBeforeDay());
                     getNumForArts = 0;
                     break;
-
-
                 case API.S_BITMAP:
                     int imgNo;
                     String articleID;
-
                     articleID = msg.getData().getString("articleID");
                     imgNo = msg.getData().getInt("imgNo");
 
                     Img imgMeta = WithDB.i().getImg(articleID, imgNo);
                     if (imgMeta == null) {
+                        KLog.e("【】【】【】【】【】【】【】" + "未找到图片1");
                         break;
                     }
-                    imgMeta.setDownState(API.ImgState_Over);
+                    imgMeta.setDownState(API.ImgMeta_Downover);
                     WithDB.i().saveImg(imgMeta);
 
                     if (App.currentArticleID != null & App.currentArticleID.equals(articleID)) {
                         Bundle bundle = msg.getData();
                         bundle.putString("imgName", imgMeta.getName());
                         Message message = Message.obtain();
-                        message.what = API.ReplaceImgSrc;
+                        message.what = API.S_BITMAP;
                         message.setData(bundle);
                         App.artHandler.sendMessage(message);
                     }
                     break;
                 case API.F_BITMAP:
+                    articleID = msg.getData().getString("articleID");
+//                    imgNo = msg.getData().getInt("imgNo");
+//                    imgMeta = WithDB.i().getImg(articleID, imgNo);
+                    if (App.currentArticleID != null & App.currentArticleID.equals(articleID)) {
+                        Bundle bundle = msg.getData();
+                        Message message = Message.obtain();
+                        message.what = API.F_BITMAP;
+                        message.setData(bundle);
+                        App.artHandler.sendMessage(message);
+                    }
+                    break;
                     // Note:  图片下载失败的重试逻辑应该放到 neter 中。此处只管结果“下载失败”了，通知具体的 activity 去更换占位图。
                     // TODO: 2017/6/6
             }
@@ -383,6 +393,7 @@ public class MainService extends IntentService {
         KLog.i("清除b" + clearTime + "--" + allArtsBeforeTime.size() + "--" + days);
         FileUtil.deleteHtmlDirList(idListMD5);
         WithDB.i().delArt(allArtsBeforeTime);
+        WithDB.i().delArticleImgs(allArtsBeforeTime);
     }
 
     /**
