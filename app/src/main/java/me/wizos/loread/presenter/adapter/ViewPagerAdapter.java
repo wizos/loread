@@ -3,6 +3,7 @@ package me.wizos.loread.presenter.adapter;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
 import android.net.Uri;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
@@ -36,13 +37,13 @@ public class ViewPagerAdapter extends PagerAdapter { //  implements ViewPager.On
     private ArticleActivity activity;
     private List<Article> dataList;
     private List<X5WebView> mViewHolderList = new ArrayList<>();
-//    private ViewPager viewPager;
+    private ViewPager viewPager;
 
-    public ViewPagerAdapter(ArticleActivity context, ViewPager viewPager, List<Article> dataList, ArticleActivity.ArtHandler artHandler) {
+    public ViewPagerAdapter(ArticleActivity context, ViewPager viewPager, List<Article> dataList) {
         if (null == dataList || dataList.isEmpty()) return;
         this.activity = context;
         this.dataList = dataList;
-//        this.viewPager = viewPager;
+        this.viewPager = viewPager;
     }
 
 
@@ -109,12 +110,30 @@ public class ViewPagerAdapter extends PagerAdapter { //  implements ViewPager.On
         webView.setTag(dataList.get(position).getId()); // 方便在webView onPageFinished 的时候调用
         container.addView(webView);
 
-        webView.postDelayed(new Runnable() {
+        webView.post(new Runnable() {
             @Override
             public void run() {
                 webView.loadDataWithBaseURL(FileUtil.getAbsoluteDir(dataList.get(position).getSaveDir()), StringUtil.getHtmlHeader() + StringUtil.getArticleHtml(dataList.get(position)) + StringUtil.getFooter(), "text/html", "utf-8", null);
             }
-        }, 500);
+        });
+//        if(viewPager.getCurrentItem()==position){
+//            KLog.i("是当前instantiateItem实例" +  position );
+//            webView.post(new Runnable() {
+//                @Override
+//                public void run() {
+//                    webView.loadDataWithBaseURL(FileUtil.getAbsoluteDir(dataList.get(position).getSaveDir()), StringUtil.getHtmlHeader() + StringUtil.getArticleHtml(dataList.get(position)) + StringUtil.getFooter(), "text/html", "utf-8", null);
+//                }
+//            });
+//        }else {
+//            KLog.i("不是当前instantiateItem实例"+ position + viewPager.getCurrentItem() );
+//            webView.postDelayed(new Runnable() {
+//                @Override
+//                public void run() {
+//                    webView.loadDataWithBaseURL(FileUtil.getAbsoluteDir(dataList.get(position).getSaveDir()), StringUtil.getHtmlHeader() + StringUtil.getArticleHtml(dataList.get(position)) + StringUtil.getFooter(), "text/html", "utf-8", null);
+//                }
+//            },1000);
+//        }
+
 
         return webView;
     }
@@ -153,11 +172,9 @@ public class ViewPagerAdapter extends PagerAdapter { //  implements ViewPager.On
 
     private class WebViewClientX extends WebViewClient {
         Context context;
-
         WebViewClientX(Activity activity) {
             context = activity;
         }
-
         @Override
         //  重写此方法表明点击网页里面的链接还是在当前的webview里跳转，不跳到浏览器那边
         public boolean shouldOverrideUrlLoading(WebView view, String url) {
@@ -184,16 +201,24 @@ public class ViewPagerAdapter extends PagerAdapter { //  implements ViewPager.On
          * 而同样的页面在 iPhone 上却是载入相当的快，因为 iPhone 是显示完页面才会触发脚本的执行。所以我们这边的解决方案延迟 JS 脚本的载入
          */
         @Override
-        public void onPageFinished(WebView webView, String url) {
+        public void onPageFinished(final WebView webView, String url) {
             super.onPageFinished(webView, url);
+            webView.getSettings().setBlockNetworkImage(false);
             KLog.e("WebView", "onPageFinished" + (System.currentTimeMillis() - App.time) + "====" + webView.getProgress());
-            webView.loadUrl("javascript:initImgClick()"); // 初始化图片的点击事件
+            webView.post(new Runnable() {
+                @Override
+                public void run() {
+                    webView.loadUrl("javascript:initImgClick()"); // 初始化图片的点击事件
+                }
+            });
+
         }
 
-//        @Override
-//        public void onPageStarted(WebView webView, String var2, Bitmap var3) {
-//            super.onPageStarted(webView,var2,var3);
-//        }
+        @Override
+        public void onPageStarted(WebView webView, String var2, Bitmap var3) {
+            super.onPageStarted(webView, var2, var3);
+            webView.getSettings().setBlockNetworkImage(true);
+        }
 //        @Override
 //        public void onLoadResource(WebView var1, String var2) {
 //        }

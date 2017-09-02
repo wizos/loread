@@ -394,6 +394,8 @@ public class Neter {
                 if (!response.isSuccessful()) {
                     KLog.e("【图片响应失败】" + response);
                     makeMsgForImg(articleID, imgUrl, imgNo, API.F_BITMAP);
+//                    if(response.code()==404){
+//                    }
                 } else {
                     InputStream inputStream;
                     int state = API.S_BITMAP;
@@ -405,7 +407,7 @@ public class Neter {
                     } finally {
                         try {
                             response.body().close();
-                            KLog.e("【图片无响应】" + response);
+                            KLog.e("【关闭图片响应】" + response);
                         } catch (final IOException ex) {
                             KLog.e("Problem while cleaning up.", ex);
                         }

@@ -52,7 +52,6 @@ public class ArticleActivity extends BaseActivity implements View.OnClickListene
     private IconFontView vStar, vRead, vSave;
     //    private NestedScrollView vScrolllayout ; // 这个是为上级顶部，页面滑动至最顶层而做的。目前由于 webview 是动态添加，所以无法用到
     private TextView vArticleNum;
-
     private Article article;
     private static String articleID = "";
 
@@ -62,9 +61,8 @@ public class ArticleActivity extends BaseActivity implements View.OnClickListene
         setContentView(R.layout.activity_article);
         App.artHandler = artHandler;
         mNeter = new Neter(artHandler);
-//        mParser = new Parser();
         initView(); // 初始化界面上的 View，将变量映射到布局上。
-        KLog.d("开始初始化数据");
+
         if (savedInstanceState != null) {
             articleNo = savedInstanceState.getInt("articleNo"); // setSelection 没有滚动效果，直接跳到指定位置。smoothScrollToPosition 有滚动效果的
             articleCount = savedInstanceState.getInt("articleCount");
@@ -72,6 +70,8 @@ public class ArticleActivity extends BaseActivity implements View.OnClickListene
             articleNo = getIntent().getExtras().getInt("articleNo"); // 文章在列表中的位置编号，下标从 0 开始
             articleCount = getIntent().getExtras().getInt("articleCount"); // 列表中所有的文章数目
         }
+        KLog.d("开始初始化数据" + articleNo + "==" + articleCount);
+
         initViewPager();
 
 //        // 配合X5内核使用。避免网页中的视频，上屏幕的时候，可能出现闪烁的情况
@@ -136,6 +136,7 @@ public class ArticleActivity extends BaseActivity implements View.OnClickListene
             // 使用自己包装的 webview
             X5WebView webView = (X5WebView) viewPager.getChildAt(i);
             webView.destroy();
+            webView.freeMemory();
         }
         viewPager.removeAllViews();
         super.onDestroy();
@@ -168,7 +169,7 @@ public class ArticleActivity extends BaseActivity implements View.OnClickListene
     @JavascriptInterface
     public boolean readCachedImage(String src) {
         KLog.e("loread", "Loread", "读取缓存图片");
-        Img imgMeta = WithDB.i().getImg(src);
+        Img imgMeta = WithDB.i().getImg(articleID, src);
         if (imgMeta != null) {
             if (imgMeta.getDownState() == API.ImgMeta_Downover) {
                 return true;
@@ -289,19 +290,14 @@ public class ArticleActivity extends BaseActivity implements View.OnClickListene
     private void imgLoadSuccess(final String imgSrc, final String localSrc) {
         KLog.e("loread", "替换imgLoadSuccess" + article.getSaveDir() + article.getTitle() + "：" + localSrc + "=" + webView);
         if (null == webView) {
-//            Message message = Message.obtain();
-//            message.what = API.S_BITMAP;
-//            message.setData(msg.getData());
-//            artHandler.sendMessageDelayed(message, 1000);
             ToastUtil.showShort("imgLoadSuccess此时webView尽然为空？");
         } else {
-            webView.postDelayed(new Runnable() {
+            webView.post(new Runnable() {
                 @Override
                 public void run() {
                     webView.loadUrl("javascript:onImageLoadSuccess('" + imgSrc + "','" + localSrc + "');");
                 }
-            }, webView.getDelayTime());
-//            webView.loadUrl("javascript:onImageLoadSuccess('" + imgSrc+ "','" + localSrc +"');"); // "+ imgNo+ "," + localSrc +"
+            }); // , webView.getDelayTime()
         }
     }
 
@@ -313,9 +309,6 @@ public class ArticleActivity extends BaseActivity implements View.OnClickListene
         }
     }
 
-
-//    class getImages extends AsyncTask<String, int[], List<InoFeedArticle>>{
-//    }
 
 
     @Override
@@ -377,7 +370,6 @@ public class ArticleActivity extends BaseActivity implements View.OnClickListene
                     break;
                 case API.S_ARTICLE_CONTENTS:
                     Parser.instance().parseArticleContents(info);
-//                    mActivity.get().initData(); // 内容重载
                     break;
                 case API.S_BITMAP:
 //                    imgNo = msg.getData().getInt("imgNo");
@@ -609,7 +601,7 @@ public class ArticleActivity extends BaseActivity implements View.OnClickListene
         viewPager = (ViewPager) findViewById(R.id.art_viewpager);
         viewPager.clearOnPageChangeListeners();
         Tool.setBackgroundColor(viewPager);
-        ViewPagerAdapter viewPagerAdapter = new ViewPagerAdapter(this, viewPager, App.articleList, artHandler);
+        ViewPagerAdapter viewPagerAdapter = new ViewPagerAdapter(this, viewPager, App.articleList);
         viewPager.setAdapter(viewPagerAdapter);
         viewPager.addOnPageChangeListener(new PageChangeListener());
         viewPager.setCurrentItem(articleNo, false); // 本句放到 ViewPagerAdapter 的构造器中是无效的。
@@ -697,14 +689,20 @@ public class ArticleActivity extends BaseActivity implements View.OnClickListene
         if (article.getImgState() != null && !article.getImgState().equals(API.ImgState_Downing)) {
             return;
         }
-        final ArrayMap<Integer, Img> lossImgMap = WithDB.i().getLossImgs(articleID);
-        KLog.e("loread", "initImgDown");
-        artHandler.postDelayed(new Runnable() {
+//        artHandler.postDelayed(new Runnable() {
+//            @Override
+//            public void run() {
+//            }
+//        },500);
+
+        new Thread(new Runnable() {
             @Override
             public void run() {
+                KLog.e("loread", "initImgDown");
+                final ArrayMap<Integer, Img> lossImgMap = WithDB.i().getLossImgs(articleID); // 此处查数据库耗时较大
                 App.mNeter.downImgs(articleID, lossImgMap, FileUtil.getRelativeDir(article.getSaveDir()) + fileTitle + "_files" + File.separator);
             }
-        }, 1000);
+        }).start();
     }
 
 

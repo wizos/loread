@@ -6,7 +6,6 @@ import android.os.Handler;
 
 import com.socks.library.KLog;
 import com.tencent.bugly.crashreport.CrashReport;
-import com.tencent.smtt.sdk.QbSdk;
 
 import java.io.File;
 import java.lang.ref.WeakReference;
@@ -93,23 +92,23 @@ public class App extends Application{
     }
 
 
-    private void initTBS() {
-        //搜本地tbs内核信息并上报服务器，服务器返回结果决定使用哪个内核。
-        KLog.e("初始化x5内核", " initTBS");
-        QbSdk.PreInitCallback cb = new QbSdk.PreInitCallback() {
-            @Override
-            public void onViewInitFinished(boolean arg0) {
-                //x5內核初始化完成的回调，为true表示x5内核加载成功，否则表示x5内核加载失败，会自动切换到系统内核。
-                KLog.e("初始化X5", " onViewInitFinished is " + arg0);
-            }
-            @Override
-            public void onCoreInitFinished() {
-                KLog.e("初始化X5", " onCoreInitFinished ");
-            }
-        };
-        //x5内核初始化接口
-        QbSdk.initX5Environment(getApplicationContext(), cb);
-    }
+//    private void initTBS() {
+//        //搜本地tbs内核信息并上报服务器，服务器返回结果决定使用哪个内核。
+//        KLog.e("初始化x5内核", " initTBS");
+//        QbSdk.PreInitCallback cb = new QbSdk.PreInitCallback() {
+//            @Override
+//            public void onViewInitFinished(boolean arg0) {
+//                //x5內核初始化完成的回调，为true表示x5内核加载成功，否则表示x5内核加载失败，会自动切换到系统内核。
+//                KLog.e("初始化X5", " onViewInitFinished is " + arg0);
+//            }
+//            @Override
+//            public void onCoreInitFinished() {
+//                KLog.e("初始化X5", " onCoreInitFinished ");
+//            }
+//        };
+//        //x5内核初始化接口
+//        QbSdk.initX5Environment(getApplicationContext(), cb);
+//    }
 
     private void initConfig() {
         if (!WithSet.i().isInoreaderProxy()) {
@@ -157,6 +156,7 @@ public class App extends Application{
                 activity.get().finish();
             }
         }
+        System.exit(0);
     }
 
 

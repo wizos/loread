@@ -125,15 +125,15 @@ public class WithDB {
         }
     }
 
-    public Img getImg(String src) {
-        List<Img> imgs = imgDao.queryBuilder()
-                .where(ImgDao.Properties.Src.eq(src)).listLazy();
-        if (imgs.size() != 0) {
-            return imgs.get(0);
-        } else {
-            return null;
-        }
-    }
+//    public Img getImg(String src) {
+//        List<Img> imgs = imgDao.queryBuilder()
+//                .where(ImgDao.Properties.Src.eq(src)).listLazy();
+//        if (imgs.size() != 0) {
+//            return imgs.get(0);
+//        } else {
+//            return null;
+//        }
+//    }
 
     public ArrayMap<Integer, Img> getLossImgs(String articleId) {
         QueryBuilder<Img> q = imgDao.queryBuilder()

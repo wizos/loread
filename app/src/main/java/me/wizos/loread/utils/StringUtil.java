@@ -117,7 +117,11 @@ public class StringUtil {
 
 
     public static String getFooter() { // <script src="file:///android_asset/rich_text_view/text.js"></script>
-        return "</div><div id=\"footerspace\"></div><script src=\"file:///android_asset/rich_text_view/zepto.min.js\"></script><script src=\"file:///android_asset/rich_text_view/lazyload.js\"></script><script src=\"file:///android_asset/rich_text_view/javascript.js\"></script></body></html>";
+        return "<div id=\"footer\"></div>" +
+                "<script src=\"file:///android_asset/rich_text_view/zepto.min.js\"></script>" +
+//                "<script src=\"file:///android_asset/rich_text_view/lazyload.js\"></script>" +
+                "<script src=\"file:///android_asset/rich_text_view/javascript.js\"></script>" +
+                "</body></html>";
     }
     public static String getHtmlHeader() {
         // 获取排版文件路径（支持自定义的文件）
@@ -138,21 +142,21 @@ public class StringUtil {
         }
 
         // 获取脚本函数
-        String script = "<script type=\"text/javascript\">" +
-                "function initImgClick(){" +
-                "var imgList = document.getElementsByTagName(\"img\"); " +
-                "for(var i=0; i<imgList.length; i++) {" +
-                "    imgList[i].no = i;" +
-                "    imgList[i].onclick = function() {" +
-                "        window.JSBridge.onImgClicked( this.no, this.src );  " +
-                "    }  " +
-                "}" +
-                "}" +
-                "</script>";
+//        String script = "<script type=\"text/javascript\">" +
+//                "function initImgClick(){" +
+//                "var imgList = document.getElementsByTagName(\"img\"); " +
+//                "for(var i=0; i<imgList.length; i++) {" +
+//                "    imgList[i].no = i;" +
+//                "    imgList[i].onclick = function() {" +
+//                "        window.JSBridge.onImgClicked( this.no, this.src );  " +
+//                "    }  " +
+//                "}" +
+//                "}" +
+//                "</script>";
         return "<!DOCTYPE html><html><head><meta charset=\"UTF-8\" name=\"viewport\" content=\"width=device-width\">" + // , initial-scale=1.0, maximum-scale=4.0, user-scalable=1
                 "<link rel=\"stylesheet\" type=\"text/css\" href=\"" + typesettingCssPath + "\" />" +
                 "<link rel=\"stylesheet\" type=\"text/css\" href=\"" + themeCssPath + "\" />" +
-                script + "</head><body>";
+                "</head><body>";
     }
 
     private static String getModHtml(Article article, String articleHtml) {

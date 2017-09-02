@@ -64,6 +64,8 @@ public class X5WebView extends WebView {
         webSetting.setCacheMode(WebSettings.LOAD_DEFAULT);
 //        webSetting.setPluginState(WebSettings.PluginState.ON_DEMAND);
         // this.getSettingsExtension().setPageCacheCapacity(IX5WebSettings.DEFAULT_CACHE_CAPACITY);//extension
+
+//        this.evaluateJavascript();//  Android 4.4之后使用evaluateJavascript调用有返回值的JS方法
     }
 
     private class WebViewDownLoadListener implements DownloadListener {
@@ -100,7 +102,7 @@ public class X5WebView extends WebView {
 
     @Override
     public void destroy() {
-//        loadDataWithBaseURL(null, "", "text/html", "utf-8", null);
+        loadDataWithBaseURL(null, "", "text/html", "utf-8", null);
         clearHistory();
         removeAllViews();
         setWebViewClient(null);
@@ -136,7 +138,7 @@ public class X5WebView extends WebView {
     public long getDelayTime() {
         long currentTimeMillis = System.currentTimeMillis();
         long delayTime;
-        int duringTime = 300;
+        int duringTime = 2000;
         /* 方法一：细化为2个阶段
         // 1,currentTimeMillis - delayTimestamp > 0
          nextDelayTimestamp = currentTimeMillis + 800

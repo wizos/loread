@@ -32,7 +32,9 @@ public class HttpUtil {
     private static final Dispatcher dispatcher = new Dispatcher();
     static{
         KLog.e("又来了一个Http链接，当前线程为：" + Thread.currentThread() + "。当前实例为");
-        dispatcher.setMaxRequests(9);
+        dispatcher.setMaxRequests(3);
+        dispatcher.setMaxRequestsPerHost(3);
+        mOkHttpClient.setDispatcher(dispatcher);
         mOkHttpClient.setConnectTimeout(30, TimeUnit.SECONDS); // 初始为30
         mOkHttpClient.setReadTimeout(60, TimeUnit.SECONDS);// 初始为30
         mOkHttpClient.setWriteTimeout(60, TimeUnit.SECONDS);// 初始为30
@@ -45,7 +47,6 @@ public class HttpUtil {
      */
     public static void enqueue(Request request, Callback responseCallback){
 //        mOkHttpClient.networkInterceptors().add(new StethoInterceptor());
-//        KLog.d("【】【】【】【】");
         mOkHttpClient.newCall(request).enqueue(responseCallback);
     }
 

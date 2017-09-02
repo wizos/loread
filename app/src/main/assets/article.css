@@ -18,6 +18,8 @@ body {
     font-size: 16px;
     line-height: 1.6;
     margin: 0 auto;
+    word-wrap:break-word; /*自动换行*/
+    word-break:break-all;
 }
 /*    color: #333;   */
 /*body > *:first-child {

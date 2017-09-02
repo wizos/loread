@@ -79,9 +79,11 @@ dependencies {
     // 悬停抽屉
     compile 'com.yinglan.scrolllayout:scrolllayout:1.0.2'
 
-    // 腾讯浏览器内核
-    compile files('libs/tbs.jar') // v3.1.0.1034
+    // 日志工具
     compile files('libs/klog.jar')
+
+    // 腾讯浏览器内核
+//    compile files('libs/tbs.jar') // v3.1.0.1034
 
     // 外部的网络监测包
     //    compile files('libs/stetho-1.3.1.jar')

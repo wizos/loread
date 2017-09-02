@@ -398,7 +398,6 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
         slv.setOnListItemClickListener(new SlideAndDragListView.OnListItemClickListener() {
             @Override
             public void onListItemClick(View v, int position) {
-                KLog.i("点击了");
                 if(position==-1){return;}
                 String articleID = App.articleList.get(position).getId();
                 Intent intent = new Intent(MainActivity.this , ArticleActivity.class);
@@ -406,6 +405,7 @@ public class MainActivity extends BaseActivity implements SwipeRefresh.OnRefresh
                 intent.putExtra("articleNo", position); // 下标从 0 开始
                 intent.putExtra("articleCount", App.articleList.size());
                 startActivityForResult(intent, 0);
+                KLog.i("点击了" + articleID + position + "-" + App.articleList.size());
             }
         });
         slv.setOnSlideListener(new SlideAndDragListView.OnSlideListener() {
