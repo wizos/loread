@@ -101,6 +101,7 @@
             android:layout_alignParentTop="true"
             android:visibility="gone"
             tools:visibility="visible"
+            tools:ignore="ContentDescription"
             android:src="@drawable/ic_vector_unread" />
         <!--android:maxWidth="80dp"-->
         <!--android:maxHeight="60dp"-->
@@ -141,8 +142,7 @@
     <View
         android:id="@+id/main_slv_item_divider"
         android:layout_width="match_parent"
-        android:layout_height="6dp"
+        android:layout_height="0.5dp"
         android:layout_below="@id/main_slv_item_info"
-        android:background="?attr/lv_item_divider">
-    </View>
+        android:background="?attr/lv_item_divider" />
 </RelativeLayout>

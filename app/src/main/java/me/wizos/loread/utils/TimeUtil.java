@@ -1,5 +1,7 @@
 package me.wizos.loread.utils;
 
+import com.socks.library.KLog;
+
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
@@ -65,10 +67,6 @@ public class TimeUtil {
     /**
      * 获取当前时间，并转换为数据库次数表中需要的时间
      */
-
-
-
-
     public static int getCurrentTime() {
         Calendar currentDate = new GregorianCalendar();
         int hour = currentDate.get(Calendar.HOUR_OF_DAY);
@@ -101,6 +99,12 @@ public class TimeUtil {
         return 0;
     }
 
+    public static int getCurrentHour() {
+        Calendar currentDate = new GregorianCalendar();
+        int hour = currentDate.get(Calendar.HOUR_OF_DAY);
+        KLog.d("当前的小时为" + hour);
+        return hour;
+    }
 
     public static String getCurrentDateID(int position) {
         Date dateID = new Date(System.currentTimeMillis() + position*24*3600*1000L); // 因为后面算的数目太大，超出其格式 int 的范围，所以加 L 使用 Long 类型

@@ -4,6 +4,8 @@ import com.google.gson.annotations.SerializedName;
 
 import java.util.ArrayList;
 
+import me.wizos.loread.bean.gson.son.ItemRefs;
+
 /**
  * Created by Wizos on 2016/3/10.
  */

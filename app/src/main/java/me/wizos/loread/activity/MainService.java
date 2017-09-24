@@ -21,8 +21,8 @@ import me.wizos.loread.R;
 import me.wizos.loread.bean.Article;
 import me.wizos.loread.bean.Img;
 import me.wizos.loread.bean.RequestLog;
-import me.wizos.loread.bean.gson.ItemRefs;
 import me.wizos.loread.bean.gson.Sub;
+import me.wizos.loread.bean.gson.son.ItemRefs;
 import me.wizos.loread.data.WithDB;
 import me.wizos.loread.data.WithSet;
 import me.wizos.loread.net.API;
@@ -119,7 +119,10 @@ public class MainService extends IntentService {
     }
 
 
-    private int urlState = 0, capacity, getNumForArts = 0, numOfFailure = 0;
+    private int urlState = 0;
+    private int readySyncArtsCapacity; // 需要同步文章内容的数量
+    private int alreadySyncedArtsNum = 0; // 同步了文章内容的数量
+    private int numOfFailure = 0;
     //    private int unreadRefsSize, starredRefsSize;
     private ArrayList<ItemRefs> afterItemRefs = new ArrayList<>();
     private Neter mNeter;
@@ -161,33 +164,34 @@ public class MainService extends IntentService {
                     if (syncRequestLog()) {
                         break;
                     }
-//                    sHandler.sendEmptyMessage(API.SUCCESS);
                     // 为了得到分组名，及排序
-                    // updateTip，updateView，updateData
                     sendProcess(getResources().getString(R.string.main_toolbar_hint_sync_tag));
 //                    mHandler.sendEmptyMessage( 0 ); // TODO: 2017/1/8
                     mNeter.getWithAuth(API.HOST + API.U_TAGS_LIST);
                     KLog.i("【开始同步分组信息：TAGS_LIST】");
                     break;
                 case API.S_TAGS_LIST: // 分组列表
-                    Parser.instance().parseTagList(info);
+                    Parser.instance().parseTagList2(info);
                     if (WithSet.i().isOrderTagFeed()) {
                         sendProcess(getResources().getString(R.string.main_toolbar_hint_sync_tag_order));
-                        mNeter.getWithAuth(API.HOST + API.U_STREAM_PREFS);// 有了这份数据才可以对 tagslist feedlist 进行排序，并储存下来
+                        mNeter.getWithAuth(API.HOST + API.U_STREAM_PREFS);// TEST:  测试获取feed // 有了这份数据才可以对 tagslist feedlist 进行排序，并储存下来
                     } else {
                         Parser.instance().orderTags();
                         sendProcess(getResources().getString(R.string.main_toolbar_hint_sync_unread_count));
-                        mNeter.getWithAuth(API.HOST + API.U_UNREAD_COUNTS);
+                        mNeter.getWithAuth(API.HOST + API.U_SUSCRIPTION_LIST);
+//                        mNeter.getWithAuth(API.HOST + API.U_UNREAD_COUNTS);// TEST:  测试获取feed
                     }
                     break;
-                case API.S_SUBSCRIPTION_LIST: // 订阅列表
+                case API.S_SUBSCRIPTION_LIST: // 订阅列表，这个目前应该没有被用到过 mNeter.getWithAuth(API.HOST + API.U_SUSCRIPTION_LIST);
                     ArrayList<Sub> subs = Parser.instance().parseSubscriptionList(info);
-                    Parser.instance().updateArticles(subs);
+//                    Parser.instance().updateArticles(subs);
+                    mNeter.getWithAuth(API.HOST + API.U_UNREAD_COUNTS);
                     break;
                 case API.S_STREAM_PREFS:
                     Parser.instance().parseStreamPrefList(info, App.mUserID);
                     sendProcess(getResources().getString(R.string.main_toolbar_hint_sync_unread_count));
-                    mNeter.getWithAuth(API.HOST + API.U_UNREAD_COUNTS);
+                    mNeter.getWithAuth(API.HOST + API.U_SUSCRIPTION_LIST);
+//                    mNeter.getWithAuth(API.HOST + API.U_UNREAD_COUNTS); // TEST:  测试获取feed
                     break;
                 case API.S_UNREAD_COUNTS:
                     Parser.instance().parseUnreadCounts(info);
@@ -216,14 +220,14 @@ public class MainService extends IntentService {
                         } else {
                             ArrayList<ItemRefs> unreadRefs = Parser.instance().reUnreadRefs();
                             ArrayList<ItemRefs> starredRefs = Parser.instance().reStarredRefs();
-                            capacity = Parser.instance().reRefs(unreadRefs, starredRefs);
-                            if (capacity == -1) {
+                            readySyncArtsCapacity = Parser.instance().reRefs(unreadRefs, starredRefs);
+                            if (readySyncArtsCapacity == -1) {
 //                                ToastUtil.showShort("同步时数据出错，请重试");
                                 sendProcess("同步时数据出错，请重试");
                                 sHandler.sendEmptyMessage(API.F_NoMsg);
                                 break;
                             }
-                            afterItemRefs = new ArrayList<>(capacity);
+                            afterItemRefs = new ArrayList<>(readySyncArtsCapacity);
                             sHandler.sendEmptyMessage(API.S_ITEM_CONTENTS);// 开始获取所有列表的内容
                             urlState = 1;
                             KLog.i("【BaseActivity 获取 reUnreadList】");
@@ -243,7 +247,7 @@ public class MainService extends IntentService {
                         Parser.instance().parseItemContentsReadStarred(info);
                     }
 
-                    sendProcess(getResources().getString(R.string.main_toolbar_hint_sync_article_content, getNumForArts, capacity));
+                    sendProcess(getResources().getString(R.string.main_toolbar_hint_sync_article_content, alreadySyncedArtsNum, readySyncArtsCapacity));
 
                     ArrayList<ItemRefs> beforeItemRefs = new ArrayList<>(afterItemRefs);
                     int num = beforeItemRefs.size();
@@ -261,7 +265,7 @@ public class MainService extends IntentService {
                             afterItemRefs.remove(0);
 //                            KLog.i("【获取 ITEM_CONTENTS 3】" + num + "--" + afterItemRefs.size());
                         }
-                        getNumForArts = getNumForArts + num;
+                        alreadySyncedArtsNum = alreadySyncedArtsNum + num;
                         mNeter.postWithAuth(API.HOST + API.U_ITEM_CONTENTS);
                     } else {
                         if (urlState == 0) {
@@ -295,7 +299,9 @@ public class MainService extends IntentService {
 //                    KLog.d("==" + logTime + info );
                     delRequestLog(logTime);
                     if (!info.equals("OK")) {
-                        mNeter.forData(url, API.request, logTime);
+                        // TEST:  
+//                        mNeter.forData(url, API.request, logTime);
+                        mNeter.exeRequest(API.request, logTime);
                         KLog.i("返回的不是 ok");
                     }
 //                    if (!hadSyncLogRequest && requestMap.size() == 0) {
@@ -303,11 +309,15 @@ public class MainService extends IntentService {
 //                        hadSyncLogRequest = true;
 //                    }
                     break;
+                // 这个似乎没有用到，可以弃用
                 case API.S_Contents:
                     Parser.instance().parseStreamContents(info);
+                    ToastUtil.showShort("API.S_Contents 似乎没有用到");
                     break;
+                // 这个似乎没有用到，可以弃用
                 case 88:
                     Parser.instance().parseStreamContents(info);
+                    ToastUtil.showShort("API.88 似乎没有用到");
                     break;
                 case API.F_Request:
                 case API.F_Response:
@@ -319,7 +329,7 @@ public class MainService extends IntentService {
                         break;
                     }
                     sHandler.sendEmptyMessage(API.F_NoMsg);
-                    getNumForArts = 0;
+                    alreadySyncedArtsNum = 0;
                     break;
                 case API.F_NoMsg:
                     sendFailure();
@@ -327,13 +337,13 @@ public class MainService extends IntentService {
                         ToastUtil.showShort("修改该文章的状态失败");
                         saveRequestLog(msg.getData().getLong("logTime"));
                     }
-                    getNumForArts = 0;
+                    alreadySyncedArtsNum = 0;
                     break;
                 case API.SUCCESS: // 文章获取完成
                     sendSuccess();
                     moveArticles();
                     clearArticles(WithSet.i().getClearBeforeDay());
-                    getNumForArts = 0;
+                    alreadySyncedArtsNum = 0;
                     break;
                 case API.S_BITMAP:
                     int imgNo;
@@ -377,49 +387,59 @@ public class MainService extends IntentService {
         }
     }
 
-    public void clearArticles(int days) {
-        long clearTime = System.currentTimeMillis() - days * 24 * 3600 * 1000L;
-        List<Article> allArtsBeforeTime = WithDB.i().getArtInReadedUnstarLtTime(clearTime);
-        KLog.i("清除" + clearTime + "--" + allArtsBeforeTime.size() + "--" + days);
-        ToastUtil.showShort("清除 " + days + " 天前的 " + allArtsBeforeTime.size() + " 篇文章");
+    public void clearArticles(final int days) {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                long clearTime = System.currentTimeMillis() - days * 24 * 3600 * 1000L;
+                List<Article> allArtsBeforeTime = WithDB.i().getArtInReadedUnstarLtTime(clearTime);
+                KLog.i("清除" + clearTime + "--" + allArtsBeforeTime.size() + "--" + days);
+//                ToastUtil.showShort("清除 " + days + " 天前的 " + allArtsBeforeTime.size() + " 篇文章");
 
-        if (allArtsBeforeTime.size() == 0) {
-            return;
-        }
-        ArrayList<String> idListMD5 = new ArrayList<>(allArtsBeforeTime.size());
-        for (Article article : allArtsBeforeTime) {
-            idListMD5.add(StringUtil.stringToMD5(article.getId()));
-        }
-        KLog.i("清除b" + clearTime + "--" + allArtsBeforeTime.size() + "--" + days);
-        FileUtil.deleteHtmlDirList(idListMD5);
-        WithDB.i().delArt(allArtsBeforeTime);
-        WithDB.i().delArticleImgs(allArtsBeforeTime);
+                if (allArtsBeforeTime.size() == 0) {
+                    return;
+                }
+                ArrayList<String> idListMD5 = new ArrayList<>(allArtsBeforeTime.size());
+                for (Article article : allArtsBeforeTime) {
+                    idListMD5.add(StringUtil.stringToMD5(article.getId()));
+                }
+                KLog.i("清除b" + clearTime + "--" + allArtsBeforeTime.size() + "--" + days);
+                FileUtil.deleteHtmlDirList(idListMD5);
+                WithDB.i().delArt(allArtsBeforeTime);
+                WithDB.i().delArticleImgs(allArtsBeforeTime);
+            }
+        }).start();
     }
 
     /**
      * 移动“保存且已读”的文章至一个新的文件夹
      */
     public void moveArticles() {
-        List<Article> boxReadArts = WithDB.i().getArtInReadedBox();
-        List<Article> storeReadArts = WithDB.i().getArtInReadedStore();
-        KLog.i("移动文章" + boxReadArts.size() + "=" + storeReadArts.size());
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                List<Article> boxReadArts = WithDB.i().getArtInReadedBox();
+                List<Article> storeReadArts = WithDB.i().getArtInReadedStore();
+                KLog.i("移动文章" + boxReadArts.size() + "=" + storeReadArts.size());
 
-        for (Article article : boxReadArts) {
-            FileUtil.moveFile(App.boxRelativePath + article.getTitle() + ".html", App.boxReadRelativePath + article.getTitle() + ".html");// 移动文件
-            FileUtil.moveDir(App.boxRelativePath + article.getTitle() + "_files", App.boxReadRelativePath + article.getTitle() + "_files");// 移动目录
-            article.setCoverSrc(FileUtil.getAbsoluteDir("boxRead") + article.getTitle() + "_files" + File.separator + StringUtil.getFileNameExtByUrl(article.getCoverSrc()));
-            article.setSaveDir(API.SAVE_DIR_BOXREAD);
-            KLog.i("移动了A");
-        }
-        WithDB.i().saveArticleList(boxReadArts);
-        for (Article article : storeReadArts) {
-            FileUtil.moveFile(App.storeRelativePath + article.getTitle() + ".html", App.storeReadRelativePath + article.getTitle() + ".html");// 移动文件
-            FileUtil.moveDir(App.storeRelativePath + article.getTitle() + "_files", App.storeReadRelativePath + article.getTitle() + "_files");// 移动目录
-            article.setCoverSrc(FileUtil.getAbsoluteDir("storeRead") + article.getTitle() + "_files" + File.separator + StringUtil.getFileNameExtByUrl(article.getCoverSrc()));
-            article.setSaveDir(API.SAVE_DIR_STOREREAD);
-            KLog.i("移动了B" + App.storeRelativePath + article.getTitle() + "_files |||| " + App.storeReadRelativePath + article.getTitle() + "_files");
-        }
-        WithDB.i().saveArticleList(storeReadArts);
+                for (Article article : boxReadArts) {
+                    FileUtil.moveFile(App.boxRelativePath + article.getTitle() + ".html", App.boxReadRelativePath + article.getTitle() + ".html");// 移动文件
+                    FileUtil.moveDir(App.boxRelativePath + article.getTitle() + "_files", App.boxReadRelativePath + article.getTitle() + "_files");// 移动目录
+                    article.setCoverSrc(FileUtil.getAbsoluteDir("boxRead") + article.getTitle() + "_files" + File.separator + StringUtil.getFileNameExtByUrl(article.getCoverSrc()));
+                    article.setSaveDir(API.SAVE_DIR_BOXREAD);
+                    KLog.i("移动了A");
+                }
+                WithDB.i().saveArticleList(boxReadArts);
+                for (Article article : storeReadArts) {
+                    FileUtil.moveFile(App.storeRelativePath + article.getTitle() + ".html", App.storeReadRelativePath + article.getTitle() + ".html");// 移动文件
+                    FileUtil.moveDir(App.storeRelativePath + article.getTitle() + "_files", App.storeReadRelativePath + article.getTitle() + "_files");// 移动目录
+                    article.setCoverSrc(FileUtil.getAbsoluteDir("storeRead") + article.getTitle() + "_files" + File.separator + StringUtil.getFileNameExtByUrl(article.getCoverSrc()));
+                    article.setSaveDir(API.SAVE_DIR_STOREREAD);
+                    KLog.i("移动了B" + App.storeRelativePath + article.getTitle() + "_files |||| " + App.storeReadRelativePath + article.getTitle() + "_files");
+                }
+                WithDB.i().saveArticleList(storeReadArts);
+            }
+        }).start();
     }
 
     private void sendSuccess() {
@@ -500,7 +520,7 @@ public class MainService extends IntentService {
             mNeter.addBody(StringUtil.formStringToParamList(bodyParamString));
             KLog.d("同步错误：" + headParamString + " = " + bodyParamString);
             if (requestLog.getMethod().equals("post")) {
-                mNeter.postWithAuth(requestLog.getUrl(), requestLog.getLogTime());
+                mNeter.postWithAuth(requestLog.getUrl()); // , requestLog.getLogTime()
             }
         }
         WithDB.i().delRequestListAll();  // TODO: 2016/10/20 不能先删除，可能删除后，手机退出，那么这些记录就丢失了
@@ -511,7 +531,6 @@ public class MainService extends IntentService {
 
 //    private boolean hadSyncLogRequest = true;
 
-//
 //    private ArrayMap<String,ArrayList> imgRecord;
 //    private ArrayMap<Integer,SrcPair> lossSrcList, obtainSrcList ;
 //

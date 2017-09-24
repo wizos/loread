@@ -1,4 +1,4 @@
-package me.wizos.loread.presenter.adapter;
+package me.wizos.loread.adapter;
 
 import android.app.Activity;
 import android.content.Context;
@@ -6,7 +6,6 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.support.v4.view.PagerAdapter;
-import android.support.v4.view.ViewPager;
 import android.view.View;
 import android.view.ViewGroup;
 import android.webkit.WebView;
@@ -23,7 +22,7 @@ import me.wizos.loread.bean.Article;
 import me.wizos.loread.data.WithSet;
 import me.wizos.loread.utils.FileUtil;
 import me.wizos.loread.utils.StringUtil;
-import me.wizos.loread.view.X5WebView;
+import me.wizos.loread.view.WebViewS;
 
 //import android.webkit.WebSettings;
 //import android.webkit.WebView;
@@ -36,14 +35,14 @@ import me.wizos.loread.view.X5WebView;
 public class ViewPagerAdapter extends PagerAdapter { //  implements ViewPager.OnPageChangeListener
     private ArticleActivity activity;
     private List<Article> dataList;
-    private List<X5WebView> mViewHolderList = new ArrayList<>();
-    private ViewPager viewPager;
+    private List<WebViewS> mViewHolderList = new ArrayList<>();
+//    private ViewPager viewPager;
 
-    public ViewPagerAdapter(ArticleActivity context, ViewPager viewPager, List<Article> dataList) {
+    public ViewPagerAdapter(ArticleActivity context, List<Article> dataList) {
         if (null == dataList || dataList.isEmpty()) return;
         this.activity = context;
         this.dataList = dataList;
-        this.viewPager = viewPager;
+//        this.viewPager = viewPager;
     }
 
 
@@ -96,16 +95,21 @@ public class ViewPagerAdapter extends PagerAdapter { //  implements ViewPager.On
     // Note: 做了两件事，第一：将当前视图添加到container中，第二：返回当前View
     @Override
     public Object instantiateItem(ViewGroup container, final int position) {
-        final X5WebView webView;
+        final WebViewS webView;
+        if (container.getChildCount() == 1 && !WithSet.i().isLeftRightSlideArticle()) {
+            KLog.i("【instantiateItem2】 " + "实例position：" + position + "==" + container.getChildCount());
+            return null;
+        }
         if (mViewHolderList.size() > 0) {
+            KLog.d("获取旧的webview" + mViewHolderList.size());
             webView = mViewHolderList.get(0);
             mViewHolderList.remove(0);
         } else {
-            webView = new X5WebView(activity);
+            webView = new WebViewS(activity);
             webView.setWebViewClient(new WebViewClientX(activity));
             KLog.e("webView：" + webView);
         }
-        KLog.i("【instantiateItem】 " + "实例position：" + position + "==" + webView);
+        KLog.i("【instantiateItem】 " + "实例position：" + position + "==" + webView + "+" + container.getChildCount());
         webView.setId(position); // 方便在其他地方调用 viewPager.findViewById 来找到 webView
         webView.setTag(dataList.get(position).getId()); // 方便在webView onPageFinished 的时候调用
         container.addView(webView);
@@ -116,25 +120,6 @@ public class ViewPagerAdapter extends PagerAdapter { //  implements ViewPager.On
                 webView.loadDataWithBaseURL(FileUtil.getAbsoluteDir(dataList.get(position).getSaveDir()), StringUtil.getHtmlHeader() + StringUtil.getArticleHtml(dataList.get(position)) + StringUtil.getFooter(), "text/html", "utf-8", null);
             }
         });
-//        if(viewPager.getCurrentItem()==position){
-//            KLog.i("是当前instantiateItem实例" +  position );
-//            webView.post(new Runnable() {
-//                @Override
-//                public void run() {
-//                    webView.loadDataWithBaseURL(FileUtil.getAbsoluteDir(dataList.get(position).getSaveDir()), StringUtil.getHtmlHeader() + StringUtil.getArticleHtml(dataList.get(position)) + StringUtil.getFooter(), "text/html", "utf-8", null);
-//                }
-//            });
-//        }else {
-//            KLog.i("不是当前instantiateItem实例"+ position + viewPager.getCurrentItem() );
-//            webView.postDelayed(new Runnable() {
-//                @Override
-//                public void run() {
-//                    webView.loadDataWithBaseURL(FileUtil.getAbsoluteDir(dataList.get(position).getSaveDir()), StringUtil.getHtmlHeader() + StringUtil.getArticleHtml(dataList.get(position)) + StringUtil.getFooter(), "text/html", "utf-8", null);
-//                }
-//            },1000);
-//        }
-
-
         return webView;
     }
 
@@ -144,8 +129,8 @@ public class ViewPagerAdapter extends PagerAdapter { //  implements ViewPager.On
     public void destroyItem(ViewGroup container, int position, Object object) {
         KLog.i("【destroyItem】 " + "当前position：" + position);
         container.removeView((View) object);
-        ((X5WebView) object).clear();
-        mViewHolderList.add((X5WebView) object);
+        ((WebViewS) object).clear();
+        mViewHolderList.add((WebViewS) object);
     }
 
     @Override
@@ -172,9 +157,11 @@ public class ViewPagerAdapter extends PagerAdapter { //  implements ViewPager.On
 
     private class WebViewClientX extends WebViewClient {
         Context context;
+
         WebViewClientX(Activity activity) {
             context = activity;
         }
+
         @Override
         //  重写此方法表明点击网页里面的链接还是在当前的webview里跳转，不跳到浏览器那边
         public boolean shouldOverrideUrlLoading(WebView view, String url) {

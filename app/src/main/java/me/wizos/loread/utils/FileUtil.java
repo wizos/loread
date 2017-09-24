@@ -230,12 +230,12 @@ public class FileUtil {
     /**
      * 此方法在使用完InputStream后会关闭它。
      *
-     * @param is
-     * @param filePath
+     * @param is 输入流
+     * @param filePath 文件路径
      * @throws IOException
      */
     public static boolean saveFromStream( InputStream is, String filePath) throws IOException {
-        KLog.e("saveFromStream", "当前线程为：" + Thread.currentThread().getId() + Thread.currentThread().getName() + "==" + filePath);
+        KLog.e("saveFromStream", "当前线程为：" + Thread.currentThread().getId() + "--" + Thread.currentThread().getName() + "==" + filePath);
         File file = new File(filePath);
         BufferedInputStream bis = new BufferedInputStream(is);
         FileOutputStream os = null;

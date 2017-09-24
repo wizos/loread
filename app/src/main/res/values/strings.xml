@@ -56,7 +56,14 @@
 
 
     <string name="setting_scroll_mark_title">滚动标记为已读</string>
-    <string name="setting_scroll_mark_tips">开启后，左滑置为未读</string>
+    <string name="setting_scroll_mark_tips">开启后，滚出屏幕的文章自动被标记为未读</string>
+
+    <string name="setting_auto_toggle_theme_title">自动切换白天/黑夜主题</string>
+    <string name="setting_auto_toggle_theme_tips">早上7点至晚20点开启白天主题</string>
+
+    <string name="setting_left_right_slide_title">文章页左右切换</string>
+    <string name="setting_left_right_slide_tips">开启后，在文章页左右滑动可直接切换文章</string>
+
     <string name="setting_down_img_title">省流量下载图片</string>
     <string name="setting_down_img_tips">只在 WiFi 时下载图片</string>
     <string name="setting_inoreader_proxy_title">Inoreader 代理</string>
@@ -109,6 +116,14 @@
     <string name="font_main">&#xe60c;</string>
     <string name="font_tag_class">&#xe7c4;</string>
 
+    <string name="font_expand">&#xe6a6;</string>
+    <string name="font_collapse">&#xe6a8;</string>
+
+    <string name="font_list_stared">&#xe617;</string>
+    <string name="font_list_unstar">&#xe614;</string>
+
+    <string name="font_list_reading">&#xe612;</string>
+    <string name="font_list_unread">&#xe613;</string>
 
     <!--<string name="article_activity_author_format">作者 | %1$s</string>-->
     <!--<string name="article_activity_time_format">发布 | %1$s</string>-->

@@ -26,4 +26,6 @@
 
     <attr name="tag_slv_item_icon" format="reference|color"/>
 
+    <attr name="bottombar_divider" format="reference|color" />
+
 </resources>

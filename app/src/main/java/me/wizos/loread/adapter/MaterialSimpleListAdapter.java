@@ -1,4 +1,4 @@
-package me.wizos.loread.presenter.adapter;
+package me.wizos.loread.adapter;
 
 import android.content.Context;
 import android.graphics.PorterDuff;

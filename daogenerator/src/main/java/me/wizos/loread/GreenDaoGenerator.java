@@ -11,7 +11,7 @@ public class GreenDaoGenerator {
         // http://www.open-open.com/lib/view/open1438065400878.html
         // 现在创建一个用于添加实体（Entity）的模式（Schema）对象，两个参数分别代表：数据库版本号与自动生成代码的包路径。
         // 如果要分别指定生成的 Bean 与 DAO 类所在的目录，只要：
-        Schema schema = new Schema(2, "me.wizos.loread.bean");
+        Schema schema = new Schema(4, "me.wizos.loread.bean");
         schema.setDefaultJavaPackageDao("me.wizos.loread.data.dao");
 
         // 模式（Schema）同时也拥有两个默认的 flags，分别用来标示 entity 是否是 activie 以及是否使用 keep sections。
@@ -61,7 +61,7 @@ public class GreenDaoGenerator {
         Entity feed = schema.addEntity("Feed");
         feed.addStringProperty("id").notNull().primaryKey();
         feed.addStringProperty("title").notNull();
-        Property categoryid = feed.addStringProperty("categoryid").getProperty();
+        Property feedCategoryid = feed.addStringProperty("categoryid").getProperty();
         feed.addStringProperty("categorylabel");
         feed.addStringProperty("sortid");
         feed.addLongProperty("firstitemmsec");
@@ -78,6 +78,7 @@ public class GreenDaoGenerator {
         article.addStringProperty("title");
         article.addLongProperty("published");
         article.addLongProperty("updated");
+        article.addLongProperty("starred"); // 新增的加星时间排序
         article.addStringProperty("enclosure");
         article.addStringProperty("canonical");
         article.addStringProperty("alternate");
@@ -94,15 +95,15 @@ public class GreenDaoGenerator {
         article.addStringProperty("originHtmlUrl");
 
 
-        article.addToOne(feed, articleCategory);
-        ToMany feedToItems = feed.addToMany(article, articleCategory);
-        feedToItems.setName("items");
-        feedToItems.orderDesc(articleTimestamp);
+//        article.addToOne(feed, articleCategory); //Note: 改了，但是还未生效（未同步）
+        ToMany feedToArticles = feed.addToMany(article, articleCategory);
+        feedToArticles.setName("items");
+        feedToArticles.orderDesc(articleTimestamp);
 
 
-        ToMany tagTofeeds = tag.addToMany(feed, categoryid);
+        ToMany tagTofeeds = tag.addToMany(feed, feedCategoryid);
         tagTofeeds.setName("feeds");
-        tagTofeeds.orderDesc(categoryid);
+        tagTofeeds.orderDesc(feedCategoryid);
         // 与在 Java 中使用驼峰命名法不同，默认数据库中的命名是使用大写和下划线来分割单词的。
         // For example, a property called “creationDate” will become a database column “CREATION_DATE”.
         // 表关系 imgId，imgNo，imgName，imgSrc，articleId，downState

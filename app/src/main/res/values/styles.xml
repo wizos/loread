@@ -16,20 +16,25 @@
         <!--<item name="colorPrimary">@color/main_day_dark</item>-->
         <!--<item name="colorPrimaryDark">@color/main_day_dark</item>-->
         <item name="root_view_bg">@color/white</item>
+        // white_screen_bg
         <item name="topbar_bg">@color/main_day_dark</item>
         <item name="topbar_fg">@color/white</item>
 
-        <item name="bottombar_bg">@color/white</item>
+        <item name="bottombar_divider">@color/white_bottombar_divider</item>
+        // 测试新的淡雅主题
+
+        <item name="bottombar_bg">@color/white_toolbar_bg</item>
         <item name="bottombar_fg">@color/main_day_light</item>
 
-        <item name="lv_item_bg">@color/white</item>
+        <item name="lv_item_bg">@color/white_screen_bg</item>
         <item name="lv_item_fg">@color/main_day_dark</item>
 
         <item name="tag_slv_item_icon">@color/main_day_dark</item>
         <item name="lv_item_title_color">@color/main_day_dark</item>
         <item name="lv_item_desc_color">@color/main_day_light</item>
         <item name="lv_item_info_color">@color/main_day_info</item>
-        <item name="lv_item_divider">@color/light_lv_divider</item>
+        <item name="lv_item_divider">@color/white_bottombar_divider</item>
+        // light_lv_divider
 
         <item name="art_title">@color/main_day_dark</item>
         <item name="art_feed">@color/main_day_light</item>
@@ -50,6 +55,8 @@
         <item name="root_view_bg">@color/article_dark_background</item>
         <item name="topbar_bg">@color/dark_foreground</item>
         <item name="topbar_fg">@color/main_night_dark</item>
+
+        <item name="bottombar_divider">@color/black_lv_divider</item>
 
         <item name="bottombar_bg">@color/article_dark_background</item>
         <item name="bottombar_fg">@color/main_night_info</item>

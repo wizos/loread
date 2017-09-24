@@ -159,7 +159,8 @@ public final class Colorful {
 				setter.setValue(curTheme, themeId);
 			}
 		}
-		/**
+
+        /**
 		 * 我新加的 方法一
 		 * 刷新 StatusBar
 		 */

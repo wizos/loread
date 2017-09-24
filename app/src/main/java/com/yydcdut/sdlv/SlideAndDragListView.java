@@ -34,6 +34,7 @@ public class SlideAndDragListView<T> extends DragListView<T> implements WrapperA
     private static final int STATE_LONG_CLICK_FINISH = 3;//长点击已经触发完成
     private static final int STATE_MORE_FINGERS = 4;//多个手指
     private int mState = STATE_NOTHING;
+    private boolean canTounch = true;
 
     private static final int RETURN_SCROLL_BACK_OWN = 1;//自己有归位操作
     private static final int RETURN_SCROLL_BACK_OTHER = 2;//其他位置有归位操作
@@ -111,6 +112,14 @@ public class SlideAndDragListView<T> extends DragListView<T> implements WrapperA
         return true;
     }
 
+    public boolean isCanTounch() {
+        return canTounch;
+    }
+
+    public void setCanTounch(boolean canTounch) {
+        this.canTounch = canTounch;
+    }
+
     /**
      * 此处有个实体机与模拟机小分歧
      * 在实体机上，手指点击时，很大程度上会触发 ACTION_MOVE，而模拟机则是直接 DOWN - UP
@@ -119,6 +128,10 @@ public class SlideAndDragListView<T> extends DragListView<T> implements WrapperA
      */
     @Override
     public boolean dispatchTouchEvent(MotionEvent ev) {
+        if (!canTounch) {
+            KLog.d("无法触摸111111");
+            return true;
+        }
         switch (ev.getAction() ) { // & MotionEvent.ACTION_MASK
             case MotionEvent.ACTION_DOWN:
                 //获取出坐标来
@@ -366,11 +379,7 @@ public class SlideAndDragListView<T> extends DragListView<T> implements WrapperA
 
             @Override
             public void onScrollStateChangedProxy(AbsListView view, int scrollState) {
-                if (scrollState == WrapperAdapter.SCROLL_STATE_IDLE) {
-                    mIsWannaTriggerClick = true;
-                } else {
-                    mIsWannaTriggerClick = false;
-                }
+                mIsWannaTriggerClick = scrollState == WrapperAdapter.SCROLL_STATE_IDLE;
                 if (mOnListScrollListener != null) {
                     mOnListScrollListener.onScrollStateChanged(view, scrollState);
                 }

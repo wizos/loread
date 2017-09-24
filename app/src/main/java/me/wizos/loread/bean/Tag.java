@@ -17,6 +17,18 @@ import me.wizos.loread.data.dao.TagDao;
  * Entity mapped to table "TAG".
  */
 public class Tag {
+
+    // KEEP FIELDS - put your custom fields here
+    @SerializedName("id")
+    private String id;
+    @SerializedName("sortid")
+    private String sortid;
+    @SerializedName("title")
+    private String title;
+    @SerializedName("unreadcount")
+    private Integer unreadcount;
+    // KEEP FIELDS END
+
     /**
      * Used to resolve relations
      */
@@ -29,16 +41,6 @@ public class Tag {
 
     private List<Feed> feeds;
 
-    // KEEP FIELDS - put your custom fields here
-    @SerializedName("id")
-    private String id;
-    @SerializedName("sortid")
-    private String sortid;
-    @SerializedName("title")
-    private String title;
-    @SerializedName("unreadcount")
-    private Integer unreadcount;
-    // KEEP FIELDS END
 
     public Tag() {
     }

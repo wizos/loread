@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.app.Application;
 import android.os.Handler;
 
+import com.lzy.okgo.OkGo;
 import com.socks.library.KLog;
 import com.tencent.bugly.crashreport.CrashReport;
 
@@ -20,6 +21,7 @@ import me.wizos.loread.data.dao.DaoSession;
 import me.wizos.loread.net.API;
 import me.wizos.loread.net.Neter;
 import me.wizos.loread.utils.FileUtil;
+import me.wizos.loread.utils.TimeUtil;
 
 /**
  * Created by Wizos on 2015/12/24.
@@ -27,6 +29,7 @@ import me.wizos.loread.utils.FileUtil;
  */
 public class App extends Application{
     public static final String DB_NAME = "loread_DB";
+    public static final int DB_VERSION = 4;
     public final static int theme_Day = 0;
     public final static int theme_Night = 1;
 
@@ -55,11 +58,16 @@ public class App extends Application{
         super.onCreate();
         App.instance = this;
         initConfig();
+        initTheme();
+
 //        initTBS();
 //        initLeakCanary();
-//        initDebug();
-        initRelease(); // 测试时，注释掉
+        initDebug();
+//        initRelease(); // 测试时，注释掉
+        OkGo.getInstance().init(this); // 初始化网络框架
+
     }
+
 
     private void initRelease() {
 //         TEST，正式环境下应该启用
@@ -137,7 +145,19 @@ public class App extends Application{
 //        storeReadAbsolutePath = FileUtil.getAbsoluteDir( "storeRead" );
     }
 
-
+    protected void initTheme() {
+        if (!WithSet.i().isAutoToggleTheme()) {
+            return;
+        }
+        int hour = TimeUtil.getCurrentHour();
+        if (hour >= 7 && hour <= 20) {
+//            mColorful.setTheme(R.style.AppTheme_Day);
+            WithSet.i().setThemeMode(App.theme_Day);
+        } else {
+//            mColorful.setTheme(R.style.AppTheme_Night);
+            WithSet.i().setThemeMode(App.theme_Night);
+        }
+    }
     //    private static WeakReference<BaseActivity> activities;
     public static List<WeakReference<BaseActivity>> activities = new ArrayList<>();
 

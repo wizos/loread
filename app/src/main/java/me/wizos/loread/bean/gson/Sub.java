@@ -21,7 +21,7 @@ public class Sub {
     String sortid;
 
     @SerializedName("firstitemmsec")
-    String firstitemmsec;
+    long firstitemmsec;
 
     @SerializedName("url")
     String url;
@@ -61,11 +61,11 @@ public class Sub {
         this.sortid = sortid;
     }
 
-
-    public String getFirstitemmsec() {
+    public long getFirstitemmsec() {
         return firstitemmsec;
     }
-    public void setFirstitemmsec(String firstitemmsec) {
+
+    public void setFirstitemmsec(long firstitemmsec) {
         this.firstitemmsec = firstitemmsec;
     }
 

@@ -218,6 +218,22 @@ public class WithSet {
         savePref("SysBrowserOpenLink", is);
     }
 
+    public boolean isLeftRightSlideArticle() {
+        return readPref("LeftRightSlideArticle", false);
+    }
+
+    public void setLeftRightSlideArticle(boolean is) {
+        savePref("LeftRightSlideArticle", is);
+    }
+
+    public boolean isAutoToggleTheme() {
+        return readPref("AutoToggleTheme", false);
+    }
+
+    public void setAutoToggleTheme(boolean is) {
+        savePref("AutoToggleTheme", is);
+    }
+
     public int getThemeMode() {
         return readPref("ThemeMode", App.theme_Day);
     }

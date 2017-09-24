@@ -6,21 +6,14 @@ import org.parceler.Parcel;
 
 import java.util.ArrayList;
 
+import me.wizos.loread.bean.gson.itemContents.Items;
 import me.wizos.loread.bean.gson.itemContents.Self;
+
 
 @Parcel
 public class StreamContents {
-	@SerializedName("self")
-	Self self;
-
-	@SerializedName("description")
-	String description;
-
 	@SerializedName("direction")
 	String direction;
-
-	@SerializedName("continuation")
-	String continuation;
 
 	@SerializedName("id")
 	String id;
@@ -28,27 +21,24 @@ public class StreamContents {
 	@SerializedName("title")
 	String title;
 
+    @SerializedName("description")
+    String description;
+
+    @SerializedName("self")
+    Self self;
+
 	@SerializedName("updated")
 	long updated;
 
+    @SerializedName("updatedUsec")
+    long updatedUsec;
+
 	@SerializedName("items")
-	ArrayList<Item> items;
+    ArrayList<Items> items;
 
-	public String getContinuation() {
-		return continuation;
-	}
+    @SerializedName("continuation")
+    String continuation;
 
-	public void setContinuation(String continuation) {
-		this.continuation = continuation;
-	}
-
-	public String getDescription() {
-		return description;
-	}
-
-	public void setDescription(String description) {
-		this.description = description;
-	}
 
 	public String getDirection() {
 		return direction;
@@ -66,13 +56,21 @@ public class StreamContents {
 		this.id = id;
 	}
 
-	public ArrayList<Item> getItems() {
-		return items;
-	}
+    public String getTitle() {
+        return title;
+    }
 
-	public void setItems(ArrayList<Item> items) {
-		this.items = items;
-	}
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
 
 	public Self getSelf() {
 		return self;
@@ -82,19 +80,35 @@ public class StreamContents {
 		this.self = self;
 	}
 
-	public String getTitle() {
-		return title;
-	}
-
-	public void setTitle(String title) {
-		this.title = title;
-	}
-
 	public long getUpdated() {
 		return updated;
 	}
 
 	public void setUpdated(long updated) {
 		this.updated = updated;
-	}
+    }
+
+    public long getUpdatedUsec() {
+        return updatedUsec;
+    }
+
+    public void setUpdatedUsec(long updatedUsec) {
+        this.updatedUsec = updatedUsec;
+    }
+
+    public ArrayList<Items> getItems() {
+        return items;
+    }
+
+    public void setItems(ArrayList<Items> items) {
+        this.items = items;
+    }
+
+    public String getContinuation() {
+        return continuation;
+    }
+
+    public void setContinuation(String continuation) {
+        this.continuation = continuation;
+    }
 }

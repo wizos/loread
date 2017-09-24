@@ -21,7 +21,12 @@ public class ViewBackgroundColorSetter extends ViewSetter {
     @Override
     public void setValue(Theme newTheme, int themeId) {
         if (mView != null) {
+            int alpha = 255;
+            if (mView.getBackground() != null) {
+                alpha = mView.getBackground().getAlpha();// 自加。保留透明度信息。
+            }
             mView.setBackgroundColor(getColor(newTheme));
+            mView.getBackground().setAlpha(alpha);// 自加。保留透明度信息。
         }
     }
 

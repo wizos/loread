@@ -5,21 +5,24 @@
     android:id="@+id/tag_slv_item"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:paddingTop="6dp"
-    android:paddingBottom="6dp"
+    android:paddingTop="12dp"
+    android:paddingBottom="12dp"
+    android:paddingStart="18dp"
+    android:paddingEnd="18dp"
     android:gravity="center_vertical"
     android:orientation="horizontal"
-    android:background="?attr/root_view_bg">
+    tools:ShowIn="@layout/activity_main">
+    <!--android:background="?attr/bottombar_bg" // 这个一直不生效 -->
     <!--MarginStart指的是控件距离开头View部分的间距大小，MarginLeft则指的是控件距离左边View部分的间距大小，MarginEnd和MarginRight同理。-->
     <!--一般情况下，View开始部分就是左边，但是有的语言目前为止还是按照从右往左的顺序来书写的-->
 
     <me.wizos.loread.view.IconFontView
         android:id="@+id/tag_slv_item_icon"
-        android:layout_width="32dp"
-        android:layout_height="32dp"
-        android:layout_marginStart="18dp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
         android:textColor="?attr/tag_slv_item_icon"
         android:text="@string/font_tag_class"
+        android:textSize="16sp"
         android:gravity="center"
         android:layout_gravity="center_vertical"/>
 
@@ -37,12 +40,12 @@
     <TextView
         android:id="@+id/tag_slv_item_count"
         android:layout_width="wrap_content"
-        android:layout_height="match_parent"
-        android:layout_marginEnd="18dp"
+        android:layout_height="wrap_content"
         android:gravity="center_vertical"
         android:lines="1"
         android:textColor="?attr/lv_item_desc_color"
-        android:textSize="12sp"
+        android:textSize="14sp"
         tools:text="0" />
+
 
 </LinearLayout>

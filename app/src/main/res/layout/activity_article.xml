@@ -7,19 +7,21 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fitsSystemWindows="true"
+    android:addStatesFromChildren="true"
+    android:windowDrawsSystemBarBackgrounds="true"
     tools:background="@color/article_dark_background"
     tools:context=".activity.ArticleActivity">
     <!-- android:fitsSystemWindows="true" 简单的讲：设置应用布局时是否考虑系统窗口布局；如果为true，将调整系统窗口布局以适应你自定义的布局。比如系统有状态栏，应用也有状态栏时。 -->
 
+    <!--app:popupTheme="@style/AppTheme.PopupOverlay"-->
     <android.support.design.widget.AppBarLayout
         android:id="@+id/art_appBarLayout"
-        android:theme="@style/AppTheme.AppBarOverlay"
+        android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
         <android.support.v7.widget.Toolbar
             android:id="@+id/art_toolbar"
             app:layout_scrollFlags="scroll|enterAlways"
-            app:popupTheme="@style/AppTheme.PopupOverlay"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
             android:background="?attr/topbar_bg" >
@@ -47,45 +49,51 @@
     <!--app:layout_behavior="@string/appbar_scrolling_view_behavior"-->
 
 
-    <android.support.v4.view.ViewPager
+    <me.wizos.loread.view.ViewPagerS
         android:id="@+id/art_viewpager"
-        android:layout_below="@id/art_appBarLayout"
-        app:layout_behavior="@string/appbar_scrolling_view_behavior"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_marginBottom="@dimen/bottom_bar_height"
-        android:paddingBottom="40dp"
+        android:layout_height="wrap_content"
         android:persistentDrawingCache="animation"
-        android:background="#fcfcfc" />
-    <LinearLayout
+        app:layout_behavior="@string/appbar_scrolling_view_behavior"
+        android:layout_marginBottom="90dp"
+        android:background="@color/white" />
+
+    <!--android:paddingBottom="40dp"-->
+    <RelativeLayout
+        android:id="@+id/art_bottombar"
         android:layout_width="match_parent"
         android:layout_height="@dimen/bottom_bar_height"
-        android:gravity="center"
-        android:id="@+id/art_bottombar"
-        android:background="?attr/bottombar_bg"
         android:layout_gravity="center_vertical|bottom"
-        android:layout_alignParentBottom="true">
+        android:layout_alignParentBottom="true"
+        android:background="?attr/bottombar_bg">
+
+        <View
+            android:id="@+id/art_bottombar_divider"
+            android:layout_width="match_parent"
+            android:layout_height="0.5dp"
+            android:layout_marginStart="10dp"
+            android:layout_marginEnd="10dp"
+            android:background="?attr/bottombar_divider" />
         <me.wizos.loread.view.IconFontView
             android:id="@+id/art_bottombar_star"
             style="@style/bottom_bar_iconfont"
+            android:layout_toStartOf="@+id/art_bottombar_tag"
             android:text="@string/font_unstar"
             android:onClick="onStarClick"/>
         <me.wizos.loread.view.IconFontView
             android:id="@+id/art_bottombar_tag"
             style="@style/bottom_bar_iconfont"
+            android:layout_centerInParent="true"
             android:text="@string/font_label"
             android:onClick="onTagClick" />
 
         <me.wizos.loread.view.IconFontView
             android:id="@+id/art_bottombar_read"
             style="@style/bottom_bar_iconfont"
+            android:layout_toEndOf="@id/art_bottombar_tag"
             android:text="@string/font_readed"
             android:onClick="onReadClick"/>
-    </LinearLayout>
-    <!--<include layout="@layout/tool_art"-->
-        <!--android:id="@+id/art_tool"-->
-        <!--android:layout_width="match_parent"-->
-        <!--android:layout_height="wrap_content"-->
-        <!--android:gravity="center_vertical"-->
-        <!--android:layout_gravity="center_vertical|bottom"/>-->
+    </RelativeLayout>
+
+
 </android.support.design.widget.CoordinatorLayout>

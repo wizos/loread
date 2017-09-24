@@ -1,1 +1,2 @@
-include ':app', ':daogenerator'
+include ':app', ':daogenerator', ':scrolllayout'
+//, ':swipelayout'

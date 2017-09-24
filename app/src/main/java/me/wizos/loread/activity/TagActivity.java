@@ -2,20 +2,17 @@ package me.wizos.loread.activity;
 
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.Color;
-import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.BaseAdapter;
+import android.widget.ListView;
 import android.widget.TextView;
 
 import com.socks.library.KLog;
-import com.yydcdut.sdlv.Menu;
-import com.yydcdut.sdlv.MenuItem;
-import com.yydcdut.sdlv.SlideAndDragListView;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,15 +23,16 @@ import me.wizos.loread.bean.Tag;
 import me.wizos.loread.data.WithDB;
 import me.wizos.loread.data.WithSet;
 import me.wizos.loread.net.API;
-import me.wizos.loread.utils.DensityUtil;
 import me.wizos.loread.utils.ToastUtil;
 import me.wizos.loread.view.colorful.Colorful;
 import me.wizos.loread.view.colorful.setter.ViewGroupSetter;
 
 //import TagSlvAdapter;
 
-public class TagActivity extends BaseActivity implements SlideAndDragListView.OnListItemLongClickListener, SlideAndDragListView.OnSlideListener,
-        SlideAndDragListView.OnListItemClickListener, SlideAndDragListView.OnMenuItemClickListener {
+public class TagActivity extends BaseActivity
+//        implements SlideAndDragListView.OnListItemLongClickListener, SlideAndDragListView.OnSlideListener,
+//        SlideAndDragListView.OnListItemClickListener, SlideAndDragListView.OnMenuItemClickListener
+{
     protected static final String TAG = "TagActivity";
     protected Context context;
     private String listState;
@@ -48,7 +46,7 @@ public class TagActivity extends BaseActivity implements SlideAndDragListView.On
         context = this;
         listState = getIntent().getExtras().getString("ListState");
         listTag = getIntent().getExtras().getString("ListTag");
-        listCount = getIntent().getExtras().getInt("ListCount");
+        listCount = getIntent().getExtras().getInt("ListCount"); // 这个地方有问题，传来的值是某个文件夹的未读文章数
         noLabelCount = getIntent().getExtras().getInt("NoLabelCount");
         userID = WithSet.i().getUseId();
         initToolbar();
@@ -65,11 +63,12 @@ public class TagActivity extends BaseActivity implements SlideAndDragListView.On
         listViewSetter.childViewTextColor(R.id.tag_slv_item_title, R.attr.lv_item_title_color);
         listViewSetter.childViewTextColor(R.id.tag_slv_item_count, R.attr.lv_item_desc_color);
         listViewSetter.childViewBgColor(R.id.tag_slv_item, R.attr.root_view_bg);
-        listViewSetter.childViewBgColor(R.id.tag_slv, R.attr.root_view_bg);
 
         mColorfulBuilder
                 // 设置view的背景图片
                 .backgroundColor(R.id.tag_root, R.attr.root_view_bg)
+                .backgroundColor(R.id.tag_slv, R.attr.root_view_bg)
+
                 // 设置 toolbar
                 .backgroundColor(R.id.tag_toolbar, R.attr.topbar_bg)
                 .textColor(R.id.tag_toolbar_count, R.attr.topbar_fg)
@@ -145,35 +144,50 @@ public class TagActivity extends BaseActivity implements SlideAndDragListView.On
         tagSlvAdapter.notifyDataSetChanged();
     }
 
-    private  SlideAndDragListView slv;
+    private ListView slv;
     public void initSlvListener() {
-        initSlvMenu();
-        slv = (SlideAndDragListView)findViewById(R.id.tag_slv);
-        slv.setMenu(mMenu);
-        slv.setOnListItemClickListener(this);
-        slv.setOnSlideListener(this);
-        slv.setOnMenuItemClickListener(this);
+//        initSlvMenu();
+        slv = (ListView) findViewById(R.id.tag_slv);
+        slv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                if (position == -1) {
+                    return;
+                }
+                String tagId = tagList.get(position).getId().replace("\"", "");
+                Intent data = new Intent();
+                data.putExtra("tagId", tagId);
+                data.putExtra("tagTitle", tagList.get(position).getTitle());
+                TagActivity.this.setResult(API.ActivityResult_TagToMain, data);//注意下面的RESULT_OK常量要与回传接收的Activity中onActivityResult（）方法一致
+                App.finishActivity(TagActivity.this);
+                KLog.d("【 TagList 被点击】" + tagId);
+            }
+        });
+//        slv.setMenu(mMenu);
+//        slv.setOnListItemClickListener(this);
+//        slv.setOnSlideListener(this);
+//        slv.setOnMenuItemClickListener(this);
     }
 
     // 初始化（每一个列表项左右滑动时出现的）菜单
-    protected Menu mMenu;
-    public void initSlvMenu() {
-        mMenu = new Menu(new ColorDrawable(Color.WHITE), true, 0);//第2个参数表示滑动item是否能滑的过量(true表示过量，就像Gif中显示的那样；false表示不过量，就像QQ中的那样)
-        mMenu.addItem(new MenuItem.Builder().setWidth(DensityUtil.get2Px(this, R.dimen.slv_menu_left_width))
-                .setBackground(new ColorDrawable(getResources().getColor(R.color.white)))
-//                .setIcon(getResources().getDrawable(R.drawable.ic_launcher)) // 插入图片
-                .setText("删除")
-                .setTextColor(DensityUtil.getColor(R.color.crimson))
-                .setTextSize((int) getResources().getDimension(R.dimen.txt_size))
-                .build());
-        mMenu.addItem(new MenuItem.Builder().setWidth(DensityUtil.get2Px(this, R.dimen.slv_menu_right_width))
-                .setBackground(new ColorDrawable(getResources().getColor(R.color.white)))
-                .setDirection(MenuItem.DIRECTION_RIGHT) // 设置是左或右
-                .setTextColor(R.color.white)
-                .setText("编辑")
-                .setTextSize(DensityUtil.getDimen(this, R.dimen.txt_size))
-                .build());
-    }
+//    protected Menu mMenu;
+//    public void initSlvMenu() {
+//        mMenu = new Menu(new ColorDrawable(Color.WHITE), true, 0);//第2个参数表示滑动item是否能滑的过量(true表示过量，就像Gif中显示的那样；false表示不过量，就像QQ中的那样)
+//        mMenu.addItem(new MenuItem.Builder().setWidth(ScreenUtil.get2Px(this, R.dimen.slv_menu_left_width))
+//                .setBackground(new ColorDrawable(getResources().getColor(R.color.white)))
+////                .setIcon(getResources().getDrawable(R.drawable.ic_launcher)) // 插入图片
+//                .setText("删除")
+//                .setTextColor(ScreenUtil.getColor(R.color.crimson))
+//                .setTextSize((int) getResources().getDimension(R.dimen.txt_size))
+//                .build());
+//        mMenu.addItem(new MenuItem.Builder().setWidth(ScreenUtil.get2Px(this, R.dimen.slv_menu_right_width))
+//                .setBackground(new ColorDrawable(getResources().getColor(R.color.white)))
+//                .setDirection(MenuItem.DIRECTION_RIGHT) // 设置是左或右
+//                .setTextColor(R.color.white)
+//                .setText("编辑")
+//                .setTextSize(ScreenUtil.getDimen(this, R.dimen.txt_size))
+//                .build());
+//    }
 
     protected Toolbar toolbar;
     private void initToolbar() {
@@ -187,49 +201,49 @@ public class TagActivity extends BaseActivity implements SlideAndDragListView.On
     }
 
 
-    @Override
-    public void onListItemLongClick(View view, int position) {
-    }
+//    @Override
+//    public void onListItemLongClick(View view, int position) {
+//    }
+
+//
+//    @Override
+//    public void onListItemClick(View v, int position) {
+//        if(position==-1){return;}
+//        String tagId = tagList.get(position).getId().replace("\"","");
+//        Intent data = new Intent();
+//        data.putExtra("tagId", tagId );
+//        data.putExtra("tagTitle", tagList.get(position).getTitle());
+//        TagActivity.this.setResult(API.ActivityResult_TagToMain, data);//注意下面的RESULT_OK常量要与回传接收的Activity中onActivityResult（）方法一致
+//        App.finishActivity(this);
+//        KLog.d("【 TagList 被点击】" + tagId );
+//    }
 
 
-    @Override
-    public void onListItemClick(View v, int position) {
-        if(position==-1){return;}
-        String tagId = tagList.get(position).getId().replace("\"","");
-        Intent data = new Intent();
-        data.putExtra("tagId", tagId );
-        data.putExtra("tagTitle", tagList.get(position).getTitle());
-        TagActivity.this.setResult(1, data);//注意下面的RESULT_OK常量要与回传接收的Activity中onActivityResult（）方法一致
-        App.finishActivity(this);
-        KLog.d("【 TagList 被点击】" + tagId );
-    }
-
-
-    @Override
-    public int onSlideOpen(View view, View parentView, int position, int direction) {
-        return Menu.ITEM_NOTHING;
-    }
-    @Override
-    public void onSlideClose(View view, View parentView, int position, int direction) {
-    }
-    @Override
-    public int onMenuItemClick(View v, int itemPosition, int buttonPosition, int direction) {
-        switch (direction) {
-            case MenuItem.DIRECTION_LEFT:
-                switch (buttonPosition) {
-                    case 0:
-                        return Menu.ITEM_DELETE_FROM_BOTTOM_TO_TOP;
-                }
-                break;
-            case MenuItem.DIRECTION_RIGHT:
-                switch (buttonPosition) {
-                    case 0:
-                        KLog.d("【itemPosition】" + itemPosition);
-                        return Menu.ITEM_DELETE_FROM_BOTTOM_TO_TOP;
-                }
-        }
-        return Menu.ITEM_NOTHING;
-    }
+//    @Override
+//    public int onSlideOpen(View view, View parentView, int position, int direction) {
+//        return Menu.ITEM_NOTHING;
+//    }
+//    @Override
+//    public void onSlideClose(View view, View parentView, int position, int direction) {
+//    }
+//    @Override
+//    public int onMenuItemClick(View v, int itemPosition, int buttonPosition, int direction) {
+//        switch (direction) {
+//            case MenuItem.DIRECTION_LEFT:
+//                switch (buttonPosition) {
+//                    case 0:
+//                        return Menu.ITEM_DELETE_FROM_BOTTOM_TO_TOP;
+//                }
+//                break;
+//            case MenuItem.DIRECTION_RIGHT:
+//                switch (buttonPosition) {
+//                    case 0:
+//                        KLog.d("【itemPosition】" + itemPosition);
+//                        return Menu.ITEM_DELETE_FROM_BOTTOM_TO_TOP;
+//                }
+//        }
+//        return Menu.ITEM_NOTHING;
+//    }
 
     protected BaseAdapter tagSlvAdapter = new BaseAdapter() {
         @Override

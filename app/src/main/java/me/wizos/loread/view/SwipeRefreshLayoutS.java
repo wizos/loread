@@ -9,19 +9,20 @@ import android.view.ViewConfiguration;
 import android.widget.AbsListView;
 
 /**
- * 下拉刷新控件的包装
+ * 下拉刷新控件的包装。解决下拉和左右滑动冲突的问题
  * Created by Wizos on 2016/3/30.
  */
-public class SwipeRefresh extends SwipeRefreshLayout {
+public class SwipeRefreshLayoutS extends SwipeRefreshLayout {
     private View view;
     private int scaleTouchSlop;
     // 上一次触摸时的X坐标
     private float preX;
-    public SwipeRefresh(Context context) {
+
+    public SwipeRefreshLayoutS(Context context) {
         super(context);
     }
 
-    public SwipeRefresh(Context context, AttributeSet attrs) {
+    public SwipeRefreshLayoutS(Context context, AttributeSet attrs) {
         super(context, attrs);
         // 触发移动事件的最短距离，如果小于这个距离就不触发移动控件
         scaleTouchSlop = ViewConfiguration.get(context).getScaledTouchSlop();

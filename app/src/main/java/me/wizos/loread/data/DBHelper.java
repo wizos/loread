@@ -4,11 +4,13 @@ import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 
 import com.github.yuweiguocn.library.greendao.MigrationHelper;
+import com.socks.library.KLog;
 
 import me.wizos.loread.App;
 import me.wizos.loread.data.dao.ArticleDao;
 import me.wizos.loread.data.dao.DaoMaster;
 import me.wizos.loread.data.dao.FeedDao;
+import me.wizos.loread.data.dao.ImgDao;
 import me.wizos.loread.data.dao.RequestLogDao;
 import me.wizos.loread.data.dao.TagDao;
 
@@ -16,20 +18,22 @@ import me.wizos.loread.data.dao.TagDao;
 /**
  * Created by Wizos on 2016/3/15.
  */
-public class UpdateDB extends DaoMaster.OpenHelper {
-    public UpdateDB(Context context, String name, SQLiteDatabase.CursorFactory factory) {
+public class DBHelper extends DaoMaster.OpenHelper {
+    public DBHelper(Context context, String name, SQLiteDatabase.CursorFactory factory) {
         super(context, name, factory);
     }
 
-    public static void start(Context context) {
-        UpdateDB helper = new UpdateDB(context, App.DB_NAME, null);// 升级数据库成功
+    public static DaoMaster startUpgrade(Context context) {
+        DBHelper helper = new DBHelper(context, App.DB_NAME, null);
         DaoMaster daoMaster = new DaoMaster(helper.getWritableDatabase());
+        return daoMaster;
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        MigrationHelper.migrate(db, ArticleDao.class, FeedDao.class, RequestLogDao.class, TagDao.class);// 后边填写所有的 Dao 类
-//        update();
+        KLog.e("正在执行数据库升级");
+        MigrationHelper.migrate(db, ArticleDao.class, FeedDao.class, TagDao.class, ImgDao.class, RequestLogDao.class);// 后边填写所有的 Dao 类
+
         //记得要修改 DaoMaster 中的数据库版本号
 //        switch (oldVersion) {
 //            case 2:
@@ -48,6 +52,5 @@ public class UpdateDB extends DaoMaster.OpenHelper {
 //                break;
 //        }
     }
-
 
 }

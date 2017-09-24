@@ -33,7 +33,7 @@ public abstract class BaseActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setColorful();
+        showCurrentTheme();
         App.addActivity(this);
     }
 
@@ -76,7 +76,7 @@ public abstract class BaseActivity extends AppCompatActivity {
      */
 
     // 自动设置当前主题
-    protected void setColorful() {
+    protected void showCurrentTheme() {
         Colorful.Builder mColorfulBuilder = new Colorful.Builder(this);
         mColorful = buildColorful(mColorfulBuilder).create();
         if (WithSet.i().getThemeMode() == App.theme_Day) {
@@ -89,9 +89,9 @@ public abstract class BaseActivity extends AppCompatActivity {
     protected abstract Colorful.Builder buildColorful(Colorful.Builder mColorfulBuilder);
 
     /**
-     * 自动切换主题并保存
+     * 手动切换主题并保存
      */
-    protected void toggleThemeAutomatic() {
+    protected void manualToggleTheme() {
         if (WithSet.i().getThemeMode() == App.theme_Day) {
             mColorful.setTheme(R.style.AppTheme_Night);
             WithSet.i().setThemeMode(App.theme_Night);

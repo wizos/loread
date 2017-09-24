@@ -9,6 +9,7 @@
 
 
     <color name="main_grey_dark">#E3E8E7</color>
+
     <color name="main_day_light">#515151</color>
     <color name="main_day_dark">#313131</color>
     <color name="main_day_info">#7c7c7c</color>
@@ -29,7 +30,11 @@
     <color name="material_red_400">#EF5350</color>
     <color name="material_teal_a400">#1DE9B6</color>
 
+    // 测试一个主题色
+    <color name="white_toolbar_bg">#FCFBF7</color>
+    <color name="white_screen_bg">#F6F5F1</color>
+    <color name="white_bottombar_divider">#D7D6D1</color>
 
-
+    <color name="shade">#404040</color>
 
 </resources>

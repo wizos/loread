@@ -7,19 +7,11 @@ import android.net.NetworkInfo;
 import android.os.Build;
 
 import com.socks.library.KLog;
-import com.squareup.okhttp.Callback;
-import com.squareup.okhttp.Dispatcher;
-import com.squareup.okhttp.OkHttpClient;
-import com.squareup.okhttp.Request;
-
-import java.util.concurrent.TimeUnit;
 
 import me.wizos.loread.App;
 import me.wizos.loread.data.WithSet;
 
-//import okhttp3.Callback;
-//import okhttp3.Request;
-//import okhttp3.Response;
+
 
 /**
  * Created by mummyding on 15-11-22.<br>
@@ -28,16 +20,17 @@ import me.wizos.loread.data.WithSet;
  * @version Leisure 1.0
  */
 public class HttpUtil {
-    private static final OkHttpClient mOkHttpClient = new OkHttpClient();
-    private static final Dispatcher dispatcher = new Dispatcher();
+//    private static final OkHttpClient mOkHttpClient = new OkHttpClient();
+//    private static final Dispatcher dispatcher = new Dispatcher();
+
     static{
         KLog.e("又来了一个Http链接，当前线程为：" + Thread.currentThread() + "。当前实例为");
-        dispatcher.setMaxRequests(3);
-        dispatcher.setMaxRequestsPerHost(3);
-        mOkHttpClient.setDispatcher(dispatcher);
-        mOkHttpClient.setConnectTimeout(30, TimeUnit.SECONDS); // 初始为30
-        mOkHttpClient.setReadTimeout(60, TimeUnit.SECONDS);// 初始为30
-        mOkHttpClient.setWriteTimeout(60, TimeUnit.SECONDS);// 初始为30
+//        dispatcher.setMaxRequests(3);
+//        dispatcher.setMaxRequestsPerHost(3);
+//        mOkHttpClient.setDispatcher(dispatcher);
+//        mOkHttpClient.setConnectTimeout(30, TimeUnit.SECONDS); // 初始为30
+//        mOkHttpClient.setReadTimeout(60, TimeUnit.SECONDS);// 初始为30
+//        mOkHttpClient.setWriteTimeout(60, TimeUnit.SECONDS);// 初始为30
     }
 
     /**
@@ -45,10 +38,36 @@ public class HttpUtil {
      * @param request
      * @param responseCallback
      */
-    public static void enqueue(Request request, Callback responseCallback){
-//        mOkHttpClient.networkInterceptors().add(new StethoInterceptor());
-        mOkHttpClient.newCall(request).enqueue(responseCallback);
+//    public static void enqueue(Request request, Callback responseCallback){
+//        mOkHttpClient.newCall(request).enqueue(responseCallback);
+//    }
+
+//    private static OkHttpClient imgOkHttpClient;
+    private static HttpUtil httpUtil;
+
+    public static HttpUtil i() {
+        if (httpUtil == null) { // 双重锁定，只有在 withDB 还没被初始化的时候才会进入到下一行，然后加上同步锁
+            synchronized (HttpUtil.class) { // 同步锁，避免多线程时可能 new 出两个实例的情况
+                if (httpUtil == null) {
+                    // All init here
+                    httpUtil = new HttpUtil();
+//                    imgOkHttpClient = new OkHttpClient();
+//                    Dispatcher dispatcher = new Dispatcher();
+//                    dispatcher.setMaxRequests(3);
+//                    dispatcher.setMaxRequestsPerHost(3);
+//
+//                    imgOkHttpClient.setDispatcher(dispatcher);
+//                    imgOkHttpClient.setConnectTimeout(30, TimeUnit.SECONDS); // 初始为30
+//                    imgOkHttpClient.setReadTimeout(60, TimeUnit.SECONDS);// 初始为30
+//                    imgOkHttpClient.setWriteTimeout(60, TimeUnit.SECONDS);// 初始为30
+                }
+            }
+        }
+        return httpUtil;
     }
+//    public void exe( Request request, Callback responseCallback ){
+//        imgOkHttpClient.newCall(request).enqueue(responseCallback);
+//    }
 
 
     /**

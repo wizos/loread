@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/header_item"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="?attr/bottombar_bg"
+    tools:ShowIn="@layout/activity_main">
+
+
+    <me.wizos.loread.view.IconFontView
+        android:id="@+id/header_item_icon"
+        android:layout_width="60dp"
+        android:layout_height="match_parent"
+        android:paddingTop="15dp"
+        android:paddingBottom="15dp"
+        android:paddingStart="20dp"
+        android:paddingEnd="15dp"
+        android:gravity="center"
+        android:textColor="?attr/tag_slv_item_icon"
+        android:text="@string/font_collapse"
+        tools:text="@string/font_tag_class" />
+
+    <TextView
+        android:id="@+id/header_item_title"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:gravity="center_vertical"
+        android:textColor="?attr/lv_item_title_color"
+        android:textSize="16sp"
+        android:lines="1"
+        tools:text="这是父item" />
+
+    <TextView
+        android:id="@+id/header_item_count"
+        android:layout_width="50dp"
+        android:layout_height="match_parent"
+        android:paddingTop="15dp"
+        android:paddingBottom="15dp"
+        android:paddingEnd="20dp"
+        android:gravity="center_vertical"
+        android:textSize="14sp"
+        android:textColor="?attr/lv_item_desc_color"
+        tools:text="-9.9" />
+
+</LinearLayout>

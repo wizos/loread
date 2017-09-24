@@ -1,4 +1,4 @@
-package me.wizos.loread.bean.gson;
+package me.wizos.loread.bean.gson.son;
 
 import com.google.gson.annotations.SerializedName;
 

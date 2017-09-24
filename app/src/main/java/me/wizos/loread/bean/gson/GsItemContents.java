@@ -8,6 +8,7 @@ import me.wizos.loread.bean.gson.itemContents.Items;
 import me.wizos.loread.bean.gson.itemContents.Self;
 
 /**
+ * 该 api 貌似被官方弃用，改用 stream content 了
  * Created by Wizos on 2016/3/11.
  */
 public class GsItemContents {

@@ -1,5 +1,6 @@
 package me.wizos.loread.utils;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.support.annotation.AttrRes;
@@ -11,9 +12,10 @@ import me.wizos.loread.App;
 
 
 /**
+ * 屏幕工具
  * Created by Wizos on 2016/2/13.
  */
-public class DensityUtil {
+public class ScreenUtil {
     /**
      * 从 R.dimen 文件中获取到数值，再根据手机的分辨率转成为 px(像素)
      */
@@ -23,12 +25,10 @@ public class DensityUtil {
         return (int) (dpValue * scale + 0.5f);
     }
     public static int getDimen(Context context,@DimenRes int id) {
-//        final int dimen = (int)context.getResources().getDimension(id);
         return (int)context.getResources().getDimension(id);
     }
     public static int getColor(@ColorRes int id) {
-//        final int dimen = (int)context.getResources().getDimension(id);
-        return (int) App.i().getResources().getColor(id);
+        return App.i().getResources().getColor(id);
     }
 
 
@@ -39,6 +39,24 @@ public class DensityUtil {
         } finally {
             a.recycle();
         }
+    }
+
+
+    /**
+     * 获取屏幕内容高度
+     * @param activity
+     * @return
+     */
+    public static int getScreenHeight(Activity activity) {
+        DisplayMetrics dm = new DisplayMetrics();
+        activity.getWindowManager().getDefaultDisplay().getMetrics(dm);
+        int result = 0;
+        int resourceId = activity.getResources()
+                .getIdentifier("status_bar_height", "dimen", "android");
+        if (resourceId > 0) {
+            result = activity.getResources().getDimensionPixelSize(resourceId);
+        }
+        return dm.heightPixels - result;
     }
 
     /**
@@ -53,9 +71,6 @@ public class DensityUtil {
         int px = Math.round(dp * (displayMetrics.xdpi / DisplayMetrics.DENSITY_DEFAULT));
         return px;
     }
-
-
-
     /**
      * 根据手机的分辨率从 px(像素) 的单位 转成为 dp
      */

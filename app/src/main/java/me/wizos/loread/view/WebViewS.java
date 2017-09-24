@@ -24,11 +24,11 @@ import me.wizos.loread.utils.Tool;
  */
 
 
-public class X5WebView extends WebView {
+public class WebViewS extends WebView {
     @SuppressLint("SetJavaScriptEnabled")
 //    WeakReference<Activity> WRArticle;
 //        WRArticle = new WeakReference<>(activity);
-    public X5WebView(Activity activity) {
+    public WebViewS(Activity activity) {
         super(activity);
         initWebViewSettings();
         Tool.setBackgroundColor(this); // 实现 webview 的背景颜色与当前主题色一致
@@ -121,7 +121,7 @@ public class X5WebView extends WebView {
             public void run() {
                 String str = "'" + TextUtils.join("','", paramVarArgs) + "'";
                 str = "javascript:" + paramString + "(" + str + ");";
-                X5WebView.this.loadUrl(str);
+                WebViewS.this.loadUrl(str);
             }
         });
     }

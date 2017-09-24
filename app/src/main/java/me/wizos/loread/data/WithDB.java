@@ -53,6 +53,7 @@ public class WithDB {
         return withDB;
     }
 
+
     // 自己写的
     public void saveTag(Tag tag) {
         if (tag.getId() != null) {return;}
@@ -73,7 +74,12 @@ public class WithDB {
     }
 
     public Tag getTag(String tagId) {
-        return tagDao.queryBuilder().where(TagDao.Properties.Id.eq(tagId)).listLazy().get(0);
+        List<Tag> tags = tagDao.queryBuilder().where(TagDao.Properties.Id.eq(tagId)).listLazy();
+        if (tags.size() != 0) {
+            return tags.get(0);
+        } else {
+            return null;
+        }
     }
 
     public void saveFeed(Feed feed) {
@@ -94,6 +100,26 @@ public class WithDB {
             }
         }
     }
+
+    public List<Feed> getFeeds() {
+        return feedDao.loadAll();
+    }
+
+    public Feed getFeed(String id) {
+        List<Feed> feeds = feedDao.queryBuilder().where(FeedDao.Properties.Id.eq(id)).listLazy();
+        if (feeds.size() != 0) {
+            return feeds.get(0);
+        } else {
+            return null;
+        }
+    }
+
+    public void saveFeeds(List<Feed> feeds) {
+        if (feeds.size() != 0) { // new fetch
+            feedDao.insertOrReplaceInTx(feeds);
+        }
+    }
+
 
     public void saveImg(ArrayMap<Integer, Img> imgMap) {
         for (Map.Entry<Integer, Img> entry : imgMap.entrySet()) {
@@ -125,19 +151,10 @@ public class WithDB {
         }
     }
 
-//    public Img getImg(String src) {
-//        List<Img> imgs = imgDao.queryBuilder()
-//                .where(ImgDao.Properties.Src.eq(src)).listLazy();
-//        if (imgs.size() != 0) {
-//            return imgs.get(0);
-//        } else {
-//            return null;
-//        }
-//    }
 
     public ArrayMap<Integer, Img> getLossImgs(String articleId) {
         QueryBuilder<Img> q = imgDao.queryBuilder()
-                .where(ImgDao.Properties.ArticleId.eq(articleId), ImgDao.Properties.DownState.eq(API.ImgMeta_Downing));
+                .where(ImgDao.Properties.ArticleId.eq(articleId), ImgDao.Properties.DownState.eq(API.ImgMeta_Downing)).orderAsc(ImgDao.Properties.No);
         List<Img> imgList = q.listLazy();
         ArrayMap<Integer, Img> imgMap = new ArrayMap<>();
         for (Img img : imgList) {
@@ -147,7 +164,13 @@ public class WithDB {
         return imgMap;
     }
 
-    public List<Img> getImgs(String articleId) { // ,int imgType
+    public List<Img> getLossImgs2(String articleId) {
+        QueryBuilder<Img> q = imgDao.queryBuilder()
+                .where(ImgDao.Properties.ArticleId.eq(articleId), ImgDao.Properties.DownState.eq(API.ImgMeta_Downing)).orderAsc(ImgDao.Properties.No);
+        return q.listLazy();
+    }
+
+    private List<Img> getImgs(String articleId) { // ,int imgType
         QueryBuilder<Img> q = imgDao.queryBuilder()
                 .where(ImgDao.Properties.ArticleId.eq(articleId));
         return q.listLazy();
@@ -249,7 +272,6 @@ public class WithDB {
     }
 
 
-
     /**
      * 获取所有文章
      */
@@ -262,7 +284,8 @@ public class WithDB {
      */
     public List<Article> getStaredArt() {
         QueryBuilder<Article> q = articleDao.queryBuilder()
-                .where(ArticleDao.Properties.StarState.eq(API.LIST_STARED)); /*  Creates an "equal ('=')" condition  for this property. */
+                .where(ArticleDao.Properties.StarState.eq(API.LIST_STARED))
+                .orderAsc(ArticleDao.Properties.Starred); /*  Creates an "equal ('=')" condition  for this property. */
         return q.listLazy();
     }
 
@@ -300,6 +323,91 @@ public class WithDB {
         return q.listLazy();
     }
 
+
+    /*
+     * 文章列表页会有12种组合：某个 Categories 内的 UnRead[含UnReading], Stared, All。某个 OriginStreamId 内的 UnRead[含UnReading], Stared, All。
+     * 所有定下来去获取文章的函数也有6个：getUnreadArtsInTag(), getStaredArtsInTag(), getAllArtsInTag(),getUnreadArtsInFeed(), getStaredArtsInFeed(), getAllArtsInFeed()
+     */
+
+
+    public List<Article> getUnreadArtsInTag(String tagId) {
+        QueryBuilder<Article> q = articleDao.queryBuilder()
+                .where(ArticleDao.Properties.ReadState.like(API.LIST_UNREAD + "%"), ArticleDao.Properties.Categories.like("%" + tagId + "%"))
+                .orderDesc(ArticleDao.Properties.TimestampUsec);
+        return q.listLazy();
+    }
+
+    public List<Article> getStaredArtsInTag(String tagId) {
+        QueryBuilder<Article> q = articleDao.queryBuilder()
+                .where(ArticleDao.Properties.StarState.eq(API.LIST_STARED), ArticleDao.Properties.Categories.like("%" + tagId + "%"))
+                .orderDesc(ArticleDao.Properties.TimestampUsec);
+        return q.listLazy();
+    }
+
+    public List<Article> getAllArtsInTag(String tagId) {
+        QueryBuilder<Article> q = articleDao.queryBuilder()
+                .where(ArticleDao.Properties.Categories.like("%" + tagId + "%"))
+                .orderDesc(ArticleDao.Properties.TimestampUsec);
+        return q.listLazy();
+    }
+
+
+    /*
+     * 根据云端 Cate的四项再写一种方式。之前设计的数据库太烂了。根本不需要 ReadState 和 StarState，不然和云端的数据同步会很麻烦。
+     */
+
+//    public QueryBuilder<Article> getArtsByCategories( String category  ){
+//        QueryBuilder<Article> artQuery = articleDao.queryBuilder()
+//                .where( ArticleDao.Properties.Categories.like("%" + category + "%"));
+//        return artQuery;
+//    }
+
+    public List<Article> getArtsByCategoriesOrderCrawlMsec(String... categories) {
+        QueryBuilder<Article> artQuery = articleDao.queryBuilder();
+        for (String category : categories) {
+            artQuery.where(ArticleDao.Properties.Categories.like(category));
+        }
+        artQuery.orderDesc(ArticleDao.Properties.CrawlTimeMsec);
+        return artQuery.listLazy();
+    }
+
+    public List<Article> loadStarAndNoTag() {
+        QueryBuilder<Article> artQuery = articleDao.queryBuilder();
+        artQuery.where(ArticleDao.Properties.Categories.like("%[user/" + App.mUserID + "/state/com.google/starred]%"));
+        artQuery.where(ArticleDao.Properties.Categories.like("%[^user/" + App.mUserID + "/label/]%"));
+        artQuery.orderDesc(ArticleDao.Properties.Starred);
+        return artQuery.listLazy();
+    }
+
+    public List<Article> loadUnreadAndNoTag() {
+        QueryBuilder<Article> artQuery = articleDao.queryBuilder();
+        artQuery.where(ArticleDao.Properties.Categories.like("%[^user/" + App.mUserID + "/state/com.google/read]%"));
+        artQuery.where(ArticleDao.Properties.Categories.like("%[^user/" + App.mUserID + "/label/]%"));
+        artQuery.orderDesc(ArticleDao.Properties.CrawlTimeMsec);
+        return artQuery.listLazy();
+    }
+
+    public List<Article> loadAllNoTag() {
+        QueryBuilder<Article> artQuery = articleDao.queryBuilder();
+        artQuery.where(ArticleDao.Properties.Categories.like("%[^user/" + App.mUserID + "/label/]%"));
+        artQuery.orderDesc(ArticleDao.Properties.CrawlTimeMsec);
+        return artQuery.listLazy();
+    }
+
+
+//    public List<Article> getStarNoTag() {
+//        QueryBuilder<Article> q = articleDao.queryBuilder()
+//                .where(ArticleDao.Properties.StarState.eq(API.LIST_STARED), ArticleDao.Properties.Categories.like("%[^" + API.U_NO_LABEL + "]%")); /**  Creates an "equal ('=')" condition  for this property. */
+//        return q.listLazy();
+//    }
+//
+//    public List<Article> getReadNoTag(){
+//        QueryBuilder<Article> q = articleDao.queryBuilder()
+//                .where(ArticleDao.Properties.ReadState.eq(API.ART_UNREAD), ArticleDao.Properties.Categories.like("%[^" + API.U_NO_LABEL + "]%"));
+//        return q.listLazy();
+//    }
+
+
     /**
      * 获取阅读状态，文章标签为 XX 的文章
      *
@@ -321,26 +429,20 @@ public class WithDB {
         return q.listLazy();
     }
 
-
-    /**
-     * 获取 XX 分类的加星文章
-     *
-     * @param listTag 某个文章分类
-     * @return
-     */
-    public List<Article> getStaredArtInTag(String listTag) {
+    public List<Article> getArtsRead(String readState, String streamId) {
         QueryBuilder<Article> q = articleDao.queryBuilder()
-                .where(ArticleDao.Properties.StarState.eq(API.LIST_STARED), ArticleDao.Properties.Categories.like("%" + listTag + "%")) /**  Creates an "equal ('=')" condition  for this property. */
+                .where(ArticleDao.Properties.ReadState.like(readState + "%"), ArticleDao.Properties.OriginStreamId.eq(streamId)) /** Creates an "equal ('=')" condition  for this property. */
                 .orderDesc(ArticleDao.Properties.TimestampUsec);
         return q.listLazy();
     }
 
-    public List<Article> loadStarNoTag() {
+    public List<Article> getArtsStar(String streamId) {
         QueryBuilder<Article> q = articleDao.queryBuilder()
-                .where(ArticleDao.Properties.StarState.eq(API.LIST_STARED), ArticleDao.Properties.Categories.like("%" + API.U_NO_LABEL + "%")); /**  Creates an "equal ('=')" condition  for this property. */
+                .where(ArticleDao.Properties.StarState.eq(API.LIST_STARED), ArticleDao.Properties.OriginStreamId.eq(streamId)) /** Creates an "equal ('=')" condition  for this property. */
+                .orderDesc(ArticleDao.Properties.TimestampUsec);
         return q.listLazy();
-//        KLog.d("Star无标签：" + query.list().size());
     }
+
 
     /**
      * 获取所有已加星，未标签的文章
@@ -350,7 +452,6 @@ public class WithDB {
     public List<Article> getStaredUntagArt() {
         QueryBuilder<Article> q = articleDao.queryBuilder()
                 .where(ArticleDao.Properties.StarState.eq(API.LIST_STARED), ArticleDao.Properties.Categories.like("%" + API.U_NO_LABEL + "%")); /**  Creates an "equal ('=')" condition  for this property. */
-
         String sql = "where STAR_STATE = '" + API.LIST_STARED + "' and CATEGORIES not like 'user/'" + App.mUserID + "/label/%";
         articleDao.queryRaw(sql);
         return q.listLazy();
@@ -378,12 +479,6 @@ public class WithDB {
 //                .build();
 //        KLog.d("Read有标签：" + query.listLazy().size());
 //        return query.listLazy();
-    }
-
-    public List<Article> loadReadNoTag(){
-        QueryBuilder<Article> q = articleDao.queryBuilder()
-                .where(ArticleDao.Properties.ReadState.eq(API.ART_UNREAD), ArticleDao.Properties.Categories.like("%" + API.U_NO_LABEL + "%"));
-        return q.listLazy();
     }
 
 

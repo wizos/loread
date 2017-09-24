@@ -31,8 +31,6 @@ public class ImgDao extends AbstractDao<Img, Long> {
         public final static Property DownState = new Property(5, Integer.class, "downState", false, "DOWN_STATE");
     }
 
-    ;
-
 
     public ImgDao(DaoConfig config) {
         super(config);
@@ -46,7 +44,7 @@ public class ImgDao extends AbstractDao<Img, Long> {
      * Creates the underlying database table.
      */
     public static void createTable(SQLiteDatabase db, boolean ifNotExists) {
-        String constraint = ifNotExists ? "IF NOT EXISTS " : "";
+        String constraint = ifNotExists ? "IF NOT EXISTS ": "";
         db.execSQL("CREATE TABLE " + constraint + "\"IMG\" (" + //
                 "\"_id\" INTEGER PRIMARY KEY AUTOINCREMENT ," + // 0: id
                 "\"NO\" INTEGER," + // 1: no
@@ -56,63 +54,55 @@ public class ImgDao extends AbstractDao<Img, Long> {
                 "\"DOWN_STATE\" INTEGER);"); // 5: downState
     }
 
-    /**
-     * Drops the underlying database table.
-     */
+    /** Drops the underlying database table. */
     public static void dropTable(SQLiteDatabase db, boolean ifExists) {
         String sql = "DROP TABLE " + (ifExists ? "IF EXISTS " : "") + "\"IMG\"";
         db.execSQL(sql);
     }
 
-    /**
-     * @inheritdoc
-     */
+    /** @inheritdoc */
     @Override
     protected void bindValues(SQLiteStatement stmt, Img entity) {
         stmt.clearBindings();
-
+ 
         Long id = entity.getId();
         if (id != null) {
             stmt.bindLong(1, id);
         }
-
+ 
         Integer no = entity.getNo();
         if (no != null) {
             stmt.bindLong(2, no);
         }
-
+ 
         String name = entity.getName();
         if (name != null) {
             stmt.bindString(3, name);
         }
-
+ 
         String src = entity.getSrc();
         if (src != null) {
             stmt.bindString(4, src);
         }
-
+ 
         String articleId = entity.getArticleId();
         if (articleId != null) {
             stmt.bindString(5, articleId);
         }
-
+ 
         Integer downState = entity.getDownState();
         if (downState != null) {
             stmt.bindLong(6, downState);
         }
     }
 
-    /**
-     * @inheritdoc
-     */
+    /** @inheritdoc */
     @Override
     public Long readKey(Cursor cursor, int offset) {
         return cursor.isNull(offset + 0) ? null : cursor.getLong(offset + 0);
     }
 
-    /**
-     * @inheritdoc
-     */
+    /** @inheritdoc */
     @Override
     public Img readEntity(Cursor cursor, int offset) {
         Img entity = new Img( //
@@ -126,9 +116,7 @@ public class ImgDao extends AbstractDao<Img, Long> {
         return entity;
     }
 
-    /**
-     * @inheritdoc
-     */
+    /** @inheritdoc */
     @Override
     public void readEntity(Cursor cursor, Img entity, int offset) {
         entity.setId(cursor.isNull(offset + 0) ? null : cursor.getLong(offset + 0));
@@ -139,18 +127,14 @@ public class ImgDao extends AbstractDao<Img, Long> {
         entity.setDownState(cursor.isNull(offset + 5) ? null : cursor.getInt(offset + 5));
     }
 
-    /**
-     * @inheritdoc
-     */
+    /** @inheritdoc */
     @Override
     protected Long updateKeyAfterInsert(Img entity, long rowId) {
         entity.setId(rowId);
         return rowId;
     }
 
-    /**
-     * @inheritdoc
-     */
+    /** @inheritdoc */
     @Override
     public Long getKey(Img entity) {
         if (entity != null) {
@@ -163,9 +147,9 @@ public class ImgDao extends AbstractDao<Img, Long> {
     /**
      * @inheritdoc
      */
-    @Override
+    @Override    
     protected boolean isEntityUpdateable() {
         return true;
     }
-
+    
 }

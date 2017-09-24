@@ -2,7 +2,7 @@ package me.wizos.loread.bean.gson;
 
 import com.google.gson.annotations.SerializedName;
 
-/**
+/** ID 和 Value
  * Created by Wizos on 2016/3/5.
  */
 public class StreamPref {

@@ -89,7 +89,7 @@ public class SettingActivity extends BaseActivity {
     }
 
 
-    private SwitchButton syncFirstOpen, downImgWifi, inoreaderProxy, scrollMark, orderTagFeed, syncAllStarred, sysBrowserOpenLink;
+    private SwitchButton syncFirstOpen, downImgWifi, inoreaderProxy, scrollMark, orderTagFeed, syncAllStarred, sysBrowserOpenLink, autoToggleTheme, leftRightSlideArticle;
     private TextView clearBeforeDaySummary;
     //    private Button clearLog;
     private int clearBeforeDayIndex, clearBeforeDay;
@@ -103,6 +103,8 @@ public class SettingActivity extends BaseActivity {
         orderTagFeed = (SwitchButton) findViewById(R.id.setting_order_tagfeed_sb_flyme);
         clearBeforeDaySummary = (TextView) findViewById(R.id.setting_clear_day_summary);
         sysBrowserOpenLink = (SwitchButton) findViewById(R.id.setting_link_open_mode_sb_flyme);
+        autoToggleTheme = (SwitchButton) findViewById(R.id.setting_auto_toggle_theme_sb_flyme);
+        leftRightSlideArticle = (SwitchButton) findViewById(R.id.setting_left_right_slide_sb_flyme);
 //        clearLog = (Button)findViewById(R.id.setting_clear_log_button);
     }
 
@@ -115,6 +117,8 @@ public class SettingActivity extends BaseActivity {
         orderTagFeed.setChecked(WithSet.i().isOrderTagFeed());
         clearBeforeDay = WithSet.i().getClearBeforeDay();
         sysBrowserOpenLink.setChecked(WithSet.i().isSysBrowserOpenLink());
+        autoToggleTheme.setChecked(WithSet.i().isAutoToggleTheme());
+        leftRightSlideArticle.setChecked(WithSet.i().isLeftRightSlideArticle());
         changeViewSummary();
         KLog.d( "读取默认的选项"+  clearBeforeDayIndex );
     }
@@ -155,6 +159,12 @@ public class SettingActivity extends BaseActivity {
                 break;
             case R.id.setting_link_open_mode_sb_flyme:
                 WithSet.i().setSysBrowserOpenLink(v.isChecked());
+                break;
+            case R.id.setting_auto_toggle_theme_sb_flyme:
+                WithSet.i().setAutoToggleTheme(v.isChecked());
+                break;
+            case R.id.setting_left_right_slide_sb_flyme:
+                WithSet.i().setLeftRightSlideArticle(v.isChecked());
                 break;
         }
 //        KLog.d("Switch: " , v.isChecked() );

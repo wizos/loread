@@ -7,7 +7,6 @@
     android:fitsSystemWindows="true"
     android:addStatesFromChildren="true"
     android:id="@+id/setting_coordinator"
-    tools:background="@color/article_dark_background"
     tools:context="me.wizos.loread.activity.SettingActivity">
     <android.support.design.widget.AppBarLayout
         android:id="@+id/appBarLayout"
@@ -204,6 +203,64 @@
                 </LinearLayout>
                 <com.kyleduo.switchbutton.SwitchButton
                     android:id="@+id/setting_scroll_mark_sb_flyme"
+                    style="@style/SwitchButtonStyle"
+                    android:checked="false"
+                    android:onClick="onSBClick" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/setting_auto_toggle_theme"
+                style="@style/SettingItem"
+                android:gravity="center_vertical">
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/setting_auto_toggle_theme_title"
+                        style="@style/SettingItemTitle"
+                        android:text="@string/setting_auto_toggle_theme_title" />
+
+                    <TextView
+                        android:id="@+id/setting_auto_toggle_theme_tips"
+                        style="@style/SettingItemTips"
+                        android:text="@string/setting_auto_toggle_theme_tips" />
+                </LinearLayout>
+
+                <com.kyleduo.switchbutton.SwitchButton
+                    android:id="@+id/setting_auto_toggle_theme_sb_flyme"
+                    style="@style/SwitchButtonStyle"
+                    android:checked="false"
+                    android:onClick="onSBClick" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/setting_left_right_slide"
+                style="@style/SettingItem"
+                android:gravity="center_vertical">
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/setting_left_right_slide_title"
+                        style="@style/SettingItemTitle"
+                        android:text="@string/setting_left_right_slide_title" />
+
+                    <TextView
+                        android:id="@+id/setting_left_right_slide_tips"
+                        style="@style/SettingItemTips"
+                        android:text="@string/setting_left_right_slide_tips" />
+                </LinearLayout>
+
+                <com.kyleduo.switchbutton.SwitchButton
+                    android:id="@+id/setting_left_right_slide_sb_flyme"
                     style="@style/SwitchButtonStyle"
                     android:checked="false"
                     android:onClick="onSBClick"/>

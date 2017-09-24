@@ -80,7 +80,12 @@ public class ViewGroupSetter extends ViewSetter {
 
     @Override
     public void setValue(Theme newTheme, int themeId) {
+        int alpha = 255;
+        if (mView.getBackground() != null) {
+            alpha = mView.getBackground().getAlpha();// 自加。保留透明度信息。
+        }
         mView.setBackgroundColor(getColor(newTheme));
+        mView.getBackground().setAlpha(alpha);// 自加。保留透明度信息。
         // 清空AbsListView的元素
         clearListViewRecyclerBin(mView);
         // 清空RecyclerView
@@ -141,9 +146,9 @@ public class ViewGroupSetter extends ViewSetter {
                 localField.setAccessible(true);
                 Method localMethod = Class.forName(
                         "android.widget.AbsListView$RecycleBin")
-                        .getDeclaredMethod("clear", new Class[0]);
+                        .getDeclaredMethod("clear");
                 localMethod.setAccessible(true);
-                localMethod.invoke(localField.get(rootView), new Object[0]);
+                localMethod.invoke(localField.get(rootView));
 //				Log.e("", "### 清空AbsListView的RecycerBin ");
             } catch (NoSuchFieldException e1) {
                 e1.printStackTrace();
@@ -167,9 +172,9 @@ public class ViewGroupSetter extends ViewSetter {
                 localField.setAccessible(true);
                 Method localMethod = Class.forName(
                         "android.support.v7.widget.RecyclerView$Recycler")
-                        .getDeclaredMethod("clear", new Class[0]);
+                        .getDeclaredMethod("clear");
                 localMethod.setAccessible(true);
-                localMethod.invoke(localField.get(rootView), new Object[0]);
+                localMethod.invoke(localField.get(rootView));
 //				Log.e("", "### 清空RecyclerView的Recycer ");
                 rootView.invalidate();
             } catch (NoSuchFieldException e1) {

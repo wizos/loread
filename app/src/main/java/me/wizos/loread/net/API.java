@@ -1,16 +1,19 @@
 package me.wizos.loread.net;
 
-import com.squareup.okhttp.Request;
+//import com.squareup.okhttp.Request;
+
+import com.lzy.okgo.request.base.Request;
 
 import java.util.ArrayList;
 
-import me.wizos.loread.bean.gson.Item;
+import me.wizos.loread.bean.gson.itemContents.Items;
 
 /**
  * 基础的 Activity
  * Created by Wizos on 2016/3/5.
  */
 public class API {
+    //    public static Request request;
     public static Request request;
     public static String MyFileType = ".loread";
     static final String INOREADER_APP_ID = "1000001277";
@@ -27,10 +30,10 @@ public class API {
     public static final String U_USER_INFO ="/reader/api/0/user-info";
     public static final String U_TAGS_LIST ="/reader/api/0/tag/list";
     public static final String U_STREAM_PREFS ="/reader/api/0/preference/stream/list";
-    public static final String U_SUSCRIPTION_LIST ="/reader/api/0/subscription/list";
+    public static final String U_SUSCRIPTION_LIST = "/reader/api/0/subscription/list"; // 这个不知道现在用在了什么地方
     public static final String U_UNREAD_COUNTS ="/reader/api/0/unread-count";
     public static final String U_ITEM_IDS = "/reader/api/0/stream/items/ids"; // 获取所有文章的id
-    public static final String U_ITEM_CONTENTS ="/reader/api/0/stream/items/contents";
+    public static final String U_ITEM_CONTENTS = "/reader/api/0/stream/items/contents"; // 获取流的内容
     public static final String U_ARTICLE_CONTENTS ="/reader/api/0/stream/items/contents";
     public static final String U_EDIT_TAG ="/reader/api/0/edit-tag";
 
@@ -57,6 +60,10 @@ public class API {
 //    public static final int SUCCESS_NET = 3;
 //    public static final int ID_UPDATE_UI = 4;
 //    public static final int ID_FROM_CACHE = 5;
+
+
+    public static final int ActivityResult_TagToMain = 1;
+    public static final int ActivityResult_ArtToMain = 2;
 
     public static final int MSG_DOUBLE_TAP = -1;
     public static final int H_WEB = -2;
@@ -96,10 +103,10 @@ public class API {
     public static final int S_ARTICLE_CONTENTS = 61;
 
     public static final int S_BITMAP = 62;
-    public static final int S_Contents = 63;
+    public static final int S_Contents = 63; // 似乎没有被用到
 
 
-    public static ArrayList<Item> itemlist;
+    public static ArrayList<Items> itemlist;
 
     public static final int ReplaceImgSrc = 69;
 //    public static final int ReplaceImgSrcAgain = 68;
@@ -111,10 +118,7 @@ public class API {
     public static final String ImgState_Over = "1";
 
 
-
-
-
-
+    // Note: 下面这个是不是能做成map的形式方便维护
     public static int url2int(String api){
         if (api.equals(HOST + U_CLIENTLOGIN)){
             return S_CLIENTLOGIN;
@@ -150,6 +154,7 @@ public class API {
     public static final String ART_READED = "Readed";// 1 已读
     public static final String ART_UNREADING = "UnReading"; // 00 强制未读
     public static final String ART_UNREAD = "UnRead"; // 0 未读
+
     public static final String ART_STARED = "Stared"; // 1
     public static final String ART_UNSTAR = "UnStar"; // 0
 
