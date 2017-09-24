@@ -18,16 +18,6 @@ import me.wizos.loread.data.dao.TagDao;
  */
 public class Tag {
 
-    // KEEP FIELDS - put your custom fields here
-    @SerializedName("id")
-    private String id;
-    @SerializedName("sortid")
-    private String sortid;
-    @SerializedName("title")
-    private String title;
-    @SerializedName("unreadcount")
-    private Integer unreadcount;
-    // KEEP FIELDS END
 
     /**
      * Used to resolve relations
@@ -41,6 +31,16 @@ public class Tag {
 
     private List<Feed> feeds;
 
+    // KEEP FIELDS - put your custom fields here
+    @SerializedName("id")
+    private String id;
+    @SerializedName("sortid")
+    private String sortid;
+    @SerializedName("title")
+    private String title;
+//    @SerializedName("unreadcount")
+//    private Integer unreadcount;
+    // KEEP FIELDS END
 
     public Tag() {
     }
@@ -49,11 +49,10 @@ public class Tag {
         this.id = id;
     }
 
-    public Tag(String id, String sortid, String title, Integer unreadcount) {
+    public Tag(String id, String sortid, String title) {
         this.id = id;
         this.sortid = sortid;
         this.title = title;
-        this.unreadcount = unreadcount;
     }
 
     /** called by internal mechanisms, do not call yourself. */
@@ -88,14 +87,6 @@ public class Tag {
 
     public void setTitle(String title) {
         this.title = title;
-    }
-
-    public Integer getUnreadcount() {
-        return unreadcount;
-    }
-
-    public void setUnreadcount(Integer unreadcount) {
-        this.unreadcount = unreadcount;
     }
 
     /** To-many relationship, resolved on first access (and after reset). Changes to to-many relations are not persisted, make changes to the target entity. */

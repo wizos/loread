@@ -14,6 +14,7 @@ import java.util.List;
 
 import me.wizos.loread.R;
 import me.wizos.loread.bean.Feed;
+import me.wizos.loread.bean.Statistic;
 import me.wizos.loread.bean.Tag;
 import me.wizos.loread.data.WithDB;
 import me.wizos.loread.view.ExpandableListViewS;
@@ -91,11 +92,9 @@ public class ExpandableListAdapterS extends BaseExpandableListAdapter { // imple
         return false;
     }
 
-    //  获得父项显示的view
-    private ItemViewHolder groupViewHolder;
-
     @Override
     public View getGroupView(final int groupPos, final boolean isExpanded, View convertView, final ViewGroup parent) {
+        ItemViewHolder groupViewHolder;
         // 使用一个 ViewHolder，可减少在该函数中每次都要去 findViewById ，这很费时间。具体见：https://zhidao.baidu.com/question/544207312.html
         if (convertView == null) {
             groupViewHolder = new ItemViewHolder();
@@ -106,6 +105,11 @@ public class ExpandableListAdapterS extends BaseExpandableListAdapter { // imple
             convertView.setTag(groupViewHolder);
         } else {
             groupViewHolder = (ItemViewHolder) convertView.getTag();
+        }
+        if (isExpanded) {
+            groupViewHolder.icon.setText(context.getString(R.string.font_expand));
+        } else {
+            groupViewHolder.icon.setText(context.getString(R.string.font_collapse));
         }
 
         groupViewHolder.icon.setOnClickListener(new View.OnClickListener() {
@@ -124,12 +128,19 @@ public class ExpandableListAdapterS extends BaseExpandableListAdapter { // imple
 
         Tag theTag = tags.get(groupPos);
         if (theTag != null) {
-            try {
-                groupViewHolder.title.setText(theTag.getTitle());
-                groupViewHolder.count.setText(theTag.getUnreadcount());
-            } catch (Exception e) {
 
+            try {
+                Statistic statistic = WithDB.i().getStatistic(theTag.getId());
+                groupViewHolder.title.setText(theTag.getTitle());
+                groupViewHolder.count.setText(String.valueOf(statistic.getUnread()));
+
+                if (theTag.getFeeds().size() == 0) {
+                    groupViewHolder.icon.setText(context.getString(R.string.font_tag_class));
+                }
+            } catch (Exception e) {
+//                groupViewHolder.icon.setText(context.getString(R.string.font_tag_class));
             }
+
 //            KLog.e("父分类：" + theTag.getTitle() + "--" + theTag.getUnreadcount());
         }
         return convertView;
@@ -170,11 +181,12 @@ public class ExpandableListAdapterS extends BaseExpandableListAdapter { // imple
         }
 
         String feedTitle = feed.getTitle();
-        String feedCount = String.valueOf(0); // TEST:  待补充
+
+        Statistic statistic = WithDB.i().getStatistic(feed.getId());
 
 //        childViewHolder.icon.setText("");
         childViewHolder.title.setText(feedTitle);
-        childViewHolder.count.setText(feedCount);
+        childViewHolder.count.setText(String.valueOf(statistic.getUnread()));
 
 //        childViewTitle.setOnClickListener(new View.OnClickListener() {
 //            @Override

@@ -11,7 +11,7 @@ public class GreenDaoGenerator {
         // http://www.open-open.com/lib/view/open1438065400878.html
         // 现在创建一个用于添加实体（Entity）的模式（Schema）对象，两个参数分别代表：数据库版本号与自动生成代码的包路径。
         // 如果要分别指定生成的 Bean 与 DAO 类所在的目录，只要：
-        Schema schema = new Schema(4, "me.wizos.loread.bean");
+        Schema schema = new Schema(6, "me.wizos.loread.bean");
         schema.setDefaultJavaPackageDao("me.wizos.loread.data.dao");
 
         // 模式（Schema）同时也拥有两个默认的 flags，分别用来标示 entity 是否是 activie 以及是否使用 keep sections。
@@ -41,6 +41,11 @@ public class GreenDaoGenerator {
         // 你也可以重新给表命名  note.setTableName("NODE");
         // greenDAO 会自动根据实体类的属性值来创建表字段，并赋予默认值
 
+        // 有些时候，我们会在生成的实体类中添加一些属性和方法，但是每次重新运行 Java 项目的时候都会覆盖掉以前的代码，如果不想覆盖自己添加的代码，可以这样设置：
+//        schema.enableKeepSectionsByDefault(); // 通过此 schema 创建的实体类都不会覆盖自定义的代码
+//        tag.setHasKeepSections(true);  // 此实体类不会覆盖自定义的代码
+
+
 //        @SerializedName("id")
 //        private String id;
 //        @SerializedName("sortid")
@@ -50,11 +55,11 @@ public class GreenDaoGenerator {
 //        @SerializedName("unreadcount")
 //        private Integer unreadcount;
         Entity tag = schema.addEntity("Tag");// 接下来你便可以设置表中的字段：
-        tag.setHasKeepSections(true);
+        tag.setHasKeepSections(true);  // 此实体类不会覆盖自定义的代码
         tag.addStringProperty("id").notNull().primaryKey();
         tag.addStringProperty("sortid").notNull();
         tag.addStringProperty("title");
-        tag.addIntProperty("unreadcount");
+//        tag.addIntProperty("unreadcount");
 //        tag.addStringProperty("feedssortid");
 //        tag.addLongProperty("feedsnum");
 
@@ -109,6 +114,14 @@ public class GreenDaoGenerator {
         // 表关系 imgId，imgNo，imgName，imgSrc，articleId，downState
         // 可以在数据库关系图中的表间创建关系以显示某个表中的列如何链接到另一表中的列。
         // 在关系数据库中，关系能防止冗余的数据。例如，如果正在设计一个数据库来跟踪有关书的信息，而每本书的信息（如书名、出版日期和出版商）都保存在一个名为 titles 的表中。同时还有一些想保存的有关出版商的信息，例如出版商的电话号码、地址和邮政编码。如果将所有这些信息都保存在 titles 表中，则对于某个出版商出版的每本书，出版商的电话号码将是重复的。
+
+
+        Entity count = schema.addEntity("Statistic"); // 包括已读、未读、加星的数量统计
+        count.addStringProperty("id").notNull().primaryKey();
+        count.addIntProperty("unread"); // 未读的数目
+        count.addIntProperty("stared"); // 加星的数目
+        count.addIntProperty("sum"); // 名下文章的数目
+        count.addLongProperty("newestItemTimestampUsec");
     }
 
     private static void addRequestLogTable(Schema schema) {

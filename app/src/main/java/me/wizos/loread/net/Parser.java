@@ -17,6 +17,7 @@ import java.util.Map;
 import me.wizos.loread.App;
 import me.wizos.loread.bean.Article;
 import me.wizos.loread.bean.Feed;
+import me.wizos.loread.bean.Statistic;
 import me.wizos.loread.bean.Tag;
 import me.wizos.loread.bean.gson.GsSubscriptions;
 import me.wizos.loread.bean.gson.GsTags;
@@ -217,20 +218,46 @@ public class Parser {
         Gson gson = new Gson();
         ArrayList<UnreadCounts> unreadCountList = gson.fromJson(info, GsUnreadCount.class).getUnreadcounts();
 
-        int numOfTags = reTagList.size();
-        int numOfUnreads = unreadCountList.size();
-        String temp;
-        for (int i=0; i<numOfTags; i++){
-            temp = reTagList.get(i).getId(); // 获取 tag 的 id
-            for (int t=0; t<numOfUnreads; t++){
-                if(temp.equals(unreadCountList.get(t).getId())){
-                    reTagList.get(i).setUnreadcount(unreadCountList.get(t).getCount());
-//                    KLog.d("【次数】" + unreadCountList.get(t).getCount() );
-                    break;
-                }
-            }
+//        int numOfTags = reTagList.size();
+//        int numOfUnreads = unreadCountList.size();
+//        String temp;
+//        for (int i=0; i<numOfTags; i++){
+//            temp = reTagList.get(i).getId(); // 获取 tag 的 id
+//            for (int t=0; t<numOfUnreads; t++){
+//                if(temp.equals(unreadCountList.get(t).getId())){
+//                    reTagList.get(i).setUnreadcount(unreadCountList.get(t).getCount());
+////                    KLog.d("【次数】" + unreadCountList.get(t).getCount() );
+//                    break;
+//                }
+//            }
+//        }
+        Map<String, UnreadCounts> map = new ArrayMap<>();
+        for (UnreadCounts unreadCounts : unreadCountList) {
+            map.put(unreadCounts.getId(), unreadCounts);
         }
-        WithDB.i().saveTagList(reTagList);
+        // 尝试写一下 Count 相关的
+        ArrayList<Statistic> statisticList = new ArrayList<>();
+        for (Tag tag : reTagList) {
+            UnreadCounts unreadCounts = map.get(tag.getId());
+            Statistic count = new Statistic();
+            count.setId(unreadCounts.getId());
+            count.setUnread(unreadCounts.getCount());
+            count.setNewestItemTimestampUsec(unreadCounts.getNewestItemTimestampUsec());
+            statisticList.add(count);
+        }
+        List<Feed> feeds = WithDB.i().getFeeds();
+
+        for (Feed feed : feeds) {
+            UnreadCounts unreadCounts = map.get(feed.getId());
+            Statistic count = new Statistic();
+            count.setId(unreadCounts.getId());
+            count.setUnread(unreadCounts.getCount());
+            count.setNewestItemTimestampUsec(unreadCounts.getNewestItemTimestampUsec());
+            statisticList.add(count);
+        }
+
+
+        WithDB.i().saveStatisticList(statisticList);
 
         unreadCounts = unreadCountList.get(0).getCount();
         starredCounts = unreadCountList.get(1).getCount();
@@ -259,7 +286,7 @@ public class Parser {
             feed.setIconurl(sub.getIconUrl());
             feeds.add(feed);
         }
-        WithDB.i().saveFeeds(feeds);
+        WithDB.i().saveAllFeeds(feeds);
         return subs;
     }
 
@@ -352,8 +379,8 @@ public class Parser {
 
     public ArrayList<ItemRefs> reStarredRefs(){
         List<Article> localStarredArticles = WithDB.i().getStaredArt();
-        Map<String, Integer> map = new ArrayMap<>(localStarredArticles.size() + remoteStarredRefs.size());
-        Map<String, Article> mapArticle = new ArrayMap<>(localStarredArticles.size());
+//        Map<String, Integer> map = new ArrayMap<>(localStarredArticles.size() + remoteStarredRefs.size());
+        Map<String, Article> map = new ArrayMap<>(localStarredArticles.size());
         ArrayList<Article> starList = new ArrayList<>(localStarredArticles.size());
         ArrayList<ItemRefs> starredRefs = new ArrayList<>(remoteStarredRefs.size());
 
@@ -361,27 +388,31 @@ public class Parser {
         // 数据量大的一方
         String articleId;
         // 第1步，遍历数据量大的一方A，将其比对项目放入Map中，计数为1
-        for (Article item : localStarredArticles) {
-            articleId = item.getId(); // String
-            map.put(articleId, 1);
-            mapArticle.put(articleId,item);
+        for (Article article : localStarredArticles) {
+            articleId = article.getId(); // String
+            map.put(articleId, article);
+//            mapArticle.put(articleId,item);
             KLog.i("【本地star文章】" + articleId);
         }
         KLog.d(WithDB.i().getStaredArt().size() + "个");
         // 第2步，遍历数据量小的一方B。到Map中找，是否含有b中的比对项。有则XX，无则YY
         for (ItemRefs item : remoteStarredRefs) {
             articleId = StringUtil.toLongID(item.getId()); // String
-            Integer cc = map.get( articleId );
-            if (cc != null) {
-                map.put(articleId, ++cc);
+//            Integer cc = map.get( articleId );
+            Article article = map.get(articleId);
+            if (article != null) {
+                if (article.getTimestampUsec() != item.getTimestampUsec()) {
+                    article.setStarred(item.getTimestampUsec()); // 由于位数不一样，不能用
+                }
+                map.remove(articleId);
             } else {
                 starredRefs.add(item);// 3，就剩云端的，要请求的加星资源（但是还是含有一些要请求的未读资源）
             }
         }
 
-        for( Map.Entry<String, Integer> entry: map.entrySet()) {
-            if(entry.getValue()==1) {
-                Article article = mapArticle.get(entry.getKey());
+        for (Map.Entry<String, Article> entry : map.entrySet()) {
+            if (entry.getValue() != null) {
+                Article article = map.get(entry.getKey());
                 article.setStarState(API.ART_UNSTAR);
                 starList.add(article);// 取消加星
             }
@@ -464,43 +495,6 @@ public class Parser {
      *
      * @return 要从云端获取的数量
      */
-    public int reRefs() {
-        if (!checkCounts()) {
-            return -1;
-        }
-        // 清空之前获取的远程资源
-//        remoteUnreadRefs = new ArrayList<>();
-//        remoteStarredRefs = new ArrayList<>();
-        int arrayCapacity = 0;
-        if (remoteUnreadRefs.size() > remoteStarredRefs.size()) {
-            arrayCapacity = remoteStarredRefs.size();
-        } else {
-            arrayCapacity = remoteUnreadRefs.size();
-        }
-        // 这里根据个别属性，划分为不同的集合。因为从远端获取内容后，要根据该属性填写不同的值
-        reUnreadUnstarRefs = new ArrayList<>(remoteUnreadRefs.size());
-        reReadStarredRefs = new ArrayList<>(remoteStarredRefs.size());
-        reUnreadStarredRefs = new ArrayList<>(arrayCapacity);
-
-        Map<String, ItemRefs> map = new ArrayMap<>(remoteUnreadRefs.size());
-        for (ItemRefs item : remoteUnreadRefs) {
-            map.put(item.getId(), item);
-        }
-        for (ItemRefs item : remoteStarredRefs) {
-            if (map.get(item.getId()) != null) {
-                map.remove(item.getId());
-                reUnreadStarredRefs.add(item);
-            } else {
-                reReadStarredRefs.add(item);
-            }
-        }
-        for (Map.Entry<String, ItemRefs> entry : map.entrySet()) {
-            reUnreadUnstarRefs.add(map.get(entry.getKey()));
-        }
-        KLog.d("【reRefs】测试" + reUnreadUnstarRefs.size() + "--" + reReadStarredRefs.size() + "--" + reUnreadStarredRefs.size());
-        return reUnreadUnstarRefs.size() + reReadStarredRefs.size() + reUnreadStarredRefs.size();
-    }
-
 //    public int reRefsWithLocal(){
 //        List<Article> localArticles = WithDB.i().getAllArt();
 //        Map<String,Article> map = new ArrayMap<>( localArticles.size() );

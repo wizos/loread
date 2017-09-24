@@ -89,16 +89,16 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
      * 而我们用户对其中某些 Article 的 Read, Star, Save, Comment, Broadcast 等操作，无意中又生成了一组集合（Stream）
      * 所以为了以后的方便，我最好是抽离/包装出一套标准的 API。
      */
-    private String StreamId;
-    private String StreamState; // 这个只是从 Read 属性的4个类型(Readed, UnRead, UnReading, All), Star 属性的3个类型(Stared, UnStar, All)中，生硬的抽出 UnRead(含UnReading), Stared, All 3个快捷状态，供用户在主页面切换时使用
-
-    private String StreamTitle;
-    private int StreamCount;
+//    private String StreamId;
+//    private String StreamState; // 这个只是从 Read 属性的4个类型(Readed, UnRead, UnReading, All), Star 属性的3个类型(Stared, UnStar, All)中，生硬的抽出 UnRead(含UnReading), Stared, All 3个快捷状态，供用户在主页面切换时使用
+//
+//    private String StreamTitle;
+//    private int StreamCount;
 
     // 由于根据 StreamId 来获取文章，可从2个属性( Categories[针对Tag], OriginStreamId[针对Feed] )上，共4个变化上（All, Tag, NoTag, Feed）来获取文章。
     // 根据 StreamState 也是从2个属性(ReadState, StarState)的3个快捷状态 ( UnRead[含UnReading], Stared, All ) 来获取文章。
     // 所以文章列表页会有6种组合：某个 Categories 内的 UnRead[含UnReading], Stared, All。某个 OriginStreamId 内的 UnRead[含UnReading], Stared, All。
-    // 所有定下来去获取文章的函数也有6个：getUnreadArtsInTag(), getStaredArtsInTag(), getAllArtsInTag(),getUnreadArtsInFeed(), getStaredArtsInFeed(), getAllArtsInFeed()
+    // 所有定下来去获取文章的函数也有6个：getArtsUnreadInTag(), getArtsStaredInTag(), getArtsAllInTag(),getUnreadArtsInFeed(), getStaredArtsInFeed(), getAllArtsInFeed()
 
 
     private boolean syncFirstOpen;
@@ -136,14 +136,14 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
         initView();
         initService();
         DaoMaster daoMaster = DBHelper.startUpgrade(this);
-        if (daoMaster.getSchemaVersion() == 3) {
-            KLog.e("数据库升级，修改数据");
-            List<Article> arts = WithDB.i().getStaredArt();
-            for (Article art : arts) {
-                art.setStarred(art.getPublished());
-            }
-            WithDB.i().saveArticleList(arts);
-        }
+//        if (daoMaster.getSchemaVersion() == 3) {
+//            KLog.e("数据库升级，修改数据");
+//            List<Article> arts = WithDB.i().getStaredArt();
+//            for (Article art : arts) {
+//                art.setStarred(art.getPublished());
+//            }
+//            WithDB.i().saveArticleList(arts);
+//        }
 
 
         initData();
@@ -301,66 +301,63 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
 //            KLog.i("【API.getArt】" + listTabState + listTagId);
 //        }
 
+//        if (listTagId.contains("user/" + App.mUserID + "/")) {
+//            if (listTagId.contains(API.U_NO_LABEL)) {
+//                App.articleList = getNoTagList2();  // FIXME: 2016/5/7 这里的未分类暂时无法使用，因为在云端订阅源的分类是可能会变的，导致本地缓存的文章分类错误
+//                KLog.i("【API.U_NO_LABEL】");
+//            } else if (listTabState.equals(API.LIST_STARED)) {
+//                App.articleList = WithDB.i().getArtsStaredInTag(listTagId); // Test 测试修改数据库的
+////                App.articleList = WithDB.i().getArtsByCategoriesOrderStaredMsec("/state/com.google/starred", listTagId);
+//                KLog.i("【API.LIST_STARED】");
+//            } else {
+//                App.articleList = WithDB.i().getArt(listTabState, listTagId); // 590-55// Test 测试修改数据库的
+////                App.articleList = WithDB.i().getArtsByCategoriesOrderCrawlMsec( listTabState, listTagId );
+//                KLog.i("【API.getArt】" + listTabState + listTagId);
+//            }
+//        } else if (listTagId.indexOf("feed/") == 0) {
+//            if (listTabState.equals(API.LIST_STARED)) {
+//                App.articleList = WithDB.i().getArtsStar(listTagId);// Test 测试修改数据库的
+////                App.articleList = WithDB.i().getArtsStarByStreamIdOrderStaredMsec( listTagId );
+//                KLog.i("【API.LIST_STARED】");
+//            } else {
+//                App.articleList = WithDB.i().getArtsRead(listTabState, listTagId); // 590-55 // Test 测试修改数据库的
+////                App.articleList = WithDB.i().getArtsStarByStreamIdOrderStaredMsec( listTagId );
+//                KLog.i("【API.getArt】" + listTabState + listTagId);
+//            }
+//        }
+
         if (listTagId.contains("user/" + App.mUserID + "/")) {
-            if (listTagId.contains(API.U_NO_LABEL)) {
-                App.articleList = getNoTagList2();  // FIXME: 2016/5/7 这里的未分类暂时无法使用，因为在云端订阅源的分类是可能会变的，导致本地缓存的文章分类错误
-                KLog.i("【API.U_NO_LABEL】");
-            } else if (listTabState.equals(API.LIST_STARED)) {
-//                App.articleList = WithDB.i().getStaredArtsInTag(listTagId); // Test 测试修改数据库的
-                App.articleList = WithDB.i().getArtsByCategoriesOrderCrawlMsec("/state/com.google/starred", listTagId);
-                KLog.i("【API.LIST_STARED】");
+            if (listTagId.contains(API.U_READING_LIST)) {
+                if (listTabState.equals(API.LIST_STARED)) {
+                    App.articleList = WithDB.i().getArtsStaredInTag(listTagId);
+                } else if (listTabState.equals(API.LIST_UNREAD)) {
+                    App.articleList = WithDB.i().getArtsUnreadInTag(listTagId); // TEST:  测试DB函数
+                } else {
+                    App.articleList = WithDB.i().getArt(listTabState, listTagId);
+                }
+            } else if (listTagId.contains(API.U_NO_LABEL)) {
+
+                if (listTabState.contains(API.LIST_STARED)) {
+                    App.articleList = WithDB.i().getArtsStaredNoTag();
+                } else if (listTabState.contains(API.LIST_UNREAD)) {
+                    App.articleList = WithDB.i().getArtsUnreadNoTag();
+                } else {
+                    App.articleList = WithDB.i().getArtsAllNoTag();
+                }
             } else {
-                App.articleList = WithDB.i().getArt(listTabState, listTagId); // 590-55
-                KLog.i("【API.getArt】" + listTabState + listTagId);
+                App.articleList = WithDB.i().getArt(listTabState, listTagId);
+                listTitle = WithDB.i().getTag(listTagId).getTitle();
             }
         } else if (listTagId.indexOf("feed/") == 0) {
             if (listTabState.equals(API.LIST_STARED)) {
                 App.articleList = WithDB.i().getArtsStar(listTagId);
                 KLog.i("【API.LIST_STARED】");
             } else {
-                App.articleList = WithDB.i().getArtsRead(listTabState, listTagId); // 590-55
+                App.articleList = WithDB.i().getArt(listTabState, listTagId); // 590-55
                 KLog.i("【API.getArt】" + listTabState + listTagId);
             }
+            listTitle = WithDB.i().getFeed(listTagId).getTitle();
         }
-
-//        if(listTagId.contains("user/" + App.mUserID + "/") ){
-//            if (listTagId.contains(API.U_READING_LIST)) {
-//                if (listTabState.equals(API.LIST_STARED)) {
-//                    listTitle = "所有加星";
-//                    App.articleList = WithDB.i().getStaredArtsInTag(listTagId);
-//                } else if (listTabState.equals(API.LIST_UNREAD)) {
-//                    listTitle = "所有未读";
-////                    App.articleList = WithDB.i().getArt(listTabState, listTagId);
-//                    App.articleList = WithDB.i().getUnreadArtsInTag(listTagId); // TEST:  测试DB函数
-//                }else {
-//                    listTitle = "所有文章";
-//                    App.articleList = WithDB.i().getArt(listTabState, listTagId);
-//                }
-//            } else if (listTagId.contains(API.U_NO_LABEL)) {
-//                if (listTabState.equals(API.LIST_STARED)) {
-//                    listTitle = "加星未分类";
-//                    App.articleList = getNoTagList();
-//                } else if (listTabState.equals(API.LIST_UNREAD)) {
-//                    listTitle = "未读未分类";
-//                    App.articleList = getNoTagList();
-//                }else {
-//                    listTitle = "所有未分类";
-//                    App.articleList = getNoTagList();
-//                }
-//            } else {
-//                App.articleList = WithDB.i().getArt(listTabState, listTagId);
-//                listTitle = WithDB.i().getTag(listTagId).getTitle();
-//            }
-//        }else if( listTagId.indexOf("feed/") == 0 ){
-//            if (listTabState.equals(API.LIST_STARED)) {
-//                App.articleList = WithDB.i().getArtsStar(listTagId);
-//                KLog.i("【API.LIST_STARED】");
-//            } else {
-//                App.articleList = WithDB.i().getArt(listTabState, listTagId); // 590-55
-//                KLog.i("【API.getArt】" + listTabState + listTagId);
-//            }
-//            listTitle = WithDB.i().getFeed(listTagId).getTitle();
-//        }
 
 
         KLog.i("【】" + listTabState + "--" + listTagId);
@@ -377,8 +374,8 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
         mainSlvAdapter = new MainSlvAdapter(this, App.articleList);
         slv.setAdapter(mainSlvAdapter);
         mainSlvAdapter.notifyDataSetChanged();
-        changeToolbarTitle();
-//        getSupportActionBar().setTitle(listTitle);
+//        changeToolbarTitle();
+        getSupportActionBar().setTitle(listTitle);
         // 在setSupportActionBar(toolbar)之后调用toolbar.setTitle()的话。 在onCreate()中调用无效。在onStart()中调用无效。 在onResume()中调用有效。
         tagCount = App.articleList.size();
         setToolbarHint(tagCount);
@@ -412,11 +409,11 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
     public List<Article> getNoTagList2() {
         List<Article> noTags;
         if (listTabState.contains(API.LIST_STARED)) {
-            noTags = WithDB.i().loadStarAndNoTag();
+            noTags = WithDB.i().getArtsStaredNoTag();
         } else if (listTabState.contains(API.LIST_UNREAD)) {
-            noTags = WithDB.i().loadUnreadAndNoTag();
+            noTags = WithDB.i().getArtsUnreadNoTag();
         }else {
-            noTags = WithDB.i().loadAllNoTag();
+            noTags = WithDB.i().getArtsAllNoTag();
         }
         return noTags;
     }
@@ -643,12 +640,12 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
 
         rootTag.setId("\"user/" + userID + API.U_READING_LIST + "\"");
         rootTag.setSortid("00000000");
-        rootTag.setUnreadcount(App.articleList.size()); // test: 这句有问题
+//        rootTag.setUnreadcount(App.articleList.size()); // test: 这句有问题
         rootTag.__setDaoSession(App.getDaoSession());
 
         noLabelTag.setId("\"user/" + userID + API.U_NO_LABEL + "\"");
         noLabelTag.setSortid("00000001");
-        noLabelTag.setUnreadcount(0);// test: 这句有问题
+//        noLabelTag.setUnreadcount(0);// test: 这句有问题
         noLabelTag.__setDaoSession(App.getDaoSession());
 
         List<Tag> tagListTemp = WithDB.i().getTags();

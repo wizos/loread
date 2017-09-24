@@ -100,7 +100,7 @@ public class ImgDao extends AbstractDao<Img, Long> {
     @Override
     public Long readKey(Cursor cursor, int offset) {
         return cursor.isNull(offset + 0) ? null : cursor.getLong(offset + 0);
-    }
+    }    
 
     /** @inheritdoc */
     @Override
@@ -115,7 +115,7 @@ public class ImgDao extends AbstractDao<Img, Long> {
         );
         return entity;
     }
-
+     
     /** @inheritdoc */
     @Override
     public void readEntity(Cursor cursor, Img entity, int offset) {
@@ -125,15 +125,15 @@ public class ImgDao extends AbstractDao<Img, Long> {
         entity.setSrc(cursor.isNull(offset + 3) ? null : cursor.getString(offset + 3));
         entity.setArticleId(cursor.isNull(offset + 4) ? null : cursor.getString(offset + 4));
         entity.setDownState(cursor.isNull(offset + 5) ? null : cursor.getInt(offset + 5));
-    }
-
+     }
+    
     /** @inheritdoc */
     @Override
     protected Long updateKeyAfterInsert(Img entity, long rowId) {
         entity.setId(rowId);
         return rowId;
     }
-
+    
     /** @inheritdoc */
     @Override
     public Long getKey(Img entity) {
@@ -144,9 +144,7 @@ public class ImgDao extends AbstractDao<Img, Long> {
         }
     }
 
-    /**
-     * @inheritdoc
-     */
+    /** @inheritdoc */
     @Override    
     protected boolean isEntityUpdateable() {
         return true;

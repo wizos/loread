@@ -2,6 +2,7 @@
 <shape xmlns:android="http://schemas.android.com/apk/res/android"
     android:shape="oval"
     android:useLevel="false">
+    <!--暂时无用-->
     <!--<solid android:color="@color/material_red_400" />-->
     <!--<padding-->
     <!--android:left="2dp"-->

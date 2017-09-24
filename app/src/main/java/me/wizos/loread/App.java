@@ -62,8 +62,8 @@ public class App extends Application{
 
 //        initTBS();
 //        initLeakCanary();
-        initDebug();
-//        initRelease(); // 测试时，注释掉
+//        initDebug();
+        initRelease(); // 测试时，注释掉
         OkGo.getInstance().init(this); // 初始化网络框架
 
     }

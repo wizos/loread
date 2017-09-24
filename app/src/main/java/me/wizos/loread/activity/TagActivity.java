@@ -19,6 +19,7 @@ import java.util.List;
 
 import me.wizos.loread.App;
 import me.wizos.loread.R;
+import me.wizos.loread.bean.Statistic;
 import me.wizos.loread.bean.Tag;
 import me.wizos.loread.data.WithDB;
 import me.wizos.loread.data.WithSet;
@@ -98,14 +99,14 @@ public class TagActivity extends BaseActivity
             rootTag.setTitle("所有文章");
             noLabelTag.setTitle("所有未分类");
         }
-        rootTag.setUnreadcount(listCount);
+//        rootTag.setUnreadcount(listCount);
 
         rootTag.setId("\"user/"+ userID + API.U_READING_LIST +"\"");
         rootTag.setSortid("00000000");
 
         noLabelTag.setId( "\"user/"+ userID + API.U_NO_LABEL +"\"");
         noLabelTag.setSortid("00000001");
-        noLabelTag.setUnreadcount(noLabelCount);
+//        noLabelTag.setUnreadcount(noLabelCount);
 
         tagList.add( rootTag );
         tagList.add( noLabelTag );
@@ -274,8 +275,9 @@ public class TagActivity extends BaseActivity
                 cvh = (CustomViewHolder) convertView.getTag();
             }
             Tag tag = this.getItem(position);
+            Statistic statistic = WithDB.i().getStatistic(tag.getId());
             cvh.tagTitle.setText(tag.getTitle());
-            cvh.tagCount.setText(String.valueOf(tag.getUnreadcount()));
+            cvh.tagCount.setText(String.valueOf(statistic.getUnread()));
 //            KLog.d("【TagSlvAdapterGetView】" + tag.getUnreadcount());
             return convertView;
         }
