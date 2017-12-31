@@ -4,7 +4,6 @@ import android.app.Activity;
 import android.content.SharedPreferences;
 
 import me.wizos.loread.App;
-import me.wizos.loread.net.API;
 
 /**
  * 内部设置
@@ -32,6 +31,10 @@ public class WithSet {
         return withSet;
     }
 
+    public void clear() {
+        editor.clear();
+        editor.apply();
+    }
 
     private String readPref(String key, String defaultValue) {
         return mySharedPreferences.getString(key, defaultValue);//getString()第二个参数为缺省值，如果preference中不存在该key，将返回缺省值
@@ -113,7 +116,7 @@ public class WithSet {
 
 
     public boolean isSyncFirstOpen() {
-        return readPref("SyncFirstOpen", false);
+        return readPref("SyncFirstOpen", true);
     }
 
     public void setSyncFirstOpen(boolean syncFirstOpen) {
@@ -163,13 +166,15 @@ public class WithSet {
     }
     public void setInoreaderProxy(boolean proxyMode) {
         savePref("InoreaderProxy", proxyMode);
-        if( !isInoreaderProxy()){
-            API.HOST = API.HOST_OFFICIAL;
-        }else {
-            API.HOST = API.HOST_PROXY;
-        }
     }
 
+    public String getInoreaderProxyHost() {
+        return readPref("InoreaderProxyHost", "https://");
+    }
+
+    public void setInoreaderProxyHost(String host) {
+        savePref("InoreaderProxyHost", host);
+    }
     /**
      * 是否为滚动标记为已读
      */
@@ -185,25 +190,25 @@ public class WithSet {
     }
 
 
-    public String getListTabState() {
+    public String getStreamState() {
         return readPref("ListState", "Unread");
     }
 
-    public void setListTabState(String listState) {
+    public void setStreamState(String listState) {
         savePref("ListState", listState);
     }
 
 
-    public String getListTagId() {
-        return readPref("listTagId", null);
+    public String getStreamId() {
+        return readPref("listTagId", "");
     }
 
-    public void setListTagId(String listTagId) {
+    public void setStreamId(String listTagId) {
         savePref("listTagId", listTagId);
     }
 
 
-    public boolean isOrderTagFeed() {
+    public boolean isOrderTagFeed() { // StreamPrefs
         return readPref("OrderTagFeed", true);
     }
     public void setOrderTagFeed(boolean is) {
@@ -213,23 +218,20 @@ public class WithSet {
     public boolean isSysBrowserOpenLink() {
         return readPref("SysBrowserOpenLink", false);
     }
-
     public void setSysBrowserOpenLink(boolean is) {
         savePref("SysBrowserOpenLink", is);
     }
 
-    public boolean isLeftRightSlideArticle() {
-        return readPref("LeftRightSlideArticle", false);
-    }
-
-    public void setLeftRightSlideArticle(boolean is) {
-        savePref("LeftRightSlideArticle", is);
-    }
+//    public boolean isLeftRightSlideArticle() {
+//        return readPref("LeftRightSlideArticle", true);
+//    }
+//    public void setLeftRightSlideArticle(boolean is) {
+//        savePref("LeftRightSlideArticle", is);
+//    }
 
     public boolean isAutoToggleTheme() {
-        return readPref("AutoToggleTheme", false);
+        return readPref("AutoToggleTheme", true);
     }
-
     public void setAutoToggleTheme(boolean is) {
         savePref("AutoToggleTheme", is);
     }
@@ -241,4 +243,21 @@ public class WithSet {
         savePref("ThemeMode", themeMode);
     }
 
+
+    public String getTagsSortId() {
+        return readPref("TagsSortId", "");
+    }
+
+    public void setTagsSortId(String tagsSortId) {
+        savePref("TagsSortId", tagsSortId);
+    }
+
+
+    public String getRequestLog() {
+        return readPref("RequestLog", "");
+    }
+
+    public void setRequestLog(String requestLog) {
+        savePref("RequestLog", requestLog);
+    }
 }

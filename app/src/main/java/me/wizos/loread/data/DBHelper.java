@@ -7,7 +7,6 @@ import com.socks.library.KLog;
 
 import me.wizos.loread.App;
 import me.wizos.loread.data.dao.DaoMaster;
-import me.wizos.loread.data.dao.StatisticDao;
 
 
 /**
@@ -32,11 +31,10 @@ public class DBHelper extends DaoMaster.OpenHelper {
 
         //记得要修改 DaoMaster 中的数据库版本号
         switch (oldVersion) {
-            case 5:
+            case 0:
 
                 //创建新表，注意createTable()是静态方法
-                StatisticDao.createTable(db, true);
-
+//                StatisticDao.createTable(db, true);
                 // 加入新字段
 //                db.execSQL("ALTER TABLE 'Article' DROP COLUMN 'ORIGIN';");
 //                db.execSQL("ALTER TABLE 'Article' ADD COLUMN 'ORIGIN_STREAMID' TEXT;");

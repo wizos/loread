@@ -16,7 +16,6 @@ import com.socks.library.KLog;
 import java.util.ArrayList;
 import java.util.List;
 
-import me.wizos.loread.App;
 import me.wizos.loread.activity.ArticleActivity;
 import me.wizos.loread.bean.Article;
 import me.wizos.loread.data.WithSet;
@@ -24,8 +23,6 @@ import me.wizos.loread.utils.FileUtil;
 import me.wizos.loread.utils.StringUtil;
 import me.wizos.loread.view.WebViewS;
 
-//import android.webkit.WebSettings;
-//import android.webkit.WebView;
 
 /**
  * Created by Wizos on 2017/6/4.
@@ -36,13 +33,11 @@ public class ViewPagerAdapter extends PagerAdapter { //  implements ViewPager.On
     private ArticleActivity activity;
     private List<Article> dataList;
     private List<WebViewS> mViewHolderList = new ArrayList<>();
-//    private ViewPager viewPager;
 
     public ViewPagerAdapter(ArticleActivity context, List<Article> dataList) {
         if (null == dataList || dataList.isEmpty()) return;
         this.activity = context;
         this.dataList = dataList;
-//        this.viewPager = viewPager;
     }
 
 
@@ -96,24 +91,46 @@ public class ViewPagerAdapter extends PagerAdapter { //  implements ViewPager.On
     @Override
     public Object instantiateItem(ViewGroup container, final int position) {
         final WebViewS webView;
-        if (container.getChildCount() == 1 && !WithSet.i().isLeftRightSlideArticle()) {
-            KLog.i("【instantiateItem2】 " + "实例position：" + position + "==" + container.getChildCount());
-            return null;
-        }
+//        if (container.getChildCount() == 1 && !WithSet.i().isLeftRightSlideArticle()) {
+//            return null;
+//        }
         if (mViewHolderList.size() > 0) {
-            KLog.d("获取旧的webview" + mViewHolderList.size());
             webView = mViewHolderList.get(0);
             mViewHolderList.remove(0);
         } else {
             webView = new WebViewS(activity);
             webView.setWebViewClient(new WebViewClientX(activity));
-            KLog.e("webView：" + webView);
         }
-        KLog.i("【instantiateItem】 " + "实例position：" + position + "==" + webView + "+" + container.getChildCount());
+        KLog.e("WebView" + webView);
         webView.setId(position); // 方便在其他地方调用 viewPager.findViewById 来找到 webView
         webView.setTag(dataList.get(position).getId()); // 方便在webView onPageFinished 的时候调用
         container.addView(webView);
-
+        // TODO: 2017/10/15 文章文件被删时候，重新去获取
+//        String articleHtml = StringUtil.getArticleHtml(dataList.get(position));
+//        if( articleHtml==null){
+//            InoApi.i().asyncItemContents(dataList.get(position).getId(), new StringCallback() {
+//                @Override
+//                public void onSuccess(Response<String> response) {
+//                    StreamContents gsItemContents = new Gson().fromJson(response.body().toString(), StreamContents.class);
+//                    if( gsItemContents.getItems().size()>0){
+//                        Message message = Message.obtain();
+//                        Bundle bundle = new Bundle();
+//                        bundle.putString("res", gsItemContents.getItems().get(0).getSummary().getContent());
+//                        message.what = 121212;
+//                        message.setData(bundle);
+//                        App.artHandler.sendMessage(message);
+//
+//                        String fileTitle;
+//                        if (dataList.get(position).getSaveDir().equals(Api.SAVE_DIR_CACHE)) {
+//                            fileTitle = StringUtil.stringToMD5(dataList.get(position).getId());
+//                        } else {
+//                            fileTitle = dataList.get(position).getTitle();
+//                        }
+//                        FileUtil.saveHtml(FileUtil.getRelativeDir(dataList.get(position).getSaveDir()) + fileTitle + ".html", gsItemContents.getItems().get(0).getSummary().getContent());
+//                    }
+//                }
+//            });
+//        }
         webView.post(new Runnable() {
             @Override
             public void run() {
@@ -127,7 +144,9 @@ public class ViewPagerAdapter extends PagerAdapter { //  implements ViewPager.On
     // Note: 销毁预加载以外的view对象, 会把需要销毁的对象的索引位置传进来就是position
     @Override
     public void destroyItem(ViewGroup container, int position, Object object) {
-        KLog.i("【destroyItem】 " + "当前position：" + position);
+        if (object == null) {
+            return;
+        }
         container.removeView((View) object);
         ((WebViewS) object).clear();
         mViewHolderList.add((WebViewS) object);
@@ -137,22 +156,6 @@ public class ViewPagerAdapter extends PagerAdapter { //  implements ViewPager.On
     public int getCount() {
         return (null == dataList) ? 0 : dataList.size();
     }
-
-
-//    @Override
-//    public Object instantiateItem(ViewGroup container,final int position) {
-////        TextView webView = new TextView(activity);
-////        webView.setText( "页面：" + position );
-    //        webView.loadDataWithBaseURL( "", "<html max-width:100%;'><head>TTTT</head><body><p>页面：" + position + "</p></body></html>", "text/html", "utf-8", null);
-//        container.addView(webView);
-//        return webView;
-//    }
-//
-//    @Override
-//    public void destroyItem(ViewGroup container, int position, Object object) {
-//        KLog.i("【destroyItem】 " + "当前position：" + position);
-//        container.removeView((View) object);
-//    }
 
 
     private class WebViewClientX extends WebViewClient {
@@ -165,13 +168,11 @@ public class ViewPagerAdapter extends PagerAdapter { //  implements ViewPager.On
         @Override
         //  重写此方法表明点击网页里面的链接还是在当前的webview里跳转，不跳到浏览器那边
         public boolean shouldOverrideUrlLoading(WebView view, String url) {
-            KLog.d("loread", "shouldOverrideUrlLoading" + WithSet.i().isSysBrowserOpenLink());
             if (WithSet.i().isSysBrowserOpenLink()) {
                 Intent intent = new Intent();
-                intent.setAction("android.intent.action.VIEW");
-                Uri content_url = Uri.parse(url);
-                intent.setData(content_url);
-                context.startActivity(intent);
+                intent.setAction(android.content.Intent.ACTION_VIEW);
+                intent.setData(Uri.parse(url));
+                context.startActivity(Intent.createChooser(intent, "选择打开方式")); // 目前无法坐那那种可以选择打开方式的
                 return true;
             }
             return super.shouldOverrideUrlLoading(view, url);
@@ -190,15 +191,24 @@ public class ViewPagerAdapter extends PagerAdapter { //  implements ViewPager.On
         @Override
         public void onPageFinished(final WebView webView, String url) {
             super.onPageFinished(webView, url);
-            webView.getSettings().setBlockNetworkImage(false);
-            KLog.e("WebView", "onPageFinished" + (System.currentTimeMillis() - App.time) + "====" + webView.getProgress());
             webView.post(new Runnable() {
                 @Override
                 public void run() {
                     webView.loadUrl("javascript:initImgClick()"); // 初始化图片的点击事件
                 }
             });
+//            List<Img> lossImgs = WithDB.i().getLossImgs((String) webView.getTag());
+//            for (final Img img:lossImgs) {
+//                webView.post(new Runnable() {
+//                    @Override
+//                    public void run() {
+//                        webView.loadUrl("javascript:onImageLoadHolder('" + img.getSrc() + "');");
+////                        webView.loadUrl("javascript:initImgClick2DownEvent('" + img.getSrc() + "');");
+//                    }
+//                });
+//            }
 
+            webView.getSettings().setBlockNetworkImage(false);
         }
 
         @Override
@@ -206,16 +216,6 @@ public class ViewPagerAdapter extends PagerAdapter { //  implements ViewPager.On
             super.onPageStarted(webView, var2, var3);
             webView.getSettings().setBlockNetworkImage(true);
         }
-//        @Override
-//        public void onLoadResource(WebView var1, String var2) {
-//        }
-//        @Override
-//        public void onReceivedError(WebView var1, int var2, String var3, String var4) {
-//            super.onReceivedError(var1,var2,var3,var4);
-//        }
-//        @Override
-//        public void onReceivedHttpError(WebView var1, WebResourceRequest var2, WebResourceResponse var3) {
-//        }
     }
 
 }

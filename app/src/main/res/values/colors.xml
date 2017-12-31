@@ -11,12 +11,15 @@
     <color name="main_grey_dark">#E3E8E7</color>
 
     <color name="main_day_light">#515151</color>
-    <color name="main_day_dark">#313131</color>
-    <color name="main_day_info">#7c7c7c</color>
+    <!--<color name="main_day_dark">#313131</color>-->
+    <color name="main_day_dark">#343432</color>
+    <!--<color name="main_day_info">#7c7c7c</color>-->
+    <color name="main_day_info">#a9a9a9</color>
 
     <color name="main_night_light">#E3E8E7</color>
     <color name="main_night_dark">#A3AAB0</color>
     <color name="main_night_info">#7B9196</color>
+    // 7B9196
 
     <color name="light_lv_divider">#f2f2f2</color>
 

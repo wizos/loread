@@ -20,4 +20,6 @@ public class GsTags {
 	public void setTags(ArrayList<Tag> tags) {
 		this.tags = tags;
 	}
+
+
 }

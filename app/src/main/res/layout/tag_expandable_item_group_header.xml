@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/header_item"
+    android:orientation="horizontal"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:gravity="center_vertical"
+    android:background="?attr/bottombar_bg"
+    tools:ShowIn="@layout/activity_main">
+
+
+    <me.wizos.loread.view.IconFontView
+        android:id="@+id/header_item_icon"
+        android:layout_width="60dp"
+        android:layout_height="match_parent"
+        android:paddingTop="15dp"
+        android:paddingBottom="15dp"
+        android:paddingStart="20dp"
+        android:paddingEnd="15dp"
+        android:gravity="center"
+        android:textSize="16sp"
+        android:textColor="?attr/tag_slv_item_icon"
+        android:text="@string/font_expand" />
+
+    <TextView
+        android:id="@+id/header_item_title"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:paddingTop="15dp"
+        android:paddingBottom="15dp"
+        android:layout_weight="1"
+        android:gravity="center_vertical"
+        android:lines="1"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        android:textColor="?attr/lv_item_title_color"
+        tools:text="这是头部header的文字" />
+
+    <TextView
+        android:id="@+id/header_item_count"
+        android:layout_width="80dp"
+        android:layout_height="match_parent"
+        android:gravity="center_vertical|end"
+        android:paddingTop="15dp"
+        android:paddingBottom="15dp"
+        android:paddingEnd="20dp"
+        android:textSize="14sp"
+        android:textColor="?attr/lv_item_desc_color"
+        tools:text="1024" />
+
+</LinearLayout>

@@ -1,23 +1,24 @@
 package me.wizos.loread.activity;
 
+import android.content.Intent;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Message;
 import android.text.TextUtils;
 import android.view.View;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Space;
 
 import com.kyleduo.switchbutton.SwitchButton;
+import com.lzy.okgo.exception.HttpException;
 import com.socks.library.KLog;
 
-import me.wizos.loread.App;
+import java.io.IOException;
+
 import me.wizos.loread.R;
 import me.wizos.loread.data.WithSet;
-import me.wizos.loread.net.API;
-import me.wizos.loread.net.Neter;
-import me.wizos.loread.net.Parser;
+import me.wizos.loread.net.DataApi;
 import me.wizos.loread.utils.ToastUtil;
+import me.wizos.loread.utils.Tool;
 import me.wizos.loread.view.colorful.Colorful;
 
 /**
@@ -27,40 +28,41 @@ public class LoginActivity extends BaseActivity implements View.OnLayoutChangeLi
     protected static final String TAG = "LoginActivity";
     protected String mAccountID = "";
     protected String mAccountPD = "";
+    private EditText vID, vPD;
+    private Button loginButton;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
-        mNeter = new Neter(handler);
-        KLog.d("【未登录】" + handler);
+        KLog.d("【未登录】");
         forInput();
         initView();
         recoverData();
     }
-    protected Neter mNeter;
+
 
     @Override
     protected Colorful.Builder buildColorful(Colorful.Builder mColorfulBuilder) {
         return mColorfulBuilder;
     }
 
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+    }
+
+
+
     private void initView(){
         vID = (EditText)findViewById(R.id.edittext_id);
         vPD = (EditText)findViewById(R.id.edittext_pd);
+        loginButton = (Button) findViewById(R.id.login_button_login);
         SwitchButton inoreaderProxy = (SwitchButton) findViewById(R.id.setting_inoreader_proxy_sb_flyme);
         inoreaderProxy.setChecked(WithSet.i().isInoreaderProxy());
     }
 
-
-
-    @Override
-    protected void onDestroy() {
-        // 如果参数为null的话，会将所有的Callbacks和Messages全部清除掉。
-        // 这样做的好处是在Acticity退出的时候，可以避免内存泄露。因为 handler 内可能引用 Activity ，导致 Activity 退出后，内存泄漏。
-        handler.removeCallbacksAndMessages(null);
-        super.onDestroy();
-    }
 
     /**
      * 默认填充密码
@@ -75,38 +77,6 @@ public class LoginActivity extends BaseActivity implements View.OnLayoutChangeLi
             vPD.setText(mAccountPD);
         }
     }
-
-
-
-    protected Handler handler = new Handler(new Handler.Callback() {
-        @Override
-        public boolean handleMessage(Message msg) {
-            String info = msg.getData().getString("res");
-            String url = msg.getData().getString("url");
-            KLog.d("【handler】开始" + msg.what + handler + url);
-            switch (msg.what) {
-                case API.S_CLIENTLOGIN:
-                    if (info==null){ return false; }
-                    API.INOREADER_ATUH = "GoogleLogin auth=" + info.split("Auth=")[1].replaceAll("\n", "");
-                    WithSet.i().setAuth(API.INOREADER_ATUH);
-                    mNeter.getWithAuth(API.HOST + API.U_USER_INFO);
-                    break;
-                case API.S_USER_INFO:
-                    long mUserID = Parser.instance().parseUserInfo(info);
-                    WithSet.i().setUseId(mUserID);
-                    App.finishActivity(LoginActivity.this);
-                    goTo(MainActivity.TAG,"syncAll");
-                    break;
-                case API.F_NoMsg:
-                case API.F_Request:
-                case API.F_Response:
-                    KLog.d(info);
-                    ToastUtil.showShort("登录失败");
-                    break;
-            }
-            return false;
-        }
-    });
 
 
     //Activity最外层的Layout视图
@@ -142,32 +112,69 @@ public class LoginActivity extends BaseActivity implements View.OnLayoutChangeLi
     }
 
 
-    private EditText vID,vPD;
     public void onLoginClicked(View view) {
         mAccountID = vID.getText().toString();
         mAccountPD = vPD.getText().toString();
 
         if(mAccountID==null) {
-            ToastUtil.showShort("账号为空");
+            ToastUtil.showShort(getString(R.string.tips_login_failure));
             return;
         }else if(mAccountID.length()<4)
             if(!mAccountID.contains("@") || mAccountID.contains(" ")) {
-                ToastUtil.showShort("账号输入错误");
+                ToastUtil.showShort(getString(R.string.tips_login_id_is_error));
                 return;
             }
         if(mAccountPD==null) {
-            ToastUtil.showShort("密码为空");
+            ToastUtil.showShort(getString(R.string.tips_login_pd_is_empty));
             return;
         }else if(mAccountID.length()<4){
-            ToastUtil.showShort("密码输入错误");
+            ToastUtil.showShort(getString(R.string.tips_login_pd_is_error));
             return;
         }
 
-        mNeter.addBody("Email", mAccountID);
-        mNeter.addBody("Passwd", mAccountPD);
-        mNeter.postWithAuth(API.HOST + API.U_CLIENTLOGIN);
-        KLog.d("【handler】" + mNeter + "-" );
+        loginButton.setEnabled(false);
+
+        startLogin();
+        KLog.i("【handler】" + "-");
     }
+
+
+    private void startLogin() {
+        KLog.i("开始登录");
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    boolean loginResult = DataApi.i().clientLogin(mAccountID, mAccountPD);
+                    if (!loginResult) {
+                        ToastUtil.showShort(getString(R.string.tips_login_failure));
+                    }
+                    DataApi.i().fetchUserInfo();
+                    Intent intentToActivity = new Intent(LoginActivity.this, MainActivity.class);
+                    startActivity(intentToActivity);
+                    LoginActivity.this.finish();
+                } catch (HttpException e) {
+                    e.printStackTrace();
+                    Tool.showOnLocal("login时出了异常：HttpException");
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    Tool.showOnLocal("login时出了异常：IOException");
+                } catch (IllegalStateException e) {
+                    e.printStackTrace();
+                    Tool.showOnLocal("login时出了异常：IllegalStateException");
+                } finally {
+                    loginButton.post(new Runnable() {// 用 post 可以解决在非主线程运行，会报错
+                        @Override
+                        public void run() {
+                            loginButton.setEnabled(true);
+                        }
+                    });
+                }
+            }
+        }).start();
+
+    }
+
 
     public void onSBClick(View view){
         SwitchButton v = (SwitchButton)view;
@@ -180,8 +187,5 @@ public class LoginActivity extends BaseActivity implements View.OnLayoutChangeLi
         KLog.d("Switch: " , v.isChecked() );
     }
 
-    @Override
-    protected void notifyDataChanged(){
-    }
 
 }

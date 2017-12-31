@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <android.support.design.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -25,11 +24,11 @@
         android:layout_height="match_parent"
         android:gravity="center">
         <TextView
-            android:gravity="center_vertical"
+            android:gravity="center"
             android:layout_width="210dp"
             android:layout_height="wrap_content"
-            android:textSize="22dp"
-            android:text="欢迎页\n加载数据\n判断去哪个 Activity"/>
+            android:textSize="22sp"
+            android:text="@string/splash_activity_slogen" />
     </LinearLayout>
 
 

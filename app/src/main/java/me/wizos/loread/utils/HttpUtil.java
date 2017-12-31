@@ -9,6 +9,7 @@ import android.os.Build;
 import com.socks.library.KLog;
 
 import me.wizos.loread.App;
+import me.wizos.loread.R;
 import me.wizos.loread.data.WithSet;
 
 
@@ -81,11 +82,11 @@ public class HttpUtil {
      */
     public static boolean canDownImg() {
         if (WithSet.i().isDownImgWifi() && !isWiFiActive()) {
-            ToastUtil.showShort("你开启了省流量模式，非 Wifi 不能下图片啦");
+            ToastUtil.showShort(App.i().getString(R.string.toast_not_wifi_mode));
             return false;
         }
         if (!WithSet.i().isDownImgWifi() && !isNetworkAvailable()) {
-            ToastUtil.showShort("小伙子，你的网络无法使用啊");
+            ToastUtil.showShort(App.i().getString(R.string.toast_not_network));
             return false;
         }
         return true;

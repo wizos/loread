@@ -1,6 +1,5 @@
 package me.wizos.loread;
 
-import android.app.Activity;
 import android.app.Application;
 import android.os.Handler;
 
@@ -9,48 +8,71 @@ import com.socks.library.KLog;
 import com.tencent.bugly.crashreport.CrashReport;
 
 import java.io.File;
-import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
 
-import me.wizos.loread.activity.BaseActivity;
 import me.wizos.loread.bean.Article;
+import me.wizos.loread.bean.Tag;
+import me.wizos.loread.data.WithDB;
 import me.wizos.loread.data.WithSet;
 import me.wizos.loread.data.dao.DaoMaster;
 import me.wizos.loread.data.dao.DaoSession;
-import me.wizos.loread.net.API;
-import me.wizos.loread.net.Neter;
+import me.wizos.loread.net.Api;
+import me.wizos.loread.net.InoApi;
 import me.wizos.loread.utils.FileUtil;
 import me.wizos.loread.utils.TimeUtil;
 
+//import com.squareup.leakcanary.LeakCanary;
+
 /**
  * Created by Wizos on 2015/12/24.
- * 该类为 Activity 管理器，每个活动创建时都添加到该 list （销毁时便移除），可以实时收集到目前存在的 活动 ，方便要退出该应用时调用 finishAll() 来一次性关闭所有活动
- */
+ * */
 public class App extends Application{
-    public static final String DB_NAME = "loread_DB";
-    public static final int DB_VERSION = 4;
+    public static App instance; // 此处的单例不会造成内存泄露，因为 App 本身就是全局的单例
+    public final static String DB_NAME = "loread_DB";
+    //    public final static int DB_VERSION = 4;
     public final static int theme_Day = 0;
     public final static int theme_Night = 1;
+    private final static boolean isDebug = false;
+
+    // 跟使用的 API 有关的 字段
+    public static long UserID;
+    public static String StreamId;
+    public static String StreamTitle;
+    public static String StreamState; // 这个只是从 Read 属性的4个类型(Readed, UnRead, UnReading, All), Star 属性的3个类型(Stared, UnStar, All)中，生硬的抽出 UnRead(含UnReading), Stared, All 3个快捷状态，供用户在主页面切换时使用
+    // 由于根据 StreamId 来获取文章，可从2个属性( Categories[针对Tag], OriginStreamId[针对Feed] )上，共4个变化上（All, Tag, NoTag, Feed）来获取文章。
+    // 根据 StreamState 也是从2个属性(ReadState, StarState)的3个快捷状态 ( UnRead[含UnReading], Stared, All ) 来获取文章。
+    // 所以文章列表页会有6种组合：某个 Categories 内的 UnRead[含UnReading], Stared, All。某个 OriginStreamId 内的 UnRead[含UnReading], Stared, All。
+    // 所有定下来去获取文章的函数也有6个：getArtsUnreadInTag(), getArtsStaredInTag(), getArtsAllInTag(),getUnreadArtsInFeed(), getStaredArtsInFeed(), getAllArtsInFeed()
+
+    public static List<Article> articleList = new ArrayList<>();
+    public static List<Tag> tagList = new ArrayList<>();
+    //    public static ArrayList<Tag> tagFeedList = new ArrayList<>();
+//    public static int theArtIndex;
+//    public static int theTagIndex;
+//    public static Article theArt;
+//    public static Tag theTag;
+    public static String currentArticleID;
+    public static Handler artHandler;
+    public static boolean syncFirstOpen;
+    public static long time;
+    public boolean isSyncing = false;
+    public long lastSyncTime = 0L;
+//    public static boolean lastSyncResult = false; // True = Success, false = fail
+//    public static String PROXY_ADDR;
+//    public static int PROXY_PORT;
+
 
     public static String cacheRelativePath,cacheAbsolutePath ,boxRelativePath, boxAbsolutePath, storeRelativePath, storeAbsolutePath ;
     public static String boxReadRelativePath, storeReadRelativePath;
     public static String logRelativePath,logAbsolutePath;
     public static String externalFilesDir;
-    public static long mUserID;
-    public static List<Article> articleList;
-    public static Handler artHandler;
-    public static String currentArticleID;
-    public static Neter mNeter;
-    public static long time;
 
-    private  static DaoSession daoSession;
-    public static App instance; // 此处的单例不会造成内存泄露，因为 App 本身就是全局的单例
+    private static DaoSession daoSession;
 
     public static synchronized App i() {
         return instance;
     }
-
 
 
     @Override
@@ -60,26 +82,33 @@ public class App extends Application{
         initConfig();
         initTheme();
 
-//        initTBS();
-//        initLeakCanary();
-//        initDebug();
-        initRelease(); // 测试时，注释掉
+        initLogAndCrash();
+        InoApi.i().init();
         OkGo.getInstance().init(this); // 初始化网络框架
-
+//        initLeakCanary();
     }
 
-
-    private void initRelease() {
-//         TEST，正式环境下应该启用
-        KLog.init(false);
-        CrashReport.initCrashReport(App.i(), "900044326", false); // 测试的时候设为 true
+    public List<Article> updateArtList(List<Article> temps) {
+        articleList.clear();
+        articleList.addAll(temps);
+        return articleList;
     }
 
-    private void initDebug() {
-//         TEST 环境下应该启用
-        KLog.init(true);
-        CrashReport.initCrashReport(App.i(), "900044326", true); // 测试的时候设为 true
-//        initStetho(); // 用于浏览器调试网络请求
+    public List<Tag> updateTagList(List<Tag> temps) {
+        tagList.clear();
+        tagList.addAll(temps);
+        return tagList;
+    }
+
+    private void initLogAndCrash() {
+        CrashReport.setIsDevelopmentDevice(this, BuildConfig.DEBUG);
+        if (BuildConfig.DEBUG && isDebug) {
+            KLog.init(true);
+            CrashReport.initCrashReport(App.i(), "900044326", true); // 测试的时候设为 true
+        } else {
+            KLog.init(false);
+            CrashReport.initCrashReport(App.i(), "900044326", false); // 测试的时候设为 true
+        }
     }
 
 //  内存泄漏检测工具
@@ -90,60 +119,87 @@ public class App extends Application{
 //        LeakCanary.install(this);
 //    }
 
-    private void initStetho() {
-        // TEST，正式环境应该注释掉
-//        Stetho.initialize(
-//                Stetho.newInitializerBuilder(this)
-//                        .enableDumpapp(Stetho.defaultDumperPluginsProvider(this))
-//                        .enableWebKitInspector(Stetho.defaultInspectorModulesProvider(this))
-//                        .build());
+
+    public void readHost() {
+        if (!WithSet.i().isInoreaderProxy()) {
+            Api.HOST = Api.HOST_OFFICIAL;
+        }else {
+            Api.HOST = WithSet.i().getInoreaderProxyHost();
+        }
     }
 
-
-//    private void initTBS() {
-//        //搜本地tbs内核信息并上报服务器，服务器返回结果决定使用哪个内核。
-//        KLog.e("初始化x5内核", " initTBS");
-//        QbSdk.PreInitCallback cb = new QbSdk.PreInitCallback() {
-//            @Override
-//            public void onViewInitFinished(boolean arg0) {
-//                //x5內核初始化完成的回调，为true表示x5内核加载成功，否则表示x5内核加载失败，会自动切换到系统内核。
-//                KLog.e("初始化X5", " onViewInitFinished is " + arg0);
-//            }
-//            @Override
-//            public void onCoreInitFinished() {
-//                KLog.e("初始化X5", " onCoreInitFinished ");
-//            }
-//        };
-//        //x5内核初始化接口
-//        QbSdk.initX5Environment(getApplicationContext(), cb);
-//    }
-
     private void initConfig() {
-        if (!WithSet.i().isInoreaderProxy()) {
-            API.HOST = API.HOST_OFFICIAL;
-        }else {
-            API.HOST = API.HOST_PROXY;
-        }
+        initApiConfig();
+
         externalFilesDir = getExternalFilesDir(null) + File.separator;
 
-        cacheRelativePath = FileUtil.getRelativeDir(API.SAVE_DIR_CACHE);
-//        cacheAbsolutePath = FileUtil.getAbsoluteDir(API.SAVE_DIR_CACHE); // 仅在储存于 html 时使用
+        cacheRelativePath = FileUtil.getRelativeDir(Api.SAVE_DIR_CACHE);
+//        cacheAbsolutePath = FileUtil.getAbsoluteDir(Api.SAVE_DIR_CACHE); // 仅在储存于 html 时使用
 
-        boxRelativePath = FileUtil.getRelativeDir(API.SAVE_DIR_BOX);
-        boxAbsolutePath = FileUtil.getAbsoluteDir(API.SAVE_DIR_BOX);
+        boxRelativePath = FileUtil.getRelativeDir(Api.SAVE_DIR_BOX);
+        boxAbsolutePath = FileUtil.getAbsoluteDir(Api.SAVE_DIR_BOX);
 
-        storeRelativePath = FileUtil.getRelativeDir(API.SAVE_DIR_STORE);
-        storeAbsolutePath = FileUtil.getAbsoluteDir(API.SAVE_DIR_STORE);
+        storeRelativePath = FileUtil.getRelativeDir(Api.SAVE_DIR_STORE);
+        storeAbsolutePath = FileUtil.getAbsoluteDir(Api.SAVE_DIR_STORE);
 
         logRelativePath = FileUtil.getRelativeDir("log");
         logAbsolutePath = FileUtil.getAbsoluteDir("log");
 
         boxReadRelativePath = FileUtil.getRelativeDir("boxRead");
 //        boxReadAbsolutePath = FileUtil.getAbsoluteDir( "boxRead" );
-
         storeReadRelativePath = FileUtil.getRelativeDir("storeRead");
 //        storeReadAbsolutePath = FileUtil.getAbsoluteDir( "storeRead" );
     }
+
+    private void initApiConfig() {
+        // 读取当前的API
+
+        // 读取代理配置
+        readHost();
+        // 读取验证
+        Api.INOREADER_ATUH = WithSet.i().getAuth();
+        // 读取uid
+        UserID = WithSet.i().getUseId();
+        syncFirstOpen = WithSet.i().isSyncFirstOpen();
+        StreamState = WithSet.i().getStreamState();
+        StreamId = WithSet.i().getStreamId();
+        KLog.e(StreamState + "  " + StreamId + "  " + syncFirstOpen);
+        if (StreamId == null || StreamId.equals("")) {
+            StreamId = "user/" + UserID + "/state/com.google/reading-list";
+        }
+        if (StreamId.equals("user/" + UserID + "/state/com.google/reading-list")) {
+            StreamTitle = getString(R.string.main_activity_title_all);
+        } else if (StreamId.equals("user/" + UserID + "/state/com.google/no-label")) {
+            StreamTitle = getString(R.string.main_activity_title_untag);
+        } else if (StreamId.startsWith("user/")) {
+            try {
+                StreamTitle = WithDB.i().getTag(StreamId).getTitle();
+            } catch (Exception e) {
+                StreamId = "user/" + UserID + "/state/com.google/reading-list";
+                StreamTitle = getString(R.string.main_activity_title_all);
+            }
+
+        } else {
+            try {
+                StreamTitle = WithDB.i().getFeed(StreamId).getTitle();
+            } catch (Exception e) {
+                StreamId = "user/" + UserID + "/state/com.google/reading-list";
+                StreamTitle = getString(R.string.main_activity_title_all);
+            }
+        }
+
+        KLog.e("此时StreamId为：" + StreamId);
+    }
+
+
+    public void clearApiData() {
+        WithSet.i().clear();
+        WithDB.i().clear();
+        OkGo.getInstance().cancelAll();
+    }
+
+
+
 
     protected void initTheme() {
         if (!WithSet.i().isAutoToggleTheme()) {
@@ -151,37 +207,15 @@ public class App extends Application{
         }
         int hour = TimeUtil.getCurrentHour();
         if (hour >= 7 && hour <= 20) {
-//            mColorful.setTheme(R.style.AppTheme_Day);
             WithSet.i().setThemeMode(App.theme_Day);
         } else {
-//            mColorful.setTheme(R.style.AppTheme_Night);
             WithSet.i().setThemeMode(App.theme_Night);
         }
-    }
-    //    private static WeakReference<BaseActivity> activities;
-    public static List<WeakReference<BaseActivity>> activities = new ArrayList<>();
-
-    public static void addActivity(BaseActivity activity) {
-        WeakReference<BaseActivity> rArticle = new WeakReference<>(activity);
-        activities.add(rArticle);
-    }
-
-    public static void finishActivity(Activity activity){
-        activities.remove(activity);
-        activity.finish();
-    }
-    public static void finishAll(){
-        for (WeakReference<BaseActivity> activity : activities) {
-            if (activity.get() != null && !activity.get().isFinishing()) {
-                activity.get().finish();
-            }
-        }
-        System.exit(0);
     }
 
 
     // 官方推荐将获取 DaoMaster 对象的方法放到 Application 层，这样将避免多次创建生成 Session 对象
-    public static DaoSession getDaoSession() {
+    public DaoSession getDaoSession() {
         if (daoSession == null) {
             DaoMaster.OpenHelper helper = new DaoMaster.DevOpenHelper(i(), DB_NAME, null);
             daoSession = new DaoMaster(helper.getWritableDatabase()).newSession();
@@ -197,5 +231,4 @@ public class App extends Application{
         }
         return daoSession;
     }
-
 }

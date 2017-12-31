@@ -9,7 +9,7 @@ import java.util.regex.Pattern;
  * emoji regex
  */
 
-public class EmojiUtil {
+class EmojiUtil {
     private static final String MiscellaneousSymbolsAndPictographs = "[\\uD83C\\uDF00-\\uD83D\\uDDFF]";
 
     private static final String SupplementalSymbolsAndPictographs = "[\\uD83E\\uDD00-\\uD83E\\uDDFF]";
@@ -56,7 +56,7 @@ public class EmojiUtil {
 
     private static final String MiscellaneousTechnical = "[\\u231A\\u231B\\u2328\\u23CF\\u23E9-\\u23F3\\u23F8-\\u23FA]\\uFE0F?";
 
-    public static String getEmojiRegex() {
+    private static String getEmojiRegex() {
         return "(?:"
                 + MiscellaneousSymbolsAndPictographs + "|"
                 + SupplementalSymbolsAndPictographs + "|"
@@ -83,20 +83,17 @@ public class EmojiUtil {
                 + MiscellaneousTechnical + ")";
     }
 
-
-    public static String filterEmoji(String source) {
+    static String filterEmoji(String source) {
         if (source == null) {
             source = "";
         }
-        Pattern emoji = Pattern.compile(EmojiUtil.getEmojiRegex(), Pattern.UNICODE_CASE | Pattern.CASE_INSENSITIVE);// 后2个参数要进行大小不明感的匹配
+        Pattern emoji = Pattern.compile(getEmojiRegex(), Pattern.UNICODE_CASE | Pattern.CASE_INSENSITIVE);// 后2个参数要进行大小不明感的匹配
         Matcher emojiMatcher = emoji.matcher(source);
         if (emojiMatcher.find()) {
             source = emojiMatcher.replaceAll("");
-            if (source == null ? true : source.trim().equals("")) {
-                source = "WuTi_" + StringUtil.getRandomString(6).toLowerCase();
-            }
         }
         return source;
     }
+
 
 }

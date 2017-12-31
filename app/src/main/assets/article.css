@@ -7,32 +7,25 @@ html, body, div, span, applet, object, iframe, h1, h2, h3, h4, h5, h6, p, blockq
     border: 0;
 }
 
-html {
-  font-family: sans-serif; /* 1 */
-  -ms-text-size-adjust: 100%; /* 2 */
-  -webkit-text-size-adjust: 100%; /* iPhone 和 Android 的浏览器纵向 (Portrate mode) 和橫向 (Landscape mode) 模式皆有自动调整字体大小的功能。控制它的就是 CSS 中的 -webkit-text-size-adjust */
-}
-
 body {
     font-family: Helvetica, arial, freesans, clean, sans-serif;
     font-size: 16px;
     line-height: 1.6;
     margin: 0 auto;
-    word-wrap:break-word; /*自动换行*/
-    word-break:break-all;
 }
 /*    color: #333;   */
-/*body > *:first-child {
+body > *:first-child {
     margin-top: 0 !important;
 }
 
 body > *:last-child {
     margin-bottom: 0 !important;
 }
-*/
 
 
-/* IMAGES */
+
+/* IMAGES
+=============================================================================*/
 
 /* 清除浮动 */
 div.clear-float {
@@ -44,11 +37,24 @@ img[src=''], img[src$='./images/'] {
     display: none;
 }
 
+html {
+  font-family: sans-serif; /* 1 */
+  -ms-text-size-adjust: 100%; /* 2 */
+  -webkit-text-size-adjust: 100%; /* 2 */
+ max-width:100%;
+margin:0;
+padding:0;
+word-break:break-all;
+}
+
+p,section,div,code,pre,article{
+word-wrap: break-word;
+white-space: pre-wrap;
+}
 
 /**
  * Remove default margin.
     max-width: 100%
-	min-height: 120px;
 
  */
 
@@ -58,10 +64,17 @@ img {
 	width: auto;
 	height: auto;
 	display:flex;
-	vertical-align: middle;
+	text-align:center;
     justify-content:center;
     align-items:center;
 }
+video,iframe,pre{
+	max-width: 98%;
+	width: auto;
+	height: auto;
+}
+
+
 /* BLOCKS
 =============================================================================*/
 
@@ -186,7 +199,6 @@ pre, code, tt {
 code, tt {
     margin: 0 0px;
     padding: 0px 0px;
-    white-space: nowrap;
     border-radius: 3px;
 }
 
@@ -267,13 +279,16 @@ table th {
     font-weight: bold;
 }
 
-
+/* 自己改变的
+=============================================================================*/
 #art{
     padding: 20px 20px 20px 20px;
 }
 #art_h1{
     text-align:center;font-size: 22px;
 }
+#art_h1.a{text-decoration:none}
+
 #art_author{
     float:left;width:50%;font-size: 14px;
 }

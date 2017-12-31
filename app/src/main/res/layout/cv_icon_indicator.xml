@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_gravity="center"
+    android:gravity="center_vertical"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <View
+        android:id="@+id/tab_indicator"
+        android:layout_width="match_parent"
+        android:layout_height="2dp"
+        android:layout_centerHorizontal="true" />
+
+    <me.wizos.loread.view.IconFontView
+        android:id="@+id/tab_icon"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+
+        android:gravity="center"
+        android:layout_centerHorizontal="true"
+        android:layout_centerVertical="true"
+        tools:textSize="16sp"
+        tools:text="@string/font_list_unread" />
+
+    <!--android:padding="6dp"-->
+    <!--android:layout_below="@id/tab_indicator"-->
+    <!--android:padding="6dp"-->
+    <!--android:layout_marginStart="14dp"-->
+    <!--android:layout_marginBottom="14dp"-->
+</RelativeLayout>

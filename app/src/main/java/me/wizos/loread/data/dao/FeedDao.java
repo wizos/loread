@@ -1,15 +1,17 @@
 package me.wizos.loread.data.dao;
 
-import java.util.List;
 import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteStatement;
 
-import de.greenrobot.dao.AbstractDao;
-import de.greenrobot.dao.Property;
-import de.greenrobot.dao.internal.DaoConfig;
-import de.greenrobot.dao.query.Query;
-import de.greenrobot.dao.query.QueryBuilder;
+import org.greenrobot.greendao.AbstractDao;
+import org.greenrobot.greendao.Property;
+import org.greenrobot.greendao.database.Database;
+import org.greenrobot.greendao.database.DatabaseStatement;
+import org.greenrobot.greendao.internal.DaoConfig;
+import org.greenrobot.greendao.query.Query;
+import org.greenrobot.greendao.query.QueryBuilder;
+
+import java.util.List;
 
 import me.wizos.loread.bean.Feed;
 
@@ -24,7 +26,7 @@ public class FeedDao extends AbstractDao<Feed, String> {
     /**
      * Properties of entity Feed.<br/>
      * Can be used for QueryBuilder and for referencing column names.
-    */
+     */
     public static class Properties {
         public final static Property Id = new Property(0, String.class, "id", true, "ID");
         public final static Property Title = new Property(1, String.class, "title", false, "TITLE");
@@ -35,7 +37,7 @@ public class FeedDao extends AbstractDao<Feed, String> {
         public final static Property Url = new Property(6, String.class, "url", false, "URL");
         public final static Property Htmlurl = new Property(7, String.class, "htmlurl", false, "HTMLURL");
         public final static Property Iconurl = new Property(8, String.class, "iconurl", false, "ICONURL");
-    };
+    }
 
     private DaoSession daoSession;
 
@@ -51,7 +53,7 @@ public class FeedDao extends AbstractDao<Feed, String> {
     }
 
     /** Creates the underlying database table. */
-    public static void createTable(SQLiteDatabase db, boolean ifNotExists) {
+    public static void createTable(Database db, boolean ifNotExists) {
         String constraint = ifNotExists? "IF NOT EXISTS ": "";
         db.execSQL("CREATE TABLE " + constraint + "\"FEED\" (" + //
                 "\"ID\" TEXT PRIMARY KEY NOT NULL ," + // 0: id
@@ -66,14 +68,13 @@ public class FeedDao extends AbstractDao<Feed, String> {
     }
 
     /** Drops the underlying database table. */
-    public static void dropTable(SQLiteDatabase db, boolean ifExists) {
+    public static void dropTable(Database db, boolean ifExists) {
         String sql = "DROP TABLE " + (ifExists ? "IF EXISTS " : "") + "\"FEED\"";
         db.execSQL(sql);
     }
 
-    /** @inheritdoc */
     @Override
-    protected void bindValues(SQLiteStatement stmt, Feed entity) {
+    protected final void bindValues(DatabaseStatement stmt, Feed entity) {
         stmt.clearBindings();
         stmt.bindString(1, entity.getId());
         stmt.bindString(2, entity.getTitle());
@@ -115,18 +116,58 @@ public class FeedDao extends AbstractDao<Feed, String> {
     }
 
     @Override
-    protected void attachEntity(Feed entity) {
+    protected final void bindValues(SQLiteStatement stmt, Feed entity) {
+        stmt.clearBindings();
+        stmt.bindString(1, entity.getId());
+        stmt.bindString(2, entity.getTitle());
+
+        String categoryid = entity.getCategoryid();
+        if (categoryid != null) {
+            stmt.bindString(3, categoryid);
+        }
+
+        String categorylabel = entity.getCategorylabel();
+        if (categorylabel != null) {
+            stmt.bindString(4, categorylabel);
+        }
+
+        String sortid = entity.getSortid();
+        if (sortid != null) {
+            stmt.bindString(5, sortid);
+        }
+
+        Long firstitemmsec = entity.getFirstitemmsec();
+        if (firstitemmsec != null) {
+            stmt.bindLong(6, firstitemmsec);
+        }
+
+        String url = entity.getUrl();
+        if (url != null) {
+            stmt.bindString(7, url);
+        }
+
+        String htmlurl = entity.getHtmlurl();
+        if (htmlurl != null) {
+            stmt.bindString(8, htmlurl);
+        }
+
+        String iconurl = entity.getIconurl();
+        if (iconurl != null) {
+            stmt.bindString(9, iconurl);
+        }
+    }
+
+    @Override
+    protected final void attachEntity(Feed entity) {
         super.attachEntity(entity);
         entity.__setDaoSession(daoSession);
     }
 
-    /** @inheritdoc */
     @Override
     public String readKey(Cursor cursor, int offset) {
         return cursor.getString(offset + 0);
     }    
 
-    /** @inheritdoc */
     @Override
     public Feed readEntity(Cursor cursor, int offset) {
         Feed entity = new Feed( //
@@ -143,7 +184,6 @@ public class FeedDao extends AbstractDao<Feed, String> {
         return entity;
     }
      
-    /** @inheritdoc */
     @Override
     public void readEntity(Cursor cursor, Feed entity, int offset) {
         entity.setId(cursor.getString(offset + 0));
@@ -157,13 +197,11 @@ public class FeedDao extends AbstractDao<Feed, String> {
         entity.setIconurl(cursor.isNull(offset + 8) ? null : cursor.getString(offset + 8));
      }
     
-    /** @inheritdoc */
     @Override
-    protected String updateKeyAfterInsert(Feed entity, long rowId) {
+    protected final String updateKeyAfterInsert(Feed entity, long rowId) {
         return entity.getId();
     }
     
-    /** @inheritdoc */
     @Override
     public String getKey(Feed entity) {
         if(entity != null) {
@@ -173,9 +211,13 @@ public class FeedDao extends AbstractDao<Feed, String> {
         }
     }
 
-    /** @inheritdoc */
-    @Override    
-    protected boolean isEntityUpdateable() {
+    @Override
+    public boolean hasKey(Feed entity) {
+        throw new UnsupportedOperationException("Unsupported for entities with a non-null key");
+    }
+
+    @Override
+    protected final boolean isEntityUpdateable() {
         return true;
     }
     

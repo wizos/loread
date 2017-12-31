@@ -5,11 +5,15 @@ import android.app.Activity;
 import android.content.Intent;
 import android.net.Uri;
 import android.text.TextUtils;
+import android.view.ViewGroup;
+import android.view.ViewParent;
 import android.webkit.DownloadListener;
+import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 
 import com.socks.library.KLog;
+import com.tencent.bugly.crashreport.CrashReport;
 
 import me.wizos.loread.App;
 import me.wizos.loread.utils.Tool;
@@ -25,17 +29,32 @@ import me.wizos.loread.utils.Tool;
 
 
 public class WebViewS extends WebView {
-    @SuppressLint("SetJavaScriptEnabled")
-//    WeakReference<Activity> WRArticle;
-//        WRArticle = new WeakReference<>(activity);
-    public WebViewS(Activity activity) {
+
+    @SuppressLint("NewApi")
+    public WebViewS(Activity activity) { // 传入 application context 来防止 activity 引用被滥用。
         super(activity);
         initWebViewSettings();
         Tool.setBackgroundColor(this); // 实现 webview 的背景颜色与当前主题色一致
+        /**
+         * 添加javascriptInterface
+         * 第一个参数：这里需要一个与js映射的java对象
+         * 第二个参数：该java对象被映射为js对象后在js里面的对象名，在js中要调用该对象的方法就是通过这个来调用
+         */
         this.addJavascriptInterface(activity, "JSBridge");
         this.setDownloadListener(new WebViewDownLoadListener());
+        // 自动注入，监控 Javascript
+        this.setWebChromeClient(new WebChromeClient() {
+            @Override
+            public void onProgressChanged(WebView webView, int progress) {
+                // 增加Javascript异常监控
+                CrashReport.setJavascriptMonitor(webView, true);
+                super.onProgressChanged(webView, progress);
+            }
+        });
     }
 
+    // 忽略 SetJavaScriptEnabled 的报错
+    @SuppressLint("SetJavaScriptEnabled")
     private void initWebViewSettings() {
         WebSettings webSetting = this.getSettings();
         webSetting.setJavaScriptEnabled(true);
@@ -59,9 +78,10 @@ public class WebViewS extends WebView {
 //        webSetting.setAppCacheMaxSize(Long.MAX_VALUE);
 //        webSetting.setDomStorageEnabled(true); // Dom Storage（Web Storage）存储，临时简单的缓存
 //        webView.setLayerType(View.LAYER_TYPE_HARDWARE, null); // 硬件加速
-        // webSetting.setDatabaseEnabled(true); // 支持javascript读写db
-        // webSetting.setPageCacheCapacity(IX5WebSettings.DEFAULT_CACHE_CAPACITY);
-        webSetting.setCacheMode(WebSettings.LOAD_DEFAULT);
+//        webSetting.setDatabaseEnabled(true); // 支持javascript读写db
+//        webSetting.setPageCacheCapacity(IX5WebSettings.DEFAULT_CACHE_CAPACITY);
+//        webSetting.setCacheMode(WebSettings.LOAD_DEFAULT);
+//        webSetting.setPluginState(WebSettings.PluginState.ON_DEMAND);
 //        webSetting.setPluginState(WebSettings.PluginState.ON_DEMAND);
         // this.getSettingsExtension().setPageCacheCapacity(IX5WebSettings.DEFAULT_CACHE_CAPACITY);//extension
 
@@ -71,8 +91,8 @@ public class WebViewS extends WebView {
     private class WebViewDownLoadListener implements DownloadListener {
         @Override
         public void onDownloadStart(String url, String userAgent, String contentDisposition, String mimetype, long contentLength) {
-            KLog.e("Loread下载", "url=" + url + "   userAgent=" + userAgent + "   contentDisposition=" + contentDisposition);
-            KLog.e("Loread下载", "mimetype=" + mimetype);
+//            KLog.e("Loread下载", "url=" + url + "   userAgent=" + userAgent + "   contentDisposition=" + contentDisposition);
+//            KLog.e("Loread下载", "mimetype=" + mimetype);
             KLog.e("Loread下载", "contentLength=" + contentLength);
             Uri uri = Uri.parse(url);
             Intent intent = new Intent(Intent.ACTION_VIEW, uri);
@@ -80,37 +100,33 @@ public class WebViewS extends WebView {
         }
     }
 
-
-//    // 这段函数很耗时，会造成页面卡顿
-//    private void initImgPlace(WebView webView) {
-//        final ArrayMap<Integer, Img> imgMap = WithDB.i().getImgs((String) webView.getTag());
-//        final ArrayMap<Integer, Img> lossImgMap = WithDB.i().getLossImgs((String) webView.getTag()); // dataList.get(webView.getId()).getId()
-//        int lossImgSize = lossImgMap.size();
-//
-//        if (lossImgSize == imgMap.size()) {
-//            webView.loadUrl("javascript:initImgPlaceholder()"); // 初始化占位图
-//        } else {
-//            StringBuilder imgNoArray = new StringBuilder("");
-//            for (int i = 0; i < lossImgSize; i++) {
-//                imgNoArray.append(lossImgMap.keyAt(i) - 1); // imgState 里的图片下标是从1开始的
-//                imgNoArray.append("_");
-//            }
-//            KLog.i("传递的值" + imgNoArray + webView);
-//            webView.loadUrl("javascript:appointImgPlaceholder(" + "\"" + imgNoArray.toString() + "\"" + ")");
-//        }
-//    }
-
     @Override
     public void destroy() {
-        loadDataWithBaseURL(null, "", "text/html", "utf-8", null);
+        // 链接：http://www.jianshu.com/p/3e8f7dbb0dc7
+        // 如果先调用destroy()方法，则会命中if (isDestroyed()) return;这一行代码，需要先onDetachedFromWindow()，再 destory()
+        ViewParent parent = this.getParent();
+        if (parent != null) {
+            ((ViewGroup) parent).removeView(this);
+        }
+
+        stopLoading();
+//        // 退出时调用此方法，移除绑定的服务，否则某些特定系统会报错
+        getSettings().setJavaScriptEnabled(false);
+        clearCache(false);
         clearHistory();
+        loadUrl("about:blank");
         removeAllViews();
-        setWebViewClient(null);
+
+//        clearCache(false);
+//        clearHistory();
+//        removeAllViews();
+//        setWebViewClient(null);
         super.destroy();
     }
 
 
     public void clear() {
+        removeAllViews();
 //        loadDataWithBaseURL(null, "", "text/html", "utf-8", null);
 //        clearHistory();
         delayTimestamp = 0;
@@ -127,7 +143,6 @@ public class WebViewS extends WebView {
     }
 
 
-    //    private static int duringTime = 300;
     private long delayTimestamp = 0; // 上一个执行（更新图片）的时间
 
     /**

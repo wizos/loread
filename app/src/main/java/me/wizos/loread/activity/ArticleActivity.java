@@ -1,28 +1,39 @@
 package me.wizos.loread.activity;
 
 import android.annotation.SuppressLint;
+import android.content.ClipboardManager;
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.support.v4.view.ViewPager;
 import android.support.v7.widget.Toolbar;
+import android.text.TextUtils;
 import android.view.KeyEvent;
 import android.view.View;
-import android.view.ViewConfiguration;
 import android.webkit.JavascriptInterface;
 import android.widget.TextView;
 
+import com.afollestad.materialdialogs.DialogAction;
+import com.afollestad.materialdialogs.GravityEnum;
 import com.afollestad.materialdialogs.MaterialDialog;
+import com.afollestad.materialdialogs.Theme;
+import com.lzy.okgo.OkGo;
+import com.lzy.okgo.https.HttpsUtils;
 import com.socks.library.KLog;
 
 import java.io.File;
+import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import me.wizos.loread.App;
+import me.wizos.loread.BuildConfig;
 import me.wizos.loread.R;
 import me.wizos.loread.adapter.MaterialSimpleListAdapter;
 import me.wizos.loread.adapter.MaterialSimpleListItem;
@@ -32,9 +43,9 @@ import me.wizos.loread.bean.Img;
 import me.wizos.loread.bean.Tag;
 import me.wizos.loread.data.WithDB;
 import me.wizos.loread.data.WithSet;
-import me.wizos.loread.net.API;
-import me.wizos.loread.net.Neter;
-import me.wizos.loread.net.Parser;
+import me.wizos.loread.net.Api;
+import me.wizos.loread.net.DataApi;
+import me.wizos.loread.net.MercuryApi;
 import me.wizos.loread.utils.FileUtil;
 import me.wizos.loread.utils.HttpUtil;
 import me.wizos.loread.utils.StringUtil;
@@ -44,23 +55,28 @@ import me.wizos.loread.view.IconFontView;
 import me.wizos.loread.view.ViewPagerS;
 import me.wizos.loread.view.WebViewS;
 import me.wizos.loread.view.colorful.Colorful;
+import okhttp3.OkHttpClient;
 
 @SuppressLint("SetJavaScriptEnabled")
 public class ArticleActivity extends BaseActivity implements View.OnClickListener {
     protected static final String TAG = "ArticleActivity";
     private WebViewS webView;
-    private IconFontView vStar, vRead, vSave;
+    private IconFontView vStar, vRead, vSave, vReadability;
     //    private NestedScrollView vScrolllayout ; // 这个是为上级顶部，页面滑动至最顶层而做的。目前由于 webview 是动态添加，所以无法用到
     private TextView vArticleNum;
     private Article article;
+    public ViewPagerS viewPager;
     private static String articleID = "";
+    //    private static Neter artNeter;
+    private OkHttpClient imgHttpClient;
+    private static String fileTitle = "";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_article);
         App.artHandler = artHandler;
-        mNeter = new Neter(artHandler);
+        imgHttpClient = buildImgClient();
         initView(); // 初始化界面上的 View，将变量映射到布局上。
 
         if (savedInstanceState != null) {
@@ -73,33 +89,6 @@ public class ArticleActivity extends BaseActivity implements View.OnClickListene
         KLog.d("开始初始化数据" + articleNo + "==" + articleCount);
 
         initViewPager();
-
-//        // 配合X5内核使用。避免网页中的视频，上屏幕的时候，可能出现闪烁的情况
-//        getWindow().setFormat(PixelFormat.TRANSLUCENT);
-//        // 配合X5内核使用。避免输入法界面弹出后遮挡输入光标的问题
-//        getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE | WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN);
-//        KLog.d("【op2】适配器总数：" + mViewPager.getAdapter().getCount() + "，View 总数：" +  views.size()  + "，当前项："  + mViewPager.getCurrentItem() );
-    }
-
-    @Override
-    protected Colorful.Builder buildColorful(Colorful.Builder mColorfulBuilder) {
-        mColorfulBuilder
-                .backgroundColor(R.id.art_coordinator, R.attr.root_view_bg)
-                // 设置 toolbar
-                .backgroundColor(R.id.art_toolbar, R.attr.topbar_bg)
-                .textColor(R.id.art_toolbar_num, R.attr.topbar_fg)
-
-                // 设置中屏和底栏之间的分割线
-                .backgroundColor(R.id.art_bottombar_divider, R.attr.bottombar_divider)
-
-                // 设置 bottombar
-                .backgroundColor(R.id.art_bottombar, R.attr.bottombar_bg)
-                .textColor(R.id.art_bottombar_read, R.attr.bottombar_fg)
-                .textColor(R.id.art_bottombar_star, R.attr.bottombar_fg)
-                .textColor(R.id.art_bottombar_tag, R.attr.bottombar_fg)
-                .textColor(R.id.art_bottombar_save, R.attr.bottombar_fg);
-//        KLog.e("loread","这里是Article窗口");
-        return mColorfulBuilder;
     }
 
     private void initView() {
@@ -108,7 +97,11 @@ public class ArticleActivity extends BaseActivity implements View.OnClickListene
         vRead = (IconFontView) findViewById(R.id.art_bottombar_read);
         vSave = (IconFontView) findViewById(R.id.art_bottombar_save);
         vArticleNum =  (TextView)findViewById(R.id.art_toolbar_num);
-//        vScrolllayout = (NestedScrollView) findViewById(R.id.art_scroll);
+        vReadability = (IconFontView) findViewById(R.id.art_bottombar_readability);
+        if (!BuildConfig.DEBUG) {
+            vSave.setVisibility(View.GONE);
+            vReadability.setVisibility(View.GONE);
+        }
         vSave.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -129,29 +122,28 @@ public class ArticleActivity extends BaseActivity implements View.OnClickListene
 //        getSupportActionBar().setHomeAsUpIndicator(upArrow); // 替换返回箭头
     }
 
+
     @Override
     protected void onDestroy() {
         // 如果参数为null的话，会将所有的Callbacks和Messages全部清除掉。
         // 这样做的好处是在 Acticity 退出的时候，可以避免内存泄露。因为 handler 内可能引用 Activity ，导致 Activity 退出后，内存泄漏
         KLog.e("loread", "onDestroy" + webView);
         artHandler.removeCallbacksAndMessages(null);
+        webView.destroy();
+        WebViewS webViewS;
         for (int i = 0; i < viewPager.getChildCount(); i++) {
             // 使用自己包装的 webview
-            WebViewS webView = (WebViewS) viewPager.getChildAt(i);
-            webView.destroy();
-            webView.freeMemory();
+            webViewS = (WebViewS) viewPager.getChildAt(i);
+            webViewS.destroy();
         }
         viewPager.removeAllViews();
+        viewPager.clearOnPageChangeListeners();
+        OkGo.cancelAll(imgHttpClient);
         super.onDestroy();
     }
 
-    private static String fileTitle = "";
 
 
-    @JavascriptInterface
-    public void onDocumentReady() {
-        KLog.d("loread", "文档已加载");
-    }
 
     @JavascriptInterface
     public void log(String paramString) {
@@ -162,23 +154,11 @@ public class ArticleActivity extends BaseActivity implements View.OnClickListene
     public void loadImage(int imgNo, String url, String localUrl) {
         KLog.e("loread", "====================loadImage", WithDB.i().getImg(articleID, url).getDownState() + "【下载图片】" + imgNo);
         // 这么检测是有问题的，有些在数据库中已经被标记为已下，但是实际没有下的（标记为已读后），相关的图片那下载记录没有删
-        if (WithDB.i().getImg(articleID, url).getDownState() != API.ImgMeta_Downover) {
+        if (WithDB.i().getImg(articleID, url).getDownState() != Api.ImgMeta_Downover) {
             restartDownloadImg(imgNo, url);
         } else {
             imgLoadSuccess(url, localUrl);
         }
-    }
-
-    @JavascriptInterface
-    public boolean readCachedImage(String src) {
-        KLog.e("loread", "Loread", "读取缓存图片");
-        Img imgMeta = WithDB.i().getImg(articleID, src);
-        if (imgMeta != null) {
-            if (imgMeta.getDownState() == API.ImgMeta_Downover) {
-                return true;
-            }
-        }
-        return false;
     }
 
     @JavascriptInterface
@@ -196,9 +176,7 @@ public class ArticleActivity extends BaseActivity implements View.OnClickListene
 
     // 在JS中调用该方法
     @JavascriptInterface
-    public void onImgClicked(final int imgNo, String src) {
-        KLog.e(imgNo + " = " + src);
-
+    public void onImgClicked(final int imgNo, final String src, final String netsrc) {
         // 下载图片
         // 打开大图
         runOnUiThread(new Runnable() {
@@ -206,27 +184,51 @@ public class ArticleActivity extends BaseActivity implements View.OnClickListene
             public void run() {
                 final MaterialSimpleListAdapter adapter = new MaterialSimpleListAdapter( ArticleActivity.this);
                 adapter.add(new MaterialSimpleListItem.Builder(ArticleActivity.this)
-                        .content("重新下载")
-                        .icon(R.drawable.ic_vector_mark_after)
+                        .content(R.string.art_img_dialog_download_again)
+                        .icon(R.drawable.dialog_ic_redownload)
                         .backgroundColor(Color.WHITE)
                         .build());
                 adapter.add(new MaterialSimpleListItem.Builder(ArticleActivity.this)
-                        .content("打开大图")
-                        .icon(R.drawable.ic_vector_mark_before)
+                        .content(R.string.art_img_dialog_open_in_new_window)
+                        .icon(R.drawable.dialog_ic_open_in_new_window)
                         .backgroundColor(Color.WHITE)
                         .build());
+                adapter.add(new MaterialSimpleListItem.Builder(ArticleActivity.this)
+                        .content(R.string.art_img_dialog_copy_link)
+                        .icon(R.drawable.dialog_ic_copy_link)
+                        .backgroundColor(Color.WHITE)
+                        .build());
+
                 new MaterialDialog.Builder(ArticleActivity.this)
                         .adapter(adapter, new MaterialDialog.ListCallback() {
                             @Override
                             public void onSelection(MaterialDialog dialog, View itemView, int which, CharSequence text) {
                                 switch (which) {
                                     case 0:
-                                        KLog.e( "重新下载" + imgNo );
+                                        KLog.e("重新下载：" + imgNo + " = " + src);
                                         // 此时还要判断他的储存位置 是 box 还是 cache
-                                        restartDownloadImg(imgNo, "");
+                                        restartDownloadImg(imgNo, src);
                                         break;
                                     case 1:
-                                        KLog.e( "打开大图" );
+//                                        try {
+                                        String imgPath = FileUtil.getRelativeDir(article.getSaveDir()) + fileTitle + "_files" + File.separator + WithDB.i().getImg(articleID, imgNo + 1).getName();
+                                        File file = new File(imgPath);
+                                        KLog.e("打开大图：" + imgPath);
+                                        if (file.isFile()) {
+                                            Intent intent = new Intent();
+                                            intent.setAction(Intent.ACTION_VIEW);
+                                            intent.setDataAndType(Uri.fromFile(file), "image/*");
+                                            ArticleActivity.this.startActivity(Intent.createChooser(intent, "选择打开方式"));
+                                        }
+//                                        }catch (Exception e){
+//                                            ToastUtil.showLong("打开图片失败");
+//                                        }
+                                        break;
+                                    case 2:
+                                        ClipboardManager cm = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+                                        cm.setText(netsrc);
+                                        KLog.e("图片链接复制成功" + src + " = " + netsrc);
+                                        ToastUtil.showShort(getString(R.string.toast_copy_img_src_success));
                                         break;
                                 }
 
@@ -239,29 +241,41 @@ public class ArticleActivity extends BaseActivity implements View.OnClickListene
         });
     }
 
+    // 在JS中调用该方法
+    @JavascriptInterface
+    public void onImgClick2Down(final int imgNo, String src) {
+        KLog.e(imgNo + " = " + src);
+        restartDownloadImg(imgNo, src);
+    }
 
-    private void restartDownloadImg(int imgNo, String url) {
+
+    private void restartDownloadImg(int imgNo, final String url) {
         imgNo = imgNo + 1 ;
         KLog.e("loread", "restartDownloadImg" + imgNo);
         Img imgMeta;
         imgMeta = WithDB.i().getImg(articleID, imgNo);
         if (imgMeta == null) {
-            ToastUtil.showShort("没有找到图片");
+            ToastUtil.showShort(getString(R.string.toast_cant_find_img));
             return;
         }
 
         String savePath = FileUtil.getRelativeDir(article.getSaveDir()) + fileTitle + "_files" + File.separator + imgMeta.getName();
         KLog.i("图片的保存目录为：" + savePath + "  下载地址为：" + imgMeta.getSrc());
-//        App.mNeter.downImg(articleID, imgNo, imgMeta.getSrc(), savePath);
-        // TEST:
-        App.mNeter.downImgSrc(articleID, FileUtil.getRelativeDir(article.getSaveDir()) + fileTitle + "_files" + File.separator, imgMeta);
+        webView.post(new Runnable() {
+            @Override
+            public void run() {
+                webView.loadUrl("javascript:onImageLoading('" + url + "');");
+            }
+        });
+
+        DataApi.i().downingImg(artHandler, imgHttpClient, imgMeta, FileUtil.getRelativeDir(article.getSaveDir()) + fileTitle + "_files" + File.separator);
     }
 
 
     private void imgLoadSuccess(final String imgSrc, final String localSrc) {
         KLog.e("loread", "替换imgLoadSuccess" + article.getSaveDir() + article.getTitle() + "：" + localSrc + "=" + webView);
         if (null == webView) {
-            ToastUtil.showShort("imgLoadSuccess此时webView尽然为空？");
+            Tool.showOnLocal("imgLoadSuccess此时webView尽然为空？");
         } else {
             webView.post(new Runnable() {
                 @Override
@@ -272,115 +286,125 @@ public class ArticleActivity extends BaseActivity implements View.OnClickListene
         }
     }
 
-    private void imgLoadFail(String imgSrc) {
-        if (null == webView) {
-            ToastUtil.showShort("imgLoadFail此时webView尽然为空？");
-        } else {
-            webView.loadUrl("javascript:onImageLoadFailed('" + imgSrc + "');");
-        }
-    }
 
 
-
-    @Override
-    public void notifyDataChanged() {
-    }
     // 非静态匿名内部类的实例，所以它持有外部类Activity的引用
     // 所以此处的 handler 会持有外部类 Activity 的引用，消息队列是在一个Looper线程中不断轮询处理消息。
     // 那么当这个Activity退出时消息队列中还有未处理的消息或者正在处理消息，而消息队列中的Message持有mHandler实例的引用，mHandler又持有Activity的引用，所以导致该Activity的内存资源无法及时回收，引发内存泄漏
 
+    private int tapCount = 0;
     @Override
     public void onClick(View v) {
-        KLog.e("loread", "【 toolbar 是否双击 】 vScrolllayout" + v.getId() + v.getTag());
-        KLog.e("loread", "【 toolbar 是否双击 】 vScrolllayout" + R.id.art_bottombar_save);
+        KLog.e("loread", "【 toolbar 是否双击 】" + v);
         switch (v.getId()) {
+            // debug
             case R.id.art_toolbar_num:
             case R.id.art_toolbar:
-                if (artHandler.hasMessages(API.MSG_DOUBLE_TAP)) {
-                    artHandler.removeMessages(API.MSG_DOUBLE_TAP);
-//                    vScrolllayout.smoothScrollTo(0, 0);
-                } else {
-                    artHandler.sendEmptyMessageDelayed(API.MSG_DOUBLE_TAP, ViewConfiguration.getDoubleTapTimeout());
-                }
                 break;
         }
     }
 
-    private static Neter mNeter;
-    public final ArtHandler artHandler = new ArtHandler(this);
-    // 静态类不持有外部类的对象，所以你的Activity可以随意被回收，不容易造成内存泄漏
-    public static class ArtHandler extends Handler {
-        private final WeakReference<ArticleActivity> mActivity;
+    public void debug_article_info(View view) {
+        KLog.e("文章信息" + tapCount);
+        if (tapCount == 0) {
+            artHandler.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    tapCount = 0;
+                }
+            }, 1300);
+        } else if (tapCount > 2) {
+            showArticleInfo(article);
+        }
+        tapCount++;
+    }
 
+    public void showArticleInfo(Article article) {
+        if (!BuildConfig.DEBUG) {
+            return;
+        }
+        article = WithDB.i().getArticle(article.getId());
+        String info = article.getTitle() + "\n" +
+                "ID=" + article.getId() + "\n" +
+                "ReadState=" + article.getReadState() + "\n" +
+                "StarState=" + article.getStarState() + "\n" +
+                "SaveDir=" + article.getSaveDir() + "\n" +
+                "Author=" + article.getAuthor() + "\n" +
+                "Published=" + article.getPublished() + "\n" +
+                "Starred=" + article.getStarred() + "\n" +
+                "Categories=" + article.getCategories() + "\n" +
+                "CoverSrc=" + article.getCoverSrc() + "\n" +
+                "OriginHtmlUrl=" + article.getOriginHtmlUrl() + "\n" +
+                "OriginStreamId=" + article.getOriginStreamId() + "\n" +
+                "OriginTitle=" + article.getOriginTitle() + "\n" +
+                "Summary=" + article.getSummary() + "\n";
+        new MaterialDialog.Builder(this)
+                .title(R.string.article_about_dialog_title)
+                .content(info)
+                .positiveText(R.string.agree)
+                .positiveColorRes(R.color.material_red_400)
+                .titleGravity(GravityEnum.CENTER)
+                .titleColorRes(R.color.material_red_400)
+                .contentColorRes(android.R.color.white)
+                .backgroundColorRes(R.color.material_blue_grey_800)
+                .dividerColorRes(R.color.material_teal_a400)
+                .btnSelector(R.drawable.md_btn_selector_custom, DialogAction.POSITIVE)
+                .positiveColor(Color.WHITE)
+                .negativeColorAttr(android.R.attr.textColorSecondaryInverse)
+                .theme(Theme.DARK)
+                .show();
+    }
+
+    public ArtHandler artHandler = new ArtHandler(this);
+    // 静态类不持有外部类的对象，所以你的Activity可以随意被回收，不容易造成内存泄漏
+    private static class ArtHandler extends Handler {
+        private final WeakReference<ArticleActivity> mActivity;
         ArtHandler(ArticleActivity activity) {
             mActivity = new WeakReference<>(activity);
         }
-
         @Override
         public void handleMessage(final Message msg) {
-            KLog.d(msg);
+            KLog.e("【handler】" + msg.what + mActivity.get());
             if (mActivity.get() == null) { // 返回引用对象的引用
                 return;
             }
-            String info = msg.getData().getString("res");
-            String url = msg.getData().getString("url");
-//            String filePath ="";
-//            String articleID;
-//            int imgNo;
-            if ( info == null ){
-                info = "";
-            }
-            KLog.d("【handler】" + msg.what + url);
-            switch (msg.what) {
-                case API.S_EDIT_TAG:
-                    long logTime = msg.getData().getLong("logTime");
-                    if(!info.equals("OK")){
-                        // TEST:
-//                        mNeter.forData(url,API.request,logTime);
-                        mNeter.exeRequest(API.request, logTime);
-                        KLog.d("【返回的不是 ok");
-                    }
-                    break;
-                case API.S_ARTICLE_CONTENTS:
-                    Parser.instance().parseArticleContents(info);
-                    break;
-                case API.S_BITMAP:
-//                    imgNo = msg.getData().getInt("imgNo");
-                    String imgName = msg.getData().getString("imgName");
-                    String imgSrc = msg.getData().getString("imgSrc");
-//                    KLog.e("loread", "替换图片" + mActivity.get() + "=" + imgName + "=");
-//                    mActivity.get().replaceImgSrc(imgNo, "./" + fileTitle + "_files" + File.separator + imgName,imgSrc, msg);
-//                    mActivity.get().replaceSrc(imgNo, "./" + fileTitle + "_files" + File.separator + imgName, msg);
-                    mActivity.get().imgLoadSuccess(imgSrc, "./" + fileTitle + "_files" + File.separator + imgName);
 
+            switch (msg.what) {
+                case Api.S_BITMAP:
+//                    int imgNo;
+                    String articleID = msg.getData().getString("articleID");
+                    String imgName = msg.getData().getString("imgName");
+//                    imgNo = msg.getData().getInt("imgNo");
+
+//                    Img imgMeta = WithDB.i().getImg(articleID, imgNo);
+//                    if (imgMeta == null) {
+//                        KLog.e("【】【】【】【】【】【】【】" + "未找到图片");
+//                        break;
+//                    }
+//                    imgMeta.setDownState(Api.ImgMeta_Downover);
+//                    WithDB.i().saveImg(imgMeta);
+
+                    if (App.currentArticleID != null & App.currentArticleID.equals(articleID)) {
+                        mActivity.get().imgLoadSuccess(msg.getData().getString("imgSrc"), "./" + fileTitle + "_files" + File.separator + imgName);
+                    }
+                    KLog.e("【t图片】" + msg.getData().getString("imgSrc") + "=" + articleID + "=" + msg.getData().getInt("imgNo") + "=" + articleID);
                     break;
-                case API.F_BITMAP:
-//                    mActivity.get().lmgLoadFail( msg.getData().getString("imgSrc") );
-                    if (null == mActivity.get().webView) {
-                        ToastUtil.showShort("此时webView尽然为空？");
-                    } else {
-                        mActivity.get().webView.postDelayed(new Runnable() {
-                            @Override
-                            public void run() {
-                                mActivity.get().webView.loadUrl("javascript:onImageLoadFailed('" + msg.getData().getString("imgSrc") + "');");
-                            }
-                        }, mActivity.get().webView.getDelayTime());
+                case Api.F_BITMAP:
+                    articleID = msg.getData().getString("articleID");
+                    if (App.currentArticleID != null & App.currentArticleID.equals(articleID)) {
+                        if (null == mActivity.get().webView) {
+                            Tool.showOnLocal("此时webView尽然为空？");
+                        } else {
+                            mActivity.get().webView.post(new Runnable() {
+                                @Override
+                                public void run() {
+                                    mActivity.get().webView.loadUrl("javascript:onImageLoadFailed('" + msg.getData().getString("imgSrc") + "');");
+                                }
+                            });
+                        }
                     }
                     break;
-                case API.F_Request:
-                case API.F_Response:
-                    if( info.equals("Authorization Required")){
-                        ToastUtil.showShort("没有Authorization，请重新登录");
-                        App.finishActivity(mActivity.get());
-                        mActivity.get().goTo(LoginActivity.TAG, "Login For Authorization");
-                        break;
-                    }
-                    ToastUtil.showShort("网络不好，中断");
-                    break;
-                case API.F_NoMsg:
-                    break;
-                case API.H_WEB:
-                    break;
+
             }
         }
     }
@@ -400,22 +424,32 @@ public class ArticleActivity extends BaseActivity implements View.OnClickListene
                     public boolean onSelection(MaterialDialog dialog, View view, int which, CharSequence text) {
                         String tagId = tagsList.get(which).getId();
                         StringBuilder newCategories = new StringBuilder(  article.getCategories().length()  );
-                        String[] cateArray = article.getCategories().replace("]","").replace("[","").split(", ");
-                        for (String cate:cateArray){
-                            if (cate.contains("user/" + App.mUserID + "/label/")) {
-                                mNeter.articleRemoveTag(articleID, cate);
-                                KLog.d("【-】" + cate );
+                        String[] cateArray = article.getCategories().replace("]", "").replace("[", "").split(",");
+                        StringBuilder tempCate = new StringBuilder();
+                        for (String category : cateArray) {
+                            tempCate.append(tempCate);
+                            if (category.contains("user/" + App.UserID + "/label/")) {
+                                if (category.substring(0, 1).equals("\"")) {
+                                    category = category.substring(1, category.length());
+                                }
+                                if (category.substring(category.length() - 1, category.length()).equals("\"")) {
+                                    category = category.substring(0, category.length() - 1);
+                                }
+//                                App.mNeter.articleRemoveTag(articleID, category);
+                                DataApi.i().articleRemoveTag(articleID, category, null);
+
+                                KLog.i("【-】" + category);
                             }else {
-                                newCategories.append(cate);
+                                newCategories.append(category);
                                 newCategories.append(", ");
                             }
                         }
                         newCategories.append(tagId);
                         newCategories.append("]");
-                        KLog.d("【==】" + newCategories + articleID);
+                        KLog.i("【==】" + newCategories + articleID);
                         article.setCategories( newCategories.toString() );
-                        mNeter.articleAddTag(articleID, tagId);
-                        mNeter.markArticleStared(articleID);
+//                        App.mNeter.articleAddTag(articleID, tagId);
+                        DataApi.i().articleAddTag(articleID, tagId, null);
                         dialog.dismiss();
                         return true; // allow selection
                     }
@@ -424,100 +458,156 @@ public class ArticleActivity extends BaseActivity implements View.OnClickListene
     }
 
 
-    public void onStarClick(View view) {
-        if (article.getStarState().equals(API.ART_UNSTAR)) {
-            changeStarState(API.ART_STARED);
-//            ToastUtil.showShort("已收藏");
-            if (article.getSaveDir().equals(API.SAVE_DIR_BOX) || article.getSaveDir().equals(API.SAVE_DIR_BOXREAD)) {
-                moveArticleDir(API.SAVE_DIR_STORE);
-            }
-        } else {
-            changeStarState(API.ART_UNSTAR);
-//            ToastUtil.showShort("取消收藏");
-            if (article.getSaveDir().equals(API.SAVE_DIR_STORE) || article.getSaveDir().equals(API.SAVE_DIR_STOREREAD)) {
-                moveArticleDir(API.SAVE_DIR_BOX);
-            }
-        }
-        WithDB.i().saveArticle(article);
-    }
+//    ArticleStateManager articleStateManager;
+//    private void initArticleStateManager(){
+//        articleStateManager = new ArticleStateManager(new ArticleStateManager.StateListener() {
+//            @Override
+//            public void onReaded() {
+//                vRead.setText(getString(R.string.font_readed));
+//            }
+//
+//            @Override
+//            public void onUnread() {
+//                vRead.setText(getString(R.string.font_unread));
+//            }
+//
+//            @Override
+//            public void onStared() {
+//                vStar.setText(getString(R.string.font_stared));
+//            }
+//
+//            @Override
+//            public void onUnstar() {
+//                vStar.setText(getString(R.string.font_unstar));
+//            }
+//        });
+//    }
 
-    private void changeStarState(String iconState) {
-        article.setStarState(iconState);
-        if (iconState.equals(API.ART_STARED)) {
+
+    public void onStarClick(View view) {
+//        articleStateManager.changeStarState(article);
+        if (article.getStarState().equals(Api.ART_UNSTAR)) {
             vStar.setText(getString(R.string.font_stared));
-            mNeter.markArticleStared(articleID);
+            DataApi.i().markArticleStared(articleID, null);
+            article.setStarState(Api.ART_STARED);
+            article.setStarred(System.currentTimeMillis() / 1000);
+            if (article.getSaveDir().equals(Api.SAVE_DIR_BOX) || article.getSaveDir().equals(Api.SAVE_DIR_BOXREAD)) {
+                moveArticleTo(article, Api.SAVE_DIR_STORE);
+            }
         } else {
             vStar.setText(getString(R.string.font_unstar));
-            mNeter.markArticleUnstar(articleID);
+            DataApi.i().markArticleUnstar(articleID, null);
+            article.setStarState(Api.ART_UNSTAR);
+            if (article.getSaveDir().equals(Api.SAVE_DIR_STORE) || article.getSaveDir().equals(Api.SAVE_DIR_STOREREAD)) {
+                moveArticleTo(article, Api.SAVE_DIR_BOX);
+            }
         }
         WithDB.i().saveArticle(article);
     }
 
+    public void onReadClick(View view) {
+//        articleStateManager.changeReadState(article);
+        KLog.e("loread", "被点击的是：" + article.getTitle());
+        if (article.getReadState().equals(Api.ART_READED)) {
+            vRead.setText(getString(R.string.font_unread));
+            DataApi.i().markArticleUnread(articleID, null);
+            article.setReadState(Api.ART_UNREADING);
+        } else {
+            vRead.setText(getString(R.string.font_readed));
+            DataApi.i().markArticleReaded(articleID, null);
+            article.setReadState(Api.ART_READED);
+        }
+        WithDB.i().saveArticle(article);
+    }
     public void onSaveClick(View view){
         KLog.e("loread", "保存文件被点击");
-        if (article.getSaveDir().equals(API.SAVE_DIR_CACHE)) {
-            if (article.getStarState().equals(API.ART_STARED)) {
-                moveArticleDir(API.SAVE_DIR_STORE);
+        if (article.getSaveDir().equals(Api.SAVE_DIR_CACHE)) {
+            if (article.getStarState().equals(Api.ART_STARED)) {
+                moveArticleTo(article, Api.SAVE_DIR_STORE);
             } else {
-                moveArticleDir(API.SAVE_DIR_BOX);
+                moveArticleTo(article, Api.SAVE_DIR_BOX);
             }
         } else {
-            ToastUtil.showShort("文件已保存");
-//            moveArticleDir( article.getSaveDir(), API.SAVE_DIR_CACHE ); // 暂时不能支持从 box/store 撤销保存回 cache，因为文章的正文是被加了修饰的，为 epub 文件做准备的
+            ToastUtil.showShort(getString(R.string.toast_file_saved));
+//            moveArticleTo( article.getSaveDir(), Api.SAVE_DIR_CACHE ); // 暂时不能支持从 box/store 撤销保存回 cache，因为文章的正文是被加了修饰的，为 epub 文件做准备的
         }
-        if (article.getSaveDir().equals(API.SAVE_DIR_CACHE)) {
+        if (article.getSaveDir().equals(Api.SAVE_DIR_CACHE)) {
             vSave.setText(getString(R.string.font_unsave));
         } else {
             vSave.setText(getString(R.string.font_saved));
         }
     }
 
+    public void onReadabilityClick(View view) {
+        KLog.e("=====点击");
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    String articleHtml = MercuryApi.fetchReadabilityContent(article.getCanonical(), null);
+                    KLog.e("=====1111" + articleHtml);
+                    String sourceFileTitle;
+                    if (article.getSaveDir().equals(Api.SAVE_DIR_CACHE)) {
+                        sourceFileTitle = StringUtil.stringToMD5(article.getId());
+                    } else {
+                        sourceFileTitle = article.getTitle();
+                    }
+                    String sourceDirPath = FileUtil.getRelativeDir(article.getSaveDir());
+                    FileUtil.saveHtml(sourceDirPath + sourceFileTitle + ".html", articleHtml);
+                    KLog.e("=====" + sourceDirPath + sourceFileTitle + ".html");
+                    KLog.e("=====" + articleHtml);
+                    article.setImgState(null);
+                    WithDB.i().saveArticle(article);
+                    webView.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            KLog.e("===== 更新");
+                            webView.loadDataWithBaseURL(FileUtil.getAbsoluteDir(article.getSaveDir()), StringUtil.getHtmlHeader() + StringUtil.getArticleHtml(article) + StringUtil.getFooter(), "text/html", "utf-8", null);
+                            initWebViewLazyLoad();
+                        }
+                    });
+                } catch (IOException e) {
+                    KLog.e("===== 报错" + e);
+                }
+            }
+        }).start();
+    }
 
-    private void moveArticleDir(String targetDir) {
-        String sourceTitle = fileTitle;
-        KLog.d(fileTitle);
+    private void moveArticleTo(Article article, String targetDir) {
+        String sourceFileTitle;
+        String targetFileTitle;
+        String articleHtml;
         String sourceDirPath = FileUtil.getRelativeDir(article.getSaveDir());
         String targetDirPath = FileUtil.getRelativeDir(targetDir);
 
-        if (article.getSaveDir().equals(API.SAVE_DIR_CACHE)) {
-            String articleHtml;
-            articleHtml = FileUtil.readHtml(sourceDirPath + fileTitle + ".html");
+        if (article.getSaveDir().equals(Api.SAVE_DIR_CACHE)) {
+            sourceFileTitle = StringUtil.stringToMD5(article.getId());
+            articleHtml = FileUtil.readHtml(sourceDirPath + sourceFileTitle + ".html");
             articleHtml = StringUtil.reviseHtmlForBox(article.getTitle(), articleHtml);
-            FileUtil.saveHtml(sourceDirPath + fileTitle + ".html", articleHtml);
-            fileTitle = article.getTitle();
-//        KLog.d(articleHtml);
+            FileUtil.saveHtml(sourceDirPath + sourceFileTitle + ".html", articleHtml);
+            targetFileTitle = StringUtil.getOptimizedNameForSave(article.getTitle());
+            article.setTitle(targetFileTitle);
+        } else {
+            sourceFileTitle = article.getTitle();
+            targetFileTitle = sourceFileTitle;
         }
 
-        FileUtil.moveFile(sourceDirPath + sourceTitle + ".html", targetDirPath + fileTitle + ".html");
-        FileUtil.moveDir(sourceDirPath + sourceTitle + "_files", targetDirPath + fileTitle + "_files");
+        FileUtil.moveFile(sourceDirPath + sourceFileTitle + ".html", targetDirPath + targetFileTitle + ".html");
+        FileUtil.moveDir(sourceDirPath + sourceFileTitle + "_files", targetDirPath + targetFileTitle + "_files");
 
+//        KLog.i(sourceFileTitle);
 //        KLog.d("原来文件夹" + sourceDirPath + sourceTitle + "_files");
 //        KLog.d("目标文件夹" + targetDirPath + article.getTitle() + "_files");
-        if (article.getImgState() != null && !article.getImgState().equals("")) {  // (lossSrcList != null && lossSrcList.size() != 0) || ( obtainSrcList!= null && obtainSrcList.size() != 0)
+        if (!TextUtils.isEmpty(article.getCoverSrc())) {  // (lossSrcList != null && lossSrcList.size() != 0) || ( obtainSrcList!= null && obtainSrcList.size() != 0)
             article.setCoverSrc(targetDirPath + article.getTitle() + "_files" + File.separator + StringUtil.getFileNameExtByUrl(article.getCoverSrc()));
 //            KLog.d("封面" + targetDirPath + article.getTitle() + "_files" + File.separator + StringUtil.getFileNameExtByUrl(article.getCoverSrc()));
         }
         article.setSaveDir(targetDir);
+        fileTitle = targetFileTitle;
         WithDB.i().saveArticle(article);
     }
 
 
-    public void onReadClick(View view) {
-        KLog.e("loread", "被点击的是：" + article.getTitle());
-        if (article.getReadState().equals(API.ART_READED)) {
-            vRead.setText(getString(R.string.font_unread));
-//            ToastUtil.showShort("未读");
-            mNeter.markArticleUnread(articleID);
-            article.setReadState(API.ART_UNREADING);
-        }else {
-            vRead.setText(getString(R.string.font_readed));
-//            ToastUtil.showShort("已读");
-            mNeter.markArticleReaded(articleID);
-            article.setReadState(API.ART_READED);
-        }
-        WithDB.i().saveArticle(article);
-
-    }
 
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
@@ -532,43 +622,42 @@ public class ArticleActivity extends BaseActivity implements View.OnClickListene
     private void back() {
         Intent data = new Intent();
         data.putExtra("articleNo", viewPager.getCurrentItem());
-        ArticleActivity.this.setResult(API.ActivityResult_ArtToMain, data);//注意下面的RESULT_OK常量要与回传接收的Activity中onActivityResult（）方法一致
-        App.finishActivity(this);//关闭当前activity
+        ArticleActivity.this.setResult(Api.ActivityResult_ArtToMain, data);//注意下面的RESULT_OK常量要与回传接收的Activity中onActivityResult（）方法一致
+        this.finish();
     }
 
     private int articleNo, articleCount;
 
 
-    private void setIconState(Article article, int position) {
-        if (article.getReadState().equals(API.ART_UNREAD)) {
+    private void setIconState(int position) {
+        if (article.getReadState().equals(Api.ART_UNREAD)) {
             vRead.setText(getString(R.string.font_readed));
-            article.setReadState(API.ART_READED);
+            article.setReadState(Api.ART_READED);
             WithDB.i().saveArticle(article);
-            mNeter.markArticleReaded(articleID);
+            DataApi.i().markArticleReaded(articleID, null);
             KLog.d("【 ReadState 】" + WithDB.i().getArticle(article.getId()).getReadState());
-        } else if (article.getReadState().equals(API.ART_READED)) {
+        } else if (article.getReadState().equals(Api.ART_READED)) {
             vRead.setText(getString(R.string.font_readed));
-        } else if (article.getReadState().equals(API.ART_UNREADING)) {
+        } else if (article.getReadState().equals(Api.ART_UNREADING)) {
             vRead.setText(getString(R.string.font_unread));
         }
 
-        if (article.getStarState().equals(API.ART_UNSTAR)) {
+        if (article.getStarState().equals(Api.ART_UNSTAR)) {
             vStar.setText(getString(R.string.font_unstar));
         } else {
             vStar.setText(getString(R.string.font_stared));
         }
-        if (article.getSaveDir().equals(API.SAVE_DIR_CACHE)) {
+        if (article.getSaveDir().equals(Api.SAVE_DIR_CACHE)) {
             vSave.setText(getString(R.string.font_unsave));
         } else {
             vSave.setText(getString(R.string.font_saved));
         }
-//        String numStr = String.valueOf(position + 1) + " / " + String.valueOf(articleCount);
+
         vArticleNum.setText((position + 1) + " / " + articleCount);
         KLog.d("=====position" + position);
     }
 
 
-    public ViewPagerS viewPager;
 
     public void initViewPager() {
         viewPager = (ViewPagerS) findViewById(R.id.art_viewpager);
@@ -582,12 +671,6 @@ public class ArticleActivity extends BaseActivity implements View.OnClickListene
             KLog.e("loread", "当articleNo为0时，试一次");
             ArticleActivity.this.initSelectedPage(0);
         }
-        if (WithSet.i().isLeftRightSlideArticle()) {
-            viewPager.setScroll(true);
-        } else {
-            viewPager.setScroll(false);
-        }
-//        KLog.e("loread","初始化ViewPager  "  + ( System.currentTimeMillis() - App.time ) );
     }
 
 
@@ -601,7 +684,7 @@ public class ArticleActivity extends BaseActivity implements View.OnClickListene
          * 泪奔，当 setCurrentItem (0) 的时候，不会调用该函数
          * <p>
          * 点击进入 viewpager 时，该函数比 InstantiateItem 函数先执行。（之后滑动时，InstantiateItem 已经创建好了 view）
-         * 所以，为了能在运行完 InstantiateItem ，有了 webView 之后再去执行 showingPageData，initSelectedPage 在首次进入时都不执行，放到 InstantiateItem 中。
+         * 所以，为了能在运行完 InstantiateItem ，有了 webView 之后再去执行 initSelectedPage 在首次进入时都不执行，放到 InstantiateItem 中。
          */
         @Override
         public void onPageSelected(final int pagePosition) {
@@ -618,13 +701,14 @@ public class ArticleActivity extends BaseActivity implements View.OnClickListene
 
     public void initSelectedArticle(int position) {
         this.article = App.articleList.get(position);
+        OkGo.cancelTag(imgHttpClient, articleID); // 取消之前那篇文章的图片下载
         App.time = System.currentTimeMillis();
         KLog.e("loread", "initSelectedArticle" + article.getTitle() + "====" + webView);
         articleID = article.getId();
         App.currentArticleID = articleID;
-        setIconState(article, position);
+        setIconState(position);
 
-        if (article.getSaveDir().equals(API.SAVE_DIR_CACHE)) {
+        if (article.getSaveDir().equals(Api.SAVE_DIR_CACHE)) {
             fileTitle = StringUtil.stringToMD5(article.getId());
         } else {
             fileTitle = article.getTitle();
@@ -636,6 +720,7 @@ public class ArticleActivity extends BaseActivity implements View.OnClickListene
             this.webView = (WebViewS) viewPager.findViewById(position);
             if (viewPager.getCurrentItem() == webView.getId()) {
                 initWebViewLazyLoad();
+//                initHtml();
             } else {
                 KLog.e("loread", "----------选择的不是当前的webView");
             }
@@ -646,6 +731,13 @@ public class ArticleActivity extends BaseActivity implements View.OnClickListene
                     initSelectedWebView(position);
                 }
             }, 100);
+        }
+    }
+
+    private void initHtml() {
+        File file = new File(FileUtil.getRelativeDir(article.getSaveDir()) + fileTitle + ".html");
+        if (!file.isFile()) {
+            webView.loadDataWithBaseURL(FileUtil.getAbsoluteDir(article.getSaveDir()), StringUtil.getHtmlHeader() + StringUtil.getArticleHtml(article) + StringUtil.getFooter(), "text/html", "utf-8", null);
         }
     }
 
@@ -664,22 +756,12 @@ public class ArticleActivity extends BaseActivity implements View.OnClickListene
     }
 
     private void initImgDown() {
-        if (article.getImgState() != null && !article.getImgState().equals(API.ImgState_Downing)) {
+        if (article.getImgState() != null && !article.getImgState().equals(Api.ImgState_Downing)) {
             return;
         }
 
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                KLog.e("loread", "initImgDown");
-
-//                final ArrayMap<Integer, Img> lossImgMap = WithDB.i().getLossImgs(articleID); // 此处查数据库耗时较大
-//                App.mNeter.downImgs(articleID, lossImgMap, FileUtil.getRelativeDir(article.getSaveDir()) + fileTitle + "_files" + File.separator);
-                // TEST:  测试新的okhttp3
-                App.mNeter.downImgs2(articleID, WithDB.i().getLossImgs2(articleID), FileUtil.getRelativeDir(article.getSaveDir()) + fileTitle + "_files" + File.separator);
-
-            }
-        }).start();
+        KLog.e("loread", "initImgDown" + artHandler);
+        DataApi.i().downImgs(artHandler, imgHttpClient, WithDB.i().getLossImgs(articleID), FileUtil.getRelativeDir(article.getSaveDir()) + fileTitle + "_files" + File.separator);
     }
 
 
@@ -689,4 +771,36 @@ public class ArticleActivity extends BaseActivity implements View.OnClickListene
         outState.putInt("articleCount", articleCount);
         super.onSaveInstanceState(outState);
     }
+
+    private OkHttpClient buildImgClient() {
+        OkHttpClient.Builder builder = new OkHttpClient.Builder();
+        builder.readTimeout(60000L, TimeUnit.MILLISECONDS);
+        builder.writeTimeout(60000L, TimeUnit.MILLISECONDS);
+        builder.connectTimeout(60000L, TimeUnit.MILLISECONDS);
+        HttpsUtils.SSLParams sslParams = HttpsUtils.getSslSocketFactory();
+        builder.sslSocketFactory(sslParams.sSLSocketFactory, sslParams.trustManager);
+        builder.hostnameVerifier(HttpsUtils.UnSafeHostnameVerifier);
+        return builder.build();
+    }
+
+    @Override
+    protected Colorful.Builder buildColorful(Colorful.Builder mColorfulBuilder) {
+        mColorfulBuilder
+                .backgroundColor(R.id.art_coordinator, R.attr.root_view_bg)
+                // 设置 toolbar
+                .backgroundColor(R.id.art_toolbar, R.attr.topbar_bg)
+                .textColor(R.id.art_toolbar_num, R.attr.topbar_fg)
+
+                // 设置中屏和底栏之间的分割线
+                .backgroundColor(R.id.art_bottombar_divider, R.attr.bottombar_divider)
+
+                // 设置 bottombar
+                .backgroundColor(R.id.art_bottombar, R.attr.bottombar_bg)
+                .textColor(R.id.art_bottombar_read, R.attr.bottombar_fg)
+                .textColor(R.id.art_bottombar_star, R.attr.bottombar_fg)
+                .textColor(R.id.art_bottombar_tag, R.attr.bottombar_fg)
+                .textColor(R.id.art_bottombar_save, R.attr.bottombar_fg);
+        return mColorfulBuilder;
+    }
+
 }

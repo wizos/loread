@@ -1,39 +1,48 @@
 <resources>
     <string name="app_name">知微</string>
-    <string name="loread_name">知微</string>
+    <string name="app_version">1.0.2</string>
     <string name="action_settings">设置</string>
-    <string name="main_activity_title_all">所有文章</string>
-    <string name="main_activity_title_unread">未读文章</string>
-    <string name="main_activity_title_star">已收藏文章</string>
-    <string name="title_activity_article">文章</string>
-    <string name="title_activity_splash">启动页·欢迎</string>
+    <string name="main_activity_title_all">所有</string>
+    <string name="main_activity_title_untag">未分类</string>
+    <!--<string name="main_activity_title_unread">未读文章</string>-->
+    <!--<string name="main_activity_title_star">已收藏文章</string>-->
+    <!--<string name="title_activity_article">文章</string>-->
+    <string name="splash_activity_slogen">走近世界</string>
     <string name="title_activity_login">登录</string>
     <string name="title_activity_tag">分组</string>
+    <string name="setting_activity_title">设置</string>
     <string-array name="markArticleListItem">
         <item>向上标记为已读</item>
         <item>向下标记为已读</item>
         <item>保持未读</item>
     </string-array>
-    <string name="setting_activity_title">设置</string>
 
     <!-- Strings related to Settings -->
     <string name="main_toolbar_hint_sync">同步%1$s</string>
+    <string name="main_toolbar_title_search">搜索：</string>
+
+    <!--下面这个还没有用到-->
     <string name="main_toolbar_hint_clear_article">1 - 清除 %1$s 天之前的文章</string>
     <string name="main_toolbar_hint_sync_article_content">1 - 同步文章内容[%1$d / %2$d]</string>
     <string name="main_toolbar_hint_sync_stared_refs">2 - 同步收藏信息</string>
     <string name="main_toolbar_hint_sync_unread_refs">3 - 同步未读信息</string>
     <string name="main_toolbar_hint_sync_unread_count">4 - 获取未读数目</string>
-    <string name="main_toolbar_hint_sync_tag_order">5 - 同步分组排序信息</string>
-    <string name="main_toolbar_hint_sync_all_stared_content">同步所有加星文章</string>
-    <string name="main_toolbar_hint_sync_tag">6 - 同步分组信息</string>
+    <string name="main_toolbar_hint_sync_tag_order">5 - 同步排序信息</string>
+    <string name="main_toolbar_hint_sync_tag">6 - 同步订阅源信息</string>
     <string name="main_toolbar_hint_sync_log">7 - 同步离线操作信息</string>
+    <string name="main_toolbar_hint_sync_all_stared_content">同步所有加星文章[%1$d]</string>
 
-    <string name="choose_label">确认</string>
     <string name="agree">同意</string>
+    <string name="confirm">确认</string>
     <string name="disagree">取消</string>
+    <string name="main_dialog_esc_positive">好滴 ^_^</string>
+    <string name="main_dialog_esc_negative">不！</string>
     <string name="more_info">更多</string>
-    <string name="setting_about_dialog_title">有些小抑郁</string>
-    <string name="setting_about_dialog_content">路很长，纵然远望，却不知方向。\n抽支烟，思绪无常，奔跑着彷徨。\n逃不脱的苟且，到不了的远方…</string>
+
+    <string name="main_dialog_esc_confirm">确定退出app？</string>
+    <string name="setting_about_dialog_title">感慨</string>
+    <string name="setting_about_dialog_content">路很长，纵然远望，却不知方向。\n抽支烟，思绪无常，奔跑着彷徨。\n逃不脱的苟且，到不了的远方…\n作于2016.10.07</string>
+
 
     <string name="auth_username">用户名</string>
     <string name="auth_password">密码</string>
@@ -45,6 +54,9 @@
     <string name="setting_clear_error_cache">删除错误遗留的文章</string>
     <string name="setting_update_article_tag_title">更新离线文章的分组信息</string>
     <string name="setting_sync_all_starred_article_button">加载</string>
+    <string name="setting_feedback_title">反馈问题</string>
+    <string name="setting_qq_group_title">Q群</string>
+    <string name="setting_qq_group_summary">106211435</string>
     <string name="setting_esc_title">退出</string>
     <string name="setting_about_title">关于</string>
     <string name="setting_license_title">许可</string>
@@ -67,29 +79,41 @@
     <string name="setting_down_img_title">省流量下载图片</string>
     <string name="setting_down_img_tips">只在 WiFi 时下载图片</string>
     <string name="setting_inoreader_proxy_title">Inoreader 代理</string>
+    <string name="setting_inoreader_proxy_dialog_title">设置代理地址</string>
+
+
     <string name="setting_inoreader_proxy_tips">开启后将使用内置代理服务器访问 Inoreader 服务</string>
     <string name="setting_clear_day_title">已读文章保留期限</string>
     <string name="setting_sync_frequency_title">同步频率</string>
     <string name="setting_sync_all_starred_title">同步所有加星文章</string>
-    <string name="setting_sync_all_starred_tips">加星文章已占用 200M / 6% 的空间</string>
+    <string name="setting_sync_all_starred_tips">开启后可同步所有加星的文章</string>
     <string name="setting_sync_first_open_title">首次开启同步</string>
     <string name="setting_sync_first_open_tips">打开应用就开始同步</string>
-
     <string name="setting_clear_day_dialog_title">选择保留最近多少天的文章呢？</string>
-
     <string name="article_choose_tag_dialog_title">选择标签</string>
 
-    <string-array name="setting_clear_day_dialog_item_array">
-        <item>0 天</item>
-        <item>1 天</item>
-        <item>7 天</item>
-        <item>15 天</item>
-        <item>30 天</item>
-        <item>60 天</item>
-    </string-array>
+    <!--<string-array name="setting_clear_day_dialog_item_array">-->
+    <!--<item>0</item>-->
+    <!--<item>1</item>-->
+    <!--<item>7</item>-->
+    <!--<item>15</item>-->
+    <!--<item>30</item>-->
+    <!--<item>60</item>-->
+    <!--</string-array>-->
+    <!--<integer-array name="setting_clear_day_dialog_item_array">-->
+    <!--<item>0</item>-->
+    <!--<item>1</item>-->
+    <!--<item>7</item>-->
+    <!--<item>15</item>-->
+    <!--<item>30</item>-->
+    <!--<item>60</item>-->
+    <!--</integer-array>-->
+
     <!--<string name="box_html_format">&lt;!DOCTYPE html&gt;\n&lt;html&gt;\n&lt;head&gt;\n&lt;meta charset=&quot;%1$s&quot;&gt;\n&lt;title&gt;%2$s&lt;/title&gt;\n    &lt;link rel=&quot;stylesheet&quot;  type=&quot;text/css&quot;  href=&quot;./normalize.css&quot; /&gt;\n    &lt;link rel=&quot;stylesheet&quot;  type=&quot;text/css&quot;  href=&quot;./markdown.css&quot; /&gt;\n    &lt;link rel=&quot;stylesheet&quot;  type=&quot;text/css&quot;  href=&quot;./customer.css&quot; /&gt;\n&lt;/head&gt;\n&lt;body&gt;\n&lt;div class=&quot;info&quot;&gt;\n&lt;div class=&quot;info-title&quot;&gt;&lt;h1&gt;&lt;a href=&quot;%3$s&quot; target=&quot;_blank&quot;&gt;%2$s&lt;/a&gt;&lt;/h1&gt;&lt;/div&gt;\n&lt;div class=&quot;info-author&quot;&gt;%4$s&lt;/div&gt;\n&lt;div class=&quot;info-pubDate&quot;&gt;%5$s&lt;/div&gt;\n&lt;/div&gt;\n&lt;div class=&quot;content&quot;&gt;%6$s&lt;/div&gt;\n&lt;/body&gt;\n&lt;/html&gt;</string>-->
     <string name="box_html_format">&lt;!DOCTYPE html&gt;\n&lt;html&gt;\n&lt;head&gt;\n&lt;meta charset=\&quot;%1$s\&quot;&gt;\n&lt;title&gt;%2$s&lt;/title&gt;\n    &lt;link rel=\&quot;stylesheet\&quot;  type=\&quot;text/css\&quot;  href=\&quot;./normalize.css\&quot; /&gt;\n    &lt;link rel=\&quot;stylesheet\&quot;  type=\&quot;text/css\&quot;  href=\&quot;./markdown.css\&quot; /&gt;\n    &lt;link rel=\&quot;stylesheet\&quot;  type=\&quot;text/css\&quot;  href=\&quot;./customer.css\&quot; /&gt;\n&lt;/head&gt;\n&lt;body&gt;\n&lt;div class=\&quot;info\&quot;&gt;\n&lt;div class=\&quot;info-title\&quot;&gt;&lt;h1&gt;&lt;a href=\&quot;%3$s\&quot; target=\&quot;_blank\&quot;&gt;%2$s&lt;/a&gt;&lt;/h1&gt;&lt;/div&gt;\n&lt;div class=\&quot;info-author\&quot;&gt;%4$s&lt;/div&gt;\n&lt;div class=\&quot;info-pubDate\&quot;&gt;%5$s&lt;/div&gt;\n&lt;/div&gt;\n&lt;div class=\&quot;content\&quot;&gt;%6$s&lt;/div&gt;\n&lt;/body&gt;\n&lt;/html&gt;</string>
     <!--<string name="box_html">&lt;charset=\&quot;&quot;%1$s</string>-->
+
+    <string name="article_about_dialog_title">本文相关信息</string>
 
 
     <string name="readability_dialog_title">主题设置</string>
@@ -107,13 +131,16 @@
     <string name="font_stared">&#xe64b;</string>
     <string name="font_readed">&#xe72f;</string>
     <string name="font_unread">&#xe656;</string>
-    <string name="font_tag">&#xe6d5;</string>
+    <string name="font_tag">&#xe615;</string>
     <string name="font_label">&#xe7c5;</string>
     <string name="font_setting">&#xe61f;</string>
-    <string name="font_readability">&#xe65a;</string>
+    <string name="font_theme">&#xe650;</string>
+    <string name="font_readability">&#xe65b;</string>
+
     <string name="font_unsave">&#xe604;</string>
     <string name="font_saved">&#xe605;</string>
     <string name="font_main">&#xe60c;</string>
+    <string name="font_add_subs">&#xe60c;</string>
     <string name="font_tag_class">&#xe7c4;</string>
 
     <string name="font_expand">&#xe6a6;</string>
@@ -125,8 +152,66 @@
     <string name="font_list_reading">&#xe612;</string>
     <string name="font_list_unread">&#xe613;</string>
 
+    <string name="font_all_article">&#xe6a7;</string>
+    <string name="font_untag_article">&#xe84d;</string>
+
+    <string name="font_no_data">&#xe608;</string>
+    <string name="font_search">&#xe741;</string>
+
+    <!--<string name="font_copy_link">&#xe601;</string>-->
+    <!--<string name="font_download_again">&#xe645;</string>-->
+    <!--<string name="font_open_in_window">&#xe610;</string>-->
+
+
     <!--<string name="article_activity_author_format">作者 | %1$s</string>-->
     <!--<string name="article_activity_time_format">发布 | %1$s</string>-->
 
+
+    <string name="tips_login_id_is_empty">账号为空</string>
+    <string name="tips_login_id_is_error">账号输入错误</string>
+    <string name="tips_login_pd_is_empty">密码为空</string>
+    <string name="tips_login_pd_is_error">密码输入错误</string>
+    <string name="tips_login_failure">登录失败，请检查账户与密码是否正确</string>
+    <string name="tips_is_in_syncing">当前正在同步中，请稍候再操作</string>
+    <string name="tips_no_net">网络没有连接上，请检查一下</string>
+    <string name="auth_required">账号太久没有用了，请重新登录</string>
+    <string name="tag_choose_tips">想看哪个分类？</string>
+
+    <string name="clear_day_summary">%1$s 天</string>
+
+
+    <string name="main_tag_dialog_rename">重命名</string>
+    <string name="main_tag_dialog_unsubscribe">取消订阅</string>
+
+    <string name="main_slv_dialog_mark_up">向上标记已读</string>
+    <string name="main_slv_dialog_mark_down">向下标记已读</string>
+    <string name="main_slv_dialog_mark_unread">标记为未读</string>
+
+    <string name="art_img_dialog_download_again">重新下载</string>
+    <string name="art_img_dialog_open_in_new_window">打开大图</string>
+    <string name="art_img_dialog_copy_link">复制链接</string>
+
+
+    <string name="rename">编辑名称</string>
+    <string name="search">搜索</string>
+    <string name="search_key">输入关键词</string>
+    <string name="cancel">取消</string>
+
+    <string name="toast_unsubscribe_fail">取消订阅失败</string>
+    <string name="toast_rename_fail">重命名失败</string>
+    <string name="toast_copy_img_src_success">图片链接复制成功</string>
+    <string name="toast_cant_find_img">没有找到图片</string>
+    <string name="toast_file_saved">文件已保存</string>
+    <string name="toast_not_wifi_mode">你开启了省流量模式，非 Wifi 不能下图片啦</string>
+
+    <string name="toast_not_network">小伙子，你的网络无法使用啊</string>
+
+    <string name="item_error">获取错误</string>
+
+    <string name="menu_readed">已读</string>
+    <string name="menu_unread">未读</string>
+
+    <string name="menu_stared">已加星</string>
+    <string name="menu_unstar">未加星</string>
 
 </resources>

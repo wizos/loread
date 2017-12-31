@@ -30,10 +30,11 @@
         <item name="lv_item_fg">@color/main_day_dark</item>
 
         <item name="tag_slv_item_icon">@color/main_day_dark</item>
+
         <item name="lv_item_title_color">@color/main_day_dark</item>
-        <item name="lv_item_desc_color">@color/main_day_light</item>
+        <item name="lv_item_desc_color">@color/main_day_info</item>
         <item name="lv_item_info_color">@color/main_day_info</item>
-        <item name="lv_item_divider">@color/white_bottombar_divider</item>
+        <item name="lv_item_divider">@color/white</item>
         // light_lv_divider
 
         <item name="art_title">@color/main_day_dark</item>
@@ -54,7 +55,7 @@
         <!--<item name="colorPrimaryDark">@color/dark_foreground</item>-->
         <item name="root_view_bg">@color/article_dark_background</item>
         <item name="topbar_bg">@color/dark_foreground</item>
-        <item name="topbar_fg">@color/main_night_dark</item>
+        <item name="topbar_fg">@color/main_night_light</item>
 
         <item name="bottombar_divider">@color/black_lv_divider</item>
 
@@ -66,9 +67,11 @@
 
         <item name="tag_slv_item_icon">@color/main_night_light</item>
         <item name="lv_item_title_color">@color/main_night_light</item>
-        <item name="lv_item_desc_color">@color/main_night_dark</item>
+        <item name="lv_item_desc_color">@color/main_night_info</item>
+        // main_night_dark
         <item name="lv_item_info_color">@color/main_night_info</item>
-        <item name="lv_item_divider">@color/black_lv_divider</item>
+        <item name="lv_item_divider">@color/article_dark_background</item>
+        // black_lv_divider
 
         <item name="art_title">#039586</item>
         <item name="art_feed">#057971</item>
@@ -101,9 +104,9 @@
         <item name="android:layout_width">wrap_content</item>
         <item name="android:layout_height">wrap_content</item>
         <item name="android:layout_gravity">center</item>
-        <item name="kswBackDrawable">@drawable/flyme_back_drawable</item>
+        <item name="kswBackDrawable">@drawable/flyme_style_switch_button_round</item>
         <item name="kswBackMeasureRatio">2.2</item>
-        <item name="kswThumbDrawable">@drawable/flyme_thumb_drawable</item>
+        <item name="kswThumbDrawable">@drawable/flyme_style_switch_button_rectangle</item>
         <item name="kswThumbHeight">16dp</item>
         <item name="kswThumbWidth">16dp</item>
     </style>
@@ -112,6 +115,7 @@
         <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">38dp</item>
         <item name="android:textSize">18sp</item>
+        <item name="android:textColor">?attr/lv_item_title_color</item>
         <item name="android:layout_gravity">center</item>
         <item name="android:gravity">center_vertical</item>
     </style>
@@ -120,6 +124,7 @@
         <item name="android:layout_weight">1</item>
         <item name="android:layout_height">38dp</item>
         <item name="android:textSize">18sp</item>
+        <item name="android:textColor">?attr/lv_item_title_color</item>
         <item name="android:layout_gravity">center</item>
         <item name="android:gravity">center_vertical</item>
     </style>
@@ -129,6 +134,7 @@
         <item name="android:layout_height">wrap_content</item>
         <item name="android:layout_marginStart">0dp</item>
         <item name="android:textSize">12sp</item>
+        <item name="android:textColor">?attr/lv_item_desc_color</item>
         <item name="android:layout_gravity">center</item>
         <item name="android:gravity">center_vertical</item>
     </style>
@@ -138,6 +144,7 @@
         <item name="android:layout_height">wrap_content</item>
         <item name="android:layout_marginRight">8dp</item>
         <item name="android:textSize">12sp</item>
+        <item name="android:textColor">?attr/lv_item_desc_color</item>
         <item name="android:layout_gravity">center</item>
         <item name="android:gravity">center|right</item>
     </style>

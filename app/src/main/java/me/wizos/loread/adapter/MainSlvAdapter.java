@@ -1,8 +1,8 @@
 package me.wizos.loread.adapter;
 
+
 import android.content.Context;
 import android.text.Html;
-import android.text.TextPaint;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -11,15 +11,20 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
+import com.ditclear.swipelayout.SwipeDragLayout;
 
 import java.util.List;
 
 import me.wizos.loread.R;
-import me.wizos.loread.activity.MainActivity;
 import me.wizos.loread.bean.Article;
-import me.wizos.loread.net.API;
+import me.wizos.loread.net.Api;
 import me.wizos.loread.utils.TimeUtil;
 import me.wizos.loread.view.IconFontView;
+import me.wizos.loread.view.ListViewS;
+
+//import com.yydcdut.sdlv.Menu;
+//import com.yydcdut.sdlv.MenuItem;
+//import com.yydcdut.sdlv.SlideAndDragListView;
 
 /**
  * Created by Wizos on 2016/3/15.
@@ -27,39 +32,46 @@ import me.wizos.loread.view.IconFontView;
 public class MainSlvAdapter extends ArrayAdapter<Article> {
     private List<Article> articleList;
     private Context context;
+    private ListViewS slv;
 
-    public MainSlvAdapter(Context context, List<Article> itemArray) {
-        super(context, 0, itemArray);
-        this.articleList = itemArray;
+    public MainSlvAdapter(Context context, List<Article> articleList, ListViewS slv) {
+        super(context, 0, articleList);
         this.context = context;
+        this.articleList = articleList;
+        this.slv = slv;
     }
 
 
     @Override
     public int getCount() {
+//        KLog.e("【getCount】" + articleList.size() );
+//        Tool.printCallStatck();
         return articleList.size();
     }
 
     @Override
     public Article getItem(int position) {
+//        KLog.e("【getItem】" + position );
         return articleList.get(position);
     }
 
     @Override
     public long getItemId(int position) {
+//        KLog.e("【getItemId】" + position );
         return position;
     }
 
+
+    //    Menu menu;
+//    View itemView;
     @Override
-    public View getView(int position, View convertView, ViewGroup parent) {
-        CustomViewHolder cvh;
+    public View getView(final int position, View convertView, ViewGroup parent) {
         Article article = this.getItem(position);
         if (convertView == null) {
             cvh = new CustomViewHolder();
-            convertView = LayoutInflater.from(context).inflate(R.layout.activity_main_slv_item, null);
+//            convertView = LayoutInflater.from(context).inflate(R.layout.activity_main_slv_item, null);
+            convertView = LayoutInflater.from(context).inflate(R.layout.activity_main_list_item, null);
             cvh.articleTitle = (TextView) convertView.findViewById(R.id.main_slv_item_title);
-            TextPaint tp = cvh.articleTitle.getPaint();
-            tp.setFakeBoldText(true);
             cvh.articleSummary = (TextView) convertView.findViewById(R.id.main_slv_item_summary);
             cvh.articleFeed = (TextView) convertView.findViewById(R.id.main_slv_item_author);
             cvh.articleImg = (ImageView) convertView.findViewById(R.id.main_slv_item_img);
@@ -67,13 +79,23 @@ public class MainSlvAdapter extends ArrayAdapter<Article> {
             cvh.articleStar = (IconFontView) convertView.findViewById(R.id.main_slv_item_icon_star);
             cvh.articleReading = (IconFontView) convertView.findViewById(R.id.main_slv_item_icon_reading);
             cvh.articleSave = (IconFontView) convertView.findViewById(R.id.main_slv_item_icon_save);
+            cvh.markLeft = (IconFontView) convertView.findViewById(R.id.main_list_item_menu_left);
+            cvh.markRight = (IconFontView) convertView.findViewById(R.id.main_list_item_menu_right);
+            swipeDragLayout = (SwipeDragLayout) convertView.findViewById(R.id.swip_layout);
+            swipeDragLayout.addListener(slv);
+
             convertView.setTag(cvh);
         } else {
             cvh = (CustomViewHolder) convertView.getTag();
         }
 
         cvh.articleTitle.setText(Html.fromHtml(article.getTitle()));
-        cvh.articleSummary.setText(article.getSummary());
+        if (article.getSummary().length() == 0) {
+            cvh.articleSummary.setVisibility(View.GONE);
+        } else {
+            cvh.articleSummary.setVisibility(View.VISIBLE);
+            cvh.articleSummary.setText(article.getSummary());
+        }
 
         if (article.getCoverSrc() != null) {
             cvh.articleImg.setVisibility(View.VISIBLE);
@@ -81,43 +103,48 @@ public class MainSlvAdapter extends ArrayAdapter<Article> {
         } else {
             cvh.articleImg.setVisibility(View.GONE);
         }
-//        KLog.d("【====】");
+
         if (article.getOriginTitle() != null) {
             cvh.articleFeed.setText(Html.fromHtml(article.getOriginTitle()));
         }
         cvh.articleTime.setText(TimeUtil.getDateSec(article.getPublished()));
-        if (article.getReadState().equals(API.ART_READED) & !MainActivity.listTabState.equals(API.ART_STARED)) {
+        if (article.getReadState().equals(Api.ART_READED)) { //  & !App.StreamState.equals(Api.ART_STARED)
             cvh.articleTitle.setAlpha(0.40f);
-            cvh.articleSummary.setAlpha(0.40f);
-            cvh.articleFeed.setAlpha(0.40f);
-            cvh.articleTime.setAlpha(0.40f);
         } else {
             cvh.articleTitle.setAlpha(1f);
-            cvh.articleSummary.setAlpha(1f);
-            cvh.articleFeed.setAlpha(1f);
-            cvh.articleTime.setAlpha(1f);
         }
-//        KLog.d("【1】" + article.getTitle());
-        if (article.getReadState().equals(API.ART_UNREADING)) {
+
+        if (article.getReadState().equals(Api.ART_UNREADING)) {
             cvh.articleReading.setVisibility(View.VISIBLE);
+            cvh.markRight.setText(context.getResources().getString(R.string.font_readed));
+        } else if (article.getReadState().equals(Api.ART_UNREAD)) {
+            cvh.articleReading.setVisibility(View.GONE);
+            cvh.markRight.setText(context.getResources().getString(R.string.font_readed));
         } else {
             cvh.articleReading.setVisibility(View.GONE);
+            cvh.markRight.setText(context.getResources().getString(R.string.font_unread));
         }
-        if (article.getStarState().equals(API.ART_STARED)) {
+        if (article.getStarState().equals(Api.ART_STARED)) {
             cvh.articleStar.setVisibility(View.VISIBLE);
+            cvh.markLeft.setText(context.getResources().getString(R.string.font_unstar));
         } else {
             cvh.articleStar.setVisibility(View.GONE);
+            cvh.markLeft.setText(context.getResources().getString(R.string.font_stared));
         }
-        if (API.SAVE_DIR_CACHE.equals(article.getSaveDir())) {
+        if (Api.SAVE_DIR_CACHE.equals(article.getSaveDir())) {
             cvh.articleSave.setVisibility(View.GONE);
         } else {
             cvh.articleSave.setVisibility(View.VISIBLE);
         }
-//        KLog.e("++++++++  "  + article.getTitle() + " - " + article.getReadState() + " - " + article.getStarState() );
+
+//        KLog.e("++++++++  "  + article.getTitle() + " - " + article.getReadState() + " - " + article.getStarState() + " - "  + cvh.articleTitle.getVisibility());
         return convertView;
     }
 
-    private class CustomViewHolder {
+    private CustomViewHolder cvh;
+    private SwipeDragLayout swipeDragLayout;
+
+    public class CustomViewHolder {
         TextView articleTitle;
         TextView articleSummary;
         TextView articleFeed;
@@ -126,6 +153,12 @@ public class MainSlvAdapter extends ArrayAdapter<Article> {
         IconFontView articleReading;
         IconFontView articleSave;
         ImageView articleImg;
+
+        public IconFontView markLeft;
+        public IconFontView markRight;
+
+//        public TextView leftMenuItem;
+//        public TextView rightMenuItem;
     }
 
 }

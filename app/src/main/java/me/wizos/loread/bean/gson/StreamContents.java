@@ -39,6 +39,17 @@ public class StreamContents {
     @SerializedName("continuation")
     String continuation;
 
+//    public StreamContents(){
+//        direction = null;
+//        id = null;
+//        title = null;
+//        description = null;
+//        self = null;
+//        updated = 0;
+//        updatedUsec = 0;
+//        items= new ArrayList<>();
+//        continuation = null;
+//    }
 
 	public String getDirection() {
 		return direction;

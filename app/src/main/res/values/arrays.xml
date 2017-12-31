@@ -7,5 +7,14 @@
         <item>@color/white</item>
         <item>@color/article_dark_background</item>
     </array>
+    <integer-array name="setting_clear_day_dialog_item_array">
+        <item>0</item>
+        <item>1</item>
+        <item>7</item>
+        <item>15</item>
+        <item>30</item>
+        <item>60</item>
+    </integer-array>
+
 
 </resources>

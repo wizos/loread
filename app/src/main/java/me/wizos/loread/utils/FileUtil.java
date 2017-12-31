@@ -1,6 +1,5 @@
 package me.wizos.loread.utils;
 
-import android.graphics.BitmapFactory;
 import android.os.Environment;
 
 import com.socks.library.KLog;
@@ -9,8 +8,6 @@ import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
@@ -19,7 +16,7 @@ import java.io.InputStream;
 import java.util.ArrayList;
 
 import me.wizos.loread.App;
-import me.wizos.loread.net.API;
+import me.wizos.loread.net.Api;
 
 /**
  * Created by Wizos on 2016/3/19.
@@ -35,7 +32,7 @@ public class FileUtil {
 //    }
 
     //判断外部存储(SD卡)是否可以读写
-    public static boolean isExternalStorageWritable() {
+    private static boolean isExternalStorageWritable() {
         String state = Environment.getExternalStorageState();
         return Environment.MEDIA_MOUNTED.equals(state);
     }
@@ -45,9 +42,6 @@ public class FileUtil {
         return Environment.MEDIA_MOUNTED.equals(state) || Environment.MEDIA_MOUNTED_READ_ONLY.equals(state);
     }
 
-//    public static String getCacheFileRelativePath(String fileNameInMD5){
-//        return fileNameInMD5;
-//    }
 
     public static void deleteHtmlDirList(ArrayList<String> fileNameInMD5List) {
         for (String fileNameInMD5:fileNameInMD5List){
@@ -71,7 +65,7 @@ public class FileUtil {
             }
             return dir.delete(); // 删除目录
         }else{
-            KLog.i( dir + "只是文件");
+//            KLog.i( dir + "只是文件");
             return dir.delete(); // 删除文件
         }
     }
@@ -175,18 +169,19 @@ public class FileUtil {
             br.close();
         } catch (IOException e) {
             e.printStackTrace();
+            return null;
         }
         return fileContent;
     }
 
     public static String getFolder(String dir, String fileNameInMD5, String fileName) {
         switch (dir) {
-            case API.SAVE_DIR_CACHE:
+            case Api.SAVE_DIR_CACHE:
                 return fileNameInMD5;
-            case API.SAVE_DIR_BOX:
-            case API.SAVE_DIR_STORE:
-            case API.SAVE_DIR_BOXREAD:
-            case API.SAVE_DIR_STOREREAD:
+            case Api.SAVE_DIR_BOX:
+            case Api.SAVE_DIR_STORE:
+            case Api.SAVE_DIR_BOXREAD:
+            case Api.SAVE_DIR_STOREREAD:
                 return fileName;
         }
         return null;
@@ -204,27 +199,6 @@ public class FileUtil {
     public static String getAbsoluteDir(String dir) {
         return "file:" + File.separator + File.separator + App.externalFilesDir + dir + File.separator;
     }
-
-
-    public static android.graphics.Bitmap getBitmap(String filePath){
-        if(filePath==null)
-            return null;
-        if(filePath.equals(""))
-            return null;
-
-        File file = new File( filePath );
-
-        try {
-            FileInputStream fis = new FileInputStream(file);
-            return BitmapFactory.decodeStream(fis);
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-            return null;
-        }
-    }
-
-
-
 
 
     /**

@@ -9,46 +9,48 @@ import java.util.ArrayList;
  * Created by Wizos on 2016/3/11.
  */
 public class Items {
-
     @SerializedName("crawlTimeMsec")
-    long crawlTimeMsec;
+    private long crawlTimeMsec;
 
     @SerializedName("timestampUsec")
-    long timestampUsec;
+    private long timestampUsec;
 
     @SerializedName("id")
-    String id;
+    private String id;
 
     @SerializedName("categories")
-    ArrayList<String> categories;
+    private ArrayList<String> categories;
 
     @SerializedName("title")
-    String title;
+    private String title;
 
     @SerializedName("published")
-    long published;
+    private long published;
 
     @SerializedName("updated")
-    long updated;
+    private long updated;
 
     @SerializedName("starred") // 加星的时间
-            long starred;
+    private long starred;
 
     // 附件：这个还不知道是什么用处，不过可以显示图片
     @SerializedName("enclosure")
-    ArrayList<Enclosure> enclosure;
+    private ArrayList<Enclosure> enclosure;
 
     @SerializedName("canonical")
-    ArrayList<Canonical> canonical;
+    private ArrayList<Canonical> canonical;
 
     @SerializedName("alternate")
-    ArrayList<Alternate> alternate;
+    private ArrayList<Alternate> alternate;
 
     @SerializedName("summary")
-    Summary summary;
+    private Summary summary;
 
     @SerializedName("author")
-    String author;
+    private String author;
+
+    @SerializedName("origin")
+    private Origin origin;
 
 //这应该是开启了社交后才会有的字段
 //            "likingUsers": [],
@@ -56,8 +58,6 @@ public class Items {
 //             "commentsNum": -1,
 //             "annotations": [],
 
-    @SerializedName("origin")
-    Origin origin;
 
     public long getCrawlTimeMsec() {
         return crawlTimeMsec;
@@ -170,4 +170,10 @@ public class Items {
     public void setOrigin(Origin origin) {
         this.origin = origin;
     }
+
+
+//    // // TEST:  学习 FeedMe 中的写法。直接把解析写入实体类中
+//    public static Items parse(String json){
+//        return new Gson().fromJson(json, Items.class);
+//    }
 }

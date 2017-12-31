@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?><!--暂时没有用到-->
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="horizontal"
+    tools:background="@color/article_dark_background"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <LinearLayout
+        android:layout_alignParentBottom="true"
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:background="?attr/bottombar_bg"
+        android:orientation="horizontal">
+
+        <me.wizos.loread.view.IconView
+            android:id="@+id/setting_auto_sync"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:layout_width="0dp"
+            android:gravity="center_horizontal"
+            app:icon_text="@string/font_all_article"
+            app:title_text="自动同步"
+            android:onClick="OnIconClickedAutoSync" />
+
+        <me.wizos.loread.view.IconView
+            android:id="@+id/setting_auto_theme"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:layout_width="0dp"
+            android:gravity="center_horizontal"
+            app:icon_text="@string/font_all_article"
+            app:title_text="夜间"
+            android:onClick="OnIconClickedAutoTheme" />
+
+        <me.wizos.loread.view.IconView
+            android:id="@+id/setting_auto_img"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:layout_width="0dp"
+            android:gravity="center_horizontal"
+            app:icon_text="@string/font_all_article"
+            app:title_text="无图"
+            android:onClick="OnIconClickedAutoImg" />
+
+        <me.wizos.loread.view.IconView
+            android:id="@+id/setting_more"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:layout_width="0dp"
+            android:gravity="center_horizontal"
+            app:icon_text="@string/font_all_article"
+            app:title_text="更多"
+            android:onClick="OnIconClickedMore" />
+
+    </LinearLayout>
+
+    <!--<View-->
+    <!--android:id="@+id/view"-->
+    <!--android:alpha="0.3"-->
+    <!--android:layout_width="match_parent"-->
+    <!--android:layout_height="match_parent"/>-->
+</RelativeLayout>

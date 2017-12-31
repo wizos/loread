@@ -8,26 +8,20 @@
     android:addStatesFromChildren="true"
     android:id="@+id/setting_coordinator"
     tools:context="me.wizos.loread.activity.SettingActivity">
+
+    <!--android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"-->
+    <!--app:layout_scrollFlags="scroll|enterAlways"-->
     <android.support.design.widget.AppBarLayout
         android:id="@+id/appBarLayout"
-        android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
+        android:theme="@style/AppTheme.AppBarOverlay"
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
         <android.support.v7.widget.Toolbar
             android:id="@+id/setting_toolbar"
             android:layout_width="match_parent"
-            android:title="@string/setting_activity_title"
-            android:layout_height="?attr/actionBarSize">
-            <TextView
-                android:id="@+id/setting_toolbar_count"
-                android:layout_gravity="end|center"
-                android:gravity="center_vertical"
-                android:layout_marginEnd="16dp"
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:text="节能型"
-                android:textSize="12sp"/>
-        </android.support.v7.widget.Toolbar>
+            app:popupTheme="@style/AppTheme.PopupOverlay"
+            android:background="?attr/topbar_bg"
+            android:layout_height="?attr/actionBarSize" />
     </android.support.design.widget.AppBarLayout>
 
 
@@ -36,7 +30,8 @@
     <android.support.v4.widget.NestedScrollView
         android:id="@+id/setting_scroll"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="match_parent"
+        android:background="?attr/root_view_bg"
         app:layout_behavior="@string/appbar_scrolling_view_behavior">
         <LinearLayout
             android:layout_width="match_parent"
@@ -44,7 +39,6 @@
             android:paddingBottom="@dimen/activity_vertical_margin"
             android:paddingLeft="@dimen/activity_horizontal_margin"
             android:paddingRight="@dimen/activity_horizontal_margin"
-            android:paddingTop="@dimen/activity_vertical_margin"
             android:orientation="vertical">
             <!--<TextView-->
             <!--android:id="@+id/setting_sync_icon"-->
@@ -53,9 +47,7 @@
             <!--tools:text="同步"-->
             <!--android:text="同步"-->
             <!--android:textSize="18sp" />-->
-            <LinearLayout
-                style="@style/SettingItem"
-                android:layout_marginBottom="8dp">
+            <LinearLayout style="@style/SettingItem">
                 <LinearLayout
                     android:layout_width="0dp"
                     android:layout_weight="1"
@@ -78,6 +70,20 @@
                     />
             </LinearLayout>
 
+            <!--<LinearLayout-->
+            <!--android:id="@+id/setting_sync_frequency"-->
+            <!--style="@style/SettingItem"-->
+            <!--android:orientation="horizontal">-->
+            <!--<TextView-->
+            <!--android:id="@+id/setting_sync_frequency_title"-->
+            <!--style="@style/SettingItemTitleHorizontal"-->
+            <!--android:text="@string/setting_sync_frequency_title" />-->
+            <!--<TextView-->
+            <!--android:id="@+id/setting_sync_frequency_summary"-->
+            <!--style="@style/SettingItemSummary"-->
+            <!--android:text="30 分钟 / 1 次"/>-->
+            <!--</LinearLayout>-->
+
             <LinearLayout
                 style="@style/SettingItem"
                 android:gravity="center_vertical">
@@ -88,6 +94,7 @@
                     android:orientation="vertical">
                     <TextView
                         android:id="@+id/setting_sync_all_starred_title"
+
                         style="@style/SettingItemTitle"
                         android:text="@string/setting_sync_all_starred_title" />
                     <TextView
@@ -100,34 +107,23 @@
                     style="@style/SwitchButtonStyle"
                     android:onClick="onSBClick" />
             </LinearLayout>
-            <LinearLayout
-                android:id="@+id/setting_sync_frequency"
-                style="@style/SettingItem"
-                android:orientation="horizontal">
-                <TextView
-                    android:id="@+id/setting_sync_frequency_title"
-                    style="@style/SettingItemTitleHorizontal"
-                    android:text="@string/setting_sync_frequency_title" />
-                <TextView
-                    android:id="@+id/setting_sync_frequency_summary"
-                    style="@style/SettingItemSummary"
-                    android:text="30 分钟 / 1 次"/>
-            </LinearLayout>
-
 
             <LinearLayout
                 android:id="@+id/setting_clear_day"
                 style="@style/SettingItem"
                 android:onClick="showClearBeforeDay"
                 android:orientation="horizontal">
+
                 <TextView
                     android:id="@+id/setting_clear_day_title"
                     style="@style/SettingItemTitleHorizontal"
                     android:text="@string/setting_clear_day_title" />
+
                 <TextView
                     android:id="@+id/setting_clear_day_summary"
                     style="@style/SettingItemSummary"
-                    android:text="10 天"/>
+                    android:layout_height="wrap_content"
+                    android:text="10 天" />
             </LinearLayout>
 
             <LinearLayout
@@ -141,6 +137,7 @@
                     android:orientation="vertical">
                     <TextView
                         android:id="@+id/setting_down_img_title"
+
                         style="@style/SettingItemTitle"
                         android:text="@string/setting_down_img_title" />
                     <TextView
@@ -157,6 +154,7 @@
                     android:onClick="onSBClick" />
             </LinearLayout>
             <LinearLayout
+                android:visibility="gone"
                 android:id="@+id/setting_inoreader_proxy"
                 style="@style/SettingItem"
                 android:gravity="center_vertical">
@@ -167,6 +165,7 @@
                     android:orientation="vertical">
                     <TextView
                         android:id="@+id/setting_inoreader_proxy_title"
+
                         style="@style/SettingItemTitle"
                         android:text="@string/setting_inoreader_proxy_title" />
                     <TextView
@@ -183,30 +182,30 @@
                     android:onClick="onSBClick" />
             </LinearLayout>
 
-            <LinearLayout
-                android:id="@+id/setting_scroll_mark"
-                style="@style/SettingItem"
-                android:gravity="center_vertical">
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_weight="1"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical">
-                    <TextView
-                        android:id="@+id/setting_scroll_mark_title"
-                        style="@style/SettingItemTitle"
-                        android:text="@string/setting_scroll_mark_title" />
-                    <TextView
-                        android:id="@+id/setting_scroll_mark_tips"
-                        style="@style/SettingItemTips"
-                        android:text="@string/setting_scroll_mark_tips"/>
-                </LinearLayout>
-                <com.kyleduo.switchbutton.SwitchButton
-                    android:id="@+id/setting_scroll_mark_sb_flyme"
-                    style="@style/SwitchButtonStyle"
-                    android:checked="false"
-                    android:onClick="onSBClick" />
-            </LinearLayout>
+            <!--<LinearLayout-->
+            <!--android:id="@+id/setting_scroll_mark"-->
+            <!--style="@style/SettingItem"-->
+            <!--android:gravity="center_vertical">-->
+            <!--<LinearLayout-->
+            <!--android:layout_width="0dp"-->
+            <!--android:layout_weight="1"-->
+            <!--android:layout_height="wrap_content"-->
+            <!--android:orientation="vertical">-->
+            <!--<TextView-->
+            <!--android:id="@+id/setting_scroll_mark_title"-->
+            <!--style="@style/SettingItemTitle"-->
+            <!--android:text="@string/setting_scroll_mark_title" />-->
+            <!--<TextView-->
+            <!--android:id="@+id/setting_scroll_mark_tips"-->
+            <!--style="@style/SettingItemTips"-->
+            <!--android:text="@string/setting_scroll_mark_tips"/>-->
+            <!--</LinearLayout>-->
+            <!--<com.kyleduo.switchbutton.SwitchButton-->
+            <!--android:id="@+id/setting_scroll_mark_sb_flyme"-->
+            <!--style="@style/SwitchButtonStyle"-->
+            <!--android:checked="false"-->
+            <!--android:onClick="onSBClick" />-->
+            <!--</LinearLayout>-->
 
             <LinearLayout
                 android:id="@+id/setting_auto_toggle_theme"
@@ -221,6 +220,7 @@
 
                     <TextView
                         android:id="@+id/setting_auto_toggle_theme_title"
+
                         style="@style/SettingItemTitle"
                         android:text="@string/setting_auto_toggle_theme_title" />
 
@@ -237,34 +237,35 @@
                     android:onClick="onSBClick" />
             </LinearLayout>
 
-            <LinearLayout
-                android:id="@+id/setting_left_right_slide"
-                style="@style/SettingItem"
-                android:gravity="center_vertical">
+            <!--<LinearLayout-->
+            <!--android:id="@+id/setting_left_right_slide"-->
+            <!--style="@style/SettingItem"-->
+            <!--android:gravity="center_vertical">-->
 
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_weight="1"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical">
+            <!--<LinearLayout-->
+            <!--android:layout_width="0dp"-->
+            <!--android:layout_weight="1"-->
+            <!--android:layout_height="wrap_content"-->
+            <!--android:orientation="vertical">-->
 
-                    <TextView
-                        android:id="@+id/setting_left_right_slide_title"
-                        style="@style/SettingItemTitle"
-                        android:text="@string/setting_left_right_slide_title" />
+            <!--<TextView-->
+            <!--android:id="@+id/setting_left_right_slide_title"-->
+            <!---->
+            <!--style="@style/SettingItemTitle"-->
+            <!--android:text="@string/setting_left_right_slide_title" />-->
 
-                    <TextView
-                        android:id="@+id/setting_left_right_slide_tips"
-                        style="@style/SettingItemTips"
-                        android:text="@string/setting_left_right_slide_tips" />
-                </LinearLayout>
+            <!--<TextView-->
+            <!--android:id="@+id/setting_left_right_slide_tips"-->
+            <!--style="@style/SettingItemTips"-->
+            <!--android:text="@string/setting_left_right_slide_tips" />-->
+            <!--</LinearLayout>-->
 
-                <com.kyleduo.switchbutton.SwitchButton
-                    android:id="@+id/setting_left_right_slide_sb_flyme"
-                    style="@style/SwitchButtonStyle"
-                    android:checked="false"
-                    android:onClick="onSBClick"/>
-            </LinearLayout>
+            <!--<com.kyleduo.switchbutton.SwitchButton-->
+            <!--android:id="@+id/setting_left_right_slide_sb_flyme"-->
+            <!--style="@style/SwitchButtonStyle"-->
+            <!--android:checked="false"-->
+            <!--android:onClick="onSBClick"/>-->
+            <!--</LinearLayout>-->
 
             <LinearLayout
                 android:id="@+id/setting_order_tagfeed"
@@ -277,6 +278,7 @@
                     android:orientation="vertical">
                     <TextView
                         android:id="@+id/setting_order_tagfeed_title"
+
                         style="@style/SettingItemTitle"
                         android:text="@string/setting_order_tagfeed_title" />
                     <TextView
@@ -292,6 +294,7 @@
             </LinearLayout>
 
             <LinearLayout
+                android:visibility="gone"
                 android:id="@+id/setting_link_open_mode"
                 style="@style/SettingItem"
                 android:gravity="center_vertical">
@@ -304,6 +307,7 @@
 
                     <TextView
                         android:id="@+id/setting_link_open_mode_title"
+
                         style="@style/SettingItemTitle"
                         android:text="@string/setting_link_open_mode_title" />
 
@@ -321,11 +325,13 @@
             </LinearLayout>
 
             <LinearLayout
+                android:visibility="gone"
                 android:id="@+id/setting_cache_path_starred"
                 style="@style/SettingItem"
                 android:orientation="horizontal">
                 <TextView
                     android:id="@+id/setting_cache_path_starred_title"
+
                     style="@style/SettingItemTitle"
                     tools:text="加星文章保存位置"
                     android:text="@string/setting_cache_path_starred_title" />
@@ -335,11 +341,13 @@
                     android:textSize="12sp" />
             </LinearLayout>
             <LinearLayout
+                android:visibility="gone"
                 android:id="@+id/setting_license"
                 style="@style/SettingItem"
                 android:orientation="horizontal">
                 <TextView
                     android:id="@+id/setting_license_title"
+
                     style="@style/SettingItemTitleHorizontal"
                     android:text="@string/setting_license_title" />
                 <TextView
@@ -360,52 +368,90 @@
                 <TextView
                     android:id="@+id/setting_about_summary"
                     style="@style/SettingItemSummary"
-                    android:text="1-2"/>
+                    android:text="@string/app_version" />
             </LinearLayout>
-            <!--<LinearLayout-->
-                <!--android:id="@+id/setting_clear_log"-->
-                <!--style="@style/SettingItem"-->
-                <!--android:orientation="horizontal">-->
-            <!--</LinearLayout>-->
-            <LinearLayout
-                android:id="@+id/setting_update_article_tag"
-                style="@style/SettingItem"
-                android:orientation="vertical">
-                <Button
-                    android:id="@+id/setting_clear_log_button"
-                    android:layout_width="wrap_content"
-                    android:layout_height="match_parent"
-                    android:layout_marginBottom="6dp"
-                    android:onClick="clearLog"
-                    android:text="@string/setting_clear_log_title" />
-                <Button
-                    android:id="@+id/setting_clear_error_cache"
-                    android:layout_width="wrap_content"
-                    android:layout_height="match_parent"
-                    android:onClick="onClickClearErrorCache"
-                    android:layout_marginBottom="6dp"
-                    android:text="@string/setting_clear_error_cache" />
 
-                <Button
-                    android:id="@+id/setting_update_article_tag_button"
-                    android:layout_width="wrap_content"
-                    android:layout_height="match_parent"
-                    android:onClick="onClickUpdateArticle"
-                    android:layout_marginBottom="6dp"
-                    android:text="@string/setting_update_article_tag_title" />
-
-            </LinearLayout>
             <LinearLayout
-                android:id="@+id/setting_esc"
+                android:id="@+id/setting_join_qqgroup"
                 style="@style/SettingItem"
+                android:onClick="joinQQGroup"
                 android:orientation="horizontal">
-                <Button
-                    android:id="@+id/setting_esc_button"
-                    android:layout_width="wrap_content"
-                    android:layout_height="match_parent"
-                    android:onClick="onClickEsc"
-                    android:text="@string/setting_esc_title" />
+
+                <TextView
+                    android:id="@+id/setting_join_qqgroup_title"
+                    style="@style/SettingItemTitleHorizontal"
+                    android:text="@string/setting_qq_group_title" />
+
+                <TextView
+                    android:id="@+id/setting_join_qqgroup_summary"
+                    style="@style/SettingItemSummary"
+                    android:text="@string/setting_qq_group_summary" />
             </LinearLayout>
+            <!--<TextView-->
+            <!--android:textSize="16sp"-->
+            <!--android:textColor="@color/shade"-->
+            <!--style="@style/SettingItem"-->
+            <!--android:layout_gravity="center"-->
+            <!--android:id="@+id/setting_qq_group_button"-->
+            <!--android:layout_width="wrap_content"-->
+            <!--android:layout_height="match_parent"-->
+            <!--android:onClick="joinQQGroup"-->
+            <!--android:text="@string/setting_qq_group_title" />-->
+            <!--<TextView-->
+            <!--android:textSize="16sp"-->
+            <!--android:textColor="@color/shade"-->
+            <!--style="@style/SettingItem"-->
+            <!--android:layout_gravity="center"-->
+            <!--android:id="@+id/setting_feedback_button"-->
+            <!--android:layout_width="wrap_content"-->
+            <!--android:layout_height="match_parent"-->
+            <!--android:onClick="onClickFeedback"-->
+            <!--android:text="@string/setting_feedback_title" />-->
+            <TextView
+                android:textSize="18sp"
+                android:textColor="@color/material_red_400"
+                style="@style/SettingItem"
+                android:layout_gravity="center"
+                android:id="@+id/setting_esc_button"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:onClick="onClickEsc"
+                android:text="@string/setting_esc_title" />
+
+
+            <!--<LinearLayout-->
+            <!--android:id="@+id/setting_clear_log"-->
+            <!--style="@style/SettingItem"-->
+            <!--android:orientation="horizontal">-->
+            <!--</LinearLayout>-->
+            <!--<LinearLayout-->
+            <!--android:visibility="gone"-->
+            <!--android:id="@+id/setting_update_article_tag"-->
+            <!--style="@style/SettingItem"-->
+            <!--android:orientation="vertical">-->
+            <!--<Button-->
+            <!--android:id="@+id/setting_clear_log_button"-->
+            <!--android:layout_width="wrap_content"-->
+            <!--android:layout_height="match_parent"-->
+            <!--android:layout_marginBottom="6dp"-->
+            <!--android:onClick="clearLog"-->
+            <!--android:text="@string/setting_clear_log_title" />-->
+            <!--<Button-->
+            <!--android:id="@+id/setting_clear_error_cache"-->
+            <!--android:layout_width="wrap_content"-->
+            <!--android:layout_height="match_parent"-->
+            <!--android:onClick="onClickClearErrorCache"-->
+            <!--android:layout_marginBottom="6dp"-->
+            <!--android:text="@string/setting_clear_error_cache" />-->
+
+            <!--<Button-->
+            <!--android:id="@+id/setting_update_article_tag_button"-->
+            <!--android:layout_width="wrap_content"-->
+            <!--android:layout_height="match_parent"-->
+            <!--android:onClick="onClickUpdateArticle"-->
+            <!--android:layout_marginBottom="6dp"-->
+            <!--android:text="@string/setting_update_article_tag_title" />-->
+            <!--</LinearLayout>-->
         </LinearLayout>
     </android.support.v4.widget.NestedScrollView>
 

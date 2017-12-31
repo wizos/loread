@@ -15,8 +15,6 @@ import android.widget.AbsListView;
 public class SwipeRefreshLayoutS extends SwipeRefreshLayout {
     private View view;
     private int scaleTouchSlop;
-    // 上一次触摸时的X坐标
-    private float preX;
 
     public SwipeRefreshLayoutS(Context context) {
         super(context);
@@ -81,18 +79,38 @@ public class SwipeRefreshLayoutS extends SwipeRefreshLayout {
     public boolean onInterceptTouchEvent(MotionEvent ev) {
         switch (ev.getAction()) {
             case MotionEvent.ACTION_DOWN:
-                preX = ev.getX();
+                mXDown = ev.getX();
+                mYDown = ev.getY();
                 break;
             case MotionEvent.ACTION_MOVE:
-                float moveX = ev.getX();
-                float instanceX = Math.abs(moveX - preX);
+//                float moveX = ev.getX();
+//                float instanceX = Math.abs(moveX - preX);
 //                KLog.i("refresh...","move: instanceX:" + instanceX + "=(moveX:" + moveX + " - preX:" + preX + ") , scaleTouchSlop:" + scaleTouchSlop);
                 // 容差值大概是24，再加上60
-                if(instanceX > scaleTouchSlop + 60){
+                if (fingerLeftAndRightMove(ev)) {
                     return false;
                 }
                 break;
         }
         return super.onInterceptTouchEvent(ev);
+    }
+
+    /* 手指放下的坐标 */
+    private float mXDown;
+    private float mYDown;
+    /* 手指滑动的最短距离 */
+    private float mShortestDistance = 25f;
+    // 上一次触摸时的X坐标
+    private float preX;
+
+    /**
+     * 手指左右移动：左右得超出50，上下不能超出50
+     *
+     * @param ev
+     * @return
+     */
+    private boolean fingerLeftAndRightMove(MotionEvent ev) {
+        return ((ev.getX() - mXDown > mShortestDistance || ev.getX() - mXDown < -mShortestDistance) &&
+                ev.getY() - mYDown < mShortestDistance && ev.getY() - mYDown > -mShortestDistance);
     }
 }

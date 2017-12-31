@@ -1,12 +1,13 @@
 package me.wizos.loread.data.dao;
 
 import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteStatement;
 
-import de.greenrobot.dao.AbstractDao;
-import de.greenrobot.dao.Property;
-import de.greenrobot.dao.internal.DaoConfig;
+import org.greenrobot.greendao.AbstractDao;
+import org.greenrobot.greendao.Property;
+import org.greenrobot.greendao.database.Database;
+import org.greenrobot.greendao.database.DatabaseStatement;
+import org.greenrobot.greendao.internal.DaoConfig;
 
 import me.wizos.loread.bean.RequestLog;
 
@@ -21,14 +22,14 @@ public class RequestLogDao extends AbstractDao<RequestLog, Long> {
     /**
      * Properties of entity RequestLog.<br/>
      * Can be used for QueryBuilder and for referencing column names.
-    */
+     */
     public static class Properties {
         public final static Property LogTime = new Property(0, long.class, "logTime", true, "LOG_TIME");
         public final static Property Url = new Property(1, String.class, "url", false, "URL");
         public final static Property Method = new Property(2, String.class, "method", false, "METHOD");
         public final static Property HeadParamString = new Property(3, String.class, "headParamString", false, "HEAD_PARAM_STRING");
         public final static Property BodyParamString = new Property(4, String.class, "bodyParamString", false, "BODY_PARAM_STRING");
-    };
+    }
 
 
     public RequestLogDao(DaoConfig config) {
@@ -40,7 +41,7 @@ public class RequestLogDao extends AbstractDao<RequestLog, Long> {
     }
 
     /** Creates the underlying database table. */
-    public static void createTable(SQLiteDatabase db, boolean ifNotExists) {
+    public static void createTable(Database db, boolean ifNotExists) {
         String constraint = ifNotExists? "IF NOT EXISTS ": "";
         db.execSQL("CREATE TABLE " + constraint + "\"REQUEST_LOG\" (" + //
                 "\"LOG_TIME\" INTEGER PRIMARY KEY NOT NULL ," + // 0: logTime
@@ -51,14 +52,13 @@ public class RequestLogDao extends AbstractDao<RequestLog, Long> {
     }
 
     /** Drops the underlying database table. */
-    public static void dropTable(SQLiteDatabase db, boolean ifExists) {
+    public static void dropTable(Database db, boolean ifExists) {
         String sql = "DROP TABLE " + (ifExists ? "IF EXISTS " : "") + "\"REQUEST_LOG\"";
         db.execSQL(sql);
     }
 
-    /** @inheritdoc */
     @Override
-    protected void bindValues(SQLiteStatement stmt, RequestLog entity) {
+    protected final void bindValues(DatabaseStatement stmt, RequestLog entity) {
         stmt.clearBindings();
         stmt.bindLong(1, entity.getLogTime());
  
@@ -83,13 +83,37 @@ public class RequestLogDao extends AbstractDao<RequestLog, Long> {
         }
     }
 
-    /** @inheritdoc */
+    @Override
+    protected final void bindValues(SQLiteStatement stmt, RequestLog entity) {
+        stmt.clearBindings();
+        stmt.bindLong(1, entity.getLogTime());
+
+        String url = entity.getUrl();
+        if (url != null) {
+            stmt.bindString(2, url);
+        }
+
+        String method = entity.getMethod();
+        if (method != null) {
+            stmt.bindString(3, method);
+        }
+
+        String headParamString = entity.getHeadParamString();
+        if (headParamString != null) {
+            stmt.bindString(4, headParamString);
+        }
+
+        String bodyParamString = entity.getBodyParamString();
+        if (bodyParamString != null) {
+            stmt.bindString(5, bodyParamString);
+        }
+    }
+
     @Override
     public Long readKey(Cursor cursor, int offset) {
         return cursor.getLong(offset + 0);
     }    
 
-    /** @inheritdoc */
     @Override
     public RequestLog readEntity(Cursor cursor, int offset) {
         RequestLog entity = new RequestLog( //
@@ -102,7 +126,6 @@ public class RequestLogDao extends AbstractDao<RequestLog, Long> {
         return entity;
     }
      
-    /** @inheritdoc */
     @Override
     public void readEntity(Cursor cursor, RequestLog entity, int offset) {
         entity.setLogTime(cursor.getLong(offset + 0));
@@ -112,14 +135,12 @@ public class RequestLogDao extends AbstractDao<RequestLog, Long> {
         entity.setBodyParamString(cursor.isNull(offset + 4) ? null : cursor.getString(offset + 4));
      }
     
-    /** @inheritdoc */
     @Override
-    protected Long updateKeyAfterInsert(RequestLog entity, long rowId) {
+    protected final Long updateKeyAfterInsert(RequestLog entity, long rowId) {
         entity.setLogTime(rowId);
         return rowId;
     }
     
-    /** @inheritdoc */
     @Override
     public Long getKey(RequestLog entity) {
         if(entity != null) {
@@ -129,9 +150,13 @@ public class RequestLogDao extends AbstractDao<RequestLog, Long> {
         }
     }
 
-    /** @inheritdoc */
-    @Override    
-    protected boolean isEntityUpdateable() {
+    @Override
+    public boolean hasKey(RequestLog entity) {
+        throw new UnsupportedOperationException("Unsupported for entities with a non-null key");
+    }
+
+    @Override
+    protected final boolean isEntityUpdateable() {
         return true;
     }
     

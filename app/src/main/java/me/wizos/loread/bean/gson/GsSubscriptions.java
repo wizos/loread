@@ -9,12 +9,13 @@ import java.util.ArrayList;
  */
 public class GsSubscriptions {
     @SerializedName("subscriptions")
-    ArrayList<Sub> subscriptions;
+    ArrayList<Subscriptions> subscriptions;
 
-    public ArrayList<Sub> getSubscriptions() {
+    public ArrayList<Subscriptions> getSubscriptions() {
         return subscriptions;
     }
-    public void setSubscriptions(ArrayList<Sub> subscriptions) {
+
+    public void setSubscriptions(ArrayList<Subscriptions> subscriptions) {
         this.subscriptions = subscriptions;
     }
 }

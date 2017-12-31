@@ -6,7 +6,6 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.graphics.Color;
-import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
@@ -14,19 +13,20 @@ import android.os.Message;
 import android.support.annotation.ColorInt;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.Toolbar;
+import android.text.InputType;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.ViewConfiguration;
+import android.widget.AdapterView;
 import android.widget.ExpandableListView;
-import android.widget.ImageView;
+import android.widget.ListView;
 import android.widget.TextView;
 
 import com.afollestad.materialdialogs.MaterialDialog;
+import com.lzy.okgo.callback.StringCallback;
+import com.lzy.okgo.model.Response;
 import com.socks.library.KLog;
 import com.yinglan.scrolllayout.ScrollLayout;
-import com.yydcdut.sdlv.Menu;
-import com.yydcdut.sdlv.MenuItem;
-import com.yydcdut.sdlv.SlideAndDragListView;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -40,181 +40,125 @@ import me.wizos.loread.adapter.MaterialSimpleListItem;
 import me.wizos.loread.bean.Article;
 import me.wizos.loread.bean.Feed;
 import me.wizos.loread.bean.Tag;
-import me.wizos.loread.data.DBHelper;
 import me.wizos.loread.data.WithDB;
 import me.wizos.loread.data.WithSet;
-import me.wizos.loread.data.dao.DaoMaster;
-import me.wizos.loread.net.API;
-import me.wizos.loread.net.Neter;
+import me.wizos.loread.net.Api;
+import me.wizos.loread.net.DataApi;
+import me.wizos.loread.net.InoApi;
 import me.wizos.loread.utils.ScreenUtil;
 import me.wizos.loread.utils.StringUtil;
 import me.wizos.loread.utils.ToastUtil;
 import me.wizos.loread.view.ExpandableListViewS;
 import me.wizos.loread.view.IconFontView;
+import me.wizos.loread.view.ListViewS;
 import me.wizos.loread.view.SwipeRefreshLayoutS;
 import me.wizos.loread.view.colorful.Colorful;
 import me.wizos.loread.view.colorful.setter.ViewGroupSetter;
 import me.wizos.loread.view.common.color.ColorChooserDialog;
 
+//import com.yydcdut.sdlv.Menu;
+//import com.yydcdut.sdlv.MenuItem;
+//import com.yydcdut.sdlv.SlideAndDragListView;
+
 public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.OnRefreshListener, ColorChooserDialog.ColorCallback, View.OnClickListener {
     protected static final String TAG = "MainActivity";
-    private IconFontView vReadIcon, vStarIcon;
-    private ImageView vPlaceHolder;
+    private IconFontView vReadIcon, vStarIcon, vPlaceHolder;
     private TextView vToolbarHint;
     private Toolbar toolbar;
-    private Menu mMenu;
-    private SwipeRefreshLayoutS mSwipeRefreshLayoutSLayout;
-    private SlideAndDragListView slv;
-
-    private static String listTagId;
-    private static String listTitle;
-    public static String listTabState;
+    //    private Menu mMenu;
+    private SwipeRefreshLayoutS mSwipeRefreshLayoutS;
+    //    private ListView artListView;
+    private ListViewS artListView;
+    //    private SlideAndDragListView artListView;
+    private MainSlvAdapter artListAdapter;
     private static int tagCount;
-
-
-    /*
-    Streams 可以是 feeds, tags (folders) 或者是 system types.
-    feed/http://feeds.arstechnica.com/arstechnica/science - Feed.
-    user/-/label/Tech - Tag (or folder).
-    user/-/state/com.google/read - Read articles.已阅读文章
-    user/-/state/com.google/starred - Starred articles.
-    user/-/state/com.google/broadcast - Broadcasted articles.
-    user/-/state/com.google/like - Likes articles.
-    user/-/state/com.google/saved-web-pages - Saved web pages.
-    user/-/state/com.google/reading-list.阅读列表(包括已读和未读)
-     */
-    /**
-     * 从上面的API也可以知道，这些分类是很混乱的。
-     * 本质上来说，Tag 或者 Feed 都是一组 Articles (最小单位) 的集合（Stream）。（Tag 是 Feed 形而上的抽离/集合）
-     * 而我们用户对其中某些 Article 的 Read, Star, Save, Comment, Broadcast 等操作，无意中又生成了一组集合（Stream）
-     * 所以为了以后的方便，我最好是抽离/包装出一套标准的 API。
-     */
-//    private String StreamId;
-//    private String StreamState; // 这个只是从 Read 属性的4个类型(Readed, UnRead, UnReading, All), Star 属性的3个类型(Stared, UnStar, All)中，生硬的抽出 UnRead(含UnReading), Stared, All 3个快捷状态，供用户在主页面切换时使用
-//
-//    private String StreamTitle;
-//    private int StreamCount;
-
-    // 由于根据 StreamId 来获取文章，可从2个属性( Categories[针对Tag], OriginStreamId[针对Feed] )上，共4个变化上（All, Tag, NoTag, Feed）来获取文章。
-    // 根据 StreamState 也是从2个属性(ReadState, StarState)的3个快捷状态 ( UnRead[含UnReading], Stared, All ) 来获取文章。
-    // 所以文章列表页会有6种组合：某个 Categories 内的 UnRead[含UnReading], Stared, All。某个 OriginStreamId 内的 UnRead[含UnReading], Stared, All。
-    // 所有定下来去获取文章的函数也有6个：getArtsUnreadInTag(), getArtsStaredInTag(), getArtsAllInTag(),getUnreadArtsInFeed(), getStaredArtsInFeed(), getAllArtsInFeed()
-
-
-    private boolean syncFirstOpen;
-    private MainSlvAdapter mainSlvAdapter;
-
-    private Neter mNeter;
-
-    /* 通过Binder，实现Activity与Service通信 */
-    //    private MainService.ServiceBinder mBinderService;
-    // 先创建一个 ServiceConnection 匿名类，重写 onServiceConnected()、onServiceDisconnected()。这两个方法分别会在Activity与Service建立关联和解除关联的时候调用。
-    // 在onServiceConnected()方法中，我们又通过向下转型得到了MyBinder的实例，有了这个实例，Activity和Service之间的关系就变得非常紧密了。
-    private ServiceConnection connection = new ServiceConnection() {
-        @Override
-        public void onServiceDisconnected(ComponentName name) {
-            KLog.d("连接断开");
-        }
-
-        @Override
-        public void onServiceConnected(ComponentName name, IBinder service) {
-            MainService.ServiceBinder mBinderService = (MainService.ServiceBinder) service;
-            MainService mainService = mBinderService.getService();
-            mainService.regHandler(mainHandler);//TODO:考虑内存泄露
-            mNeter = mainService.getNeter();
-            KLog.d("连接开始");
-        }
-    };
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         setContentView(R.layout.activity_main);
-        initToolbar();
-        initSlvListener();
-        initSwipe();
-        initView();
         initService();
-        DaoMaster daoMaster = DBHelper.startUpgrade(this);
-//        if (daoMaster.getSchemaVersion() == 3) {
-//            KLog.e("数据库升级，修改数据");
-//            List<Article> arts = WithDB.i().getStaredArt();
-//            for (Article art : arts) {
-//                art.setStarred(art.getPublished());
-//            }
-//            WithDB.i().saveArticleList(arts);
-//        }
+        initToolbar();
+        initIconView();
+        initArtListView();
+        initTagListView();
+        initSwipeRefreshLayout(); // 必须要放在 initArtListView() 之后，不然无论 ListView 滚动到第几页，一下拉就会触发刷新
+        initData();  // 获取文章列表数据为 App.articleList
+        KLog.i("列表数目：" + App.articleList.size() + "  当前状态：" + App.StreamState);
 
-
-        initData();
-        initScrollTag();
         if (savedInstanceState != null) {
             final int position = savedInstanceState.getInt("listItemFirstVisiblePosition");
             slvSetSelection(position);
-//            mainHandler.post(new Runnable() {
-//                @Override
-//                public void run() {
-//                    // setSelection 没有滚动效果，直接跳到指定位置。smoothScrollToPosition 有滚动效果的
-//                    slv.setSelection(position);
-//                }
-//            });
-//            slv.setSelection( savedInstanceState.getInt("listItemFirstVisiblePosition") ) ; // setSelection 没有滚动效果，直接跳到指定位置。smoothScrollToPosition 有滚动效果的
         }
         super.onCreate(savedInstanceState);
     }
 
     @Override
     protected void onSaveInstanceState(Bundle outState) {
-        outState.putInt("listItemFirstVisiblePosition", slv.getFirstVisiblePosition());
+        outState.putInt("listItemFirstVisiblePosition", artListView.getFirstVisiblePosition());
         super.onSaveInstanceState(outState);
     }
 
     @Override
     protected void onResume(){
         super.onResume();
-        if (mainSlvAdapter != null) {
-            mainSlvAdapter.notifyDataSetChanged();
+        if (artListAdapter != null) {
+            artListAdapter.notifyDataSetChanged();
         }
-        KLog.i("【onResume】" + listTabState + "---" + toolbar.getTitle() + listTagId);
+        KLog.i("【onResume】" + App.StreamState + "---" + toolbar.getTitle() + "===" + App.StreamId);
     }
 
-
-    protected void readSetting(){
-        API.INOREADER_ATUH = WithSet.i().getAuth();
-        App.mUserID = WithSet.i().getUseId();
-        listTabState = WithSet.i().getListTabState();
-        listTagId = WithSet.i().getListTagId();
-        if (listTagId == null || listTagId.equals("")) {
-            listTagId = "user/" + App.mUserID + "/state/com.google/reading-list";
-        }
-        syncFirstOpen = WithSet.i().isSyncFirstOpen();
-//        isOrderTagFeed = WithSet.i().isOrderTagFeed();
-        KLog.i("【 readSetting 】ATUH 为" + API.INOREADER_ATUH + syncFirstOpen + "【mUserID为】");
-        KLog.i(WithSet.i().getUseName() + WithSet.i().getUseId());
-    }
-
-    protected void initView(){
+    protected void initIconView() {
         vReadIcon = (IconFontView) findViewById(R.id.main_bottombar_read);
         vStarIcon = (IconFontView)findViewById(R.id.main_bottombar_star);
 //        vToolbarCount = (TextView)findViewById(R.id.main_toolbar_count);
         vToolbarHint = (TextView)findViewById(R.id.main_toolbar_hint);
-        vPlaceHolder = (ImageView)findViewById(R.id.main_placeholder);
+        vPlaceHolder = (IconFontView) findViewById(R.id.main_placeholder);
+        if (App.StreamState.equals(Api.ART_STARED)) {
+            vStarIcon.setText(R.string.font_stared);
+            vReadIcon.setText(R.string.font_readed);
+
+        } else if (App.StreamState.equals(Api.ART_UNREAD)) {
+            vStarIcon.setText(R.string.font_unstar);
+            vReadIcon.setText(R.string.font_unread);
+        } else {
+            vStarIcon.setText(R.string.font_unstar);
+            vReadIcon.setText(R.string.font_readed);
+        }
         IconFontView iconReadability = (IconFontView) findViewById(R.id.main_toolbar_readability);
-        iconReadability.setVisibility(View.VISIBLE);
         iconReadability.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 manualToggleTheme();
-//                showSelectThemeDialog();
+            }
+        });
+
+        IconFontView searchView = (IconFontView) findViewById(R.id.main_toolbar_search);
+        searchView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                new MaterialDialog.Builder(MainActivity.this)
+                        .title(R.string.search)
+                        .inputType(InputType.TYPE_CLASS_TEXT)
+                        .inputRange(1, 22)
+                        .input(null, "", new MaterialDialog.InputCallback() {
+                            @Override
+                            public void onInput(MaterialDialog dialog, CharSequence input) {
+                                showSearchResult(input.toString());
+                            }
+                        })
+                        .positiveText(R.string.search)
+                        .negativeText(android.R.string.cancel)
+                        .show();
             }
         });
     }
-    protected void initSwipe(){
-        mSwipeRefreshLayoutSLayout = (SwipeRefreshLayoutS) findViewById(R.id.main_swipe);
-        if (mSwipeRefreshLayoutSLayout == null) return;
-        mSwipeRefreshLayoutSLayout.setOnRefreshListener(this);
-        mSwipeRefreshLayoutSLayout.setProgressViewOffset(true, 0, 120);//设置样式刷新显示的位置
-        mSwipeRefreshLayoutSLayout.setViewGroup(slv);
+
+    protected void initSwipeRefreshLayout() {
+        mSwipeRefreshLayoutS = (SwipeRefreshLayoutS) findViewById(R.id.main_swipe);
+        if (mSwipeRefreshLayoutS == null) return;
+        mSwipeRefreshLayoutS.setOnRefreshListener(this);
+        mSwipeRefreshLayoutS.setProgressViewOffset(true, 0, 120);//设置样式刷新显示的位置
+        mSwipeRefreshLayoutS.setViewGroup(artListView);
 //        appBarLayout = (AppBarLayout) findViewById(R.id.appBarLayout);
 //        appBarLayout.addOnOffsetChangedListener(new AppBarLayout.OnOffsetChangedListener() {
 //            @Override
@@ -230,12 +174,9 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
 
     @Override
     public void onRefresh() {
-        if (!mSwipeRefreshLayoutSLayout.isEnabled()) {
+        if (!mSwipeRefreshLayoutS.isEnabled()) {
             return;
         }
-        mSwipeRefreshLayoutSLayout.setEnabled(false);
-        mSwipeRefreshLayoutSLayout.setRefreshing(false);  // 调用 setRefreshing(false) 去取消任何刷新的视觉迹象。如果活动只是希望展示一个进度条的动画，他应该条用 setRefreshing(true) 。 关闭手势和进度条动画，调用该 View 的 setEnable(false)
-//        Tool.printCallStatck();
         startSyncService();
         KLog.i("【刷新中】");
     }
@@ -246,242 +187,76 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
     protected void onDestroy() {
         // 如果参数为null的话，会将所有的Callbacks和Messages全部清除掉。
         // 这样做的好处是在Acticity退出的时候，可以避免内存泄露。因为 handler 内可能引用 Activity ，导致 Activity 退出后，内存泄漏。
-//        handler.removeCallbacksAndMessages(null);
-        mainHandler.removeCallbacksAndMessages(null);
+        maHandler.removeCallbacksAndMessages(null);
         unbindService(connection);
         super.onDestroy();
     }
+
 
     private Intent intent;
     private void initService() {
         intent = new Intent(this, MainService.class);
         bindService(intent, connection, BIND_AUTO_CREATE);
     }
+
+    // 先创建一个 ServiceConnection 匿名类，重写 onServiceConnected()、onServiceDisconnected()。这两个方法分别会在Activity与Service建立关联和解除关联的时候调用。
+    // 在onServiceConnected()方法中，我们又通过向下转型得到了MyBinder的实例，有了这个实例，Activity和Service之间的关系就变得非常紧密了。
+    private ServiceConnection connection = new ServiceConnection() {
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+            KLog.d("连接断开");
+        }
+
+        // onServiceConnected在绑定成功时进行回调，但不保证在执行binService后立马回调。
+        // 我们在onCreate方法中绑定后立马获取service实例，但此时不保证onServiceConnected已经被回调。 也就是我们onCreate方法执行时onServiceConnected还没有别调用。此时当然mService还为空了。
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+            // 通过Binder，实现Activity与Service通信
+            MainService.ServiceBinder mBinderService = (MainService.ServiceBinder) service;
+            MainService mainService = mBinderService.getService();
+            mainService.regHandler(maHandler);//TODO:考虑内存泄露
+            if (App.syncFirstOpen && !mSwipeRefreshLayoutS.isRefreshing()) {
+                ToastUtil.showShort("开始同步");
+                mSwipeRefreshLayoutS.setEnabled(false);
+                startSyncService();
+            }
+            KLog.d("连接开始");
+        }
+    };
+
     private void startSyncService() {
-        intent.setAction("refresh");
-        KLog.d("bindService");
+        intent.setAction("sync");
+        KLog.i("调用Service，开始同步");
         startService(intent);
     }
 
-    @Override
-    protected void notifyDataChanged(){
-        mSwipeRefreshLayoutSLayout.setRefreshing(false);
-        mSwipeRefreshLayoutSLayout.setEnabled(true);
-        reloadData();
-    }
 
-    protected void initData(){
-        readSetting();
-        initBottombarIcon();
-        reloadData();  // 先加载已有数据
-        if (syncFirstOpen && !mSwipeRefreshLayoutSLayout.isRefreshing()) {
-            ToastUtil.showShort("开始同步");
-            mSwipeRefreshLayoutSLayout.setEnabled(false);
-            startSyncService();
-        }
-
-        KLog.i("列表数目：" + App.articleList.size() + "  当前状态：" + listTabState);
-    }
-
-    /**
-     * listTabState 包含 3 个状态：All，Unread，Stared
-     * listTagId 至少包含 1 个状态： Reading-list
-     * */
-    protected void reloadData() { // 获取 App.articleList , 并且根据 App.articleList 的到未读数目
-        KLog.i("reloadData", "加载数据");
-
-//        if (listTagId.contains(API.U_NO_LABEL)) {
-//            App.articleList = getNoTagList();  // FIXME: 2016/5/7 这里的未分类暂时无法使用，因为在云端订阅源的分类是可能会变的，导致本地缓存的文章分类错误
-//            KLog.i("【API.U_NO_LABEL】");
-//        } else if (listTabState.equals(API.LIST_STARED)) {
-//            App.articleList = WithDB.i().getStaredArtInTag(listTagId);
-//            KLog.i("【API.LIST_STARED】");
-//        } else {
-//            App.articleList = WithDB.i().getArt(listTabState, listTagId); // 590-55
-//            KLog.i("【API.getArt】" + listTabState + listTagId);
-//        }
-
-//        if (listTagId.contains("user/" + App.mUserID + "/")) {
-//            if (listTagId.contains(API.U_NO_LABEL)) {
-//                App.articleList = getNoTagList2();  // FIXME: 2016/5/7 这里的未分类暂时无法使用，因为在云端订阅源的分类是可能会变的，导致本地缓存的文章分类错误
-//                KLog.i("【API.U_NO_LABEL】");
-//            } else if (listTabState.equals(API.LIST_STARED)) {
-//                App.articleList = WithDB.i().getArtsStaredInTag(listTagId); // Test 测试修改数据库的
-////                App.articleList = WithDB.i().getArtsByCategoriesOrderStaredMsec("/state/com.google/starred", listTagId);
-//                KLog.i("【API.LIST_STARED】");
-//            } else {
-//                App.articleList = WithDB.i().getArt(listTabState, listTagId); // 590-55// Test 测试修改数据库的
-////                App.articleList = WithDB.i().getArtsByCategoriesOrderCrawlMsec( listTabState, listTagId );
-//                KLog.i("【API.getArt】" + listTabState + listTagId);
-//            }
-//        } else if (listTagId.indexOf("feed/") == 0) {
-//            if (listTabState.equals(API.LIST_STARED)) {
-//                App.articleList = WithDB.i().getArtsStar(listTagId);// Test 测试修改数据库的
-////                App.articleList = WithDB.i().getArtsStarByStreamIdOrderStaredMsec( listTagId );
-//                KLog.i("【API.LIST_STARED】");
-//            } else {
-//                App.articleList = WithDB.i().getArtsRead(listTabState, listTagId); // 590-55 // Test 测试修改数据库的
-////                App.articleList = WithDB.i().getArtsStarByStreamIdOrderStaredMsec( listTagId );
-//                KLog.i("【API.getArt】" + listTabState + listTagId);
-//            }
-//        }
-
-        if (listTagId.contains("user/" + App.mUserID + "/")) {
-            if (listTagId.contains(API.U_READING_LIST)) {
-                if (listTabState.equals(API.LIST_STARED)) {
-                    App.articleList = WithDB.i().getArtsStaredInTag(listTagId);
-                } else if (listTabState.equals(API.LIST_UNREAD)) {
-                    App.articleList = WithDB.i().getArtsUnreadInTag(listTagId); // TEST:  测试DB函数
-                } else {
-                    App.articleList = WithDB.i().getArt(listTabState, listTagId);
-                }
-            } else if (listTagId.contains(API.U_NO_LABEL)) {
-
-                if (listTabState.contains(API.LIST_STARED)) {
-                    App.articleList = WithDB.i().getArtsStaredNoTag();
-                } else if (listTabState.contains(API.LIST_UNREAD)) {
-                    App.articleList = WithDB.i().getArtsUnreadNoTag();
-                } else {
-                    App.articleList = WithDB.i().getArtsAllNoTag();
-                }
-            } else {
-                App.articleList = WithDB.i().getArt(listTabState, listTagId);
-                listTitle = WithDB.i().getTag(listTagId).getTitle();
-            }
-        } else if (listTagId.indexOf("feed/") == 0) {
-            if (listTabState.equals(API.LIST_STARED)) {
-                App.articleList = WithDB.i().getArtsStar(listTagId);
-                KLog.i("【API.LIST_STARED】");
-            } else {
-                App.articleList = WithDB.i().getArt(listTabState, listTagId); // 590-55
-                KLog.i("【API.getArt】" + listTabState + listTagId);
-            }
-            listTitle = WithDB.i().getFeed(listTagId).getTitle();
-        }
-
-
-        KLog.i("【】" + listTabState + "--" + listTagId);
-
-        if (StringUtil.isBlank(App.articleList)) {
-            vPlaceHolder.setVisibility(View.VISIBLE);
-            slv.setVisibility(View.GONE);
-//            ToastUtil.showShort("没有文章"); // 弹出一个提示框，询问是否同步
-        }else {
-            vPlaceHolder.setVisibility(View.GONE);
-            slv.setVisibility(View.VISIBLE);
-        }
-        KLog.i("【notify1】" + listTabState + listTagId + toolbar.getTitle() + App.articleList.size());
-        mainSlvAdapter = new MainSlvAdapter(this, App.articleList);
-        slv.setAdapter(mainSlvAdapter);
-        mainSlvAdapter.notifyDataSetChanged();
-//        changeToolbarTitle();
-        getSupportActionBar().setTitle(listTitle);
-        // 在setSupportActionBar(toolbar)之后调用toolbar.setTitle()的话。 在onCreate()中调用无效。在onStart()中调用无效。 在onResume()中调用有效。
-        tagCount = App.articleList.size();
-        setToolbarHint(tagCount);
-    }
-    private void changeToolbarTitle() {
-        if (listTagId.contains(API.U_READING_LIST)) {
-            if (listTabState.equals(API.LIST_STARED)) {
-                listTitle = "所有加星";
-            } else if (listTabState.equals(API.LIST_UNREAD)) {
-                listTitle = "所有未读";
-            } else {
-                listTitle = "所有文章";
-            }
-        } else if (listTagId.contains(API.U_NO_LABEL)) {
-            if (listTabState.equals(API.LIST_STARED)) {
-                listTitle = "加星未分类";
-            } else if (listTabState.equals(API.LIST_UNREAD)) {
-                listTitle = "未读未分类";
-            } else {
-                listTitle = "所有未分类";
-            }
-        } else {
-            listTitle = WithDB.i().getTag(listTagId).getTitle();
-        }
-        KLog.e("页面title是：" + listTitle);
-        getSupportActionBar().setTitle(listTitle);
-        // 在setSupportActionBar(toolbar)之后调用toolbar.setTitle()的话。 在onCreate()中调用无效。在onStart()中调用无效。 在onResume()中调用有效。
-        KLog.d(listTagId + listTabState + listTitle);
-    }
-
-    public List<Article> getNoTagList2() {
-        List<Article> noTags;
-        if (listTabState.contains(API.LIST_STARED)) {
-            noTags = WithDB.i().getArtsStaredNoTag();
-        } else if (listTabState.contains(API.LIST_UNREAD)) {
-            noTags = WithDB.i().getArtsUnreadNoTag();
-        }else {
-            noTags = WithDB.i().getArtsAllNoTag();
-        }
-        return noTags;
-    }
-
-
-//    private List<Article> getNoTagList() {
-//        List<Article> all,part,exist;
-//        if (listTabState.contains(API.LIST_STARED)) {
-//            all = WithDB.i().getStaredArt();
-//            part = WithDB.i().loadStaredHasTag(App.mUserID);
-//            exist = WithDB.i().getStarNoTag();
-//        }else {
-//            all = WithDB.i().getArt(listTabState);
-//            part = WithDB.i().loadReadListHasTag(listTabState, App.mUserID);
-//            exist = WithDB.i().getReadNoTag();
-//       }
-//
-//        ArrayList<Article> noTag = new ArrayList<>(all.size() - part.size());
-//        Map<String,Integer> map = new ArrayMap<>( part.size());
-//        String articleId;
-//        StringBuffer sb = new StringBuffer(10);
-//
-//        for( Article article: part ){
-//            articleId = article.getId();
-//            map.put(articleId,1);
-//        }
-//        for( Article article: all ){
-//            articleId = article.getId();
-//            Integer cc = map.get( articleId );
-//            if(cc!=null) {
-//                map.put( articleId , ++cc);
-//            }else {
-//                sb = new StringBuffer( article.getCategories() );
-////                sb.append(article.getCategories());
-//                sb.insert(sb.length() - 1, ", \"user/" + App.mUserID + API.U_NO_LABEL + "\"");
-//                article.setCategories( sb.toString() );
-//                noTag.add(article);
-//            }
-//        }
-//        KLog.e( sb.toString() +" - "+  all.size() + " - "+ part.size());
-//        noTag.addAll(exist);
-//        return noTag;
-//    }
-
-
-    // TEST:
-    protected Handler mainHandler = new Handler(new Handler.Callback() {
+    // 这里不必和 ArticleActivity 一样写成静态内部类，用来防止因持有外部的Activity而造成内存泄漏。
+    // 因为MainActivity基本只有一个实例，且不会反复创建、销毁，所以不用担心回收造成的内存泄漏问题。
+    private Handler maHandler = new Handler(new Handler.Callback() {
         @Override
         public boolean handleMessage(Message msg) {
             String tips = msg.getData().getString("tips");
             KLog.i("【handler】" + msg.what + "---" + "---");
             switch (msg.what) {
-                case API.SUCCESS:
-                    vToolbarHint.setText(String.valueOf(App.articleList.size()));
-                    notifyDataChanged();
-//                    KLog.i("【文章列表获取完成】" );
+                case Api.SYNC_START:
+                    mSwipeRefreshLayoutS.setRefreshing(true);
+                    mSwipeRefreshLayoutS.setEnabled(false);
+                    KLog.e("开始同步");
                     break;
-                case API.FAILURE: // 文章获取失败
-                    mSwipeRefreshLayoutSLayout.setRefreshing(false);
-                    mSwipeRefreshLayoutSLayout.setEnabled(true);
-                    vToolbarHint.setText(String.valueOf(App.articleList.size() + "\n同步失败"));
-                    ToastUtil.showShort("同步失败");
+                case Api.SYNC_SUCCESS:
+                    mSwipeRefreshLayoutS.setRefreshing(false);
+                    mSwipeRefreshLayoutS.setEnabled(true);
+                    initData();
                     break;
-                case API.PROCESS:
+                case Api.SYNC_FAILURE: // 文章获取失败
+                    mSwipeRefreshLayoutS.setRefreshing(false);
+                    mSwipeRefreshLayoutS.setEnabled(true);
+                    vToolbarHint.setText(String.valueOf(tagCount));
+//                    ToastUtil.showShort("同步失败");
+                    break;
+                case Api.SYNC_PROCESS:
                     vToolbarHint.setText(tips);
-                    break;
-                case 1000:
-                    vToolbarHint.setText("升级完成");
                     break;
             }
             return false;
@@ -489,7 +264,135 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
     });
 
 
+    /**
+     * App.StreamState 包含 3 个状态：All，Unread，Stared
+     * App.StreamId 至少包含 1 个状态： Reading-list
+     * */
+    protected void refreshData() { // 获取 App.articleList , 并且根据 App.articleList 的到未读数目
+        KLog.e("refreshData：" + App.StreamId + "  " + App.StreamState + "   " + App.UserID);
+        getArtData();
+        getTagData();
+        artListAdapter = new MainSlvAdapter(this, App.articleList, artListView);
+        artListView.setAdapter(artListAdapter);
+        tagListAdapter.notifyDataSetChanged();
+        loadData();
+    }
 
+    private void initData() {
+        getArtData();
+        getTagData();
+        artListAdapter = new MainSlvAdapter(this, App.articleList, artListView);
+        artListView.setAdapter(artListAdapter);
+        tagListAdapter = new ExpandableListAdapterS(this, App.tagList, tagListView);
+        tagListView.setAdapter(tagListAdapter);
+        loadData();
+    }
+
+    private void getArtData() {
+        if (App.StreamId.startsWith("user/")) {
+            if (App.StreamId.contains(Api.U_READING_LIST)) {
+                if (App.StreamState.contains(Api.ART_STARED)) {
+//                    App.articleList = WithDB.i().getArtsStared();
+                    App.i().updateArtList(WithDB.i().getArtsStared());
+                } else if (App.StreamState.contains(Api.ART_UNREAD)) {
+//                    App.articleList = WithDB.i().getArtsUnread();
+                    App.i().updateArtList(WithDB.i().getArtsUnread());
+                } else {
+//                    App.articleList = WithDB.i().getArtsAll();
+                    App.i().updateArtList(WithDB.i().getArtsAll());
+                }
+            } else if (App.StreamId.contains(Api.U_NO_LABEL)) {
+                if (App.StreamState.contains(Api.ART_STARED)) {
+//                    App.articleList = WithDB.i().getArtsStaredNoTag();
+                    App.i().updateArtList(WithDB.i().getArtsStaredNoTag());
+                } else if (App.StreamState.contains(Api.ART_UNREAD)) {
+//                    App.articleList = WithDB.i().getArtsUnreadNoTag();
+                    App.i().updateArtList(WithDB.i().getArtsUnreadNoTag());
+                } else {
+//                    App.articleList = WithDB.i().getArtsAllNoTag();
+                    App.i().updateArtList(WithDB.i().getArtsAllNoTag());
+                }
+            } else {
+                // TEST:  测试
+                Tag theTag = WithDB.i().getTag(App.StreamId);
+                KLog.e("类：" + App.StreamId + App.StreamTitle + App.StreamState + theTag);
+                if (App.StreamState.contains(Api.ART_STARED)) {
+//                    App.articleList = WithDB.i().getArtsStaredInTag(theTag);
+                    App.i().updateArtList(WithDB.i().getArtsStaredInTag(theTag));
+                } else if (App.StreamState.contains(Api.ART_UNREAD)) {
+//                    App.articleList = WithDB.i().getArtsUnreadInTag(theTag);
+                    App.i().updateArtList(WithDB.i().getArtsUnreadInTag(theTag));
+                } else {
+//                    App.articleList = WithDB.i().getArtsAllInTag(theTag);
+                    App.i().updateArtList(WithDB.i().getArtsAllInTag(theTag));
+                }
+            }
+        } else if (App.StreamId.startsWith("feed/")) {
+            if (App.StreamState.equals(Api.ART_STARED)) {
+//                App.articleList = WithDB.i().getArtsStaredInFeed(App.StreamId);
+                App.i().updateArtList(WithDB.i().getArtsStaredInFeed(App.StreamId));
+            } else if (App.StreamState.contains(Api.ART_UNREAD)) {
+//                App.articleList = WithDB.i().getArtsUnreadInFeed(App.StreamId); // TEST:  测试DB函数
+                App.i().updateArtList(WithDB.i().getArtsUnreadInFeed(App.StreamId));
+            } else {
+//                App.articleList = WithDB.i().getArtsAllInFeed(App.StreamId); // 590-55
+                App.i().updateArtList(WithDB.i().getArtsAllInFeed(App.StreamId));
+            }
+            KLog.i("【Api.getArts】" + App.StreamState + App.StreamId);
+            App.StreamTitle = WithDB.i().getFeed(App.StreamId).getTitle();
+        }
+    }
+
+    private void getTagData() {
+        Tag rootTag = new Tag();
+        Tag noLabelTag = new Tag();
+        long userID = WithSet.i().getUseId();
+        rootTag.setTitle(getString(R.string.main_activity_title_all));
+        noLabelTag.setTitle(getString(R.string.main_activity_title_untag));
+
+        rootTag.setId("\"user/" + userID + Api.U_READING_LIST + "\"");
+        rootTag.setSortid("00000000");
+        rootTag.__setDaoSession(App.i().getDaoSession());
+
+        noLabelTag.setId("\"user/" + userID + Api.U_NO_LABEL + "\"");
+        noLabelTag.setSortid("00000001");
+        noLabelTag.__setDaoSession(App.i().getDaoSession());
+
+        List<Tag> tagListTemp = new ArrayList<>();
+        tagListTemp.add(rootTag);
+        tagListTemp.add(noLabelTag);
+        tagListTemp.addAll(WithDB.i().getTags());
+        App.i().updateTagList(tagListTemp);
+
+//        App.tagList = new ArrayList<>(tagListTemp.size()+2);
+//        App.tagList.add(rootTag);
+//        App.tagList.add(noLabelTag);
+//        App.tagList.addAll(tagListTemp);
+        KLog.d("【listTag】 " + rootTag.toString());
+    }
+
+
+    private void loadData() {
+        KLog.i("【】" + App.StreamState + "--" + App.StreamTitle + "--" + App.StreamId + "--" + toolbar.getTitle() + App.articleList.size());
+        if (StringUtil.isBlank(App.articleList)) {
+            vPlaceHolder.setVisibility(View.VISIBLE);
+            artListView.setVisibility(View.GONE);
+        }else {
+            vPlaceHolder.setVisibility(View.GONE);
+            artListView.setVisibility(View.VISIBLE);
+        }
+
+        // 每次重新加载列表数据的时候，应该把 ArticleListAdapter 和 TagListAdapter 都更新一下。
+//        adapter中的数据源集合或数组等必须是同一个数据源，也就是同一个对象。
+//        当数据源发生变化的时候，我们会调用adaper的notifyDataSetChanged()方法。
+//        当直接将从数据库或者其他方式获取的数据源集合或者数组直接赋值给当前数据源时，相当于当前数据源的对象发生了变化，当前对象已经不是adapter中的对象了，所以adaper调用notifyDataSetChanged()方法不会进行刷新数据和界面的操作。
+
+        KLog.e("未触碰Group" + "=" + "=" + App.tagList.size());
+        // 在setSupportActionBar(toolbar)之后调用toolbar.setTitle()的话。 在onCreate()中调用无效。在onStart()中调用无效。 在onResume()中调用有效。
+        getSupportActionBar().setTitle(App.StreamTitle);
+        tagCount = App.articleList.size();
+        setToolbarHint(tagCount);
+    }
 
     private void changeItemNum(int offset){
         tagCount = tagCount + offset;
@@ -501,26 +404,11 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
     }
 
 
-
-    private void initBottombarIcon(){
-        if (listTabState.equals(API.LIST_STARED)) {
-            vStarIcon.setText(getString(R.string.font_stared));
-            vReadIcon.setText(getString(R.string.font_readed));
-
-        } else if (listTabState.equals(API.LIST_UNREAD)) {
-            vStarIcon.setText(getString(R.string.font_unstar));
-            vReadIcon.setText(getString(R.string.font_unread));
-        }else {
-            vStarIcon.setText(getString(R.string.font_unstar));
-            vReadIcon.setText(getString(R.string.font_readed));
-        }
-    }
-
-
     private ScrollLayout mScrollLayout;
     private ExpandableListViewS tagListView;
+    private ExpandableListAdapterS tagListAdapter;
 
-    public void initScrollTag() {
+    public void initTagListView() {
         /**设置 setting*/
         mScrollLayout = (ScrollLayout) findViewById(R.id.scroll_down_layout);
         mScrollLayout.setMinOffset(0); // minOffset 关闭状态时最上方预留高度
@@ -529,144 +417,375 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
         mScrollLayout.setIsSupportExit(true);
         mScrollLayout.setAllowHorizontalScroll(false);
         mScrollLayout.setToExit();
+//        mScrollLayout.setDraggable(false); // 设置能否往下拖动
 
         IconFontView tagIcon = (IconFontView) findViewById(R.id.main_bottombar_tag);
         tagIcon.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (v.getHandler().hasMessages(3608)) {
-                    v.getHandler().removeMessages(3608);
-                    Intent intent = new Intent(MainActivity.this, TagActivity.class);
-                    intent.putExtra("ListState", listTabState);
-                    intent.putExtra("ListTag", listTagId);
-                    intent.putExtra("ListCount", App.articleList.size());
-                    intent.putExtra("NoTagCount", getNoTagList2().size());
-                    startActivityForResult(intent, 0);
-                } else {
-                    Runnable r = new Runnable() {
-                        @Override
-                        public void run() {
-                            mScrollLayout.setToOpen();
-                        }
-                    };
-                    Message m = Message.obtain(v.getHandler(), r); // obtain() 从全局池中返回一个新的Message实例。在大多数情况下这样可以避免分配新的对象。
-                    m.what = 3608;
-                    v.getHandler().sendMessageDelayed(m, 300);// ViewConfiguration.getDoubleTapTimeout()
-                }
+                mScrollLayout.setToOpen();
+                tagListAdapter.notifyDataSetChanged(); // 每次点击的时候更新一下 tagList
+//                if (v.getHandler().hasMessages(3608)) {
+//                    v.getHandler().removeMessages(3608);
+//                    Intent intent = new Intent(MainActivity.this, TagActivity.class);
+//                    intent.putExtra("ListState", App.StreamState);
+//                    intent.putExtra("ListTag", App.StreamId);
+//                    intent.putExtra("ListCount", App.articleList.size());
+//                    startActivityForResult(intent, 0);
+//                    overridePendingTransition(R.anim.in_from_bottom, R.anim.exit_anim );
+//                } else {
+//                    Runnable r = new Runnable() {
+//                        @Override
+//                        public void run() {
+//                            mScrollLayout.setToOpen();
+//                        }
+//                    };
+//                    Message m = Message.obtain(v.getHandler(), r); // obtain() 从全局池中返回一个新的Message实例。在大多数情况下这样可以避免分配新的对象。
+//                    m.what = 3608;
+//                    v.getHandler().sendMessageDelayed(m, 300);// ViewConfiguration.getDoubleTapTimeout()
+//                    tagListAdapter.notifyDataSetChanged();
+//                }
             }
         });
 
-//        tagIcon.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View v) {
-//                mScrollLayout.setToOpen();
-////                slv.setCanTounch(false);
-//            }
-//        });
-
-//        tagIcon.setOnTapListener(new IconFontView.OnTapListener() {
-//            @Override
-//            public void onSingleClick(View v) {
-//                mScrollLayout.setToOpen();
-////                slv.setCanTounch(false);
-//            }
-//
-//            @Override
-//            public void onDoubleClick(View v) {
-//                Intent intent = new Intent(MainActivity.this,TagActivity.class);
-//                intent.putExtra("ListState", listTabState);
-//                intent.putExtra("ListTag", listTagId);
-//                intent.putExtra("ListCount", App.articleList.size());
-//                intent.putExtra("NoTagCount",getNoTagList().size());
-//                startActivityForResult(intent, 0);
-//            }
-//        });
-
-        getTagData();
-
-
-        ExpandableListAdapterS expandableListAdapter = new ExpandableListAdapterS(this, tagList);
         tagListView = (ExpandableListViewS) findViewById(R.id.list_view);
-        tagListView.setAdapter(expandableListAdapter);
-        KLog.e("未触碰Group" + tagListView.isActivated() + "=" + tagListView.isClickable() + "=" + tagListView.isLongClickable() + "=" + "=" + tagListView.isEnabled() + "=" + tagListView.isInTouchMode() + "=" + tagListView.isFocused() + "=" + "=" + tagListView.isPressed() + "=" + tagListView.isSelected() + "=");
-        // 设置悬浮头部VIEW
-//        tagListView.setHeaderView(getLayoutInflater().inflate(R.layout.main_expandable_item_group_header, tagListView, false));
+        tagListView.setChoiceMode(ListView.CHOICE_MODE_SINGLE);
 
+        // 设置悬浮头部VIEW
+        tagListView.setHeaderView(getLayoutInflater().inflate(R.layout.tag_expandable_item_group_header, tagListView, false));
 
         tagListView.setOnGroupClickListener(new ExpandableListView.OnGroupClickListener() {
             @Override
             public boolean onGroupClick(ExpandableListView parent, View v, int groupPosition, long id) {
                 mScrollLayout.setToExit();
-                listTagId = tagList.get(groupPosition).getId().replace("\"", "");
-                listTitle = tagList.get(groupPosition).getTitle();
-                if (listTagId == null || listTagId.equals("")) {
-                    listTagId = "user/" + App.mUserID + "/state/com.google/reading-list";
-                }
-                WithSet.i().setListTagId(listTagId);
-                reloadData();
-                KLog.d("【 TagList 被点击】" + listTagId + listTabState);
+                App.StreamId = App.tagList.get(groupPosition).getId().replace("\"", "");
+                App.StreamTitle = App.tagList.get(groupPosition).getTitle();
+//                if (App.StreamId == null || App.StreamId.equals("")) {
+//                    App.StreamId = "user/" + App.UserID + "/state/com.google/reading-list";
+//                }
+                WithSet.i().setStreamId(App.StreamId);
+                refreshData();
+                KLog.i("【 TagList 被点击】" + App.StreamId + App.StreamState);
                 return true;
             }
         });
+
 
         tagListView.setOnChildClickListener(new ExpandableListView.OnChildClickListener() {
             @Override
             public boolean onChildClick(ExpandableListView parent, View v, int groupPosition, int childPosition, long id) {
                 KLog.e("子项被点击1：" + v + " - " + v.getTag() + "-" + groupPosition + "==" + childPosition + "=" + id);
                 mScrollLayout.setToExit();
-                Feed theFeed = tagList.get(groupPosition).getFeeds().get(childPosition);
+                Feed theFeed = App.tagList.get(groupPosition).getFeeds().get(childPosition);
 
-                listTagId = theFeed.getId();
-                listTitle = theFeed.getTitle();
-                WithSet.i().setListTagId(listTagId);
-                reloadData();
+                App.StreamId = theFeed.getId();
+                App.StreamTitle = theFeed.getTitle();
+                WithSet.i().setStreamId(App.StreamId);
+                refreshData();
 
-                KLog.e("【子项被点击2】" + listTagId + listTabState);
+                KLog.e("【子项被点击2】" + App.StreamId + App.StreamState);
                 return true;
             }
         });
 
-    }
-
-
-    private ArrayList<Tag> tagList;
-
-    private void getTagData() {
-        Tag rootTag = new Tag();
-        Tag noLabelTag = new Tag();
-        long userID = WithSet.i().getUseId();
-        rootTag.setTitle("所有文章");
-        noLabelTag.setTitle("未分类");
-
-        rootTag.setId("\"user/" + userID + API.U_READING_LIST + "\"");
-        rootTag.setSortid("00000000");
-//        rootTag.setUnreadcount(App.articleList.size()); // test: 这句有问题
-        rootTag.__setDaoSession(App.getDaoSession());
-
-        noLabelTag.setId("\"user/" + userID + API.U_NO_LABEL + "\"");
-        noLabelTag.setSortid("00000001");
-//        noLabelTag.setUnreadcount(0);// test: 这句有问题
-        noLabelTag.__setDaoSession(App.getDaoSession());
-
-        List<Tag> tagListTemp = WithDB.i().getTags();
-        tagList = new ArrayList<>(tagListTemp.size());
-        tagList.add(rootTag);
-        tagList.add(noLabelTag);
-        tagList.addAll(tagListTemp);
-
-        KLog.d("【listTag】 " + rootTag.toString());
-    }
-
-
-    public void initSlvListener() {
-        initSlvMenu();
-        slv = (SlideAndDragListView)findViewById(R.id.main_slv);
-        if(slv==null)return;
-        slv.setMenu(mMenu);
-        slv.setOnListItemClickListener(new SlideAndDragListView.OnListItemClickListener() {
+        tagListView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
             @Override
-            public void onListItemClick(View v, int position) {
-//                KLog.e("【 TagList 被点击】");
+            public boolean onItemLongClick(AdapterView<?> parent, View view, final int position, long id) {
+                KLog.e("被长安，view的id是" + view.getId() + "，parent的id" + parent.getId() + "，Tag是" + view.getTag() + "，位置是" + tagListView.getPositionForView(view));
+
+                ExpandableListAdapterS.ItemViewHolder itemView = (ExpandableListAdapterS.ItemViewHolder) view.getTag();
+                if (InoApi.isTag(itemView.id)) {
+                    showTagDialog(WithDB.i().getTag(itemView.id));
+                } else if (InoApi.isFeed(itemView.id)) {
+                    showFeedDialog(itemView, WithDB.i().getFeed(itemView.id));
+                }
+                return true;
+            }
+        });
+    }
+
+
+    public void showTagDialog(final Tag tag) {
+        // 重命名弹窗的适配器
+        MaterialSimpleListAdapter adapter = new MaterialSimpleListAdapter(MainActivity.this);
+        adapter.add(new MaterialSimpleListItem.Builder(MainActivity.this)
+                .content(R.string.main_tag_dialog_rename)
+                .icon(R.drawable.dialog_ic_rename)
+                .backgroundColor(Color.TRANSPARENT)
+                .build());
+        new MaterialDialog.Builder(MainActivity.this)
+                .adapter(adapter, new MaterialDialog.ListCallback() {
+                    @Override
+                    public void onSelection(MaterialDialog dialog, View itemView, int which, CharSequence text) {
+                        switch (which) {
+                            case 0:
+                                new MaterialDialog.Builder(MainActivity.this)
+                                        .title(R.string.rename)
+                                        .inputType(InputType.TYPE_CLASS_TEXT)
+                                        .inputRange(1, 22)
+                                        .input(null, tag.getTitle(), new MaterialDialog.InputCallback() {
+                                            @Override
+                                            public void onInput(MaterialDialog dialog, CharSequence input) {
+                                                saveRenamedTagResult(input.toString(), tag);
+                                            }
+                                        })
+                                        .positiveText(R.string.confirm)
+                                        .negativeText(android.R.string.cancel)
+                                        .show();
+                                break;
+                        }
+                        dialog.dismiss();
+                    }
+                })
+                .show();
+    }
+
+    public void saveRenamedTagResult(final String renamedTagTitle, Tag tag) {
+        KLog.e("=====" + renamedTagTitle);
+        if (!renamedTagTitle.equals("") && !tag.getTitle().equals(renamedTagTitle)) {
+            final String destTagId = tag.getId().replace(tag.getTitle(), renamedTagTitle);
+            final String sourceTagId = tag.getId();
+            DataApi.i().renameTag(sourceTagId, destTagId, new StringCallback() {
+                @Override
+                public void onSuccess(Response<String> response) {
+                    if (!response.body().equals("OK")) {
+                        this.onError(response);
+                        return;
+                    }
+                    Tag tag = WithDB.i().getTag(sourceTagId);
+                    if (tag == null) {
+                        return;
+                    }
+                    WithDB.i().delTag(tag);
+                    tag.setId(destTagId);
+                    tag.setTitle(renamedTagTitle);
+                    WithDB.i().insertTag(tag);
+                    WithDB.i().updateFeedsCategoryId(sourceTagId, destTagId);
+                    tagListAdapter.notifyDataSetChanged();
+                }
+
+                @Override
+                public void onError(Response<String> response) {
+                    ToastUtil.showShort(getString(R.string.toast_rename_fail));
+                }
+            });
+        }
+    }
+
+    public void showFeedDialog(final ExpandableListAdapterS.ItemViewHolder itemView, final Feed feed) {
+        if (feed == null) {
+            return;
+        }
+        // 重命名弹窗的适配器
+        MaterialSimpleListAdapter adapter = new MaterialSimpleListAdapter(MainActivity.this);
+        adapter.add(new MaterialSimpleListItem.Builder(MainActivity.this)
+                .content(R.string.main_tag_dialog_rename)
+                .icon(R.drawable.dialog_ic_rename)
+                .backgroundColor(Color.TRANSPARENT)
+                .build());
+        adapter.add(new MaterialSimpleListItem.Builder(MainActivity.this)
+                .content(R.string.main_tag_dialog_unsubscribe)
+                .icon(R.drawable.dialog_ic_unsubscribe)
+                .backgroundColor(Color.TRANSPARENT)
+                .build());
+        new MaterialDialog.Builder(MainActivity.this)
+                .adapter(adapter, new MaterialDialog.ListCallback() {
+                    @Override
+                    public void onSelection(MaterialDialog dialog, View view, int which, CharSequence text) {
+                        switch (which) {
+                            case 0:
+                                new MaterialDialog.Builder(MainActivity.this)
+                                        .title(R.string.rename)
+                                        .inputType(InputType.TYPE_CLASS_TEXT)
+                                        .inputRange(1, 22)
+                                        .input(null, feed.getTitle(), new MaterialDialog.InputCallback() {
+                                            @Override
+                                            public void onInput(MaterialDialog dialog, CharSequence input) {
+                                                saveRenameFeedResult(input.toString(), feed);
+                                            }
+                                        })
+                                        .positiveText(R.string.confirm)
+                                        .negativeText(android.R.string.cancel)
+                                        .show();
+                                break;
+                            case 1:
+
+                                DataApi.i().unsubscribeFeed(feed.getId(), new StringCallback() {
+                                    @Override
+                                    public void onSuccess(Response<String> response) {
+                                        if (!response.body().equals("OK")) {
+                                            this.onError(response);
+                                            return;
+                                        }
+                                        WithDB.i().delFeed(feed);
+//                                        KLog.e("移除" + itemView.groupPos + "  " + itemView.childPos );
+                                        tagListAdapter.removeChild(itemView.groupPos, itemView.childPos);
+                                        tagListAdapter.notifyDataSetChanged();
+                                    }
+
+                                    @Override
+                                    public void onError(Response<String> response) {
+                                        ToastUtil.showShort(getString(R.string.toast_unsubscribe_fail));
+                                    }
+                                });
+                                break;
+                        }
+                        dialog.dismiss();
+                    }
+                })
+                .show();
+    }
+
+    public void saveRenameFeedResult(final String renamedTitle, Feed feed) {
+        final String feedId = feed.getId();
+        KLog.e("=====" + renamedTitle + feedId);
+        if (!renamedTitle.equals("") && !feed.getTitle().equals(renamedTitle)) {
+            DataApi.i().renameFeed(feedId, renamedTitle, new StringCallback() {
+                @Override
+                public void onSuccess(Response<String> response) {
+                    if (!response.body().equals("OK")) {
+                        this.onError(response);
+                        return;
+                    }
+                    Feed feed = WithDB.i().getFeed(feedId);
+                    if (feed == null) {
+                        return;
+                    }
+                    feed.setTitle(renamedTitle);
+                    WithDB.i().updateFeed(feed);
+                    tagListAdapter.notifyDataSetChanged();
+                }
+
+                @Override
+                public void onError(Response<String> response) {
+                    ToastUtil.showShort(getString(R.string.toast_rename_fail));
+                }
+            });
+        }
+    }
+
+
+//    //定义一个startActivityForResult（）方法用到的整型值
+//    public void onTagIconClicked(View view){
+//        Intent intent = new Intent(MainActivity.this, TagActivity.class);
+//        intent.putExtra("ListState", App.StreamState);
+//        intent.putExtra("ListTag", App.StreamId);
+//        intent.putExtra("ListCount", App.articleList.size());
+////        intent.putExtra("NoTagCount", getNoTagList2().size());
+//        startActivityForResult(intent, 0);
+//        overridePendingTransition(R.anim.in_from_bottom, R.anim.exit_anim );
+//    }
+
+
+    public void initArtListView() {
+//        initSlvMenu();
+        artListView = (ListViewS) findViewById(R.id.main_slv);
+//        artListView = (ListView) findViewById(R.id.main_slv);
+//        artListView = (SlideAndDragListView) findViewById(R.id.main_slv);
+        if (artListView == null) return;
+//        artListView.setMenu(mMenu);
+//        artListView.setOnListItemClickListener(new SlideAndDragListView.OnListItemClickListener() {
+//            @Override
+//            public void onListItemClick(View v, int position) {
+////                KLog.e("【 TagList 被点击】");
+//                if(position==-1){return;}
+//                String articleID = App.articleList.get(position).getId();
+//                Intent intent = new Intent(MainActivity.this , ArticleActivity.class);
+//                intent.putExtra("articleID", articleID);
+//                intent.putExtra("articleNo", position); // 下标从 0 开始
+//                intent.putExtra("articleCount", App.articleList.size());
+//                startActivityForResult(intent, 0);
+////                KLog.i("点击了" + articleID + position + "-" + App.articleList.size());
+//            }
+//        });
+
+//        artListView.setOnSlideListener(new SlideAndDragListView.OnSlideListener() {
+//            @Override
+//            public int onSlideOpen(View view, View parentView, int position, int direction) {
+//                if (position == -1) {
+//                    return Menu.ITEM_NOTHING;
+//                }
+//                Article article = App.articleList.get(position);
+//                switch (direction) {
+//                    case MenuItem.DIRECTION_LEFT:
+//                        changeStarState(article);
+//                        return Menu.ITEM_SCROLL_BACK;
+//                    case MenuItem.DIRECTION_RIGHT:
+//                        changeReadState(article);
+//                        c = position;
+//                        return Menu.ITEM_SCROLL_BACK;
+//                }
+//                return Menu.ITEM_NOTHING;
+//            }
+//
+//            @Override
+//            public void onSlideClose(View view, View parentView, int position, int direction) {
+//            }
+//        });
+        artListView.setOnListItemLongClickListener(new ListViewS.OnListItemLongClickListener() {
+            @Override
+            public void onListItemLongClick(View view, final int position) {
+                KLog.d("长按===");
+                final MaterialSimpleListAdapter adapter = new MaterialSimpleListAdapter(MainActivity.this);
+                adapter.add(new MaterialSimpleListItem.Builder(MainActivity.this)
+                        .content(R.string.main_slv_dialog_mark_up)
+                        .icon(R.drawable.dialog_ic_mark_up)
+                        .backgroundColor(Color.WHITE)
+                        .build());
+                adapter.add(new MaterialSimpleListItem.Builder(MainActivity.this)
+                        .content(R.string.main_slv_dialog_mark_down)
+                        .icon(R.drawable.dialog_ic_mark_down)
+                        .backgroundColor(Color.WHITE)
+                        .build());
+                adapter.add(new MaterialSimpleListItem.Builder(MainActivity.this)
+                        .content(R.string.main_slv_dialog_mark_unread)
+                        .icon(R.drawable.dialog_ic_mark_unread)
+                        .backgroundColor(Color.WHITE)
+                        .build());
+
+                new MaterialDialog.Builder(MainActivity.this)
+                        .adapter(adapter, new MaterialDialog.ListCallback() {
+                            @Override
+                            public void onSelection(MaterialDialog dialog, View itemView, int which, CharSequence text) {
+                                ArrayList<Article> artList = new ArrayList<>();
+                                int i = 0, num = 0;
+                                switch (which) {
+                                    case 0:
+                                        i = 0;
+                                        num = position + 1;
+                                        artList = new ArrayList<>(position + 1);
+                                        break;
+                                    case 1:
+                                        i = position;
+                                        num = App.articleList.size();
+                                        artList = new ArrayList<>(num - position - 1);
+                                        break;
+                                    case 2:
+                                        Article article = App.articleList.get(position);
+                                        DataApi.i().markArticleUnread(article.getId(), null);
+                                        article.setReadState(Api.ART_UNREADING);
+                                        WithDB.i().saveArticle(article);
+                                        artListAdapter.notifyDataSetChanged();
+                                        break;
+                                }
+
+                                for (int n = i; n < num; n++) {
+                                    if (App.articleList.get(n).getReadState().equals(Api.ART_UNREAD)) {
+                                        App.articleList.get(n).setReadState(Api.ART_READED);
+                                        artList.add(App.articleList.get(n));
+                                    }
+                                }
+                                addReadedList(artList);
+                                dialog.dismiss();
+                            }
+                        })
+                        .show();
+            }
+        });
+
+        artListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 if(position==-1){return;}
                 String articleID = App.articleList.get(position).getId();
                 Intent intent = new Intent(MainActivity.this , ArticleActivity.class);
@@ -677,48 +796,27 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
 //                KLog.i("点击了" + articleID + position + "-" + App.articleList.size());
             }
         });
-        slv.setOnSlideListener(new SlideAndDragListView.OnSlideListener() {
+        artListView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
             @Override
-            public int onSlideOpen(View view, View parentView, int position, int direction) {
-                if (position == -1) {
-                    return Menu.ITEM_NOTHING;
-                }
-                Article article = App.articleList.get(position);
-                switch (direction) {
-                    case MenuItem.DIRECTION_LEFT:
-                        changeStarState(article);
-                        return Menu.ITEM_SCROLL_BACK;
-                    case MenuItem.DIRECTION_RIGHT:
-                        changeReadState(article);
-                        return Menu.ITEM_SCROLL_BACK;
-                }
-                return Menu.ITEM_NOTHING;
-            }
-
-            @Override
-            public void onSlideClose(View view, View parentView, int position, int direction) {
-            }
-        });
-        slv.setOnListItemLongClickListener(new SlideAndDragListView.OnListItemLongClickListener() {
-            @Override
-            public void onListItemLongClick(View view,final int position) {
+            public boolean onItemLongClick(AdapterView<?> parent, View view, final int position, long id) {
                 KLog.d("长按===");
                 final MaterialSimpleListAdapter adapter = new MaterialSimpleListAdapter( MainActivity.this);
                 adapter.add(new MaterialSimpleListItem.Builder(MainActivity.this)
-                        .content("向上标记已读")
-                        .icon(R.drawable.ic_vector_mark_after)
+                        .content(R.string.main_slv_dialog_mark_up)
+                        .icon(R.drawable.dialog_ic_mark_up)
                         .backgroundColor(Color.WHITE)
                         .build());
                 adapter.add(new MaterialSimpleListItem.Builder(MainActivity.this)
-                        .content("向下标记已读")
-                        .icon(R.drawable.ic_vector_mark_before)
+                        .content(R.string.main_slv_dialog_mark_down)
+                        .icon(R.drawable.dialog_ic_mark_down)
                         .backgroundColor(Color.WHITE)
                         .build());
                 adapter.add(new MaterialSimpleListItem.Builder(MainActivity.this)
-                        .content("标记为未读")
-                        .icon(R.drawable.ic_vector_unread)
+                        .content(R.string.main_slv_dialog_mark_unread)
+                        .icon(R.drawable.dialog_ic_mark_unread)
                         .backgroundColor(Color.WHITE)
                         .build());
+
                 new MaterialDialog.Builder(MainActivity.this)
                         .adapter(adapter, new MaterialDialog.ListCallback() {
                             @Override
@@ -738,17 +836,16 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
                                         break;
                                     case 2:
                                         Article article = App.articleList.get(position);
-//                                        startAction("unreadArticle",article.getId());
-                                        mNeter.markArticleUnread(article.getId());
-                                        article.setReadState(API.ART_UNREADING);
+                                        DataApi.i().markArticleUnread(article.getId(), null);
+                                        article.setReadState(Api.ART_UNREADING);
                                         WithDB.i().saveArticle(article);
-                                        mainSlvAdapter.notifyDataSetChanged();
+                                        artListAdapter.notifyDataSetChanged();
                                         break;
                                 }
 
                                 for(int n = i; n< num; n++){
-                                    if (App.articleList.get(n).getReadState().equals(API.ART_UNREAD)) {
-                                        App.articleList.get(n).setReadState(API.ART_READED);
+                                    if (App.articleList.get(n).getReadState().equals(Api.ART_UNREAD)) {
+                                        App.articleList.get(n).setReadState(Api.ART_READED);
                                         artList.add(App.articleList.get(n));
                                     }
                                 }
@@ -757,59 +854,158 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
                             }
                         })
                         .show();
+                return true;
+            }
+        });
+
+
+        artListView.setOnAdapterSlideListenerProxy(new ListViewS.OnAdapterSlideListenerProxy() {
+            @Override
+            public void onUpdate(View view, int position, float offset) {
+                // 推测由于该函数 getView 已经生成了 View 所以不在更新了。使用 notifyDataSetChanged(); 也不行
+//                KLog.e("观察" + offset + "  " + lastOffset);
+//                MainSlvAdapter.CustomViewHolder itemViewHolder;
+//                int firstVisiblePosition = artListView.getFirstVisiblePosition(); //屏幕内当前可以看见的第一条数据
+//                if( position-firstVisiblePosition>=0){
+//                    View itemView = artListView.getChildAt(position - firstVisiblePosition);
+//                    itemViewHolder = (MainSlvAdapter.CustomViewHolder) itemView.getTag();
+//
+//                    if( offset < -0.6 && hadChanged==false ){
+//                        if( (offset - lastOffset) >  0 ){ // 向右滑
+//                            itemViewHolder.markLeft.setTextColor( getResources().getColor(R.color.crimson));
+//                            hadChanged=true;
+//                        }else {
+//                            itemViewHolder.markLeft.setTextColor( getResources().getColor(R.color.colorPrimary));
+//                            hadChanged=false;
+//                        }
+//                        KLog.e("变色" );
+//
+//                    }else if( offset > 0.6 && hadChanged==false ){
+//                        KLog.e("变色" );
+//                        if( ( offset - lastOffset ) >  0 ){ // 向左滑
+//                            itemViewHolder.markLeft.setTextColor( getResources().getColor(R.color.crimson));
+//                            hadChanged=true;
+//                        }else {
+//                            itemViewHolder.markLeft.setTextColor( getResources().getColor(R.color.colorPrimary));
+//                            hadChanged=false;
+//                        }
+//                    }
+//                }
+
+//                lastOffset = offset;
+            }
+
+            @Override
+            public void onCloseLeft(View view, int position, int direction) {
+                KLog.e("onCloseLeft：" + position + "  ");
+//                hadChanged=false;
+//                IconFontView leftMenuItem = (IconFontView) view.findViewById(R.id.main_list_item_menu_left);
+//                leftMenuItem.setTextColor(getResources().getColor(R.color.colorPrimary));
+//                artListAdapter.notifyDataSetChanged();
+                Article article = App.articleList.get(position);
+                changeStarState(article);
+            }
+
+            @Override
+            public void onCloseRight(View view, int position, int direction) {
+//                hadChanged=false;
+                int firstVisiblePosition = artListView.getFirstVisiblePosition(); //屏幕内当前可以看见的第一条数据
+                KLog.e("onCloseRight：" + position + "  " + firstVisiblePosition);
+//                if( position-firstVisiblePosition>=0){
+//                    View itemView = artListView.getChildAt(position - firstVisiblePosition);
+//                    MainSlvAdapter.CustomViewHolder itemViewHolder = (MainSlvAdapter.CustomViewHolder) itemView.getTag();
+//                    itemViewHolder.markRight.setTextColor(getResources().getColor(R.color.colorPrimary));
+//                    artListAdapter.notifyDataSetChanged();
+//                }
+
+
+                Article article = App.articleList.get(position);
+                changeReadState(article);
+            }
+
+            @Override
+            public void onClick(View view, int position) {
+                KLog.e("onClick" + position);
+                if (position == -1) {
+                    return;
+                }
+                String articleID = App.articleList.get(position).getId();
+                Intent intent = new Intent(MainActivity.this, ArticleActivity.class);
+                intent.putExtra("articleID", articleID);
+                intent.putExtra("articleNo", position); // 下标从 0 开始
+                intent.putExtra("articleCount", App.articleList.size());
+                startActivityForResult(intent, 0);
+//                KLog.i("点击了" + articleID + position + "-" + App.articleList.size());
+            }
+
+            @Override
+            public void log(String layout) {
+                KLog.e(layout);
             }
         });
     }
 
 
+    private void showSearchResult(String keyword) {
+//        List<Article> articles = WithDB.i().getSearchedArts( keyword );
+        App.i().updateArtList(WithDB.i().getSearchedArts(keyword));
+        App.StreamId = Api.U_Search;
+        App.StreamTitle = getString(R.string.main_toolbar_title_search) + keyword;
+        loadData();
+    }
 
     private void addReadedList(ArrayList<Article> artList){
         if(artList.size() == 0){return;}
+        List<String> articleIDs = new ArrayList<>(artList.size());
         for (Article article : artList) {
-            mNeter.markArticleReaded(article.getId());
-            changeItemNum(-1);
+            articleIDs.add(article.getId());
+            article.setReadState(Api.ART_READED);
         }
+        DataApi.i().markArticleListReaded(articleIDs, null);
+        changeItemNum(-artList.size());
+
         WithDB.i().saveArticleList(artList);
-        mainSlvAdapter.notifyDataSetChanged();
+        artListAdapter.notifyDataSetChanged();
     }
-    private void changeReadState(Article article){
-        if (article.getReadState().equals(API.ART_READED)) {
-            article.setReadState(API.ART_UNREADING);
-            mNeter.markArticleUnread(article.getId());
+
+    //    int c ;
+    private void changeReadState(final Article article) {
+        if (article.getReadState().equals(Api.ART_READED)) {
+            DataApi.i().markArticleUnread(article.getId(), null);
+            article.setReadState(Api.ART_UNREADING);
             changeItemNum( + 1 );
-//            ToastUtil.showShort("标为未读");
         }else {
-            article.setReadState(API.ART_READED);
-            mNeter.markArticleReaded(article.getId());
+            DataApi.i().markArticleReaded(article.getId(), null);
+            article.setReadState(Api.ART_READED);
             changeItemNum( - 1 );
-//            ToastUtil.showShort("标为已读");
         }
         WithDB.i().saveArticle(article);
-        mainSlvAdapter.notifyDataSetChanged();
+        artListAdapter.notifyDataSetChanged();
     }
 
-    protected void changeStarState(Article article){
-        if (article.getStarState().equals(API.ART_STARED)) {
-            article.setStarState(API.ART_UNSTAR);
-            mNeter.markArticleUnstar(article.getId());
+
+    private void changeStarState(final Article article) {
+        if (article.getStarState().equals(Api.ART_STARED)) {
+            article.setStarState(Api.ART_UNSTAR);
+            DataApi.i().markArticleUnstar(article.getId(), null);
         }else {
-            article.setStarState(API.ART_STARED);
-            mNeter.markArticleStared(article.getId());
+            article.setStarState(Api.ART_STARED);
+            DataApi.i().markArticleStared(article.getId(), null);
+            article.setStarred(System.currentTimeMillis() / 1000);
         }
         WithDB.i().saveArticle(article);
-        mainSlvAdapter.notifyDataSetChanged();
+        artListAdapter.notifyDataSetChanged();
     }
-
 
     @Override
     public void onClick(View v) {
         switch (v.getId()) {
             case R.id.main_toolbar:
-                if (mainHandler.hasMessages(API.MSG_DOUBLE_TAP)) {
-                    mainHandler.removeMessages(API.MSG_DOUBLE_TAP);
-                    slv.smoothScrollToPosition(0);
+                if (maHandler.hasMessages(Api.MSG_DOUBLE_TAP)) {
+                    maHandler.removeMessages(Api.MSG_DOUBLE_TAP);
+                    artListView.smoothScrollToPosition(0);
                 } else {
-                    mainHandler.sendEmptyMessageDelayed(API.MSG_DOUBLE_TAP, ViewConfiguration.getDoubleTapTimeout());
+                    maHandler.sendEmptyMessageDelayed(Api.MSG_DOUBLE_TAP, ViewConfiguration.getDoubleTapTimeout());
                 }
                 break;
         }
@@ -822,30 +1018,25 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
 //        KLog.e("------------------------------------------" + resultCode + requestCode);
         switch (resultCode){
             // 这一段应该用不到了
-            case API.ActivityResult_TagToMain:
-//                tagCount = intent.getExtras().getInt("tagCount");
-                listTagId = intent.getExtras().getString("tagId");
-                listTitle = intent.getExtras().getString("tagTitle");
-                if (listTagId == null || listTagId.equals("")) {
-                    listTagId = "user/" + App.mUserID + "/state/com.google/reading-list";
-                }
-                WithSet.i().setListTagId(listTagId);
-                reloadData();
+            case Api.ActivityResult_TagToMain:
+                refreshData(); // TagToMain
                 break;
-            case API.ActivityResult_ArtToMain:
-                final int articleNo = intent.getExtras().getInt("articleNo");
-                slvSetSelection(articleNo);
+            case Api.ActivityResult_ArtToMain:
+                int articleNo = intent.getExtras().getInt("articleNo"); // 在文章页的时候读到了第几篇文章，好让列表也自动将该项置顶
+                if (articleNo > artListView.getLastVisiblePosition()) {
+                    slvSetSelection(articleNo);
+                }
+                KLog.e("【onActivityResult】" + articleNo + "  " + artListView.getLastVisiblePosition());
                 break;
         }
-//                KLog.e("【onActivityResult】" + listTagId + listTabState);
     }
 
     // 滚动到指定位置
     private void slvSetSelection(final int position) {
-        mainHandler.post(new Runnable() {
+        artListView.post(new Runnable() {
             @Override
             public void run() {
-                slv.setSelection(position);
+                artListView.setSelection(position); // 不能直接用这个，无法滚动
             }
         });
         KLog.e("【setSelection】" + position);
@@ -856,7 +1047,7 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
      */
     @Override
     protected Colorful.Builder buildColorful(Colorful.Builder mColorfulBuilder) {
-        ViewGroupSetter artListViewSetter = new ViewGroupSetter(slv);
+        ViewGroupSetter artListViewSetter = new ViewGroupSetter(artListView);
         // 绑定ListView的Item View中的news_title视图，在换肤时修改它的text_color属性
         artListViewSetter.childViewTextColor(R.id.main_slv_item_title, R.attr.lv_item_title_color);
         artListViewSetter.childViewTextColor(R.id.main_slv_item_summary, R.attr.lv_item_desc_color);
@@ -864,6 +1055,7 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
         artListViewSetter.childViewTextColor(R.id.main_slv_item_time, R.attr.lv_item_info_color);
         artListViewSetter.childViewBgColor(R.id.main_slv_item_divider, R.attr.lv_item_divider);
         artListViewSetter.childViewBgColor(R.id.main_slv_item, R.attr.root_view_bg);
+        artListViewSetter.childViewBgColor(R.id.main_list_item_surface, R.attr.root_view_bg);
 
         ViewGroupSetter tagListViewSetter = new ViewGroupSetter(tagListView);
         // 绑定ListView的Item View中的news_title视图，在换肤时修改它的text_color属性
@@ -871,18 +1063,20 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
 //        tagListViewSetter.childViewTextColor(R.id.tag_slv_item_title, R.attr.lv_item_title_color);
 //        tagListViewSetter.childViewTextColor(R.id.tag_slv_item_count, R.attr.lv_item_desc_color);
 //        tagListViewSetter.childViewBgColor(R.id.tag_slv_item,R.attr.bottombar_bg); // 这个不生效，反而会影响底色修改
+//        tagListViewSetter.childViewTextColor(R.id.header_item_icon, R.attr.tag_slv_item_icon);
+//        tagListViewSetter.childViewTextColor(R.id.header_item_title, R.attr.lv_item_title_color);
+//        tagListViewSetter.childViewTextColor(R.id.header_item_count, R.attr.lv_item_desc_color);
+//        tagListViewSetter.childViewBgColor(R.id.header_item, R.attr.bottombar_bg);
 
-        tagListViewSetter.childViewTextColor(R.id.header_item_icon, R.attr.tag_slv_item_icon);
-        tagListViewSetter.childViewTextColor(R.id.header_item_title, R.attr.lv_item_title_color);
-        tagListViewSetter.childViewTextColor(R.id.header_item_count, R.attr.lv_item_desc_color);
-        tagListViewSetter.childViewBgColor(R.id.header_item, R.attr.bottombar_bg);
-
+        tagListViewSetter.childViewBgColor(R.id.group_item, R.attr.bottombar_bg);
         tagListViewSetter.childViewTextColor(R.id.group_item_icon, R.attr.tag_slv_item_icon);
         tagListViewSetter.childViewTextColor(R.id.group_item_title, R.attr.lv_item_title_color);
         tagListViewSetter.childViewTextColor(R.id.group_item_count, R.attr.lv_item_desc_color);
 
+        tagListViewSetter.childViewBgColor(R.id.child_item, R.attr.bottombar_bg);
         tagListViewSetter.childViewTextColor(R.id.child_item_title, R.attr.lv_item_title_color);
         tagListViewSetter.childViewTextColor(R.id.child_item_count, R.attr.lv_item_desc_color);
+
 
 
         mColorfulBuilder
@@ -893,10 +1087,15 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
                 .textColor(R.id.main_scrolllayout_title, R.attr.bottombar_fg)
                 .backgroundColor(R.id.main_scrolllayout_divider, R.attr.bottombar_divider)
 
+                .textColor(R.id.header_item_icon, R.attr.tag_slv_item_icon)
+                .textColor(R.id.header_item_title, R.attr.lv_item_title_color)
+                .textColor(R.id.header_item_count, R.attr.lv_item_desc_color)
+//                .backgroundColor(R.id.header_item, R.attr.bottombar_bg)
+
                 // 设置 toolbar
                 .backgroundColor(R.id.main_toolbar, R.attr.topbar_bg)
                 .textColor(R.id.main_toolbar_hint, R.attr.topbar_fg)
-                .textColor(R.id.main_toolbar_readability, R.attr.topbar_fg)
+//                .textColor(R.id.main_toolbar_readability, R.attr.topbar_fg)
 
                 // 设置 bottombar
                 .backgroundColor(R.id.main_bottombar, R.attr.bottombar_bg)
@@ -912,64 +1111,101 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
         return mColorfulBuilder;
     }
 
-
-    public void showSelectThemeDialog() {
-//        selectTheme = ScreenUtil.resolveColor( this,R.attr.colorPrimary, 0);
-        new ColorChooserDialog.Builder(this, R.string.readability_dialog_title)
-//                .titleSub(R.string.md_custom_tag)
-                .customColors(R.array.theme_colors, null)
-                .preselect(0) // 预先选择
-                .show();
-        KLog.d("主题选择对话框");
-    }
-
     @Override
     public void onColorSelection(@NonNull ColorChooserDialog dialog, @ColorInt int color) {
-//        selectTheme = color;
         KLog.e("被选择的颜色：" + color);
         manualToggleTheme();
     }
+//    public void showSelectThemeDialog() {
+////        selectTheme = ScreenUtil.resolveColor( this,R.attr.colorPrimary, 0);
+//        new ColorChooserDialog.Builder(this, R.string.readability_dialog_title)
+////                .titleSub(R.string.md_custom_tag)
+//                .customColors(R.array.theme_colors, null)
+//                .preselect(0) // 预先选择
+//                .show();
+//        KLog.d("主题选择对话框");
+//    }
 
     public void onSettingIconClicked(View view){
         Intent intent = new Intent(this, SettingActivity.class);
         startActivityForResult(intent, 0);
+
+//        Intent intent = new Intent(this, TestActivity.class);
+//        startActivity(intent);
+
     }
-    //定义一个startActivityForResult（）方法用到的整型值
-    public void onTagIconClicked(View view){
-//        Intent intent = new Intent(MainActivity.this,TagActivity.class);
-//        intent.putExtra("ListState", listTabState);
-//        intent.putExtra("ListTag", listTagId);
-//        intent.putExtra("ListCount", App.articleList.size());
-//        intent.putExtra("NoTagCount",getNoTagList().size());
-//        startActivityForResult(intent, 0);
+
+    private View settingview;
+
+    public void onSettingIconClickedForDialog() {
+//        if(settingview==null){
+//            settingview = (View)findViewById(R.id.main_settingview);
+//        }
+//        if(settingview.getVisibility()==View.GONE){
+//            settingview.setVisibility(View.VISIBLE);
+//        }else {
+//            settingview.setVisibility(View.GONE);
+//        }
+    }
+
+    public void OnIconClickedAutoSync(View view) {
+        if (!mSwipeRefreshLayoutS.isEnabled()) {
+            return;
+        }
+        startSyncService();
+        KLog.e("OnIconClickedAutoSync图标被点击");
+        settingview.setVisibility(View.GONE);
+    }
+
+    public void OnIconClickedAutoTheme(View view) {
+        manualToggleTheme();
+        view.setBackgroundColor(getResources().getColor(R.color.colorPrimary));
+        KLog.e("OnIconClickedAutoTheme图标被点击");
+        settingview.setVisibility(View.GONE);
+    }
+
+    public void OnIconClickedAutoImg(View view) {
+        KLog.e("OnIconClickedAutoImg图标被点击");
+        if (WithSet.i().isDownImgWifi()) {
+            WithSet.i().setDownImgWifi(false);
+        } else {
+            WithSet.i().setDownImgWifi(true);
+        }
+        settingview.setVisibility(View.GONE);
+    }
+
+    public void OnIconClickedMore(View view) {
+        KLog.e("OnIconClickedMore图标被点击");
+        Intent intent = new Intent(this, SettingActivity.class);
+        startActivityForResult(intent, 0);
+        settingview.setVisibility(View.GONE);
     }
 
     public void onStarIconClicked(View view){
-        KLog.d(listTagId + listTabState + listTitle);
-        KLog.d("收藏列表" + listTagId + listTabState + listTitle);
-        if (listTabState.equals(API.LIST_STARED)) {
+        KLog.d(App.StreamId + App.StreamState + App.StreamTitle);
+        KLog.d("收藏列表" + App.StreamId + App.StreamState + App.StreamTitle);
+        if (App.StreamState.equals(Api.ART_STARED)) {
             ToastUtil.showShort("已经在收藏列表了");
         }else {
-            vStarIcon.setText(getString(R.string.font_stared));
-            vReadIcon.setText(getString(R.string.font_readed));
+            vStarIcon.setText(R.string.font_stared);
+            vReadIcon.setText(R.string.font_readed);
 
-            listTabState = API.LIST_STARED;
-            WithSet.i().setListTabState(listTabState);
-            reloadData();
+            App.StreamState = Api.ART_STARED;
+            WithSet.i().setStreamState(App.StreamState);
+            refreshData(); // 点击StarIcon时
         }
     }
     public void onReadIconClicked(View view){
-        KLog.d(listTagId + listTabState + listTitle);
-        vStarIcon.setText(getString(R.string.font_unstar));
-        if (listTabState.equals(API.LIST_UNREAD)) {
-            vReadIcon.setText(getString(R.string.font_readed));
-            listTabState = API.LIST_ALL;
+        vStarIcon.setText(R.string.font_unstar);
+        if (App.StreamState.equals(Api.ART_UNREAD)) {
+            vReadIcon.setText(R.string.font_readed);
+            App.StreamState = Api.ART_ALL;
         }else {
-            vReadIcon.setText(getString(R.string.font_unread));
-            listTabState = API.LIST_UNREAD;
+            vReadIcon.setText(R.string.font_unread);
+            App.StreamState = Api.ART_UNREAD;
         }
-        WithSet.i().setListTabState(listTabState);
-        reloadData();
+        WithSet.i().setStreamState(App.StreamState);
+        refreshData();// 点击ReadIcon时
     }
 
 
@@ -985,6 +1221,7 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
             } else {
                 quitDialog();// 创建弹出的Dialog
             }
+//            quitDialog();// 创建弹出的Dialog
             return true;//返回真表示返回键被屏蔽掉
         }
         return super.onKeyDown(keyCode, event);
@@ -992,14 +1229,14 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
 
     private void quitDialog() {
         new AlertDialog.Builder(this)
-                .setMessage("确定退出app?")
-                .setPositiveButton("好滴 ^_^",new DialogInterface.OnClickListener() {
+                .setMessage(R.string.main_dialog_esc_confirm)
+                .setPositiveButton(R.string.main_dialog_esc_positive, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        App.finishAll();
+                        System.exit(0);
                     }
                 })
-                .setNegativeButton("不！", new DialogInterface.OnClickListener() {
+                .setNegativeButton(R.string.main_dialog_esc_negative, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         dialog.dismiss();
@@ -1019,23 +1256,31 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
         // setDisplayShowCustomEnabled(true)  // 使自定义的普通View能在title栏显示，即actionBar.setCustomView能起作用，对应ActionBar.DISPLAY_SHOW_CUSTOM
     }
 
-    public void initSlvMenu() {
-        mMenu = new Menu(new ColorDrawable(Color.WHITE), true, 0);//第2个参数表示滑动item是否能滑的过量(true表示过量，就像Gif中显示的那样；false表示不过量，就像QQ中的那样)
-        mMenu.addItem(new MenuItem.Builder().setWidth(ScreenUtil.get2Px(this, R.dimen.slv_menu_left_width))
-                .setBackground(new ColorDrawable(getResources().getColor(R.color.white)))
-                .setIcon(getResources().getDrawable(R.drawable.ic_vector_menu_star, null)) // 插入图片
-//                .setTextSize((int) getResources().getDimension(R.dimen.txt_size))
-//                .setTextColor(ScreenUtil.getColor(R.color.crimson))
-//                .setText("加星")
-                .build());
-        mMenu.addItem(new MenuItem.Builder().setWidth(ScreenUtil.get2Px(this, R.dimen.slv_menu_right_width))
-                .setBackground(new ColorDrawable(getResources().getColor(R.color.white)))
-                .setIcon(getResources().getDrawable(R.drawable.ic_vector_menu_adjust, null))
-                .setDirection(MenuItem.DIRECTION_RIGHT) // 设置是左或右
-//                .setTextColor(R.color.white)
-//                .setTextSize(ScreenUtil.getDimen(this, R.dimen.txt_size))
+
+//    public void initSlvMenu() {
+////        menuResId = new ArrayMap<>();
+////        menuResId.put()
+//        mMenu = new Menu(new ColorDrawable(Color.WHITE), true, 0);//第2个参数表示滑动item是否能滑的过量(true表示过量，就像Gif中显示的那样；false表示不过量，就像QQ中的那样)
+//        mMenu.addItem(new MenuItem.Builder().setWidth(ScreenUtil.get2Px(this, R.dimen.slv_menu_left_width))
+//                .setBackground(new ColorDrawable(getResources().getColor(R.color.white)))
+//                .setIcon(getResources().getDrawable(R.drawable.slv_menu_ic_star, null)) // 插入图片
+////                .setTextSize((int) getResources().getDimension(R.dimen.txt_size))
+////                .setTextColor(ScreenUtil.getColor(R.color.crimson))
+//                .setText(getString(R.string.font_stared))
+//                .build());
+//        res = View.generateViewId();
+//
+//        mMenu.addItem(new MenuItem.Builder().setWidth(ScreenUtil.get2Px(this, R.dimen.slv_menu_right_width))
+//                .setDirection(MenuItem.DIRECTION_RIGHT) // 设置是左或右
+//                .setBackground(new ColorDrawable(getResources().getColor(R.color.white)))
+//                .setIcon(getResources().getDrawable(R.drawable.slv_menu_ic_adjust, null))
+////                .setTextColor(R.color.white)
+////                .setTextSize(ScreenUtil.getDimen(this, R.dimen.txt_size))
 //                .setText("已读")
-                .build());
-        mMenu.getItemBackGroundDrawable();
-    }
+//                .build());
+//    }
+
+
+
+
 }

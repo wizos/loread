@@ -33,8 +33,15 @@
                 android:id="@+id/main_toolbar_readability"
                 style="@style/top_bar_iconfont"
                 android:layout_gravity="end|center"
-                android:text="@string/font_readability" />
+                android:text="@string/font_theme" />
+
+            <me.wizos.loread.view.IconFontView
+                android:id="@+id/main_toolbar_search"
+                style="@style/top_bar_iconfont"
+                android:layout_gravity="end|center"
+                android:text="@string/font_search" />
         </android.support.v7.widget.Toolbar>
+
     </android.support.design.widget.AppBarLayout>
 
     <me.wizos.loread.view.SwipeRefreshLayoutS
@@ -49,7 +56,19 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:orientation="vertical">
-            <com.yydcdut.sdlv.SlideAndDragListView
+            <!--<com.yydcdut.sdlv.SlideAndDragListView-->
+            <!--android:id="@+id/main_slv"-->
+            <!--app:layout_behavior="@string/appbar_scrolling_view_behavior"-->
+            <!--android:layout_width="match_parent"-->
+            <!--android:layout_height="match_parent"-->
+            <!--android:layout_marginLeft="12dp"-->
+            <!--android:layout_marginRight="12dp"-->
+            <!--android:animateLayoutChanges="true"-->
+            <!--android:headerDividersEnabled="false"-->
+            <!--android:layout_above="@+id/main_bottombar">-->
+            <!--</com.yydcdut.sdlv.SlideAndDragListView>-->
+
+            <me.wizos.loread.view.ListViewS
                 android:id="@+id/main_slv"
                 app:layout_behavior="@string/appbar_scrolling_view_behavior"
                 android:layout_width="match_parent"
@@ -58,29 +77,24 @@
                 android:layout_marginRight="12dp"
                 android:animateLayoutChanges="true"
                 android:headerDividersEnabled="false"
-                android:layout_above="@+id/main_bottombar">
-            </com.yydcdut.sdlv.SlideAndDragListView>
+                android:background="?attr/root_view_bg"
+                android:layout_above="@+id/main_bottombar"></me.wizos.loread.view.ListViewS>
 
 
-            <!--android:background="@android:color/transparent"-->
-            <!--android:animateLayoutChanges="true" 属性只能用在ViewGroup控件里，表示容器里面布局改变时有默认的动画效果，比如说添加控件，删除控件的时候就是默认的动画效果。-->
-            <!--或者创建一个LayoutTransition对象，并在容器布局调用setLayoutTransition(LayoutTransition)方法-->
-            <ImageView
+            <me.wizos.loread.view.IconFontView
                 android:id="@+id/main_placeholder"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:paddingLeft="188dp"
-                android:paddingRight="188dp"
-                android:visibility="gone"
-                android:src="@drawable/ic_vector_unread"
-                android:layout_above="@+id/main_bottombar"
-                tools:ignore="ContentDescription" />
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerInParent="true"
+                android:layout_marginBottom="@dimen/bottom_bar_height"
+                android:textSize="50sp"
+                android:text="@string/font_no_data" />
+
 
             <RelativeLayout
                 android:id="@+id/main_bottombar"
                 android:layout_width="match_parent"
                 android:layout_height="@dimen/bottom_bar_height"
-                android:onClick="onBottombarClicked"
                 android:layout_gravity="center_vertical|bottom"
                 android:layout_alignParentBottom="true"
                 android:background="?attr/bottombar_bg"
@@ -104,9 +118,9 @@
                     android:id="@id/main_bottombar_tag"
                     style="@style/bottom_bar_iconfont"
                     android:layout_centerInParent="true"
-                    android:text="@string/font_tag"
-                    android:onClick="onTagIconClicked" />
+                    android:text="@string/font_tag" />
 
+                <!--android:onClick="onTagIconClicked"-->
                 <me.wizos.loread.view.IconFontView
                     android:id="@+id/main_bottombar_read"
                     style="@style/bottom_bar_iconfont"
@@ -121,23 +135,45 @@
                     android:layout_alignParentStart="true"
                     android:onClick="onSettingIconClicked"/>
 
+                <!--<me.wizos.loread.view.IconIndicatorView-->
+                <!--android:id="@+id/main_bottombar_setting"-->
+                <!--android:layout_width="@dimen/bottom_bar_height"-->
+                <!--android:layout_height="match_parent"-->
+                <!--android:layout_alignParentStart="true"-->
+                <!--app:icon_text="@string/font_setting"-->
+                <!--app:icon_size="16sp"-->
+                <!--app:icon_color="?attr/bottombar_fg"-->
+                <!--app:indicator_color="@color/main_night_info"-->
+                <!--android:onClick="onSettingIconClicked"/>-->
+
+                <!--<include layout="@layout/cv_icon_indicator"/>-->
                 <View
                     android:layout_width="@dimen/bottom_bar_height"
                     android:layout_height="2dp"
                     android:background="@color/main_night_info"
                     android:layout_alignStart="@id/main_bottombar_tag" />
+
             </RelativeLayout>
 
+            <!--<include layout="@layout/settingview"-->
+            <!--android:id="@+id/main_settingview"-->
+            <!--android:layout_width="match_parent"-->
+            <!--android:layout_height="match_parent"-->
+            <!--android:visibility="gone"-->
+            <!--tools:visibility="visible"-->
+            <!--android:layout_above="@id/main_bottombar"/>-->
         </RelativeLayout>
     </me.wizos.loread.view.SwipeRefreshLayoutS>
 
     <!--android:background="?attr/bottombar_bg"-->
+
     <com.yinglan.scrolllayout.ScrollLayout
         android:id="@+id/scroll_down_layout"
         android:tag="scroll_down_layout"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="@color/shade"
+        android:visibility="gone"
         android:elevation="4dp">
         <!--因为悬停抽屉出现时，对屏幕其他区域做了遮罩，而这个遮罩的透明度其实对这个抽屉也会有影响，所以这里另加了一个遮罩-->
         <View
@@ -147,21 +183,10 @@
             android:layout_height="match_parent"
             android:background="?attr/bottombar_bg" />
 
-        <RelativeLayout
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent">
-
-            <me.wizos.loread.view.ExpandableListViewS
-                android:id="@+id/list_view"
-                android:tag="list_view"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:paddingTop="?attr/actionBarSize"
-                android:divider="?attr/lv_item_divider"
-                android:groupIndicator="@null"
-                android:fadingEdgeLength="4dp"
-                android:background="?attr/bottombar_bg"></me.wizos.loread.view.ExpandableListViewS>
-
+            android:layout_height="match_parent"
+            android:orientation="vertical">
             <TextView
                 android:id="@+id/main_scrolllayout_title"
                 android:layout_width="match_parent"
@@ -174,17 +199,29 @@
                 android:paddingBottom="10dp"
                 android:paddingStart="12dp"
                 android:paddingEnd="12dp"
-                android:text="想看哪个分类？" />
-
+                android:text="@string/tag_choose_tips" />
             <View
                 android:id="@+id/main_scrolllayout_divider"
                 android:layout_width="match_parent"
                 android:layout_height="0.5dp"
-                android:layout_below="@id/main_scrolllayout_title"
                 android:layout_marginStart="10dp"
                 android:layout_marginEnd="10dp"
                 android:background="?attr/bottombar_divider" />
-        </RelativeLayout>
+
+            <me.wizos.loread.view.ExpandableListViewS
+                android:id="@+id/list_view"
+                android:tag="list_view"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:divider="?attr/lv_item_divider"
+                android:groupIndicator="@null"
+                android:fadingEdgeLength="4dp"
+                android:background="?attr/bottombar_bg" />
+
+            <!--android:paddingTop="?attr/actionBarSize"-->
+
+
+        </LinearLayout>
     </com.yinglan.scrolllayout.ScrollLayout>
 
 </RelativeLayout>

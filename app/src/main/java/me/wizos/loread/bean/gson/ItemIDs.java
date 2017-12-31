@@ -20,6 +20,13 @@ public class ItemIDs {
     @SerializedName("continuation")
     String continuation;
 
+    public ItemIDs() {
+        items = new ArrayList<>();
+        itemRefs = new ArrayList<>();
+        continuation = null;
+    }
+
+
     public ArrayList<String> getItems() {
         return items;
     }
@@ -41,4 +48,10 @@ public class ItemIDs {
     public String getContinuation() {
         return continuation;
     }
+
+    public void addItemRefs(ArrayList<ItemRefs> itemRefs) {
+        this.itemRefs.addAll(itemRefs);
+    }
+
+
 }

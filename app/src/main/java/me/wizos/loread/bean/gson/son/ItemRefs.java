@@ -39,4 +39,14 @@ public class ItemRefs {
     public long getTimestampUsec() {
         return timestampUsec;
     }
+
+    public String getLongId() {
+        String idHex = Long.toHexString(Long.valueOf(id));
+        return "tag:google.com,2005:reader/item/" + String.format("%0" + (16 - idHex.length()) + "d", 0) + idHex;
+        // String.format("%0"+length+"d", arr) 中
+        // (16 - id.length())代表的是格式化后字符串的总长度。
+        // d是个占位符，会被arr所替换。arr必须是数字
+        // 0是在arr转化为字符后，长度达不到length的时候，前面以0 不足。
+        // 不能写出 "tag:google.com,2005:reader/item/" + String.format("%0" + 16 + "d", id)
+    }
 }
