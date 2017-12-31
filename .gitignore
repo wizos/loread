@@ -15,3 +15,8 @@ daogenerator/libs/
 app-release.apk
 /app/src/main/java/me/wizos/loread/dump/
 dump/
+/swipelayout/
+src/main/java/me/wizos/test/Test.java
+/daogenerator/src/main/java/me/wizos/test/Test.java
+/gradlew
+/gradlew.bat
