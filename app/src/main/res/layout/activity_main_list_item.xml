@@ -10,10 +10,10 @@
     android:layout_marginBottom="6dp"
     android:layout_marginStart="10dp"
     android:layout_marginEnd="10dp"
-    android:background="?attr/root_view_bg"
     tools:ShowIn="@layout/activity_main"
     android:orientation="vertical"
     android:baselineAligned="false">
+    <!--android:background="?attr/root_view_bg"-->
     <!--MarginStart指的是控件距离开头View部分的间距大小，MarginLeft则指的是控件距离左边View部分的间距大小，MarginEnd和MarginRight同理。-->
     <!--一般情况下，View开始部分就是左边，但是有的语言目前为止还是按照从右往左的顺序来书写的-->
     <com.ditclear.swipelayout.SwipeDragLayout
@@ -26,21 +26,23 @@
 
         <me.wizos.loread.view.IconFontView
             android:id="@+id/main_list_item_menu_left"
+            android:background="?attr/root_view_bg"
             android:layout_width="90dp"
             android:layout_height="match_parent"
             tools:visibility="visible"
             android:textColor="#5a8fca"
-            android:padding="30dp"
+            android:padding="20dp"
             android:textSize="12sp"
             android:text="@string/font_unread" />
 
         <me.wizos.loread.view.IconFontView
             android:id="@+id/main_list_item_menu_right"
+            android:background="?attr/root_view_bg"
             android:layout_width="90dp"
             android:layout_height="match_parent"
             tools:visibility="visible"
             android:textColor="#5a8fca"
-            android:padding="30dp"
+            android:padding="20dp"
             android:textSize="12sp"
             android:text="@string/font_unread" />
 

@@ -33,7 +33,7 @@ public class App extends Application{
     //    public final static int DB_VERSION = 4;
     public final static int theme_Day = 0;
     public final static int theme_Night = 1;
-    private final static boolean isDebug = false;
+    private final static boolean isDebug = true;
 
     // 跟使用的 API 有关的 字段
     public static long UserID;
@@ -122,7 +122,7 @@ public class App extends Application{
 
     public void readHost() {
         if (!WithSet.i().isInoreaderProxy()) {
-            Api.HOST = Api.HOST_OFFICIAL;
+            Api.HOST = InoApi.HOST;
         }else {
             Api.HOST = WithSet.i().getInoreaderProxyHost();
         }
@@ -157,7 +157,7 @@ public class App extends Application{
         // 读取代理配置
         readHost();
         // 读取验证
-        Api.INOREADER_ATUH = WithSet.i().getAuth();
+        InoApi.INOREADER_ATUH = WithSet.i().getAuth();
         // 读取uid
         UserID = WithSet.i().getUseId();
         syncFirstOpen = WithSet.i().isSyncFirstOpen();

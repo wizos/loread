@@ -102,7 +102,7 @@ public class TimeUtil {
     public static int getCurrentHour() {
         Calendar currentDate = new GregorianCalendar();
         int hour = currentDate.get(Calendar.HOUR_OF_DAY);
-        KLog.d("当前的小时为" + hour);
+        KLog.i("当前的小时为" + hour);
         return hour;
     }
 
@@ -128,28 +128,15 @@ public class TimeUtil {
         return dateHMS.format(getDateTime(0));
     }
 
-    public static String getFormatDate(Date date){
-        SimpleDateFormat dateYMD = new SimpleDateFormat("yyyy-MM-dd", Locale.CHINA);
-        return dateYMD.format(date);
-    }
 
-    public static String getDateMSec(Long stringDate) {
-        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm",Locale.CHINA);
-        Date date = new Date(stringDate);
-//        Timestamp date = new Timestamp( stringDate );
+    /**
+     * 将时间戳（毫秒）转换为时间（yyyy-MM-dd HH:mm:ss）
+     */
+    public static String stampToTime(long stamp, String pattern) {
+        SimpleDateFormat dateFormat = new SimpleDateFormat(pattern, Locale.CHINA);
+        Date date = new Date(stamp);
+//        Timestamp date = new Timestamp( stamp );
         return dateFormat.format(date);
     }
 
-    public static String getDateSec(Long stringDate) {
-        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.CHINA);
-        Date date = new Date(stringDate * 1000);
-//        Timestamp date = new Timestamp( stringDate );
-        return dateFormat.format(date);
-    }
-
-    public static String getFormatDateSec(Long stringDate) {
-        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.CHINA);
-        Date date = new Date(stringDate);
-        return dateFormat.format(date);
-    }
 }

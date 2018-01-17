@@ -49,17 +49,22 @@
     <!--给你的可滑动的组件，也就是RecyclerView 或者 NestedScrollView 设置如下属性：-->
     <!--app:layout_behavior="@string/appbar_scrolling_view_behavior"-->
 
-
-    <me.wizos.loread.view.ViewPagerS
-        android:id="@+id/art_viewpager"
+    <me.wizos.loread.view.SwipeRefreshLayoutS
+        android:id="@+id/art_swipe_refresh"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:persistentDrawingCache="animation"
-        app:layout_behavior="@string/appbar_scrolling_view_behavior"
+        android:layout_height="match_parent"
+        android:background="?attr/root_view_bg"
+        android:layout_below="@+id/art_appBarLayout"
         android:layout_marginBottom="90dp"
-        android:background="@color/white" />
+        tools:context=".activity.ArticleActivity">
 
-    <!--android:paddingBottom="40dp"-->
+        <me.wizos.loread.view.ViewPagerS
+            android:id="@+id/art_viewpager"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:persistentDrawingCache="animation"
+            android:background="?attr/root_view_bg" />
+    </me.wizos.loread.view.SwipeRefreshLayoutS>
     <RelativeLayout
         android:id="@+id/art_bottombar"
         android:layout_width="match_parent"

@@ -1,6 +1,6 @@
 <resources>
     <string name="app_name">知微</string>
-    <string name="app_version">1.0.2</string>
+    <string name="app_version">1.0.4</string>
     <string name="action_settings">设置</string>
     <string name="main_activity_title_all">所有</string>
     <string name="main_activity_title_untag">未分类</string>
@@ -20,6 +20,10 @@
     <!-- Strings related to Settings -->
     <string name="main_toolbar_hint_sync">同步%1$s</string>
     <string name="main_toolbar_title_search">搜索：</string>
+
+    <string name="search_result_summary">简介：%1$s | 订阅网址：%2$s</string>
+    <string name="search_result_subs">%1$d 人订阅 | 周更新 %2$s 篇</string>
+    <string name="search_result_last_update_time">上次更新 %1$s</string>
 
     <!--下面这个还没有用到-->
     <string name="main_toolbar_hint_clear_article">1 - 清除 %1$s 天之前的文章</string>
@@ -140,7 +144,11 @@
     <string name="font_unsave">&#xe604;</string>
     <string name="font_saved">&#xe605;</string>
     <string name="font_main">&#xe60c;</string>
-    <string name="font_add_subs">&#xe60c;</string>
+
+    <string name="font_add">&#xe699;</string>
+    <string name="font_right">&#xe636;</string>
+
+
     <string name="font_tag_class">&#xe7c4;</string>
 
     <string name="font_expand">&#xe6a6;</string>
@@ -157,8 +165,8 @@
 
     <string name="font_no_data">&#xe608;</string>
     <string name="font_search">&#xe741;</string>
+    <string name="font_clear_search_word">&#xe6cb;</string>
 
-    <!--<string name="font_copy_link">&#xe601;</string>-->
     <!--<string name="font_download_again">&#xe645;</string>-->
     <!--<string name="font_open_in_window">&#xe610;</string>-->
 
@@ -192,13 +200,24 @@
     <string name="art_img_dialog_copy_link">复制链接</string>
 
 
+    <string name="toast_get_readability_ing">正在获取全文</string>
+
+
     <string name="rename">编辑名称</string>
     <string name="search">搜索</string>
     <string name="search_key">输入关键词</string>
     <string name="cancel">取消</string>
 
-    <string name="toast_unsubscribe_fail">取消订阅失败</string>
-    <string name="toast_rename_fail">重命名失败</string>
+    <string name="bag_network">网络不好，请重试一下</string>
+    <string name="fail_try">失败，请重试一下</string>
+
+    <string name="search_cloudy_feeds_result_count">已搜到 %1$d 个订阅源</string>
+    <string name="search_header_search_cloudy_feeds">搜索订阅源</string>
+    <string name="search_header_search_local_articles">搜索本地文章</string>
+    <string name="toast_subscribe_success">订阅成功</string>
+    <string name="toast_subscribe_fail">取消订阅失败，请重试</string>
+    <string name="toast_unsubscribe_fail">取消订阅失败，请重试</string>
+    <string name="toast_rename_fail">重命名失败，请重试</string>
     <string name="toast_copy_img_src_success">图片链接复制成功</string>
     <string name="toast_cant_find_img">没有找到图片</string>
     <string name="toast_file_saved">文件已保存</string>
@@ -208,10 +227,11 @@
 
     <string name="item_error">获取错误</string>
 
-    <string name="menu_readed">已读</string>
-    <string name="menu_unread">未读</string>
+    <!--<string name="menu_readed">已读</string>-->
+    <!--<string name="menu_unread">未读</string>-->
 
-    <string name="menu_stared">已加星</string>
-    <string name="menu_unstar">未加星</string>
+    <!--<string name="menu_stared">已加星</string>-->
+    <!--<string name="menu_unstar">未加星</string>-->
+
 
 </resources>

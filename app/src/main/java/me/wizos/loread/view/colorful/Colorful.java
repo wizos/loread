@@ -127,9 +127,11 @@ public final class Colorful {
 			return this;
 		}
 
-		/**
-		 * 用户手动构造并且添加Setter
-		 * 
+        // mElements 用于保存 要修改的 Views
+
+        /**
+         * 用户手动构造并且添加Setter(对于listView来说，只是把旗下某个项的 viewid 和 要改的值 挂钩在一起)
+         *
 		 * @param setter
 		 *            用户自定义的Setter
 		 * @return

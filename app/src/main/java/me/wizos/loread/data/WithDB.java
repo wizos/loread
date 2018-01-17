@@ -210,18 +210,41 @@ public class WithDB {
         }
     }
 
+    public void delFeed(String feedId) {
+        if (feedId == null) {
+            return;
+        }
+        feedDao.deleteByKeyInTx(feedId);
+    }
     public void delFeed(Feed feed) {
         if (feed == null) {
             return;
         }
-        feedDao.delete(feed);
+        feedDao.deleteInTx(feed);
     }
 
+    public void addFeed(Feed feed) {
+        if (feed != null) {
+            feedDao.insertInTx(feed);
+        }
+    }
     public void coverSaveFeeds(List<Feed> feeds) {
         feedDao.deleteAll();
         feedDao.insertOrReplaceInTx(feeds);
     }
 
+    public void updateArtsFeedTitle(Feed feed) {
+        if (feed == null) {
+            return;
+        }
+        QueryBuilder q = articleDao.queryBuilder()
+                .where(ArticleDao.Properties.OriginStreamId.eq(feed.getId()));
+        List<Article> articles = q.list();
+        for (Article article : articles) {
+            article.setOriginTitle(feed.getTitle());
+        }
+        articleDao.updateInTx(articles);
+    }
     public void updateFeed(Feed feed) {
         if (feed != null) {
             feedDao.update(feed);
@@ -647,8 +670,8 @@ public class WithDB {
                 + ArticleDao.TABLENAME + " LEFT JOIN " + FeedDao.TABLENAME + " ON " + ArticleDao.TABLENAME + "." + ArticleDao.Properties.OriginStreamId.columnName + " = " + FeedDao.TABLENAME + "." + FeedDao.Properties.Id.columnName
                 + " WHERE "
                 + FeedDao.TABLENAME + "." + FeedDao.Properties.Categoryid.columnName + " IS NULL OR "
-                + FeedDao.TABLENAME + "." + FeedDao.Properties.Id.columnName + " IS NULL"
-                + "ORDER BY " + ArticleDao.Properties.TimestampUsec.columnName + " DESC";
+                + FeedDao.TABLENAME + "." + FeedDao.Properties.Id.columnName + " IS NULL "
+                + " ORDER BY " + ArticleDao.Properties.TimestampUsec.columnName + " DESC";
         KLog.e("测getArtsAllNoTag2：" + queryString);
         Cursor cursor = articleDao.getDatabase().rawQuery(queryString, new String[]{});
         if (cursor == null) {

@@ -156,14 +156,14 @@ public class MainService extends IntentService {
             if (e.getMessage().equals("401")) {
                 sendSyncNeedAuth();
             }
-            Tool.showOnLocal("syncAllStarred时出了异常：HttpException");
+            Tool.showShort("syncAllStarred时出了异常：HttpException");
             sendSyncFailure();
         } catch (IOException e) {
             e.printStackTrace();
-            Tool.showOnLocal("syncAllStarred时出了异常：IOException");
+            Tool.showShort("syncAllStarred时出了异常：IOException");
             sendSyncFailure();
         }
-        Tool.showOnLocal("syncAllStarred时出了异常");
+        Tool.showShort("syncAllStarred时出了异常");
 //        sync();  // 最后再来走一波同步？
     }
 

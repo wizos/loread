@@ -29,12 +29,12 @@ import me.wizos.loread.view.ListViewS;
 /**
  * Created by Wizos on 2016/3/15.
  */
-public class MainSlvAdapter extends ArrayAdapter<Article> {
+public class MainListViewAdapter extends ArrayAdapter<Article> {
     private List<Article> articleList;
     private Context context;
     private ListViewS slv;
 
-    public MainSlvAdapter(Context context, List<Article> articleList, ListViewS slv) {
+    public MainListViewAdapter(Context context, List<Article> articleList, ListViewS slv) {
         super(context, 0, articleList);
         this.context = context;
         this.articleList = articleList;
@@ -75,7 +75,7 @@ public class MainSlvAdapter extends ArrayAdapter<Article> {
             cvh.articleSummary = (TextView) convertView.findViewById(R.id.main_slv_item_summary);
             cvh.articleFeed = (TextView) convertView.findViewById(R.id.main_slv_item_author);
             cvh.articleImg = (ImageView) convertView.findViewById(R.id.main_slv_item_img);
-            cvh.articleTime = (TextView) convertView.findViewById(R.id.main_slv_item_time);
+            cvh.articlePublished = (TextView) convertView.findViewById(R.id.main_slv_item_time);
             cvh.articleStar = (IconFontView) convertView.findViewById(R.id.main_slv_item_icon_star);
             cvh.articleReading = (IconFontView) convertView.findViewById(R.id.main_slv_item_icon_reading);
             cvh.articleSave = (IconFontView) convertView.findViewById(R.id.main_slv_item_icon_save);
@@ -107,7 +107,7 @@ public class MainSlvAdapter extends ArrayAdapter<Article> {
         if (article.getOriginTitle() != null) {
             cvh.articleFeed.setText(Html.fromHtml(article.getOriginTitle()));
         }
-        cvh.articleTime.setText(TimeUtil.getDateSec(article.getPublished()));
+        cvh.articlePublished.setText(TimeUtil.stampToTime(article.getPublished() * 1000, "yyyy-MM-dd HH:mm"));
         if (article.getReadState().equals(Api.ART_READED)) { //  & !App.StreamState.equals(Api.ART_STARED)
             cvh.articleTitle.setAlpha(0.40f);
         } else {
@@ -148,7 +148,7 @@ public class MainSlvAdapter extends ArrayAdapter<Article> {
         TextView articleTitle;
         TextView articleSummary;
         TextView articleFeed;
-        TextView articleTime;
+        TextView articlePublished;
         IconFontView articleStar;
         IconFontView articleReading;
         IconFontView articleSave;
@@ -156,9 +156,6 @@ public class MainSlvAdapter extends ArrayAdapter<Article> {
 
         public IconFontView markLeft;
         public IconFontView markRight;
-
-//        public TextView leftMenuItem;
-//        public TextView rightMenuItem;
     }
 
 }

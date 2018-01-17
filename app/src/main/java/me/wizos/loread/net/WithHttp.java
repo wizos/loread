@@ -107,7 +107,7 @@ public class WithHttp {
 
                 @Override
                 public void onError(Response<String> response) {
-                    Tool.showOnLocal("同步文章状态失败A" + response.body());
+                    Tool.showShort("同步文章状态失败A" + response.body());
                 }
             };
         }

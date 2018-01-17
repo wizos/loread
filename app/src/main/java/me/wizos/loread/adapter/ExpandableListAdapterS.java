@@ -1,7 +1,6 @@
 package me.wizos.loread.adapter;
 
 import android.content.Context;
-import android.util.SparseIntArray;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -283,20 +282,19 @@ public class ExpandableListAdapterS extends BaseExpandableListAdapter implements
         ((TextView) header.findViewById(R.id.header_item_title)).setText(groupTitle);
     }
 
-    private SparseIntArray groupStatusMap = new SparseIntArray();
-
-    @Override
-    public void setGroupClickStatus(int groupPosition, int status) {
-        groupStatusMap.put(groupPosition, status);
-    }
-
-    @Override
-    public int getGroupClickStatus(int groupPosition) {
-        if (groupStatusMap.keyAt(groupPosition) >= 0) {
-            return groupStatusMap.get(groupPosition);
-        } else {
-            return 0;
-        }
-    }
+//    private SparseIntArray groupStatusMap = new SparseIntArray();
+//    @Override
+//    public void setGroupClickStatus(int groupPosition, int status) {
+//        groupStatusMap.put(groupPosition, status);
+//    }
+//
+//    @Override
+//    public int getGroupClickStatus(int groupPosition) {
+//        if (groupStatusMap.keyAt(groupPosition) >= 0) {
+//            return groupStatusMap.get(groupPosition);
+//        } else {
+//            return 0;
+//        }
+//    }
 
 }

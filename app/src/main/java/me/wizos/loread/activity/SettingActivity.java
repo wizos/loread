@@ -40,11 +40,6 @@ public class SettingActivity extends BaseActivity {
 
     }
 
-//    @Override
-//    protected void onResume(){
-//        super.onResume();
-//        getSupportActionBar().setTitle(R.string.setting_activity_title);
-//    }
 
     @Override
     protected Colorful.Builder buildColorful(Colorful.Builder mColorfulBuilder) {
@@ -85,9 +80,6 @@ public class SettingActivity extends BaseActivity {
     }
 
 
-    //    private SwitchButton syncFirstOpen, downImgWifi, inoreaderProxy, orderTagFeed, syncAllStarred, sysBrowserOpenLink, autoToggleTheme; // , leftRightSlideArticle
-//    scrollMark,
-//    private Button clearLog;
     private TextView clearBeforeDaySummary;
     private int clearBeforeDayIndex, clearBeforeDay;
 

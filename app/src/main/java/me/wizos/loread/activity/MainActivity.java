@@ -17,6 +17,7 @@ import android.text.InputType;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.ViewConfiguration;
+import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ExpandableListView;
 import android.widget.ListView;
@@ -34,7 +35,7 @@ import java.util.List;
 import me.wizos.loread.App;
 import me.wizos.loread.R;
 import me.wizos.loread.adapter.ExpandableListAdapterS;
-import me.wizos.loread.adapter.MainSlvAdapter;
+import me.wizos.loread.adapter.MainListViewAdapter;
 import me.wizos.loread.adapter.MaterialSimpleListAdapter;
 import me.wizos.loread.adapter.MaterialSimpleListItem;
 import me.wizos.loread.bean.Article;
@@ -56,21 +57,14 @@ import me.wizos.loread.view.colorful.Colorful;
 import me.wizos.loread.view.colorful.setter.ViewGroupSetter;
 import me.wizos.loread.view.common.color.ColorChooserDialog;
 
-//import com.yydcdut.sdlv.Menu;
-//import com.yydcdut.sdlv.MenuItem;
-//import com.yydcdut.sdlv.SlideAndDragListView;
-
 public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.OnRefreshListener, ColorChooserDialog.ColorCallback, View.OnClickListener {
     protected static final String TAG = "MainActivity";
     private IconFontView vReadIcon, vStarIcon, vPlaceHolder;
     private TextView vToolbarHint;
     private Toolbar toolbar;
-    //    private Menu mMenu;
-    private SwipeRefreshLayoutS mSwipeRefreshLayoutS;
-    //    private ListView artListView;
+    private SwipeRefreshLayoutS swipeRefreshLayoutS;
     private ListViewS artListView;
-    //    private SlideAndDragListView artListView;
-    private MainSlvAdapter artListAdapter;
+    private MainListViewAdapter artListAdapter;
     private static int tagCount;
 
     @Override
@@ -133,32 +127,40 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
         });
 
         IconFontView searchView = (IconFontView) findViewById(R.id.main_toolbar_search);
+//        searchView.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                new MaterialDialog.Builder(MainActivity.this)
+//                        .title(R.string.search)
+//                        .inputType(InputType.TYPE_CLASS_TEXT)
+//                        .inputRange(1, 22)
+//                        .input(null, "", new MaterialDialog.InputCallback() {
+//                            @Override
+//                            public void onInput(MaterialDialog dialog, CharSequence input) {
+//                                showSearchResult(input.toString());
+//                            }
+//                        })
+//                        .positiveText(R.string.search)
+//                        .negativeText(android.R.string.cancel)
+//                        .show();
+//            }
+//        });
         searchView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                new MaterialDialog.Builder(MainActivity.this)
-                        .title(R.string.search)
-                        .inputType(InputType.TYPE_CLASS_TEXT)
-                        .inputRange(1, 22)
-                        .input(null, "", new MaterialDialog.InputCallback() {
-                            @Override
-                            public void onInput(MaterialDialog dialog, CharSequence input) {
-                                showSearchResult(input.toString());
-                            }
-                        })
-                        .positiveText(R.string.search)
-                        .negativeText(android.R.string.cancel)
-                        .show();
+                Intent intent = new Intent(MainActivity.this, SearchActivity.class);
+                startActivityForResult(intent, 0);
             }
         });
+
     }
 
     protected void initSwipeRefreshLayout() {
-        mSwipeRefreshLayoutS = (SwipeRefreshLayoutS) findViewById(R.id.main_swipe);
-        if (mSwipeRefreshLayoutS == null) return;
-        mSwipeRefreshLayoutS.setOnRefreshListener(this);
-        mSwipeRefreshLayoutS.setProgressViewOffset(true, 0, 120);//设置样式刷新显示的位置
-        mSwipeRefreshLayoutS.setViewGroup(artListView);
+        swipeRefreshLayoutS = (SwipeRefreshLayoutS) findViewById(R.id.main_swipe_refresh);
+        if (swipeRefreshLayoutS == null) return;
+        swipeRefreshLayoutS.setOnRefreshListener(this);
+        swipeRefreshLayoutS.setProgressViewOffset(true, 0, 120);//设置样式刷新显示的位置
+        swipeRefreshLayoutS.setViewGroup(artListView);
 //        appBarLayout = (AppBarLayout) findViewById(R.id.appBarLayout);
 //        appBarLayout.addOnOffsetChangedListener(new AppBarLayout.OnOffsetChangedListener() {
 //            @Override
@@ -174,7 +176,7 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
 
     @Override
     public void onRefresh() {
-        if (!mSwipeRefreshLayoutS.isEnabled()) {
+        if (!swipeRefreshLayoutS.isEnabled()) {
             return;
         }
         startSyncService();
@@ -215,9 +217,9 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
             MainService.ServiceBinder mBinderService = (MainService.ServiceBinder) service;
             MainService mainService = mBinderService.getService();
             mainService.regHandler(maHandler);//TODO:考虑内存泄露
-            if (App.syncFirstOpen && !mSwipeRefreshLayoutS.isRefreshing()) {
+            if (App.syncFirstOpen && !swipeRefreshLayoutS.isRefreshing()) {
                 ToastUtil.showShort("开始同步");
-                mSwipeRefreshLayoutS.setEnabled(false);
+                swipeRefreshLayoutS.setEnabled(false);
                 startSyncService();
             }
             KLog.d("连接开始");
@@ -240,18 +242,18 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
             KLog.i("【handler】" + msg.what + "---" + "---");
             switch (msg.what) {
                 case Api.SYNC_START:
-                    mSwipeRefreshLayoutS.setRefreshing(true);
-                    mSwipeRefreshLayoutS.setEnabled(false);
+                    swipeRefreshLayoutS.setRefreshing(true);
+                    swipeRefreshLayoutS.setEnabled(false);
                     KLog.e("开始同步");
                     break;
                 case Api.SYNC_SUCCESS:
-                    mSwipeRefreshLayoutS.setRefreshing(false);
-                    mSwipeRefreshLayoutS.setEnabled(true);
+                    swipeRefreshLayoutS.setRefreshing(false);
+                    swipeRefreshLayoutS.setEnabled(true);
                     initData();
                     break;
                 case Api.SYNC_FAILURE: // 文章获取失败
-                    mSwipeRefreshLayoutS.setRefreshing(false);
-                    mSwipeRefreshLayoutS.setEnabled(true);
+                    swipeRefreshLayoutS.setRefreshing(false);
+                    swipeRefreshLayoutS.setEnabled(true);
                     vToolbarHint.setText(String.valueOf(tagCount));
 //                    ToastUtil.showShort("同步失败");
                     break;
@@ -272,7 +274,7 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
         KLog.e("refreshData：" + App.StreamId + "  " + App.StreamState + "   " + App.UserID);
         getArtData();
         getTagData();
-        artListAdapter = new MainSlvAdapter(this, App.articleList, artListView);
+        artListAdapter = new MainListViewAdapter(this, App.articleList, artListView);
         artListView.setAdapter(artListAdapter);
         tagListAdapter.notifyDataSetChanged();
         loadData();
@@ -281,7 +283,7 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
     private void initData() {
         getArtData();
         getTagData();
-        artListAdapter = new MainSlvAdapter(this, App.articleList, artListView);
+        artListAdapter = new MainListViewAdapter(this, App.articleList, artListView);
         artListView.setAdapter(artListAdapter);
         tagListAdapter = new ExpandableListAdapterS(this, App.tagList, tagListView);
         tagListView.setAdapter(tagListAdapter);
@@ -350,11 +352,11 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
         rootTag.setTitle(getString(R.string.main_activity_title_all));
         noLabelTag.setTitle(getString(R.string.main_activity_title_untag));
 
-        rootTag.setId("\"user/" + userID + Api.U_READING_LIST + "\"");
+        rootTag.setId("user/" + userID + Api.U_READING_LIST);
         rootTag.setSortid("00000000");
         rootTag.__setDaoSession(App.i().getDaoSession());
 
-        noLabelTag.setId("\"user/" + userID + Api.U_NO_LABEL + "\"");
+        noLabelTag.setId("user/" + userID + Api.U_NO_LABEL);
         noLabelTag.setSortid("00000001");
         noLabelTag.__setDaoSession(App.i().getDaoSession());
 
@@ -407,6 +409,7 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
     private ScrollLayout mScrollLayout;
     private ExpandableListViewS tagListView;
     private ExpandableListAdapterS tagListAdapter;
+    private View headerView;
 
     public void initTagListView() {
         /**设置 setting*/
@@ -452,7 +455,18 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
         tagListView.setChoiceMode(ListView.CHOICE_MODE_SINGLE);
 
         // 设置悬浮头部VIEW
-        tagListView.setHeaderView(getLayoutInflater().inflate(R.layout.tag_expandable_item_group_header, tagListView, false));
+        headerView = getLayoutInflater().inflate(R.layout.tag_expandable_item_group_header, tagListView, false);
+        tagListView.setHeaderView(headerView);
+        tagListView.setOnPinnedGroupClickListener(new ExpandableListViewS.OnPinnedGroupClickListener() {
+            @Override
+            public void onHeaderClick(ExpandableListView parent, View v, int pinnedGroupPosition) {
+                if (parent.isGroupExpanded(pinnedGroupPosition)) {
+                    tagListView.collapseGroup(pinnedGroupPosition);
+                } else {
+                    tagListView.expandGroup(pinnedGroupPosition);
+                }
+            }
+        });
 
         tagListView.setOnGroupClickListener(new ExpandableListView.OnGroupClickListener() {
             @Override
@@ -526,7 +540,7 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
                                         .input(null, tag.getTitle(), new MaterialDialog.InputCallback() {
                                             @Override
                                             public void onInput(MaterialDialog dialog, CharSequence input) {
-                                                saveRenamedTagResult(input.toString(), tag);
+                                                renameTag(input.toString(), tag);
                                             }
                                         })
                                         .positiveText(R.string.confirm)
@@ -540,36 +554,38 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
                 .show();
     }
 
-    public void saveRenamedTagResult(final String renamedTagTitle, Tag tag) {
+    public void renameTag(final String renamedTagTitle, Tag tag) {
         KLog.e("=====" + renamedTagTitle);
-        if (!renamedTagTitle.equals("") && !tag.getTitle().equals(renamedTagTitle)) {
-            final String destTagId = tag.getId().replace(tag.getTitle(), renamedTagTitle);
-            final String sourceTagId = tag.getId();
-            DataApi.i().renameTag(sourceTagId, destTagId, new StringCallback() {
-                @Override
-                public void onSuccess(Response<String> response) {
-                    if (!response.body().equals("OK")) {
-                        this.onError(response);
-                        return;
-                    }
-                    Tag tag = WithDB.i().getTag(sourceTagId);
-                    if (tag == null) {
-                        return;
-                    }
-                    WithDB.i().delTag(tag);
-                    tag.setId(destTagId);
-                    tag.setTitle(renamedTagTitle);
-                    WithDB.i().insertTag(tag);
-                    WithDB.i().updateFeedsCategoryId(sourceTagId, destTagId);
-                    tagListAdapter.notifyDataSetChanged();
-                }
-
-                @Override
-                public void onError(Response<String> response) {
-                    ToastUtil.showShort(getString(R.string.toast_rename_fail));
-                }
-            });
+        if (renamedTagTitle.equals("") || tag.getTitle().equals(renamedTagTitle)) {
+            return;
         }
+        final String destTagId = tag.getId().replace(tag.getTitle(), renamedTagTitle);
+        final String sourceTagId = tag.getId();
+        DataApi.i().renameTag(sourceTagId, destTagId, new StringCallback() {
+            @Override
+            public void onSuccess(Response<String> response) {
+                if (!response.body().equals("OK")) {
+                    this.onError(response);
+                    return;
+                }
+                Tag tag = WithDB.i().getTag(sourceTagId);
+                if (tag == null) {
+                    this.onError(response);
+                    return;
+                }
+                WithDB.i().delTag(tag);
+                tag.setId(destTagId);
+                tag.setTitle(renamedTagTitle);
+                WithDB.i().insertTag(tag);
+                WithDB.i().updateFeedsCategoryId(sourceTagId, destTagId); // 由于改 tag 的名字，涉及到改 tag 的 id ，而每个 feed 自带的 tag 的 id 也得改过来。
+                tagListAdapter.notifyDataSetChanged();
+            }
+
+            @Override
+            public void onError(Response<String> response) {
+                ToastUtil.showLong(getString(R.string.toast_rename_fail));
+            }
+        });
     }
 
     public void showFeedDialog(final ExpandableListAdapterS.ItemViewHolder itemView, final Feed feed) {
@@ -601,7 +617,7 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
                                         .input(null, feed.getTitle(), new MaterialDialog.InputCallback() {
                                             @Override
                                             public void onInput(MaterialDialog dialog, CharSequence input) {
-                                                saveRenameFeedResult(input.toString(), feed);
+                                                renameFeed(input.toString(), feed);
                                             }
                                         })
                                         .positiveText(R.string.confirm)
@@ -609,7 +625,6 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
                                         .show();
                                 break;
                             case 1:
-
                                 DataApi.i().unsubscribeFeed(feed.getId(), new StringCallback() {
                                     @Override
                                     public void onSuccess(Response<String> response) {
@@ -625,7 +640,7 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
 
                                     @Override
                                     public void onError(Response<String> response) {
-                                        ToastUtil.showShort(getString(R.string.toast_unsubscribe_fail));
+                                        ToastUtil.showLong(getString(R.string.toast_unsubscribe_fail));
                                     }
                                 });
                                 break;
@@ -636,32 +651,35 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
                 .show();
     }
 
-    public void saveRenameFeedResult(final String renamedTitle, Feed feed) {
+    public void renameFeed(final String renamedTitle, Feed feed) {
         final String feedId = feed.getId();
         KLog.e("=====" + renamedTitle + feedId);
-        if (!renamedTitle.equals("") && !feed.getTitle().equals(renamedTitle)) {
-            DataApi.i().renameFeed(feedId, renamedTitle, new StringCallback() {
-                @Override
-                public void onSuccess(Response<String> response) {
-                    if (!response.body().equals("OK")) {
-                        this.onError(response);
-                        return;
-                    }
-                    Feed feed = WithDB.i().getFeed(feedId);
-                    if (feed == null) {
-                        return;
-                    }
-                    feed.setTitle(renamedTitle);
-                    WithDB.i().updateFeed(feed);
-                    tagListAdapter.notifyDataSetChanged();
-                }
-
-                @Override
-                public void onError(Response<String> response) {
-                    ToastUtil.showShort(getString(R.string.toast_rename_fail));
-                }
-            });
+        if (renamedTitle.equals("") || feed.getTitle().equals(renamedTitle)) {
+            return;
         }
+        DataApi.i().renameFeed(feedId, renamedTitle, new StringCallback() {
+            @Override
+            public void onSuccess(Response<String> response) {
+                if (!response.body().equals("OK")) {
+                    this.onError(response);
+                    return;
+                }
+                Feed feed = WithDB.i().getFeed(feedId);
+                if (feed == null) {
+                    this.onError(response);
+                    return;
+                }
+                feed.setTitle(renamedTitle);
+                WithDB.i().updateFeed(feed);
+                WithDB.i().updateArtsFeedTitle(feed); // 由于改了 feed 的名字，而每个 article 自带的 feed 名字也得改过来。
+                tagListAdapter.notifyDataSetChanged();
+            }
+
+            @Override
+            public void onError(Response<String> response) {
+                ToastUtil.showLong(getString(R.string.toast_rename_fail));
+            }
+        });
     }
 
 
@@ -864,11 +882,11 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
             public void onUpdate(View view, int position, float offset) {
                 // 推测由于该函数 getView 已经生成了 View 所以不在更新了。使用 notifyDataSetChanged(); 也不行
 //                KLog.e("观察" + offset + "  " + lastOffset);
-//                MainSlvAdapter.CustomViewHolder itemViewHolder;
+//                SearchListViewAdapter.CustomViewHolder itemViewHolder;
 //                int firstVisiblePosition = artListView.getFirstVisiblePosition(); //屏幕内当前可以看见的第一条数据
 //                if( position-firstVisiblePosition>=0){
 //                    View itemView = artListView.getChildAt(position - firstVisiblePosition);
-//                    itemViewHolder = (MainSlvAdapter.CustomViewHolder) itemView.getTag();
+//                    itemViewHolder = (SearchListViewAdapter.CustomViewHolder) itemView.getTag();
 //
 //                    if( offset < -0.6 && hadChanged==false ){
 //                        if( (offset - lastOffset) >  0 ){ // 向右滑
@@ -891,34 +909,19 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
 //                        }
 //                    }
 //                }
-
 //                lastOffset = offset;
             }
 
             @Override
             public void onCloseLeft(View view, int position, int direction) {
                 KLog.e("onCloseLeft：" + position + "  ");
-//                hadChanged=false;
-//                IconFontView leftMenuItem = (IconFontView) view.findViewById(R.id.main_list_item_menu_left);
-//                leftMenuItem.setTextColor(getResources().getColor(R.color.colorPrimary));
-//                artListAdapter.notifyDataSetChanged();
                 Article article = App.articleList.get(position);
                 changeStarState(article);
             }
 
             @Override
             public void onCloseRight(View view, int position, int direction) {
-//                hadChanged=false;
-                int firstVisiblePosition = artListView.getFirstVisiblePosition(); //屏幕内当前可以看见的第一条数据
-                KLog.e("onCloseRight：" + position + "  " + firstVisiblePosition);
-//                if( position-firstVisiblePosition>=0){
-//                    View itemView = artListView.getChildAt(position - firstVisiblePosition);
-//                    MainSlvAdapter.CustomViewHolder itemViewHolder = (MainSlvAdapter.CustomViewHolder) itemView.getTag();
-//                    itemViewHolder.markRight.setTextColor(getResources().getColor(R.color.colorPrimary));
-//                    artListAdapter.notifyDataSetChanged();
-//                }
-
-
+                KLog.e("onCloseRight：" + position + "  ");
                 Article article = App.articleList.get(position);
                 changeReadState(article);
             }
@@ -948,9 +951,12 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
 
     private void showSearchResult(String keyword) {
 //        List<Article> articles = WithDB.i().getSearchedArts( keyword );
-        App.i().updateArtList(WithDB.i().getSearchedArts(keyword));
+//        App.i().updateArtList(WithDB.i().getSearchedArts(keyword));
         App.StreamId = Api.U_Search;
         App.StreamTitle = getString(R.string.main_toolbar_title_search) + keyword;
+        App.articleList = WithDB.i().getSearchedArts(keyword);
+        artListAdapter = new MainListViewAdapter(this, App.articleList, artListView);
+        artListView.setAdapter(artListAdapter);
         loadData();
     }
 
@@ -968,7 +974,6 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
         artListAdapter.notifyDataSetChanged();
     }
 
-    //    int c ;
     private void changeReadState(final Article article) {
         if (article.getReadState().equals(Api.ART_READED)) {
             DataApi.i().markArticleUnread(article.getId(), null);
@@ -1028,6 +1033,10 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
                 }
                 KLog.e("【onActivityResult】" + articleNo + "  " + artListView.getLastVisiblePosition());
                 break;
+            case Api.ActivityResult_SearchLocalArtsToMain:
+                KLog.e("被搜索的词是" + intent.getExtras().getString("searchWord"));
+                showSearchResult(intent.getExtras().getString("searchWord"));
+                break;
         }
     }
 
@@ -1039,7 +1048,6 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
                 artListView.setSelection(position); // 不能直接用这个，无法滚动
             }
         });
-        KLog.e("【setSelection】" + position);
     }
 
     /**
@@ -1059,38 +1067,33 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
 
         ViewGroupSetter tagListViewSetter = new ViewGroupSetter(tagListView);
         // 绑定ListView的Item View中的news_title视图，在换肤时修改它的text_color属性
-//        tagListViewSetter.childViewTextColor(R.id.tag_slv_item_icon, R.attr.lv_item_title_color);
-//        tagListViewSetter.childViewTextColor(R.id.tag_slv_item_title, R.attr.lv_item_title_color);
-//        tagListViewSetter.childViewTextColor(R.id.tag_slv_item_count, R.attr.lv_item_desc_color);
-//        tagListViewSetter.childViewBgColor(R.id.tag_slv_item,R.attr.bottombar_bg); // 这个不生效，反而会影响底色修改
-//        tagListViewSetter.childViewTextColor(R.id.header_item_icon, R.attr.tag_slv_item_icon);
-//        tagListViewSetter.childViewTextColor(R.id.header_item_title, R.attr.lv_item_title_color);
-//        tagListViewSetter.childViewTextColor(R.id.header_item_count, R.attr.lv_item_desc_color);
-//        tagListViewSetter.childViewBgColor(R.id.header_item, R.attr.bottombar_bg);
-
-        tagListViewSetter.childViewBgColor(R.id.group_item, R.attr.bottombar_bg);
+//        tagListViewSetter.childViewBgColor(R.id.group_item, R.attr.bottombar_bg);  // 这个不生效，反而会影响底色修改
         tagListViewSetter.childViewTextColor(R.id.group_item_icon, R.attr.tag_slv_item_icon);
         tagListViewSetter.childViewTextColor(R.id.group_item_title, R.attr.lv_item_title_color);
         tagListViewSetter.childViewTextColor(R.id.group_item_count, R.attr.lv_item_desc_color);
 
-        tagListViewSetter.childViewBgColor(R.id.child_item, R.attr.bottombar_bg);
+//        tagListViewSetter.childViewBgColor(R.id.child_item, R.attr.bottombar_bg);  // 这个不生效，反而会影响底色修改
         tagListViewSetter.childViewTextColor(R.id.child_item_title, R.attr.lv_item_title_color);
         tagListViewSetter.childViewTextColor(R.id.child_item_count, R.attr.lv_item_desc_color);
 
-
+        ViewGroupSetter headerViewSetter = new ViewGroupSetter((ViewGroup) headerView);
+        headerViewSetter.childViewTextColor(R.id.header_item_icon, R.attr.tag_slv_item_icon);
+        headerViewSetter.childViewTextColor(R.id.header_item_title, R.attr.lv_item_title_color);
+        headerViewSetter.childViewTextColor(R.id.header_item_count, R.attr.lv_item_desc_color);
+        headerViewSetter.childViewBgColor(R.id.tag_group_header, R.attr.bottombar_bg);
 
         mColorfulBuilder
                 // 设置view的背景图片
-                .backgroundColor(R.id.main_swipe, R.attr.root_view_bg)
+                .backgroundColor(R.id.main_swipe_refresh, R.attr.root_view_bg) // 这里做设置，实质都是直接生成了一个View（根据Activity的findViewById），并直接添加到 colorful 内的 mElements 中。
 
-                .backgroundColor(R.id.scrolllayout_bg, R.attr.bottombar_bg)
-                .textColor(R.id.main_scrolllayout_title, R.attr.bottombar_fg)
+                .backgroundColor(R.id.main_scroll_layout_bg, R.attr.bottombar_bg)
+                .textColor(R.id.main_scroll_layout_title, R.attr.bottombar_fg)
                 .backgroundColor(R.id.main_scrolllayout_divider, R.attr.bottombar_divider)
 
                 .textColor(R.id.header_item_icon, R.attr.tag_slv_item_icon)
                 .textColor(R.id.header_item_title, R.attr.lv_item_title_color)
                 .textColor(R.id.header_item_count, R.attr.lv_item_desc_color)
-//                .backgroundColor(R.id.header_item, R.attr.bottombar_bg)
+                .backgroundColor(R.id.tag_group_header, R.attr.bottombar_bg)
 
                 // 设置 toolbar
                 .backgroundColor(R.id.main_toolbar, R.attr.topbar_bg)
@@ -1106,6 +1109,7 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
                 .textColor(R.id.main_bottombar_tag, R.attr.bottombar_fg)
 
                 // 设置 listview 背景色
+                .setter(headerViewSetter) // 这里做设置，实质是将View（根据Activity的findViewById），并直接添加到 colorful 内的 mElements 中。
                 .setter(tagListViewSetter)
                 .setter(artListViewSetter);
         return mColorfulBuilder;
@@ -1129,10 +1133,6 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
     public void onSettingIconClicked(View view){
         Intent intent = new Intent(this, SettingActivity.class);
         startActivityForResult(intent, 0);
-
-//        Intent intent = new Intent(this, TestActivity.class);
-//        startActivity(intent);
-
     }
 
     private View settingview;
@@ -1149,7 +1149,7 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
     }
 
     public void OnIconClickedAutoSync(View view) {
-        if (!mSwipeRefreshLayoutS.isEnabled()) {
+        if (!swipeRefreshLayoutS.isEnabled()) {
             return;
         }
         startSyncService();

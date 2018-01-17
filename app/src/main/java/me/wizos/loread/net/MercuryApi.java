@@ -1,6 +1,7 @@
 package me.wizos.loread.net;
 
 import com.google.gson.Gson;
+import com.lzy.okgo.callback.StringCallback;
 import com.lzy.okgo.exception.HttpException;
 import com.lzy.okgo.model.HttpHeaders;
 
@@ -23,5 +24,12 @@ public class MercuryApi {
         String info = WithHttp.i().syncGet(HOST + url, null, headers, cb);
         Readability readability = new Gson().fromJson(info, Readability.class);
         return readability.getContent();
+    }
+
+    public static void fetchReadabilityContent(String url, StringCallback cb) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.put("Content-Type", "application/json");
+        headers.put("x-api-key", KEY);
+        WithHttp.i().asyncGet(HOST + url, null, headers, cb);
     }
 }

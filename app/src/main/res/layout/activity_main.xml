@@ -45,7 +45,7 @@
     </android.support.design.widget.AppBarLayout>
 
     <me.wizos.loread.view.SwipeRefreshLayoutS
-        android:id="@+id/main_swipe"
+        android:id="@+id/main_swipe_refresh"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_below="@+id/main_appBarLayout"
@@ -78,7 +78,7 @@
                 android:animateLayoutChanges="true"
                 android:headerDividersEnabled="false"
                 android:background="?attr/root_view_bg"
-                android:layout_above="@+id/main_bottombar"></me.wizos.loread.view.ListViewS>
+                android:layout_above="@+id/main_bottombar" />
 
 
             <me.wizos.loread.view.IconFontView
@@ -177,7 +177,7 @@
         android:elevation="4dp">
         <!--因为悬停抽屉出现时，对屏幕其他区域做了遮罩，而这个遮罩的透明度其实对这个抽屉也会有影响，所以这里另加了一个遮罩-->
         <View
-            android:id="@+id/scrolllayout_bg"
+            android:id="@+id/main_scroll_layout_bg"
             android:tag="scrolllayout_bg"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
@@ -188,7 +188,7 @@
             android:layout_height="match_parent"
             android:orientation="vertical">
             <TextView
-                android:id="@+id/main_scrolllayout_title"
+                android:id="@+id/main_scroll_layout_title"
                 android:layout_width="match_parent"
                 android:layout_height="?attr/actionBarSize"
                 android:textSize="14sp"

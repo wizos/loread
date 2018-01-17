@@ -16,10 +16,17 @@ import me.wizos.loread.data.WithSet;
 
 public class Tool {
 
-    public static void showOnLocal(String msg) {
+    public static void showShort(String msg) {
         if (BuildConfig.DEBUG) {
             KLog.e(msg);
             ToastUtil.showShort(msg);
+        }
+    }
+
+    public static void showLong(String msg) {
+        if (BuildConfig.DEBUG) {
+            KLog.e(msg);
+            ToastUtil.showLong(msg);
         }
     }
 

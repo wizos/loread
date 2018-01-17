@@ -92,8 +92,8 @@ public class DataApi {
         if (TextUtils.isEmpty(auth)) {
             return false;
         }
-        Api.INOREADER_ATUH = "GoogleLogin auth=" + auth;
-        WithSet.i().setAuth(Api.INOREADER_ATUH);
+        InoApi.INOREADER_ATUH = "GoogleLogin auth=" + auth;
+        WithSet.i().setAuth(InoApi.INOREADER_ATUH);
         InoApi.i().init();
         return true;
     }
@@ -176,8 +176,8 @@ public class DataApi {
                 feed.setCategoryid(subscriptions.getCategories().get(0).getId());
                 feed.setCategorylabel(subscriptions.getCategories().get(0).getLabel());
             } catch (Exception e) {
-                feed.setCategoryid(null);
-                feed.setCategorylabel(null);
+                feed.setCategoryid("user/" + WithSet.i().getUseId() + Api.U_NO_LABEL);
+                feed.setCategorylabel("no-label"); // TODO: 2018/1/11 待改成引用
             }
             feed.setSortid(subscriptions.getSortid());
             feed.setFirstitemmsec(subscriptions.getFirstitemmsec());
@@ -268,7 +268,6 @@ public class DataApi {
         }
         return orderingArray;
     }
-
 
 //    public void fetchUnreadCounts() throws HttpException,IOException{
 //        String info = InoApi.i().syncUnreadCounts(cb);
@@ -455,59 +454,12 @@ public class DataApi {
         }, cb);
     }
 
-    /**
-     * 将一个list均分成n个list,主要通过偏移量来实现的
-     *
-     * @param source
-     * @return
-     */
-    public static <T> List<List<T>> averageAssign(List<T> source, int n) {
-        List<List<T>> result = new ArrayList<List<T>>();
-        int remaider = source.size() % n;  //(先计算出余数)
-        int number = source.size() / n;  //然后是商
-        int offset = 0;//偏移量
-        for (int i = 0; i < n; i++) {
-            List<T> value = null;
-            if (remaider > 0) {
-                value = source.subList(i * number + offset, (i + 1) * number + offset + 1);
-                remaider--;
-                offset++;
-            } else {
-                value = source.subList(i * number + offset, (i + 1) * number + offset);
-            }
-            result.add(value);
-        }
-        return result;
-    }
-
-
-    private <T> void paging(List<T> list, int eachPageSize) {
-        int totalCount = list.size();
-        int pageCount;
-
-        //分多少次处理
-        int requestCount = totalCount / eachPageSize;
-
-        for (int i = 0; i <= requestCount; i++) {
-            Integer fromIndex = i * eachPageSize;
-            //如果总数少于PAGE_SIZE,为了防止数组越界,toIndex直接使用totalCount即可
-            int toIndex = Math.min(totalCount, (i + 1) * eachPageSize);
-            List<T> subList = list.subList(fromIndex, toIndex);
-            System.out.println(subList);
-            //总数不到一页或者刚好等于一页的时候,只需要处理一次就可以退出for循环了
-            if (toIndex == totalCount) {
-                break;
-            }
-        }
-    }
-
     private ArrayList<Article> fetchContent(List<String> ids, ArticleChanger changer, NetCallbackS cb) throws HttpException, IOException {
         ArrayList<Article> articleList = new ArrayList<>(ids.size());
 
         int distance = ids.size();
         int index = 0;
         int currentFetchCnt = 0;
-//        int count = ids.size();
         List<String> tempIds;
 
         while (distance > 0) {
@@ -673,6 +625,12 @@ public class DataApi {
         InoApi.i().renameTag(sourceTagId, destTagId, cb);
     }
 
+
+    public void addFeed(String feedId, StringCallback cb) {
+        // /reader/api/0/subscription/quickadd
+        InoApi.i().addFeed(feedId, cb);
+    }
+
     public void renameFeed(String feedId, String renamedTitle, StringCallback cb) {
         InoApi.i().renameFeed(feedId, renamedTitle, cb);
     }
@@ -743,6 +701,53 @@ public class DataApi {
         message.setData(bundle);
         handler.sendMessage(message);
         KLog.e("【】下载图片" + handler + msg + " = " + img.getArticleId() + "==" + img.getSrc() + "下载状态：" + img.getDownState() + ", 当前线程为：" + Thread.currentThread().getName());
+    }
+
+
+    /**
+     * 将一个list均分成n个list,主要通过偏移量来实现的
+     *
+     * @param source
+     * @return
+     */
+    public static <T> List<List<T>> averageAssign(List<T> source, int n) {
+        List<List<T>> result = new ArrayList<List<T>>();
+        int remaider = source.size() % n;  //(先计算出余数)
+        int number = source.size() / n;  //然后是商
+        int offset = 0;//偏移量
+        for (int i = 0; i < n; i++) {
+            List<T> value = null;
+            if (remaider > 0) {
+                value = source.subList(i * number + offset, (i + 1) * number + offset + 1);
+                remaider--;
+                offset++;
+            } else {
+                value = source.subList(i * number + offset, (i + 1) * number + offset);
+            }
+            result.add(value);
+        }
+        return result;
+    }
+
+
+    private <T> void paging(List<T> list, int eachPageSize) {
+        int totalCount = list.size();
+        int pageCount;
+
+        //分多少次处理
+        int requestCount = totalCount / eachPageSize;
+
+        for (int i = 0; i <= requestCount; i++) {
+            Integer fromIndex = i * eachPageSize;
+            //如果总数少于PAGE_SIZE,为了防止数组越界,toIndex直接使用totalCount即可
+            int toIndex = Math.min(totalCount, (i + 1) * eachPageSize);
+            List<T> subList = list.subList(fromIndex, toIndex);
+            System.out.println(subList);
+            //总数不到一页或者刚好等于一页的时候,只需要处理一次就可以退出for循环了
+            if (toIndex == totalCount) {
+                break;
+            }
+        }
     }
 
 }

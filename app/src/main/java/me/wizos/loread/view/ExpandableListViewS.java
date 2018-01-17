@@ -14,7 +14,7 @@ import android.widget.ExpandableListView;
  * Created by Wizos on 2017/9/17.
  */
 
-public class ExpandableListViewS extends ExpandableListView implements AbsListView.OnScrollListener, ExpandableListView.OnGroupClickListener { // PinnedHeader
+public class ExpandableListViewS extends ExpandableListView implements AbsListView.OnScrollListener { // PinnedHeader
 
     public ExpandableListViewS(Context context) {
         super(context);
@@ -58,22 +58,21 @@ public class ExpandableListViewS extends ExpandableListView implements AbsListVi
          */
         void configureHeader(View header, int groupPosition, int childPosition, int alpha);
 
-        /**
-         * 设置组按下的状态
-         *
-         * @param groupPosition
-         * @param status
-         */
-        void setGroupClickStatus(int groupPosition, int status);
-
-        /**
-         * 获取组按下的状态
-         *
-         * @param groupPosition
-         * @return
-         */
-        int getGroupClickStatus(int groupPosition);
-
+//        /**
+//         * 设置组按下的状态
+//         *
+//         * @param groupPosition
+//         * @param status
+//         */
+//        void setGroupClickStatus(int groupPosition, int status);
+//
+//        /**
+//         * 获取组按下的状态
+//         *
+//         * @param groupPosition
+//         * @return
+//         */
+//        int getGroupClickStatus(int groupPosition);
     }
 
     private static final int MAX_ALPHA = 255;
@@ -101,33 +100,51 @@ public class ExpandableListViewS extends ExpandableListView implements AbsListVi
         if (mHeaderView != null) {
             setFadingEdgeLength(0);
         }
-
         requestLayout();
     }
 
     private void registerListener() {
         setOnScrollListener(this);
-        setOnGroupClickListener(this);
+//        setOnGroupClickListener(this);
     }
 
-    /**
-     * 点击 HeaderView 触发的事件
-     */
-    private void headerViewClick() {
-        long packedPosition = getExpandableListPosition(this.getFirstVisiblePosition());
+    private OnPinnedGroupClickListener mOnPinnedGroupClickListener;
 
-        int groupPosition = ExpandableListView.getPackedPositionGroup(packedPosition);
-
-        if (mAdapter.getGroupClickStatus(groupPosition) == 1) {
-            this.collapseGroup(groupPosition);
-            mAdapter.setGroupClickStatus(groupPosition, 0);
-        } else {
-            this.expandGroup(groupPosition);
-            mAdapter.setGroupClickStatus(groupPosition, 1);
-        }
-
-        this.setSelectedGroup(groupPosition);
+    public void setOnPinnedGroupClickListener(OnPinnedGroupClickListener onPinnedGroupClickListener) {
+        mOnPinnedGroupClickListener = onPinnedGroupClickListener;
     }
+
+    public interface OnPinnedGroupClickListener {
+        void onHeaderClick(ExpandableListView parent, View v, int pinnedGroupPosition);
+    }
+
+//    /**
+//     * 点击 HeaderView 触发的事件
+//     */
+//    private void headerViewClick() {
+//        KLog.e("header 被点击");
+//        long packedPosition = getExpandableListPosition(this.getFirstVisiblePosition());
+//        int groupPosition = ExpandableListView.getPackedPositionGroup(packedPosition);
+//        KLog.e("header 被点击2：" + packedPosition + " = " + groupPosition  + " = " + mAdapter.getGroupClickStatus(groupPosition));
+//
+//        if ( isGroupExpanded(groupPosition) ) {
+//            this.collapseGroup(groupPosition);
+//            mAdapter.setGroupClickStatus(groupPosition, 0);
+//        } else {
+//            this.expandGroup(groupPosition);
+//            mAdapter.setGroupClickStatus(groupPosition, 1);
+//        }
+//
+////        if (mAdapter.getGroupClickStatus(groupPosition) == 1) {
+////            this.collapseGroup(groupPosition);
+////            mAdapter.setGroupClickStatus(groupPosition, 0);
+////        } else {
+////            this.expandGroup(groupPosition);
+////            mAdapter.setGroupClickStatus(groupPosition, 1);
+////        }
+//
+//        this.setSelectedGroup(groupPosition);
+//    }
 
     private float mDownX;
     private float mDownY;
@@ -155,8 +172,11 @@ public class ExpandableListViewS extends ExpandableListView implements AbsListVi
                     // 如果 HeaderView 是可见的 , 点击在 HeaderView 内 , 那么触发 headerClick()
                     if (x <= mHeaderViewWidth && y <= mHeaderViewHeight && offsetX <= mHeaderViewWidth
                             && offsetY <= mHeaderViewHeight) {
-                        if (mHeaderView != null) {
-                            headerViewClick();
+                        if (mHeaderView != null && mOnPinnedGroupClickListener != null) {
+//                            headerViewClick(); // 改为接口方式
+                            long packedPosition = getExpandableListPosition(this.getFirstVisiblePosition());
+                            int pinnedGroupPosition = ExpandableListView.getPackedPositionGroup(packedPosition);
+                            mOnPinnedGroupClickListener.onHeaderClick(this, mHeaderView, pinnedGroupPosition);
                         }
 
                         return true;
@@ -177,26 +197,27 @@ public class ExpandableListViewS extends ExpandableListView implements AbsListVi
         mAdapter = (HeaderAdapter) adapter;
     }
 
-    /**
-     * 点击了 Group 触发的事件 , 要根据根据当前点击 Group 的状态来
-     */
-    @Override
-    public boolean onGroupClick(final ExpandableListView parent, View v, int groupPosition, long id) {
-        if (mAdapter.getGroupClickStatus(groupPosition) == 0) {// 点击需展开
-            mAdapter.setGroupClickStatus(groupPosition, 1);
-            parent.expandGroup(groupPosition);
-
-            // Header自动置顶
-            // parent.setSelectedGroup(groupPosition);
-
-        } else if (mAdapter.getGroupClickStatus(groupPosition) == 1) {// 点击合上
-            mAdapter.setGroupClickStatus(groupPosition, 0);
-            parent.collapseGroup(groupPosition);
-        }
-
-        // 返回 true 才可以弹回第一行 , 不知道为什么
-        return true;
-    }
+//    /**
+//     * 点击了 Group 触发的事件 , 要根据根据当前点击 Group 的状态来
+//     */
+//    @Override
+//    public boolean onGroupClick(final ExpandableListView parent, View v, int groupPosition, long id) {
+////
+////        if (mAdapter.getGroupClickStatus(groupPosition) == 0) {// 点击需展开
+////            mAdapter.setGroupClickStatus(groupPosition, 1);
+////            parent.expandGroup(groupPosition);
+////
+////            // Header自动置顶
+////            // parent.setSelectedGroup(groupPosition);
+////
+////        } else if (mAdapter.getGroupClickStatus(groupPosition) == 1) {// 点击合上
+////            mAdapter.setGroupClickStatus(groupPosition, 0);
+////            parent.collapseGroup(groupPosition);
+////        }
+//
+//        // 返回 true 才可以弹回第一行 , 不知道为什么
+//        return true;
+//    }
 
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
@@ -222,7 +243,6 @@ public class ExpandableListViewS extends ExpandableListView implements AbsListVi
             mHeaderView.layout(0, 0, mHeaderViewWidth, mHeaderViewHeight);
         }
         configureHeaderView(groupPos, childPos);
-
     }
 
     public void configureHeaderView(int groupPosition, int childPosition) {
@@ -253,7 +273,7 @@ public class ExpandableListViewS extends ExpandableListView implements AbsListVi
                 View firstView = getChildAt(0);
                 int bottom = firstView.getBottom();
 
-                // intitemHeight = firstView.getHeight();
+//                int itemHeight = firstView.getHeight();
                 int headerHeight = mHeaderView.getHeight();
 
                 int y;
@@ -267,7 +287,6 @@ public class ExpandableListViewS extends ExpandableListView implements AbsListVi
                     y = 0;
                     alpha = MAX_ALPHA;
                 }
-
                 mAdapter.configureHeader(mHeaderView, groupPosition, childPosition, alpha);
 
                 if (mHeaderView.getTop() != y) {

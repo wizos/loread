@@ -1,8 +1,66 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/search_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="me.wizos.loread.activity.SearchActivity">
+    android:fitsSystemWindows="true"
+    android:addStatesFromChildren="true"
+    android:focusable="true"
+    android:focusableInTouchMode="true"
+    android:windowDrawsSystemBarBackgrounds="true">
 
-</android.support.constraint.ConstraintLayout>
+    <android.support.design.widget.AppBarLayout
+        android:id="@+id/search_appBarLayout"
+        android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <android.support.v7.widget.Toolbar
+            android:id="@+id/search_toolbar"
+            app:layout_scrollFlags="scroll|enterAlways"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            android:background="?attr/topbar_bg">
+            <!--<me.wizos.loread.view.IconFontView-->
+            <!--android:id="@+id/search_toolbar_clear_icon"-->
+            <!--style="@style/top_bar_iconfont"-->
+            <!--android:layout_gravity="end|center"-->
+            <!--android:layout_weight="1"-->
+            <!--android:visibility="gone"-->
+            <!--android:text="@string/font_clear_search_word"/>-->
+            <com.xw.repo.XEditText
+                android:id="@+id/search_toolbar_edittext"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="15dp"
+                android:hint="@string/search"
+                android:imeOptions="actionSearch"
+                android:singleLine="true" />
+
+        </android.support.v7.widget.Toolbar>
+
+
+    </android.support.design.widget.AppBarLayout>
+
+    <me.wizos.loread.view.SwipeRefreshLayoutS
+        android:id="@+id/search_swipe_refresh"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="?attr/root_view_bg"
+        android:layout_below="@+id/search_appBarLayout"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior"
+        tools:context=".activity.SearchActivity">
+
+        <ListView
+            android:id="@+id/search_list_view"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:divider="?attr/lv_item_divider"
+            android:layout_below="@id/search_appBarLayout"
+            android:groupIndicator="@null"
+            android:fadingEdgeLength="4dp"
+            android:background="?attr/bottombar_bg" />
+    </me.wizos.loread.view.SwipeRefreshLayoutS>
+</RelativeLayout>

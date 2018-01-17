@@ -21,12 +21,14 @@ import com.afollestad.materialdialogs.DialogAction;
 import com.afollestad.materialdialogs.GravityEnum;
 import com.afollestad.materialdialogs.MaterialDialog;
 import com.afollestad.materialdialogs.Theme;
+import com.google.gson.Gson;
 import com.lzy.okgo.OkGo;
+import com.lzy.okgo.callback.StringCallback;
 import com.lzy.okgo.https.HttpsUtils;
+import com.lzy.okgo.model.Response;
 import com.socks.library.KLog;
 
 import java.io.File;
-import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
@@ -40,6 +42,7 @@ import me.wizos.loread.adapter.MaterialSimpleListItem;
 import me.wizos.loread.adapter.ViewPagerAdapter;
 import me.wizos.loread.bean.Article;
 import me.wizos.loread.bean.Img;
+import me.wizos.loread.bean.Readability;
 import me.wizos.loread.bean.Tag;
 import me.wizos.loread.data.WithDB;
 import me.wizos.loread.data.WithSet;
@@ -52,6 +55,7 @@ import me.wizos.loread.utils.StringUtil;
 import me.wizos.loread.utils.ToastUtil;
 import me.wizos.loread.utils.Tool;
 import me.wizos.loread.view.IconFontView;
+import me.wizos.loread.view.SwipeRefreshLayoutS;
 import me.wizos.loread.view.ViewPagerS;
 import me.wizos.loread.view.WebViewS;
 import me.wizos.loread.view.colorful.Colorful;
@@ -61,7 +65,9 @@ import okhttp3.OkHttpClient;
 public class ArticleActivity extends BaseActivity implements View.OnClickListener {
     protected static final String TAG = "ArticleActivity";
     private WebViewS webView;
-    private IconFontView vStar, vRead, vSave, vReadability;
+    private IconFontView vStar, vRead, vSave;
+    //    private IconFontView vReadability;
+    private SwipeRefreshLayoutS swipeRefreshLayoutS;
     //    private NestedScrollView vScrolllayout ; // 这个是为上级顶部，页面滑动至最顶层而做的。目前由于 webview 是动态添加，所以无法用到
     private TextView vArticleNum;
     private Article article;
@@ -97,10 +103,12 @@ public class ArticleActivity extends BaseActivity implements View.OnClickListene
         vRead = (IconFontView) findViewById(R.id.art_bottombar_read);
         vSave = (IconFontView) findViewById(R.id.art_bottombar_save);
         vArticleNum =  (TextView)findViewById(R.id.art_toolbar_num);
-        vReadability = (IconFontView) findViewById(R.id.art_bottombar_readability);
+//        vReadability = (IconFontView) findViewById(R.id.art_bottombar_readability);
+        swipeRefreshLayoutS = (SwipeRefreshLayoutS) findViewById(R.id.art_swipe_refresh);
+        swipeRefreshLayoutS.setEnabled(false);
         if (!BuildConfig.DEBUG) {
             vSave.setVisibility(View.GONE);
-            vReadability.setVisibility(View.GONE);
+//            vReadability.setVisibility(View.GONE);
         }
         vSave.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -275,7 +283,7 @@ public class ArticleActivity extends BaseActivity implements View.OnClickListene
     private void imgLoadSuccess(final String imgSrc, final String localSrc) {
         KLog.e("loread", "替换imgLoadSuccess" + article.getSaveDir() + article.getTitle() + "：" + localSrc + "=" + webView);
         if (null == webView) {
-            Tool.showOnLocal("imgLoadSuccess此时webView尽然为空？");
+            Tool.showShort("imgLoadSuccess此时webView尽然为空？");
         } else {
             webView.post(new Runnable() {
                 @Override
@@ -371,7 +379,6 @@ public class ArticleActivity extends BaseActivity implements View.OnClickListene
 
             switch (msg.what) {
                 case Api.S_BITMAP:
-//                    int imgNo;
                     String articleID = msg.getData().getString("articleID");
                     String imgName = msg.getData().getString("imgName");
 //                    imgNo = msg.getData().getInt("imgNo");
@@ -393,7 +400,7 @@ public class ArticleActivity extends BaseActivity implements View.OnClickListene
                     articleID = msg.getData().getString("articleID");
                     if (App.currentArticleID != null & App.currentArticleID.equals(articleID)) {
                         if (null == mActivity.get().webView) {
-                            Tool.showOnLocal("此时webView尽然为空？");
+                            Tool.showShort("此时webView尽然为空？");
                         } else {
                             mActivity.get().webView.post(new Runnable() {
                                 @Override
@@ -539,40 +546,48 @@ public class ArticleActivity extends BaseActivity implements View.OnClickListene
     }
 
     public void onReadabilityClick(View view) {
+        final String handledArticleId = article.getId();
+        swipeRefreshLayoutS.setRefreshing(true);
         KLog.e("=====点击");
-        new Thread(new Runnable() {
+        ToastUtil.showLong(getString(R.string.toast_get_readability_ing));
+        MercuryApi.fetchReadabilityContent(article.getCanonical(), new StringCallback() {
             @Override
-            public void run() {
-                try {
-                    String articleHtml = MercuryApi.fetchReadabilityContent(article.getCanonical(), null);
-                    KLog.e("=====1111" + articleHtml);
-                    String sourceFileTitle;
-                    if (article.getSaveDir().equals(Api.SAVE_DIR_CACHE)) {
-                        sourceFileTitle = StringUtil.stringToMD5(article.getId());
-                    } else {
-                        sourceFileTitle = article.getTitle();
-                    }
-                    String sourceDirPath = FileUtil.getRelativeDir(article.getSaveDir());
-                    FileUtil.saveHtml(sourceDirPath + sourceFileTitle + ".html", articleHtml);
-                    KLog.e("=====" + sourceDirPath + sourceFileTitle + ".html");
-                    KLog.e("=====" + articleHtml);
-                    article.setImgState(null);
-                    WithDB.i().saveArticle(article);
-                    webView.post(new Runnable() {
-                        @Override
-                        public void run() {
-                            KLog.e("===== 更新");
-                            webView.loadDataWithBaseURL(FileUtil.getAbsoluteDir(article.getSaveDir()), StringUtil.getHtmlHeader() + StringUtil.getArticleHtml(article) + StringUtil.getFooter(), "text/html", "utf-8", null);
-                            initWebViewLazyLoad();
-                        }
-                    });
-                } catch (IOException e) {
-                    KLog.e("===== 报错" + e);
+            public void onSuccess(Response<String> response) {
+                if (!response.isSuccessful()) {
+                    return;
                 }
-            }
-        }).start();
-    }
+                if (handledArticleId != article.getId()) {
+                    return;
+                }
+                swipeRefreshLayoutS.setRefreshing(false);
+                Readability readability = new Gson().fromJson(response.body(), Readability.class);
+                String articleHtml = readability.getContent();
+//                String sourceFileTitle;
+//                if (article.getSaveDir().equals(Api.SAVE_DIR_CACHE)) {
+//                    sourceFileTitle = StringUtil.stringToMD5(article.getId());
+//                } else {
+//                    sourceFileTitle = article.getTitle();
+//                }
+//                String sourceDirPath = FileUtil.getRelativeDir(article.getSaveDir());
+//                FileUtil.saveHtml(sourceDirPath + sourceFileTitle + ".html", articleHtml);
+//                KLog.e("=====" + sourceDirPath + sourceFileTitle + ".html");
+                KLog.e("=====" + articleHtml);
+//                article.setImgState(null);
+//                WithDB.i().saveArticle(article);
 
+                KLog.e("===== 更新");
+//                webView.loadDataWithBaseURL(FileUtil.getAbsoluteDir(article.getSaveDir()), StringUtil.getHtmlHeader() + StringUtil.getArticleHtml(article) + StringUtil.getFooter(), "text/html", "utf-8", null);
+                webView.loadDataWithBaseURL(FileUtil.getAbsoluteDir(article.getSaveDir()), StringUtil.getHtmlHeader() + StringUtil.getModHtml(article, readability.getContent()) + StringUtil.getFooter(), "text/html", "utf-8", null);
+//                initWebViewLazyLoad();
+            }
+
+            @Override
+            public void onError(Response<String> response) {
+                ToastUtil.showLong(getString(R.string.fail_try));
+                swipeRefreshLayoutS.setRefreshing(false);
+            }
+        });
+    }
     private void moveArticleTo(Article article, String targetDir) {
         String sourceFileTitle;
         String targetFileTitle;
@@ -695,6 +710,7 @@ public class ArticleActivity extends BaseActivity implements View.OnClickListene
     }
 
     public void initSelectedPage(int position) {
+        swipeRefreshLayoutS.setRefreshing(false);
         initSelectedArticle(position);
         initSelectedWebView(position);
     }

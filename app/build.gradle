@@ -69,12 +69,12 @@ dependencies {
     compile 'com.kyleduo.switchbutton:library:1.4.0'
 //    compile 'me.zhanghai.android.materialprogressbar:library:1.1.6' // 1.1.6
     compile 'me.zhanghai.android.materialedittext:library:1.0.2'
+    compile 'com.xw.repo:xedittext:2.0.5@aar'
 
     //其中latest.release指代最新Bugly SDK版本号，也可以指定明确的版本号，例如:2.3.1
     compile 'com.tencent.bugly:crashreport:2.6.6.1'
     // 日志工具
     compile files('libs/klog.jar')
-
     // 悬停抽屉
     compile project(":scrolllayout")
 //    compile project(":sweetsheet")
@@ -101,5 +101,4 @@ dependencies {
 //    compile 'io.reactivex.rxjava2:rxandroid:2.0.1'
 //    // 因为RxAndroid发行版本很少，所以建议您也明确依赖RxJava的最新版本来修复错误和新功能。
 //    compile 'io.reactivex.rxjava2:rxjava:2.1.5'
-
 }

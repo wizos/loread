@@ -22,14 +22,14 @@ import okhttp3.FormBody;
  * Created by Wizos on 2016/3/10.
  */
 public class InoApi {
-    private static final String APP_ID = "1000001277";
-    private static final String APP_KEY = "8dByWzO4AYi425yx5glICKntEY2g3uJo";
-    private static String HOST = "https://www.inoreader.com";
     public int FETCH_CONTENT_EACH_CNT = 20;
 
+    private static final String APP_ID = "1000001277";
+    private static final String APP_KEY = "8dByWzO4AYi425yx5glICKntEY2g3uJo";
+    public static String HOST = "https://www.inoreader.com";
+    public static String INOREADER_ATUH = "";
 
     public static final String CLIENTLOGIN = "/accounts/ClientLogin";
-
     public static final String USER_INFO = "/reader/api/0/user-info";
     public static final String TAG_LIST = "/reader/api/0/tag/list";
     public static final String STREAM_PREFS = "/reader/api/0/preference/stream/list";
@@ -40,14 +40,15 @@ public class InoApi {
     public static final String EDIT_TAG = "/reader/api/0/edit-tag";
     public static final String RENAME_TAG = "/reader/api/0/rename-tag";
     public static final String EDIT_FEED = "/reader/api/0/subscription/edit";
+    public static final String ADD_FEED = "/reader/api/0/subscription/quickadd";
 
     public static final String STREAM_CONTENTS = "/reader/api/0/stream/contents/";
     public static final String Stream_Contents_Atom = "/reader/atom";
     public static final String Stream_Contents_User = "/reader/api/0/stream/contents/user/";
 
     public static final String READING_LIST = "/state/com.google/reading-list";
-    public static final String STARRED = "user/-/state/com.google/starred";
     public static final String NO_LABEL = "/state/com.google/no-label";
+    public static final String STARRED = "/state/com.google/starred";
     public static final String UNREAND = "/state/com.google/unread";
     
     /*
@@ -87,8 +88,8 @@ Code 	Description
         authHeaders = new HttpHeaders();
         authHeaders.put("AppId", APP_ID);
         authHeaders.put("AppKey", APP_KEY);
-        if (!TextUtils.isEmpty(Api.INOREADER_ATUH)) {
-            authHeaders.put("Authorization", Api.INOREADER_ATUH); // TEST:  这里不对
+        if (!TextUtils.isEmpty(InoApi.INOREADER_ATUH)) {
+            authHeaders.put("Authorization", InoApi.INOREADER_ATUH); // TEST:  这里不对
         }
     }
 
@@ -192,6 +193,7 @@ Code 	Description
         WithHttp.i().syncPost(HOST + ITEM_CONTENTS, builder, authHeaders, cb);
     }
 
+
     public void articleRemoveTag(String articleID, String tagId, StringCallback cb) {
         FormBody.Builder builder = new FormBody.Builder();
         builder.add("r", tagId);
@@ -211,6 +213,13 @@ Code 	Description
         builder.add("s", sourceTagId);
         builder.add("dest", destTagId);
         WithHttp.i().asyncPost(HOST + RENAME_TAG, builder, authHeaders, cb);
+    }
+
+    public void addFeed(String feedId, StringCallback cb) {
+        // /reader/api/0/subscription/quickadd
+        FormBody.Builder builder = new FormBody.Builder();
+        builder.add("quickadd", feedId);
+        WithHttp.i().asyncPost(HOST + ADD_FEED, builder, authHeaders, cb);
     }
 
     public void renameFeed(String feedId, String renamedTitle, StringCallback cb) {

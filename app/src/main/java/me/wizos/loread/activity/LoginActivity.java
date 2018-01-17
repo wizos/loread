@@ -78,6 +78,11 @@ public class LoginActivity extends BaseActivity implements View.OnLayoutChangeLi
         }
     }
 
+    private void forInput() {
+        activityRootView = findViewById(R.id.login_scroll);
+        screenHeight = this.getWindowManager().getDefaultDisplay().getHeight();//获取屏幕高度
+        keyHeight = screenHeight / 3; //阀值设置为屏幕高度的1/3
+    }
 
     //Activity最外层的Layout视图
     private View activityRootView;
@@ -90,11 +95,6 @@ public class LoginActivity extends BaseActivity implements View.OnLayoutChangeLi
         super.onResume();
         //添加layout大小发生改变监听器
         activityRootView.addOnLayoutChangeListener(this);
-    }
-    private void forInput(){
-        activityRootView = findViewById(R.id.login_scroll);
-        screenHeight = this.getWindowManager().getDefaultDisplay().getHeight();//获取屏幕高度
-        keyHeight = screenHeight/3; //阀值设置为屏幕高度的1/3
     }
 
     @Override
@@ -155,13 +155,13 @@ public class LoginActivity extends BaseActivity implements View.OnLayoutChangeLi
                     LoginActivity.this.finish();
                 } catch (HttpException e) {
                     e.printStackTrace();
-                    Tool.showOnLocal("login时出了异常：HttpException");
+                    Tool.showShort("login时出了异常：HttpException");
                 } catch (IOException e) {
                     e.printStackTrace();
-                    Tool.showOnLocal("login时出了异常：IOException");
+                    Tool.showShort("login时出了异常：IOException");
                 } catch (IllegalStateException e) {
                     e.printStackTrace();
-                    Tool.showOnLocal("login时出了异常：IllegalStateException");
+                    Tool.showShort("login时出了异常：IllegalStateException");
                 } finally {
                     loginButton.post(new Runnable() {// 用 post 可以解决在非主线程运行，会报错
                         @Override

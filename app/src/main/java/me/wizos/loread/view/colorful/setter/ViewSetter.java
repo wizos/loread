@@ -11,7 +11,6 @@ import android.view.View;
  * @author mrsimple
  */
 public abstract class ViewSetter {
-
     /**
      * 目标View
      */

@@ -92,7 +92,7 @@ public class StringUtil {
                 "</head><body>";
     }
 
-    private static String getModHtml(Article article, String articleHtml) {
+    public static String getModHtml(Article article, String articleHtml) {
         String author = article.getAuthor();
         if (author == null ||
                 author.equals("") ||
@@ -112,7 +112,7 @@ public class StringUtil {
                 "<article id=\"art\">" +
                 "<header id=\"art_header\">" +
                 "<h1 id=\"art_h1\"><a href=\"" + article.getCanonical() + "\">" + article.getTitle() + "</a></h1>" +
-                "<p id=\"art_author\">" + author + "</p><p id=\"art_pubDate\">" + TimeUtil.getDateSec(article.getPublished()) + "</p>" +
+                "<p id=\"art_author\">" + author + "</p><p id=\"art_pubDate\">" + TimeUtil.stampToTime(article.getPublished() * 1000, "yyyy-MM-dd HH:mm") + "</p>" +
                 "</header>" +
                 "<hr id=\"art_hr\">" +
                 "<section id=\"art_section\">" + articleHtml + "</section>" +

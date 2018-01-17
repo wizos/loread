@@ -58,11 +58,14 @@
             android:label="@string/setting_activity_title"
             android:parentActivityName=".activity.MainActivity"
             android:theme="@style/AppTheme.Day.NoActionBar" />
+        <activity
+            android:name=".activity.SearchActivity"
+            android:parentActivityName=".activity.MainActivity"
+            android:screenOrientation="portrait"
+            android:theme="@style/AppTheme.Day.NoActionBar" />
 
         <service android:name=".activity.MainService" />
 
-        <activity android:name=".activity.TestActivity" />
-        <activity android:name=".activity.SearchActivity"></activity>
     </application>
 
 </manifest>
