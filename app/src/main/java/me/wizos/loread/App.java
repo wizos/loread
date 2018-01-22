@@ -3,6 +3,7 @@ package me.wizos.loread;
 import android.app.Application;
 import android.os.Handler;
 
+import com.bumptech.glide.Glide;
 import com.lzy.okgo.OkGo;
 import com.socks.library.KLog;
 import com.tencent.bugly.crashreport.CrashReport;
@@ -33,7 +34,7 @@ public class App extends Application{
     //    public final static int DB_VERSION = 4;
     public final static int theme_Day = 0;
     public final static int theme_Night = 1;
-    private final static boolean isDebug = true;
+    private final static boolean isDebug = false;
 
     // 跟使用的 API 有关的 字段
     public static long UserID;
@@ -74,6 +75,21 @@ public class App extends Application{
         return instance;
     }
 
+    @Override
+    public void onTrimMemory(int level) {
+        super.onTrimMemory(level);
+        if (level == TRIM_MEMORY_UI_HIDDEN) {
+            Glide.get(this).clearMemory();
+        }
+        Glide.get(this).trimMemory(level);
+    }
+
+    @Override
+    public void onLowMemory() {
+        super.onLowMemory();
+        // 内存低的时候，清理 Glide 的缓存
+        Glide.get(this).clearMemory();
+    }
 
     @Override
     public void onCreate() {
@@ -102,12 +118,15 @@ public class App extends Application{
 
     private void initLogAndCrash() {
         CrashReport.setIsDevelopmentDevice(this, BuildConfig.DEBUG);
-        if (BuildConfig.DEBUG && isDebug) {
-            KLog.init(true);
+        if (BuildConfig.DEBUG) {
             CrashReport.initCrashReport(App.i(), "900044326", true); // 测试的时候设为 true
         } else {
-            KLog.init(false);
             CrashReport.initCrashReport(App.i(), "900044326", false); // 测试的时候设为 true
+        }
+        if (isDebug) {
+            KLog.init(true);
+        } else {
+            KLog.init(false);
         }
     }
 
@@ -160,10 +179,9 @@ public class App extends Application{
         InoApi.INOREADER_ATUH = WithSet.i().getAuth();
         // 读取uid
         UserID = WithSet.i().getUseId();
-        syncFirstOpen = WithSet.i().isSyncFirstOpen();
         StreamState = WithSet.i().getStreamState();
         StreamId = WithSet.i().getStreamId();
-        KLog.e(StreamState + "  " + StreamId + "  " + syncFirstOpen);
+        KLog.e(StreamState + "  " + StreamId + "  ");
         if (StreamId == null || StreamId.equals("")) {
             StreamId = "user/" + UserID + "/state/com.google/reading-list";
         }

@@ -6,78 +6,58 @@ import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewParent;
 import android.widget.AbsListView;
 import android.widget.ExpandableListAdapter;
 import android.widget.ExpandableListView;
+
+import com.yinglan.scrolllayout.ScrollLayout;
+
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 
 /**
  * Created by Wizos on 2017/9/17.
  */
 
 public class ExpandableListViewS extends ExpandableListView implements AbsListView.OnScrollListener { // PinnedHeader
-
     public ExpandableListViewS(Context context) {
         super(context);
-        registerListener();
+        setOnScrollListener(this);
     }
 
     public ExpandableListViewS(Context context, AttributeSet attrs) {
         super(context, attrs);
-        registerListener();
+        setOnScrollListener(this);
     }
 
     public ExpandableListViewS(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
-        registerListener();
+        setOnScrollListener(this);
     }
+
 
     /**
      * Adapter 接口 . 列表必须实现此接口 .
      */
+    private HeaderAdapter mAdapter;
     public interface HeaderAdapter {
         int PINNED_HEADER_GONE = 0;
         int PINNED_HEADER_VISIBLE = 1;
         int PINNED_HEADER_PUSHED_UP = 2;
-
         /**
          * 获取 Header 的状态
-         *
-         * @param groupPosition
-         * @param childPosition
          * @return PINNED_HEADER_GONE, PINNED_HEADER_VISIBLE, PINNED_HEADER_PUSHED_UP 其中之一
          */
         int getHeaderState(int groupPosition, int childPosition);
 
         /**
          * 配置 Header, 让 Header 知道显示的内容
-         *
-         * @param header
-         * @param groupPosition
-         * @param childPosition
-         * @param alpha
          */
         void configureHeader(View header, int groupPosition, int childPosition, int alpha);
-
-//        /**
-//         * 设置组按下的状态
-//         *
-//         * @param groupPosition
-//         * @param status
-//         */
-//        void setGroupClickStatus(int groupPosition, int status);
-//
-//        /**
-//         * 获取组按下的状态
-//         *
-//         * @param groupPosition
-//         * @return
-//         */
-//        int getGroupClickStatus(int groupPosition);
     }
 
-    private static final int MAX_ALPHA = 255;
-
-    private HeaderAdapter mAdapter;
 
     /**
      * 用于在列表头显示的 View,mHeaderViewVisible 为 true 才可见
@@ -89,6 +69,7 @@ public class ExpandableListViewS extends ExpandableListView implements AbsListVi
      */
     private boolean mHeaderViewVisible;
 
+    private static final int MAX_ALPHA = 255;
     private int mHeaderViewWidth;
     private int mHeaderViewHeight;
 
@@ -103,48 +84,18 @@ public class ExpandableListViewS extends ExpandableListView implements AbsListVi
         requestLayout();
     }
 
-    private void registerListener() {
-        setOnScrollListener(this);
-//        setOnGroupClickListener(this);
-    }
+//    private void registerListener() {
+//        setOnScrollListener(this);
+////        setOnGroupClickListener(this);
+//    }
 
     private OnPinnedGroupClickListener mOnPinnedGroupClickListener;
-
     public void setOnPinnedGroupClickListener(OnPinnedGroupClickListener onPinnedGroupClickListener) {
         mOnPinnedGroupClickListener = onPinnedGroupClickListener;
     }
-
     public interface OnPinnedGroupClickListener {
         void onHeaderClick(ExpandableListView parent, View v, int pinnedGroupPosition);
     }
-
-//    /**
-//     * 点击 HeaderView 触发的事件
-//     */
-//    private void headerViewClick() {
-//        KLog.e("header 被点击");
-//        long packedPosition = getExpandableListPosition(this.getFirstVisiblePosition());
-//        int groupPosition = ExpandableListView.getPackedPositionGroup(packedPosition);
-//        KLog.e("header 被点击2：" + packedPosition + " = " + groupPosition  + " = " + mAdapter.getGroupClickStatus(groupPosition));
-//
-//        if ( isGroupExpanded(groupPosition) ) {
-//            this.collapseGroup(groupPosition);
-//            mAdapter.setGroupClickStatus(groupPosition, 0);
-//        } else {
-//            this.expandGroup(groupPosition);
-//            mAdapter.setGroupClickStatus(groupPosition, 1);
-//        }
-//
-////        if (mAdapter.getGroupClickStatus(groupPosition) == 1) {
-////            this.collapseGroup(groupPosition);
-////            mAdapter.setGroupClickStatus(groupPosition, 0);
-////        } else {
-////            this.expandGroup(groupPosition);
-////            mAdapter.setGroupClickStatus(groupPosition, 1);
-////        }
-//
-//        this.setSelectedGroup(groupPosition);
-//    }
 
     private float mDownX;
     private float mDownY;
@@ -173,12 +124,10 @@ public class ExpandableListViewS extends ExpandableListView implements AbsListVi
                     if (x <= mHeaderViewWidth && y <= mHeaderViewHeight && offsetX <= mHeaderViewWidth
                             && offsetY <= mHeaderViewHeight) {
                         if (mHeaderView != null && mOnPinnedGroupClickListener != null) {
-//                            headerViewClick(); // 改为接口方式
                             long packedPosition = getExpandableListPosition(this.getFirstVisiblePosition());
                             int pinnedGroupPosition = ExpandableListView.getPackedPositionGroup(packedPosition);
                             mOnPinnedGroupClickListener.onHeaderClick(this, mHeaderView, pinnedGroupPosition);
                         }
-
                         return true;
                     }
                     break;
@@ -186,9 +135,7 @@ public class ExpandableListViewS extends ExpandableListView implements AbsListVi
                     break;
             }
         }
-
         return super.onTouchEvent(ev);
-
     }
 
     @Override
@@ -196,28 +143,6 @@ public class ExpandableListViewS extends ExpandableListView implements AbsListVi
         super.setAdapter(adapter);
         mAdapter = (HeaderAdapter) adapter;
     }
-
-//    /**
-//     * 点击了 Group 触发的事件 , 要根据根据当前点击 Group 的状态来
-//     */
-//    @Override
-//    public boolean onGroupClick(final ExpandableListView parent, View v, int groupPosition, long id) {
-////
-////        if (mAdapter.getGroupClickStatus(groupPosition) == 0) {// 点击需展开
-////            mAdapter.setGroupClickStatus(groupPosition, 1);
-////            parent.expandGroup(groupPosition);
-////
-////            // Header自动置顶
-////            // parent.setSelectedGroup(groupPosition);
-////
-////        } else if (mAdapter.getGroupClickStatus(groupPosition) == 1) {// 点击合上
-////            mAdapter.setGroupClickStatus(groupPosition, 0);
-////            parent.collapseGroup(groupPosition);
-////        }
-//
-//        // 返回 true 才可以弹回第一行 , 不知道为什么
-//        return true;
-//    }
 
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
@@ -228,7 +153,6 @@ public class ExpandableListViewS extends ExpandableListView implements AbsListVi
             mHeaderViewHeight = mHeaderView.getMeasuredHeight();
         }
     }
-
     private int mOldState = -1;
 
     @Override
@@ -249,37 +173,27 @@ public class ExpandableListViewS extends ExpandableListView implements AbsListVi
         if (mHeaderView == null || mAdapter == null || ((ExpandableListAdapter) mAdapter).getGroupCount() == 0) {
             return;
         }
-
         int state = mAdapter.getHeaderState(groupPosition, childPosition);
-
         switch (state) {
             case HeaderAdapter.PINNED_HEADER_GONE: {
                 mHeaderViewVisible = false;
                 break;
             }
-
             case HeaderAdapter.PINNED_HEADER_VISIBLE: {
                 mAdapter.configureHeader(mHeaderView, groupPosition, childPosition, MAX_ALPHA);
-
                 if (mHeaderView.getTop() != 0) {
                     mHeaderView.layout(0, 0, mHeaderViewWidth, mHeaderViewHeight);
                 }
-
                 mHeaderViewVisible = true;
                 break;
             }
-
             case HeaderAdapter.PINNED_HEADER_PUSHED_UP: {
                 View firstView = getChildAt(0);
                 int bottom = firstView.getBottom();
-
 //                int itemHeight = firstView.getHeight();
                 int headerHeight = mHeaderView.getHeight();
-
                 int y;
-
                 int alpha;
-
                 if (bottom < headerHeight) {
                     y = (bottom - headerHeight);
                     alpha = MAX_ALPHA * (headerHeight + y) / headerHeight;
@@ -288,21 +202,18 @@ public class ExpandableListViewS extends ExpandableListView implements AbsListVi
                     alpha = MAX_ALPHA;
                 }
                 mAdapter.configureHeader(mHeaderView, groupPosition, childPosition, alpha);
-
                 if (mHeaderView.getTop() != y) {
                     mHeaderView.layout(0, y, mHeaderViewWidth, mHeaderViewHeight + y);
                 }
-
                 mHeaderViewVisible = true;
                 break;
             }
         }
     }
-
-    @Override
     /**
      * 列表界面更新时调用该方法(如滚动时)
      */
+    @Override
     protected void dispatchDraw(Canvas canvas) {
         super.dispatchDraw(canvas);
         if (mHeaderViewVisible) {
@@ -316,12 +227,203 @@ public class ExpandableListViewS extends ExpandableListView implements AbsListVi
         final long flatPos = getExpandableListPosition(firstVisibleItem);
         int groupPosition = ExpandableListView.getPackedPositionGroup(flatPos);
         int childPosition = ExpandableListView.getPackedPositionChild(flatPos);
-
         configureHeaderView(groupPosition, childPosition);
     }
 
     @Override
     public void onScrollStateChanged(AbsListView view, int scrollState) {
     }
+
+    // 这段代码导致可以实现listview在悬停抽屉中滚动。但是又导致pinnedGroup失效
+    @Override
+    protected void onAttachedToWindow() {
+        super.onAttachedToWindow();
+        ViewParent parent = getParent();
+        while (parent != null) {
+            if (parent instanceof ScrollLayout) {
+                ((ScrollLayout) parent).setAssociatedListView(this);
+                break;
+            }
+            parent = parent.getParent();
+        }
+    }
+
+
+    // 以上都是 设置 PinnedGroup 的内容
+
+
+    /**
+     * 实现/接管 AbsListView.OnScrollListener 接口，让 setOnScrollListener 改造为 addOnScrollListener，可以添加更多的监听器。
+     * 因为要实现“悬停抽屉只有在其内部的listview到达最顶部的时候，才能下拉”和“PinnedGroup”功能，都要添加 OnScrollListener 监听器。
+     */
+    private final CompositeScrollListener compositeScrollListener = new CompositeScrollListener();
+
+    //    其实再类内部{}只是代表在调用构造函数之前在{}中初始化，static{}只在类加载时调用
+//    new子类的对象时，先调用父类staic{}里的东西，在调用子类里的static{}，在调用父类{}的在调用父类构造方法，在调用子类构造方法
+//    调用子类或者父类的静态方法时，先调用父类的static{}在调用子类的static{}
+    {
+        super.setOnScrollListener(compositeScrollListener);
+        // 下面这段代码会影响 PinnedGroup 的功能
+//        getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+//            @Override
+//            public void onGlobalLayout() {
+//                ViewGroup.LayoutParams layoutParams = getLayoutParams();
+//                ViewParent parent = getParent();
+//                while (parent != null) {
+//                    if (parent instanceof ScrollLayout) {
+//                        int height = ((ScrollLayout) parent).getMeasuredHeight() - ((ScrollLayout) parent).minOffset;
+//                        if (layoutParams.height == height) {
+//                            return;
+//                        } else {
+//                            layoutParams.height = height;
+//                            break;
+//                        }
+//                    }
+//                    parent = parent.getParent();
+//                }
+//                setLayoutParams(layoutParams);
+//            }
+//        });
+    }
+
+    /**
+     * 添加一个OnScrollListener,不会取代已添加OnScrollListener
+     * <p><b>Make sure call this on UI thread</b></p>
+     *
+     * @param listener the listener to add
+     */
+    @Override
+    public void setOnScrollListener(final OnScrollListener listener) {
+        addOnScrollListener(listener);
+    }
+
+    /**
+     * 添加一个OnScrollListener,不会取代已添加OnScrollListener
+     * <p><b>Make sure call this on UI thread</b></p>
+     *
+     * @param listener the listener to add
+     */
+    public void addOnScrollListener(final OnScrollListener listener) {
+//        throwIfNotOnMainThread();
+        compositeScrollListener.addOnScrollListener(listener);
+    }
+
+    //
+//    /**
+//     * 删除前一个添加scrollListener,只会删除完全相同的对象
+//     * <p><b>Make sure call this on UI thread.</b></p>
+//     *
+//     * @param listener the listener to remove
+//     */
+//    public void removeOnScrollListener(final OnScrollListener listener) {
+////        throwIfNotOnMainThread();
+//        compositeScrollListener.removeOnScrollListener(listener);
+//    }
+    private class CompositeScrollListener implements OnScrollListener {
+        private final List<OnScrollListener> scrollListenerList = new
+                ArrayList<OnScrollListener>();
+
+        public void addOnScrollListener(OnScrollListener listener) {
+            if (listener == null) {
+                return;
+            }
+            for (OnScrollListener scrollListener : scrollListenerList) {
+                if (listener == scrollListener) {
+                    return;
+                }
+            }
+            scrollListenerList.add(listener);
+        }
+
+        public void removeOnScrollListener(OnScrollListener listener) {
+            if (listener == null) {
+                return;
+            }
+            Iterator<OnScrollListener> iterator = scrollListenerList.iterator();
+            while (iterator.hasNext()) {
+                OnScrollListener scrollListener = iterator.next();
+                if (listener == scrollListener) {
+                    iterator.remove();
+                    return;
+                }
+            }
+        }
+
+        @Override
+        public void onScrollStateChanged(AbsListView view, int scrollState) {
+            List<OnScrollListener> listeners = new ArrayList<OnScrollListener>(scrollListenerList);
+            for (OnScrollListener listener : listeners) {
+                listener.onScrollStateChanged(view, scrollState);
+            }
+        }
+
+        @Override
+        public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
+            List<OnScrollListener> listeners = new ArrayList<OnScrollListener>(scrollListenerList);
+            for (OnScrollListener listener : listeners) {
+                listener.onScroll(view, firstVisibleItem, visibleItemCount, totalItemCount);
+            }
+        }
+    }
+
+
+//    @Override
+//    protected void onDetachedFromWindow() {
+//        super.onDetachedFromWindow();
+//    }
+
+//    private void throwIfNotOnMainThread() {
+//        if (Looper.myLooper() != Looper.getMainLooper()) {
+//            throw new IllegalStateException("Must be invoked from the main thread.");
+//        }
+//    }
+
+
+    /**
+     * 阴影部分的代码
+     */
+//    private boolean showShadow = false;
+//    private View shadowView;
+//    /**
+//     * 需要调用之前setOnScrollListener
+//     * @param shadowView the shadow view
+//     */
+//    public void setTopShadowView(View shadowView) {
+//        if (shadowView == null) {
+//            return;
+//        }
+//        this.shadowView = shadowView;
+//        addOnScrollListener(new OnScrollListener() {
+//            @Override
+//            public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
+//                View firstChild = view.getChildAt(0);
+//                if (firstChild != null) {
+//                    if (firstVisibleItem == 0 && firstChild.getTop() == 0) {
+//                        showShadow = false;
+//                        showTopShadow();
+//                    } else if (!showShadow) {
+//                        showShadow = true;
+//                        showTopShadow();
+//                    }
+//                }
+//            }
+//
+//            @Override
+//            public void onScrollStateChanged(AbsListView view, int scrollState) {
+//            }
+//        });
+//    }
+//    private void showTopShadow() {
+//        if (shadowView == null || shadowView.getVisibility() == View.VISIBLE) {
+//            return;
+//        }
+//        shadowView.setVisibility(View.VISIBLE);
+//    }
+//    private void hideTopShadow() {
+//        if (shadowView == null || shadowView.getVisibility() == View.GONE) {
+//            return;
+//        }
+//    }
+
 }
 

@@ -1,9 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.design.widget.CoordinatorLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/art_coordinator"
+    android:id="@+id/art_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fitsSystemWindows="true"
@@ -21,7 +19,6 @@
         android:layout_height="wrap_content">
         <android.support.v7.widget.Toolbar
             android:id="@+id/art_toolbar"
-            app:layout_scrollFlags="scroll|enterAlways"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
             android:background="?attr/topbar_bg" >
@@ -49,13 +46,14 @@
     <!--给你的可滑动的组件，也就是RecyclerView 或者 NestedScrollView 设置如下属性：-->
     <!--app:layout_behavior="@string/appbar_scrolling_view_behavior"-->
 
+
     <me.wizos.loread.view.SwipeRefreshLayoutS
         android:id="@+id/art_swipe_refresh"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="?attr/root_view_bg"
-        android:layout_below="@+id/art_appBarLayout"
-        android:layout_marginBottom="90dp"
+        android:layout_above="@id/art_bottombar"
+        android:layout_below="@id/art_appBarLayout"
         tools:context=".activity.ArticleActivity">
 
         <me.wizos.loread.view.ViewPagerS
@@ -109,4 +107,4 @@
     </RelativeLayout>
 
 
-</android.support.design.widget.CoordinatorLayout>
+</RelativeLayout>

@@ -201,8 +201,6 @@ public class ExpandableListAdapterS extends BaseExpandableListAdapter implements
             groupViewHolder.title.setText(App.i().getString(R.string.item_error));
 //            KLog.e("父分类：" + theTag.getTitle() + "--" + theTag.getUnreadcount());
         }
-
-
         return convertView;
     }
 
@@ -263,15 +261,12 @@ public class ExpandableListAdapterS extends BaseExpandableListAdapter implements
 //        No need to draw header view if this group does not contain any child & also not expanded.
         // 如果这个 group 不包含 child 并且没有展开，那么不绘制 header view
         if (firstVisibleChildPosition == -1 && !listView.isGroupExpanded(firstVisibleGroupPosition)) { // 如果某项是父项，并且没有展开
-//            KLog.e("---------状态：GONE"  );
             return PINNED_HEADER_GONE;
         }
         // 到达当前 Group 的最后一个 Child，准备对接下一个 Group header。
         if (firstVisibleChildPosition == getChildrenCount(firstVisibleGroupPosition) - 1) {
-//            KLog.e("---------状态：PUSHED_UP"  );
             return PINNED_HEADER_PUSHED_UP;
         }
-//            KLog.e("---------状态：VISIBLE"  );
         return PINNED_HEADER_VISIBLE;
     }
 
@@ -281,20 +276,5 @@ public class ExpandableListAdapterS extends BaseExpandableListAdapter implements
         String groupTitle = tags.get(groupPosition).getTitle();
         ((TextView) header.findViewById(R.id.header_item_title)).setText(groupTitle);
     }
-
-//    private SparseIntArray groupStatusMap = new SparseIntArray();
-//    @Override
-//    public void setGroupClickStatus(int groupPosition, int status) {
-//        groupStatusMap.put(groupPosition, status);
-//    }
-//
-//    @Override
-//    public int getGroupClickStatus(int groupPosition) {
-//        if (groupStatusMap.keyAt(groupPosition) >= 0) {
-//            return groupStatusMap.get(groupPosition);
-//        } else {
-//            return 0;
-//        }
-//    }
 
 }

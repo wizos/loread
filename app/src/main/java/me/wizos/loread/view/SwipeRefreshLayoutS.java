@@ -14,7 +14,12 @@ import android.widget.AbsListView;
  */
 public class SwipeRefreshLayoutS extends SwipeRefreshLayout {
     private View view;
-    private int scaleTouchSlop;
+//    private int scaleTouchSlop;
+
+    // 方案2：解决下来刷新与左右滑动的冲突
+    private int mTouchSlop;
+    private float mPrevX;
+    //
 
     public SwipeRefreshLayoutS(Context context) {
         super(context);
@@ -23,7 +28,9 @@ public class SwipeRefreshLayoutS extends SwipeRefreshLayout {
     public SwipeRefreshLayoutS(Context context, AttributeSet attrs) {
         super(context, attrs);
         // 触发移动事件的最短距离，如果小于这个距离就不触发移动控件
-        scaleTouchSlop = ViewConfiguration.get(context).getScaledTouchSlop();
+//        scaleTouchSlop = ViewConfiguration.get(context).getScaledTouchSlop();
+        // 判断用户在进行滑动操作的最小距离
+        mTouchSlop = ViewConfiguration.get(context).getScaledTouchSlop();
     }
 
     public void setViewGroup(View view) {
@@ -77,22 +84,43 @@ public class SwipeRefreshLayoutS extends SwipeRefreshLayout {
      */
     @Override
     public boolean onInterceptTouchEvent(MotionEvent ev) {
+//        switch (ev.getAction()) {
+//            case MotionEvent.ACTION_DOWN:
+//                mXDown = ev.getX();
+//                mYDown = ev.getY();
+//                break;
+//            case MotionEvent.ACTION_MOVE:
+////                float moveX = ev.getX();
+////                float instanceX = Math.abs(moveX - preX);
+////                KLog.i("refresh...","move: instanceX:" + instanceX + "=(moveX:" + moveX + " - preX:" + preX + ") , scaleTouchSlop:" + scaleTouchSlop);
+//                // 容差值大概是24，再加上60
+//                if (fingerLeftAndRightMove(ev)) {
+//                    return false;
+//                }
+//                break;
+//        }
+//        return super.onInterceptTouchEvent(ev);
+
+
+//        作者：秋天的雨滴
+//        链接：https://www.jianshu.com/p/04d799608c2e
         switch (ev.getAction()) {
             case MotionEvent.ACTION_DOWN:
-                mXDown = ev.getX();
-                mYDown = ev.getY();
+                mPrevX = MotionEvent.obtain(ev).getX();
                 break;
+
             case MotionEvent.ACTION_MOVE:
-//                float moveX = ev.getX();
-//                float instanceX = Math.abs(moveX - preX);
-//                KLog.i("refresh...","move: instanceX:" + instanceX + "=(moveX:" + moveX + " - preX:" + preX + ") , scaleTouchSlop:" + scaleTouchSlop);
-                // 容差值大概是24，再加上60
-                if (fingerLeftAndRightMove(ev)) {
+                final float eventX = ev.getX();
+                //获取水平移动距离
+                float xDiff = Math.abs(eventX - mPrevX);
+                //当水平移动距离大于滑动操作的最小距离的时候就认为进行了横向滑动
+                //不进行事件拦截,并将这个事件交给子View处理
+                if (xDiff > mTouchSlop) {
                     return false;
                 }
-                break;
         }
         return super.onInterceptTouchEvent(ev);
+
     }
 
     /* 手指放下的坐标 */
@@ -100,8 +128,6 @@ public class SwipeRefreshLayoutS extends SwipeRefreshLayout {
     private float mYDown;
     /* 手指滑动的最短距离 */
     private float mShortestDistance = 25f;
-    // 上一次触摸时的X坐标
-    private float preX;
 
     /**
      * 手指左右移动：左右得超出50，上下不能超出50

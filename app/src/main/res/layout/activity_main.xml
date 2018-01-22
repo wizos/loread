@@ -173,17 +173,12 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="@color/shade"
-        android:visibility="gone"
         android:elevation="4dp">
-        <!--因为悬停抽屉出现时，对屏幕其他区域做了遮罩，而这个遮罩的透明度其实对这个抽屉也会有影响，所以这里另加了一个遮罩-->
-        <View
-            android:id="@+id/main_scroll_layout_bg"
-            android:tag="scrolllayout_bg"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:background="?attr/bottombar_bg" />
 
         <LinearLayout
+            android:id="@+id/main_scroll_layout_bg"
+            android:background="?attr/bottombar_bg"
+
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:orientation="vertical">
@@ -217,10 +212,7 @@
                 android:groupIndicator="@null"
                 android:fadingEdgeLength="4dp"
                 android:background="?attr/bottombar_bg" />
-
             <!--android:paddingTop="?attr/actionBarSize"-->
-
-
         </LinearLayout>
     </com.yinglan.scrolllayout.ScrollLayout>
 

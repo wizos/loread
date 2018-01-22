@@ -614,33 +614,84 @@ public class WithDB {
 
 
     public int getUnreadArtsCountNoTag() {
-        QueryBuilder<Article> q = articleDao.queryBuilder();
-        q.join(ArticleDao.Properties.OriginStreamId, Feed.class).where(FeedDao.Properties.Categoryid.isNull());
-        q.where(ArticleDao.Properties.ReadState.like(Api.ART_UNREAD + "%"));
-        return (int) q.buildCount().count();
+        String queryString = "SELECT count(*) FROM "
+                + ArticleDao.TABLENAME + " LEFT JOIN " + FeedDao.TABLENAME + " ON " + ArticleDao.TABLENAME + "." + ArticleDao.Properties.OriginStreamId.columnName + " = " + FeedDao.TABLENAME + "." + FeedDao.Properties.Id.columnName
+                + " WHERE "
+                + ArticleDao.TABLENAME + "." + ArticleDao.Properties.ReadState.columnName + " like \"" + Api.ART_UNREAD + "%\""
+                + " AND " + FeedDao.TABLENAME + "." + FeedDao.Properties.Categoryid.columnName + " IS \"user/" + WithSet.i().getUseId() + Api.U_NO_LABEL + "\"";
+        KLog.e("测getUnreadArtsCountNoTag：" + queryString);
+        Cursor cursor = articleDao.getDatabase().rawQuery(queryString, new String[]{});
+        if (cursor == null) {
+            return 0;
+        }
+        cursor.moveToFirst();
+        int count = cursor.getInt(0);
+        cursor.close();
+        return count;
     }
 
     public int getStaredArtsCountNoTag() {
-        QueryBuilder<Article> q = articleDao.queryBuilder();
-        q.join(ArticleDao.Properties.OriginStreamId, Feed.class).where(FeedDao.Properties.Categoryid.isNull());
-        q.where(ArticleDao.Properties.StarState.eq(Api.ART_STARED));
-        return (int) q.buildCount().count();
+        // SELECT count(*) FROM Article LEFT JOIN Feed ON Article.ORIGIN_STREAM_ID = Feed.Id WHERE Article.Star_State like "Stared"  AND ( Feed.Categoryid IS "user/1006097346/state/com.google/no-label" OR Feed.Categoryid IS NULL );
+        String queryString = "SELECT count(*) FROM "
+                + ArticleDao.TABLENAME + " LEFT JOIN " + FeedDao.TABLENAME + " ON " + ArticleDao.TABLENAME + "." + ArticleDao.Properties.OriginStreamId.columnName + " = " + FeedDao.TABLENAME + "." + FeedDao.Properties.Id.columnName
+                + " WHERE "
+                + ArticleDao.TABLENAME + "." + ArticleDao.Properties.StarState.columnName + " = \"" + Api.ART_STARED + "\" AND "
+                + "(" + FeedDao.TABLENAME + "." + FeedDao.Properties.Id.columnName + " IS NULL OR " + FeedDao.TABLENAME + "." + FeedDao.Properties.Categoryid.columnName + " IS \"user/" + WithSet.i().getUseId() + Api.U_NO_LABEL + "\" )";
+        KLog.e("测getStaredArtsCountNoTag：" + queryString);
+        Cursor cursor = articleDao.getDatabase().rawQuery(queryString, new String[]{});
+        if (cursor == null) {
+            return 0;
+        }
+        cursor.moveToFirst();
+        int count = cursor.getInt(0);
+        cursor.close();
+        return count;
     }
 
     public int getAllArtsCountNoTag() {
-        QueryBuilder<Article> q = articleDao.queryBuilder();
-        q.join(ArticleDao.Properties.OriginStreamId, Feed.class).where(FeedDao.Properties.Categoryid.isNull());
-        return (int) q.buildCount().count();
+        // 在未分类的文章有以下几种：
+        // 1.有订阅源，但是订阅源没有tag（未读的时候，还有一个条件是文章的状态为unread）
+        // 2.没有订阅源，但是是加星的（加星的时候）
+        // （全部的时候是他们的合集）
+        // 查询在一张表不在另外一张表的记录：http://blog.csdn.net/c840898727/article/details/42238363
+        // select ta.* from ta left join tb on ta.id=tb.id where tb.id is null
+        String queryString = "SELECT count(*) FROM "
+                + ArticleDao.TABLENAME + " LEFT JOIN " + FeedDao.TABLENAME + " ON " + ArticleDao.TABLENAME + "." + ArticleDao.Properties.OriginStreamId.columnName + " = " + FeedDao.TABLENAME + "." + FeedDao.Properties.Id.columnName
+                + " WHERE "
+                + FeedDao.TABLENAME + "." + FeedDao.Properties.Id.columnName + " IS NULL OR " + FeedDao.TABLENAME + "." + FeedDao.Properties.Categoryid.columnName + " IS \"user/" + WithSet.i().getUseId() + Api.U_NO_LABEL + "\"";
+        KLog.e("测getAllArtsCountNoTag：" + queryString);
+        Cursor cursor = articleDao.getDatabase().rawQuery(queryString, new String[]{});
+        if (cursor == null) {
+            return 0;
+        }
+        cursor.moveToFirst();
+        int count = cursor.getInt(0);
+        cursor.close();
+        return count;
     }
 
 
     public List<Article> getArtsUnreadNoTag() {
-        QueryBuilder<Article> q = articleDao.queryBuilder();
-        q.join(ArticleDao.Properties.OriginStreamId, Feed.class).where(FeedDao.Properties.Categoryid.isNull());
-        q.where(ArticleDao.Properties.ReadState.like(Api.ART_UNREAD + "%"));
-        q.orderDesc(ArticleDao.Properties.TimestampUsec);
-        return q.listLazy();
+        // select ta.* from ta left join tb on ta.id=tb.id where tb.id is null
+        String queryString = "SELECT " + ArticleDao.TABLENAME + ".* FROM "
+                + ArticleDao.TABLENAME + " LEFT JOIN " + FeedDao.TABLENAME + " ON " + ArticleDao.TABLENAME + "." + ArticleDao.Properties.OriginStreamId.columnName + " = " + FeedDao.TABLENAME + "." + FeedDao.Properties.Id.columnName
+                + " WHERE "
+                + ArticleDao.TABLENAME + "." + ArticleDao.Properties.ReadState.columnName + " like \"" + Api.ART_UNREAD + "%\" AND "
+                + FeedDao.TABLENAME + "." + FeedDao.Properties.Categoryid.columnName + " IS \"user/" + WithSet.i().getUseId() + Api.U_NO_LABEL + "\""
+                + " ORDER BY " + ArticleDao.Properties.TimestampUsec.columnName + " DESC";
+        KLog.e("测getArtsStaredNoTag2：" + queryString);
+        Cursor cursor = articleDao.getDatabase().rawQuery(queryString, new String[]{});
+        if (cursor == null) {
+            return new ArrayList<>();
+        }
+        List<Article> articles = new ArrayList<>(cursor.getCount());
+        while (cursor.moveToNext()) {
+            articles.add(genArticle(new Article(), cursor));
+        }
+        cursor.close();
+        return articles;
     }
+
 
     // 为分类的加星文章包含两部分：1.是在订阅中，但是没有分类的加星文章；2.是不在订阅中，加星的文章
     public List<Article> getArtsStaredNoTag() {
@@ -649,7 +700,7 @@ public class WithDB {
                 + ArticleDao.TABLENAME + " LEFT JOIN " + FeedDao.TABLENAME + " ON " + ArticleDao.TABLENAME + "." + ArticleDao.Properties.OriginStreamId.columnName + " = " + FeedDao.TABLENAME + "." + FeedDao.Properties.Id.columnName
                 + " WHERE "
                 + ArticleDao.TABLENAME + "." + ArticleDao.Properties.StarState.columnName + " = \"" + Api.ART_STARED + "\" AND "
-                + "(" + FeedDao.TABLENAME + "." + FeedDao.Properties.Id.columnName + " IS NULL OR " + FeedDao.TABLENAME + "." + FeedDao.Properties.Categoryid.columnName + " IS NULL )"
+                + "(" + FeedDao.TABLENAME + "." + FeedDao.Properties.Id.columnName + " IS NULL OR " + FeedDao.Properties.Categoryid.columnName + " IS \"user/" + WithSet.i().getUseId() + Api.U_NO_LABEL + "\" )"
                 + "ORDER BY " + ArticleDao.Properties.TimestampUsec.columnName + " DESC";
         KLog.e("测getArtsStaredNoTag2：" + queryString);
         Cursor cursor = articleDao.getDatabase().rawQuery(queryString, new String[]{});
@@ -669,8 +720,7 @@ public class WithDB {
         String queryString = "SELECT " + ArticleDao.TABLENAME + ".* FROM "
                 + ArticleDao.TABLENAME + " LEFT JOIN " + FeedDao.TABLENAME + " ON " + ArticleDao.TABLENAME + "." + ArticleDao.Properties.OriginStreamId.columnName + " = " + FeedDao.TABLENAME + "." + FeedDao.Properties.Id.columnName
                 + " WHERE "
-                + FeedDao.TABLENAME + "." + FeedDao.Properties.Categoryid.columnName + " IS NULL OR "
-                + FeedDao.TABLENAME + "." + FeedDao.Properties.Id.columnName + " IS NULL "
+                + FeedDao.TABLENAME + "." + FeedDao.Properties.Id.columnName + " IS NULL OR " + FeedDao.TABLENAME + "." + FeedDao.Properties.Categoryid.columnName + " IS \"user/" + WithSet.i().getUseId() + Api.U_NO_LABEL + "\""
                 + " ORDER BY " + ArticleDao.Properties.TimestampUsec.columnName + " DESC";
         KLog.e("测getArtsAllNoTag2：" + queryString);
         Cursor cursor = articleDao.getDatabase().rawQuery(queryString, new String[]{});

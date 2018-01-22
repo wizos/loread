@@ -217,7 +217,7 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
             MainService.ServiceBinder mBinderService = (MainService.ServiceBinder) service;
             MainService mainService = mBinderService.getService();
             mainService.regHandler(maHandler);//TODO:考虑内存泄露
-            if (App.syncFirstOpen && !swipeRefreshLayoutS.isRefreshing()) {
+            if (WithSet.i().isSyncFirstOpen() && !swipeRefreshLayoutS.isRefreshing()) {
                 ToastUtil.showShort("开始同步");
                 swipeRefreshLayoutS.setEnabled(false);
                 startSyncService();
@@ -411,16 +411,49 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
     private ExpandableListAdapterS tagListAdapter;
     private View headerView;
 
+
+    private ScrollLayout.OnScrollChangedListener mOnScrollChangedListener = new ScrollLayout.OnScrollChangedListener() {
+        @Override
+        public void onScrollProgressChanged(float currentProgress) {
+            if (currentProgress >= 0) {
+                float precent = 255 * currentProgress;
+                if (precent > 255) {
+                    precent = 255;
+                } else if (precent < 0) {
+                    precent = 0;
+                }
+                mScrollLayout.getBackground().setAlpha(255 - (int) precent);
+            }
+        }
+
+        @Override
+        public void onScrollFinished(ScrollLayout.Status currentStatus) {
+        }
+
+        @Override
+        public void onChildScroll(int top) {
+        }
+    };
+
+
     public void initTagListView() {
         /**设置 setting*/
         mScrollLayout = (ScrollLayout) findViewById(R.id.scroll_down_layout);
+//        mScrollLayout.setOnLog(new ScrollLayout.OnLog() {
+//            @Override
+//            public void e(String s) {
+//                KLog.e(s);
+//            }
+//        });
         mScrollLayout.setMinOffset(0); // minOffset 关闭状态时最上方预留高度
         mScrollLayout.setMaxOffset((int) (ScreenUtil.getScreenHeight(this) * 0.6)); //打开状态时内容显示区域的高度
         mScrollLayout.setExitOffset(ScreenUtil.dip2px(this, 0)); //最低部退出状态时可看到的高度，0为不可见
         mScrollLayout.setIsSupportExit(true);
         mScrollLayout.setAllowHorizontalScroll(false);
         mScrollLayout.setToExit();
-//        mScrollLayout.setDraggable(false); // 设置能否往下拖动
+//        mScrollLayout.getBackground().setAlpha(0);
+        mScrollLayout.setOnScrollChangedListener(mOnScrollChangedListener);
+
 
         IconFontView tagIcon = (IconFontView) findViewById(R.id.main_bottombar_tag);
         tagIcon.setOnClickListener(new View.OnClickListener() {
@@ -518,6 +551,9 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
         });
     }
 
+    public void text(View view) {
+        KLog.e("【】背景层是否被点击");
+    }
 
     public void showTagDialog(final Tag tag) {
         // 重命名弹窗的适配器

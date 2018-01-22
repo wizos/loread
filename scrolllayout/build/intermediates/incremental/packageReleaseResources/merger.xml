@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<merger version="3"><dataSet config="main$Generated" generated="true"><source path="F:\Code\Android\loread\scrolllayout\src\main\res"/><source path="F:\Code\Android\loread\scrolllayout\build\generated\res\rs\release"/><source path="F:\Code\Android\loread\scrolllayout\build\generated\res\resValues\release"/></dataSet><dataSet config="main" generated-set="main$Generated"><source path="F:\Code\Android\loread\scrolllayout\src\main\res"><file path="F:\Code\Android\loread\scrolllayout\src\main\res\values\attrs.xml" qualifiers=""><declare-styleable name="ScrollLayout">
+
+        <attr format="dimension" name="minOffset"/>
+
+        <attr format="dimension" name="maxOffset"/>
+
+        <attr format="dimension" name="exitOffset"/>
+
+        <attr name="mode">
+            <flag name="open" value="0x0"/>
+            <flag name="close" value="0x1"/>
+            <flag name="exit" value="0x2"/>
+        </attr>
+
+        <attr format="boolean" name="allowHorizontalScroll"/>
+
+        <attr format="boolean" name="isSupportExit"/>
+
+    </declare-styleable></file><file path="F:\Code\Android\loread\scrolllayout\src\main\res\values\strings.xml" qualifiers=""><string name="app_name">scrolllayout</string></file></source><source path="F:\Code\Android\loread\scrolllayout\build\generated\res\rs\release"/><source path="F:\Code\Android\loread\scrolllayout\build\generated\res\resValues\release"/></dataSet><dataSet config="release$Generated" generated="true"><source path="F:\Code\Android\loread\scrolllayout\src\release\res"/></dataSet><dataSet config="release" generated-set="release$Generated"><source path="F:\Code\Android\loread\scrolllayout\src\release\res"/></dataSet><mergedItems><configuration qualifiers=""><declare-styleable name="ScrollLayout"><attr format="dimension" name="minOffset"/><attr format="dimension" name="maxOffset"/><attr format="dimension" name="exitOffset"/><attr name="mode">
+            <flag name="open" value="0x0"/>
+            <flag name="close" value="0x1"/>
+            <flag name="exit" value="0x2"/>
+        </attr><attr format="boolean" name="allowHorizontalScroll"/><attr format="boolean" name="isSupportExit"/></declare-styleable></configuration></mergedItems></merger>

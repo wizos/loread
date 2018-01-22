@@ -802,7 +802,7 @@ public class ArticleActivity extends BaseActivity implements View.OnClickListene
     @Override
     protected Colorful.Builder buildColorful(Colorful.Builder mColorfulBuilder) {
         mColorfulBuilder
-                .backgroundColor(R.id.art_coordinator, R.attr.root_view_bg)
+                .backgroundColor(R.id.art_root, R.attr.root_view_bg)
                 // 设置 toolbar
                 .backgroundColor(R.id.art_toolbar, R.attr.topbar_bg)
                 .textColor(R.id.art_toolbar_num, R.attr.topbar_fg)
