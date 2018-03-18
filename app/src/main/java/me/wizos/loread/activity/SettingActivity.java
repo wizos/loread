@@ -19,9 +19,10 @@ import java.util.Map;
 
 import me.wizos.loread.App;
 import me.wizos.loread.R;
-import me.wizos.loread.bean.Article;
+import me.wizos.loread.data.PrefUtils;
 import me.wizos.loread.data.WithDB;
-import me.wizos.loread.data.WithSet;
+import me.wizos.loread.db.Article;
+import me.wizos.loread.service.MainService;
 import me.wizos.loread.utils.FileUtil;
 import me.wizos.loread.utils.StringUtil;
 import me.wizos.loread.view.colorful.Colorful;
@@ -85,35 +86,35 @@ public class SettingActivity extends BaseActivity {
 
     private void initView(){
         SwitchButton syncFirstOpen, downImgWifi, inoreaderProxy, orderTagFeed, syncAllStarred, sysBrowserOpenLink, autoToggleTheme;
-        syncFirstOpen = (SwitchButton) findViewById(R.id.setting_sync_first_open_sb_flyme);
-        syncFirstOpen.setChecked(WithSet.i().isSyncFirstOpen());
+        syncFirstOpen = findViewById(R.id.setting_sync_first_open_sb_flyme);
+        syncFirstOpen.setChecked(PrefUtils.i().isSyncFirstOpen());
 
-        syncAllStarred = (SwitchButton) findViewById(R.id.setting_sync_all_starred_sb_flyme);
-        syncAllStarred.setChecked(WithSet.i().isSyncAllStarred());
+        syncAllStarred = findViewById(R.id.setting_sync_all_starred_sb_flyme);
+        syncAllStarred.setChecked(PrefUtils.i().isSyncAllStarred());
 
-        downImgWifi = (SwitchButton) findViewById(R.id.setting_down_img_sb_flyme);
-        downImgWifi.setChecked(WithSet.i().isDownImgWifi());
+        downImgWifi = findViewById(R.id.setting_down_img_sb_flyme);
+        downImgWifi.setChecked(PrefUtils.i().isDownImgWifi());
 
-        inoreaderProxy = (SwitchButton) findViewById(R.id.setting_inoreader_proxy_sb_flyme);
-        inoreaderProxy.setChecked(WithSet.i().isInoreaderProxy());
+        inoreaderProxy = findViewById(R.id.setting_inoreader_proxy_sb_flyme);
+        inoreaderProxy.setChecked(PrefUtils.i().isInoreaderProxy());
 //        scrollMark = (SwitchButton) findViewById(R.id.setting_scroll_mark_sb_flyme);
-//        scrollMark.setChecked(WithSet.i().isScrollMark());
-        orderTagFeed = (SwitchButton) findViewById(R.id.setting_order_tagfeed_sb_flyme);
-        orderTagFeed.setChecked(WithSet.i().isOrderTagFeed());
+//        scrollMark.setChecked(PrefUtils.i().isScrollMark());
+        orderTagFeed = findViewById(R.id.setting_order_tagfeed_sb_flyme);
+        orderTagFeed.setChecked(PrefUtils.i().isOrderTagFeed());
 
-        clearBeforeDaySummary = (TextView) findViewById(R.id.setting_clear_day_summary);
-        clearBeforeDay = WithSet.i().getClearBeforeDay();
+        clearBeforeDaySummary = findViewById(R.id.setting_clear_day_summary);
+        clearBeforeDay = PrefUtils.i().getClearBeforeDay();
         clearBeforeDaySummary.setText(getResources().getString(R.string.clear_day_summary, String.valueOf(clearBeforeDay)));
 
 
-        sysBrowserOpenLink = (SwitchButton) findViewById(R.id.setting_link_open_mode_sb_flyme);
-        sysBrowserOpenLink.setChecked(WithSet.i().isSysBrowserOpenLink());
+        sysBrowserOpenLink = findViewById(R.id.setting_link_open_mode_sb_flyme);
+        sysBrowserOpenLink.setChecked(PrefUtils.i().isSysBrowserOpenLink());
 
-        autoToggleTheme = (SwitchButton) findViewById(R.id.setting_auto_toggle_theme_sb_flyme);
-        autoToggleTheme.setChecked(WithSet.i().isAutoToggleTheme());
+        autoToggleTheme = findViewById(R.id.setting_auto_toggle_theme_sb_flyme);
+        autoToggleTheme.setChecked(PrefUtils.i().isAutoToggleTheme());
 
 //        leftRightSlideArticle = (SwitchButton) findViewById(R.id.setting_left_right_slide_sb_flyme);
-//        leftRightSlideArticle.setChecked(WithSet.i().isLeftRightSlideArticle());
+//        leftRightSlideArticle.setChecked(PrefUtils.i().isLeftRightSlideArticle());
 
 //        clearLog = (Button)findViewById(R.id.setting_clear_log_button);
     }
@@ -137,17 +138,17 @@ public class SettingActivity extends BaseActivity {
         KLog.d( "点击" );
         switch (v.getId()) {
             case R.id.setting_sync_first_open_sb_flyme:
-                WithSet.i().setSyncFirstOpen(v.isChecked());
+                PrefUtils.i().setSyncFirstOpen(v.isChecked());
                 break;
             case R.id.setting_sync_all_starred_sb_flyme:
-                WithSet.i().setSyncAllStarred(v.isChecked());
+                PrefUtils.i().setSyncAllStarred(v.isChecked());
                 syncAllStarred();
                 break;
             case R.id.setting_down_img_sb_flyme:
-                WithSet.i().setDownImgWifi(v.isChecked());
+                PrefUtils.i().setDownImgWifi(v.isChecked());
                 break;
             case R.id.setting_inoreader_proxy_sb_flyme:
-                WithSet.i().setInoreaderProxy(v.isChecked());
+                PrefUtils.i().setInoreaderProxy(v.isChecked());
                 if (v.isChecked()) {
                     showInoreaderProxyHostDialog();
                 } else {
@@ -155,19 +156,19 @@ public class SettingActivity extends BaseActivity {
                 }
                 break;
             case R.id.setting_order_tagfeed_sb_flyme:
-                WithSet.i().setOrderTagFeed(v.isChecked());
+                PrefUtils.i().setOrderTagFeed(v.isChecked());
                 break;
             case R.id.setting_link_open_mode_sb_flyme:
-                WithSet.i().setSysBrowserOpenLink(v.isChecked());
+                PrefUtils.i().setSysBrowserOpenLink(v.isChecked());
                 break;
             case R.id.setting_auto_toggle_theme_sb_flyme:
-                WithSet.i().setAutoToggleTheme(v.isChecked());
+                PrefUtils.i().setAutoToggleTheme(v.isChecked());
                 break;
 //            case R.id.setting_scroll_mark_sb_flyme:
-//                WithSet.i().setScrollMark(v.isChecked());
+//                PrefUtils.i().setScrollMark(v.isChecked());
 //                break;
 //            case R.id.setting_left_right_slide_sb_flyme:
-//                WithSet.i().setLeftRightSlideArticle(v.isChecked());
+//                PrefUtils.i().setLeftRightSlideArticle(v.isChecked());
 //                break;
         }
 //        KLog.d("Switch: " , v.isChecked() );
@@ -175,9 +176,9 @@ public class SettingActivity extends BaseActivity {
 
     private void syncAllStarred() {
         KLog.i("【获取所有加星文章1】");
-        if (WithSet.i().isSyncAllStarred()) { // !WithSet.i().isHadSyncAllStarred() &&
+        if (PrefUtils.i().isSyncAllStarred()) { // !PrefUtils.i().isHadSyncAllStarred() &&
             Intent intent = new Intent(this, MainService.class);
-            intent.setAction("syncAllStarred");
+            intent.setAction(MainService.SYNC_ALL_STARRED);
             startService(intent);
             KLog.i("【获取所有加星文章2】");
         }
@@ -189,10 +190,10 @@ public class SettingActivity extends BaseActivity {
 //                .content(R.string.setting_inoreader_proxy_dialog_title)
                 .inputType(InputType.TYPE_CLASS_TEXT)
                 .inputRange(8, 34)
-                .input(null, WithSet.i().getInoreaderProxyHost(), new MaterialDialog.InputCallback() {
+                .input(null, PrefUtils.i().getInoreaderProxyHost(), new MaterialDialog.InputCallback() {
                     @Override
                     public void onInput(MaterialDialog dialog, CharSequence input) {
-                        WithSet.i().setInoreaderProxyHost(input.toString());
+                        PrefUtils.i().setInoreaderProxyHost(input.toString());
                         App.i().readHost();
                     }
                 })
@@ -280,7 +281,7 @@ public class SettingActivity extends BaseActivity {
                     public boolean onSelection(MaterialDialog dialog, View view, int which, CharSequence text) {
                         clearBeforeDay = dayValueItems[which];
                         clearBeforeDayIndex = which;
-                        WithSet.i().setClearBeforeDay(clearBeforeDay);
+                        PrefUtils.i().setClearBeforeDay(clearBeforeDay);
                         KLog.i("选择了" + clearBeforeDayIndex);
                         clearBeforeDaySummary.setText(getResources().getString(R.string.clear_day_summary, clearBeforeDay + ""));
                         dialog.dismiss();
@@ -347,13 +348,10 @@ public class SettingActivity extends BaseActivity {
         this.finish();
     }
 
-    public void clearLog(View view) {
-        WithDB.i().delRequestListAll();
-    }
 
 
     private void initToolbar() {
-        Toolbar toolbar = (Toolbar) findViewById(R.id.setting_toolbar);
+        Toolbar toolbar = findViewById(R.id.setting_toolbar);
         setSupportActionBar(toolbar);
         getSupportActionBar().setHomeButtonEnabled(true); // 这个小于4.0版本是默认为true，在4.0及其以上是false。该方法的作用：决定左上角的图标是否可以点击(没有向左的小图标)，true 可点
         getSupportActionBar().setDisplayHomeAsUpEnabled(true); // 决定左上角图标的左侧是否有向左的小箭头，true 有小箭头

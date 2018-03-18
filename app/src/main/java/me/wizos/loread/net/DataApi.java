@@ -1,16 +1,11 @@
 package me.wizos.loread.net;
 
-import android.os.Bundle;
-import android.os.Handler;
-import android.os.Message;
 import android.support.v4.util.ArrayMap;
 import android.text.TextUtils;
 
 import com.google.gson.Gson;
-import com.lzy.okgo.callback.FileCallback;
 import com.lzy.okgo.callback.StringCallback;
 import com.lzy.okgo.exception.HttpException;
-import com.lzy.okgo.model.Response;
 import com.lzy.okgo.request.base.Request;
 import com.socks.library.KLog;
 import com.tencent.bugly.crashreport.BuglyLog;
@@ -25,10 +20,6 @@ import java.util.List;
 import java.util.Map;
 
 import me.wizos.loread.App;
-import me.wizos.loread.bean.Article;
-import me.wizos.loread.bean.Feed;
-import me.wizos.loread.bean.Img;
-import me.wizos.loread.bean.Tag;
 import me.wizos.loread.bean.gson.GsSubscriptions;
 import me.wizos.loread.bean.gson.GsTags;
 import me.wizos.loread.bean.gson.ItemIDs;
@@ -39,12 +30,12 @@ import me.wizos.loread.bean.gson.Subscriptions;
 import me.wizos.loread.bean.gson.UserInfo;
 import me.wizos.loread.bean.gson.itemContents.Items;
 import me.wizos.loread.bean.gson.son.ItemRefs;
+import me.wizos.loread.data.PrefUtils;
 import me.wizos.loread.data.WithDB;
-import me.wizos.loread.data.WithSet;
-import me.wizos.loread.utils.FileUtil;
-import me.wizos.loread.utils.HttpUtil;
+import me.wizos.loread.db.Article;
+import me.wizos.loread.db.Feed;
+import me.wizos.loread.db.Tag;
 import me.wizos.loread.utils.StringUtil;
-import okhttp3.OkHttpClient;
 
 /**
  * 该类处于 获取 -> 处理 -> 输出 数据的处理一层。主要任务是处理、保存业务数据。
@@ -93,7 +84,7 @@ public class DataApi {
             return false;
         }
         InoApi.INOREADER_ATUH = "GoogleLogin auth=" + auth;
-        WithSet.i().setAuth(InoApi.INOREADER_ATUH);
+        PrefUtils.i().setAuth(InoApi.INOREADER_ATUH);
         InoApi.i().init();
         return true;
     }
@@ -102,7 +93,7 @@ public class DataApi {
         String info = InoApi.i().fetchUserInfo(cb);
         UserInfo userInfo = new Gson().fromJson(info, UserInfo.class);
         KLog.e("此时的UID为" + userInfo.getUserId());
-        WithSet.i().setUseId(userInfo.getUserId());
+        PrefUtils.i().setUseId(userInfo.getUserId());
         return userInfo.getUserId();
 //        UserID = userInfo.getUserId();
 //        mUserName = userInfo.getUserName();
@@ -138,7 +129,7 @@ public class DataApi {
 //    private List<Tag> getTagList( List<Tag> tagListTemp ) {
 //        Tag rootTag = new Tag();
 //        Tag notTag = new Tag();
-//        long userID = WithSet.i().getUseId();
+//        long userID = PrefUtils.i().getUseId();
 //        rootTag.setTitle("所有文章");
 //        notTag.setTitle("未分类");
 //
@@ -176,7 +167,7 @@ public class DataApi {
                 feed.setCategoryid(subscriptions.getCategories().get(0).getId());
                 feed.setCategorylabel(subscriptions.getCategories().get(0).getLabel());
             } catch (Exception e) {
-                feed.setCategoryid("user/" + WithSet.i().getUseId() + Api.U_NO_LABEL);
+                feed.setCategoryid("user/" + PrefUtils.i().getUseId() + Api.U_NO_LABEL);
                 feed.setCategorylabel("no-label"); // TODO: 2018/1/11 待改成引用
             }
             feed.setSortid(subscriptions.getSortid());
@@ -184,6 +175,7 @@ public class DataApi {
             feed.setUrl(subscriptions.getUrl());
             feed.setHtmlurl(subscriptions.getHtmlUrl());
             feed.setIconurl(subscriptions.getIconUrl());
+            feed.setOpenMode(Api.OPEN_RSS);
             feedList.add(feed);
         }
         // TODO: 2017/10/14 少了保存 List
@@ -243,6 +235,7 @@ public class DataApi {
         }
 
         Collections.sort(tagList, new Comparator<Tag>() {
+            @Override
             public int compare(Tag o1, Tag o2) {
                 return o1.getTitle().compareTo(o2.getTitle());
             }
@@ -295,7 +288,7 @@ public class DataApi {
         for (Article article : localUnreadArticles) {
             articleId = article.getId();
             map.put(articleId, article);
-            KLog.e("文章的" + article.getId());
+//            KLog.e("文章的" + article.getId());
         }
         // 数据量小的一方
         Article article;
@@ -467,7 +460,7 @@ public class DataApi {
             tempIds = ids.subList(index, index + currentFetchCnt);
             index = index + currentFetchCnt;
             distance = ids.size() - index;
-            fetchNotice.onProcessChanged(currentFetchCnt, ids.size());  // TEST:
+            fetchNotice.onProcessChanged(currentFetchCnt, ids.size());
             String res = InoApi.i().syncItemContents(tempIds, cb);
             ArrayList<Article> tempArticleList = parseItemContents(res, changer);
             articleList.addAll(tempArticleList);
@@ -519,19 +512,22 @@ public class DataApi {
             article.setOriginStreamId(items.getOrigin().getStreamId());
             article.setOriginHtmlUrl(items.getOrigin().getHtmlUrl());
             article.setOriginTitle(items.getOrigin().getTitle());
+            if (items.getEnclosure() != null && items.getEnclosure().size() > 0 && (items.getEnclosure().get(0).getType().startsWith("image") || items.getEnclosure().get(0).getType().startsWith("parsedImg"))) {
+                article.setCoverSrc(items.getEnclosure().get(0).getHref());
+            }
 
             html = items.getSummary().getContent();
+            html = StringUtil.getOptimizedContent(html);
             summary = StringUtil.getOptimizedSummary(html);
-//            summary = StringUtil.delHtmlTag(html);
             article.setSummary(summary);
+            article.setContent(html);
 
             // 自己设置的字段
             article.setSaveDir(Api.SAVE_DIR_CACHE);
-//            KLog.i("【增加文章】" + article.getId());
+            KLog.i("【增加文章】" + article.getId());
             article.setReadState(Api.ART_READED);
             article.setStarState(Api.ART_STARED);
             tempArticleList.add(article);
-            FileUtil.saveCacheHtml(StringUtil.stringToMD5(article.getId()), html);
         }
         WithDB.i().saveArticleList(tempArticleList);
     }
@@ -595,18 +591,23 @@ public class DataApi {
             article.setOriginStreamId(items.getOrigin().getStreamId());
             article.setOriginHtmlUrl(items.getOrigin().getHtmlUrl());
             article.setOriginTitle(items.getOrigin().getTitle());
+            if (items.getEnclosure() != null && items.getEnclosure().size() > 0 && (items.getEnclosure().get(0).getType().startsWith("image") || items.getEnclosure().get(0).getType().startsWith("parsedImg"))) {
+                article.setCoverSrc(items.getEnclosure().get(0).getHref());
+            }
 
             html = items.getSummary().getContent();
+            html = StringUtil.getOptimizedContent(html);
             summary = StringUtil.getOptimizedSummary(html);
 //            summary = StringUtil.delHtmlTag(html);
             article.setSummary(summary);
+            article.setContent(html);
 
             // 自己设置的字段
             article.setSaveDir(Api.SAVE_DIR_CACHE);
 //            KLog.i("【增加文章】" + article.getId());
             article = articleChanger.change(article);
             tempArticleList.add(article);
-            FileUtil.saveCacheHtml(StringUtil.stringToMD5(article.getId()), html);
+//            FileUtil.saveCacheHtml(StringUtil.stringToMD5(article.getId()), html);
         }
         WithDB.i().saveArticleList(tempArticleList);
         return tempArticleList;
@@ -660,94 +661,47 @@ public class DataApi {
     }
 
 
-    public void downImgs(Handler handler, OkHttpClient imgHttpClient, List<Img> imgList, String parentPath) {
-        if ((WithSet.i().isDownImgWifi() && !HttpUtil.isWiFiActive()) ||
-                (!WithSet.i().isDownImgWifi() && !HttpUtil.isNetworkAvailable())) {
-            return;
-        }
-        for (Img img : imgList) {
-            downingImg(handler, imgHttpClient, img, parentPath);
-        }
-        KLog.e("批量下图片：" + imgList.size());
-    }
-
-    public void downingImg(final Handler handler, OkHttpClient imgHttpClient, final Img img, String parentPath) {
-        FileCallback fileCallback = new FileCallback(parentPath, img.getName()) {
-            @Override
-            public void onSuccess(Response<File> response) {
-                img.setDownState(Api.ImgMeta_Downover);
-                WithDB.i().saveImg(img);
-                makeMsgForImg(handler, img, Api.S_BITMAP);
-            }
-
-            // 该方法执行在主线程中
-            @Override
-            public void onError(Response<File> response) {
-                makeMsgForImg(handler, img, Api.F_BITMAP);
-            }
-        };
-
-        WithHttp.i().asyncGetImg(imgHttpClient, img, fileCallback);
-    }
-
-    private void makeMsgForImg(Handler handler, Img img, int msg) {
-        Message message = Message.obtain();
-        Bundle bundle = new Bundle();
-        bundle.putString("articleID", img.getArticleId());
-        bundle.putString("imgSrc", img.getSrc());
-        bundle.putString("imgName", img.getName());
-//        bundle.putInt("imgNo", img.getNo());
-        message.what = msg;
-        message.setData(bundle);
-        handler.sendMessage(message);
-        KLog.e("【】下载图片" + handler + msg + " = " + img.getArticleId() + "==" + img.getSrc() + "下载状态：" + img.getDownState() + ", 当前线程为：" + Thread.currentThread().getName());
-    }
-
-
-    /**
-     * 将一个list均分成n个list,主要通过偏移量来实现的
-     *
-     * @param source
-     * @return
-     */
-    public static <T> List<List<T>> averageAssign(List<T> source, int n) {
-        List<List<T>> result = new ArrayList<List<T>>();
-        int remaider = source.size() % n;  //(先计算出余数)
-        int number = source.size() / n;  //然后是商
-        int offset = 0;//偏移量
-        for (int i = 0; i < n; i++) {
-            List<T> value = null;
-            if (remaider > 0) {
-                value = source.subList(i * number + offset, (i + 1) * number + offset + 1);
-                remaider--;
-                offset++;
-            } else {
-                value = source.subList(i * number + offset, (i + 1) * number + offset);
-            }
-            result.add(value);
-        }
-        return result;
-    }
-
-
-    private <T> void paging(List<T> list, int eachPageSize) {
-        int totalCount = list.size();
-        int pageCount;
-
-        //分多少次处理
-        int requestCount = totalCount / eachPageSize;
-
-        for (int i = 0; i <= requestCount; i++) {
-            Integer fromIndex = i * eachPageSize;
-            //如果总数少于PAGE_SIZE,为了防止数组越界,toIndex直接使用totalCount即可
-            int toIndex = Math.min(totalCount, (i + 1) * eachPageSize);
-            List<T> subList = list.subList(fromIndex, toIndex);
-            System.out.println(subList);
-            //总数不到一页或者刚好等于一页的时候,只需要处理一次就可以退出for循环了
-            if (toIndex == totalCount) {
-                break;
-            }
-        }
-    }
-
+//    public void downImgs(Handler handler, OkHttpClient imgHttpClient, List<Img> imgList, String parentPath) {
+//        if ((PrefUtils.i().isDownImgWifi() && !HttpUtil.isWiFiUsed()) ||
+//                (!PrefUtils.i().isDownImgWifi() && !HttpUtil.isNetworkAvailable())) {
+//            return;
+//        }
+//        for (Img img : imgList) {
+//            downingImg(handler, imgHttpClient, img, parentPath);
+//        }
+//        KLog.e("批量下图片：" + imgList.size());
+//    }
+//
+//    public void downingImg(final Handler handler, OkHttpClient imgHttpClient, final Img img, String parentPath) {
+//        FileCallback fileCallback = new FileCallback(parentPath, img.getName()) {
+//            @Override
+//            public void onSuccess(Response<File> response) {
+//                img.setDownState(Api.ImgMeta_Downover);
+//                WithDB.i().saveImg(img);
+//                makeMsgForImg(handler, img, Api.S_BITMAP);
+//            }
+//
+//            // 该方法执行在主线程中
+//            @Override
+//            public void onError(Response<File> response) {
+//                makeMsgForImg(handler, img, Api.F_BITMAP);
+//            }
+//        };
+//
+//        WithHttp.i().asyncGetImg(imgHttpClient, img, fileCallback);
+//    }
+//
+//    private void makeMsgForImg(Handler handler, Img img, int msg) {
+//        Message message = Message.obtain();
+//        Bundle bundle = new Bundle();
+//        bundle.putString("articleID", img.getArticleId());
+//        bundle.putString("imgSrc", img.getSrc());
+//        bundle.putString("imgName", img.getName());
+////        bundle.putInt("imgNo", img.getNo());
+//        message.what = msg;
+//        message.setData(bundle);
+//        handler.sendMessage(message);
+//
+//        KLog.e("【】下载图片" + handler + msg + " = " + img.getArticleId() + "==" + img.getSrc() + "下载状态：" + img.getDownState() + ", 当前线程为：" + Thread.currentThread().getName());
+//    }
 }

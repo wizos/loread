@@ -14,9 +14,11 @@
     <uses-permission android:name="android.permission.READ_LOGS" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
 
+    <!-- 应用可以监听该广播，成为自启动权限，但是这样会有很多缺点，最大的缺点就是拖慢开机进度，影响用户体验 -->
+    <!-- <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/> -->
     <!-- 在SDCard中创建与删除文件权限 -->
     <application
-        android:name=".App"
+        android:name="me.wizos.loread.App"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
@@ -24,50 +26,60 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme.Day">
         <activity
-            android:name=".activity.SplashActivity"
+            android:name="me.wizos.loread.activity.SplashActivity"
             android:label="@string/app_name"
             android:launchMode="singleTask"
             android:screenOrientation="portrait"
-            android:theme="@style/AppTheme.Day.NoActionBar">
+            android:theme="@style/AppBaseTheme.welcome">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
         <activity
-            android:name=".activity.MainActivity"
+            android:name="me.wizos.loread.activity.MainActivity"
             android:label="@string/app_name"
             android:launchMode="singleTask"
             android:screenOrientation="portrait"
             android:theme="@style/AppTheme.Day.NoActionBar" />
         <activity
-            android:name=".activity.LoginActivity"
+            android:name="me.wizos.loread.activity.LoginActivity"
             android:label="@string/title_activity_login"
             android:launchMode="singleTop"
-            android:theme="@style/AppTheme.Day.NoActionBar"
             android:screenOrientation="portrait"
+            android:theme="@style/AppTheme.Day.NoActionBar"
             android:windowSoftInputMode="adjustResize|stateHidden" />
         <activity
-            android:name=".activity.ArticleActivity"
+            android:name="me.wizos.loread.activity.ArticleActivity"
             android:configChanges="orientation|screenSize|keyboardHidden"
-            android:hardwareAccelerated="false"
+            android:hardwareAccelerated="true"
             android:label="@string/app_name"
-            android:parentActivityName=".activity.MainActivity"
-            android:screenOrientation="portrait"
-            android:theme="@style/AppTheme.Day.NoActionBar" />
-        <activity
-            android:name=".activity.SettingActivity"
-            android:label="@string/setting_activity_title"
-            android:screenOrientation="portrait"
-            android:parentActivityName=".activity.MainActivity"
-            android:theme="@style/AppTheme.Day.NoActionBar" />
-        <activity
-            android:name=".activity.SearchActivity"
-            android:parentActivityName=".activity.MainActivity"
+            android:parentActivityName="me.wizos.loread.activity.MainActivity"
             android:screenOrientation="portrait"
             android:theme="@style/AppTheme.Day.NoActionBar" />
 
-        <service android:name=".activity.MainService" />
+        <activity
+            android:name="me.wizos.loread.activity.SettingActivity"
+            android:label="@string/setting_activity_title"
+            android:parentActivityName="me.wizos.loread.activity.MainActivity"
+            android:screenOrientation="portrait"
+            android:theme="@style/AppTheme.Day.NoActionBar" />
+        <activity
+            android:name="me.wizos.loread.activity.SearchActivity"
+            android:parentActivityName="me.wizos.loread.activity.MainActivity"
+            android:screenOrientation="portrait"
+            android:theme="@style/AppTheme.Day.NoActionBar" />
+
+        <!-- <service -->
+        <!-- android:name=".service.AutoRefreshService" -->
+        <!-- android:exported="true" -->
+        <!-- android:permission="com.google.android.gms.permission.BIND_NETWORK_TASK_SERVICE"> -->
+        <!-- <intent-filter> -->
+        <!-- <action android:name="com.google.android.gms.gcm.ACTION_TASK_READY" /> -->
+        <!-- </intent-filter> -->
+        <!-- </service> -->
+        <service android:name="me.wizos.loread.service.MainService" />
 
     </application>
 

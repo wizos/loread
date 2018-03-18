@@ -34,6 +34,10 @@ public class ListViewS extends ListView implements Handler.Callback, SwipeDragLa
         mHandler = new Handler(this);
     }
 
+
+    /**
+     * 自己写的长点击事件
+     */
     /* Handler 的 Message 信息 */
     private static final int MSG_WHAT_LONG_CLICK = 1;
 
@@ -46,24 +50,19 @@ public class ListViewS extends ListView implements Handler.Callback, SwipeDragLa
     private static final int STATE_MORE_FINGERS = 4;//多个手指
     private int mState = STATE_NOTHING;
     private OnListItemLongClickListener mOnListItemLongClickListener;
-
     public void setOnListItemLongClickListener(OnListItemLongClickListener listener) {
         mOnListItemLongClickListener = listener;
     }
-
-    /**
-     * 自己写的长点击事件
-     */
     public interface OnListItemLongClickListener {
         void onListItemLongClick(View view, int position);
     }
-
 
     @Override
     public boolean handleMessage(Message msg) {
         switch (msg.what) {
             case MSG_WHAT_LONG_CLICK:
-                if (mState == STATE_DOWN || mState == STATE_LONG_CLICK) {//如果得到msg的时候state状态是Long Click的话
+                //如果得到msg的时候state状态是Long Click的话
+                if (mState == STATE_DOWN || mState == STATE_LONG_CLICK) {
                     //改为long click触发完成
                     mState = STATE_LONG_CLICK_FINISH;
                     //得到长点击的位置
@@ -78,19 +77,21 @@ public class ListViewS extends ListView implements Handler.Callback, SwipeDragLa
                     }
                 }
                 break;
+            default:
+                break;
         }
         KLog.d("---" + msg.what + "==" + mState + "==" + mOnListItemLongClickListener);
         return true;
     }
 
     /* 手指放下的坐标 */
-    private int mXDown;
-    private int mYDown;
+    private int downX;
+    private int downY;
     /* Handler 发送message需要延迟的时间 */
     private static final long CLICK_LONG_TRIGGER_TIME = 500;//1s
 
     /**
-     * remove掉message
+     * remove message
      */
     private void removeLongClickMessage() {
         if (mHandler.hasMessages(MSG_WHAT_LONG_CLICK)) {
@@ -99,7 +100,7 @@ public class ListViewS extends ListView implements Handler.Callback, SwipeDragLa
     }
 
     /**
-     * sendMessage
+     * send message
      */
     private void sendLongClickMessage(int position) {
         if (!mHandler.hasMessages(MSG_WHAT_LONG_CLICK)) {
@@ -110,21 +111,20 @@ public class ListViewS extends ListView implements Handler.Callback, SwipeDragLa
         }
     }
 
-    @Override
-    public boolean onInterceptTouchEvent(MotionEvent ev) {
-        switch (ev.getAction()) {
-            case MotionEvent.ACTION_DOWN:
-                break;
-            case MotionEvent.ACTION_MOVE:
-                // 容差值大概是24，再加上60
-                if (fingerLeftAndRightMove(ev)) {
-                    return false;
-                }
-                break;
-        }
-
-        return super.onInterceptTouchEvent(ev);
-    }
+//    @Override
+//    public boolean onInterceptTouchEvent(MotionEvent ev) {
+//        switch (ev.getAction()) {
+//            case MotionEvent.ACTION_DOWN:
+//                break;
+//            case MotionEvent.ACTION_MOVE:
+//                // 容差值大概是24，再加上60
+//                if (fingerLeftAndRightMove(ev)) {
+//                    return false;
+//                }
+//                break;
+//        }
+//        return super.onInterceptTouchEvent(ev);
+//    }
 
     private int slideItemPosition = -1;
     private int lastX;
@@ -137,11 +137,11 @@ public class ListViewS extends ListView implements Handler.Callback, SwipeDragLa
         switch (ev.getAction()) { // & MotionEvent.ACTION_MASK
             case MotionEvent.ACTION_DOWN:
                 //获取出坐标来
-                mXDown = (int) ev.getX();
-                mYDown = (int) ev.getY();
+                downX = (int) ev.getX();
+                downY = (int) ev.getY();
                 //当前state状态为按下
                 mState = STATE_DOWN;
-                sendLongClickMessage(pointToPosition(mXDown, mYDown)); // FIXME: 2016/5/4 【添加】修复他的 长按 bug
+                sendLongClickMessage(pointToPosition(downX, downY)); // FIXME: 2016/5/4 【添加】修复 长按 bug
                 break;
             case MotionEvent.ACTION_POINTER_DOWN:
                 removeLongClickMessage();
@@ -156,7 +156,7 @@ public class ListViewS extends ListView implements Handler.Callback, SwipeDragLa
                 } else if (fingerLeftAndRightMove(ev)) {
                     removeLongClickMessage();
                     //将当前想要滑动哪一个传递给wrapperAdapter
-                    int position = pointToPosition(mXDown, mYDown);
+                    int position = pointToPosition(downX, downY);
                     if (position != AdapterView.INVALID_POSITION) {
                         slideItemPosition = position;
                     }
@@ -169,28 +169,36 @@ public class ListViewS extends ListView implements Handler.Callback, SwipeDragLa
             case MotionEvent.ACTION_CANCEL:
                 removeLongClickMessage();
                 break;
+            default:
+                break;
         }
         return super.dispatchTouchEvent(ev);
     }
 
+//
+//    /**
+//     * 是不是向右滑动
+//     *
+//     * @return
+//     */
+//    private boolean isFingerMoving2Right(MotionEvent ev) {
+//        return (ev.getX() - downX > mShortestDistance);
+//    }
+//
+//    /**
+//     * 是不是向左滑动
+//     *
+//     * @return
+//     */
+//    private boolean isFingerMoving2Left(MotionEvent ev) {
+//        return (ev.getX() - downX < -mShortestDistance);
+//    }
 
-    /**
-     * 是不是向右滑动
-     *
-     * @return
-     */
-    private boolean isFingerMoving2Right(MotionEvent ev) {
-        return (ev.getX() - mXDown > mShortestDistance);
-    }
+//    private boolean fingerUpAndDownMove(MotionEvent ev) {
+//        return ((ev.getX() - downX < mShortestDistance && ev.getX() - downX > -mShortestDistance) &&
+//                ev.getY() - downY > mShortestDistance || ev.getY() - downY < -mShortestDistance);
+//    }
 
-    /**
-     * 是不是向左滑动
-     *
-     * @return
-     */
-    private boolean isFingerMoving2Left(MotionEvent ev) {
-        return (ev.getX() - mXDown < -mShortestDistance);
-    }
 
     /* 手指滑动的最短距离 */
     private int mShortestDistance = 25;
@@ -202,8 +210,8 @@ public class ListViewS extends ListView implements Handler.Callback, SwipeDragLa
      * @return
      */
     private boolean fingerNotMove(MotionEvent ev) {
-        return (mXDown - ev.getX() < mShortestDistance && mXDown - ev.getX() > -mShortestDistance &&
-                mYDown - ev.getY() < mShortestDistance && mYDown - ev.getY() > -mShortestDistance);
+        return (downX - ev.getX() < mShortestDistance && downX - ev.getX() > -mShortestDistance &&
+                downY - ev.getY() < mShortestDistance && downY - ev.getY() > -mShortestDistance);
     }
 
     /**
@@ -213,45 +221,38 @@ public class ListViewS extends ListView implements Handler.Callback, SwipeDragLa
      * @return
      */
     private boolean fingerLeftAndRightMove(MotionEvent ev) {
-        return ((ev.getX() - mXDown > mShortestDistance || ev.getX() - mXDown < -mShortestDistance) &&
-                ev.getY() - mYDown < mShortestDistance && ev.getY() - mYDown > -mShortestDistance);
+        return ((ev.getX() - downX > mShortestDistance || ev.getX() - downX < -mShortestDistance) &&
+                ev.getY() - downY < mShortestDistance && ev.getY() - downY > -mShortestDistance);
     }
 
-    private boolean fingerUpAndDownMove(MotionEvent ev) {
-        return ((ev.getX() - mXDown < mShortestDistance && ev.getX() - mXDown > -mShortestDistance) &&
-                ev.getY() - mYDown > mShortestDistance || ev.getY() - mYDown < -mShortestDistance);
-    }
 
-    /* 监听器 */
-    private OnAdapterSlideListenerProxy mOnAdapterSlideListenerProxy;
+
 
     /**
-     * 设置监听器
+     * 设置列表项左右滑动时的监听器
      *
-     * @param onAdapterSlideListenerProxy
+     * @param onItemSlideListener
      */
-    public void setOnAdapterSlideListenerProxy(OnAdapterSlideListenerProxy onAdapterSlideListenerProxy) {
-        mOnAdapterSlideListenerProxy = onAdapterSlideListenerProxy;
+    public void setItemSlideListener(OnItemSlideListener onItemSlideListener) {
+        mOnItemSlideListener = onItemSlideListener;
     }
 
-    public interface OnAdapterSlideListenerProxy {
+    private OnItemSlideListener mOnItemSlideListener;
+
+    public interface OnItemSlideListener {
         //        int onSlideOpen(View view, int position, int direction); // FIXME: 2016/5/4 【实现划开自动返回】把返回类型由 void 改为 int
         void onUpdate(View view, int position, float offset);
-
         void onCloseLeft(View view, int position, int direction);
-
         void onCloseRight(View view, int position, int direction);
-
         void onClick(View view, int position);
-
         void log(String layout);
     }
 
 
     @Override
     public void onUpdate(View view, float offset) {
-        if (mOnAdapterSlideListenerProxy != null) {
-            mOnAdapterSlideListenerProxy.onUpdate(view, slideItemPosition, offset);
+        if (mOnItemSlideListener != null) {
+            mOnItemSlideListener.onUpdate(view, slideItemPosition, offset);
         }
     }
 
@@ -267,28 +268,29 @@ public class ListViewS extends ListView implements Handler.Callback, SwipeDragLa
 
     @Override
     public void onCloseLeft(View view) {
-        if (mOnAdapterSlideListenerProxy != null) {
-            mOnAdapterSlideListenerProxy.onCloseLeft(view, slideItemPosition, SwipeDragLayout.DIRECTION_LEFT);
+        if (mOnItemSlideListener != null) {
+            mOnItemSlideListener.onCloseLeft(view, slideItemPosition, SwipeDragLayout.DIRECTION_LEFT);
         }
     }
 
     @Override
     public void onCloseRight(View view) {
-        if (mOnAdapterSlideListenerProxy != null) {
-            mOnAdapterSlideListenerProxy.onCloseRight(view, slideItemPosition, SwipeDragLayout.DIRECTION_RIGHT);
+        if (mOnItemSlideListener != null) {
+            KLog.e("关闭右侧" + (lastX - downX) + "==" + (lastY - downY));
+            mOnItemSlideListener.onCloseRight(view, slideItemPosition, SwipeDragLayout.DIRECTION_RIGHT);
         }
     }
 
     @Override
     public void onClick(View view) {
-        if (mOnAdapterSlideListenerProxy != null) {
-            int position = pointToPosition(mXDown, mYDown);
-            mOnAdapterSlideListenerProxy.onClick(view, position);
+        if (mOnItemSlideListener != null) {
+            int position = pointToPosition(downX, downY);
+            mOnItemSlideListener.onClick(view, position);
         }
     }
 
     @Override
     public void log(String layout) {
-        mOnAdapterSlideListenerProxy.log(layout);
+        mOnItemSlideListener.log(layout);
     }
 }

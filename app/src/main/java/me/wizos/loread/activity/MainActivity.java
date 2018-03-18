@@ -10,20 +10,26 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
-import android.support.annotation.ColorInt;
-import android.support.annotation.NonNull;
+import android.support.design.widget.BottomSheetDialog;
 import android.support.v7.widget.Toolbar;
 import android.text.InputType;
 import android.view.KeyEvent;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewConfiguration;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
+import android.widget.CompoundButton;
 import android.widget.ExpandableListView;
 import android.widget.ListView;
+import android.widget.PopupMenu;
+import android.widget.RadioButton;
+import android.widget.RadioGroup;
 import android.widget.TextView;
 
 import com.afollestad.materialdialogs.MaterialDialog;
+import com.kyleduo.switchbutton.SwitchButton;
 import com.lzy.okgo.callback.StringCallback;
 import com.lzy.okgo.model.Response;
 import com.socks.library.KLog;
@@ -32,20 +38,22 @@ import com.yinglan.scrolllayout.ScrollLayout;
 import java.util.ArrayList;
 import java.util.List;
 
+import butterknife.OnClick;
 import me.wizos.loread.App;
 import me.wizos.loread.R;
 import me.wizos.loread.adapter.ExpandableListAdapterS;
 import me.wizos.loread.adapter.MainListViewAdapter;
 import me.wizos.loread.adapter.MaterialSimpleListAdapter;
 import me.wizos.loread.adapter.MaterialSimpleListItem;
-import me.wizos.loread.bean.Article;
-import me.wizos.loread.bean.Feed;
-import me.wizos.loread.bean.Tag;
+import me.wizos.loread.data.PrefUtils;
 import me.wizos.loread.data.WithDB;
-import me.wizos.loread.data.WithSet;
+import me.wizos.loread.db.Article;
+import me.wizos.loread.db.Feed;
+import me.wizos.loread.db.Tag;
 import me.wizos.loread.net.Api;
 import me.wizos.loread.net.DataApi;
 import me.wizos.loread.net.InoApi;
+import me.wizos.loread.service.MainService;
 import me.wizos.loread.utils.ScreenUtil;
 import me.wizos.loread.utils.StringUtil;
 import me.wizos.loread.utils.ToastUtil;
@@ -55,11 +63,13 @@ import me.wizos.loread.view.ListViewS;
 import me.wizos.loread.view.SwipeRefreshLayoutS;
 import me.wizos.loread.view.colorful.Colorful;
 import me.wizos.loread.view.colorful.setter.ViewGroupSetter;
-import me.wizos.loread.view.common.color.ColorChooserDialog;
 
-public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.OnRefreshListener, ColorChooserDialog.ColorCallback, View.OnClickListener {
+//import me.wizos.loread.service.AutoRefreshService;
+
+public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.OnRefreshListener {
     protected static final String TAG = "MainActivity";
-    private IconFontView vReadIcon, vStarIcon, vPlaceHolder;
+    //    private IconFontView vReadIcon, vStarIcon;
+    private IconFontView vPlaceHolder;
     private TextView vToolbarHint;
     private Toolbar toolbar;
     private SwipeRefreshLayoutS swipeRefreshLayoutS;
@@ -83,6 +93,8 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
             final int position = savedInstanceState.getInt("listItemFirstVisiblePosition");
             slvSetSelection(position);
         }
+//        Sync.schedulePeriodicJob();
+
         super.onCreate(savedInstanceState);
     }
 
@@ -101,77 +113,36 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
         KLog.i("【onResume】" + App.StreamState + "---" + toolbar.getTitle() + "===" + App.StreamId);
     }
 
+
     protected void initIconView() {
-        vReadIcon = (IconFontView) findViewById(R.id.main_bottombar_read);
-        vStarIcon = (IconFontView)findViewById(R.id.main_bottombar_star);
-//        vToolbarCount = (TextView)findViewById(R.id.main_toolbar_count);
-        vToolbarHint = (TextView)findViewById(R.id.main_toolbar_hint);
-        vPlaceHolder = (IconFontView) findViewById(R.id.main_placeholder);
-        if (App.StreamState.equals(Api.ART_STARED)) {
-            vStarIcon.setText(R.string.font_stared);
-            vReadIcon.setText(R.string.font_readed);
-
-        } else if (App.StreamState.equals(Api.ART_UNREAD)) {
-            vStarIcon.setText(R.string.font_unstar);
-            vReadIcon.setText(R.string.font_unread);
-        } else {
-            vStarIcon.setText(R.string.font_unstar);
-            vReadIcon.setText(R.string.font_readed);
-        }
-        IconFontView iconReadability = (IconFontView) findViewById(R.id.main_toolbar_readability);
-        iconReadability.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                manualToggleTheme();
-            }
-        });
-
-        IconFontView searchView = (IconFontView) findViewById(R.id.main_toolbar_search);
+        vToolbarHint = findViewById(R.id.main_toolbar_hint);
+        vPlaceHolder = findViewById(R.id.main_placeholder);
+//        toolbar.setSubtitle();
+//        IconFontView searchView = (IconFontView) findViewById(R.id.main_bottombar_search);
 //        searchView.setOnClickListener(new View.OnClickListener() {
 //            @Override
 //            public void onClick(View v) {
-//                new MaterialDialog.Builder(MainActivity.this)
-//                        .title(R.string.search)
-//                        .inputType(InputType.TYPE_CLASS_TEXT)
-//                        .inputRange(1, 22)
-//                        .input(null, "", new MaterialDialog.InputCallback() {
-//                            @Override
-//                            public void onInput(MaterialDialog dialog, CharSequence input) {
-//                                showSearchResult(input.toString());
-//                            }
-//                        })
-//                        .positiveText(R.string.search)
-//                        .negativeText(android.R.string.cancel)
-//                        .show();
+//                Intent intent = new Intent(MainActivity.this, SearchActivity.class);
+//                startActivityForResult(intent, 0);
 //            }
 //        });
-        searchView.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(MainActivity.this, SearchActivity.class);
-                startActivityForResult(intent, 0);
-            }
-        });
+    }
 
+    @OnClick(R.id.main_bottombar_search)
+    public void clickSearchIcon(View view) {
+        Intent intent = new Intent(MainActivity.this, SearchActivity.class);
+        startActivityForResult(intent, 0);
     }
 
     protected void initSwipeRefreshLayout() {
-        swipeRefreshLayoutS = (SwipeRefreshLayoutS) findViewById(R.id.main_swipe_refresh);
-        if (swipeRefreshLayoutS == null) return;
+        swipeRefreshLayoutS = findViewById(R.id.main_swipe_refresh);
+        if (swipeRefreshLayoutS == null) {
+            return;
+        }
         swipeRefreshLayoutS.setOnRefreshListener(this);
         swipeRefreshLayoutS.setProgressViewOffset(true, 0, 120);//设置样式刷新显示的位置
         swipeRefreshLayoutS.setViewGroup(artListView);
-//        appBarLayout = (AppBarLayout) findViewById(R.id.appBarLayout);
-//        appBarLayout.addOnOffsetChangedListener(new AppBarLayout.OnOffsetChangedListener() {
-//            @Override
-//            public void onOffsetChanged(AppBarLayout appBarLayout, int verticalOffset) {
-//                if (verticalOffset >= 0) {
-//                    mSwipeRefreshLayout.setEnabled(true);
-//                } else {
-//                    mSwipeRefreshLayout.setEnabled(false);
-//                }
-//            }
-//        });
+
     }
 
     @Override
@@ -179,8 +150,8 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
         if (!swipeRefreshLayoutS.isEnabled()) {
             return;
         }
-        startSyncService();
         KLog.i("【刷新中】");
+        startSyncService();
     }
 
     // 按下back键时会调用onDestroy()销毁当前的activity，重新启动此activity时会调用onCreate()重建；
@@ -206,9 +177,8 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
     private ServiceConnection connection = new ServiceConnection() {
         @Override
         public void onServiceDisconnected(ComponentName name) {
-            KLog.d("连接断开");
+            KLog.e("与MainService的连接断开");
         }
-
         // onServiceConnected在绑定成功时进行回调，但不保证在执行binService后立马回调。
         // 我们在onCreate方法中绑定后立马获取service实例，但此时不保证onServiceConnected已经被回调。 也就是我们onCreate方法执行时onServiceConnected还没有别调用。此时当然mService还为空了。
         @Override
@@ -217,18 +187,18 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
             MainService.ServiceBinder mBinderService = (MainService.ServiceBinder) service;
             MainService mainService = mBinderService.getService();
             mainService.regHandler(maHandler);//TODO:考虑内存泄露
-            if (WithSet.i().isSyncFirstOpen() && !swipeRefreshLayoutS.isRefreshing()) {
+            if (PrefUtils.i().isSyncFirstOpen() && !swipeRefreshLayoutS.isRefreshing()) {
                 ToastUtil.showShort("开始同步");
                 swipeRefreshLayoutS.setEnabled(false);
                 startSyncService();
             }
-            KLog.d("连接开始");
+            KLog.e("与MainService的连接开始");
         }
     };
 
     private void startSyncService() {
-        intent.setAction("sync");
-        KLog.i("调用Service，开始同步");
+        intent.setAction(MainService.SYNC_ALL);
+        KLog.i("调用 MainService，开始 SYNC_ALL");
         startService(intent);
     }
 
@@ -249,16 +219,21 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
                 case Api.SYNC_SUCCESS:
                     swipeRefreshLayoutS.setRefreshing(false);
                     swipeRefreshLayoutS.setEnabled(true);
+                    toolbar.setSubtitle(null);
                     initData();
                     break;
                 case Api.SYNC_FAILURE: // 文章获取失败
                     swipeRefreshLayoutS.setRefreshing(false);
                     swipeRefreshLayoutS.setEnabled(true);
                     vToolbarHint.setText(String.valueOf(tagCount));
+                    toolbar.setSubtitle(null);
 //                    ToastUtil.showShort("同步失败");
                     break;
                 case Api.SYNC_PROCESS:
-                    vToolbarHint.setText(tips);
+//                    vToolbarHint.setText(tips);
+                    toolbar.setSubtitle(tips);
+                    break;
+                default:
                     break;
             }
             return false;
@@ -348,7 +323,7 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
     private void getTagData() {
         Tag rootTag = new Tag();
         Tag noLabelTag = new Tag();
-        long userID = WithSet.i().getUseId();
+        long userID = PrefUtils.i().getUseId();
         rootTag.setTitle(getString(R.string.main_activity_title_all));
         noLabelTag.setTitle(getString(R.string.main_activity_title_untag));
 
@@ -375,7 +350,7 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
 
 
     private void loadData() {
-        KLog.i("【】" + App.StreamState + "--" + App.StreamTitle + "--" + App.StreamId + "--" + toolbar.getTitle() + App.articleList.size());
+//        KLog.i("【】" + App.StreamState + "--" + App.StreamTitle + "--" + App.StreamId + "--" + toolbar.getTitle() + App.articleList.size());
         if (StringUtil.isBlank(App.articleList)) {
             vPlaceHolder.setVisibility(View.VISIBLE);
             artListView.setVisibility(View.GONE);
@@ -393,17 +368,18 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
         // 在setSupportActionBar(toolbar)之后调用toolbar.setTitle()的话。 在onCreate()中调用无效。在onStart()中调用无效。 在onResume()中调用有效。
         getSupportActionBar().setTitle(App.StreamTitle);
         tagCount = App.articleList.size();
-        setToolbarHint(tagCount);
+        vToolbarHint.setText(String.valueOf(tagCount));
+        toolbar.setSubtitle(null);
+        //toolbar的menu点击事件的监听
     }
+
 
     private void changeItemNum(int offset){
         tagCount = tagCount + offset;
         vToolbarHint.setText(String.valueOf( tagCount ));
     }
 
-    private void setToolbarHint(int tagCount) {
-        vToolbarHint.setText(String.valueOf( tagCount ));
-    }
+
 
 
     private ScrollLayout mScrollLayout;
@@ -438,13 +414,8 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
 
     public void initTagListView() {
         /**设置 setting*/
-        mScrollLayout = (ScrollLayout) findViewById(R.id.scroll_down_layout);
-//        mScrollLayout.setOnLog(new ScrollLayout.OnLog() {
-//            @Override
-//            public void e(String s) {
-//                KLog.e(s);
-//            }
-//        });
+        mScrollLayout = findViewById(R.id.scroll_down_layout);
+
         mScrollLayout.setMinOffset(0); // minOffset 关闭状态时最上方预留高度
         mScrollLayout.setMaxOffset((int) (ScreenUtil.getScreenHeight(this) * 0.6)); //打开状态时内容显示区域的高度
         mScrollLayout.setExitOffset(ScreenUtil.dip2px(this, 0)); //最低部退出状态时可看到的高度，0为不可见
@@ -455,36 +426,16 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
         mScrollLayout.setOnScrollChangedListener(mOnScrollChangedListener);
 
 
-        IconFontView tagIcon = (IconFontView) findViewById(R.id.main_bottombar_tag);
+        IconFontView tagIcon = findViewById(R.id.main_bottombar_tag);
         tagIcon.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 mScrollLayout.setToOpen();
                 tagListAdapter.notifyDataSetChanged(); // 每次点击的时候更新一下 tagList
-//                if (v.getHandler().hasMessages(3608)) {
-//                    v.getHandler().removeMessages(3608);
-//                    Intent intent = new Intent(MainActivity.this, TagActivity.class);
-//                    intent.putExtra("ListState", App.StreamState);
-//                    intent.putExtra("ListTag", App.StreamId);
-//                    intent.putExtra("ListCount", App.articleList.size());
-//                    startActivityForResult(intent, 0);
-//                    overridePendingTransition(R.anim.in_from_bottom, R.anim.exit_anim );
-//                } else {
-//                    Runnable r = new Runnable() {
-//                        @Override
-//                        public void run() {
-//                            mScrollLayout.setToOpen();
-//                        }
-//                    };
-//                    Message m = Message.obtain(v.getHandler(), r); // obtain() 从全局池中返回一个新的Message实例。在大多数情况下这样可以避免分配新的对象。
-//                    m.what = 3608;
-//                    v.getHandler().sendMessageDelayed(m, 300);// ViewConfiguration.getDoubleTapTimeout()
-//                    tagListAdapter.notifyDataSetChanged();
-//                }
             }
         });
 
-        tagListView = (ExpandableListViewS) findViewById(R.id.list_view);
+        tagListView = findViewById(R.id.list_view);
         tagListView.setChoiceMode(ListView.CHOICE_MODE_SINGLE);
 
         // 设置悬浮头部VIEW
@@ -510,7 +461,7 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
 //                if (App.StreamId == null || App.StreamId.equals("")) {
 //                    App.StreamId = "user/" + App.UserID + "/state/com.google/reading-list";
 //                }
-                WithSet.i().setStreamId(App.StreamId);
+                PrefUtils.i().setStreamId(App.StreamId);
                 refreshData();
                 KLog.i("【 TagList 被点击】" + App.StreamId + App.StreamState);
                 return true;
@@ -527,7 +478,7 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
 
                 App.StreamId = theFeed.getId();
                 App.StreamTitle = theFeed.getTitle();
-                WithSet.i().setStreamId(App.StreamId);
+                PrefUtils.i().setStreamId(App.StreamId);
                 refreshData();
 
                 KLog.e("【子项被点击2】" + App.StreamId + App.StreamState);
@@ -551,9 +502,6 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
         });
     }
 
-    public void text(View view) {
-        KLog.e("【】背景层是否被点击");
-    }
 
     public void showTagDialog(final Tag tag) {
         // 重命名弹窗的适配器
@@ -732,19 +680,19 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
 
 
     public void initArtListView() {
-//        initSlvMenu();
-        artListView = (ListViewS) findViewById(R.id.main_slv);
-//        artListView = (ListView) findViewById(R.id.main_slv);
-//        artListView = (SlideAndDragListView) findViewById(R.id.main_slv);
-        if (artListView == null) return;
-//        artListView.setMenu(mMenu);
-//        artListView.setOnListItemClickListener(new SlideAndDragListView.OnListItemClickListener() {
+        artListView = findViewById(R.id.main_slv);
+        if (artListView == null) {
+            return;
+        }
+
+        // 由于父 listview 被重载，onClick 事件也被重写了
+//        artListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
 //            @Override
-//            public void onListItemClick(View v, int position) {
-////                KLog.e("【 TagList 被点击】");
+//            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
 //                if(position==-1){return;}
 //                String articleID = App.articleList.get(position).getId();
-//                Intent intent = new Intent(MainActivity.this , ArticleActivity.class);
+////                Intent intent = new Intent(MainActivity.this , ArticleActivity.class);
+//                Intent intent = new Intent(MainActivity.this , PostActivity.class);
 //                intent.putExtra("articleID", articleID);
 //                intent.putExtra("articleNo", position); // 下标从 0 开始
 //                intent.putExtra("articleCount", App.articleList.size());
@@ -753,29 +701,7 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
 //            }
 //        });
 
-//        artListView.setOnSlideListener(new SlideAndDragListView.OnSlideListener() {
-//            @Override
-//            public int onSlideOpen(View view, View parentView, int position, int direction) {
-//                if (position == -1) {
-//                    return Menu.ITEM_NOTHING;
-//                }
-//                Article article = App.articleList.get(position);
-//                switch (direction) {
-//                    case MenuItem.DIRECTION_LEFT:
-//                        changeStarState(article);
-//                        return Menu.ITEM_SCROLL_BACK;
-//                    case MenuItem.DIRECTION_RIGHT:
-//                        changeReadState(article);
-//                        c = position;
-//                        return Menu.ITEM_SCROLL_BACK;
-//                }
-//                return Menu.ITEM_NOTHING;
-//            }
-//
-//            @Override
-//            public void onSlideClose(View view, View parentView, int position, int direction) {
-//            }
-//        });
+        // 由于item内有view添加了onItemClickListener,所以事件被消耗，没有回调到ListView OnItemLongClick方法。
         artListView.setOnListItemLongClickListener(new ListViewS.OnListItemLongClickListener() {
             @Override
             public void onListItemLongClick(View view, final int position) {
@@ -821,6 +747,8 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
                                         WithDB.i().saveArticle(article);
                                         artListAdapter.notifyDataSetChanged();
                                         break;
+                                    default:
+                                        break;
                                 }
 
                                 for (int n = i; n < num; n++) {
@@ -837,83 +765,74 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
             }
         });
 
-        artListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                if(position==-1){return;}
-                String articleID = App.articleList.get(position).getId();
-                Intent intent = new Intent(MainActivity.this , ArticleActivity.class);
-                intent.putExtra("articleID", articleID);
-                intent.putExtra("articleNo", position); // 下标从 0 开始
-                intent.putExtra("articleCount", App.articleList.size());
-                startActivityForResult(intent, 0);
-//                KLog.i("点击了" + articleID + position + "-" + App.articleList.size());
-            }
-        });
-        artListView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
-            @Override
-            public boolean onItemLongClick(AdapterView<?> parent, View view, final int position, long id) {
-                KLog.d("长按===");
-                final MaterialSimpleListAdapter adapter = new MaterialSimpleListAdapter( MainActivity.this);
-                adapter.add(new MaterialSimpleListItem.Builder(MainActivity.this)
-                        .content(R.string.main_slv_dialog_mark_up)
-                        .icon(R.drawable.dialog_ic_mark_up)
-                        .backgroundColor(Color.WHITE)
-                        .build());
-                adapter.add(new MaterialSimpleListItem.Builder(MainActivity.this)
-                        .content(R.string.main_slv_dialog_mark_down)
-                        .icon(R.drawable.dialog_ic_mark_down)
-                        .backgroundColor(Color.WHITE)
-                        .build());
-                adapter.add(new MaterialSimpleListItem.Builder(MainActivity.this)
-                        .content(R.string.main_slv_dialog_mark_unread)
-                        .icon(R.drawable.dialog_ic_mark_unread)
-                        .backgroundColor(Color.WHITE)
-                        .build());
 
-                new MaterialDialog.Builder(MainActivity.this)
-                        .adapter(adapter, new MaterialDialog.ListCallback() {
-                            @Override
-                            public void onSelection(MaterialDialog dialog, View itemView, int which, CharSequence text) {
-                                ArrayList<Article> artList = new ArrayList<>();
-                                int i = 0,num = 0;
-                                switch (which) {
-                                    case 0:
-                                        i=0;
-                                        num = position + 1;
-                                        artList = new ArrayList<>( position + 1 );
-                                        break;
-                                    case 1:
-                                        i= position;
-                                        num = App.articleList.size();
-                                        artList = new ArrayList<>( num - position - 1 );
-                                        break;
-                                    case 2:
-                                        Article article = App.articleList.get(position);
-                                        DataApi.i().markArticleUnread(article.getId(), null);
-                                        article.setReadState(Api.ART_UNREADING);
-                                        WithDB.i().saveArticle(article);
-                                        artListAdapter.notifyDataSetChanged();
-                                        break;
-                                }
-
-                                for(int n = i; n< num; n++){
-                                    if (App.articleList.get(n).getReadState().equals(Api.ART_UNREAD)) {
-                                        App.articleList.get(n).setReadState(Api.ART_READED);
-                                        artList.add(App.articleList.get(n));
-                                    }
-                                }
-                                addReadedList(artList);
-                                dialog.dismiss();
-                            }
-                        })
-                        .show();
-                return true;
-            }
-        });
+//
+//        artListView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+//            @Override
+//            public boolean onItemLongClick(AdapterView<?> parent, View view, final int position, long id) {
+//                KLog.d("长按===");
+//                final MaterialSimpleListAdapter adapter = new MaterialSimpleListAdapter( MainActivity.this);
+//                adapter.add(new MaterialSimpleListItem.Builder(MainActivity.this)
+//                        .content(R.string.main_slv_dialog_mark_up)
+//                        .icon(R.drawable.dialog_ic_mark_up)
+//                        .backgroundColor(Color.WHITE)
+//                        .build());
+//                adapter.add(new MaterialSimpleListItem.Builder(MainActivity.this)
+//                        .content(R.string.main_slv_dialog_mark_down)
+//                        .icon(R.drawable.dialog_ic_mark_down)
+//                        .backgroundColor(Color.WHITE)
+//                        .build());
+//                adapter.add(new MaterialSimpleListItem.Builder(MainActivity.this)
+//                        .content(R.string.main_slv_dialog_mark_unread)
+//                        .icon(R.drawable.dialog_ic_mark_unread)
+//                        .backgroundColor(Color.WHITE)
+//                        .build());
+//
+//                new MaterialDialog.Builder(MainActivity.this)
+//                        .adapter(adapter, new MaterialDialog.ListCallback() {
+//                            @Override
+//                            public void onSelection(MaterialDialog dialog, View itemView, int which, CharSequence text) {
+//                                ArrayList<Article> artList = new ArrayList<>();
+//                                int i = 0,num = 0;
+//                                switch (which) {
+//                                    case 0:
+//                                        i=0;
+//                                        num = position + 1;
+//                                        artList = new ArrayList<>( position + 1 );
+//                                        break;
+//                                    case 1:
+//                                        i= position;
+//                                        num = App.articleList.size();
+//                                        artList = new ArrayList<>( num - position - 1 );
+//                                        break;
+//                                    case 2:
+//                                        Article article = App.articleList.get(position);
+//                                        DataApi.i().markArticleUnread(article.getId(), null);
+//                                        article.setReadState(Api.ART_UNREADING);
+//                                        WithDB.i().saveArticle(article);
+//                                        artListAdapter.notifyDataSetChanged();
+//                                        break;
+//                                    default:
+//                                        break;
+//                                }
+//
+//                                for(int n = i; n< num; n++){
+//                                    if (App.articleList.get(n).getReadState().equals(Api.ART_UNREAD)) {
+//                                        App.articleList.get(n).setReadState(Api.ART_READED);
+//                                        artList.add(App.articleList.get(n));
+//                                    }
+//                                }
+//                                addReadedList(artList);
+//                                dialog.dismiss();
+//                            }
+//                        })
+//                        .show();
+//                return true;
+//            }
+//        });
 
 
-        artListView.setOnAdapterSlideListenerProxy(new ListViewS.OnAdapterSlideListenerProxy() {
+        artListView.setItemSlideListener(new ListViewS.OnItemSlideListener() {
             @Override
             public void onUpdate(View view, int position, float offset) {
                 // 推测由于该函数 getView 已经生成了 View 所以不在更新了。使用 notifyDataSetChanged(); 也不行
@@ -970,6 +889,7 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
                 }
                 String articleID = App.articleList.get(position).getId();
                 Intent intent = new Intent(MainActivity.this, ArticleActivity.class);
+//                Intent intent = new Intent(MainActivity.this, PostActivity.class);
                 intent.putExtra("articleID", articleID);
                 intent.putExtra("articleNo", position); // 下标从 0 开始
                 intent.putExtra("articleCount", App.articleList.size());
@@ -1038,22 +958,19 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
         artListAdapter.notifyDataSetChanged();
     }
 
-    @Override
-    public void onClick(View v) {
-        switch (v.getId()) {
-            case R.id.main_toolbar:
-                if (maHandler.hasMessages(Api.MSG_DOUBLE_TAP)) {
-                    maHandler.removeMessages(Api.MSG_DOUBLE_TAP);
-                    artListView.smoothScrollToPosition(0);
-                } else {
-                    maHandler.sendEmptyMessageDelayed(Api.MSG_DOUBLE_TAP, ViewConfiguration.getDoubleTapTimeout());
-                }
-                break;
-        }
-    }
 
+    // TODO: 2018/3/4 改用观察者模式。http://iaspen.cn/2015/05/09/观察者模式在android%20上的最佳实践
 
-
+    /**
+     * 在android中从A页面跳转到B页面，然后B页面进行某些操作后需要通知A页面去刷新数据，
+     * 我们可以通过startActivityForResult来唤起B页面，然后再B页面结束后在A页面重写onActivityResult来接收返回结果从而来刷新页面。
+     * 但是如果跳转路径是这样的A->B->C->…..，C或者C以后的页面来刷新A，这个时候如果还是使用这种方法就会非常的棘手。
+     * 使用这种方法可能会存在以下几个弊端：
+     * 1、多个路径或者多个事件的传递处理起来会非常困难。
+     * 2、数据更新不及时，往往需要用户去等待，降低系统性能和用户体验。
+     * 3、代码结构混乱，不易编码和扩展。
+     * 因此考虑使用观察者模式去处理这个问题。
+     */
     @Override
     protected void onActivityResult(int requestCode , int resultCode , Intent intent){
 //        KLog.e("------------------------------------------" + resultCode + requestCode);
@@ -1063,7 +980,8 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
                 refreshData(); // TagToMain
                 break;
             case Api.ActivityResult_ArtToMain:
-                int articleNo = intent.getExtras().getInt("articleNo"); // 在文章页的时候读到了第几篇文章，好让列表也自动将该项置顶
+                // 在文章页的时候读到了第几篇文章，好让列表也自动将该项置顶
+                int articleNo = intent.getExtras().getInt("articleNo");
                 if (articleNo > artListView.getLastVisiblePosition()) {
                     slvSetSelection(articleNo);
                 }
@@ -1072,6 +990,8 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
             case Api.ActivityResult_SearchLocalArtsToMain:
                 KLog.e("被搜索的词是" + intent.getExtras().getString("searchWord"));
                 showSearchResult(intent.getExtras().getString("searchWord"));
+                break;
+            default:
                 break;
         }
     }
@@ -1119,9 +1039,8 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
         headerViewSetter.childViewBgColor(R.id.tag_group_header, R.attr.bottombar_bg);
 
         mColorfulBuilder
-                // 设置view的背景图片
-                .backgroundColor(R.id.main_swipe_refresh, R.attr.root_view_bg) // 这里做设置，实质都是直接生成了一个View（根据Activity的findViewById），并直接添加到 colorful 内的 mElements 中。
-
+                // 这里做设置，实质都是直接生成了一个View（根据Activity的findViewById），并直接添加到 colorful 内的 mElements 中。
+                .backgroundColor(R.id.main_swipe_refresh, R.attr.root_view_bg)
                 .backgroundColor(R.id.main_scroll_layout_bg, R.attr.bottombar_bg)
                 .textColor(R.id.main_scroll_layout_title, R.attr.bottombar_fg)
                 .backgroundColor(R.id.main_scrolllayout_divider, R.attr.bottombar_divider)
@@ -1138,127 +1057,258 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
 
                 // 设置 bottombar
                 .backgroundColor(R.id.main_bottombar, R.attr.bottombar_bg)
-                .backgroundColor(R.id.main_bottombar_divider, R.attr.bottombar_divider)// 设置中屏和底栏之间的分割线
-                .textColor(R.id.main_bottombar_read, R.attr.bottombar_fg)
-                .textColor(R.id.main_bottombar_star, R.attr.bottombar_fg)
+                // 设置中屏和底栏之间的分割线
+                .backgroundColor(R.id.main_bottombar_divider, R.attr.bottombar_divider)
+                .textColor(R.id.main_bottombar_search, R.attr.bottombar_fg)
+//                .textColor(R.id.main_bottombar_articles_state, R.attr.bottombar_fg)
+//                .textColor(R.id.main_bottombar_star, R.attr.bottombar_fg)
                 .textColor(R.id.main_bottombar_setting, R.attr.bottombar_fg)
                 .textColor(R.id.main_bottombar_tag, R.attr.bottombar_fg)
 
                 // 设置 listview 背景色
-                .setter(headerViewSetter) // 这里做设置，实质是将View（根据Activity的findViewById），并直接添加到 colorful 内的 mElements 中。
+                // 这里做设置，实质是将View（根据Activity的findViewById），并直接添加到 colorful 内的 mElements 中。
+                .setter(headerViewSetter)
                 .setter(tagListViewSetter)
                 .setter(artListViewSetter);
         return mColorfulBuilder;
     }
 
-    @Override
-    public void onColorSelection(@NonNull ColorChooserDialog dialog, @ColorInt int color) {
-        KLog.e("被选择的颜色：" + color);
-        manualToggleTheme();
+
+    private BottomSheetDialog dialog;
+
+    public void onQuickSettingIconClicked(View view) {
+        dialog = new BottomSheetDialog(MainActivity.this);
+        dialog.setContentView(R.layout.main_bottom_sheet_more);
+//        dialog.dismiss(); //dialog消失
+//        dialog.setCanceledOnTouchOutside(false);  //触摸dialog之外的地方，dialog不消失
+//        dialog.setCancelable(false); // dialog无法取消，按返回键都取消不了
+
+        View moreSetting = dialog.findViewById(R.id.more_setting);
+        SwitchButton autoMarkWhenScrolling = dialog.findViewById(R.id.auto_mark_when_scrolling_switch);
+        SwitchButton downImgOnWifiSwitch = dialog.findViewById(R.id.down_img_on_wifi_switch);
+        RadioGroup radioGroup = dialog.findViewById(R.id.article_list_state_radio_group);
+        final RadioButton radioAll = dialog.findViewById(R.id.radio_all);
+        final RadioButton radioUnread = dialog.findViewById(R.id.radio_unread);
+        final RadioButton radioStarred = dialog.findViewById(R.id.radio_starred);
+        SwitchButton nightThemeWifiSwitch = dialog.findViewById(R.id.night_theme_switch);
+
+        autoMarkWhenScrolling.setChecked(PrefUtils.i().isScrollMark());
+        downImgOnWifiSwitch.setChecked(PrefUtils.i().isDownImgWifi());
+        nightThemeWifiSwitch.setChecked(PrefUtils.i().getThemeMode() == App.theme_Night);
+
+        dialog.show();
+        moreSetting.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                dialog.dismiss();
+                Intent intent = new Intent(MainActivity.this, SettingActivity.class);
+                startActivityForResult(intent, 0);
+            }
+        });
+        autoMarkWhenScrolling.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
+                KLog.e("onClickedAutoMarkWhenScrolling图标被点击");
+                PrefUtils.i().setScrollMark(b);
+            }
+        });
+        downImgOnWifiSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
+                PrefUtils.i().setDownImgWifi(b);
+            }
+        });
+        nightThemeWifiSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
+                dialog.dismiss();
+                manualToggleTheme();
+            }
+        });
+
+        if (App.StreamState.equals(Api.ART_STARED)) {
+            radioStarred.setChecked(true);
+        } else if (App.StreamState.equals(Api.ART_UNREAD)) {
+            radioUnread.setChecked(true);
+        } else {
+            radioAll.setChecked(true);
+        }
+
+        radioGroup.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(RadioGroup radioGroup, int i) {
+                if (i == radioStarred.getId()) {
+                    App.StreamState = Api.ART_STARED;
+                    toolbar.setNavigationIcon(R.drawable.state_star);
+                } else if (i == radioUnread.getId()) {
+                    App.StreamState = Api.ART_UNREAD;
+                    toolbar.setNavigationIcon(R.drawable.state_unread);
+                } else {
+                    App.StreamState = Api.ART_ALL;
+                    toolbar.setNavigationIcon(R.drawable.state_all);
+                }
+                PrefUtils.i().setStreamState(App.StreamState);
+                refreshData();
+                dialog.dismiss();
+            }
+        });
     }
-//    public void showSelectThemeDialog() {
-////        selectTheme = ScreenUtil.resolveColor( this,R.attr.colorPrimary, 0);
-//        new ColorChooserDialog.Builder(this, R.string.readability_dialog_title)
-////                .titleSub(R.string.md_custom_tag)
-//                .customColors(R.array.theme_colors, null)
-//                .preselect(0) // 预先选择
-//                .show();
-//        KLog.d("主题选择对话框");
+
+
+//    public void onClickArticlesState(View view){
+//        final BottomSheetDialog dialog;
+//        dialog = new BottomSheetDialog(MainActivity.this);
+//        dialog.setContentView(R.layout.main_bottom_sheet_article_list_state);
+//        View showAllButton = dialog.findViewById(R.id.article_list_show_all);
+//        View showUnreadButton = dialog.findViewById(R.id.article_list_show_unread);
+//        View showStarredButton = dialog.findViewById(R.id.article_list_show_starred);
+//        showAllButton.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View view) {
+//                App.StreamState = Api.ART_ALL;
+//                PrefUtils.i().setStreamState(App.StreamState);
+//                toolbar.setNavigationIcon(R.drawable.state_all);
+//                refreshData(); // 点击StarIcon时
+//                dialog.dismiss();
+//            }
+//        });
+//        showUnreadButton.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View view) {
+//                App.StreamState = Api.ART_UNREAD;
+//                PrefUtils.i().setStreamState(App.StreamState);
+//                toolbar.setNavigationIcon(R.drawable.state_unread);
+//                refreshData(); // 点击StarIcon时
+//                dialog.dismiss();
+//            }
+//        });
+//        showStarredButton.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View view) {
+//                App.StreamState = Api.ART_STARED;
+//                PrefUtils.i().setStreamState(App.StreamState);
+//                toolbar.setNavigationIcon(R.drawable.state_star);
+//                refreshData(); // 点击StarIcon时
+//                dialog.dismiss();
+//            }
+//        });
+//        dialog.show();
 //    }
 
-    public void onSettingIconClicked(View view){
-        Intent intent = new Intent(this, SettingActivity.class);
-        startActivityForResult(intent, 0);
-    }
 
-    private View settingview;
-
-    public void onSettingIconClickedForDialog() {
-//        if(settingview==null){
-//            settingview = (View)findViewById(R.id.main_settingview);
-//        }
-//        if(settingview.getVisibility()==View.GONE){
-//            settingview.setVisibility(View.VISIBLE);
+//    public void onStarIconClicked(View view){
+//        KLog.d(App.StreamId + App.StreamState + App.StreamTitle);
+//        KLog.d("收藏列表" + App.StreamId + App.StreamState + App.StreamTitle);
+//        if (App.StreamState.equals(Api.ART_STARED)) {
+//            ToastUtil.showShort("已经在收藏列表了");
 //        }else {
-//            settingview.setVisibility(View.GONE);
+//            vStarIcon.setText(R.string.font_stared);
+//            vReadIcon.setText(R.string.font_readed);
+//
+//            App.StreamState = Api.ART_STARED;
+//            PrefUtils.i().setStreamState(App.StreamState);
+//            refreshData(); // 点击StarIcon时
 //        }
-    }
+//    }
 
-    public void OnIconClickedAutoSync(View view) {
-        if (!swipeRefreshLayoutS.isEnabled()) {
-            return;
-        }
-        startSyncService();
-        KLog.e("OnIconClickedAutoSync图标被点击");
-        settingview.setVisibility(View.GONE);
-    }
+//    public void onReadIconClicked(View view){
+//        vStarIcon.setText(R.string.font_unstar);
+//        if (App.StreamState.equals(Api.ART_UNREAD)) {
+//            vReadIcon.setText(R.string.font_readed);
+//            App.StreamState = Api.ART_ALL;
+//        }else {
+//            vReadIcon.setText(R.string.font_unread);
+//            App.StreamState = Api.ART_UNREAD;
+//        }
+//        PrefUtils.i().setStreamState(App.StreamState);
+//        refreshData();// 点击ReadIcon时
+//    }
 
-    public void OnIconClickedAutoTheme(View view) {
-        manualToggleTheme();
-        view.setBackgroundColor(getResources().getColor(R.color.colorPrimary));
-        KLog.e("OnIconClickedAutoTheme图标被点击");
-        settingview.setVisibility(View.GONE);
-    }
 
-    public void OnIconClickedAutoImg(View view) {
-        KLog.e("OnIconClickedAutoImg图标被点击");
-        if (WithSet.i().isDownImgWifi()) {
-            WithSet.i().setDownImgWifi(false);
+    @OnClick(R.id.main_toolbar)
+    public void clickToolbar(View view) {
+        if (maHandler.hasMessages(Api.MSG_DOUBLE_TAP)) {
+            maHandler.removeMessages(Api.MSG_DOUBLE_TAP);
+            artListView.smoothScrollToPosition(0);
         } else {
-            WithSet.i().setDownImgWifi(true);
-        }
-        settingview.setVisibility(View.GONE);
-    }
-
-    public void OnIconClickedMore(View view) {
-        KLog.e("OnIconClickedMore图标被点击");
-        Intent intent = new Intent(this, SettingActivity.class);
-        startActivityForResult(intent, 0);
-        settingview.setVisibility(View.GONE);
-    }
-
-    public void onStarIconClicked(View view){
-        KLog.d(App.StreamId + App.StreamState + App.StreamTitle);
-        KLog.d("收藏列表" + App.StreamId + App.StreamState + App.StreamTitle);
-        if (App.StreamState.equals(Api.ART_STARED)) {
-            ToastUtil.showShort("已经在收藏列表了");
-        }else {
-            vStarIcon.setText(R.string.font_stared);
-            vReadIcon.setText(R.string.font_readed);
-
-            App.StreamState = Api.ART_STARED;
-            WithSet.i().setStreamState(App.StreamState);
-            refreshData(); // 点击StarIcon时
+            maHandler.sendEmptyMessageDelayed(Api.MSG_DOUBLE_TAP, ViewConfiguration.getDoubleTapTimeout());
         }
     }
-    public void onReadIconClicked(View view){
-        vStarIcon.setText(R.string.font_unstar);
-        if (App.StreamState.equals(Api.ART_UNREAD)) {
-            vReadIcon.setText(R.string.font_readed);
-            App.StreamState = Api.ART_ALL;
-        }else {
-            vReadIcon.setText(R.string.font_unread);
-            App.StreamState = Api.ART_UNREAD;
-        }
-        WithSet.i().setStreamState(App.StreamState);
-        refreshData();// 点击ReadIcon时
+
+
+    public void onClickedArticleListOrder(final View view) {
+        KLog.e("onClickedArticleListOrder图标被点击");
+        PopupMenu popupMenu = new PopupMenu(this, view);
+        MenuInflater menuInflater = popupMenu.getMenuInflater();
+        popupMenu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem menuItem) {
+                switch (menuItem.getItemId()) {
+                    case R.id.list_order_desc:
+                        KLog.e("排序规则为 Desc");
+                        break;
+                    case R.id.list_order_asc:
+                        App.StreamState = Api.ART_UNREAD;
+                        KLog.e("排序规则为 Asc");
+                        break;
+                    default:
+                        break;
+                }
+                TextView textView = (TextView) view;
+                textView.setText(menuItem.getTitle());
+                dialog.dismiss();
+                return false;
+            }
+        });
+        menuInflater.inflate(R.menu.menu_article_list_order, popupMenu.getMenu());
+        popupMenu.show();
     }
 
+    public void onArticleListStateIconClicked(final View view) {
+        PopupMenu popupMenu = new PopupMenu(this, view);
+        MenuInflater menuInflater = popupMenu.getMenuInflater();
+        popupMenu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem menuItem) {
+                switch (menuItem.getItemId()) {
+                    case R.id.list_state_all:
+                        App.StreamState = Api.ART_ALL;
+                        break;
+                    case R.id.list_state_unread:
+                        App.StreamState = Api.ART_UNREAD;
+                        break;
+                    case R.id.list_state_starred:
+                        App.StreamState = Api.ART_STARED;
+                        break;
+                    default:
+                        App.StreamState = Api.ART_UNREAD;
+                        break;
+                }
+                TextView textView = (TextView) view;
+                textView.setText(menuItem.getTitle());
+                return false;
+            }
+        });
+        menuInflater.inflate(R.menu.menu_article_list_state, popupMenu.getMenu());
+        popupMenu.show();
+    }
 
 
     /**
      * 监听返回键，弹出提示退出对话框
      */
     @Override
-    public boolean onKeyDown(int keyCode , KeyEvent event){
-        if(keyCode == KeyEvent.KEYCODE_BACK && event.getRepeatCount() == 0){ // 后者为短期内按下的次数
+    public boolean onKeyDown(int keyCode , KeyEvent event) {
+        // 后者为短期内按下的次数
+        if (keyCode == KeyEvent.KEYCODE_BACK && event.getRepeatCount() == 0){
             if (mScrollLayout.getCurrentStatus() != ScrollLayout.Status.EXIT) {
                 mScrollLayout.setToExit();
             } else {
-                quitDialog();// 创建弹出的Dialog
+                // 创建弹出的Dialog
+                quitDialog();
             }
-//            quitDialog();// 创建弹出的Dialog
-            return true;//返回真表示返回键被屏蔽掉
+            //返回真表示返回键被屏蔽掉
+            return true;
         }
         return super.onKeyDown(keyCode, event);
     }
@@ -1282,41 +1332,23 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
     }
 
     private void initToolbar() {
-        toolbar = (Toolbar) findViewById(R.id.main_toolbar);
+        toolbar = findViewById(R.id.main_toolbar);
         setSupportActionBar(toolbar);
-        getSupportActionBar().setHomeButtonEnabled(true); // 这个小于4.0版本是默认为true，在4.0及其以上是false。该方法的作用：决定左上角的图标是否可以点击(没有向左的小图标)，true 可点
-        getSupportActionBar().setDisplayHomeAsUpEnabled(false); // 决定左上角图标的左侧是否有向左的小箭头，true 有小箭头
+        // 这个小于4.0版本是默认为true，在4.0及其以上是false。该方法的作用：决定左上角的图标是否可以点击(没有向左的小图标)，true 可点
+        getSupportActionBar().setHomeButtonEnabled(true);
+        // 决定左上角图标的左侧是否有向左的小箭头，true 有小箭头
+        getSupportActionBar().setDisplayHomeAsUpEnabled(false);
         getSupportActionBar().setDisplayShowTitleEnabled(true);
-        toolbar.setOnClickListener(this);
+//        toolbar.setOnClickListener(this);
+        if (App.StreamState.equals(Api.ART_ALL)) {
+            toolbar.setNavigationIcon(R.drawable.state_all);
+        } else if (App.StreamState.equals(Api.ART_STARED)) {
+            toolbar.setNavigationIcon(R.drawable.state_star);
+        } else {
+            toolbar.setNavigationIcon(R.drawable.state_unread);
+        }
+
         // setDisplayShowHomeEnabled(true)   //使左上角图标是否显示，如果设成false，则没有程序图标，仅仅就个标题，否则，显示应用程序图标，对应id为android.R.id.home，对应ActionBar.DISPLAY_SHOW_HOME
         // setDisplayShowCustomEnabled(true)  // 使自定义的普通View能在title栏显示，即actionBar.setCustomView能起作用，对应ActionBar.DISPLAY_SHOW_CUSTOM
     }
-
-
-//    public void initSlvMenu() {
-////        menuResId = new ArrayMap<>();
-////        menuResId.put()
-//        mMenu = new Menu(new ColorDrawable(Color.WHITE), true, 0);//第2个参数表示滑动item是否能滑的过量(true表示过量，就像Gif中显示的那样；false表示不过量，就像QQ中的那样)
-//        mMenu.addItem(new MenuItem.Builder().setWidth(ScreenUtil.get2Px(this, R.dimen.slv_menu_left_width))
-//                .setBackground(new ColorDrawable(getResources().getColor(R.color.white)))
-//                .setIcon(getResources().getDrawable(R.drawable.slv_menu_ic_star, null)) // 插入图片
-////                .setTextSize((int) getResources().getDimension(R.dimen.txt_size))
-////                .setTextColor(ScreenUtil.getColor(R.color.crimson))
-//                .setText(getString(R.string.font_stared))
-//                .build());
-//        res = View.generateViewId();
-//
-//        mMenu.addItem(new MenuItem.Builder().setWidth(ScreenUtil.get2Px(this, R.dimen.slv_menu_right_width))
-//                .setDirection(MenuItem.DIRECTION_RIGHT) // 设置是左或右
-//                .setBackground(new ColorDrawable(getResources().getColor(R.color.white)))
-//                .setIcon(getResources().getDrawable(R.drawable.slv_menu_ic_adjust, null))
-////                .setTextColor(R.color.white)
-////                .setTextSize(ScreenUtil.getDimen(this, R.dimen.txt_size))
-//                .setText("已读")
-//                .build());
-//    }
-
-
-
-
 }

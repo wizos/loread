@@ -7,7 +7,7 @@ import com.socks.library.KLog;
 import me.wizos.loread.App;
 import me.wizos.loread.BuildConfig;
 import me.wizos.loread.R;
-import me.wizos.loread.data.WithSet;
+import me.wizos.loread.data.PrefUtils;
 
 /**
  * 一些比较杂的工具函数
@@ -23,6 +23,28 @@ public class Tool {
         }
     }
 
+
+    /**
+     * 能否下载图片分以下几种情况：
+     * 1，开启省流量 & Wifi 可用
+     * 2，开启省流量 & Wifi 不可用
+     * 3，关闭省流量 & 网络 可用
+     * 4，关闭省流量 & 网络 不可用
+     *
+     * @return
+     */
+    public static boolean canDownImg() {
+        if (!PrefUtils.i().isDownImgWifi() && !HttpUtil.isNetworkAvailable()) {
+//            ToastUtil.showShort(App.i().getString(R.string.toast_not_network));
+            return false;
+        }
+        if (PrefUtils.i().isDownImgWifi() && !HttpUtil.isWiFiUsed()) {
+            ToastUtil.showShort(App.i().getString(R.string.toast_not_wifi_mode));
+            return false;
+        }
+        return true;
+    }
+
     public static void showLong(String msg) {
         if (BuildConfig.DEBUG) {
             KLog.e(msg);
@@ -30,11 +52,6 @@ public class Tool {
         }
     }
 
-    //    public static void showOnCloud( String msg ){ // Tool.show
-//        if(!BuildConfig.DEBUG){
-//            CrashReport.postCatchedException(thr);
-//        }
-//    }
     public static void printCallStatck() {
         if (!BuildConfig.DEBUG) {
             return;
@@ -51,7 +68,7 @@ public class Tool {
     }
 
     public static void setBackgroundColor(View object) {
-        if (WithSet.i().getThemeMode() == App.theme_Night) {
+        if (PrefUtils.i().getThemeMode() == App.theme_Night) {
             object.setBackgroundColor(App.i().getResources().getColor(R.color.article_dark_background));
         }
     }

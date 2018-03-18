@@ -23,6 +23,8 @@
     <attr name="art_date" format="reference|color"/>
     <attr name="art_time" format="reference|color"/>
 
+    <attr name="icon_title_color" format="reference|color" />
+
     <attr name="setting_title" format="reference|color"/>
     <attr name="setting_tips" format="reference|color"/>
 

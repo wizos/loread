@@ -14,9 +14,9 @@ import java.util.List;
 
 import me.wizos.loread.App;
 import me.wizos.loread.R;
-import me.wizos.loread.bean.Feed;
-import me.wizos.loread.bean.Tag;
 import me.wizos.loread.data.WithDB;
+import me.wizos.loread.db.Feed;
+import me.wizos.loread.db.Tag;
 import me.wizos.loread.net.Api;
 import me.wizos.loread.view.ExpandableListViewS;
 import me.wizos.loread.view.IconFontView;
@@ -128,30 +128,30 @@ public class ExpandableListAdapterS extends BaseExpandableListAdapter implements
         if (convertView == null) {
             groupViewHolder = new ItemViewHolder();
             convertView = LayoutInflater.from(context).inflate(R.layout.tag_expandable_item_group, null);
-            groupViewHolder.icon = (IconFontView) convertView.findViewById(R.id.group_item_icon);
-            groupViewHolder.title = (TextView) convertView.findViewById(R.id.group_item_title);
-            groupViewHolder.count = (TextView) convertView.findViewById(R.id.group_item_count);
+            groupViewHolder.icon = convertView.findViewById(R.id.group_item_icon);
+            groupViewHolder.title = convertView.findViewById(R.id.group_item_title);
+            groupViewHolder.count = convertView.findViewById(R.id.group_item_count);
             convertView.setTag(groupViewHolder);
         } else {
             groupViewHolder = (ItemViewHolder) convertView.getTag();
         }
 
         if (isExpanded) {
-            groupViewHolder.icon.setText(context.getString(R.string.font_expand));
+            groupViewHolder.icon.setText(context.getString(R.string.font_arrow_down));
         } else {
-            groupViewHolder.icon.setText(context.getString(R.string.font_collapse));
+            groupViewHolder.icon.setText(context.getString(R.string.font_arrow_right));
         }
 
         groupViewHolder.icon.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                KLog.e("箭头被点击");
+//                KLog.e("箭头被点击");
                 if (isExpanded) {
                     ((ExpandableListViewS) parent).collapseGroup(groupPos);
-                    ((IconFontView) v).setText(context.getString(R.string.font_collapse));
+                    ((IconFontView) v).setText(context.getString(R.string.font_arrow_right));
                 } else {
                     ((ExpandableListViewS) parent).expandGroup(groupPos);
-                    ((IconFontView) v).setText(context.getString(R.string.font_expand));
+                    ((IconFontView) v).setText(context.getString(R.string.font_arrow_down));
                 }
             }
         });
@@ -192,7 +192,7 @@ public class ExpandableListAdapterS extends BaseExpandableListAdapter implements
             groupViewHolder.count.setText(String.valueOf(count));
 
             if (theTag.getFeeds().size() == 0) {
-                groupViewHolder.icon.setText(context.getString(R.string.font_tag_class));
+                groupViewHolder.icon.setText(context.getString(R.string.font_tag));
             }
         } catch (Exception e) {
             groupViewHolder.id = "";
@@ -212,8 +212,8 @@ public class ExpandableListAdapterS extends BaseExpandableListAdapter implements
             childViewHolder = new ItemViewHolder();
             convertView = LayoutInflater.from(context).inflate(R.layout.tag_expandable_item_child, null);
 //            childViewHolder.icon = (IconFontView) convertView.findViewById(R.id.group_item_icon);
-            childViewHolder.title = (TextView) convertView.findViewById(R.id.child_item_title);
-            childViewHolder.count = (TextView) convertView.findViewById(R.id.child_item_count);
+            childViewHolder.title = convertView.findViewById(R.id.child_item_title);
+            childViewHolder.count = convertView.findViewById(R.id.child_item_count);
             convertView.setTag(childViewHolder);
         } else {
             childViewHolder = (ItemViewHolder) convertView.getTag();

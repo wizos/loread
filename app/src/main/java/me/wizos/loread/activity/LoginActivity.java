@@ -15,7 +15,7 @@ import com.socks.library.KLog;
 import java.io.IOException;
 
 import me.wizos.loread.R;
-import me.wizos.loread.data.WithSet;
+import me.wizos.loread.data.PrefUtils;
 import me.wizos.loread.net.DataApi;
 import me.wizos.loread.utils.ToastUtil;
 import me.wizos.loread.utils.Tool;
@@ -56,11 +56,11 @@ public class LoginActivity extends BaseActivity implements View.OnLayoutChangeLi
 
 
     private void initView(){
-        vID = (EditText)findViewById(R.id.edittext_id);
-        vPD = (EditText)findViewById(R.id.edittext_pd);
-        loginButton = (Button) findViewById(R.id.login_button_login);
-        SwitchButton inoreaderProxy = (SwitchButton) findViewById(R.id.setting_inoreader_proxy_sb_flyme);
-        inoreaderProxy.setChecked(WithSet.i().isInoreaderProxy());
+        vID = findViewById(R.id.edittext_id);
+        vPD = findViewById(R.id.edittext_pd);
+        loginButton = findViewById(R.id.login_button_login);
+        SwitchButton inoreaderProxy = findViewById(R.id.setting_inoreader_proxy_sb_flyme);
+        inoreaderProxy.setChecked(PrefUtils.i().isInoreaderProxy());
     }
 
 
@@ -68,8 +68,8 @@ public class LoginActivity extends BaseActivity implements View.OnLayoutChangeLi
      * 默认填充密码
      */
     private void recoverData(){
-        mAccountID = WithSet.i().getAccountID();
-        mAccountPD = WithSet.i().getAccountPD();
+        mAccountID = PrefUtils.i().getAccountID();
+        mAccountPD = PrefUtils.i().getAccountPD();
         if (!TextUtils.isEmpty(mAccountID)) {
             vID.setText(mAccountID);
         }
@@ -99,7 +99,7 @@ public class LoginActivity extends BaseActivity implements View.OnLayoutChangeLi
 
     @Override
     public void onLayoutChange(View v, int left, int top, int right,int bottom, int oldLeft, int oldTop, int oldRight, int oldBottom) {
-        Space space = (Space)findViewById(R.id.login_space_a);
+        Space space = findViewById(R.id.login_space_a);
         if(oldBottom != 0 && bottom != 0 &&(oldBottom - bottom > keyHeight)){
 //            if(space.getVisibility() == View.VISIBLE){
 //                space.setVisibility(View.GONE);
@@ -181,7 +181,7 @@ public class LoginActivity extends BaseActivity implements View.OnLayoutChangeLi
         KLog.d( "点击" );
         switch (v.getId()) {
             case R.id.setting_inoreader_proxy_sb_flyme:
-                WithSet.i().setInoreaderProxy(v.isChecked());
+                PrefUtils.i().setInoreaderProxy(v.isChecked());
                 break;
         }
         KLog.d("Switch: " , v.isChecked() );

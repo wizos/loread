@@ -71,7 +71,7 @@
     <string name="setting_link_open_mode_tips">测试功能</string>
 
 
-    <string name="setting_scroll_mark_title">滚动标记为已读</string>
+    <string name="setting_scroll_mark_title">滚动时自动标记为已读</string>
     <string name="setting_scroll_mark_tips">开启后，滚出屏幕的文章自动被标记为未读</string>
 
     <string name="setting_auto_toggle_theme_title">自动切换白天/黑夜主题</string>
@@ -95,6 +95,7 @@
     <string name="setting_sync_first_open_tips">打开应用就开始同步</string>
     <string name="setting_clear_day_dialog_title">选择保留最近多少天的文章呢？</string>
     <string name="article_choose_tag_dialog_title">选择标签</string>
+
 
     <!--<string-array name="setting_clear_day_dialog_item_array">-->
     <!--<item>0</item>-->
@@ -135,8 +136,7 @@
     <string name="font_stared">&#xe64b;</string>
     <string name="font_readed">&#xe72f;</string>
     <string name="font_unread">&#xe656;</string>
-    <string name="font_tag">&#xe615;</string>
-    <string name="font_label">&#xe7c5;</string>
+
     <string name="font_setting">&#xe61f;</string>
     <string name="font_theme">&#xe650;</string>
     <string name="font_readability">&#xe65b;</string>
@@ -146,27 +146,46 @@
     <string name="font_main">&#xe60c;</string>
 
     <string name="font_add">&#xe699;</string>
-    <string name="font_right">&#xe636;</string>
+    <string name="font_cross">&#xe6cb;</string>
+    <string name="font_tick">&#xe636;</string>
 
 
-    <string name="font_tag_class">&#xe7c4;</string>
+    <string name="font_group">&#xe615;</string>
 
-    <string name="font_expand">&#xe6a6;</string>
-    <string name="font_collapse">&#xe6a8;</string>
+    <string name="font_tag">&#xe7c4;</string>
+    <string name="font_label">&#xe7c5;</string>
 
-    <string name="font_list_stared">&#xe617;</string>
-    <string name="font_list_unstar">&#xe614;</string>
+    <string name="font_arrow_down">&#xe6a6;</string>
+    <string name="font_arrow_right">&#xe6a8;</string>
 
     <string name="font_list_reading">&#xe612;</string>
     <string name="font_list_unread">&#xe613;</string>
 
-    <string name="font_all_article">&#xe6a7;</string>
-    <string name="font_untag_article">&#xe84d;</string>
 
     <string name="font_no_data">&#xe608;</string>
     <string name="font_search">&#xe741;</string>
-    <string name="font_clear_search_word">&#xe6cb;</string>
 
+
+    <string name="font_share">&#xe616;</string>
+    <string name="font_more">&#xe60f;</string>
+
+    <string name="font_archive">&#xe680;</string>
+
+    <string name="font_translation">&#xe6ba;</string>
+    <string name="font_open_link_by_browser">&#xe678;</string>
+    <string name="font_get_readability">&#xe611;</string>
+    <string name="font_feed_config">&#xe72b;</string>
+
+
+    <!--准备删除-->
+    <string name="font_last">&#xe65b;</string>
+    <string name="font_next">&#xe6a7;</string>
+    <string name="font_all_article">&#xe6a7;</string>
+    <string name="font_list_stared">&#xe617;</string>
+    <string name="font_list_unstar">&#xe614;</string>
+
+    <!--气泡-->
+    <string name="font_untag_article">&#xe84d;</string>
     <!--<string name="font_download_again">&#xe645;</string>-->
     <!--<string name="font_open_in_window">&#xe610;</string>-->
 
@@ -214,6 +233,9 @@
     <string name="search_cloudy_feeds_result_count">已搜到 %1$d 个订阅源</string>
     <string name="search_header_search_cloudy_feeds">搜索订阅源</string>
     <string name="search_header_search_local_articles">搜索本地文章</string>
+
+    <string name="toast_login_for_auth">过太久了，请重新登录吧</string>
+
     <string name="toast_subscribe_success">订阅成功</string>
     <string name="toast_subscribe_fail">取消订阅失败，请重试</string>
     <string name="toast_unsubscribe_fail">取消订阅失败，请重试</string>
@@ -232,6 +254,46 @@
 
     <!--<string name="menu_stared">已加星</string>-->
     <!--<string name="menu_unstar">未加星</string>-->
+
+
+    <string name="bottom_type_setting">排版</string>
+    <string name="bottom_mark_scrolling">自动标记已读</string>
+    <string name="bottom_download_img_on_wifi">智能无图</string>
+    <string name="bottom_setting">设置</string>
+    <string name="bottom_search">搜索</string>
+    <string name="bottom_refresh">刷新</string>
+    <string name="bottom_esc">退出</string>
+
+    <string name="more_setting">更多设置</string>
+    <string name="auto_mark_when_scrolling">滚动时自动标记为已读</string>
+    <string name="down_img_on_wifi">仅在连接Wifi时下载图片</string>
+    <string name="article_list_state">文章筛选</string>
+    <string name="night_theme">夜间主题</string>
+
+    <string name="article_list_order">文章排序（按抓取到的时间排序）</string>
+    <string name="article_list_order_asc">上旧下新</string>
+    <string name="article_list_order_desc">上新下旧</string>
+
+    <string name="show_all">显示「所有」文章</string>
+    <string name="show_unread">显示「未读」文章</string>
+    <string name="show_starred">显示「收藏」文章</string>
+
+
+    <string name="all">所有</string>
+    <string name="unread">未读</string>
+    <string name="starred">收藏</string>
+
+    <string name="rss">RSS</string>
+    <string name="readability">易读</string>
+    <string name="web_page">网页</string>
+
+    <string name="article_display_mode">显示模式</string>
+
+
+    <string name="feed_config">配置该源</string>
+    <string name="get_readability">获取正文</string>
+    <string name="translation">翻译</string>
+    <string name="open_link_by_browser">查看原文</string>
 
 
 </resources>

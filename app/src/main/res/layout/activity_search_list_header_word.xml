@@ -20,7 +20,7 @@
         android:gravity="center"
         android:text="@string/search_header_search_cloudy_feeds"
         android:textColor="?attr/lv_item_desc_color"
-        android:onClick="OnSearchFeedsClicked" />
+        android:onClick="onSearchFeedsClicked" />
 
     <TextView
         android:id="@+id/search_local_articles"
@@ -33,6 +33,6 @@
         android:gravity="center"
         android:text="@string/search_header_search_local_articles"
         android:textColor="?attr/lv_item_desc_color"
-        android:onClick="OnSearchLocalArtsClicked" />
+        android:onClick="onSearchLocalArtsClicked" />
 
 </LinearLayout>

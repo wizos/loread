@@ -16,7 +16,6 @@ import java.io.InputStream;
 import java.util.ArrayList;
 
 import me.wizos.loread.App;
-import me.wizos.loread.net.Api;
 
 /**
  * Created by Wizos on 2016/3/19.
@@ -174,16 +173,13 @@ public class FileUtil {
         return fileContent;
     }
 
-    public static String getFolder(String dir, String fileNameInMD5, String fileName) {
-        switch (dir) {
-            case Api.SAVE_DIR_CACHE:
-                return fileNameInMD5;
-            case Api.SAVE_DIR_BOX:
-            case Api.SAVE_DIR_STORE:
-            case Api.SAVE_DIR_BOXREAD:
-            case Api.SAVE_DIR_STOREREAD:
-                return fileName;
+    public static String readImageCache(String articleId, String url) {
+        String fileNameExt = StringUtil.getFileNameExtByUrl(url);
+        String filePath = App.externalFilesDir + "cache/" + StringUtil.stringToMD5(articleId) + "_files/" + fileNameExt;
+        if (new File(filePath).exists()) {
+            return filePath;
         }
+//        KLog.e("ImageBridge", "要读取的url：" + url + "    文件位置" + filePath);
         return null;
     }
 

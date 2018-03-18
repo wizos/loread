@@ -6,29 +6,36 @@ import android.content.SharedPreferences;
 import me.wizos.loread.App;
 
 /**
+ * @author Wizos
+ * @date 2016/4/30
  * 内部设置
- * Created by Wizos on 2016/4/30.
  */
-public class WithSet {
-    private static WithSet withSet;
+public class PrefUtils {
+    private static PrefUtils prefUtils;
     private static SharedPreferences mySharedPreferences;
     private static SharedPreferences.Editor editor;
 
+    public static final String PREF_NAME = App.APP_NAME_EN;
+//    public static final String REFRESH_INTERVAL = "refresh.interval";
+//    public static final String SIXTY_MINUTES = "3600000";
 
-    private WithSet() {
+
+    private PrefUtils() {
     }
 
-    public static WithSet i() {
-        if (withSet == null) { // 双重锁定，只有在 mySharedPreferences 还没被初始化的时候才会进入到下一行，然后加上同步锁
-            synchronized (WithSet.class) {  // 同步锁，避免多线程时可能 new 出两个实例的情况
-                if (withSet == null) {
-                    withSet = new WithSet();
-                    mySharedPreferences = App.i().getSharedPreferences("loread", Activity.MODE_PRIVATE);
+    public static PrefUtils i() {
+        // 双重锁定，只有在 mySharedPreferences 还没被初始化的时候才会进入到下一行，然后加上同步锁
+        if (prefUtils == null) {
+            // 同步锁，避免多线程时可能 new 出两个实例的情况
+            synchronized (PrefUtils.class) {
+                if (prefUtils == null) {
+                    prefUtils = new PrefUtils();
+                    mySharedPreferences = App.i().getSharedPreferences(PREF_NAME, Activity.MODE_PRIVATE);
                     editor = mySharedPreferences.edit();
                 }
             }
         }
-        return withSet;
+        return prefUtils;
     }
 
     public void clear() {
@@ -36,228 +43,248 @@ public class WithSet {
         editor.apply();
     }
 
-    private String readPref(String key, String defaultValue) {
+    private String read(String key, String defaultValue) {
         return mySharedPreferences.getString(key, defaultValue);//getString()第二个参数为缺省值，如果preference中不存在该key，将返回缺省值
     }
 
-    private void savePref(String key, String value) {
+    private void save(String key, String value) {
 //        SharedPreferences.Editor editor = mySharedPreferences.edit();//实例化SharedPreferences.Editor对象
         editor.putString(key, value); //用putString的方法保存数据
         editor.apply(); //提交当前数据
     }
 
-    private boolean readPref(String key, boolean defaultValue) {
+    private boolean read(String key, boolean defaultValue) {
         return mySharedPreferences.getBoolean(key, defaultValue);
     }
 
-    private void savePref(String key, boolean value) {
-        editor.putBoolean(key, value); //用putString的方法保存数据
+    private void save(String key, boolean value) {
+        //用putString的方法保存数据
+        editor.putBoolean(key, value);
         editor.apply(); //提交当前数据
     }
 
-    private int readPref(String key, int value) {
+    private int read(String key, int value) {
         return mySharedPreferences.getInt(key, value);
     }
 
-    private void savePref(String key, int value) {
+    private void save(String key, int value) {
         editor.putInt(key, value);
         editor.apply();
     }
 
-    private long readPref(String key, long value) {
+    private long read(String key, long value) {
         return mySharedPreferences.getLong(key, value);
     }
 
-    private void savePref(String key, long value) {
+    private void save(String key, long value) {
         editor.putLong(key, value);
         editor.apply();
     }
 
 
+
     public String getAuth() {
-        return readPref("Auth", "");
+        return read("Auth", "");
     }
 
     public void setAuth(String auth) {
-        savePref("Auth", auth);
+        save("Auth", auth);
     }
 
 
     public String getAccountID() {
-        return readPref("AccountID", "");
+        return read("AccountID", "");
     }
 
     public void setAccountID(String accountID) {
-        savePref("AccountID", accountID);
+        save("AccountID", accountID);
     }
 
     public String getAccountPD() {
-        return readPref("AccountPD", "");
+        return read("AccountPD", "");
     }
 
     public void setAccountPD(String accountPD) {
-        savePref("AccountPD", accountPD);
+        save("AccountPD", accountPD);
     }
 
     public long getUseId() {
-        return readPref("UserID", 0L);
+        return read("UserID", 0L);
     }
     public void setUseId(long useId) {
-        savePref("UserID", useId);
+        save("UserID", useId);
     }
 
     public String getUseName() {
-        return readPref("UserName", "");
+        return read("UserName", "");
     }
 
     public void setUseName(String useName) {
-        savePref("UserName", useName);
+        save("UserName", useName);
     }
 
 
     public boolean isSyncFirstOpen() {
-        return readPref("SyncFirstOpen", true);
+        return read("SyncFirstOpen", true);
     }
 
     public void setSyncFirstOpen(boolean syncFirstOpen) {
-        savePref("SyncFirstOpen", syncFirstOpen);
+        save("SyncFirstOpen", syncFirstOpen);
     }
 
     public boolean isSyncAllStarred() {
-        return readPref("SyncAllStarred", false);
+        return read("SyncAllStarred", false);
     }
     public void setSyncAllStarred(boolean syncAllStarred) {
-        savePref("SyncAllStarred", syncAllStarred);
+        save("SyncAllStarred", syncAllStarred);
     }
 
     public boolean isHadSyncAllStarred() {
-        return readPref("HadSyncAllStarred", false);
+        return read("HadSyncAllStarred", false);
     }
     public void setHadSyncAllStarred(boolean had) {
-        savePref("HadSyncAllStarred", had);
+        save("HadSyncAllStarred", had);
     }
 
     public String getSyncFrequency() {
-        return readPref("SyncFrequency", "");
+        return read("SyncFrequency", "");
     }
 
     public void setSyncFrequency(String syncFrequency) {
-        savePref("SyncFrequency", syncFrequency);
+        save("SyncFrequency", syncFrequency);
     }
 
     public int getClearBeforeDay() {
-        return readPref("ClearBeforeDay", 7);
+        return read("ClearBeforeDay", 7);
     }
 
     public void setClearBeforeDay(int clearBeforeDay) {
-        savePref("ClearBeforeDay", clearBeforeDay);
+        save("ClearBeforeDay", clearBeforeDay);
     }
 
 
     public boolean isDownImgWifi() {
-        return readPref("DownImgWifi", true);
+        return read("DownImgWifi", true);
     }
     public void setDownImgWifi(boolean downImgMode) {
-        savePref("DownImgWifi", downImgMode);
+        save("DownImgWifi", downImgMode);
     }
 
     public boolean isInoreaderProxy() {
-        return readPref("InoreaderProxy", false);
+        return read("InoreaderProxy", false);
     }
     public void setInoreaderProxy(boolean proxyMode) {
-        savePref("InoreaderProxy", proxyMode);
+        save("InoreaderProxy", proxyMode);
     }
 
     public String getInoreaderProxyHost() {
-        return readPref("InoreaderProxyHost", "https://");
+        return read("InoreaderProxyHost", "https://");
     }
 
     public void setInoreaderProxyHost(String host) {
-        savePref("InoreaderProxyHost", host);
+        save("InoreaderProxyHost", host);
     }
     /**
      * 是否为滚动标记为已读
      */
     public boolean isScrollMark() {
-        return readPref("ScrollMark", true);
+        return read("ScrollMark", true);
     }
 
     /**
      * 设置滚动标记为已读
      */
     public void setScrollMark(boolean scrollMark) {
-        savePref("ScrollMark", scrollMark);
+        save("ScrollMark", scrollMark);
     }
 
 
     public String getStreamState() {
-        return readPref("ListState", "Unread");
+        return read("ListState", "Unread");
     }
 
     public void setStreamState(String listState) {
-        savePref("ListState", listState);
+        save("ListState", listState);
     }
 
 
     public String getStreamId() {
-        return readPref("listTagId", "");
+        return read("listTagId", "");
     }
 
     public void setStreamId(String listTagId) {
-        savePref("listTagId", listTagId);
+        save("listTagId", listTagId);
     }
 
 
     public boolean isOrderTagFeed() { // StreamPrefs
-        return readPref("OrderTagFeed", true);
+        return read("OrderTagFeed", true);
     }
     public void setOrderTagFeed(boolean is) {
-        savePref("OrderTagFeed", is);
+        save("OrderTagFeed", is);
     }
 
     public boolean isSysBrowserOpenLink() {
-        return readPref("SysBrowserOpenLink", false);
+        return read("SysBrowserOpenLink", true);
     }
     public void setSysBrowserOpenLink(boolean is) {
-        savePref("SysBrowserOpenLink", is);
+        save("SysBrowserOpenLink", is);
     }
 
 //    public boolean isLeftRightSlideArticle() {
-//        return readPref("LeftRightSlideArticle", true);
+//        return read("LeftRightSlideArticle", true);
 //    }
 //    public void setLeftRightSlideArticle(boolean is) {
-//        savePref("LeftRightSlideArticle", is);
+//        save("LeftRightSlideArticle", is);
 //    }
 
     public boolean isAutoToggleTheme() {
-        return readPref("AutoToggleTheme", true);
+        return read("AutoToggleTheme", true);
     }
     public void setAutoToggleTheme(boolean is) {
-        savePref("AutoToggleTheme", is);
+        save("AutoToggleTheme", is);
     }
 
     public int getThemeMode() {
-        return readPref("ThemeMode", App.theme_Day);
+        return read("ThemeMode", App.theme_Day);
     }
     public void setThemeMode(int themeMode) {
-        savePref("ThemeMode", themeMode);
+        save("ThemeMode", themeMode);
     }
+
+
+    public int getAutoRefreshInterval() {
+        return read("AutoRefreshInterval", 0);
+    }
+
+    public void setAutoRefreshInterval(int timeInterval) {
+        save("AutoRefreshInterval", timeInterval);
+    }
+
+//    public boolean autoRefreshInterval() {
+//        return read("AutoRefreshInterval", true);
+//    }
+//    public void enableAutoRefresh() {
+//        save("AutoRefreshEnabled", true);
+//    }
 
 
     public String getTagsSortId() {
-        return readPref("TagsSortId", "");
+        return read("TagsSortId", "");
     }
 
     public void setTagsSortId(String tagsSortId) {
-        savePref("TagsSortId", tagsSortId);
+        save("TagsSortId", tagsSortId);
     }
 
 
     public String getRequestLog() {
-        return readPref("RequestLog", "");
+        return read("RequestLog", "");
     }
 
     public void setRequestLog(String requestLog) {
-        savePref("RequestLog", requestLog);
+        save("RequestLog", requestLog);
     }
+
+
 }

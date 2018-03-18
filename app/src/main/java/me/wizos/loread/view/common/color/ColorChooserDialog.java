@@ -16,7 +16,6 @@ import android.support.v4.app.DialogFragment;
 import android.support.v4.app.Fragment;
 import android.support.v4.content.res.ResourcesCompat;
 import android.support.v7.app.AppCompatActivity;
-import android.text.Editable;
 import android.text.InputFilter;
 import android.text.TextWatcher;
 import android.view.View;
@@ -357,21 +356,21 @@ public class ColorChooserDialog extends DialogFragment implements View.OnClickLi
                 .build();
 
         final View v = dialog.getCustomView();
-        mGrid = (GridView) v.findViewById(R.id.grid);
+        mGrid = v.findViewById(R.id.grid);
 
         if (builder.mAllowUserCustom) {
             mSelectedCustomColor = preselectColor;
             mColorChooserCustomFrame = v.findViewById(R.id.colorChooserCustomFrame);
-            mCustomColorHex = (EditText) v.findViewById(R.id.hexInput);
+            mCustomColorHex = v.findViewById(R.id.hexInput);
             mCustomColorIndicator = v.findViewById(R.id.colorIndicator);
-            mCustomSeekA = (SeekBar) v.findViewById(R.id.colorA);
-            mCustomSeekAValue = (TextView) v.findViewById(R.id.colorAValue);
-            mCustomSeekR = (SeekBar) v.findViewById(R.id.colorR);
-            mCustomSeekRValue = (TextView) v.findViewById(R.id.colorRValue);
-            mCustomSeekG = (SeekBar) v.findViewById(R.id.colorG);
-            mCustomSeekGValue = (TextView) v.findViewById(R.id.colorGValue);
-            mCustomSeekB = (SeekBar) v.findViewById(R.id.colorB);
-            mCustomSeekBValue = (TextView) v.findViewById(R.id.colorBValue);
+            mCustomSeekA = v.findViewById(R.id.colorA);
+            mCustomSeekAValue = v.findViewById(R.id.colorAValue);
+            mCustomSeekR = v.findViewById(R.id.colorR);
+            mCustomSeekRValue = v.findViewById(R.id.colorRValue);
+            mCustomSeekG = v.findViewById(R.id.colorG);
+            mCustomSeekGValue = v.findViewById(R.id.colorGValue);
+            mCustomSeekB = v.findViewById(R.id.colorB);
+            mCustomSeekBValue = v.findViewById(R.id.colorBValue);
 
             if (!builder.mAllowUserCustomAlpha) {
                 v.findViewById(R.id.colorALabel).setVisibility(View.GONE);

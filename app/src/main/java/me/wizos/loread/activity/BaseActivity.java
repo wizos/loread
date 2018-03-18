@@ -9,7 +9,7 @@ import com.socks.library.KLog;
 
 import me.wizos.loread.App;
 import me.wizos.loread.R;
-import me.wizos.loread.data.WithSet;
+import me.wizos.loread.data.PrefUtils;
 import me.wizos.loread.view.colorful.Colorful;
 
 /**
@@ -34,7 +34,6 @@ public abstract class BaseActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         showCurrentTheme();
-//        App.i().addActivity(this);
     }
 
 
@@ -61,43 +60,40 @@ public abstract class BaseActivity extends AppCompatActivity {
 
     protected Colorful mColorful;
 
+    protected abstract Colorful.Builder buildColorful(Colorful.Builder mColorfulBuilder);
     /**
-     * 设置各个视图与颜色属性的关联
+     * 自动设置当前主题(设置各个视图与颜色属性的关联)
      */
-
-    // 自动设置当前主题
     protected void showCurrentTheme() {
         Colorful.Builder mColorfulBuilder = new Colorful.Builder(this);
         mColorful = buildColorful(mColorfulBuilder).create();
-        if (WithSet.i().getThemeMode() == App.theme_Day) {
+        if (PrefUtils.i().getThemeMode() == App.theme_Day) {
             mColorful.setTheme(R.style.AppTheme_Day);
         } else {
             mColorful.setTheme(R.style.AppTheme_Night);
         }
     }
-
-    protected abstract Colorful.Builder buildColorful(Colorful.Builder mColorfulBuilder);
-
     /**
      * 手动切换主题并保存
      */
     protected void manualToggleTheme() {
-        if (WithSet.i().getThemeMode() == App.theme_Day) {
+        if (PrefUtils.i().getThemeMode() == App.theme_Day) {
             mColorful.setTheme(R.style.AppTheme_Night);
-            WithSet.i().setThemeMode(App.theme_Night);
+            PrefUtils.i().setThemeMode(App.theme_Night);
         } else {
             mColorful.setTheme(R.style.AppTheme_Day);
-            WithSet.i().setThemeMode(App.theme_Day);
+            PrefUtils.i().setThemeMode(App.theme_Day);
         }
     }
 
 
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
-        if (keyCode == KeyEvent.KEYCODE_BACK && event.getRepeatCount() == 0) { // 后者为短期内按下的次数
-//            App.i().finishActivity(this);// 移除这个 Activity
+        // 后者为短期内按下的次数
+        if (keyCode == KeyEvent.KEYCODE_BACK && event.getRepeatCount() == 0) {
             this.finish();
-            return true;//返回真表示返回键被屏蔽掉
+            //返回真表示返回键被屏蔽掉
+            return true;
         }
         return super.onKeyDown(keyCode, event);
     }

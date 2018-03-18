@@ -16,15 +16,12 @@ import com.ditclear.swipelayout.SwipeDragLayout;
 import java.util.List;
 
 import me.wizos.loread.R;
-import me.wizos.loread.bean.Article;
+import me.wizos.loread.db.Article;
 import me.wizos.loread.net.Api;
 import me.wizos.loread.utils.TimeUtil;
 import me.wizos.loread.view.IconFontView;
 import me.wizos.loread.view.ListViewS;
 
-//import com.yydcdut.sdlv.Menu;
-//import com.yydcdut.sdlv.MenuItem;
-//import com.yydcdut.sdlv.SlideAndDragListView;
 
 /**
  * Created by Wizos on 2016/3/15.
@@ -71,17 +68,17 @@ public class MainListViewAdapter extends ArrayAdapter<Article> {
             cvh = new CustomViewHolder();
 //            convertView = LayoutInflater.from(context).inflate(R.layout.activity_main_slv_item, null);
             convertView = LayoutInflater.from(context).inflate(R.layout.activity_main_list_item, null);
-            cvh.articleTitle = (TextView) convertView.findViewById(R.id.main_slv_item_title);
-            cvh.articleSummary = (TextView) convertView.findViewById(R.id.main_slv_item_summary);
-            cvh.articleFeed = (TextView) convertView.findViewById(R.id.main_slv_item_author);
-            cvh.articleImg = (ImageView) convertView.findViewById(R.id.main_slv_item_img);
-            cvh.articlePublished = (TextView) convertView.findViewById(R.id.main_slv_item_time);
-            cvh.articleStar = (IconFontView) convertView.findViewById(R.id.main_slv_item_icon_star);
-            cvh.articleReading = (IconFontView) convertView.findViewById(R.id.main_slv_item_icon_reading);
-            cvh.articleSave = (IconFontView) convertView.findViewById(R.id.main_slv_item_icon_save);
-            cvh.markLeft = (IconFontView) convertView.findViewById(R.id.main_list_item_menu_left);
-            cvh.markRight = (IconFontView) convertView.findViewById(R.id.main_list_item_menu_right);
-            swipeDragLayout = (SwipeDragLayout) convertView.findViewById(R.id.swip_layout);
+            cvh.articleTitle = convertView.findViewById(R.id.main_slv_item_title);
+            cvh.articleSummary = convertView.findViewById(R.id.main_slv_item_summary);
+            cvh.articleFeed = convertView.findViewById(R.id.main_slv_item_author);
+            cvh.articleImg = convertView.findViewById(R.id.main_slv_item_img);
+            cvh.articlePublished = convertView.findViewById(R.id.main_slv_item_time);
+            cvh.articleStar = convertView.findViewById(R.id.main_slv_item_icon_star);
+            cvh.articleReading = convertView.findViewById(R.id.main_slv_item_icon_reading);
+            cvh.articleSave = convertView.findViewById(R.id.main_slv_item_icon_save);
+            cvh.markLeft = convertView.findViewById(R.id.main_list_item_menu_left);
+            cvh.markRight = convertView.findViewById(R.id.main_list_item_menu_right);
+            swipeDragLayout = convertView.findViewById(R.id.swip_layout);
             swipeDragLayout.addListener(slv);
 
             convertView.setTag(cvh);
@@ -95,6 +92,7 @@ public class MainListViewAdapter extends ArrayAdapter<Article> {
         } else {
             cvh.articleSummary.setVisibility(View.VISIBLE);
             cvh.articleSummary.setText(article.getSummary());
+//            cvh.articleSummary.setText( Jsoup.parse(article.getSummary()).text() );
         }
 
         if (article.getCoverSrc() != null) {

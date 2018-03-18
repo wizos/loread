@@ -9,6 +9,7 @@ buildscript {
     }
     dependencies {
         classpath 'com.android.tools.build:gradle:3.0.1' // 4.0.1-all
+        classpath 'org.greenrobot:greendao-gradle-plugin:3.2.2' // add plugin
         classpath fileTree(dir: 'plugin', include: ['*.jar'])
 //        classpath 'com.neenbedankt.gradle.plugins:android-apt:1.8'
         // NOTE: Do not place your application dependencies here; they belong

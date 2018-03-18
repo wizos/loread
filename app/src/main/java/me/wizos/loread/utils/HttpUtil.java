@@ -9,9 +9,6 @@ import android.os.Build;
 import com.socks.library.KLog;
 
 import me.wizos.loread.App;
-import me.wizos.loread.R;
-import me.wizos.loread.data.WithSet;
-
 
 
 /**
@@ -24,15 +21,15 @@ public class HttpUtil {
 //    private static final OkHttpClient mOkHttpClient = new OkHttpClient();
 //    private static final Dispatcher dispatcher = new Dispatcher();
 
-    static{
-        KLog.e("又来了一个Http链接，当前线程为：" + Thread.currentThread() + "。当前实例为");
-//        dispatcher.setMaxRequests(3);
-//        dispatcher.setMaxRequestsPerHost(3);
-//        mOkHttpClient.setDispatcher(dispatcher);
-//        mOkHttpClient.setConnectTimeout(30, TimeUnit.SECONDS); // 初始为30
-//        mOkHttpClient.setReadTimeout(60, TimeUnit.SECONDS);// 初始为30
-//        mOkHttpClient.setWriteTimeout(60, TimeUnit.SECONDS);// 初始为30
-    }
+//    static{
+////        KLog.e("又来了一个Http链接，当前线程为：" + Thread.currentThread() + "。当前实例为");
+////        dispatcher.setMaxRequests(3);
+////        dispatcher.setMaxRequestsPerHost(3);
+////        mOkHttpClient.setDispatcher(dispatcher);
+////        mOkHttpClient.setConnectTimeout(30, TimeUnit.SECONDS); // 初始为30
+////        mOkHttpClient.setReadTimeout(60, TimeUnit.SECONDS);// 初始为30
+////        mOkHttpClient.setWriteTimeout(60, TimeUnit.SECONDS);// 初始为30
+//    }
 
     /**
      * 开启异步线程访问网络
@@ -52,59 +49,40 @@ public class HttpUtil {
                 if (httpUtil == null) {
                     // All init here
                     httpUtil = new HttpUtil();
-//                    imgOkHttpClient = new OkHttpClient();
-//                    Dispatcher dispatcher = new Dispatcher();
-//                    dispatcher.setMaxRequests(3);
-//                    dispatcher.setMaxRequestsPerHost(3);
-//
-//                    imgOkHttpClient.setDispatcher(dispatcher);
-//                    imgOkHttpClient.setConnectTimeout(30, TimeUnit.SECONDS); // 初始为30
-//                    imgOkHttpClient.setReadTimeout(60, TimeUnit.SECONDS);// 初始为30
-//                    imgOkHttpClient.setWriteTimeout(60, TimeUnit.SECONDS);// 初始为30
                 }
             }
         }
         return httpUtil;
     }
-//    public void exe( Request request, Callback responseCallback ){
-//        imgOkHttpClient.newCall(request).enqueue(responseCallback);
-//    }
 
-
-    /**
-     * 能否下载图片分以下几种情况：
-     * 1，开启省流量 & Wifi 可用
-     * 2，开启省流量 & Wifi 不可用
-     * 3，关闭省流量 & 网络 可用
-     * 4，关闭省流量 & 网络 不可用
-     *
-     * @return
-     */
-    public static boolean canDownImg() {
-        if (WithSet.i().isDownImgWifi() && !isWiFiActive()) {
-            ToastUtil.showShort(App.i().getString(R.string.toast_not_wifi_mode));
-            return false;
-        }
-        if (!WithSet.i().isDownImgWifi() && !isNetworkAvailable()) {
-            ToastUtil.showShort(App.i().getString(R.string.toast_not_network));
-            return false;
-        }
-        return true;
-    }
 
     /**
      * 判断网络是否可用
      */
     public static boolean isNetworkAvailable() {
         ConnectivityManager connectivity = (ConnectivityManager) App.i().getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo info = connectivity.getActiveNetworkInfo();
-        return (info != null && info.isConnected());
+        NetworkInfo networkInfo = connectivity.getActiveNetworkInfo();
+        return (networkInfo != null && networkInfo.isConnected());
+    }
+
+    /**
+     * 判断当前是否在用WIFI
+     */
+    public static boolean isWiFiUsed() {
+        ConnectivityManager connectivityManager = (ConnectivityManager) App.i().getSystemService(Context.CONNECTIVITY_SERVICE);
+        final NetworkInfo networkInfo = connectivityManager.getActiveNetworkInfo();
+        // 无网络，或网络未连接
+        if (networkInfo == null || !networkInfo.isConnected()) {
+            return false;
+        }
+        // 当前连接的网络是否为 WiFi
+        return networkInfo.getType() == ConnectivityManager.TYPE_WIFI;
     }
 
     /**
      * 判断WIFI是否可用
      */
-    public static boolean isWiFiActive() {
+    public static boolean isWiFiUsed2() {
         ConnectivityManager connectivity = (ConnectivityManager) App.i().getSystemService(Context.CONNECTIVITY_SERVICE);
         if (connectivity == null) {
             return false;
@@ -131,12 +109,15 @@ public class HttpUtil {
             }
             for (NetworkInfo networkInfo : networkInfos) {
                 //此处请务必使用NetworkInfo对象下的isAvailable（）方法，isConnected()是检测当前是否连接到了wifi
-                if (networkInfo.getType() != ConnectivityManager.TYPE_WIFI) continue;
+                if (networkInfo.getType() != ConnectivityManager.TYPE_WIFI) {
+                    continue;
+                }
                 KLog.i("Wifi==", networkInfo.isConnected());
                 return networkInfo.isConnected();
             }
         }
         return true;
     }
+
 
 }

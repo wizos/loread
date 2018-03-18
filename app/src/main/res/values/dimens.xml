@@ -10,7 +10,5 @@
     <dimen name="bottom_bar_height">40dp</dimen>
 
 
-
-
     <dimen name="md_colorchooser_circlesize">40dp</dimen>
 </resources>

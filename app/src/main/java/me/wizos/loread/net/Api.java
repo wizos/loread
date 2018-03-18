@@ -74,6 +74,12 @@ public class Api {
     public static final int ActivityResult_ArtToMain = 2;
     public static final int ActivityResult_SearchLocalArtsToMain = 3;
 
+    public static final String OPEN_RSS = "rss";
+    public static final String OPEN_READABILITY = "readability";
+    public static final String OPEN_LINK = "link";
+
+
+    public static final int INIT_IMAGWE_BRIDGE = 4;
 
     public static final int MSG_DOUBLE_TAP = -1;
 

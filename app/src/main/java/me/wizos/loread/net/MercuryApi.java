@@ -7,7 +7,7 @@ import com.lzy.okgo.model.HttpHeaders;
 
 import java.io.IOException;
 
-import me.wizos.loread.bean.Readability;
+import me.wizos.loread.bean.gson.Readability;
 
 /**
  * Created by Wizos on 2017/12/17.

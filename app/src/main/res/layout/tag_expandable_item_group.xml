@@ -18,8 +18,8 @@
         android:paddingEnd="15dp"
         android:gravity="center"
         android:textColor="?attr/tag_slv_item_icon"
-        android:text="@string/font_collapse"
-        tools:text="@string/font_tag_class" />
+        android:text="@string/font_arrow_right"
+        tools:text="@string/font_tag" />
 
 
     <TextView

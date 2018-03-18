@@ -4,6 +4,23 @@
             "outputFile": "F:\\Code\\Android\\loread\\scrolllayout\\build\\intermediates\\incremental\\mergeDebugAndroidTestResources\\merged.dir\\values\\values.xml",
             "map": [
                 {
+                    "source": "C:\\Users\\Wizos\\.gradle\\caches\\transforms-1\\files-1.1\\recyclerview-v7-25.4.0.aar\\8d11915124fdd060c55080601d155ca8\\res\\values\\values.xml",
+                    "from": {
+                        "startLines": "3,4,5,6",
+                        "startColumns": "4,4,4,4",
+                        "startOffsets": "372,447,523,595",
+                        "endColumns": "74,75,71,65",
+                        "endOffsets": "442,518,590,656"
+                    },
+                    "to": {
+                        "startLines": "8,9,10,11",
+                        "startColumns": "4,4,4,4",
+                        "startOffsets": "831,906,982,1054",
+                        "endColumns": "74,75,71,65",
+                        "endOffsets": "901,977,1049,1115"
+                    }
+                },
+                {
                     "source": "F:\\Code\\Android\\loread\\scrolllayout\\build\\intermediates\\bundles\\debug\\res\\values\\values.xml",
                     "from": {
                         "startLines": "7",
@@ -18,23 +35,6 @@
                         "startOffsets": "1120",
                         "endColumns": "49",
                         "endOffsets": "1165"
-                    }
-                },
-                {
-                    "source": "C:\\Users\\Wizos\\.gradle\\caches\\transforms-1\\files-1.1\\recyclerview-v7-25.4.0.aar\\cf7e3b40839f8b39afbd164ded54119e\\res\\values\\values.xml",
-                    "from": {
-                        "startLines": "3,4,5,6",
-                        "startColumns": "4,4,4,4",
-                        "startOffsets": "372,447,523,595",
-                        "endColumns": "74,75,71,65",
-                        "endOffsets": "442,518,590,656"
-                    },
-                    "to": {
-                        "startLines": "8,9,10,11",
-                        "startColumns": "4,4,4,4",
-                        "startOffsets": "831,906,982,1054",
-                        "endColumns": "74,75,71,65",
-                        "endOffsets": "901,977,1049,1115"
                     }
                 }
             ]

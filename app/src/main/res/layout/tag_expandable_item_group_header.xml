@@ -24,7 +24,7 @@
             android:gravity="center"
             android:textSize="16sp"
             android:textColor="?attr/tag_slv_item_icon"
-            android:text="@string/font_expand" />
+            android:text="@string/font_arrow_down" />
 
         <TextView
             android:id="@+id/header_item_title"

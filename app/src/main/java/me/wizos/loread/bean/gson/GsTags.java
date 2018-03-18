@@ -6,7 +6,7 @@ import org.parceler.Parcel;
 
 import java.util.ArrayList;
 
-import me.wizos.loread.bean.Tag;
+import me.wizos.loread.db.Tag;
 
 @Parcel
 public class GsTags {

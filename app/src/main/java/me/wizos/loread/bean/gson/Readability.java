@@ -1,10 +1,11 @@
-package me.wizos.loread.bean;
+package me.wizos.loread.bean.gson;
 
 import com.google.gson.annotations.SerializedName;
 
 import org.parceler.Parcel;
 
 /**
+ * 调用 Mercy 接口的返回实体
  * Created by Wizos on 2017/12/17.
  */
 

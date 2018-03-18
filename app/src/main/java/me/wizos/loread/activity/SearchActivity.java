@@ -31,11 +31,11 @@ import java.util.List;
 
 import me.wizos.loread.App;
 import me.wizos.loread.R;
-import me.wizos.loread.bean.Feed;
 import me.wizos.loread.bean.search.FeedlyFeed;
 import me.wizos.loread.bean.search.FeedlyFeedsSearchResult;
 import me.wizos.loread.bean.search.QuickAdd;
 import me.wizos.loread.data.WithDB;
+import me.wizos.loread.db.Feed;
 import me.wizos.loread.net.Api;
 import me.wizos.loread.net.DataApi;
 import me.wizos.loread.net.SearchApi;
@@ -66,9 +66,9 @@ public class SearchActivity extends BaseActivity {
     }
 
     private void initView() {
-        swipeRefreshLayoutS = (SwipeRefreshLayoutS) findViewById(R.id.search_swipe_refresh);
-        searchView = (EditText) findViewById(R.id.search_toolbar_edittext);
-        listView = (ListView) findViewById(R.id.search_list_view);
+        swipeRefreshLayoutS = findViewById(R.id.search_swipe_refresh);
+        searchView = findViewById(R.id.search_toolbar_edittext);
+        listView = findViewById(R.id.search_list_view);
 
         swipeRefreshLayoutS.setEnabled(false);
         // headerView
@@ -114,7 +114,7 @@ public class SearchActivity extends BaseActivity {
             @Override
             public boolean onKey(View v, int keyCode, KeyEvent event) {
                 if (keyCode == KeyEvent.KEYCODE_ENTER) {
-                    OnSearchFeedsClicked(null);
+                    onSearchFeedsClicked(null);
                 }
                 return false;
             }
@@ -153,7 +153,7 @@ public class SearchActivity extends BaseActivity {
                         KLog.e("点击搜索" + searchView.getText().toString() + feedlyFeeds.size());
 //                        ToastUtil.showShort("已获取到" + feedlyFeeds.size() + "个订阅源");
                         listViewAdapter = new SearchListViewAdapter(SearchActivity.this, feedlyFeeds);
-                        TextView textView = (TextView) resultCountHeaderView.findViewById(R.id.search_feeds_result_count);
+                        TextView textView = resultCountHeaderView.findViewById(R.id.search_feeds_result_count);
                         textView.setText(getString(R.string.search_cloudy_feeds_result_count, feedlyFeeds.size()));
                         listView.addHeaderView(resultCountHeaderView);
                         listView.setAdapter(listViewAdapter);
@@ -194,7 +194,7 @@ public class SearchActivity extends BaseActivity {
                     feed.setTitle(quickAdd.getStreamName());
                     feed.setHtmlurl(quickAdd.getStreamId().replaceFirst("^feed\\/", ""));
                     WithDB.i().addFeed(feed);
-                    ((IconFontView) view).setText(R.string.font_right);
+                    ((IconFontView) view).setText(R.string.font_tick);
                     view.setClickable(true);
                 } catch (Exception e) {
                     KLog.e(e);
@@ -240,13 +240,13 @@ public class SearchActivity extends BaseActivity {
             if (convertView == null) {
                 cvh = new CustomViewHolder();
                 convertView = LayoutInflater.from(SearchActivity.this).inflate(R.layout.activity_search_list_item_feed, null);
-                cvh.feedIcon = (ImageView) convertView.findViewById(R.id.search_list_item_icon);
-                cvh.feedTitle = (TextView) convertView.findViewById(R.id.search_list_item_title);
-                cvh.feedSummary = (TextView) convertView.findViewById(R.id.search_list_item_summary);
-                cvh.feedUrl = (TextView) convertView.findViewById(R.id.search_list_item_feed_url);
-                cvh.feedSubsVelocity = (TextView) convertView.findViewById(R.id.search_list_item_sub_velocity);
-                cvh.feedLastUpdated = (TextView) convertView.findViewById(R.id.search_list_item_last_updated);
-                cvh.feedSubState = (IconFontView) convertView.findViewById(R.id.search_list_item_sub_state);
+                cvh.feedIcon = convertView.findViewById(R.id.search_list_item_icon);
+                cvh.feedTitle = convertView.findViewById(R.id.search_list_item_title);
+                cvh.feedSummary = convertView.findViewById(R.id.search_list_item_summary);
+                cvh.feedUrl = convertView.findViewById(R.id.search_list_item_feed_url);
+                cvh.feedSubsVelocity = convertView.findViewById(R.id.search_list_item_sub_velocity);
+                cvh.feedLastUpdated = convertView.findViewById(R.id.search_list_item_last_updated);
+                cvh.feedSubState = convertView.findViewById(R.id.search_list_item_sub_state);
                 convertView.setTag(cvh);
             } else {
                 cvh = (CustomViewHolder) convertView.getTag();
@@ -270,7 +270,7 @@ public class SearchActivity extends BaseActivity {
                 cvh.feedLastUpdated.setText("");
             }
             if (WithDB.i().getFeed(feedlyFeed.getFeedId()) != null) {
-                cvh.feedSubState.setText(R.string.font_right);
+                cvh.feedSubState.setText(R.string.font_tick);
             } else {
                 cvh.feedSubState.setText(R.string.font_add);
             }
@@ -279,7 +279,7 @@ public class SearchActivity extends BaseActivity {
                 public void onClick(final View view) {
                     if (WithDB.i().getFeed(feedlyFeed.getFeedId()) != null) {
                         view.setClickable(false); // 防止重复点击
-                        cvh.feedSubState.setText(R.string.font_right);
+                        cvh.feedSubState.setText(R.string.font_tick);
                         DataApi.i().unsubscribeFeed(feedlyFeed.getFeedId(), new StringCallback() {
                             @Override
                             public void onSuccess(Response<String> response) {
@@ -322,7 +322,7 @@ public class SearchActivity extends BaseActivity {
     }
 
     private void initToolbar() {
-        Toolbar toolbar = (Toolbar) findViewById(R.id.search_toolbar);
+        Toolbar toolbar = findViewById(R.id.search_toolbar);
         setSupportActionBar(toolbar);
         getSupportActionBar().setHomeButtonEnabled(true); // 这个小于4.0版本是默认为true，在4.0及其以上是false。该方法的作用：决定左上角的图标是否可以点击(没有向左的小图标)，true 可点
         getSupportActionBar().setDisplayHomeAsUpEnabled(true); // 决定左上角图标的左侧是否有向左的小箭头，true 有小箭头
@@ -331,7 +331,7 @@ public class SearchActivity extends BaseActivity {
         // setDisplayShowCustomEnabled(true)  // 使自定义的普通View能在title栏显示，即actionBar.setCustomView能起作用，对应ActionBar.DISPLAY_SHOW_CUSTOM
     }
 
-    public void OnSearchFeedsClicked(View view) {
+    public void onSearchFeedsClicked(View view) {
         if (TextUtils.isEmpty(searchView.getText().toString())) {
             ToastUtil.showShort("请输入要搜索的词");
             return;
@@ -342,7 +342,7 @@ public class SearchActivity extends BaseActivity {
         searchAndLoadFeedsData();
     }
 
-    public void OnSearchLocalArtsClicked(View view) {
+    public void onSearchLocalArtsClicked(View view) {
         Intent intent = new Intent(SearchActivity.this, MainActivity.class);
         KLog.e("要搜索的词是" + searchView.getText().toString());
         intent.putExtra("searchWord", searchView.getText().toString());
@@ -378,17 +378,7 @@ public class SearchActivity extends BaseActivity {
         mColorfulBuilder
                 .backgroundColor(R.id.search_root, R.attr.root_view_bg)
                 // 设置 toolbar
-                .backgroundColor(R.id.search_toolbar, R.attr.topbar_bg)
-
-                // 设置中屏和底栏之间的分割线
-                .backgroundColor(R.id.art_bottombar_divider, R.attr.bottombar_divider)
-
-                // 设置 bottombar
-                .backgroundColor(R.id.art_bottombar, R.attr.bottombar_bg)
-                .textColor(R.id.art_bottombar_read, R.attr.bottombar_fg)
-                .textColor(R.id.art_bottombar_star, R.attr.bottombar_fg)
-                .textColor(R.id.art_bottombar_tag, R.attr.bottombar_fg)
-                .textColor(R.id.art_bottombar_save, R.attr.bottombar_fg);
+                .backgroundColor(R.id.search_toolbar, R.attr.topbar_bg);
         return mColorfulBuilder;
     }
 }

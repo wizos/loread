@@ -20,26 +20,29 @@
             app:layout_scrollFlags="scroll|enterAlways"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
-            android:background="?attr/topbar_bg">
+            android:background="?attr/topbar_bg"
+            app:contentInsetStartWithNavigation="0dp"
+            app:subtitleTextAppearance="@style/MyToolbar.SubTitle"
+            tools:title="博谈"
+            tools:navigationIcon="@drawable/state_star">
             <TextView
                 android:id="@+id/main_toolbar_hint"
+                android:minWidth="40dp"
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
-                android:layout_gravity="center"
-                android:gravity="center"
+                android:layout_gravity="end|center"
+                android:paddingRight="12dp"
+                android:background="?android:attr/selectableItemBackgroundBorderless"
+                android:clickable="true"
+                android:gravity="center|right"
                 android:textSize="12sp"
                 tools:text="12" />
-            <me.wizos.loread.view.IconFontView
-                android:id="@+id/main_toolbar_readability"
-                style="@style/top_bar_iconfont"
-                android:layout_gravity="end|center"
-                android:text="@string/font_theme" />
+            <!--<me.wizos.loread.view.IconFontView-->
+            <!--android:id="@+id/main_toolbar_readability"-->
+            <!--style="@style/top_bar_iconfont"-->
+            <!--android:layout_gravity="end|center"-->
+            <!--android:text="@string/font_theme" />-->
 
-            <me.wizos.loread.view.IconFontView
-                android:id="@+id/main_toolbar_search"
-                style="@style/top_bar_iconfont"
-                android:layout_gravity="end|center"
-                android:text="@string/font_search" />
         </android.support.v7.widget.Toolbar>
 
     </android.support.design.widget.AppBarLayout>
@@ -56,25 +59,16 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:orientation="vertical">
-            <!--<com.yydcdut.sdlv.SlideAndDragListView-->
-            <!--android:id="@+id/main_slv"-->
-            <!--app:layout_behavior="@string/appbar_scrolling_view_behavior"-->
-            <!--android:layout_width="match_parent"-->
-            <!--android:layout_height="match_parent"-->
-            <!--android:layout_marginLeft="12dp"-->
-            <!--android:layout_marginRight="12dp"-->
-            <!--android:animateLayoutChanges="true"-->
-            <!--android:headerDividersEnabled="false"-->
-            <!--android:layout_above="@+id/main_bottombar">-->
-            <!--</com.yydcdut.sdlv.SlideAndDragListView>-->
+
+
+            <!--android:scrollbars="vertical"-->
+            <!--android:fastScrollEnabled="true"-->
 
             <me.wizos.loread.view.ListViewS
                 android:id="@+id/main_slv"
                 app:layout_behavior="@string/appbar_scrolling_view_behavior"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:layout_marginLeft="12dp"
-                android:layout_marginRight="12dp"
                 android:animateLayoutChanges="true"
                 android:headerDividersEnabled="false"
                 android:background="?attr/root_view_bg"
@@ -107,67 +101,35 @@
                     android:layout_marginStart="10dp"
                     android:layout_marginEnd="10dp"
                     android:background="?attr/bottombar_divider" />
-                <me.wizos.loread.view.IconFontView
-                    android:id="@+id/main_bottombar_star"
-                    style="@style/bottom_bar_iconfont"
-                    android:layout_toStartOf="@+id/main_bottombar_tag"
-                    android:text="@string/font_unstar"
-                    android:onClick="onStarIconClicked" />
 
                 <me.wizos.loread.view.IconFontView
-                    android:id="@id/main_bottombar_tag"
+                    android:id="@+id/main_bottombar_tag"
                     style="@style/bottom_bar_iconfont"
                     android:layout_centerInParent="true"
-                    android:text="@string/font_tag" />
+                    android:text="@string/font_group" />
 
-                <!--android:onClick="onTagIconClicked"-->
                 <me.wizos.loread.view.IconFontView
-                    android:id="@+id/main_bottombar_read"
+                    android:id="@+id/main_bottombar_search"
                     style="@style/bottom_bar_iconfont"
-                    android:layout_toEndOf="@id/main_bottombar_tag"
-                    android:text="@string/font_unread"
-                    android:onClick="onReadIconClicked" />
+                    android:layout_toStartOf="@id/main_bottombar_tag"
+                    android:text="@string/font_search" />
 
                 <me.wizos.loread.view.IconFontView
                     android:id="@+id/main_bottombar_setting"
                     style="@style/bottom_bar_iconfont"
-                    android:text="@string/font_setting"
-                    android:layout_alignParentStart="true"
-                    android:onClick="onSettingIconClicked"/>
-
-                <!--<me.wizos.loread.view.IconIndicatorView-->
-                <!--android:id="@+id/main_bottombar_setting"-->
-                <!--android:layout_width="@dimen/bottom_bar_height"-->
-                <!--android:layout_height="match_parent"-->
-                <!--android:layout_alignParentStart="true"-->
-                <!--app:icon_text="@string/font_setting"-->
-                <!--app:icon_size="16sp"-->
-                <!--app:icon_color="?attr/bottombar_fg"-->
-                <!--app:indicator_color="@color/main_night_info"-->
-                <!--android:onClick="onSettingIconClicked"/>-->
-
-                <!--<include layout="@layout/cv_icon_indicator"/>-->
-                <View
-                    android:layout_width="@dimen/bottom_bar_height"
-                    android:layout_height="2dp"
-                    android:background="@color/main_night_info"
-                    android:layout_alignStart="@id/main_bottombar_tag" />
+                    android:text="@string/font_more"
+                    android:layout_toEndOf="@id/main_bottombar_tag"
+                    android:onClick="onQuickSettingIconClicked" />
 
             </RelativeLayout>
-
-            <!--<include layout="@layout/settingview"-->
-            <!--android:id="@+id/main_settingview"-->
-            <!--android:layout_width="match_parent"-->
-            <!--android:layout_height="match_parent"-->
-            <!--android:visibility="gone"-->
-            <!--tools:visibility="visible"-->
-            <!--android:layout_above="@id/main_bottombar"/>-->
         </RelativeLayout>
     </me.wizos.loread.view.SwipeRefreshLayoutS>
 
     <!--android:background="?attr/bottombar_bg"-->
+    <!--<include layout="@laymain_bottom_sheet_quick_settingheet"/>-->
 
     <com.yinglan.scrolllayout.ScrollLayout
+        tools:visibility="gone"
         android:id="@+id/scroll_down_layout"
         android:tag="scroll_down_layout"
         android:layout_width="match_parent"
@@ -178,7 +140,6 @@
         <LinearLayout
             android:id="@+id/main_scroll_layout_bg"
             android:background="?attr/bottombar_bg"
-
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:orientation="vertical">
