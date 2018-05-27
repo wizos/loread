@@ -11,30 +11,38 @@ import com.socks.library.KLog;
 import com.tencent.bugly.crashreport.BuglyLog;
 import com.tencent.bugly.crashreport.CrashReport;
 
-import java.io.File;
+import org.greenrobot.eventbus.EventBus;
+import org.jsoup.Jsoup;
+import org.jsoup.select.Elements;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
 import me.wizos.loread.App;
+import me.wizos.loread.R;
 import me.wizos.loread.bean.gson.GsSubscriptions;
 import me.wizos.loread.bean.gson.GsTags;
+import me.wizos.loread.bean.gson.GsUnreadCount;
 import me.wizos.loread.bean.gson.ItemIDs;
 import me.wizos.loread.bean.gson.StreamContents;
 import me.wizos.loread.bean.gson.StreamPref;
 import me.wizos.loread.bean.gson.StreamPrefs;
 import me.wizos.loread.bean.gson.Subscriptions;
+import me.wizos.loread.bean.gson.UnreadCounts;
 import me.wizos.loread.bean.gson.UserInfo;
 import me.wizos.loread.bean.gson.itemContents.Items;
 import me.wizos.loread.bean.gson.son.ItemRefs;
-import me.wizos.loread.data.PrefUtils;
 import me.wizos.loread.data.WithDB;
+import me.wizos.loread.data.WithPref;
 import me.wizos.loread.db.Article;
 import me.wizos.loread.db.Feed;
 import me.wizos.loread.db.Tag;
+import me.wizos.loread.event.Sync;
 import me.wizos.loread.utils.StringUtil;
 
 /**
@@ -74,26 +82,30 @@ public class DataApi {
 
 
     public String fetchBootstrap() throws HttpException, IOException {
-        return InoApi.i().syncBootstrap(cb);
+        return InoApi.i().syncBootstrap();
     }
 
     public boolean clientLogin(String accountId, String accountPd) throws HttpException, IOException {
-        String info = InoApi.i().clientLogin(accountId, accountPd, cb);
+        String info = InoApi.i().clientLogin(accountId, accountPd);
         String auth = info.split("Auth=")[1].replaceAll("\n", "");
         if (TextUtils.isEmpty(auth)) {
             return false;
         }
         InoApi.INOREADER_ATUH = "GoogleLogin auth=" + auth;
-        PrefUtils.i().setAuth(InoApi.INOREADER_ATUH);
-        InoApi.i().init();
+        WithPref.i().setAuth(InoApi.INOREADER_ATUH);
+        InoApi.i().initAuthHeaders();
         return true;
     }
 
+    public void clientLogin2(String accountId, String accountPd, StringCallback cb) {
+        InoApi.i().clientLogin2(accountId, accountPd, cb);
+    }
+
     public long fetchUserInfo() throws HttpException, IOException {
-        String info = InoApi.i().fetchUserInfo(cb);
+        String info = InoApi.i().fetchUserInfo();
         UserInfo userInfo = new Gson().fromJson(info, UserInfo.class);
         KLog.e("此时的UID为" + userInfo.getUserId());
-        PrefUtils.i().setUseId(userInfo.getUserId());
+        WithPref.i().setUseId(userInfo.getUserId());
         return userInfo.getUserId();
 //        UserID = userInfo.getUserId();
 //        mUserName = userInfo.getUserName();
@@ -105,19 +117,24 @@ public class DataApi {
 //        save("UserID" , UserID);
 //        save("mUserName" , mUserName);
 //        save("mUserEmail" , mUserEmail);
-//        App.i().finishActivity(LoginActivity.this);
-//        goTo(MainActivity.TAG,"syncAll");
     }
 
-
     public List<Tag> fetchTagList() throws HttpException, IOException {
-        String info = InoApi.i().syncTagList(cb);
+        String info = InoApi.i().syncTagList();
         String[] array;
         String tagTitle;
         List<Tag> tagListTemp = new Gson().fromJson(info, GsTags.class).getTags();
         tagListTemp.remove(0); // /state/com.google/starred
         tagListTemp.remove(0); // /state/com.google/broadcast
         tagListTemp.remove(0); // /state/com.google/blogger-following
+
+//        Tag noLabelTag = new Tag();
+//        noLabelTag.setTitle(App.i().getString(R.string.main_activity_title_untag));
+//        noLabelTag.setId("user/" +  WithPref.i().getUseId() + Api.U_NO_LABEL);
+//        noLabelTag.setSortid("00000001");
+//        noLabelTag.__setDaoSession(App.i().getDaoSession());
+//        tagListTemp.add(0,noLabelTag);
+
         for (Tag tag : tagListTemp) {
             array = tag.getId().split("/");
             tagTitle = array[array.length - 1];
@@ -129,7 +146,7 @@ public class DataApi {
 //    private List<Tag> getTagList( List<Tag> tagListTemp ) {
 //        Tag rootTag = new Tag();
 //        Tag notTag = new Tag();
-//        long userID = PrefUtils.i().getUseId();
+//        long userID = WithPref.i().getUseId();
 //        rootTag.setTitle("所有文章");
 //        notTag.setTitle("未分类");
 //
@@ -154,8 +171,8 @@ public class DataApi {
 //    }
 
     public List<Feed> fetchFeedList() throws HttpException, IOException {
-        String info = InoApi.i().syncSubList(cb);
-        KLog.i("解析parseSubscriptionList");
+        String info = InoApi.i().syncSubList();
+        KLog.i("解析SubscriptionList");
         List<Subscriptions> subscriptionses = new Gson().fromJson(info, GsSubscriptions.class).getSubscriptions();
         List<Feed> feedList = new ArrayList<>(subscriptionses.size());
         Feed feed;
@@ -167,7 +184,7 @@ public class DataApi {
                 feed.setCategoryid(subscriptions.getCategories().get(0).getId());
                 feed.setCategorylabel(subscriptions.getCategories().get(0).getLabel());
             } catch (Exception e) {
-                feed.setCategoryid("user/" + PrefUtils.i().getUseId() + Api.U_NO_LABEL);
+                feed.setCategoryid("user/" + WithPref.i().getUseId() + Api.U_NO_LABEL);
                 feed.setCategorylabel("no-label"); // TODO: 2018/1/11 待改成引用
             }
             feed.setSortid(subscriptions.getSortid());
@@ -175,7 +192,7 @@ public class DataApi {
             feed.setUrl(subscriptions.getUrl());
             feed.setHtmlurl(subscriptions.getHtmlUrl());
             feed.setIconurl(subscriptions.getIconUrl());
-            feed.setOpenMode(Api.OPEN_RSS);
+//            feed.setOpenMode(Api.DISPLAY_RSS);
             feedList.add(feed);
         }
         // TODO: 2017/10/14 少了保存 List
@@ -187,11 +204,10 @@ public class DataApi {
      * 获取到排序规则
      *
      * @param
-     * @throws HttpException
      * @throws IOException
      */
-    public List<Tag> fetchStreamPrefs(List<Tag> tagList) throws HttpException, IOException {
-        String info = InoApi.i().syncStreamPrefs(cb);
+    public List<Tag> fetchStreamPrefs(List<Tag> tagList) throws IOException {
+        String info = InoApi.i().syncStreamPrefs();
 //        if (tagList.size() == 0){return;
 //        }
         StreamPrefs streamPrefs = new Gson().fromJson(info, StreamPrefs.class);
@@ -262,150 +278,280 @@ public class DataApi {
         return orderingArray;
     }
 
-//    public void fetchUnreadCounts() throws HttpException,IOException{
-//        String info = InoApi.i().syncUnreadCounts(cb);
-//        List<UnreadCounts> unreadCountList = new Gson().fromJson(info, GsUnreadCount.class).getUnreadcounts();
-//        // TODO: 2017/10/15 将未读信息保存到 Tag 和 Feed 中
+    public List<UnreadCounts> fetchUnreadCounts() throws HttpException, IOException {
+        String info = InoApi.i().syncUnreadCounts();
+        List<UnreadCounts> unreadCountList = new Gson().fromJson(info, GsUnreadCount.class).getUnreadcounts();
+        return unreadCountList;
+    }
+
+//    public List<ItemRefs> fetchUnreadRefs() throws HttpException, IOException {
+//        ItemIDs itemIDs = new ItemIDs();
+//        do {
+//            String info = InoApi.i().syncUnReadRefs(itemIDs.getContinuation());
+//            ItemIDs tempItemIDs = new Gson().fromJson(info, ItemIDs.class);
+//            itemIDs.addItemRefs(tempItemIDs.getItemRefs());
+//            itemIDs.setContinuation(tempItemIDs.getContinuation());
+//        } while (itemIDs.getContinuation() != null);
+//
+//
+//        List<Article> localUnreadArticles = WithDB.i().getArtsUnread();
+//        List<Article> changedArticles = new ArrayList<>(); // // TODO: 2017/10/15 待保存
+//        Map<String, Article> map = new ArrayMap<>(localUnreadArticles.size());
+//        ArrayList<ItemRefs> tempUnreadRefs = new ArrayList<>(itemIDs.getItemRefs().size());// 筛选下来，最终要去云端获取内容的未读Refs的集合
+//
+//        // 数据量大的一方
+//        String articleId;
+//        for (Article article : localUnreadArticles) {
+//            articleId = article.getId();
+//            map.put(articleId, article);
+////            KLog.e("文章的" + article.getId());
+//        }
+//        // 数据量小的一方
+//        Article article;
+//        for (ItemRefs item : itemIDs.getItemRefs()) {
+//            articleId = item.getLongId();
+//            article = map.get(articleId);
+////            KLog.e("获取到的" + item.getId() + "   " + item.getLongId() );
+//            if (article != null) {
+//                map.remove(articleId);
+////                KLog.e("本地有" );
+//            } else {
+//                article = WithDB.i().getArticle(articleId);
+//                if (article != null && article.getReadState().equals(Api.ART_READED)) {
+////                    KLog.e("本地有B" );
+//                    article.setReadState(Api.ART_UNREAD);
+//                    changedArticles.add(article);
+//                } else {
+////                    KLog.e("本地无" );
+//                    tempUnreadRefs.add(item);// 本地无，而云远端有，加入要请求的未读资源
+//                }
+//            }
+//        }
+//        for (Map.Entry<String, Article> entry : map.entrySet()) {
+////            KLog.e("最终" + entry.getKey() );
+//            if (entry.getKey() != null) {
+//                article = map.get(entry.getKey());
+//                article.setReadState(Api.ART_READED); // 本地未读设为已读
+//                changedArticles.add(article);
+//            }
+//        }
+//
+//        WithDB.i().saveArticles(changedArticles);
+//        return tempUnreadRefs;
+//    }
+//    public List<ItemRefs> fetchStaredRefs() throws HttpException, IOException {
+//        ItemIDs itemIDs = new ItemIDs();
+//        do {
+//            String info = InoApi.i().syncStarredRefs(itemIDs.getContinuation());
+//            ItemIDs tempItemIDs = new Gson().fromJson(info, ItemIDs.class);
+//            itemIDs.addItemRefs(tempItemIDs.getItemRefs());
+//            itemIDs.setContinuation(tempItemIDs.getContinuation());
+//        } while (itemIDs.getContinuation() != null);
+//
+//        List<Article> localStarredArticles = WithDB.i().getArtsStared();
+//        List<Article> changedArticles = new ArrayList<>(); // // TODO: 2017/10/15 待保存
+//        Map<String, Article> map = new ArrayMap<>(localStarredArticles.size());
+//        ArrayList<ItemRefs> tempStarredRefs = new ArrayList<>(itemIDs.getItemRefs().size());
+//
+//
+//        String articleId;
+//        // 第1步，遍历数据量大的一方A，将其比对项目放入Map中，计数为1
+//        for (Article article : localStarredArticles) {
+//            articleId = article.getId(); // String
+//            map.put(articleId, article);
+//        }
+//        // 第2步，遍历数据量小的一方B。到Map中找，是否含有b中的比对项。有则XX，无则YY
+//        Article article;
+//        for (ItemRefs item : itemIDs.getItemRefs()) {
+////            articleId = StringUtil.toLongID(item.getLongId());
+//            articleId = item.getLongId();
+//            article = map.get(articleId);
+//            if (article != null) {
+//                map.remove(articleId);
+//            } else {
+//                article = WithDB.i().getArticle(articleId);
+//                if (article != null) {
+//                    article.setStarState(Api.ART_STARED);
+//                    changedArticles.add(article);
+//                } else {
+//                    tempStarredRefs.add(item);// 本地无，而云远端有，加入要请求的未读资源
+//                }
+////                starredRefs.add(item);// 3，就剩云端的，要请求的加星资源（但是还是含有一些要请求的未读资源，和一些本地是已读的文章）
+//            }
+//        }
+//
+//        for (Map.Entry<String, Article> entry : map.entrySet()) {
+//            if (entry.getKey() != null) {
+//                article = map.get(entry.getKey());
+//                article.setStarState(Api.ART_UNSTAR);
+//                changedArticles.add(article);// 取消加星
+//            }
+//        }
+//
+//        WithDB.i().saveArticles(changedArticles);
+//        return tempStarredRefs;
 //    }
 
-    public List<ItemRefs> fetchUnreadRefs() throws HttpException, IOException {
-        ItemIDs itemIDs = new ItemIDs();
+    public HashSet<String> fetchUnreadRefs2() throws HttpException, IOException {
+        List<ItemRefs> itemRefs = new ArrayList<>();
+        String info;
+        ItemIDs tempItemIDs = new ItemIDs();
         do {
-            String info = InoApi.i().syncUnReadRefs(itemIDs.getContinuation(), cb);
-            ItemIDs tempItemIDs = new Gson().fromJson(info, ItemIDs.class);
-            itemIDs.addItemRefs(tempItemIDs.getItemRefs());
-            itemIDs.setContinuation(tempItemIDs.getContinuation());
-        } while (itemIDs.getContinuation() != null);
+            info = InoApi.i().syncUnReadRefs(tempItemIDs.getContinuation());
+            tempItemIDs = new Gson().fromJson(info, ItemIDs.class);
+            itemRefs.addAll(tempItemIDs.getItemRefs());
+        } while (tempItemIDs.getContinuation() != null);
 
-
-        List<Article> localUnreadArticles = WithDB.i().getArtsUnread();
-        List<Article> changedArticles = new ArrayList<>(); // // TODO: 2017/10/15 待保存
-        Map<String, Article> map = new ArrayMap<>(localUnreadArticles.size());
-        ArrayList<ItemRefs> tempUnreadRefs = new ArrayList<>(itemIDs.getItemRefs().size());// 筛选下来，最终要去云端获取内容的未读Refs的集合
-
+        List<Article> localUnreadArticles = WithDB.i().getArtsUnreadNoOrder();
+        Map<String, Article> localUnreadArticlesMap = new ArrayMap<>(localUnreadArticles.size());
+        // TODO: 2017/10/15 待保存
+        List<Article> changedArticles = new ArrayList<>();
+        // 筛选下来，最终要去云端获取内容的未读Refs的集合
+        HashSet<String> tempUnreadIds = new HashSet<>(itemRefs.size());
         // 数据量大的一方
         String articleId;
         for (Article article : localUnreadArticles) {
             articleId = article.getId();
-            map.put(articleId, article);
-//            KLog.e("文章的" + article.getId());
+            localUnreadArticlesMap.put(articleId, article);
         }
         // 数据量小的一方
         Article article;
-        for (ItemRefs item : itemIDs.getItemRefs()) {
+        for (ItemRefs item : itemRefs) {
             articleId = item.getLongId();
-            article = map.get(articleId);
-//            KLog.e("获取到的" + item.getId() + "   " + item.getLongId() );
+            article = localUnreadArticlesMap.get(articleId);
             if (article != null) {
-                map.remove(articleId);
-//                KLog.e("本地有" );
+                localUnreadArticlesMap.remove(articleId);
             } else {
                 article = WithDB.i().getArticle(articleId);
                 if (article != null && article.getReadState().equals(Api.ART_READED)) {
-//                    KLog.e("本地有B" );
                     article.setReadState(Api.ART_UNREAD);
                     changedArticles.add(article);
                 } else {
-//                    KLog.e("本地无" );
-                    tempUnreadRefs.add(item);// 本地无，而云远端有，加入要请求的未读资源
+                    // 本地无，而云端有，加入要请求的未读资源
+                    tempUnreadIds.add(articleId);
                 }
             }
         }
-        for (Map.Entry<String, Article> entry : map.entrySet()) {
-//            KLog.e("最终" + entry.getKey() );
+        for (Map.Entry<String, Article> entry : localUnreadArticlesMap.entrySet()) {
             if (entry.getKey() != null) {
-                article = map.get(entry.getKey());
-                article.setReadState(Api.ART_READED); // 本地未读设为已读
+                article = localUnreadArticlesMap.get(entry.getKey());
+                // 本地未读设为已读
+                article.setReadState(Api.ART_READED);
                 changedArticles.add(article);
             }
         }
 
-        WithDB.i().saveArticleList(changedArticles);
-        return tempUnreadRefs;
+        WithDB.i().saveArticles(changedArticles);
+        return tempUnreadIds;
     }
 
 
-    public List<ItemRefs> fetchStaredRefs() throws HttpException, IOException {
-        ItemIDs itemIDs = new ItemIDs();
+    public HashSet<String> fetchStaredRefs2() throws HttpException, IOException {
+        List<ItemRefs> itemRefs = new ArrayList<>();
+        String info;
+        ItemIDs tempItemIDs = new ItemIDs();
         do {
-            String info = InoApi.i().syncStarredRefs(itemIDs.getContinuation(), cb);
-            ItemIDs tempItemIDs = new Gson().fromJson(info, ItemIDs.class);
-            itemIDs.addItemRefs(tempItemIDs.getItemRefs());
-            itemIDs.setContinuation(tempItemIDs.getContinuation());
-        } while (itemIDs.getContinuation() != null);
+            info = InoApi.i().syncStarredRefs(tempItemIDs.getContinuation());
+            tempItemIDs = new Gson().fromJson(info, ItemIDs.class);
+            itemRefs.addAll(tempItemIDs.getItemRefs());
+        } while (tempItemIDs.getContinuation() != null);
 
         List<Article> localStarredArticles = WithDB.i().getArtsStared();
-        List<Article> changedArticles = new ArrayList<>(); // // TODO: 2017/10/15 待保存
-        Map<String, Article> map = new ArrayMap<>(localStarredArticles.size());
-        ArrayList<ItemRefs> tempStarredRefs = new ArrayList<>(itemIDs.getItemRefs().size());
-
+        Map<String, Article> localStarredArticlesMap = new ArrayMap<>(localStarredArticles.size());
+        List<Article> changedArticles = new ArrayList<>();
+        HashSet<String> tempStarredIds = new HashSet<>(itemRefs.size());
 
         String articleId;
-        // 第1步，遍历数据量大的一方A，将其比对项目放入Map中，计数为1
+        // 第1步，遍历数据量大的一方A，将其比对项目放入Map中
         for (Article article : localStarredArticles) {
-            articleId = article.getId(); // String
-            map.put(articleId, article);
+            articleId = article.getId();
+            localStarredArticlesMap.put(articleId, article);
         }
+
         // 第2步，遍历数据量小的一方B。到Map中找，是否含有b中的比对项。有则XX，无则YY
         Article article;
-        for (ItemRefs item : itemIDs.getItemRefs()) {
-//            articleId = StringUtil.toLongID(item.getLongId());
+        for (ItemRefs item : itemRefs) {
             articleId = item.getLongId();
-            article = map.get(articleId);
+            article = localStarredArticlesMap.get(articleId);
             if (article != null) {
-                map.remove(articleId);
+                localStarredArticlesMap.remove(articleId);
             } else {
                 article = WithDB.i().getArticle(articleId);
                 if (article != null) {
                     article.setStarState(Api.ART_STARED);
                     changedArticles.add(article);
                 } else {
-                    tempStarredRefs.add(item);// 本地无，而云远端有，加入要请求的未读资源
+                    tempStarredIds.add(articleId);// 本地无，而云远端有，加入要请求的未读资源
                 }
-//                starredRefs.add(item);// 3，就剩云端的，要请求的加星资源（但是还是含有一些要请求的未读资源，和一些本地是已读的文章）
             }
         }
 
-        for (Map.Entry<String, Article> entry : map.entrySet()) {
+        for (Map.Entry<String, Article> entry : localStarredArticlesMap.entrySet()) {
             if (entry.getKey() != null) {
-                article = map.get(entry.getKey());
+                article = localStarredArticlesMap.get(entry.getKey());
                 article.setStarState(Api.ART_UNSTAR);
                 changedArticles.add(article);// 取消加星
             }
         }
 
-        WithDB.i().saveArticleList(changedArticles);
-        return tempStarredRefs;
+        WithDB.i().saveArticles(changedArticles);
+        return tempStarredIds;
     }
 
-    public ArrayList<List<ItemRefs>> splitRefs(List<ItemRefs> tempUnreadRefs, List<ItemRefs> tempStarredRefs) {
-        KLog.e("【reRefs1】云端未读" + tempUnreadRefs.size() + "，云端加星" + tempStarredRefs.size());
-        int arrayCapacity = tempUnreadRefs.size() > tempStarredRefs.size() ? tempStarredRefs.size() : tempUnreadRefs.size();
+//    public ArrayList<List<ItemRefs>> splitRefs(List<ItemRefs> tempUnreadRefs, List<ItemRefs> tempStarredRefs) {
+//        KLog.e("【reRefs1】云端未读" + tempUnreadRefs.size() + "，云端加星" + tempStarredRefs.size());
+//        int arrayCapacity = tempUnreadRefs.size() > tempStarredRefs.size() ? tempStarredRefs.size() : tempUnreadRefs.size();
+//
+//        ArrayList<ItemRefs> reUnreadUnstarRefs = new ArrayList<>(tempUnreadRefs.size());
+//        ArrayList<ItemRefs> reReadStarredRefs = new ArrayList<>(tempStarredRefs.size());
+//        ArrayList<ItemRefs> reUnreadStarredRefs = new ArrayList<>(arrayCapacity);
+//
+//        Map<String, ItemRefs> mapArray = new ArrayMap<>(tempUnreadRefs.size());
+//        for (ItemRefs item : tempUnreadRefs) {
+//            mapArray.put(item.getId(), item);
+//        }
+//        ItemRefs tempItem;
+//        for (ItemRefs item : tempStarredRefs) {
+//            tempItem = mapArray.get(item.getId());
+//            if (tempItem != null) {
+//                mapArray.remove(item.getId());
+//                reUnreadStarredRefs.add(item);
+//            } else {
+//                reReadStarredRefs.add(item);
+//            }
+//        }
+//        for (Map.Entry<String, ItemRefs> entry : mapArray.entrySet()) {
+//            if (entry.getKey() != null) {
+//                reUnreadUnstarRefs.add(mapArray.get(entry.getKey()));
+//            }
+//        }
+//        ArrayList<List<ItemRefs>> refsList = new ArrayList<>();
+//        refsList.add(reUnreadUnstarRefs);
+//        refsList.add(reReadStarredRefs);
+//        refsList.add(reUnreadStarredRefs);
+//        KLog.e("【reRefs2】" + reUnreadUnstarRefs.size() + "--" + reReadStarredRefs.size() + "--" + reUnreadStarredRefs.size());
+//        return refsList;
+//    }
 
-        ArrayList<ItemRefs> reUnreadUnstarRefs = new ArrayList<>(tempUnreadRefs.size());
-        ArrayList<ItemRefs> reReadStarredRefs = new ArrayList<>(tempStarredRefs.size());
-        ArrayList<ItemRefs> reUnreadStarredRefs = new ArrayList<>(arrayCapacity);
+    public ArrayList<HashSet<String>> splitRefs2(HashSet<String> tempUnreadIds, HashSet<String> tempStarredIds) {
+        KLog.e("【reRefs1】云端未读" + tempUnreadIds.size() + "，云端加星" + tempStarredIds.size());
+        int arrayCapacity = tempUnreadIds.size() > tempStarredIds.size() ? tempStarredIds.size() : tempUnreadIds.size();
 
-        Map<String, ItemRefs> mapArray = new ArrayMap<>(tempUnreadRefs.size());
-        for (ItemRefs item : tempUnreadRefs) {
-            mapArray.put(item.getId(), item);
-        }
-        ItemRefs tempItem;
-        for (ItemRefs item : tempStarredRefs) {
-            tempItem = mapArray.get(item.getId());
-            if (tempItem != null) {
-                mapArray.remove(item.getId());
-                reUnreadStarredRefs.add(item);
+        HashSet<String> reUnreadUnstarRefs = new HashSet<>(tempUnreadIds.size());
+        HashSet<String> reReadStarredRefs = new HashSet<>(tempStarredIds.size());
+        HashSet<String> reUnreadStarredRefs = new HashSet<>(arrayCapacity);
+
+        for (String id : tempStarredIds) {
+            if (tempUnreadIds.contains(id)) {
+                tempUnreadIds.remove(id);
+                reUnreadStarredRefs.add(id);
             } else {
-                reReadStarredRefs.add(item);
+                reReadStarredRefs.add(id);
             }
         }
-        for (Map.Entry<String, ItemRefs> entry : mapArray.entrySet()) {
-            if (entry.getKey() != null) {
-                reUnreadUnstarRefs.add(mapArray.get(entry.getKey()));
-            }
-        }
-        ArrayList<List<ItemRefs>> refsList = new ArrayList<>(reUnreadUnstarRefs.size() + reReadStarredRefs.size() + reUnreadStarredRefs.size());
+        reUnreadUnstarRefs = tempUnreadIds;
+
+        ArrayList<HashSet<String>> refsList = new ArrayList<>();
         refsList.add(reUnreadUnstarRefs);
         refsList.add(reReadStarredRefs);
         refsList.add(reUnreadStarredRefs);
@@ -413,167 +559,92 @@ public class DataApi {
         return refsList;
     }
 
-
-    public ArrayList<Article> fetchContentsUnreadUnstar(List<String> ids) throws HttpException, IOException {
-        return fetchContent(ids, new ArticleChanger() {
+    public ArrayList<Article> fetchContentsUnreadUnstar2(List<String> ids) throws HttpException, IOException {
+        return parseItemContents2(InoApi.i().syncItemContents(ids), new ArticleChanger() {
             @Override
             public Article change(Article article) {
                 article.setReadState(Api.ART_UNREAD);
                 article.setStarState(Api.ART_UNSTAR);
                 return article;
             }
-        }, cb);
+        });
     }
 
-    public ArrayList<Article> fetchContentsUnreadStarred(List<String> ids) throws HttpException, IOException {
-        return fetchContent(ids, new ArticleChanger() {
+    public ArrayList<Article> fetchContentsUnreadStarred2(List<String> ids) throws HttpException, IOException {
+        return parseItemContents2(InoApi.i().syncItemContents(ids), new ArticleChanger() {
             @Override
             public Article change(Article article) {
                 article.setReadState(Api.ART_UNREAD);
                 article.setStarState(Api.ART_STARED);
                 return article;
             }
-        }, cb);
+        });
     }
 
-    public ArrayList<Article> fetchContentsReadStarred(List<String> ids) throws HttpException, IOException {
-        return fetchContent(ids, new ArticleChanger() {
+    public ArrayList<Article> fetchContentsReadStarred2(List<String> ids) throws HttpException, IOException {
+        return parseItemContents2(InoApi.i().syncItemContents(ids), new ArticleChanger() {
             @Override
             public Article change(Article article) {
                 article.setReadState(Api.ART_READED);
                 article.setStarState(Api.ART_STARED);
                 return article;
             }
-        }, cb);
+        });
     }
 
-    private ArrayList<Article> fetchContent(List<String> ids, ArticleChanger changer, NetCallbackS cb) throws HttpException, IOException {
-        ArrayList<Article> articleList = new ArrayList<>(ids.size());
-
-        int distance = ids.size();
-        int index = 0;
-        int currentFetchCnt = 0;
-        List<String> tempIds;
-
-        while (distance > 0) {
-            currentFetchCnt = Math.min(distance, InoApi.i().FETCH_CONTENT_EACH_CNT);
-            tempIds = ids.subList(index, index + currentFetchCnt);
-            index = index + currentFetchCnt;
-            distance = ids.size() - index;
-            fetchNotice.onProcessChanged(currentFetchCnt, ids.size());
-            String res = InoApi.i().syncItemContents(tempIds, cb);
-            ArrayList<Article> tempArticleList = parseItemContents(res, changer);
-            articleList.addAll(tempArticleList);
-        }
-//        if(articleList.size()!= ids.size() ){
-//            ToastUtil.showLong("获取到的文章有遗漏" + ids.size() + "=" +  articleList.size() );
-//        }
-        return articleList;
-    }
-
-    public void fetchAllStaredStreamContent() throws HttpException, IOException {
-        ArrayList<Items> itemses = new ArrayList<>();
+    public void fetchAllStaredStreamContent2() throws HttpException, IOException {
         String continuation = null;
         StreamContents streamContents;
+        int count = 0;
         do {
-            fetchNotice.onProcessChanged(InoApi.i().FETCH_CONTENT_EACH_CNT, 0);
-            String res = InoApi.i().syncStaredStreamContents(continuation, cb);
+            EventBus.getDefault().post(new Sync(Sync.DOING, App.i().getString(R.string.main_toolbar_hint_sync_all_stared_content, count)));
+            String res = InoApi.i().syncStaredStreamContents(continuation);
             streamContents = new Gson().fromJson(res, StreamContents.class);
-            itemses.addAll(streamContents.getItems());
+            WithDB.i().saveArticles(parseItemContents3(streamContents.getItems(), new ArticleChanger() {
+                @Override
+                public Article change(Article article) {
+                    article.setReadState(Api.ART_READED);
+                    article.setStarState(Api.ART_STARED);
+                    return article;
+                }
+            }));
+            count = count + streamContents.getItems().size();
             continuation = streamContents.getContinuation();
         } while (streamContents.getContinuation() != null);
-
-        ArrayList<Article> tempArticleList = new ArrayList<>(itemses.size());
-        String summary = "", html = "";
-        Article article;
-        Gson gson = new Gson();
-        for (Items items : itemses) {
-//            KLog.e("文章标题："+ items.getTitle() );
-            if (WithDB.i().getArticleEchoes(items.getTitle(), items.getCanonical().get(0).getHref()) != 0) {
-//                KLog.showLong("有重复的文章");
-                continue;
-            }
-
-            article = new Article();
-            // 返回的字段
-            article.setId(items.getId());
-            article.setCrawlTimeMsec(items.getCrawlTimeMsec());
-            article.setTimestampUsec(items.getTimestampUsec());
-            article.setCategories(gson.toJson(items.getCategories()));
-//            article.setTitle(items.getTitle().replace(File.separator, "-").replace("\r", "").replace("\n", ""));
-            article.setTitle(items.getTitle().replace("\r", "").replace("\n", ""));
-
-            article.setPublished(items.getPublished());
-            article.setUpdated(items.getUpdated());
-            article.setStarred(items.getStarred());// 设置被加星的时间
-            article.setCanonical(items.getCanonical().get(0).getHref()); // items.getCanonical().get(0).getHref()
-            article.setAlternate(gson.toJson(items.getCanonical())); // items.getAlternate().toString()
-            article.setAuthor(items.getAuthor());
-            article.setOriginStreamId(items.getOrigin().getStreamId());
-            article.setOriginHtmlUrl(items.getOrigin().getHtmlUrl());
-            article.setOriginTitle(items.getOrigin().getTitle());
-            if (items.getEnclosure() != null && items.getEnclosure().size() > 0 && (items.getEnclosure().get(0).getType().startsWith("image") || items.getEnclosure().get(0).getType().startsWith("parsedImg"))) {
-                article.setCoverSrc(items.getEnclosure().get(0).getHref());
-            }
-
-            html = items.getSummary().getContent();
-            html = StringUtil.getOptimizedContent(html);
-            summary = StringUtil.getOptimizedSummary(html);
-            article.setSummary(summary);
-            article.setContent(html);
-
-            // 自己设置的字段
-            article.setSaveDir(Api.SAVE_DIR_CACHE);
-            KLog.i("【增加文章】" + article.getId());
-            article.setReadState(Api.ART_READED);
-            article.setStarState(Api.ART_STARED);
-            tempArticleList.add(article);
-        }
-        WithDB.i().saveArticleList(tempArticleList);
     }
+
 
     private interface ArticleChanger {
         Article change(Article article);
     }
 
-    private FetchNotice fetchNotice;
 
-    public interface FetchNotice {
-        void onProcessChanged(int had, int count);
-    }
-
-    public void regFetchNotice(FetchNotice fetchNotice) {
-        this.fetchNotice = fetchNotice;
-    }
-
-
-    /**
-     * 这里有两种方法来实现了函数 A B C 共用一个主函数 X ，但各自在主函数中的某些语句又不同
-     * 1.是采用分割主函数为多个函数 X[]，再在要在具体的函数 A B C 内拼接调用 X[]。
-     * 2.（目前）是采用接口类作为主函数 X 的参数传递，在调用具体的函数 A B C 时，将各自要不同的语句在该接口内实现
-     * 之前的代码是函数 A B C 都各自再写一遍共用函数
-     * 使用接口类作为参数传递，实际上是让调用者来实现具体语句
-     *
-     * @param info           获得的响应体
-     * @param articleChanger 回调，用于修改 Article 对象
-     */
-    private ArrayList<Article> parseItemContents(String info, ArticleChanger articleChanger) {
+    private ArrayList<Article> parseItemContents2(String info, ArticleChanger articleChanger) {
         // 如果返回 null 会与正常获取到流末端时返回 continuation = null 相同，导致调用该函数的那端误以为是正常的 continuation = null
         if (info == null || info.equals("")) {
             return null;
         }
         Gson gson = new Gson();
         StreamContents gsItemContents = gson.fromJson(info, StreamContents.class);
-        ArrayList<Items> tempItemsList = gsItemContents.getItems();
-        ArrayList<Article> tempArticleList = new ArrayList<>(tempItemsList.size());
+        return parseItemContents3(gsItemContents.getItems(), articleChanger);
+    }
+
+    private ArrayList<Article> parseItemContents3(ArrayList<Items> itemsList, ArticleChanger articleChanger) {
+        // 如果返回 null 会与正常获取到流末端时返回 continuation = null 相同，导致调用该函数的那端误以为是正常的 continuation = null
+        if (itemsList == null || itemsList.size() <= 0) {
+            return null;
+        }
+        ArrayList<Article> articleList = new ArrayList<>(itemsList.size());
         String summary = "", html = "";
         Article article;
-        for (Items items : tempItemsList) {
+        Gson gson = new Gson();
+        Elements elements;
+        for (Items items : itemsList) {
+//            if (WithDB.i().getArticleEchoes(items.getTitle(), items.getCanonical().get(0).getHref()) != 0) {
+//                KLog.e("重复文章：" + items.getTitle() );
+//                continue;
+//            }
 //            KLog.e("文章标题："+ items.getTitle() );
-            if (WithDB.i().getArticleEchoes(items.getTitle(), items.getCanonical().get(0).getHref()) != 0) {
-                KLog.e("有重复的文章");
-                continue;
-            }
 
             article = new Article();
             // 返回的字段
@@ -581,38 +652,45 @@ public class DataApi {
             article.setCrawlTimeMsec(items.getCrawlTimeMsec());
             article.setTimestampUsec(items.getTimestampUsec());
             article.setCategories(gson.toJson(items.getCategories()));
-            article.setTitle(items.getTitle().replace(File.separator, "-").replace("\r", "").replace("\n", ""));
+            article.setTitle(items.getTitle().replace("\r", "").replace("\n", ""));
             article.setPublished(items.getPublished());
             article.setUpdated(items.getUpdated());
-            article.setStarred(items.getStarred());// 设置被加星的时间
-            article.setCanonical(items.getCanonical().get(0).getHref()); // items.getCanonical().get(0).getHref()
-            article.setAlternate(gson.toJson(items.getCanonical())); // items.getAlternate().toString()
+            // 设置被加星的时间
+            article.setStarred(items.getStarred());
+            // items.getCanonical().get(0).getHref()
+            article.setCanonical(items.getCanonical().get(0).getHref());
+            // items.getAlternate().toString()
+            article.setAlternate(gson.toJson(items.getCanonical()));
             article.setAuthor(items.getAuthor());
             article.setOriginStreamId(items.getOrigin().getStreamId());
             article.setOriginHtmlUrl(items.getOrigin().getHtmlUrl());
             article.setOriginTitle(items.getOrigin().getTitle());
-            if (items.getEnclosure() != null && items.getEnclosure().size() > 0 && (items.getEnclosure().get(0).getType().startsWith("image") || items.getEnclosure().get(0).getType().startsWith("parsedImg"))) {
-                article.setCoverSrc(items.getEnclosure().get(0).getHref());
-            }
 
             html = items.getSummary().getContent();
             html = StringUtil.getOptimizedContent(html);
             summary = StringUtil.getOptimizedSummary(html);
-//            summary = StringUtil.delHtmlTag(html);
             article.setSummary(summary);
             article.setContent(html);
 
-            // 自己设置的字段
-            article.setSaveDir(Api.SAVE_DIR_CACHE);
-//            KLog.i("【增加文章】" + article.getId());
-            article = articleChanger.change(article);
-            tempArticleList.add(article);
-//            FileUtil.saveCacheHtml(StringUtil.stringToMD5(article.getId()), html);
-        }
-        WithDB.i().saveArticleList(tempArticleList);
-        return tempArticleList;
-    }
 
+            if (items.getEnclosure() != null && items.getEnclosure().size() > 0 && (items.getEnclosure().get(0).getType().startsWith("image") || items.getEnclosure().get(0).getType().startsWith("parsedImg"))) {
+                article.setCoverSrc(items.getEnclosure().get(0).getHref());
+            } else {
+                elements = Jsoup.parseBodyFragment(article.getContent() == null ? "" : article.getContent()).getElementsByTag("img");
+                if (elements.size() > 0) {
+                    article.setCoverSrc(elements.attr("src"));
+                }
+            }
+
+            // 自己设置的字段
+//            KLog.i("【增加文章】" + article.getId());
+            article.setSaveDir(Api.SAVE_DIR_CACHE);
+            article = articleChanger.change(article);
+            articleList.add(article);
+        }
+//        WithDB.i().saveArticles(articleList);
+        return articleList;
+    }
 
     public void articleRemoveTag(String articleID, String tagId, StringCallback cb) {
         InoApi.i().articleRemoveTag(articleID, tagId, cb);
@@ -661,47 +739,131 @@ public class DataApi {
     }
 
 
-//    public void downImgs(Handler handler, OkHttpClient imgHttpClient, List<Img> imgList, String parentPath) {
-//        if ((PrefUtils.i().isDownImgWifi() && !HttpUtil.isWiFiUsed()) ||
-//                (!PrefUtils.i().isDownImgWifi() && !HttpUtil.isNetworkAvailable())) {
+    public void changeUnreadCount2(String feedId, int offset) {
+        if (TextUtils.isEmpty(feedId)) {
+            return;
+        }
+        Feed feed = WithDB.i().getFeed(feedId);
+        if (feed == null) {
+            return;
+        }
+        try {
+            KLog.e("Feed" + feed.getUnreadCount() + "  " + offset);
+            feed.setUnreadCount(feed.getUnreadCount() + offset);
+            feed.update();
+//            Tag tag = WithDB.i().getTag(feed.getCategoryid());
+//            if( tag == null ){
+//                return;
+//            }
+//            tag.setUnreadCount(tag.getUnreadCount()+ offset);
+//            tag.update();
+            commitUnreadOffset(feedId, offset);
+        } catch (Exception e) {
+        }
+    }
+
+
+    /**
+     * 修改内存中未读的计数
+     *
+     * @param feedId
+     * @param offset
+     */
+    public void changeUnreadCount(String feedId, int offset) {
+        KLog.e("feedID：" + feedId);
+        if (TextUtils.isEmpty(feedId)) {
+            return;
+        }
+
+        try {
+            int count;
+            if (App.unreadCountMap.containsKey(feedId)) {
+                count = App.unreadCountMap.get(feedId);
+                App.unreadCountMap.put(feedId, count + offset);
+            }
+
+            KLog.e("是否有包含这个feed的tag：" + feedId + App.feedsCategoryIdMap.containsKey(feedId));
+
+            if (App.feedsCategoryIdMap.containsKey(feedId)) {
+                count = App.unreadCountMap.get(App.feedsCategoryIdMap.get(feedId));
+                App.unreadCountMap.put(App.feedsCategoryIdMap.get(feedId), count + offset);
+                KLog.e("计数" + (count + offset));
+            }
+            commitUnreadOffset(feedId, offset);
+        } catch (Exception e) {
+            KLog.e("报错" + e);
+        }
+    }
+
+//    public void changeUnreadCount3(String feedId, int offset) {
+//        if(TextUtils.isEmpty(feedId)){
 //            return;
 //        }
-//        for (Img img : imgList) {
-//            downingImg(handler, imgHttpClient, img, parentPath);
+//
+//        try {
+//            UnreadCounts unreadCounts = App.unreadCountMap.get(feedId);
+//            if( unreadCounts == null ){
+//                return;
+//            }
+//            unreadCounts.setCount(unreadCounts.getCount() + offset);
+//            App.unreadCountMap.put(feedId, unreadCounts);
+//
+//            unreadCounts = App.unreadCountMap.get(App.feedsCategoryIdMap.get(feedId));
+//            if( unreadCounts == null ){
+//                return;
+//            }
+//            unreadCounts.setCount(unreadCounts.getCount() + offset);
+//            App.unreadCountMap.put(feedId, unreadCounts);
+//        }catch (Exception e){
 //        }
-//        KLog.e("批量下图片：" + imgList.size());
 //    }
+
+    /**
+     * 当正在初始化 UnreadCount 时，将本地临时做的变动缓存起来，待初始化完成再重新赋值一次。
+     *
+     * @param feedId
+     * @param offset
+     */
+    public void commitUnreadOffset(String feedId, int offset) {
+        if (!App.isSyncingUnreadCount) {
+            return;
+        }
+        if (null == App.unreadOffsetMap) {
+            App.unreadOffsetMap = new ArrayMap<>();
+        }
+
+        int count;
+        if (!App.unreadOffsetMap.containsKey(feedId)) {
+            count = 0;
+        } else {
+            count = App.unreadOffsetMap.get(feedId);
+        }
+        App.unreadOffsetMap.put(feedId, count + offset);
+
+
+        if (!App.feedsCategoryIdMap.containsKey(feedId)) {
+            return;
+        }
+        if (!App.unreadOffsetMap.containsKey(App.feedsCategoryIdMap.get(feedId))) {
+            count = 0;
+        } else {
+            count = App.unreadOffsetMap.get(App.feedsCategoryIdMap.get(feedId));
+        }
+        App.unreadOffsetMap.put(App.feedsCategoryIdMap.get(feedId), count + offset);
+    }
+
+
+//    public void applyUnreadOffset(){
+//        if( null == App.unreadOffsetMap){
+//            return;
+//        }
 //
-//    public void downingImg(final Handler handler, OkHttpClient imgHttpClient, final Img img, String parentPath) {
-//        FileCallback fileCallback = new FileCallback(parentPath, img.getName()) {
-//            @Override
-//            public void onSuccess(Response<File> response) {
-//                img.setDownState(Api.ImgMeta_Downover);
-//                WithDB.i().saveImg(img);
-//                makeMsgForImg(handler, img, Api.S_BITMAP);
+//        for (Map.Entry<String, Integer> entry : App.unreadOffsetMap.entrySet()) {
+//            if (entry.getKey() != null && App.unreadCountMap.containsKey(entry.getKey())) {
+//                App.unreadCountMap.put(entry.getKey(), App.unreadCountMap.get(entry.getKey()) + entry.getValue());
 //            }
-//
-//            // 该方法执行在主线程中
-//            @Override
-//            public void onError(Response<File> response) {
-//                makeMsgForImg(handler, img, Api.F_BITMAP);
-//            }
-//        };
-//
-//        WithHttp.i().asyncGetImg(imgHttpClient, img, fileCallback);
+//        }
+//        App.unreadOffsetMap = null;
 //    }
-//
-//    private void makeMsgForImg(Handler handler, Img img, int msg) {
-//        Message message = Message.obtain();
-//        Bundle bundle = new Bundle();
-//        bundle.putString("articleID", img.getArticleId());
-//        bundle.putString("imgSrc", img.getSrc());
-//        bundle.putString("imgName", img.getName());
-////        bundle.putInt("imgNo", img.getNo());
-//        message.what = msg;
-//        message.setData(bundle);
-//        handler.sendMessage(message);
-//
-//        KLog.e("【】下载图片" + handler + msg + " = " + img.getArticleId() + "==" + img.getSrc() + "下载状态：" + img.getDownState() + ", 当前线程为：" + Thread.currentThread().getName());
-//    }
+
 }

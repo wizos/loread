@@ -1,60 +1,66 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/group_item"
-    android:orientation="horizontal"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:gravity="center_vertical"
-    tools:ShowIn="@layout/activity_main">
+    android:layout_height="wrap_content">
 
-    <me.wizos.loread.view.IconFontView
-        android:id="@+id/group_item_icon"
-        android:layout_width="60dp"
-        android:layout_height="match_parent"
-        android:paddingTop="15dp"
-        android:paddingBottom="15dp"
-        android:paddingStart="20dp"
-        android:paddingEnd="15dp"
-        android:gravity="center"
-        android:textColor="?attr/tag_slv_item_icon"
-        android:text="@string/font_arrow_right"
-        tools:text="@string/font_tag" />
-
-
-    <TextView
-        android:id="@+id/group_item_title"
-        android:layout_width="0dp"
+    <LinearLayout
+        android:id="@+id/group_item"
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:paddingTop="15dp"
-        android:paddingBottom="15dp"
-        android:layout_weight="1"
         android:gravity="center_vertical"
-        android:lines="1"
-        android:textColor="?attr/lv_item_title_color"
-        android:textSize="16sp"
-        android:textStyle="bold"
-        tools:text="这是父item" />
-    <!--<TextView-->
-    <!--android:id="@+id/group_item_title_superscript"-->
-    <!--android:layout_width="15dp"-->
-    <!--android:layout_height="15dp"-->
-    <!--android:textColor="?attr/lv_item_title_color"-->
-    <!--android:textSize="16sp"-->
-    <!--tools:text="1"-->
-    <!--android:background="@drawable/ic_superscript"-->
-    <!--android:gravity="center"/>-->
+        android:background="?attr/bottombar_bg"
+        tools:ShowIn="@layout/activity_main">
 
-    <TextView
-        android:id="@+id/group_item_count"
-        android:layout_width="80dp"
-        android:layout_height="match_parent"
-        android:gravity="center_vertical|end"
-        android:paddingTop="15dp"
-        android:paddingBottom="15dp"
-        android:paddingEnd="20dp"
-        android:textSize="14sp"
-        android:textColor="?attr/lv_item_desc_color"
-        tools:text="1024" />
+        <me.wizos.loread.view.IconFontView
+            android:id="@+id/group_item_icon"
+            android:layout_width="60dp"
+            android:layout_height="match_parent"
+            android:paddingTop="15dp"
+            android:paddingBottom="15dp"
+            android:paddingStart="20dp"
+            android:paddingEnd="15dp"
+            android:gravity="center"
+            android:textColor="?attr/tag_slv_item_icon"
+            android:text="@string/font_arrow_right"
+            tools:text="@string/font_tag" />
 
-</LinearLayout>
+
+        <TextView
+            android:id="@+id/group_item_title"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:paddingTop="15dp"
+            android:paddingBottom="15dp"
+            android:layout_weight="1"
+            android:gravity="center_vertical"
+            android:lines="1"
+            android:textColor="?attr/lv_item_title_color"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            tools:text="这是父item" />
+        <!--<TextView-->
+        <!--android:id="@+id/group_item_title_superscript"-->
+        <!--android:layout_width="15dp"-->
+        <!--android:layout_height="15dp"-->
+        <!--android:textColor="?attr/lv_item_title_color"-->
+        <!--android:textSize="16sp"-->
+        <!--tools:text="1"-->
+        <!--android:background="@drawable/ic_superscript"-->
+        <!--android:gravity="center"/>-->
+
+        <TextView
+            android:id="@+id/group_item_count"
+            android:layout_width="80dp"
+            android:layout_height="match_parent"
+            android:gravity="center_vertical|end"
+            android:paddingTop="15dp"
+            android:paddingBottom="15dp"
+            android:paddingEnd="20dp"
+            android:textSize="14sp"
+            android:textColor="?attr/lv_item_desc_color"
+            tools:text="1024" />
+
+    </LinearLayout>
+</FrameLayout>

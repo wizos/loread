@@ -142,7 +142,7 @@ public class SearchActivity extends BaseActivity {
         listView.setEnabled(false);
         listView.removeHeaderView(wordHeaderView);
         listView.removeHeaderView(resultCountHeaderView);
-        SearchApi.i().aSyncFetchSearchResult(searchView.getText().toString(), new StringCallback() {
+        SearchApi.i().asyncFetchSearchResult(searchView.getText().toString(), new StringCallback() {
             @Override
             public void onSuccess(Response<String> response) {
                 try {

@@ -2,15 +2,13 @@ package me.wizos.loread.net;
 
 import com.lzy.okgo.callback.StringCallback;
 
-import okhttp3.FormBody;
-
 /**
  * Created by Wizos on 2017/12/31.
  */
 
 public class SearchApi {
     private static final String Loreead_Feeds_Host = "http://api.wizos.me/search.php";
-    //    private static final String Feedly_Feeds_Host = "http://cloud.feedly.com/v3/search/feeds";
+    private static final String Feedly_Feeds_Host = "http://cloud.feedly.com/v3/search/feeds";
 //    private static final String Inoreader_Feeds_Host = "https://www.inoreader.com";
     private static final int page_unit = 10000;
     private static SearchApi searchApi;
@@ -26,12 +24,18 @@ public class SearchApi {
         return searchApi;
     }
 
-    public void aSyncFetchSearchResult(String searchWord, StringCallback cb) {
-        FormBody.Builder builder = new FormBody.Builder();
-        builder.add("n", page_unit + "");
-        builder.add("q", searchWord);
-//        WithHttp.i().asyncGet(Loreead_Feeds_Host + "?n=" + page_unit + "&q=" + searchWord, null, null, cb );        WithHttp.i().asyncGet(Loreead_Feeds_Host + "?n=" + page_unit + "&q=" + searchWord, null, null, cb );
-        WithHttp.i().asyncPost(Loreead_Feeds_Host, builder, null, cb);
+    public void asyncFetchSearchResult(String searchWord, StringCallback cb) {
+//        WithHttp.i().asyncGet(Loreead_Feeds_Host + "?n=" + page_unit + "&q=" + searchWord, null, null, cb );
+//        WithHttp.i().asyncGet(Loreead_Feeds_Host + "?n=" + page_unit + "&q=" + searchWord, null, null, cb );
+
+//        if(BuildConfig.DEBUG){
+//            FormBody.Builder builder = new FormBody.Builder();
+//            builder.add("n", page_unit + "");
+//            builder.add("q", searchWord);
+//            WithHttp.i().asyncPost(Loreead_Feeds_Host, builder, null, cb);
+//        }else {
+        WithHttp.i().asyncGet(Feedly_Feeds_Host + "?n=" + page_unit + "&q=" + searchWord, null, null, cb);
+//        }
     }
 
 //    public FeedlyFeedsSearchResult fetchSearchResult(String searchWord ) throws IOException{

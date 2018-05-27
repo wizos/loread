@@ -6,19 +6,16 @@ import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.ViewParent;
 import android.widget.AbsListView;
 import android.widget.ExpandableListAdapter;
 import android.widget.ExpandableListView;
-
-import com.yinglan.scrolllayout.ScrollLayout;
 
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
 /**
- * Created by Wizos on 2017/9/17.
+ * @author Wizos on 2017/9/17.
  */
 
 public class ExpandableListViewS extends ExpandableListView implements AbsListView.OnScrollListener { // PinnedHeader
@@ -73,7 +70,7 @@ public class ExpandableListViewS extends ExpandableListView implements AbsListVi
     private int mHeaderViewWidth;
     private int mHeaderViewHeight;
 
-    public void setHeaderView(View view) {
+    public void setPinnedHeaderView(View view) {
         mHeaderView = view;
         AbsListView.LayoutParams lp = new AbsListView.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         view.setLayoutParams(lp);
@@ -84,10 +81,6 @@ public class ExpandableListViewS extends ExpandableListView implements AbsListVi
         requestLayout();
     }
 
-//    private void registerListener() {
-//        setOnScrollListener(this);
-////        setOnGroupClickListener(this);
-//    }
 
     private OnPinnedGroupClickListener mOnPinnedGroupClickListener;
     public void setOnPinnedGroupClickListener(OnPinnedGroupClickListener onPinnedGroupClickListener) {
@@ -106,6 +99,10 @@ public class ExpandableListViewS extends ExpandableListView implements AbsListVi
      */
     @Override
     public boolean onTouchEvent(MotionEvent ev) {
+
+        if (canScrollVertically(this)) {
+            getParent().requestDisallowInterceptTouchEvent(true);
+        }
         if (mHeaderViewVisible) {
             switch (ev.getAction()) {
                 case MotionEvent.ACTION_DOWN:
@@ -235,18 +232,69 @@ public class ExpandableListViewS extends ExpandableListView implements AbsListVi
     }
 
     // 这段代码导致可以实现listview在悬停抽屉中滚动。但是又导致pinnedGroup失效
-    @Override
-    protected void onAttachedToWindow() {
-        super.onAttachedToWindow();
-        ViewParent parent = getParent();
-        while (parent != null) {
-            if (parent instanceof ScrollLayout) {
-                ((ScrollLayout) parent).setAssociatedListView(this);
-                break;
+//    @Override
+//    protected void onAttachedToWindow() {
+//        super.onAttachedToWindow();
+//        ViewParent parent = getParent();
+//        while (parent != null) {
+//            setAssociatedListView(this);
+//            parent = parent.getParent();
+//        }
+//    }
+//    @Override
+//    public boolean onInterceptTouchEvent(MotionEvent ev) {
+//        return true;
+//    }
+    public boolean canScrollVertically(AbsListView view) {
+        boolean canScroll = false;
+
+        if (view != null && view.getChildCount() > 0) {
+            boolean isOnTop = view.getFirstVisiblePosition() != 0 || view.getChildAt(0).getTop() != 0;
+            boolean isAllItemsVisible = isOnTop && view.getLastVisiblePosition() == view.getChildCount();
+
+            if (isOnTop || isAllItemsVisible) {
+                canScroll = true;
             }
-            parent = parent.getParent();
+        }
+
+        return canScroll;
+    }
+
+    public void setAssociatedListView(AbsListView listView) {
+        listView.setOnScrollListener(associatedListViewListener);
+        updateListViewScrollState(listView);
+    }
+
+    private final AbsListView.OnScrollListener associatedListViewListener =
+            new AbsListView.OnScrollListener() {
+                @Override
+                public void onScrollStateChanged(AbsListView view, int scrollState) {
+                    updateListViewScrollState(view);
+                }
+
+                @Override
+                public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
+                    updateListViewScrollState(view);
+                }
+            };
+
+    private void updateListViewScrollState(AbsListView listView) {
+        if (listView.getChildCount() == 0) {
+            isDraggable = true;
+        } else {
+            if (listView.getFirstVisiblePosition() == 0) {
+                View firstChild = listView.getChildAt(0);
+                if (firstChild.getTop() == listView.getPaddingTop()) {
+                    isDraggable = true;
+                    return;
+                }
+            }
+            isDraggable = false;
         }
     }
+
+    private boolean isDraggable = true;
+    // 可拖动
 
 
     // 以上都是 设置 PinnedGroup 的内容

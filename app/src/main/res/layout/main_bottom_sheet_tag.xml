@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/sheet_tag"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="?attr/root_view_bg"
+    android:orientation="vertical">
+
+    <!--<TextView-->
+    <!--android:id="@+id/main_tag_title"-->
+    <!--android:layout_width="match_parent"-->
+    <!--android:layout_height="?attr/actionBarSize"-->
+    <!--android:textSize="14sp"-->
+    <!--android:textStyle="bold"-->
+    <!--android:textColor="?attr/bottombar_fg"-->
+    <!--android:gravity="center_vertical"-->
+    <!--android:paddingTop="10dp"-->
+    <!--android:paddingBottom="10dp"-->
+    <!--android:paddingStart="12dp"-->
+    <!--android:paddingEnd="12dp"-->
+    <!--android:background="?attr/bottombar_bg"-->
+    <!--android:text="@string/tag_choose_tips" />-->
+    <!--<View-->
+    <!--android:id="@+id/main_tag_divider"-->
+    <!--android:layout_width="match_parent"-->
+    <!--android:layout_height="0.5dp"-->
+    <!--android:layout_marginStart="10dp"-->
+    <!--android:layout_marginEnd="10dp"-->
+    <!--android:layout_below="@id/main_tag_title"-->
+    <!--android:background="?attr/bottombar_divider" />-->
+
+    <!--android:divider="?attr/lv_item_divider"-->
+    <!--android:dividerHeight="0.2dp"-->
+    <!--android:layout_below="@id/main_tag_title"-->
+    <me.wizos.loread.view.ExpandableListViewS
+        android:id="@+id/main_tag_list_view"
+        android:tag="main_tag_list_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:groupIndicator="@null"
+        android:fadingEdgeLength="4dp"
+        android:layout_above="@id/main_tag_close"
+        android:background="?attr/bottombar_bg" />
+
+    <!--<ExpandableListView-->
+    <!--android:id="@+id/main_tag_list_view"-->
+    <!--android:tag="main_tag_list_view"-->
+    <!--android:layout_width="match_parent"-->
+    <!--android:layout_height="match_parent"-->
+    <!--android:groupIndicator="@null"-->
+    <!--android:fadingEdgeLength="4dp"-->
+    <!--android:layout_above="@id/main_tag_close"-->
+    <!--android:background="?attr/bottombar_bg" />-->
+
+
+    <!--android:layout_below="@id/main_tag_list_view"-->
+
+    <!--<View-->
+    <!--android:id="@+id/main_tag_bg"-->
+    <!--android:layout_width="match_parent"-->
+    <!--android:layout_height="40dp"-->
+    <!--android:layout_centerHorizontal="true"-->
+    <!--android:layout_alignParentBottom="true"-->
+    <!--android:background="?attr/bottombar_bg" />-->
+    <!--android:layout_centerInParent="true"-->
+
+    <me.wizos.loread.view.IconFontView
+        android:id="@+id/main_tag_close"
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        android:padding="5dp"
+        android:gravity="center"
+        android:textSize="20sp"
+        android:textColor="?attr/bottombar_fg"
+        android:background="?attr/bottombar_bg"
+        android:layout_centerHorizontal="true"
+        android:layout_alignParentBottom="true"
+        android:text="@string/font_cross" />
+
+</RelativeLayout>

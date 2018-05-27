@@ -2,36 +2,37 @@ package me.wizos.loread.service;
 
 import android.app.IntentService;
 import android.content.Intent;
-import android.os.Binder;
-import android.os.Bundle;
-import android.os.Handler;
-import android.os.IBinder;
-import android.os.Message;
 
-import com.lzy.okgo.exception.HttpException;
 import com.socks.library.KLog;
 
-import java.io.File;
+import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
+import org.greenrobot.eventbus.ThreadMode;
+
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 
 import me.wizos.loread.App;
 import me.wizos.loread.R;
 import me.wizos.loread.activity.LoginActivity;
-import me.wizos.loread.bean.gson.son.ItemRefs;
-import me.wizos.loread.data.PrefUtils;
+import me.wizos.loread.bean.gson.UnreadCounts;
 import me.wizos.loread.data.WithDB;
+import me.wizos.loread.data.WithPref;
 import me.wizos.loread.db.Article;
 import me.wizos.loread.db.Feed;
 import me.wizos.loread.db.Tag;
+import me.wizos.loread.event.Login;
+import me.wizos.loread.event.Sync;
 import me.wizos.loread.net.Api;
 import me.wizos.loread.net.DataApi;
+import me.wizos.loread.net.InoApi;
 import me.wizos.loread.utils.FileUtil;
 import me.wizos.loread.utils.HttpUtil;
 import me.wizos.loread.utils.StringUtil;
 import me.wizos.loread.utils.ToastUtil;
-import me.wizos.loread.utils.Tool;
 
 /**
  * FetcherService
@@ -43,345 +44,370 @@ import me.wizos.loread.utils.Tool;
  */
 
 public class MainService extends IntentService {
-    private final static String TAG = "MainService";
+//    public static final String SYNC_ALL = "me.wizos.loread.sync.all";
+//    public final static String SYNC_STARRED = "me.wizos.loread.sync.starred";
+//    public static final String TAG_sync_config = "me.wizos.loread.sync.config";
+//    public static final String CLEAR = "me.wizos.loread.clear";
 
     public MainService() {
-        super("MainService");
+        super(Api.SYNC_ALL);
     }
-
-    // MainActivity 的 Handler
-    private Handler maHandler;
-    // 已同步了文章内容的数量
-    private int alreadySyncedArtsNum = 0;
-    private int readySyncArtsCapacity = 0;
 
     @Override
     public void onCreate() {
         super.onCreate();
     }
 
-    // Activity 与 Service 通信方式 总结：http://www.jianshu.com/p/cd69f208f395
-    // 使用 startService(intent); 多次启动IntentService，但IntentService的实例只有一个，这跟传统的Service是一样的.
-    // 最终IntentService会去调用onHandleIntent执行异步任务。这里可能我们还会担心for循环去启动任务，而实例又只有一个，那么任务会不会被覆盖掉呢？其实是不会的，因为IntentService真正执行异步任务的是HandlerThread+Handler
-
-   /* 第一种模式通信：Binder */
-    public class ServiceBinder extends Binder {
-       public MainService getService() {
-            return MainService.this;
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void onReceiveesult(Sync sync) {
+        int result = sync.result;
+        KLog.e("接收到的数据为：" + result);
+        switch (result) {
+            case Sync.STOP:
+                stopSelf();
+                break;
+            default:
+                break;
         }
     }
-    public ServiceBinder mBinder = new ServiceBinder(); /* 数据通信的桥梁 */
-
-    /* 重写Binder的onBind函数，返回派生类 */
     @Override
-    public IBinder onBind(Intent arg0) {
-        super.onBind(arg0);
-        return mBinder;
+    public void onDestroy() {
+        super.onDestroy();
     }
-
-    public void regHandler(Handler mHandler) {
-        this.maHandler = mHandler;
-    }
-
-    /**
-     * TODO: 2018/2/15  可以采用类似 net.fred.feedex.REFRESH 的方式作为字符串
-     */
-    public final static String SYNC_ALL = "syncAll";
-    public final static String SYNC_ALL_STARRED = "syncAllStarred";
-    private final static String SYNC_ALL_UNREAD = "unreadArticle";
-
     @Override
     protected void onHandleIntent(Intent intent) {
         if (intent == null) {
             return;
         }
-        String action = intent.getAction();
-        // 这个是在 SettingActivity 中发起的
-        if (SYNC_ALL.equals(action)) {
-            syncAll();
-        } else if (SYNC_ALL_STARRED.equals(action)) {
-            syncAllStarred();
-        }
-    }
 
-
-    public void syncAllStarred() {
-        if (App.i().isSyncing) {
-            ToastUtil.showShort(getString(R.string.tips_is_in_syncing));
+        if (App.i().isSyncing || !HttpUtil.isNetworkAvailable()) {
             return;
         }
-        sendSyncStart();
-        DataApi.FetchNotice fetchNotice = new DataApi.FetchNotice() {
-            @Override
-            public void onProcessChanged(int had, int count) {
-                alreadySyncedArtsNum += had;
-                sendSyncProcess(getString(R.string.main_toolbar_hint_sync_all_stared_content, alreadySyncedArtsNum));
-            }
-        };
 
-        DataApi.i().regFetchNotice(fetchNotice);
-        try {
-            DataApi.i().fetchAllStaredStreamContent();
-            PrefUtils.i().setHadSyncAllStarred(true);
-            sendSyncSuccess();
-        } catch (HttpException e) {
-            e.printStackTrace();
-            if (e.getMessage().equals("401")) {
-                sendSyncNeedAuth();
-            }
-            Tool.showShort("syncAllStarred时出了异常：HttpException");
-            sendSyncFailure();
-        } catch (IOException e) {
-            e.printStackTrace();
-            Tool.showShort("syncAllStarred时出了异常：IOException");
-            sendSyncFailure();
+        String action = intent.getAction();
+        if (Api.SYNC_ALL.equals(action) || Api.SYNC_HEARTBEAT.equals(action)) {
+            syncAll();
+        } else if (Api.CLEAR.equals(action)) {
+            // 最后的 300 * 1000L 是留前5分钟时间的不删除 WithPref.i().getClearBeforeDay()
+            long time = System.currentTimeMillis() - WithPref.i().getClearBeforeDay() * 24 * 3600 * 1000L - 300 * 1000L;
+            handleSavedArticles(time);
+            clearArticles(time);
+        } else if (Api.LOGIN.equals(action)) {
+            login(intent);
         }
-        Tool.showShort("syncAllStarred完成");
     }
+
+
+    private void login(Intent intent) {
+        App.i().isSyncing = true;
+        try {
+            boolean loginResult = DataApi.i().clientLogin(intent.getStringExtra("accountID"), intent.getStringExtra("accountPW"));
+            KLog.e("登录出错：", loginResult);
+            if (!loginResult) {
+                EventBus.getDefault().post(new Login(false, "Just do it"));
+            }
+            DataApi.i().fetchUserInfo();
+            EventBus.getDefault().post(new Login(true));
+            syncAll();
+        } catch (Exception e) {
+            EventBus.getDefault().post(new Login(false));
+        }
+        App.i().isSyncing = false;
+    }
+
 
     private void syncAll() {
-        if (App.i().isSyncing) {
-            ToastUtil.showShort("当前正在同步中，请稍候再操作");
-            return;
-        }
-        // note: 像这种没有网络的应该改为抛异常
-        if (!HttpUtil.isNetworkAvailable()) {
-            ToastUtil.showShort(getString(R.string.tips_no_net));
-            return;
-        }
-
-        sendSyncStart();
+        App.i().isSyncing = true;
+        EventBus.getDefault().post(new Sync(Sync.START));
         try {
-//            sendSyncProcess(getString(R.string.main_toolbar_hint_sync_log));
-//            DataApi.i().fetchUserInfo();
-//            KLog.e("7 - 同步分组信息"); // （分组）
             KLog.e("5 - 同步订阅源信息");
-            sendSyncProcess(getString(R.string.main_toolbar_hint_sync_tag));
+            EventBus.getDefault().post(new Sync(Sync.DOING, App.i().getString(R.string.main_toolbar_hint_sync_tag)));
             List<Tag> tagList = DataApi.i().fetchTagList();
             List<Feed> feedList = DataApi.i().fetchFeedList();
 
             KLog.e("4 - 同步排序信息");
-            sendSyncProcess(getString(R.string.main_toolbar_hint_sync_tag_order));
-            if (PrefUtils.i().isOrderTagFeed()) {
+            EventBus.getDefault().post(new Sync(Sync.DOING, App.i().getString(R.string.main_toolbar_hint_sync_tag_order)));
+            if (WithPref.i().isOrderTagFeed()) {
                 tagList = DataApi.i().fetchStreamPrefs(tagList);
             } else {
                 tagList = DataApi.i().orderTags(tagList);
             }
 
-//            KLog.e("4 - 获取未读数目");
+            // 如果在获取到数据的时候就保存，那么到这里同步断了的话，可能系统内的文章就找不到响应的分组，所有放到这里保存。（比如在云端将文章移到的新的分组）
+            coverSavedTagFeed(tagList, feedList);
+
 //            sendSyncProcess(getString(R.string.main_toolbar_hint_sync_unread_count));
 //            DataApi.i().fetchUnreadCounts();
 
             KLog.e("3 - 同步未读信息");
-            sendSyncProcess(getString(R.string.main_toolbar_hint_sync_unread_refs));
-            List<ItemRefs> unreadRefsList = DataApi.i().fetchUnreadRefs();
+            EventBus.getDefault().post(new Sync(Sync.DOING, App.i().getString(R.string.main_toolbar_hint_sync_unread_refs)));
+            HashSet<String> unreadRefsList = DataApi.i().fetchUnreadRefs2();
 
 
             KLog.e("2 - 同步收藏信息");
-            sendSyncProcess(getString(R.string.main_toolbar_hint_sync_stared_refs));
-            List<ItemRefs> staredRefsList = DataApi.i().fetchStaredRefs();
+            EventBus.getDefault().post(new Sync(Sync.DOING, App.i().getString(R.string.main_toolbar_hint_sync_stared_refs)));
+            HashSet<String> staredRefsList = DataApi.i().fetchStaredRefs2();
 
-            // 如果在获取到数据的时候就保存，那么到这里同步断了的话，可能系统内的文章就找不到响应的分组，所有放到这里保存。（比如在云端将文章移到的新的分组）
-            WithDB.i().coverSaveTagList(tagList);
-            WithDB.i().coverSaveFeeds(feedList);
 
             KLog.e("1 - 同步文章内容");
-            ArrayList<List<ItemRefs>> refsList = DataApi.i().splitRefs(unreadRefsList, staredRefsList);
-            List<ItemRefs> itemRefsList;
-            readySyncArtsCapacity = refsList.get(0).size() + refsList.get(1).size() + refsList.get(2).size();
-            DataApi.FetchNotice fetchNotice = new DataApi.FetchNotice() {
-                @Override
-                public void onProcessChanged(int had, int count) {
-                    KLog.e("继续同步B" + had + "==" + count);
-                    alreadySyncedArtsNum += had;
-                    sendSyncProcess(getString(R.string.main_toolbar_hint_sync_article_content, alreadySyncedArtsNum, readySyncArtsCapacity));
-                }
-            };
-            DataApi.i().regFetchNotice(fetchNotice);
-
+            ArrayList<HashSet<String>> refsList = DataApi.i().splitRefs2(unreadRefsList, staredRefsList);
+            int readySyncArtsCapacity = refsList.get(0).size() + refsList.get(1).size() + refsList.get(2).size();
             List<String> ids;
-            ids = new ArrayList<>();
-            itemRefsList = refsList.get(0);
-            for (ItemRefs itemRefs : itemRefsList) {
-                ids.add(itemRefs.getId());
-            }
+            int alreadySyncedArtsNum = 0, hadFetchCount, needFetchCount, num;
+            ArrayList<Article> tempArticleList;
+
+            ids = new ArrayList<>(refsList.get(0));
+            needFetchCount = ids.size();
+            hadFetchCount = 0;
             KLog.e("栈的数量A:" + ids.size());
-            DataApi.i().fetchContentsUnreadUnstar(ids);
+            while (needFetchCount > 0) {
+                num = Math.min(needFetchCount, InoApi.i().FETCH_CONTENT_EACH_CNT);
+                tempArticleList = DataApi.i().fetchContentsUnreadUnstar2(ids.subList(hadFetchCount, hadFetchCount = hadFetchCount + num));
+                WithDB.i().saveArticles(tempArticleList);
+                alreadySyncedArtsNum = alreadySyncedArtsNum + num;
+                EventBus.getDefault().post(new Sync(Sync.DOING, App.i().getString(R.string.main_toolbar_hint_sync_article_content, alreadySyncedArtsNum, readySyncArtsCapacity)));
+                needFetchCount = ids.size() - hadFetchCount;
+            }
 
 
-            ids = new ArrayList<>();
-            itemRefsList = refsList.get(1);
-            for (ItemRefs itemRefs : itemRefsList) {
-                ids.add(itemRefs.getId());
+            ids = new ArrayList<>(refsList.get(1));
+            needFetchCount = ids.size();
+            hadFetchCount = 0;
+//            KLog.e("栈的数量B:" + ids.size());
+            while (needFetchCount > 0) {
+                num = Math.min(needFetchCount, InoApi.i().FETCH_CONTENT_EACH_CNT);
+                tempArticleList = DataApi.i().fetchContentsReadStarred2(ids.subList(hadFetchCount, hadFetchCount = hadFetchCount + num));
+                WithDB.i().saveArticles(tempArticleList);
+                alreadySyncedArtsNum = alreadySyncedArtsNum + num;
+                EventBus.getDefault().post(new Sync(Sync.DOING, App.i().getString(R.string.main_toolbar_hint_sync_article_content, alreadySyncedArtsNum, readySyncArtsCapacity)));
+                needFetchCount = ids.size() - hadFetchCount;
             }
-            KLog.e("栈的数量C:" + ids.size());
-            DataApi.i().fetchContentsReadStarred(ids);
 
-            ids = new ArrayList<>();
-            itemRefsList = refsList.get(2);
-            for (ItemRefs itemRefs : itemRefsList) {
-                ids.add(itemRefs.getId());
+
+            ids = new ArrayList<>(refsList.get(2));
+            needFetchCount = ids.size();
+            hadFetchCount = 0;
+//            KLog.e("栈的数量C:" + ids.size());
+            while (needFetchCount > 0) {
+                num = Math.min(needFetchCount, InoApi.i().FETCH_CONTENT_EACH_CNT);
+                tempArticleList = DataApi.i().fetchContentsUnreadStarred2(ids.subList(hadFetchCount, hadFetchCount = hadFetchCount + num));
+                WithDB.i().saveArticles(tempArticleList);
+                alreadySyncedArtsNum = alreadySyncedArtsNum + num;
+                EventBus.getDefault().post(new Sync(Sync.DOING, App.i().getString(R.string.main_toolbar_hint_sync_article_content, alreadySyncedArtsNum, readySyncArtsCapacity)));
+                needFetchCount = ids.size() - hadFetchCount;
             }
-            KLog.e("栈的数量D:" + ids.size());
-            DataApi.i().fetchContentsUnreadStarred(ids);
-            sendSyncSuccess();
-            moveArticles();
-            clearArticles(PrefUtils.i().getClearBeforeDay());
-        } catch (HttpException e) {
-            e.printStackTrace();
-            if (e.getMessage().equals("401")) {
-                sendSyncNeedAuth();
+
+
+            // 如果没有同步过所有加薪文章就同步
+            if (!WithPref.i().isHadSyncAllStarred()) {
+                ToastUtil.showLong("同步耗时较长，请耐心等待");
+                DataApi.i().fetchAllStaredStreamContent2();
+                WithPref.i().setHadSyncAllStarred(true);
             }
-            sendSyncFailure();
+
+            EventBus.getDefault().post(new Sync(Sync.END));
         } catch (IOException e) {
             e.printStackTrace();
-            sendSyncFailure();
-        }
+            if (e.getMessage().equals("401")) {
+                needAuth();
+            }
 
+            EventBus.getDefault().post(new Sync(Sync.ERROR));
+        }
+        App.i().isSyncing = false;
     }
 
-    private void sendSyncNeedAuth() {
+
+    private void syncFast() {
+        App.i().isSyncing = true;
+        // 发送有两种方式，调用sendBroadcast或sendBroadcast方法。sendBroadcast方法不会立即处理广播，而是通过mHandler发送一个MSG_EXEC_PENDING_BROADCASTS的空消，然后在主线程异步处理。而sendBroadcast在调用时便处理广播，即同步处理。因此sendBroadcast不能在子线程中调用。
+
+        try {
+//            KLog.e("4 - 获取未读数目");
+//            List<UnreadCounts> unreadCountList = DataApi.i().fetchUnreadCounts();
+//            UnreadCounts unreadCounts = unreadCountList.get(0);
+//            if(unreadCounts.getNewestItemTimestampUsec()== WithPref.i().getNewestItemTimestampUsec() ){
+//                return;
+//            }
+//
+//            // 更新本地的未读计数
+//            Map<String, UnreadCounts> unreadCountMap = new ArrayMap<>(unreadCountList.size());
+//            for (int i =0, size= unreadCountList.size(); i<size;i++){
+//                unreadCountMap.put(unreadCountList.get(i).getId(),unreadCountList.get(i));
+//            }
+//
+//            List<Tag> tagList = WithDB.i().getTags();
+//            for (Tag tag:tagList) {
+//                unreadCounts = unreadCountMap.get(tag.getId());
+//                if( unreadCounts== null){
+//                    continue;
+//                }
+//                if( tag.getNewestItemTimestampUsec()!= unreadCounts.getNewestItemTimestampUsec()){
+//                    tag.setUnreadCount(unreadCounts.getCount());
+//                    tag.setNewestItemTimestampUsec(unreadCounts.getNewestItemTimestampUsec());
+//                }
+//                // TODO: 2018/3/31 这里可以去检查一下这个tag是不是被删了？
+//            }
+//            WithDB.i().coverSaveTags(tagList);
+//
+//            // 不用吧所有的feed都拿出来，只需要把不在tag内的拿出来
+//            List<Feed> feedList = WithDB.i().getFeeds();
+//            for (Feed feed:feedList) {
+//                unreadCounts = unreadCountMap.get(feed.getId());
+//                if( unreadCounts== null){
+//                    continue;
+//                }
+//                if( feed.getNewestItemTimestampUsec()!= unreadCounts.getNewestItemTimestampUsec()){
+//                    feed.setUnreadCount(unreadCounts.getCount());
+//                    feed.setNewestItemTimestampUsec(unreadCounts.getNewestItemTimestampUsec());
+//                }
+//                // TODO: 2018/3/31 这里可以去检查一下这个tag是不是被删了？
+//            }
+//            WithDB.i().saveFeeds(feedList);
+
+            coverSavedTagFeed(WithDB.i().getTags(), WithDB.i().getFeeds());
+
+
+            KLog.e("3 - 同步未读资源");
+            HashSet<String> unreadRefsIDList = DataApi.i().fetchUnreadRefs2();
+
+            List<String> ids = new ArrayList<>(unreadRefsIDList);
+            int alreadySyncedArtsNum = 0, hadFetchCount = 0, needFetchCount = unreadRefsIDList.size(), num;
+            ArrayList<Article> tempArticleList;
+
+            KLog.e("栈的数量R:" + ids.size());
+            while (needFetchCount > 0) {
+                num = Math.min(needFetchCount, InoApi.i().FETCH_CONTENT_EACH_CNT);
+                tempArticleList = DataApi.i().fetchContentsUnreadUnstar2(ids.subList(hadFetchCount, hadFetchCount = hadFetchCount + num));
+                WithDB.i().saveArticles(tempArticleList);
+                alreadySyncedArtsNum = alreadySyncedArtsNum + num;
+                needFetchCount = ids.size() - hadFetchCount;
+            }
+            // 如果在获取到数据的时候就保存，那么到这里同步断了的话，可能系统内的文章就找不到响应的分组，所有放到这里保存。（比如在云端将文章移到的新的分组）
+
+        } catch (IOException e) {
+            e.printStackTrace();
+            if (e.getMessage().equals("401")) {
+                needAuth();
+            }
+        }
+        App.i().isSyncing = false;
+//        lbM.sendBroadcast( localIntent.putExtra(Api.NOTICE,Api.N_NEWS));
+    }
+
+
+    private void coverSavedTagFeed(List<Tag> tagList, List<Feed> feedList) {
+        App.isSyncingUnreadCount = true;
+        try {
+            KLog.e("获取未读数目");
+            List<UnreadCounts> unreadCountList = DataApi.i().fetchUnreadCounts();
+            // 更新本地的未读计数
+            for (int i = 0, size = unreadCountList.size(); i < size; i++) {
+                App.unreadCountMap.put(unreadCountList.get(i).getId(), unreadCountList.get(i).getCount());
+//                KLog.e("【】" +  unreadCountList.get(i).getId() + "  " +  unreadCountList.get(i).getCount() );
+            }
+
+            if (null != App.unreadOffsetMap) {
+                for (Map.Entry<String, Integer> entry : App.unreadOffsetMap.entrySet()) {
+                    if (entry.getKey() != null && App.unreadCountMap.containsKey(entry.getKey())) {
+                        App.unreadCountMap.put(entry.getKey(), App.unreadCountMap.get(entry.getKey()) + entry.getValue());
+                    }
+                }
+                App.unreadOffsetMap = null;
+            }
+
+        } catch (Exception e) {
+            KLog.e("保存有错误");
+            KLog.e(e);
+            App.isSyncingUnreadCount = false;
+        }
+
+        WithDB.i().coverSaveTags(tagList);
+        WithDB.i().coverSaveFeeds(feedList);
+        App.i().initFeedsCategoryid();
+        App.isSyncingUnreadCount = false;
+    }
+
+    private void needAuth() {
         ToastUtil.showShort(getString(R.string.toast_login_for_auth));
         Intent loginIntent = new Intent(MainService.this, LoginActivity.class);
         startActivity(loginIntent);
-    }
-
-
-    public void clearArticles(int days) {
-        // 最后的 300 * 1000L 是留前5分钟时间的不删除
-        long clearTime = System.currentTimeMillis() - days * 24 * 3600 * 1000L - 300 * 1000L;
-        List<Article> allArtsBeforeTime = WithDB.i().getArtInReadedUnstarLtTime(clearTime);
-        KLog.i("清除A：" + clearTime + "--" + allArtsBeforeTime.size() + "--" + days);
-        if (allArtsBeforeTime.size() == 0) {
-            return;
-        }
-        ArrayList<String> idListMD5 = new ArrayList<>(allArtsBeforeTime.size());
-        for (Article article : allArtsBeforeTime) {
-            idListMD5.add(StringUtil.stringToMD5(article.getId()));
-        }
-        KLog.i("清除B：" + clearTime + "--" + allArtsBeforeTime.size() + "--" + days);
-        FileUtil.deleteHtmlDirList(idListMD5);
-        WithDB.i().delArt(allArtsBeforeTime);
-        WithDB.i().delArticleImgs(allArtsBeforeTime);
-        System.gc();
     }
 
     /**
      * 移动“保存且已读”的文章至一个新的文件夹
      * test 这里可能有问题，因为在我手机中有出现，DB中文章已经不存在，但文件与文件夹还存在与Box文件夹内的情况。
      */
-    public void moveArticles() {
-        List<Article> boxReadArts = WithDB.i().getArtInReadedBox();
-        List<Article> storeReadArts = WithDB.i().getArtInReadedStore();
-        KLog.i("移动文章" + boxReadArts.size() + "=" + storeReadArts.size());
+    private void handleSavedArticles(long time) {
+        List<Article> boxReadArts = WithDB.i().getArtInReadedBox(time);
+        KLog.i("移动文章" + boxReadArts.size());
 
         for (Article article : boxReadArts) {
-            FileUtil.moveFile(App.boxRelativePath + article.getTitle() + ".html", App.boxReadRelativePath + article.getTitle() + ".html");// 移动文件
-            FileUtil.moveDir(App.boxRelativePath + article.getTitle() + "_files", App.boxReadRelativePath + article.getTitle() + "_files");// 移动目录
-            article.setCoverSrc(FileUtil.getAbsoluteDir(Api.SAVE_DIR_BOXREAD) + article.getTitle() + "_files" + File.separator + StringUtil.getFileNameExtByUrl(article.getCoverSrc()));
-            article.setSaveDir(Api.SAVE_DIR_BOXREAD);
-            KLog.i("移动了A");
+            // 移动目录
+//                    FileUtil.moveDir(App.cacheRelativePath + StringUtil.str2MD5(article.getId()) + "_files", App.boxRelativePath + article.getTitle() + "_files");
+//                    FileUtil.saveBoxHtml( article.getTitle() , StringUtil.getModHtml( article ));
+//                    FileUtil.saveArticle2Box(article);
+            FileUtil.saveArticle(App.boxRelativePath, article);
+            article.setSaveDir(Api.SAVE_DIR_CACHE);
         }
-        WithDB.i().saveArticleList(boxReadArts);
+        WithDB.i().saveArticles(boxReadArts);
+
+        List<Article> storeReadArts = WithDB.i().getArtInReadedStore(time);
+        KLog.i("移动文章" + storeReadArts.size());
         for (Article article : storeReadArts) {
-            FileUtil.moveFile(App.storeRelativePath + article.getTitle() + ".html", App.storeReadRelativePath + article.getTitle() + ".html");// 移动文件
-            FileUtil.moveDir(App.storeRelativePath + article.getTitle() + "_files", App.storeReadRelativePath + article.getTitle() + "_files");// 移动目录
-            article.setCoverSrc(FileUtil.getAbsoluteDir(Api.SAVE_DIR_STOREREAD) + article.getTitle() + "_files" + File.separator + StringUtil.getFileNameExtByUrl(article.getCoverSrc()));
-            article.setSaveDir(Api.SAVE_DIR_STOREREAD);
-            KLog.i("移动了B" + App.storeRelativePath + article.getTitle() + "_files |||| " + App.storeReadRelativePath + article.getTitle() + "_files");
+            // 移动目录
+//                    FileUtil.moveDir(App.cacheRelativePath + StringUtil.str2MD5(article.getId()) + "_files", App.storeRelativePath + article.getTitle() + "_files");
+//                    FileUtil.saveStoreHtml( article.getTitle() , StringUtil.getModHtml( article ));
+//                    FileUtil.saveArticle2Store(article);
+            FileUtil.saveArticle(App.storeRelativePath, article);
+            article.setSaveDir(Api.SAVE_DIR_CACHE);
         }
-        WithDB.i().saveArticleList(storeReadArts);
+        WithDB.i().saveArticles(storeReadArts);
     }
 
 
-    private void sendSyncStart() {
-        maHandler.sendEmptyMessage(Api.SYNC_START);
-        alreadySyncedArtsNum = 0;
-        App.i().isSyncing = true;
+    public void clearArticles(long clearTime) {
+        List<Article> allArtsBeforeTime = WithDB.i().getArtInReadedUnstarLtTime(clearTime);
+        KLog.i("清除A：" + clearTime + "--" + allArtsBeforeTime.size());
+        if (allArtsBeforeTime.size() == 0) {
+            return;
+        }
+        ArrayList<String> idListMD5 = new ArrayList<>(allArtsBeforeTime.size());
+        for (Article article : allArtsBeforeTime) {
+            idListMD5.add(StringUtil.str2MD5(article.getId()));
+        }
+        KLog.i("清除B：" + clearTime + "--" + allArtsBeforeTime.size());
+        FileUtil.deleteHtmlDirList2(idListMD5);
+        WithDB.i().delArt(allArtsBeforeTime);
+        System.gc();
     }
 
 
-    private void sendSyncSuccess() {
-        maHandler.sendEmptyMessage(Api.SYNC_SUCCESS);
-        alreadySyncedArtsNum = 0;
-        App.i().isSyncing = false;
-//        App.i().lastSyncTime = System.currentTimeMillis();
-    }
-
-    private void sendSyncFailure() {
-        maHandler.sendEmptyMessage(Api.SYNC_FAILURE);
-        alreadySyncedArtsNum = 0;
-        App.i().isSyncing = false;
-        PrefUtils.i().setSyncAllStarred(false);
-//        App.i().lastSyncTime = System.currentTimeMillis();
-    }
-
-    private void sendSyncProcess(String tips) {
-        Message message = Message.obtain();
-        Bundle bundle = new Bundle();
-        bundle.putString("tips", tips);
-        message.what = Api.SYNC_PROCESS;
-        message.setData(bundle);
-        maHandler.sendMessage(message);
-    }
-
-
-//    private ArrayMap<Long, RequestLog> requestMap;
-//    private Neter.Record<RequestLog> recorder = new Neter.Record<RequestLog>() {
-//        @Override
-//        public void log(RequestLog entry) {
-//            KLog.d(" 记录 log");
-//            if (entry.getHeadParamString() != null && !entry.getHeadParamString().contains("c=")) {
-//                requestMap.put(entry.getLogTime(), entry);
-//            }
-//        }
-//    };
+//    /**
+//     * 移动“保存且已读”的文章至一个新的文件夹
+//     * test 这里可能有问题，因为在我手机中有出现，DB中文章已经不存在，但文件与文件夹还存在与Box文件夹内的情况。
+//     */
+//    public void moveArticles() {
+//        List<Article> boxReadArts = WithDB.i().getArtInReadedBox();
+//        List<Article> storeReadArts = WithDB.i().getArtInReadedStore();
+//        KLog.i("移动文章" + boxReadArts.size() + "=" + storeReadArts.size());
 //
-//    public void delRequestLog(long key) {
-//        if (requestMap != null) {
-//            if (requestMap.size() != 0) {
-//                requestMap.remove(key); // 因为最后一次使用 handleMessage(100) 时也会调用
-//            }
+//        for (Article article : boxReadArts) {
+//            FileUtil.moveFile(App.boxRelativePath + article.getTitle() + ".html", App.boxReadRelativePath + article.getTitle() + ".html");// 移动文件
+//            FileUtil.moveDir(App.boxRelativePath + article.getTitle() + "_files", App.boxReadRelativePath + article.getTitle() + "_files");// 移动目录
+//            article.setCoverSrc(FileUtil.getAbsoluteDir(Api.SAVE_DIR_BOXREAD) + article.getTitle() + "_files" + File.separator + StringUtil.getFileNameExtByUrl(article.getCoverSrc()));
+//            article.setSaveDir(Api.SAVE_DIR_BOXREAD);
+//            KLog.i("移动了A");
 //        }
-//    }
-//
-//    private void saveRequestLog(long logTime) {
-//        KLog.i("【saveRequest1】");
-//        if (requestMap == null) {
-//            return;
+//        WithDB.i().saveArticles(boxReadArts);
+//        for (Article article : storeReadArts) {
+//            FileUtil.moveFile(App.storeRelativePath + article.getTitle() + ".html", App.storeReadRelativePath + article.getTitle() + ".html");// 移动文件
+//            FileUtil.moveDir(App.storeRelativePath + article.getTitle() + "_files", App.storeReadRelativePath + article.getTitle() + "_files");// 移动目录
+//            article.setCoverSrc(FileUtil.getAbsoluteDir(Api.SAVE_DIR_STOREREAD) + article.getTitle() + "_files" + File.separator + StringUtil.getFileNameExtByUrl(article.getCoverSrc()));
+//            article.setSaveDir(Api.SAVE_DIR_STOREREAD);
+//            KLog.i("移动了B" + App.storeRelativePath + article.getTitle() + "_files |||| " + App.storeReadRelativePath + article.getTitle() + "_files");
 //        }
-//        KLog.i("【saveRequest2】" + requestMap.get(logTime));
-//        WithDB.i().saveRequestLog(requestMap.get(logTime));
-//    }
-
-//    private boolean syncRequestLog() {
-//        List<RequestLog> requestLogs = WithDB.i().loadRequestListAll();
-//        if (requestLogs.size() == 0) {
-//            return false;
-//        }
-//        sendSyncProcess(getString(R.string.main_toolbar_hint_sync_log));
-//
-//        if (requestMap.size() != requestLogs.size()) {
-//            for (RequestLog requestLog : requestLogs) {
-//                requestMap.put(requestLog.getLogTime(), requestLog);
-//            }
-//        }
-//        // TODO: 2016/5/26 将这个改为 json 格式来持久化 RequestLog 对象 ？貌似也不好
-//        for (RequestLog requestLog : requestLogs) {
-//            requestMap.put(requestLog.getLogTime(), requestLog);
-//            String headParamString = requestLog.getHeadParamString();
-//            String bodyParamString = requestLog.getBodyParamString();
-//            mNeter.addHeader(StringUtil.formStringToParamList(headParamString));
-//            mNeter.addBody(StringUtil.formStringToParamList(bodyParamString));
-//            KLog.d("同步错误：" + headParamString + " = " + bodyParamString);
-//            if (requestLog.getMethod().equals("post")) {
-//                mNeter.asyncPostWithAuth(requestLog.getUrl()); // , requestLog.getLogTime()
-//            }
-//        }
-//        WithDB.i().delRequestListAll();  // TODO: 2016/10/20 不能先删除，可能删除后，手机退出，那么这些记录就丢失了
-////        hadSyncLogRequest = true;
-//        KLog.d("读取到的数目： " + requestLogs.size());
-//        return true;
+//        WithDB.i().saveArticles(storeReadArts);
 //    }
 
 }

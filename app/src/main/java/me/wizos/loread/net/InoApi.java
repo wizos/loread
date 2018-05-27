@@ -14,12 +14,13 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import me.wizos.loread.App;
+import me.wizos.loread.data.WithPref;
 import okhttp3.FormBody;
 
 
 /**
  * 本接口对接 Inoreader 服务，从他那获取数据
- * Created by Wizos on 2016/3/10.
+ * @author Wizos on 2016/3/10.
  */
 public class InoApi {
     public int FETCH_CONTENT_EACH_CNT = 20;
@@ -69,7 +70,7 @@ Code 	Description
     private static InoApi inoApi;
 
     private InoApi() {
-        init();
+        initAuthHeaders();
     }
 
     public static InoApi i() {
@@ -84,49 +85,58 @@ Code 	Description
         return inoApi;
     }
 
-    public void init() {
+    public void initAuthHeaders() {
         authHeaders = new HttpHeaders();
         authHeaders.put("AppId", APP_ID);
         authHeaders.put("AppKey", APP_KEY);
-        if (!TextUtils.isEmpty(InoApi.INOREADER_ATUH)) {
-            authHeaders.put("Authorization", InoApi.INOREADER_ATUH); // TEST:  这里不对
+        if (!TextUtils.isEmpty(WithPref.i().getAuth())) {
+            authHeaders.put("Authorization", WithPref.i().getAuth()); // TEST:  这里不对
         }
     }
 
 
-    public String syncBootstrap(NetCallbackS cb) throws HttpException, IOException {
-        return WithHttp.i().syncGet(HOST + "/reader/api/0/bootstrap", null, authHeaders, cb);
+    public String syncBootstrap() throws HttpException, IOException {
+        return WithHttp.i().syncGet(HOST + "/reader/api/0/bootstrap", null, authHeaders);
     }
 
-    public String clientLogin(String accountId, String accountPd, NetCallbackS cb) throws HttpException, IOException {
+    public String clientLogin(String accountId, String accountPd) throws HttpException, IOException {
         FormBody.Builder builder = new FormBody.Builder();
         builder.add("Email", accountId);
         builder.add("Passwd", accountPd);
         KLog.e(HOST + "/accounts/ClientLogin" + accountId + "-" + accountPd);
-        return WithHttp.i().syncPost(HOST + "/accounts/ClientLogin", builder, authHeaders, cb);
+        return WithHttp.i().syncPost(HOST + "/accounts/ClientLogin", builder, authHeaders);
     }
 
-    public String fetchUserInfo(NetCallbackS cb) throws HttpException, IOException {
-        return WithHttp.i().syncGet(HOST + "/reader/api/0/user-info", null, authHeaders, cb);
+    public void clientLogin2(String accountId, String accountPd, StringCallback cb) {
+        FormBody.Builder builder = new FormBody.Builder();
+        builder.add("Email", accountId);
+        builder.add("Passwd", accountPd);
+        KLog.e(HOST + "/accounts/ClientLogin" + accountId + "-" + accountPd);
+        WithHttp.i().asyncPost(HOST + "/accounts/ClientLogin", builder, authHeaders, cb);
     }
 
-    public String syncTagList(NetCallbackS cb) throws HttpException, IOException {
-        return WithHttp.i().syncGet(HOST + "/reader/api/0/tag/list", null, authHeaders, cb);
+
+    public String fetchUserInfo() throws HttpException, IOException {
+        return WithHttp.i().syncGet(HOST + "/reader/api/0/user-info", null, authHeaders);
     }
 
-    public String syncSubList(NetCallbackS cb) throws HttpException, IOException {
-        return WithHttp.i().syncGet(HOST + "/reader/api/0/subscription/list", null, authHeaders, cb);
+    public String syncTagList() throws HttpException, IOException {
+        return WithHttp.i().syncGet(HOST + "/reader/api/0/tag/list", null, authHeaders);
     }
 
-    public String syncStreamPrefs(NetCallbackS cb) throws HttpException, IOException {
-        return WithHttp.i().syncGet(HOST + "/reader/api/0/preference/stream/list", null, authHeaders, cb);
+    public String syncSubList() throws HttpException, IOException {
+        return WithHttp.i().syncGet(HOST + "/reader/api/0/subscription/list", null, authHeaders);
     }
 
-//    public String syncUnreadCounts(NetCallbackS cb) throws HttpException,IOException{
-//        return WithHttp.i().syncGet(HOST + "/reader/api/0/unread-count",null,authHeaders, cb);
-//    }
+    public String syncStreamPrefs() throws HttpException, IOException {
+        return WithHttp.i().syncGet(HOST + "/reader/api/0/preference/stream/list", null, authHeaders);
+    }
 
-    public String syncUnReadRefs(String continuation, NetCallbackS cb) throws HttpException, IOException {
+    public String syncUnreadCounts() throws HttpException, IOException {
+        return WithHttp.i().syncGet(HOST + "/reader/api/0/unread-count", null, authHeaders);
+    }
+
+    public String syncUnReadRefs(String continuation) throws HttpException, IOException {
         HttpParams httpParams = new HttpParams();
 //        addHeader("ot","0");
         httpParams.put("n", "1000");
@@ -136,45 +146,38 @@ Code 	Description
         if (continuation != null) {
             httpParams.put("c", continuation);
         }
-        return WithHttp.i().syncGet(HOST + ITEM_IDS, httpParams, authHeaders, cb);
+        return WithHttp.i().syncGet(HOST + ITEM_IDS, httpParams, authHeaders);
     }
 
-    public String syncStarredRefs(String continuation, NetCallbackS cb) throws HttpException, IOException {
+    public String syncStarredRefs(String continuation) throws HttpException, IOException {
         HttpParams httpParams = new HttpParams();
 //        addHeader("ot","0");
         httpParams.put("n", "1000");
         httpParams.put("s", "user/" + mUserID + "/state/com.google/starred");
         httpParams.put("includeAllDirectStreamIds", "false");
         httpParams.put("c", continuation);
-        return WithHttp.i().syncGet(HOST + ITEM_IDS, httpParams, authHeaders, cb);
+        return WithHttp.i().syncGet(HOST + ITEM_IDS, httpParams, authHeaders);
     }
 
-    public String syncItemContents(List<String> ids, NetCallbackS cb) throws HttpException, IOException {
+    public String syncItemContents(List<String> ids) throws HttpException, IOException {
         FormBody.Builder builder = new FormBody.Builder();
         for (String id : ids) {
             builder.add("i", id);
         }
-        return syncItemContents(builder, cb);
+        return syncItemContents(builder);
     }
 
-    //
-//    public String syncItemContents(Queue<String> ids, NetCallbackS cb) throws HttpException,IOException{
-//        FormBody.Builder builder = new  FormBody.Builder();
-//        while ( ids.size()>0 ){
-//            builder.add("i",ids.poll());
-//        }
-//        return syncItemContents(builder,cb);
-//    }
-    public String syncItemContents(FormBody.Builder builder, NetCallbackS cb) throws HttpException, IOException {
-        return WithHttp.i().syncPost(HOST + ITEM_CONTENTS, builder, authHeaders, cb);
+
+    public String syncItemContents(FormBody.Builder builder) throws HttpException, IOException {
+        return WithHttp.i().syncPost(HOST + ITEM_CONTENTS, builder, authHeaders);
     }
 
-    public String syncStaredStreamContents(String continuation, NetCallbackS cb) throws HttpException, IOException {
+    public String syncStaredStreamContents(String continuation) throws HttpException, IOException {
         HttpParams httpParams = new HttpParams();
         httpParams.put("n", FETCH_CONTENT_EACH_CNT);
         httpParams.put("r", "o");
         httpParams.put("c", continuation);
-        return WithHttp.i().syncGet(HOST + "/reader/api/0/stream/contents/" + "user/-/state/com.google/starred", httpParams, authHeaders, cb);
+        return WithHttp.i().syncGet(HOST + "/reader/api/0/stream/contents/" + "user/-/state/com.google/starred", httpParams, authHeaders);
     }
 
 
@@ -187,11 +190,6 @@ Code 	Description
 //    }
 
 
-    public void getArticleContents(String articleID, NetCallbackS cb) throws HttpException, IOException {
-        FormBody.Builder builder = new FormBody.Builder();
-        builder.add("i", articleID);
-        WithHttp.i().syncPost(HOST + ITEM_CONTENTS, builder, authHeaders, cb);
-    }
 
 
     public void articleRemoveTag(String articleID, String tagId, StringCallback cb) {
@@ -255,7 +253,7 @@ Code 	Description
     }
 
     public void markArticleUnread(String articleID, StringCallback cb) {
-        KLog.i("【markArticleUnread】 ");
+//        KLog.i("【markArticleUnread】 ");
         FormBody.Builder builder = new FormBody.Builder();
         builder.add("r", "user/-/state/com.google/read");
         builder.add("i", articleID);

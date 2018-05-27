@@ -5,6 +5,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseExpandableListAdapter;
+import android.widget.ExpandableListView;
 import android.widget.TextView;
 
 import com.socks.library.KLog;
@@ -17,51 +18,58 @@ import me.wizos.loread.R;
 import me.wizos.loread.data.WithDB;
 import me.wizos.loread.db.Feed;
 import me.wizos.loread.db.Tag;
-import me.wizos.loread.net.Api;
+import me.wizos.loread.utils.UnreadCountUtil;
 import me.wizos.loread.view.ExpandableListViewS;
 import me.wizos.loread.view.IconFontView;
 
 /**
- * Created by Wizos on 2017/9/17.
+ * @author Wizos on 2017/9/17.
  */
 
 public class ExpandableListAdapterS extends BaseExpandableListAdapter implements ExpandableListViewS.HeaderAdapter { // implements ExpandableListViewS.HeaderAdapter
-    Context context;
+    private Context context;
     private List<Tag> tags = new ArrayList<>();
-    private ExpandableListViewS listView;
-    private List<List<Feed>> feeds;
+    private ExpandableListView listView;
+//    private List<List<Feed>> feeds;
 
-    public ExpandableListAdapterS(Context context, List<Tag> tags, ExpandableListViewS listView) {
+    public ExpandableListAdapterS(Context context, List<Tag> tags, ExpandableListView listView) {
         this.context = context;
         this.tags = tags;
-        feeds = new ArrayList<>(tags.size());
-
-        for (int i = 0; i < tags.size(); i++) {
-            try {
-                feeds.add(i, tags.get(i).getFeeds());
-            } catch (RuntimeException e) {
-                KLog.i("无法获取子项：" + i + tags.get(i).getTitle());
-            }
-        }
+//        feeds = new ArrayList<>(tags.size());
+//        for (int i = 0; i < tags.size(); i++) {
+//            try {
+//                feeds.add(i, tags.get(i).getFeeds());
+//            } catch (RuntimeException e) {
+//                KLog.i("无法获取子项：" + i + tags.get(i).getTitle());
+//            }
+//        }
 
         this.listView = listView;
     }
 
     //  获得某个父项的某个子项
     @Override
-    public Object getChild(int parentPos, int childPos) {
+    public Object getChild(int groupPos, int childPos) {
         try {
-            return feeds.get(parentPos).get(childPos);
+            return tags.get(groupPos).getFeeds().get(childPos);
+//            return feeds.get(groupPos).get(childPos);
         } catch (RuntimeException e) {
             KLog.i("无法获取子项B：" + WithDB.i().getFeeds().get(childPos));
             return 0;
         }
     }
 
+    public void removeChild(int groupPos, Feed feed) {
+        try {
+            tags.get(groupPos).getFeeds().remove(feed);
+//            feeds.get(groupPos).remove(childPos);
+        } catch (Exception e) {
+        }
+    }
 
     public void removeChild(int groupPos, int childPos) {
         try {
-            feeds.get(groupPos).remove(childPos);
+            tags.get(groupPos).getFeeds().remove(childPos);
         } catch (Exception e) {
         }
     }
@@ -75,9 +83,10 @@ public class ExpandableListAdapterS extends BaseExpandableListAdapter implements
     @Override
     public int getChildrenCount(int groupPos) {
         try {
-            return feeds.get(groupPos).size();
+            return tags.get(groupPos).getFeeds().size();
+//            return feeds.get(groupPos).size();
         } catch (RuntimeException e) {
-            KLog.e("子项的数量B：" + WithDB.i().getFeeds().size());
+//            KLog.e("子项的数量B：" + WithDB.i().getFeeds().size());
             return 0; // WithDB.i().getFeeds().size()
         }
     }
@@ -158,42 +167,33 @@ public class ExpandableListAdapterS extends BaseExpandableListAdapter implements
 
 
         try {
-            Tag theTag = tags.get(groupPos);
-            groupViewHolder.id = theTag.getId();
-            groupViewHolder.type = ItemViewHolder.TYPE_GROUP;
-            groupViewHolder.groupPos = groupPos;
-            groupViewHolder.title.setText(theTag.getTitle());
-            int count;
-            if (theTag.getId().contains(Api.U_READING_LIST)) {
-                if (App.StreamState.startsWith(Api.ART_UNREAD)) {
-                    count = WithDB.i().getUnreadArtsCount();
-                } else if (App.StreamState.equals(Api.ART_STARED)) {
-                    count = WithDB.i().getStaredArtsCount();
-                } else {
-                    count = WithDB.i().getAllArtsCount();
-                }
-            } else if (theTag.getId().contains(Api.U_NO_LABEL)) {
-                if (App.StreamState.startsWith(Api.ART_UNREAD)) {
-                    count = WithDB.i().getUnreadArtsCountNoTag();
-                } else if (App.StreamState.equals(Api.ART_STARED)) {
-                    count = WithDB.i().getStaredArtsCountNoTag();
-                } else {
-                    count = WithDB.i().getAllArtsCountNoTag();
-                }
-            } else {
-                if (App.StreamState.startsWith(Api.ART_UNREAD)) {
-                    count = WithDB.i().getUnreadArtsCountByTag(theTag);
-                } else if (App.StreamState.equals(Api.ART_STARED)) {
-                    count = WithDB.i().getStaredArtsCountByTag(theTag);
-                } else {
-                    count = WithDB.i().getAllArtsCountByTag(theTag);
-                }
-            }
-            groupViewHolder.count.setText(String.valueOf(count));
-
-            if (theTag.getFeeds().size() == 0) {
+            Tag tag = tags.get(groupPos);
+            if (tag.getFeeds().size() == 0) {
                 groupViewHolder.icon.setText(context.getString(R.string.font_tag));
             }
+            groupViewHolder.id = tag.getId();
+            groupViewHolder.type = ItemViewHolder.TYPE_GROUP;
+            groupViewHolder.groupPos = groupPos;
+            groupViewHolder.title.setText(tag.getTitle());
+
+//            int count = 0;
+//            if (tag.getId().contains(Api.U_READING_LIST)) {
+//                count = WithDB.i().getUnreadArtsCount();
+//            } else if (tag.getId().contains(Api.U_NO_LABEL)) {
+//                count = WithDB.i().getUnreadArtsCountNoTag();
+//            } else {
+//                if( App.unreadCountMap.containsKey(tag.getId()) ){
+//                    count = App.unreadCountMap.get(tag.getId());
+//                    KLog.e("【getGroupView】复用" + tag.getId() + " -- " + tag.getTitle() + "--"  );
+//                }else {
+//                    count = WithDB.i().getUnreadArtsCountByTag(tag);
+//                    App.unreadCountMap.put(tag.getId(),count);
+//                    KLog.e("【getGroupView】初始" + tag.getId() + " -- " + tag.getTitle() + "--"  );
+//                }
+//            }
+            groupViewHolder.count.setText(String.valueOf(UnreadCountUtil.getTagUnreadCount(tag.getId())));
+
+
         } catch (Exception e) {
             groupViewHolder.id = "";
             groupViewHolder.type = ItemViewHolder.TYPE_GROUP;
@@ -226,22 +226,26 @@ public class ExpandableListAdapterS extends BaseExpandableListAdapter implements
             childViewHolder.groupPos = groupPos;
             childViewHolder.childPos = childPos;
             childViewHolder.title.setText(feed.getTitle());
+//            childViewHolder.count.setText(String.valueOf(App.unreadCountMap.get(feed.getId())));
+            childViewHolder.count.setText(String.valueOf(feed.getUnreadCount()));
 
-            int count;
-            if (App.StreamState.startsWith(Api.ART_UNREAD)) {
-                count = WithDB.i().getUnreadArtsCountByFeed(feed.getId());
-            } else if (App.StreamState.equals(Api.ART_STARED)) {
-                count = WithDB.i().getStaredArtsCountByFeed(feed.getId());
+            if (App.unreadCountMap.containsKey(feed.getId())) {
+                childViewHolder.count.setText(String.valueOf(App.unreadCountMap.get(feed.getId())));
+//                KLog.e("【getChildView】复用" + feed.getId() + " -- " + feed.getTitle());
             } else {
-                count = WithDB.i().getAllArtsCountByFeed(feed.getId());
+                int count = WithDB.i().getUnreadArtsCountByFeed(feed.getId());
+                App.unreadCountMap.put(feed.getId(), count);
+                childViewHolder.count.setText(String.valueOf(count));
+//                KLog.e("【getChildView】初始" + feed.getId() + " -- " + feed.getTitle());
             }
-            childViewHolder.count.setText(String.valueOf(count));
+
         } catch (RuntimeException e) {
             childViewHolder.id = "";
             childViewHolder.type = ItemViewHolder.TYPE_CHILD;
             childViewHolder.groupPos = groupPos;
             childViewHolder.childPos = childPos;
             childViewHolder.title.setText(App.i().getString(R.string.item_error));
+            KLog.e(e);
         }
         return convertView;
     }
@@ -257,10 +261,8 @@ public class ExpandableListAdapterS extends BaseExpandableListAdapter implements
     // https://github.com/CotTan/PinnedHeaderExpandable/blob/master/app/src/main/java/intelstd/com/pinnedheaderexpandable/PinnedHeaderExpandableListView.java
     @Override
     public int getHeaderState(int firstVisibleGroupPosition, int firstVisibleChildPosition) {
-//        KLog.e("getHeaderState：groupPosition" + groupPosition + "，childPosition" + childPosition  + "，childCount" + childCount + "，是否展开" + listView.isGroupExpanded(groupPosition) + "，列表的子数量：" + listView.getChildCount());
-//        No need to draw header view if this group does not contain any child & also not expanded.
         // 如果这个 group 不包含 child 并且没有展开，那么不绘制 header view
-        if (firstVisibleChildPosition == -1 && !listView.isGroupExpanded(firstVisibleGroupPosition)) { // 如果某项是父项，并且没有展开
+        if (firstVisibleChildPosition == -1 && !listView.isGroupExpanded(firstVisibleGroupPosition)) {
             return PINNED_HEADER_GONE;
         }
         // 到达当前 Group 的最后一个 Child，准备对接下一个 Group header。

@@ -47,6 +47,24 @@ public class Api {
 //    public static String U_LIKED ="user/-/state/com.google/like";
 //    public static String U_SAVED ="user/-/state/com.google/saved-web-pages";
 
+    public static final String LOGIN = "me.wizos.loread.login";
+    public static final String SYNC_ALL = "me.wizos.loread.sync.all";
+    public final static String SYNC_STARRED = "me.wizos.loread.sync.starred";
+    public final static String SYNC_HEARTBEAT = "me.wizos.loread.sync.heartbeat";
+    public static final String CLEAR = "me.wizos.loread.clear";
+
+    public static final String NOTICE = "me.wizos.loread.notice";
+    public static final String N_START = "me.wizos.loread.notice.on-start";
+    public static final String N_COMPLETED = "me.wizos.loread.notice.on-completed";
+    public static final String N_ERROR = "me.wizos.loread.notice.on-error";
+    public static final String N_NEWS = "me.wizos.loread.notice.news";
+
+    public static final String EXT_TMP = ".tmp";
+    public static final String Referer = "Referer";
+    public static final String UserAgent = "User-Agent";
+    public static final String Auto = "User-Agent";
+
+
     public static String getLabelStreamFlag() {
         return "user/" + App.UserID + "/label/";
     }
@@ -74,12 +92,12 @@ public class Api {
     public static final int ActivityResult_ArtToMain = 2;
     public static final int ActivityResult_SearchLocalArtsToMain = 3;
 
-    public static final String OPEN_RSS = "rss";
-    public static final String OPEN_READABILITY = "readability";
-    public static final String OPEN_LINK = "link";
+    public static final String DISPLAY_RSS = "rss";
+    public static final String DISPLAY_READABILITY = "readability";
+    public static final String DISPLAY_LINK = "webpage";
 
 
-    public static final int INIT_IMAGWE_BRIDGE = 4;
+    public static final int INIT_IMAGE_BRIDGE = 4;
 
     public static final int MSG_DOUBLE_TAP = -1;
 

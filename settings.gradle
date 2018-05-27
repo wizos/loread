@@ -1,2 +1,2 @@
-include ':app', ':dao_generator', ':scrolllayout', ':swipelayout'
-//, ':sweetsheet'
+include ':app', ':scrolllayout', ':swipelayout', ':circletimeview', ':agentweb-core',':luban'
+//, ':sweetsheet' , ':grouplistview'

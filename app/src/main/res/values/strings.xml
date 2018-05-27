@@ -1,6 +1,5 @@
 <resources>
     <string name="app_name">知微</string>
-    <string name="app_version">1.0.4</string>
     <string name="action_settings">设置</string>
     <string name="main_activity_title_all">所有</string>
     <string name="main_activity_title_untag">未分类</string>
@@ -43,6 +42,7 @@
     <string name="main_dialog_esc_negative">不！</string>
     <string name="more_info">更多</string>
 
+    <string name="main_dialog_confirm_mark_article_list">确定要将以下文章标记为已读？</string>
     <string name="main_dialog_esc_confirm">确定退出app？</string>
     <string name="setting_about_dialog_title">感慨</string>
     <string name="setting_about_dialog_content">路很长，纵然远望，却不知方向。\n抽支烟，思绪无常，奔跑着彷徨。\n逃不脱的苟且，到不了的远方…\n作于2016.10.07</string>
@@ -54,47 +54,72 @@
     <string name="auth_register">没有账户？现在注册</string>
 
 
-    <string name="setting_clear_log_title">清除错误记录</string>
-    <string name="setting_clear_error_cache">删除错误遗留的文章</string>
-    <string name="setting_update_article_tag_title">更新离线文章的分组信息</string>
-    <string name="setting_sync_all_starred_article_button">加载</string>
+    <string name="article_choose_tag_dialog_title">选择标签</string>
+
+
+    <!--数据同步-->
+    <string name="setting_auto_sync_title">自动同步</string>
+    <string name="setting_auto_sync_on_wifi_title">仅在Wifi模式下自动同步</string>
+    <string name="setting_sync_frequency_title">同步的时间间隔</string>
+
+    <string name="setting_sync_first_open_title">首次开启同步</string>
+    <string name="setting_sync_first_open_tips">打开应用就开始同步</string>
+    <string name="setting_sync_all_starred_title">同步所有加星文章</string>
+    <string name="setting_sync_all_starred_tips">开启后可同步所有加星的文章</string>
+    <string name="setting_order_tagfeed_title">是否同步分组与源的排序？</string>
+    <string name="setting_order_tagfeed_tips">开启后费流量，费时间，还没多大用</string>
+    <string name="setting_down_img_title">省流量下载图片</string>
+    <string name="setting_down_img_tips">只在 WiFi 时下载图片</string>
+    <string name="setting_proxy_title">代理</string>
+
+    <!--<string name="setting_inoreader_proxy_dialog_title">设置代理地址</string>-->
+
+
+    <!--界面显示-->
+    <string name="setting_day_theme_title">白天主题</string>
+    <string name="setting_night_theme_title">夜间主题</string>
+    <string name="setting_auto_toggle_theme_title">自动切换夜间主题</string>
+    <string name="setting_night_time_interval_title">夜间时间区间</string>
+    <string name="setting_type_title">排版</string>
+    <string name="setting_language_title">语言</string>
+
+    <!--<string name="setting_auto_toggle_theme_tips">早上7点至晚20点开启白天主题</string>-->
+
+
+    <!--操作-->
+    <string name="setting_link_open_mode_title">使用系统浏览器打开链接</string>
+    <!--<string name="setting_link_open_mode_tips">测试功能</string>-->
+    <!--<string name="setting_scroll_mark_tips">开启后，滚出屏幕的文章自动被标记为未读</string>-->
+    <!--<string name="setting_left_right_slide_title">文章页左右切换</string>-->
+    <!--<string name="setting_left_right_slide_tips">开启后，在文章页左右滑动可直接切换文章</string>-->
+    <!--<string name="setting_scroll_mark_title">滚动时自动标记为已读</string>-->
+
+    <!--缓存-->
+    <string name="setting_clear_day_title">已读文章保留期限</string>
+    <!--<string name="setting_clear_day_dialog_title">选择保留最近多少天的文章呢？</string>-->
+    <string name="setting_clear_cache_title">清理缓存</string>
+
+    <!--备份-->
+    <string name="setting_backup_now_title">立即备份</string>
+    <string name="setting_restore_backup_title">恢复备份</string>
+    <string name="setting_handle_saved_pages_title">整理已保存的文章</string>
+
+    <string name="is_update_title">正在升级</string>
+
+    <!--关于-->
+    <string name="setting_about_title">关于</string>
+    <string name="setting_license_title">许可</string>
     <string name="setting_feedback_title">反馈问题</string>
     <string name="setting_qq_group_title">Q群</string>
     <string name="setting_qq_group_summary">106211435</string>
     <string name="setting_esc_title">退出</string>
-    <string name="setting_about_title">关于</string>
-    <string name="setting_license_title">许可</string>
-    <string name="setting_cache_path_starred_title">加星文章保存位置</string>
-    <string name="setting_order_tagfeed_title">是否同步分组与源的排序？</string>
-    <string name="setting_order_tagfeed_tips">开启后费流量，费时间，还没多大用</string>
-    <string name="setting_link_open_mode_title">使用系统浏览器打开链接？</string>
-    <string name="setting_link_open_mode_tips">测试功能</string>
 
 
-    <string name="setting_scroll_mark_title">滚动时自动标记为已读</string>
-    <string name="setting_scroll_mark_tips">开启后，滚出屏幕的文章自动被标记为未读</string>
-
-    <string name="setting_auto_toggle_theme_title">自动切换白天/黑夜主题</string>
-    <string name="setting_auto_toggle_theme_tips">早上7点至晚20点开启白天主题</string>
-
-    <string name="setting_left_right_slide_title">文章页左右切换</string>
-    <string name="setting_left_right_slide_tips">开启后，在文章页左右滑动可直接切换文章</string>
-
-    <string name="setting_down_img_title">省流量下载图片</string>
-    <string name="setting_down_img_tips">只在 WiFi 时下载图片</string>
-    <string name="setting_inoreader_proxy_title">Inoreader 代理</string>
-    <string name="setting_inoreader_proxy_dialog_title">设置代理地址</string>
-
-
-    <string name="setting_inoreader_proxy_tips">开启后将使用内置代理服务器访问 Inoreader 服务</string>
-    <string name="setting_clear_day_title">已读文章保留期限</string>
-    <string name="setting_sync_frequency_title">同步频率</string>
-    <string name="setting_sync_all_starred_title">同步所有加星文章</string>
-    <string name="setting_sync_all_starred_tips">开启后可同步所有加星的文章</string>
-    <string name="setting_sync_first_open_title">首次开启同步</string>
-    <string name="setting_sync_first_open_tips">打开应用就开始同步</string>
-    <string name="setting_clear_day_dialog_title">选择保留最近多少天的文章呢？</string>
-    <string name="article_choose_tag_dialog_title">选择标签</string>
+    <!--<string name="setting_clear_log_title">清除错误记录</string>-->
+    <!--<string name="setting_clear_error_cache">删除错误遗留的文章</string>-->
+    <!--<string name="setting_update_article_tag_title">更新离线文章的分组信息</string>-->
+    <!--<string name="setting_sync_all_starred_article_button">加载</string>-->
+    <!--<string name="setting_cache_path_starred_title">加星文章保存位置</string>-->
 
 
     <!--<string-array name="setting_clear_day_dialog_item_array">-->
@@ -157,6 +182,7 @@
 
     <string name="font_arrow_down">&#xe6a6;</string>
     <string name="font_arrow_right">&#xe6a8;</string>
+    <string name="font_arrow_left">&#xe84e;</string>
 
     <string name="font_list_reading">&#xe612;</string>
     <string name="font_list_unread">&#xe613;</string>
@@ -204,6 +230,8 @@
     <string name="auth_required">账号太久没有用了，请重新登录</string>
     <string name="tag_choose_tips">想看哪个分类？</string>
 
+    <string name="xx_minute">%1$s 分钟</string>
+    <string name="xx_hour">%1$s 小时</string>
     <string name="clear_day_summary">%1$s 天</string>
 
 
@@ -247,7 +275,7 @@
 
     <string name="toast_not_network">小伙子，你的网络无法使用啊</string>
 
-    <string name="item_error">获取错误</string>
+    <string name="item_error">出错，请手动同步下</string>
 
     <!--<string name="menu_readed">已读</string>-->
     <!--<string name="menu_unread">未读</string>-->
@@ -288,6 +316,7 @@
     <string name="web_page">网页</string>
 
     <string name="article_display_mode">显示模式</string>
+    <string name="dialog_please_wait">正在处理，请等待…</string>
 
 
     <string name="feed_config">配置该源</string>

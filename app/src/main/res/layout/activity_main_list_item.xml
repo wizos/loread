@@ -8,8 +8,6 @@
     android:gravity="center_vertical"
     android:layout_marginTop="6dp"
     android:layout_marginBottom="6dp"
-    android:paddingStart="12dp"
-    android:paddingEnd="12dp"
     tools:ShowIn="@layout/activity_main"
     android:orientation="vertical"
     android:baselineAligned="false">
@@ -30,23 +28,23 @@
         <me.wizos.loread.view.IconFontView
             android:id="@+id/main_list_item_menu_left"
             android:background="?attr/root_view_bg"
-            android:layout_width="90dp"
-            android:layout_height="match_parent"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
             tools:visibility="visible"
             android:textColor="#5a8fca"
             android:padding="20dp"
-            android:textSize="12sp"
+            android:textSize="14sp"
             android:text="@string/font_unread" />
 
         <me.wizos.loread.view.IconFontView
             android:id="@+id/main_list_item_menu_right"
             android:background="?attr/root_view_bg"
-            android:layout_width="90dp"
-            android:layout_height="match_parent"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
             tools:visibility="visible"
             android:textColor="#5a8fca"
             android:padding="20dp"
-            android:textSize="12sp"
+            android:textSize="14sp"
             android:text="@string/font_unread" />
 
         <!--tools:visibility="gone"-->

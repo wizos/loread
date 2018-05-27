@@ -3,6 +3,7 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fitsSystemWindows="true"
@@ -31,10 +32,10 @@
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
                 android:layout_gravity="end|center"
-                android:paddingRight="12dp"
+                android:paddingEnd="12dp"
                 android:background="?android:attr/selectableItemBackgroundBorderless"
                 android:clickable="true"
-                android:gravity="center|right"
+                android:gravity="center|end"
                 android:textSize="12sp"
                 tools:text="12" />
             <!--<me.wizos.loread.view.IconFontView-->
@@ -69,6 +70,8 @@
                 app:layout_behavior="@string/appbar_scrolling_view_behavior"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp"
                 android:animateLayoutChanges="true"
                 android:headerDividersEnabled="false"
                 android:background="?attr/root_view_bg"
@@ -106,13 +109,16 @@
                     android:id="@+id/main_bottombar_tag"
                     style="@style/bottom_bar_iconfont"
                     android:layout_centerInParent="true"
-                    android:text="@string/font_group" />
+                    android:text="@string/font_group"
+                    android:onClick="onTagIconClicked1" />
 
+                <!--android:onClick="onTagIconClicked1"-->
                 <me.wizos.loread.view.IconFontView
                     android:id="@+id/main_bottombar_search"
                     style="@style/bottom_bar_iconfont"
                     android:layout_toStartOf="@id/main_bottombar_tag"
-                    android:text="@string/font_search" />
+                    android:text="@string/font_search"
+                    android:onClick="clickSearchIcon" />
 
                 <me.wizos.loread.view.IconFontView
                     android:id="@+id/main_bottombar_setting"
@@ -127,55 +133,57 @@
 
     <!--android:background="?attr/bottombar_bg"-->
     <!--<include layout="@laymain_bottom_sheet_quick_settingheet"/>-->
+    <!--android:visibility="gone"-->
 
-    <com.yinglan.scrolllayout.ScrollLayout
-        tools:visibility="gone"
-        android:id="@+id/scroll_down_layout"
-        android:tag="scroll_down_layout"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="@color/shade"
-        android:elevation="4dp">
+    <!--<com.yinglan.scrolllayout.ScrollLayout-->
+    <!--tools:visibility="gone"-->
+    <!--android:visibility="gone"-->
+    <!--android:id="@+id/scroll_down_layout"-->
+    <!--android:tag="scroll_down_layout"-->
+    <!--android:layout_width="match_parent"-->
+    <!--android:layout_height="match_parent"-->
+    <!--android:background="@color/shade"-->
+    <!--android:elevation="4dp">-->
 
-        <LinearLayout
-            android:id="@+id/main_scroll_layout_bg"
-            android:background="?attr/bottombar_bg"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:orientation="vertical">
-            <TextView
-                android:id="@+id/main_scroll_layout_title"
-                android:layout_width="match_parent"
-                android:layout_height="?attr/actionBarSize"
-                android:textSize="14sp"
-                android:textStyle="bold"
-                android:textColor="?attr/bottombar_fg"
-                android:gravity="center_vertical"
-                android:paddingTop="10dp"
-                android:paddingBottom="10dp"
-                android:paddingStart="12dp"
-                android:paddingEnd="12dp"
-                android:text="@string/tag_choose_tips" />
-            <View
-                android:id="@+id/main_scrolllayout_divider"
-                android:layout_width="match_parent"
-                android:layout_height="0.5dp"
-                android:layout_marginStart="10dp"
-                android:layout_marginEnd="10dp"
-                android:background="?attr/bottombar_divider" />
+    <!--<LinearLayout-->
+    <!--android:id="@+id/main_scroll_layout_bg"-->
+    <!--android:background="?attr/bottombar_bg"-->
+    <!--android:layout_width="match_parent"-->
+    <!--android:layout_height="match_parent"-->
+    <!--android:orientation="vertical">-->
+    <!--<TextView-->
+    <!--android:id="@+id/main_scroll_layout_title"-->
+    <!--android:layout_width="match_parent"-->
+    <!--android:layout_height="?attr/actionBarSize"-->
+    <!--android:textSize="14sp"-->
+    <!--android:textStyle="bold"-->
+    <!--android:textColor="?attr/bottombar_fg"-->
+    <!--android:gravity="center_vertical"-->
+    <!--android:paddingTop="10dp"-->
+    <!--android:paddingBottom="10dp"-->
+    <!--android:paddingStart="12dp"-->
+    <!--android:paddingEnd="12dp"-->
+    <!--android:text="@string/tag_choose_tips" />-->
+    <!--<View-->
+    <!--android:id="@+id/main_scrolllayout_divider"-->
+    <!--android:layout_width="match_parent"-->
+    <!--android:layout_height="0.5dp"-->
+    <!--android:layout_marginStart="10dp"-->
+    <!--android:layout_marginEnd="10dp"-->
+    <!--android:background="?attr/bottombar_divider" />-->
 
-            <me.wizos.loread.view.ExpandableListViewS
-                android:id="@+id/list_view"
-                android:tag="list_view"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:divider="?attr/lv_item_divider"
-                android:groupIndicator="@null"
-                android:fadingEdgeLength="4dp"
-                android:background="?attr/bottombar_bg" />
-            <!--android:paddingTop="?attr/actionBarSize"-->
-        </LinearLayout>
-    </com.yinglan.scrolllayout.ScrollLayout>
+    <!--<me.wizos.loread.view.ExpandableListViewS-->
+    <!--android:id="@+id/list_view"-->
+    <!--android:tag="list_view"-->
+    <!--android:layout_width="match_parent"-->
+    <!--android:layout_height="match_parent"-->
+    <!--android:divider="?attr/lv_item_divider"-->
+    <!--android:groupIndicator="@null"-->
+    <!--android:fadingEdgeLength="4dp"-->
+    <!--android:background="?attr/bottombar_bg" />-->
+
+    <!--</LinearLayout>-->
+    <!--</com.yinglan.scrolllayout.ScrollLayout>-->
 
 </RelativeLayout>
 

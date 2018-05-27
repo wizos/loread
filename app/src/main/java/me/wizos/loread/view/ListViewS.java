@@ -164,7 +164,6 @@ public class ListViewS extends ListView implements Handler.Callback, SwipeDragLa
                     removeLongClickMessage();
                 }
                 break;
-
             case MotionEvent.ACTION_UP:
             case MotionEvent.ACTION_CANCEL:
                 removeLongClickMessage();
@@ -276,7 +275,7 @@ public class ListViewS extends ListView implements Handler.Callback, SwipeDragLa
     @Override
     public void onCloseRight(View view) {
         if (mOnItemSlideListener != null) {
-            KLog.e("关闭右侧" + (lastX - downX) + "==" + (lastY - downY));
+//            KLog.e("关闭右侧" + (lastX - downX) + "==" + (lastY - downY));
             mOnItemSlideListener.onCloseRight(view, slideItemPosition, SwipeDragLayout.DIRECTION_RIGHT);
         }
     }

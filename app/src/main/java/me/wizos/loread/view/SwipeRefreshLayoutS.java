@@ -19,7 +19,6 @@ public class SwipeRefreshLayoutS extends SwipeRefreshLayout {
     // 方案2：解决下来刷新与左右滑动的冲突
     private int mTouchSlop;
     private float mPrevX;
-    //
 
     public SwipeRefreshLayoutS(Context context) {
         super(context);
@@ -108,7 +107,6 @@ public class SwipeRefreshLayoutS extends SwipeRefreshLayout {
             case MotionEvent.ACTION_DOWN:
                 mPrevX = MotionEvent.obtain(ev).getX();
                 break;
-
             case MotionEvent.ACTION_MOVE:
                 final float eventX = ev.getX();
                 //获取水平移动距离
@@ -118,25 +116,27 @@ public class SwipeRefreshLayoutS extends SwipeRefreshLayout {
                 if (xDiff > mTouchSlop) {
                     return false;
                 }
+            default:
+                break;
         }
         return super.onInterceptTouchEvent(ev);
-
     }
 
-    /* 手指放下的坐标 */
-    private float mXDown;
-    private float mYDown;
-    /* 手指滑动的最短距离 */
-    private float mShortestDistance = 25f;
 
-    /**
-     * 手指左右移动：左右得超出50，上下不能超出50
-     *
-     * @param ev
-     * @return
-     */
-    private boolean fingerLeftAndRightMove(MotionEvent ev) {
-        return ((ev.getX() - mXDown > mShortestDistance || ev.getX() - mXDown < -mShortestDistance) &&
-                ev.getY() - mYDown < mShortestDistance && ev.getY() - mYDown > -mShortestDistance);
-    }
+//    /* 手指放下的坐标 */
+//    private float mXDown;
+//    private float mYDown;
+//    /* 手指滑动的最短距离 */
+//    private float mShortestDistance = 25f;
+//
+//    /**
+//     * 手指左右移动：左右得超出50，上下不能超出50
+//     *
+//     * @param ev
+//     * @return
+//     */
+//    private boolean fingerLeftAndRightMove(MotionEvent ev) {
+//        return ((ev.getX() - mXDown > mShortestDistance || ev.getX() - mXDown < -mShortestDistance) &&
+//                ev.getY() - mYDown < mShortestDistance && ev.getY() - mYDown > -mShortestDistance);
+//    }
 }

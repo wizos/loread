@@ -4,10 +4,13 @@
 
     <style name="AppTheme.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" />
 
+    <!--Theme.AppCompat.Light.DarkActionBar-->
+    <!--QMUI.Compat.NoActionBar-->
     <style name="AppBaseTheme" parent="Theme.AppCompat.Light.DarkActionBar">
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
         <item name="toolbarStyle">@style/MyToolbar</item>
+        <item name="android:windowContentTransitions">true</item>
         <item name="toolbarNavigationButtonStyle">@style/MyToolbar.Navigation</item>
         <!--<item name="app:subtitleTextAppearance">@style/MyToolbar.SubTitle</item>-->
         <!--app:subtitleTextAppearance="@style/toolbar_subtitle_style"-->
@@ -72,6 +75,7 @@
 
         <item name="icon_title_color">@color/main_day_dark</item>
         <item name="lv_item_title_color">@color/main_day_dark</item>
+        <item name="setting_header_title_color">@color/main_day_dark</item>
         <item name="lv_item_desc_color">@color/main_day_info</item>
         <item name="lv_item_info_color">@color/main_day_info</item>
         <item name="lv_item_divider">@color/white</item>
@@ -107,6 +111,7 @@
 
         <item name="tag_slv_item_icon">@color/main_night_light</item>
         <item name="icon_title_color">@color/main_night_info</item>
+        <item name="setting_header_title_color">@color/main_night_info</item>
         <item name="lv_item_title_color">@color/main_night_light</item>
         <item name="lv_item_desc_color">@color/main_night_info</item>
         // main_night_dark
@@ -132,7 +137,18 @@
     <style name="SettingItem">
         <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">wrap_content</item>
-        <item name="android:layout_marginTop">12dp</item>
+        <item name="android:textColor">?attr/lv_item_title_color</item>
+        <item name="android:padding">10dp</item>
+    </style>
+
+    <style name="SettingItemTitle2">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:layout_height">45dp</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:textColor">?attr/lv_item_title_color</item>
+        <item name="android:layout_gravity">center</item>
+        <item name="android:gravity">center_vertical</item>
     </style>
 
     <style name="SwitchButtonStyle">
@@ -150,6 +166,16 @@
         <item name="kswThumbWidth">16dp</item>
     </style>
 
+    <style name="SettingItemArrowRight">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:layout_height">45dp</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:textColor">?attr/lv_item_title_color</item>
+        <item name="android:layout_gravity">center</item>
+        <item name="android:gravity">center_vertical</item>
+    </style>
+
     <style name="SettingItemTitle">
         <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">38dp</item>
@@ -159,10 +185,23 @@
         <item name="android:gravity">center_vertical</item>
     </style>
 
+
     <style name="BottomSheetItem">
         <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">wrap_content</item>
         <item name="android:layout_margin">5dp</item>
+    </style>
+
+
+    <style name="SettingItemHeader">
+        <!--<item name="android:alpha">0.80</item>-->
+        <item name="android:minWidth">10dp</item>
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:textSize">12sp</item>
+        <item name="android:textColor">?attr/lv_item_desc_color</item>
+        <item name="android:gravity">center|left</item>
+        <item name="android:padding">10dp</item>
     </style>
 
     <style name="BottomSheetItemTitle">
@@ -198,13 +237,14 @@
 
     <style name="SettingItemSummary">
         <!--<item name="android:alpha">0.80</item>-->
-        <item name="android:layout_width">90dp</item>
-        <item name="android:layout_height">wrap_content</item>
-        <item name="android:layout_marginRight">8dp</item>
+        <item name="android:minWidth">10dp</item>
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">match_parent</item>
         <item name="android:textSize">12sp</item>
         <item name="android:textColor">?attr/lv_item_desc_color</item>
         <item name="android:layout_gravity">center</item>
         <item name="android:gravity">center|right</item>
+        <item name="android:drawableRight">@drawable/ic_arrow_right</item>
     </style>
 
     <style name="string_grey">

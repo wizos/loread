@@ -2,6 +2,7 @@
 <resources>
     <color name="colorPrimary">#3F51B5</color>
     <color name="colorPrimaryDark">#303F9F</color>
+    <color name="bluePrimary">#28A4E9</color>
     <color name="colorAccent">#FF4081</color>
     <color name="crimson">#e62e2e</color>
 
@@ -40,4 +41,5 @@
 
     <color name="shade">#404040</color>
 
+    <color name="placeholder_bg">#EFF3F2</color>
 </resources>

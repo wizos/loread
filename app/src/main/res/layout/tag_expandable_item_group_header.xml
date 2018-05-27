@@ -5,7 +5,7 @@
     android:layout_height="wrap_content">
 
     <LinearLayout
-        android:id="@+id/tag_group_header"
+        android:id="@+id/header_item"
         android:orientation="horizontal"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

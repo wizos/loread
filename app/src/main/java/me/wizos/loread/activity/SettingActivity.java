@@ -1,44 +1,44 @@
 package me.wizos.loread.activity;
 
 import android.content.Intent;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
-import android.support.v4.util.ArrayMap;
+import android.support.annotation.Nullable;
 import android.support.v7.widget.Toolbar;
 import android.text.InputType;
 import android.view.View;
+import android.widget.CompoundButton;
 import android.widget.TextView;
 
 import com.afollestad.materialdialogs.MaterialDialog;
 import com.kyleduo.switchbutton.SwitchButton;
 import com.socks.library.KLog;
 
-import java.io.File;
-import java.util.List;
-import java.util.Map;
-
+import butterknife.BindView;
+import butterknife.ButterKnife;
 import me.wizos.loread.App;
+import me.wizos.loread.BuildConfig;
 import me.wizos.loread.R;
-import me.wizos.loread.data.PrefUtils;
-import me.wizos.loread.data.WithDB;
-import me.wizos.loread.db.Article;
-import me.wizos.loread.service.MainService;
+import me.wizos.loread.data.WithPref;
 import me.wizos.loread.utils.FileUtil;
-import me.wizos.loread.utils.StringUtil;
 import me.wizos.loread.view.colorful.Colorful;
 
+/**
+ * @author Wizos on 2016/3/10.
+ */
 
 public class SettingActivity extends BaseActivity {
     protected static final String TAG = "SettingActivity";
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_setting);
+        ButterKnife.bind(this);
         initToolbar();
         initView();
-
     }
 
 
@@ -52,27 +52,24 @@ public class SettingActivity extends BaseActivity {
                 .backgroundColor(R.id.setting_toolbar, R.attr.topbar_bg)
 //                .textColor(R.id.setting_toolbar_count, R.attr.topbar_fg)
                 // 设置文章信息
-                .textColor(R.id.setting_sync_first_open_title, R.attr.setting_title)
-                .textColor(R.id.setting_sync_first_open_tips, R.attr.setting_tips)
-                .textColor(R.id.setting_sync_all_starred_title, R.attr.setting_title)
-                .textColor(R.id.setting_sync_all_starred_tips, R.attr.setting_tips)
+//                .textColor(R.id.setting_sync_first_open_title, R.attr.setting_title)
+//                .textColor(R.id.setting_sync_all_starred_title, R.attr.setting_title)
 //                .textColor(R.id.setting_sync_frequency_title, R.attr.setting_title)
 //                .textColor(R.id.setting_sync_frequency_summary, R.attr.setting_tips)
                 .textColor(R.id.setting_clear_day_title, R.attr.setting_title)
                 .textColor(R.id.setting_clear_day_summary, R.attr.setting_tips)
                 .textColor(R.id.setting_down_img_title, R.attr.setting_title)
-                .textColor(R.id.setting_down_img_tips, R.attr.setting_tips)
 
-                .textColor(R.id.setting_inoreader_proxy_title, R.attr.setting_title)
-                .textColor(R.id.setting_inoreader_proxy_tips, R.attr.setting_tips)
+                .textColor(R.id.setting_proxy_title, R.attr.setting_title)
+
 //                .textColor(R.id.setting_scroll_mark_title, R.attr.setting_title)
 //                .textColor(R.id.setting_scroll_mark_tips, R.attr.setting_tips)
-                .textColor(R.id.setting_order_tagfeed_title, R.attr.setting_title)
-                .textColor(R.id.setting_order_tagfeed_tips, R.attr.setting_tips)
+//                .textColor(R.id.setting_order_tagfeed_title, R.attr.setting_title)
+//                .textColor(R.id.setting_order_tagfeed_tips, R.attr.setting_tips)
+//                .textColor(R.id.setting_link_open_mode_tips, R.attr.setting_tips)
+//                .textColor(R.id.setting_cache_path_starred_title, R.attr.setting_title)
+//                .textColor(R.id.setting_cache_path_starred_summary, R.attr.setting_tips)
                 .textColor(R.id.setting_link_open_mode_title, R.attr.setting_title)
-                .textColor(R.id.setting_link_open_mode_tips, R.attr.setting_tips)
-                .textColor(R.id.setting_cache_path_starred_title, R.attr.setting_title)
-                .textColor(R.id.setting_cache_path_starred_summary, R.attr.setting_tips)
                 .textColor(R.id.setting_license_title, R.attr.setting_title)
                 .textColor(R.id.setting_license_summary, R.attr.setting_tips)
                 .textColor(R.id.setting_about_title, R.attr.setting_title)
@@ -82,41 +79,147 @@ public class SettingActivity extends BaseActivity {
 
 
     private TextView clearBeforeDaySummary;
-    private int clearBeforeDayIndex, clearBeforeDay;
+
+    @Nullable
+    @BindView(R.id.setting_auto_sync_sb)
+    SwitchButton autoSyncSB;
+    @Nullable
+    @BindView(R.id.setting_auto_sync_on_wifi_sb)
+    SwitchButton autoSyncOnWifiSB;
+
+
+    @BindView(R.id.setting_auto_sync_on_wifi)
+    View autoSyncOnWifi;
+
+    @Nullable
+    @BindView(R.id.setting_auto_sync_frequency)
+    View autoSyncFrequency;
+
+    @BindView(R.id.setting_sync_frequency_summary)
+    TextView autoSyncFrequencySummary;
+
+//    TextView startTimeTextView;
+//    TextView endTimeTextView;
+
+    @BindView(R.id.setting_backup)
+    TextView backup;
+
+    @BindView(R.id.setting_restore)
+    TextView restore;
+
+    @BindView(R.id.setting_read_config)
+    TextView readConfig;
+
+
+//    @OnClick(R.id.setting_night_time_interval)
+//    public void onClickNightTimeInterval(View view){
+//        MaterialDialog dialog = new MaterialDialog.Builder(this)
+//                .title("夜间时间段")
+//                .customView(R.layout.select_night_time_interval_view, true)
+//                .positiveText("确认")
+//                .negativeText("取消")
+//                .onPositive(new MaterialDialog.SingleButtonCallback() {
+//                    @Override
+//                    public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
+//                        WithPref.i().setNightThemeThemeStartTime(startTime);
+//                        WithPref.i().setNightThemeEndTime(endTime);
+//                    }
+//                }).build();
+//        dialog.show();
+//
+//        startTimeTextView = (TextView) dialog.findViewById(R.id.start);
+//        endTimeTextView = (TextView) dialog.findViewById(R.id.end);
+//
+//        CircleAlarmTimerView circleAlarmTimerView = (CircleAlarmTimerView) dialog.findViewById(R.id.circletimerview);
+//        circleAlarmTimerView.setOnTimeChangedListener(new CircleAlarmTimerView.OnTimeChangedListener() {
+//            @Override
+//            public void start(String starting) {
+//                startTimeTextView.setText(starting);
+//                startTime = starting;
+//            }
+//            @Override
+//            public void end(String ending) {
+//                endTimeTextView.setText(ending);
+//                endTime = ending;
+//            }
+//        });
+//
+//        circleAlarmTimerView.getPaddingStart();
+//    }
+//    private String startTime;
+//    private String endTime;
+
+
+    private void toggleAutoSyncItem() {
+        if (WithPref.i().isAutoSync()) {
+            autoSyncSB.setChecked(true);
+            autoSyncOnWifi.setVisibility(View.VISIBLE);
+            autoSyncFrequency.setVisibility(View.VISIBLE);
+            autoSyncOnWifiSB.setChecked(WithPref.i().isAutoSyncOnWifi());
+        } else {
+            autoSyncSB.setChecked(false);
+            autoSyncOnWifi.setVisibility(View.GONE);
+            autoSyncFrequency.setVisibility(View.GONE);
+        }
+    }
 
     private void initView(){
-        SwitchButton syncFirstOpen, downImgWifi, inoreaderProxy, orderTagFeed, syncAllStarred, sysBrowserOpenLink, autoToggleTheme;
-        syncFirstOpen = findViewById(R.id.setting_sync_first_open_sb_flyme);
-        syncFirstOpen.setChecked(PrefUtils.i().isSyncFirstOpen());
+        SwitchButton downImgWifi, sysBrowserOpenLink, autoToggleTheme;
+        toggleAutoSyncItem();
+        autoSyncSB.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
+                WithPref.i().setAutoSync(b);
+                toggleAutoSyncItem();
+            }
+        });
 
-        syncAllStarred = findViewById(R.id.setting_sync_all_starred_sb_flyme);
-        syncAllStarred.setChecked(PrefUtils.i().isSyncAllStarred());
 
-        downImgWifi = findViewById(R.id.setting_down_img_sb_flyme);
-        downImgWifi.setChecked(PrefUtils.i().isDownImgWifi());
-
-        inoreaderProxy = findViewById(R.id.setting_inoreader_proxy_sb_flyme);
-        inoreaderProxy.setChecked(PrefUtils.i().isInoreaderProxy());
-//        scrollMark = (SwitchButton) findViewById(R.id.setting_scroll_mark_sb_flyme);
-//        scrollMark.setChecked(PrefUtils.i().isScrollMark());
-        orderTagFeed = findViewById(R.id.setting_order_tagfeed_sb_flyme);
-        orderTagFeed.setChecked(PrefUtils.i().isOrderTagFeed());
+        downImgWifi = findViewById(R.id.setting_down_img_sb);
+        downImgWifi.setChecked(WithPref.i().isDownImgWifi());
 
         clearBeforeDaySummary = findViewById(R.id.setting_clear_day_summary);
-        clearBeforeDay = PrefUtils.i().getClearBeforeDay();
-        clearBeforeDaySummary.setText(getResources().getString(R.string.clear_day_summary, String.valueOf(clearBeforeDay)));
+        clearBeforeDaySummary.setText(getResources().getString(R.string.clear_day_summary, String.valueOf(WithPref.i().getClearBeforeDay())));
 
+        int autoSyncFrequency = WithPref.i().getAutoSyncFrequency();
+        if (autoSyncFrequency >= 60) {
+            autoSyncFrequencySummary.setText(getResources().getString(R.string.xx_hour, autoSyncFrequency / 60 + ""));
 
-        sysBrowserOpenLink = findViewById(R.id.setting_link_open_mode_sb_flyme);
-        sysBrowserOpenLink.setChecked(PrefUtils.i().isSysBrowserOpenLink());
+        } else {
+            autoSyncFrequencySummary.setText(getResources().getString(R.string.xx_minute, autoSyncFrequency + ""));
+        }
+        View openLinkMode = findViewById(R.id.setting_link_open_mode);
+        sysBrowserOpenLink = findViewById(R.id.setting_link_open_mode_sb);
+        sysBrowserOpenLink.setChecked(WithPref.i().isSysBrowserOpenLink());
+        if (BuildConfig.DEBUG) {
+            openLinkMode.setVisibility(View.GONE);
+        }
 
-        autoToggleTheme = findViewById(R.id.setting_auto_toggle_theme_sb_flyme);
-        autoToggleTheme.setChecked(PrefUtils.i().isAutoToggleTheme());
-
-//        leftRightSlideArticle = (SwitchButton) findViewById(R.id.setting_left_right_slide_sb_flyme);
-//        leftRightSlideArticle.setChecked(PrefUtils.i().isLeftRightSlideArticle());
+        autoToggleTheme = findViewById(R.id.setting_auto_toggle_theme_sb);
+        autoToggleTheme.setChecked(WithPref.i().isAutoToggleTheme());
 
 //        clearLog = (Button)findViewById(R.id.setting_clear_log_button);
+
+        TextView versionSummary = findViewById(R.id.setting_about_summary);
+        PackageManager manager = this.getPackageManager();
+        String title;
+        try {
+            PackageInfo info = manager.getPackageInfo(this.getPackageName(), 0);
+            title = info.versionName;
+        } catch (PackageManager.NameNotFoundException unused) {
+            title = "";
+        }
+        versionSummary.setText(title);
+
+
+        if (BuildConfig.DEBUG) {
+//            TextView handleSavedPages = findViewById(R.id.setting_handle_saved_pages);
+//            handleSavedPages.setVisibility(View.VISIBLE);
+
+            backup.setVisibility(View.VISIBLE);
+            restore.setVisibility(View.VISIBLE);
+            readConfig.setVisibility(View.VISIBLE);
+        }
     }
 
 
@@ -135,167 +238,136 @@ public class SettingActivity extends BaseActivity {
 
     public void onSBClick(View view){
         SwitchButton v = (SwitchButton)view;
-        KLog.d( "点击" );
+        KLog.i("点击");
         switch (v.getId()) {
-            case R.id.setting_sync_first_open_sb_flyme:
-                PrefUtils.i().setSyncFirstOpen(v.isChecked());
+            case R.id.setting_link_open_mode_sb:
+                WithPref.i().setSysBrowserOpenLink(v.isChecked());
                 break;
-            case R.id.setting_sync_all_starred_sb_flyme:
-                PrefUtils.i().setSyncAllStarred(v.isChecked());
-                syncAllStarred();
+            case R.id.setting_auto_toggle_theme_sb:
+                WithPref.i().setAutoToggleTheme(v.isChecked());
                 break;
-            case R.id.setting_down_img_sb_flyme:
-                PrefUtils.i().setDownImgWifi(v.isChecked());
+            case R.id.setting_down_img_sb:
+                WithPref.i().setDownImgWifi(v.isChecked());
                 break;
-            case R.id.setting_inoreader_proxy_sb_flyme:
-                PrefUtils.i().setInoreaderProxy(v.isChecked());
+            case R.id.setting_proxy_sb:
+                WithPref.i().setInoreaderProxy(v.isChecked());
                 if (v.isChecked()) {
                     showInoreaderProxyHostDialog();
                 } else {
-                    App.i().readHost();
+//                    App.i().readHost();
                 }
                 break;
-            case R.id.setting_order_tagfeed_sb_flyme:
-                PrefUtils.i().setOrderTagFeed(v.isChecked());
-                break;
-            case R.id.setting_link_open_mode_sb_flyme:
-                PrefUtils.i().setSysBrowserOpenLink(v.isChecked());
-                break;
-            case R.id.setting_auto_toggle_theme_sb_flyme:
-                PrefUtils.i().setAutoToggleTheme(v.isChecked());
-                break;
+//            case R.id.setting_sync_all_starred_sb_flyme:
+//                WithPref.i().setSyncAllStarred(v.isChecked());
+//                syncAllStarred();
+//                break;
+//            case R.id.setting_order_tagfeed_sb_flyme:
+//                WithPref.i().setOrderTagFeed(v.isChecked());
+//                break;
 //            case R.id.setting_scroll_mark_sb_flyme:
-//                PrefUtils.i().setScrollMark(v.isChecked());
+//                WithPref.i().setScrollMark(v.isChecked());
 //                break;
 //            case R.id.setting_left_right_slide_sb_flyme:
-//                PrefUtils.i().setLeftRightSlideArticle(v.isChecked());
+//                WithPref.i().setLeftRightSlideArticle(v.isChecked());
 //                break;
+            default:
+                break;
         }
-//        KLog.d("Switch: " , v.isChecked() );
+//        KLog.i("Switch: " , v.isChecked() );
     }
 
-    private void syncAllStarred() {
-        KLog.i("【获取所有加星文章1】");
-        if (PrefUtils.i().isSyncAllStarred()) { // !PrefUtils.i().isHadSyncAllStarred() &&
-            Intent intent = new Intent(this, MainService.class);
-            intent.setAction(MainService.SYNC_ALL_STARRED);
-            startService(intent);
-            KLog.i("【获取所有加星文章2】");
-        }
-    }
 
     private void showInoreaderProxyHostDialog() {
         new MaterialDialog.Builder(this)
-                .title(R.string.setting_inoreader_proxy_dialog_title)
+                .title(R.string.setting_proxy_title)
 //                .content(R.string.setting_inoreader_proxy_dialog_title)
                 .inputType(InputType.TYPE_CLASS_TEXT)
                 .inputRange(8, 34)
-                .input(null, PrefUtils.i().getInoreaderProxyHost(), new MaterialDialog.InputCallback() {
+                .input(null, WithPref.i().getInoreaderProxyHost(), new MaterialDialog.InputCallback() {
                     @Override
                     public void onInput(MaterialDialog dialog, CharSequence input) {
-                        PrefUtils.i().setInoreaderProxyHost(input.toString());
-                        App.i().readHost();
+                        WithPref.i().setInoreaderProxyHost(input.toString());
+//                        App.i().readHost();
                     }
                 })
                 .positiveText("保存")
                 .show();
     }
 
-    public void onClickUpdateArticle(View view){
-//        Intent data = new Intent();
-//        data.putExtra("source", "updateArticles" );
-        SettingActivity.this.setResult( 2);//注意下面的RESULT_OK常量要与回传接收的Activity中onActivityResult（）方法一致
-        SettingActivity.this.finish();
-    }
-    public void onClickClearErrorCache(View view){
-        clearAll();
-    }
 
+    public void onClickAutoSyncFrequencySelect(View view) {
+        final int[] minuteArray = this.getResources().getIntArray(R.array.setting_sync_frequency_minute);
+        int preSelectTimeFrequency = WithPref.i().getAutoSyncFrequency();
+        int preSelectTimeFrequencyIndex = -1;
 
-    private void clearAll(){
-        List<Article> allArts = WithDB.i().loadAllArts();
-        KLog.i("清除" +  "--"+  allArts.size()  + "--" );
-        if( allArts.size()==0){return;}
-
-        File dir =  new File( App.cacheRelativePath ) ;
-        File[] files = dir.listFiles();
-
-        Map<String,Integer> map = new ArrayMap<>( allArts.size() + files.length );
-
-        // 数据量大的一方
-        for( File file : files ){
-            map.put(file.getName(), 1);
-            KLog.d( "存在文件："+ file.getName() ); // 存在3类文件 md5(历史遗留)、md5_files、md5.html
-        }
-
-        // 数据量小的一方
-        for ( Article item : allArts ) {
-            String articleIdToMD5 = StringUtil.stringToMD5(item.getId());
-            Integer cc = map.get( articleIdToMD5 + ".html" );
-            if(cc!=null) {
-                map.put( articleIdToMD5 + ".html" , ++cc);
-                map.put( articleIdToMD5 + "_files" , 2 );  // 1，去掉
-                KLog.d( "重复："+ articleIdToMD5 + "==" + cc);
-            }else {
-//                map.put( articleIdToMD5 , 0);
-                KLog.d( "不重复："+ articleIdToMD5 );
-            }
-        }
-        // 遍历结果
-        for( Map.Entry<String, Integer> entry: map.entrySet()) {
-            if(entry.getValue()==1) {
-                // 删除
-                KLog.d( "多余文件："+ entry.getKey() );
-                FileUtil.deleteHtmlDir(new File(App.cacheRelativePath + entry.getKey()));
-            }
-        }
-
-
-    }
-
-    public void showClearBeforeDay(View view) {
-//        final CharSequence[] dayValueItems = this.getResources().getTextArray(R.array.setting_clear_day_dialog_item_array);
-        final int[] dayValueItems = this.getResources().getIntArray(R.array.setting_clear_day_dialog_item_array);
-        int num = dayValueItems.length;
-        CharSequence[] dayDescItems = new CharSequence[num];
+        int num = minuteArray.length;
+        CharSequence[] timeDescItems = new CharSequence[num];
         for (int i = 0; i < num; i++) {
-            dayDescItems[i] = getResources().getString(R.string.clear_day_summary, dayValueItems[i] + "");
-            if (clearBeforeDay == dayValueItems[i]) {
-                clearBeforeDayIndex = i;
+            if (minuteArray[i] >= 60) {
+                timeDescItems[i] = getResources().getString(R.string.xx_hour, minuteArray[i] / 60 + "");
+            }else {
+                timeDescItems[i] = getResources().getString(R.string.xx_minute, minuteArray[i] + "");
+            }
+            if (preSelectTimeFrequency == minuteArray[i]) {
+                preSelectTimeFrequencyIndex = i;
             }
         }
-//        getClearBeforeDayIndex();
-//        final int[] dayValueItems = this.getResources().getIntArray(R.array.setting_clear_day_dialog_item_array);
-//        int num = dayValueItems.length;
-//        for(int i=0; i< num; i++){
-//            if ( clearBeforeDay == dayValueItems[i] ){
-//                clearBeforeDayIndex = i;
-//            }
-//        }
+
+        final CharSequence[] timeDescArray = timeDescItems;
 
         new MaterialDialog.Builder(this)
-                .title(R.string.setting_clear_day_dialog_title)
-                .items(dayDescItems)
-                .itemsCallbackSingleChoice( clearBeforeDayIndex, new MaterialDialog.ListCallbackSingleChoice() {
+                .title(R.string.setting_sync_frequency_title)
+                .items(timeDescArray)
+                .itemsCallbackSingleChoice(preSelectTimeFrequencyIndex, new MaterialDialog.ListCallbackSingleChoice() {
                     @Override
                     public boolean onSelection(MaterialDialog dialog, View view, int which, CharSequence text) {
-                        clearBeforeDay = dayValueItems[which];
-                        clearBeforeDayIndex = which;
-                        PrefUtils.i().setClearBeforeDay(clearBeforeDay);
-                        KLog.i("选择了" + clearBeforeDayIndex);
-                        clearBeforeDaySummary.setText(getResources().getString(R.string.clear_day_summary, clearBeforeDay + ""));
+                        WithPref.i().setAutoSyncFrequency(minuteArray[which]);
+                        KLog.i("选择了" + which);
+                        autoSyncFrequencySummary.setText(timeDescArray[which]);
                         dialog.dismiss();
                         return true; // allow selection
                     }
                 })
-//                .positiveText(R.string.choose_label)
                 .show();
     }
 
+    public void showClearBeforeDay(View view) {
+        final int[] dayValueArray = this.getResources().getIntArray(R.array.setting_clear_day_dialog_item_array);
+        int preSelectClearBeforeDay = WithPref.i().getClearBeforeDay();
+        int preSelectClearBeforeDayIndex = -1;
+
+        int num = dayValueArray.length;
+        CharSequence[] dayDescArrayTemp = new CharSequence[num];
+        for (int i = 0; i < num; i++) {
+            dayDescArrayTemp[i] = getResources().getString(R.string.clear_day_summary, dayValueArray[i] + "");
+            if (preSelectClearBeforeDay == dayValueArray[i]) {
+                preSelectClearBeforeDayIndex = i;
+            }
+        }
+
+        final CharSequence[] dayDescArray = dayDescArrayTemp;
+
+        new MaterialDialog.Builder(this)
+                .title(R.string.setting_clear_day_title)
+                .items(dayDescArray)
+                .itemsCallbackSingleChoice(preSelectClearBeforeDayIndex, new MaterialDialog.ListCallbackSingleChoice() {
+                    @Override
+                    public boolean onSelection(MaterialDialog dialog, View view, int which, CharSequence text) {
+                        WithPref.i().setClearBeforeDay(dayValueArray[which]);
+                        clearBeforeDaySummary.setText(dayDescArray[which]);
+                        KLog.i("选择了" + which);
+                        dialog.dismiss();
+                        return true;
+                    }
+                })
+                .show();
+    }
+
+
     public void showAbout(View view) {
-            new MaterialDialog.Builder(this)
-                    .title(R.string.setting_about_dialog_title)
-                    .content(R.string.setting_about_dialog_content)
+        new MaterialDialog.Builder(this)
+                .title(R.string.setting_about_dialog_title)
+                .content(R.string.setting_about_dialog_content)
 //                    .positiveText(R.string.agree)
 //                    .negativeText(R.string.disagree)
 //                    .positiveColorRes(R.color.material_red_400)
@@ -309,7 +381,7 @@ public class SettingActivity extends BaseActivity {
 //                    .dividerColorRes(R.color.material_teal_a400)
 //                    .btnSelector(R.drawable.md_btn_selector_custom, DialogAction.POSITIVE)
 //                    .theme(Theme.DARK)
-                    .show();
+                .show();
     }
 
 
@@ -334,12 +406,8 @@ public class SettingActivity extends BaseActivity {
         }
     }
 
-    public void onClickFeedback(View view) {
-        Intent intent = new Intent();
-        intent.setAction(android.content.Intent.ACTION_VIEW);
-        intent.setData(Uri.parse("http://support.qq.com/embed/15424"));
-        startActivity(intent); // 目前无法坐那那种可以选择打开方式的
-    }
+
+    private MaterialDialog materialDialog;
 
     public void onClickEsc(View view) {
         App.i().clearApiData();
@@ -349,6 +417,51 @@ public class SettingActivity extends BaseActivity {
     }
 
 
+    public void onClickBackup(View view) {
+        materialDialog = new MaterialDialog.Builder(this)
+                .title("正在处理")
+                .content("请耐心等待下")
+                .progress(true, 0)
+                .canceledOnTouchOutside(false)
+                .progressIndeterminateStyle(false)
+                .show();
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                FileUtil.backup();
+                materialDialog.dismiss();
+            }
+        }).start();
+
+    }
+
+    public void onClickRestore(View view) {
+        materialDialog = new MaterialDialog.Builder(this)
+                .title("正在处理")
+                .content("请耐心等待下")
+                .progress(true, 0)
+                .canceledOnTouchOutside(false)
+                .progressIndeterminateStyle(false)
+                .show();
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                FileUtil.restore();
+                materialDialog.dismiss();
+            }
+        }).start();
+    }
+
+    public void onClickReadConfig(View view) {
+        materialDialog = new MaterialDialog.Builder(this)
+                .content("正在读取")
+                .progress(true, 0)
+                .canceledOnTouchOutside(false)
+                .progressIndeterminateStyle(false)
+                .show();
+        App.i().initFeedsConfig();
+        materialDialog.dismiss();
+    }
 
     private void initToolbar() {
         Toolbar toolbar = findViewById(R.id.setting_toolbar);
@@ -356,8 +469,115 @@ public class SettingActivity extends BaseActivity {
         getSupportActionBar().setHomeButtonEnabled(true); // 这个小于4.0版本是默认为true，在4.0及其以上是false。该方法的作用：决定左上角的图标是否可以点击(没有向左的小图标)，true 可点
         getSupportActionBar().setDisplayHomeAsUpEnabled(true); // 决定左上角图标的左侧是否有向左的小箭头，true 有小箭头
         getSupportActionBar().setDisplayShowTitleEnabled(true);
-
         // setDisplayShowHomeEnabled(true)   //使左上角图标是否显示，如果设成false，则没有程序图标，仅仅就个标题，否则，显示应用程序图标，对应id为android.R.id.home，对应ActionBar.DISPLAY_SHOW_HOME
         // setDisplayShowCustomEnabled(true)  // 使自定义的普通View能在title栏显示，即actionBar.setCustomView能起作用，对应ActionBar.DISPLAY_SHOW_CUSTOM
     }
+
+
+//    public void onClickFeedback(View view) {
+//        Intent intent = new Intent();
+//        intent.setAction(android.content.Intent.ACTION_VIEW);
+//        intent.loadDataWithBaseURL(Uri.parse("http://support.qq.com/embed/15424"));
+//        startActivity(intent); // 目前无法做那那种可以选择打开方式的
+//    }
+
+//    public void onClickAutoSyncFrequency(View view){
+//        MaterialDialog dialog = new MaterialDialog.Builder(this)
+//                .title("同步频率")
+//                .customView(R.layout.select_night_time_interval_view, true)
+//                .positiveText("确认")
+//                .negativeText("取消")
+//                .onPositive(new MaterialDialog.SingleButtonCallback() {
+//                    @Override
+//                    public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
+//                        Tool.showShort("Password: " );
+//                    }
+//                }).build();
+//        dialog.show();
+//    }
+//    public void onClickHandleSavedPages(View view) {
+//        materialDialog = new MaterialDialog.Builder(this)
+//                .title(R.string.setting_handle_saved_pages_title)
+//                .content(R.string.dialog_please_wait)
+//                .progress(true, 0)
+//                .canceledOnTouchOutside(false)
+//                .progressIndeterminateStyle(false)
+//                .show();
+//        new Thread(new Runnable() {
+//            @Override
+//            public void run() {
+//                /**
+//                 * 移动“保存且已读”的文章至一个新的文件夹
+//                 * test 这里可能有问题，因为在我手机中有出现，DB中文章已经不存在，但文件与文件夹还存在与Box文件夹内的情况。
+//                 */
+//                List<Article> boxReadArts = WithDB.i().getArtInReadedBox();
+//                List<Article> storeReadArts = WithDB.i().getArtInReadedStore();
+//                KLog.i("移动文章" + boxReadArts.size() + "=" + storeReadArts.size());
+//
+//                for (Article article : boxReadArts) {
+//                    // 移动目录
+////                    FileUtil.moveDir(App.cacheRelativePath + StringUtil.str2MD5(article.getId()) + "_files", App.boxRelativePath + article.getTitle() + "_files");
+////                    FileUtil.saveBoxHtml( article.getTitle() , StringUtil.getModHtml( article ));
+////                    FileUtil.saveArticle2Box(article);
+//                    FileUtil.saveArticle(App.boxRelativePath, article);
+//                    article.setSaveDir(Api.SAVE_DIR_CACHE);
+//                }
+//                for (Article article : storeReadArts) {
+//                    // 移动目录
+////                    FileUtil.moveDir(App.cacheRelativePath + StringUtil.str2MD5(article.getId()) + "_files", App.storeRelativePath + article.getTitle() + "_files");
+////                    FileUtil.saveStoreHtml( article.getTitle() , StringUtil.getModHtml( article ));
+////                    FileUtil.saveArticle2Store(article);
+//                    FileUtil.saveArticle(App.storeRelativePath, article);
+//                    article.setSaveDir(Api.SAVE_DIR_CACHE);
+//                }
+//                WithDB.i().saveArticles(boxReadArts);
+//                WithDB.i().saveArticles(storeReadArts);
+//                materialDialog.dismiss();
+//            }
+//        }).start();
+//    }
+//    public void onClickClearErrorCache(View view){
+//        clearAll();
+//    }
+//
+//
+//    private void clearAll(){
+//        List<Article> allArts = WithDB.i().loadAllArts();
+//        KLog.i("清除" +  "--"+  allArts.size()  + "--" );
+//        if( allArts.size()==0){return;}
+//
+//        File dir =  new File( App.cacheRelativePath ) ;
+//        File[] files = dir.listFiles();
+//
+//        Map<String,Integer> map = new ArrayMap<>( allArts.size() + files.length );
+//
+//        // 数据量大的一方
+//        for( File file : files ){
+//            map.put(file.getName(), 1);
+//            KLog.i( "存在文件："+ file.getName() ); // 存在3类文件 md5(历史遗留)、md5_files、md5.html
+//        }
+//
+//        // 数据量小的一方
+//        for ( Article item : allArts ) {
+//            String articleIdToMD5 = StringUtil.str2MD5(item.getId());
+//            Integer cc = map.get( articleIdToMD5 + ".html" );
+//            if(cc!=null) {
+//                map.put( articleIdToMD5 + ".html" , ++cc);
+//                map.put( articleIdToMD5 + "_files" , 2 );  // 1，去掉
+//                KLog.i( "重复："+ articleIdToMD5 + "==" + cc);
+//            }else {
+////                map.put( articleIdToMD5 , 0);
+//                KLog.i( "不重复："+ articleIdToMD5 );
+//            }
+//        }
+//        // 遍历结果
+//        for( Map.Entry<String, Integer> entry: map.entrySet()) {
+//            if(entry.getValue()==1) {
+//                // 删除
+//                KLog.i( "多余文件："+ entry.getKey() );
+//                FileUtil.deleteHtmlDir(new File(App.cacheRelativePath + entry.getKey()));
+//            }
+//        }
+//    }
+
 }

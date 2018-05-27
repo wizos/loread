@@ -1,7 +1,11 @@
 package me.wizos.loread.activity;
 
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Bundle;
+import android.support.v4.content.LocalBroadcastManager;
 import android.text.TextUtils;
 import android.view.View;
 import android.widget.Button;
@@ -9,16 +13,18 @@ import android.widget.EditText;
 import android.widget.Space;
 
 import com.kyleduo.switchbutton.SwitchButton;
-import com.lzy.okgo.exception.HttpException;
 import com.socks.library.KLog;
 
-import java.io.IOException;
+import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
+import org.greenrobot.eventbus.ThreadMode;
 
 import me.wizos.loread.R;
-import me.wizos.loread.data.PrefUtils;
-import me.wizos.loread.net.DataApi;
+import me.wizos.loread.data.WithPref;
+import me.wizos.loread.event.Login;
+import me.wizos.loread.net.Api;
+import me.wizos.loread.service.MainService;
 import me.wizos.loread.utils.ToastUtil;
-import me.wizos.loread.utils.Tool;
 import me.wizos.loread.view.colorful.Colorful;
 
 /**
@@ -28,7 +34,7 @@ public class LoginActivity extends BaseActivity implements View.OnLayoutChangeLi
     protected static final String TAG = "LoginActivity";
     protected String mAccountID = "";
     protected String mAccountPD = "";
-    private EditText vID, vPD;
+    private EditText idEditText, pdEditText;
     private Button loginButton;
 
     @Override
@@ -39,6 +45,9 @@ public class LoginActivity extends BaseActivity implements View.OnLayoutChangeLi
         forInput();
         initView();
         recoverData();
+        initBroadcast();
+        //注册
+        EventBus.getDefault().register(this);
     }
 
 
@@ -49,32 +58,54 @@ public class LoginActivity extends BaseActivity implements View.OnLayoutChangeLi
 
 
     @Override
-    protected void onDestroy() {
+    public void onDestroy() {
+        manager.unregisterReceiver(localReceiver);
+        EventBus.getDefault().unregister(this);
         super.onDestroy();
     }
 
 
+    /**
+     * 事件响应方法
+     * 接收消息
+     *
+     * @param loginEvent
+     */
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void onEvent(Login loginEvent) {
+        if (loginEvent.isSuccess()) {
+            Intent intentToActivity = new Intent(LoginActivity.this, MainActivity.class);
+            intentToActivity.setAction("firstSetupStart");
+            startActivity(intentToActivity);
+            LoginActivity.this.finish();
+        } else {
+            loginButton.setEnabled(true);
+            idEditText.setEnabled(true);
+            pdEditText.setEnabled(true);
+            ToastUtil.showLong(getString(R.string.tips_login_failure) + loginEvent.getInfo());
+        }
+    }
 
-    private void initView(){
-        vID = findViewById(R.id.edittext_id);
-        vPD = findViewById(R.id.edittext_pd);
+    private void initView() {
+        idEditText = findViewById(R.id.edittext_id);
+        pdEditText = findViewById(R.id.edittext_pd);
         loginButton = findViewById(R.id.login_button_login);
-        SwitchButton inoreaderProxy = findViewById(R.id.setting_inoreader_proxy_sb_flyme);
-        inoreaderProxy.setChecked(PrefUtils.i().isInoreaderProxy());
+        SwitchButton inoreaderProxy = findViewById(R.id.setting_proxy_sb);
+        inoreaderProxy.setChecked(WithPref.i().isInoreaderProxy());
     }
 
 
     /**
      * 默认填充密码
      */
-    private void recoverData(){
-        mAccountID = PrefUtils.i().getAccountID();
-        mAccountPD = PrefUtils.i().getAccountPD();
+    private void recoverData() {
+        mAccountID = WithPref.i().getAccountID();
+        mAccountPD = WithPref.i().getAccountPD();
         if (!TextUtils.isEmpty(mAccountID)) {
-            vID.setText(mAccountID);
+            idEditText.setText(mAccountID);
         }
         if (!TextUtils.isEmpty(mAccountPD)) {
-            vPD.setText(mAccountPD);
+            pdEditText.setText(mAccountPD);
         }
     }
 
@@ -113,66 +144,109 @@ public class LoginActivity extends BaseActivity implements View.OnLayoutChangeLi
 
 
     public void onLoginClicked(View view) {
-        mAccountID = vID.getText().toString();
-        mAccountPD = vPD.getText().toString();
+        mAccountID = idEditText.getText().toString();
+        mAccountPD = pdEditText.getText().toString();
 
         if(mAccountID==null) {
-            ToastUtil.showShort(getString(R.string.tips_login_failure));
+            ToastUtil.showLong(getString(R.string.tips_login_failure));
             return;
         }else if(mAccountID.length()<4)
             if(!mAccountID.contains("@") || mAccountID.contains(" ")) {
-                ToastUtil.showShort(getString(R.string.tips_login_id_is_error));
+                ToastUtil.showLong(getString(R.string.tips_login_id_is_error));
                 return;
             }
         if(mAccountPD==null) {
-            ToastUtil.showShort(getString(R.string.tips_login_pd_is_empty));
+            ToastUtil.showLong(getString(R.string.tips_login_pd_is_empty));
             return;
-        }else if(mAccountID.length()<4){
-            ToastUtil.showShort(getString(R.string.tips_login_pd_is_error));
+        }else if(mAccountID.length() < 4) {
+            ToastUtil.showLong(getString(R.string.tips_login_pd_is_error));
             return;
         }
-
-        loginButton.setEnabled(false);
 
         startLogin();
         KLog.i("【handler】" + "-");
     }
 
+//    private void startLogin2() {
+//        new Thread(new Runnable() {
+//            @Override
+//            public void run() {
+//                try {
+//                    boolean loginResult = DataApi.i().clientLogin(mAccountID, mAccountPD);
+//                    if (!loginResult) {
+//                        ToastUtil.showLong(getString(R.string.tips_login_failure));
+//                    }
+//                    DataApi.i().fetchUserInfo();
+//                    Intent intentToActivity = new Intent(LoginActivity.this, MainActivity.class);
+//                    startActivity(intentToActivity);
+//                    LoginActivity.this.finish();
+//                } catch (HttpException e) {
+//                    e.printStackTrace();
+//                    Tool.showLong("login时出了异常：HttpException");
+//                } catch (IOException e) {
+//                    e.printStackTrace();
+//                    Tool.showLong("login时出了异常：IOException");
+//                } catch (IllegalStateException e) {
+//                    e.printStackTrace();
+//                    Tool.showLong("login时出了异常：IllegalStateException");
+//                } finally {
+//                    loginButton.post(new Runnable() {// 用 post 可以解决在非主线程运行，会报错
+//                        @Override
+//                        public void run() {
+//                            loginButton.setEnabled(true);
+//                        }
+//                    });
+//                }
+//            }
+//        }).start();
+//    }
 
     private void startLogin() {
-        KLog.i("开始登录");
-        new Thread(new Runnable() {
+        loginButton.setEnabled(false);
+        idEditText.setEnabled(false);
+        pdEditText.setEnabled(false);
+
+        Intent intent = new Intent(this, MainService.class);
+        intent.setAction(Api.LOGIN);
+        intent.putExtra("accountID", mAccountID);
+        intent.putExtra("accountPW", mAccountPD);
+        startService(intent);
+    }
+
+
+    private LocalBroadcastManager manager;
+    private BroadcastReceiver localReceiver;
+
+    private void initBroadcast() {
+        manager = LocalBroadcastManager.getInstance(this);
+        // 先创建一个 BroadcastReceiver 实例
+        localReceiver = new BroadcastReceiver() {
             @Override
-            public void run() {
-                try {
-                    boolean loginResult = DataApi.i().clientLogin(mAccountID, mAccountPD);
-                    if (!loginResult) {
-                        ToastUtil.showShort(getString(R.string.tips_login_failure));
-                    }
-                    DataApi.i().fetchUserInfo();
-                    Intent intentToActivity = new Intent(LoginActivity.this, MainActivity.class);
-                    startActivity(intentToActivity);
-                    LoginActivity.this.finish();
-                } catch (HttpException e) {
-                    e.printStackTrace();
-                    Tool.showShort("login时出了异常：HttpException");
-                } catch (IOException e) {
-                    e.printStackTrace();
-                    Tool.showShort("login时出了异常：IOException");
-                } catch (IllegalStateException e) {
-                    e.printStackTrace();
-                    Tool.showShort("login时出了异常：IllegalStateException");
-                } finally {
-                    loginButton.post(new Runnable() {// 用 post 可以解决在非主线程运行，会报错
-                        @Override
-                        public void run() {
-                            loginButton.setEnabled(true);
-                        }
-                    });
+            public void onReceive(Context context, Intent intent) {
+                String data = intent.getStringExtra(Api.NOTICE);
+//                String data = intent.getAction();
+                KLog.e("接收到的数据为：", data);
+                switch (data) {
+                    case Api.N_COMPLETED:
+                        Intent intentToActivity = new Intent(LoginActivity.this, MainActivity.class);
+                        startActivity(intentToActivity);
+                        LoginActivity.this.finish();
+                        break;
+                    // 文章获取失败
+                    case Api.N_ERROR:
+                        ToastUtil.showLong(getString(R.string.tips_login_failure));
+                        loginButton.setEnabled(true);
+                        idEditText.setEnabled(true);
+                        pdEditText.setEnabled(true);
+                        break;
+                    default:
+                        break;
                 }
             }
-        }).start();
+        };
 
+        // 动态注册这个 receiver 实例，记得在不需要时注销   // Api.SYNC_ALL
+        manager.registerReceiver(localReceiver, new IntentFilter(Api.SYNC_ALL));
     }
 
 
@@ -180,11 +254,11 @@ public class LoginActivity extends BaseActivity implements View.OnLayoutChangeLi
         SwitchButton v = (SwitchButton)view;
         KLog.d( "点击" );
         switch (v.getId()) {
-            case R.id.setting_inoreader_proxy_sb_flyme:
-                PrefUtils.i().setInoreaderProxy(v.isChecked());
+            case R.id.setting_proxy_sb:
+                WithPref.i().setInoreaderProxy(v.isChecked());
                 break;
         }
-        KLog.d("Switch: " , v.isChecked() );
+        KLog.i("Switch: ", v.isChecked() );
     }
 
 

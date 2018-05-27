@@ -133,7 +133,7 @@
 //            @Override
 //            public void run() {
 ////                webView.loadDataWithBaseURL(FileUtil.getAbsoluteDir(dataList.get(position).getSaveDir()), StringUtil.getArticleHeader(dataList.get(position)) + initContent3( dataList.get(position) ) + StringUtil.getArticleFooter(), "text/html", "utf-8", null);
-//                webView.setData(FileUtil.getAbsoluteDir(dataList.get(position).getSaveDir()), StringUtil.getArticleHeader(dataList.get(position)) + initContent3( dataList.get(position) ) + StringUtil.getArticleFooter());
+//                webView.loadDataWithBaseURL(FileUtil.getAbsoluteDir(dataList.get(position).getSaveDir()), StringUtil.getArticleHeader(dataList.get(position)) + initContent3( dataList.get(position) ) + StringUtil.getArticleFooter());
 //            }
 //        });
 //
@@ -141,11 +141,11 @@
 //    }
 //
 //    private String initContent1(Article article ){
-//        return article.getContent();
+//        return article.getHtml();
 //    }
 //
 //    private String initContent2(Article article ){
-//        String articleContent = article.getContent();
+//        String articleContent = article.getHtml();
 //        Document document = Jsoup.parseBodyFragment(articleContent);
 //        Elements elements = document.getElementsByTag("img");
 //
@@ -179,14 +179,14 @@
 //            imageHolder = "file:///android_asset/image/image_holder_loading.gif";
 //        }
 //
-//        String articleContent = article.getContent();
+//        String articleContent = article.getHtml();
 //        Document document = Jsoup.parseBodyFragment(articleContent);
 //        Elements elements = document.getElementsByTag("img");
 //
 //        for(Element element : elements){
 //            originalUrl = element.attr("src");
 //            element.attr("original-src", originalUrl);
-//            cacheUrl = FileUtil.readImageCache(article.getId(),originalUrl);
+//            cacheUrl = FileUtil.readCacheFilePath(article.getId(),originalUrl);
 //            if( cacheUrl != null ){
 //                element.attr("src", cacheUrl);
 //            }else {

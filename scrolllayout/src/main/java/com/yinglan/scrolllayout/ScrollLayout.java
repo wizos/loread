@@ -634,7 +634,7 @@ public class ScrollLayout extends FrameLayout {
         recyclerView.addOnScrollListener(associatedRecyclerViewListener);
         updateRecyclerViewScrollState(recyclerView);
     }
-//
+
 //    private OnLog mOnLog;
 //    public void setOnLog(OnLog onLog) {
 //        mOnLog = onLog;

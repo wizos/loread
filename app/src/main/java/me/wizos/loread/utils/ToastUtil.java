@@ -17,7 +17,7 @@ public class ToastUtil {
             toast = null;
         }
         toast = Toast.makeText(App.i(), msg, Toast.LENGTH_LONG);
-        KLog.d(msg);
+        KLog.e(msg);
         toast.show();
     }
     public static void showShort(String msg) {
@@ -26,7 +26,7 @@ public class ToastUtil {
             toast = null;
         }
         toast = Toast.makeText(App.i(), msg, Toast.LENGTH_SHORT);
-        KLog.d(msg);
+        KLog.e(msg);
         toast.show();
     }
 }

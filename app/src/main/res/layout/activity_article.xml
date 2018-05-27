@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<android.support.design.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/art_root"
@@ -10,183 +10,191 @@
     android:windowDrawsSystemBarBackgrounds="true"
     tools:background="@color/article_dark_background"
     tools:context=".activity.ArticleActivity">
-    <!-- android:fitsSystemWindows="true" 简单的讲：设置应用布局时是否考虑系统窗口布局；如果为true，将调整系统窗口布局以适应你自定义的布局。比如系统有状态栏，应用也有状态栏时。 -->
 
-    <android.support.design.widget.CoordinatorLayout
-        android:layout_above="@+id/article_bottombar"
+
+    <!--app:popupTheme="@style/AppTheme.PopupOverlay"-->
+    <android.support.design.widget.AppBarLayout
+        android:id="@+id/art_appBarLayout"
+        android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="wrap_content">
 
-        <!--app:layout_scrollFlags="scroll|enterAlways|snap"-->
-        <!--app:popupTheme="@style/AppTheme.PopupOverlay"-->
-        <android.support.design.widget.AppBarLayout
-            android:id="@+id/art_appBarLayout"
-            android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
+        <android.support.v7.widget.Toolbar
+            android:id="@+id/art_toolbar"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            android:layout_height="?attr/actionBarSize"
+            android:background="?attr/topbar_bg"
+            app:layout_scrollFlags="scroll|enterAlways|snap">
 
-            <android.support.v7.widget.Toolbar
-                android:id="@+id/art_toolbar"
-                android:layout_width="match_parent"
-                android:layout_height="?attr/actionBarSize"
-                android:background="?attr/topbar_bg">
+            <TextView
+                android:id="@+id/art_toolbar_num"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_gravity="center"
+                android:gravity="center"
+                android:onClick="debugArticleInfo"
+                android:textSize="12sp"
+                tools:text="12" />
 
-                <TextView
-                    android:id="@+id/art_toolbar_num"
-                    android:layout_width="wrap_content"
-                    android:layout_height="match_parent"
-                    android:layout_gravity="center"
-                    android:gravity="center"
-                    android:onClick="debugArticleInfo"
-                    android:textSize="12sp"
-                    tools:text="12" />
+            <me.wizos.loread.view.IconFontView
+                android:id="@+id/art_bottombar_save"
+                style="@style/top_bar_iconfont"
+                android:layout_gravity="end|center"
+                android:text="@string/font_unsave" />
+        </android.support.v7.widget.Toolbar>
 
-                <me.wizos.loread.view.IconFontView
-                    android:id="@+id/art_bottombar_save"
-                    style="@style/top_bar_iconfont"
-                    android:layout_gravity="end|center"
-                    android:text="@string/font_unsave" />
-            </android.support.v7.widget.Toolbar>
-        </android.support.design.widget.AppBarLayout>
-
-        <!--android:onClick="onSaveClick"-->
-        <!-- Use Nested to make toolbar auto hide enable -->
-        <!--CoordinatorLayout必须作为整个布局的父布局容器。 给需要滑动的组件设置 app:layout_scrollFlags=”scroll|enterAlways” 属性。-->
-        <!--给你的可滑动的组件，也就是RecyclerView 或者 NestedScrollView 设置如下属性：-->
-        <!--app:layout_behavior="@string/appbar_scrolling_view_behavior"-->
-        <!--android:layout_below="@id/art_appBarLayout"-->
-
-
-        <me.wizos.loread.view.SwipeRefreshLayoutS
-            android:id="@+id/art_swipe_refresh"
+        <ProgressBar
+            android:id="@+id/article_progress_bar"
+            style="@style/Base.Widget.AppCompat.ProgressBar.Horizontal"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:background="?attr/root_view_bg"
-            app:layout_behavior="@string/appbar_scrolling_view_behavior"
-            tools:context=".activity.ArticleActivity">
+            android:progressDrawable="@drawable/progress_bg"
+            android:layout_height="2dp"
+            android:visibility="gone" />
+    </android.support.design.widget.AppBarLayout>
 
-            <me.wizos.loread.view.ViewPagerS
-                android:id="@+id/art_viewpager"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:persistentDrawingCache="animation"
-                android:background="?attr/root_view_bg" />
-        </me.wizos.loread.view.SwipeRefreshLayoutS>
+    <!--android:onClick="onSaveClick"-->
+    <!-- Use Nested to make toolbar auto hide enable -->
+    <!--CoordinatorLayout必须作为整个布局的父布局容器。 给需要滑动的组件设置 app:layout_scrollFlags=”scroll|enterAlways” 属性。-->
+    <!--给你的可滑动的组件，也就是RecyclerView 或者 NestedScrollView 设置如下属性：-->
+    <!--app:layout_behavior="@string/appbar_scrolling_view_behavior"-->
+    <!--android:layout_below="@id/art_appBarLayout"-->
 
-    </android.support.design.widget.CoordinatorLayout>
+    <!--<me.wizos.loread.view.SwipeRefreshLayoutS-->
+    <!--android:id="@+id/art_swipe_refresh"-->
+    <!--android:layout_width="match_parent"-->
+    <!--android:layout_height="match_parent"-->
+    <!--android:background="?attr/root_view_bg"-->
+    <!--tools:context=".activity.ArticleActivity">-->
+    <!--</me.wizos.loread.view.SwipeRefreshLayoutS>-->
 
+    <me.wizos.loread.view.ViewPagerS
+        android:id="@+id/art_viewpager"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:persistentDrawingCache="animation"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior"
+        android:background="?attr/root_view_bg" />
 
-    <android.support.constraint.ConstraintLayout
+    <RelativeLayout
         android:id="@+id/article_bottombar"
         android:layout_width="match_parent"
         android:layout_height="@dimen/bottom_bar_height"
-        android:layout_gravity="center_vertical"
+        android:layout_gravity="bottom"
         android:layout_alignParentBottom="true"
-        android:paddingStart="60dp"
-        android:paddingEnd="60dp"
-        android:background="?attr/bottombar_bg">
+        android:background="?attr/bottombar_bg"
+        app:layout_behavior="me.wizos.loread.behavior.BottomNavigationViewBehavior">
         <View
             android:id="@+id/article_bottombar_divider"
             android:layout_width="match_parent"
             android:layout_height="0.5dp"
             android:layout_marginStart="10dp"
             android:layout_marginEnd="10dp"
-            app:layout_constraintTop_toTopOf="parent"
+            android:layout_alignParentTop="true"
             android:background="?attr/bottombar_divider" />
 
-        <!--<me.wizos.loread.view.IconFontView-->
-        <!--android:id="@+id/article_bottombar_share"-->
-        <!--style="@style/bottom_bar_iconfont"-->
-        <!--android:text="@string/font_share"-->
-        <!--app:layout_constraintHorizontal_chainStyle="spread"-->
-        <!--app:layout_constraintBottom_toBottomOf="parent"-->
-        <!--app:layout_constraintLeft_toLeftOf="parent"-->
-        <!--app:layout_constraintRight_toLeftOf="@id/article_bottombar_tag"  />-->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:paddingStart="60dp"
+            android:paddingEnd="60dp"
+            android:gravity="center"
+            android:orientation="horizontal">
+            <!--<me.wizos.loread.view.IconFontView-->
+            <!--android:id="@+id/article_bottombar_tag"-->
+            <!--style="@style/bottom_bar_iconfont"-->
+            <!--android:text="@string/font_label"-->
+            <!--android:onClick="onTagClick"/>-->
+            <me.wizos.loread.view.IconFontView
+                android:id="@+id/article_bottombar_star"
+                style="@style/bottom_bar_iconfont"
+                android:text="@string/font_unstar"
+                android:onClick="onStarClick" />
 
-        <me.wizos.loread.view.IconFontView
-            android:id="@+id/article_bottombar_tag"
-            style="@style/bottom_bar_iconfont"
-            android:text="@string/font_label"
-            android:onClick="onTagClick"
-            app:layout_constraintHorizontal_chainStyle="spread"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintLeft_toLeftOf="parent"
-            app:layout_constraintEnd_toStartOf="@id/article_bottombar_star" />
+            <me.wizos.loread.view.IconFontView
+                android:id="@+id/article_bottombar_read"
+                style="@style/bottom_bar_iconfont"
+                android:text="@string/font_readed"
+                android:onClick="onReadClick" />
+
+            <me.wizos.loread.view.IconFontView
+                android:id="@+id/article_bottombar_more"
+                style="@style/bottom_bar_iconfont"
+                android:text="@string/font_more"
+                android:onClick="onClickMore" />
+        </LinearLayout>
 
 
-        <!--android:onClick="onStarClick"-->
-        <me.wizos.loread.view.IconFontView
-            android:id="@+id/article_bottombar_star"
-            style="@style/bottom_bar_iconfont"
-            android:text="@string/font_unstar"
-            android:onClick="onStarClick"
-            app:layout_constraintHorizontal_bias="0.0"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintLeft_toRightOf="@id/article_bottombar_tag"
-            app:layout_constraintRight_toLeftOf="@id/article_bottombar_read" />
+    </RelativeLayout>
 
-        <!--android:onClick="onReadClick"-->
-        <me.wizos.loread.view.IconFontView
-            android:id="@+id/article_bottombar_read"
-            style="@style/bottom_bar_iconfont"
-            android:text="@string/font_readed"
-            android:onClick="onReadClick"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintLeft_toRightOf="@id/article_bottombar_star"
-            app:layout_constraintRight_toLeftOf="@id/article_bottombar_more" />
-
-        <me.wizos.loread.view.IconFontView
-            android:id="@+id/article_bottombar_more"
-            style="@style/bottom_bar_iconfont"
-            android:text="@string/font_more"
-            android:onClick="onClickMore"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintLeft_toRightOf="@id/article_bottombar_read"
-            app:layout_constraintRight_toRightOf="parent" />
-    </android.support.constraint.ConstraintLayout>
-
-    <!--<RelativeLayout-->
-    <!--android:id="@+id/art_bottombar"-->
+    <!--<android.support.constraint.ConstraintLayout-->
+    <!--android:id="@+id/article_bottombar"-->
     <!--android:layout_width="match_parent"-->
     <!--android:layout_height="@dimen/bottom_bar_height"-->
-    <!--android:layout_gravity="center_vertical|bottom"-->
+    <!--android:layout_gravity="bottom"-->
     <!--android:layout_alignParentBottom="true"-->
-    <!--android:background="?attr/bottombar_bg">-->
+    <!--android:paddingStart="60dp"-->
+    <!--android:paddingEnd="60dp"-->
+    <!--android:background="?attr/bottombar_bg"-->
+    <!--app:layout_behavior="me.wizos.loread.behavior.BottomNavigationViewBehavior">-->
 
     <!--<View-->
-    <!--android:id="@+id/art_bottombar_divider"-->
+    <!--android:id="@+id/article_bottombar_divider"-->
     <!--android:layout_width="match_parent"-->
     <!--android:layout_height="0.5dp"-->
     <!--android:layout_marginStart="10dp"-->
     <!--android:layout_marginEnd="10dp"-->
+    <!--app:layout_constraintTop_toTopOf="parent"-->
     <!--android:background="?attr/bottombar_divider" />-->
+
+    <!--&lt;!&ndash;<me.wizos.loread.view.IconFontView&ndash;&gt;-->
+    <!--&lt;!&ndash;android:id="@+id/article_bottombar_share"&ndash;&gt;-->
+    <!--&lt;!&ndash;style="@style/bottom_bar_iconfont"&ndash;&gt;-->
+    <!--&lt;!&ndash;android:text="@string/font_share"&ndash;&gt;-->
+    <!--&lt;!&ndash;app:layout_constraintHorizontal_chainStyle="spread"&ndash;&gt;-->
+    <!--&lt;!&ndash;app:layout_constraintBottom_toBottomOf="parent"&ndash;&gt;-->
+    <!--&lt;!&ndash;app:layout_constraintLeft_toLeftOf="parent"&ndash;&gt;-->
+    <!--&lt;!&ndash;app:layout_constraintRight_toLeftOf="@id/article_bottombar_tag"  />&ndash;&gt;-->
+
     <!--<me.wizos.loread.view.IconFontView-->
-    <!--android:id="@+id/art_bottombar_star"-->
+    <!--android:id="@+id/article_bottombar_tag"-->
     <!--style="@style/bottom_bar_iconfont"-->
-    <!--android:layout_toStartOf="@+id/art_bottombar_tag"-->
-    <!--android:text="@string/font_unstar"-->
-    <!--android:onClick="onStarClick"/>-->
-    <!--<me.wizos.loread.view.IconFontView-->
-    <!--android:id="@+id/art_bottombar_tag"-->
-    <!--style="@style/bottom_bar_iconfont"-->
-    <!--android:layout_centerInParent="true"-->
     <!--android:text="@string/font_label"-->
-    <!--android:onClick="onTagClick" />-->
+    <!--android:onClick="onTagClick"-->
+    <!--app:layout_constraintHorizontal_chainStyle="spread"-->
+    <!--app:layout_constraintBottom_toBottomOf="parent"-->
+    <!--app:layout_constraintLeft_toLeftOf="parent"-->
+    <!--app:layout_constraintEnd_toStartOf="@id/article_bottombar_star" />-->
 
+
+    <!--&lt;!&ndash;android:onClick="onStarClick"&ndash;&gt;-->
     <!--<me.wizos.loread.view.IconFontView-->
-    <!--android:id="@+id/art_bottombar_read"-->
+    <!--android:id="@+id/article_bottombar_star"-->
     <!--style="@style/bottom_bar_iconfont"-->
-    <!--android:layout_toEndOf="@id/art_bottombar_tag"-->
+    <!--android:text="@string/font_unstar"-->
+    <!--android:onClick="onStarClick"-->
+    <!--app:layout_constraintBottom_toBottomOf="parent"-->
+    <!--app:layout_constraintLeft_toRightOf="@id/article_bottombar_tag"-->
+    <!--app:layout_constraintRight_toLeftOf="@id/article_bottombar_read" />-->
+
+    <!--&lt;!&ndash;android:onClick="onReadClick"&ndash;&gt;-->
+    <!--<me.wizos.loread.view.IconFontView-->
+    <!--android:id="@+id/article_bottombar_read"-->
+    <!--style="@style/bottom_bar_iconfont"-->
     <!--android:text="@string/font_readed"-->
-    <!--android:onClick="onReadClick"/>-->
+    <!--android:onClick="onReadClick"-->
+    <!--app:layout_constraintBottom_toBottomOf="parent"-->
+    <!--app:layout_constraintLeft_toRightOf="@id/article_bottombar_star"-->
+    <!--app:layout_constraintRight_toLeftOf="@id/article_bottombar_more" />-->
 
     <!--<me.wizos.loread.view.IconFontView-->
-    <!--android:id="@+id/art_bottombar_readability"-->
+    <!--android:id="@+id/article_bottombar_more"-->
     <!--style="@style/bottom_bar_iconfont"-->
-    <!--android:text="@string/font_readability"-->
-    <!--android:layout_alignParentStart="true"-->
-    <!--android:onClick="onReadabilityClick" />-->
-    <!--</RelativeLayout>-->
+    <!--android:text="@string/font_more"-->
+    <!--android:onClick="onClickMore"-->
+    <!--app:layout_constraintBottom_toBottomOf="parent"-->
+    <!--app:layout_constraintLeft_toRightOf="@id/article_bottombar_read"-->
+    <!--app:layout_constraintRight_toRightOf="parent" />-->
+    <!--</android.support.constraint.ConstraintLayout>-->
 
 
-</RelativeLayout>
+</android.support.design.widget.CoordinatorLayout>

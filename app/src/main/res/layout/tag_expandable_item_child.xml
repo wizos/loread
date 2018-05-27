@@ -1,36 +1,43 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/child_item"
-    android:orientation="horizontal"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:gravity="center_vertical"
-    tools:ShowIn="@layout/activity_main">
+    android:layout_height="wrap_content">
 
-    <TextView
-        android:id="@+id/child_item_title"
-        android:layout_width="0dp"
+    <LinearLayout
+        android:id="@+id/child_item"
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:paddingTop="15dp"
-        android:paddingBottom="15dp"
-        android:paddingStart="70dp"
-        android:layout_weight="1"
         android:gravity="center_vertical"
-        android:lines="1"
-        android:textColor="?attr/lv_item_title_color"
-        android:textSize="16sp"
-        tools:text="这是父item" />
+        android:background="?attr/bottombar_bg"
+        tools:ShowIn="@layout/activity_main">
 
-    <TextView
-        android:id="@+id/child_item_count"
-        android:layout_width="80dp"
-        android:layout_height="match_parent"
-        android:paddingTop="15dp"
-        android:paddingBottom="15dp"
-        android:paddingEnd="20dp"
-        android:gravity="center_vertical|right"
-        android:textSize="14sp"
-        android:textColor="?attr/lv_item_desc_color"
-        tools:text="-9.9" />
-</LinearLayout>
+        <TextView
+            android:id="@+id/child_item_title"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:paddingTop="15dp"
+            android:paddingBottom="15dp"
+            android:paddingStart="70dp"
+            android:layout_weight="1"
+            android:gravity="center_vertical"
+            android:lines="1"
+            android:textColor="?attr/lv_item_title_color"
+            android:textSize="16sp"
+            tools:text="这是父item" />
+
+        <TextView
+            android:id="@+id/child_item_count"
+            android:layout_width="80dp"
+            android:layout_height="match_parent"
+            android:paddingTop="15dp"
+            android:paddingBottom="15dp"
+            android:paddingEnd="20dp"
+            android:gravity="center_vertical|right"
+            android:textSize="14sp"
+            android:textColor="?attr/lv_item_desc_color"
+            tools:text="-9.9" />
+    </LinearLayout>
+
+</FrameLayout>

@@ -9,8 +9,6 @@
     android:id="@+id/setting_coordinator"
     tools:context="me.wizos.loread.activity.SettingActivity">
 
-    <!--android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"-->
-    <!--app:layout_scrollFlags="scroll|enterAlways"-->
     <android.support.design.widget.AppBarLayout
         android:id="@+id/appBarLayout"
         android:theme="@style/AppTheme.AppBarOverlay"
@@ -24,130 +22,84 @@
             android:layout_height="?attr/actionBarSize" />
     </android.support.design.widget.AppBarLayout>
 
-
-
-    <!--app:layout_behavior="@string/appbar_scrolling_view_behavior"-->
     <android.support.v4.widget.NestedScrollView
         android:id="@+id/setting_scroll"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="?attr/root_view_bg"
+
+        tools:background="#e9e9e9"
         app:layout_behavior="@string/appbar_scrolling_view_behavior">
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:paddingBottom="@dimen/activity_vertical_margin"
-            android:paddingLeft="@dimen/activity_horizontal_margin"
-            android:paddingRight="@dimen/activity_horizontal_margin"
             android:orientation="vertical">
-            <!--<TextView-->
-            <!--android:id="@+id/setting_sync_icon"-->
-            <!--android:layout_width="match_parent"-->
-            <!--android:layout_height="20dp"-->
-            <!--tools:text="同步"-->
-            <!--android:text="同步"-->
-            <!--android:textSize="18sp" />-->
+
+            <TextView
+                android:id="@+id/setting_sync_icon"
+                style="@style/SettingItemHeader"
+                android:text="同步" />
             <LinearLayout style="@style/SettingItem">
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_weight="1"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical">
-                    <TextView
-                        android:id="@+id/setting_sync_first_open_title"
-                        style="@style/SettingItemTitle"
-                        android:text="@string/setting_sync_first_open_title" />
-                    <TextView
-                        android:id="@+id/setting_sync_first_open_tips"
-                        style="@style/SettingItemTips"
-                        android:text="@string/setting_sync_first_open_tips" />
-                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/setting_auto_sync_title"
+                    style="@style/SettingItemTitle2"
+                    android:text="@string/setting_auto_sync_title" />
                 <com.kyleduo.switchbutton.SwitchButton
-                    android:id="@+id/setting_sync_first_open_sb_flyme"
+                    android:id="@+id/setting_auto_sync_sb"
                     style="@style/SwitchButtonStyle"
                     android:onClick="onSBClick"
-                    android:checked="true"
-                    />
+                    android:checked="true" />
             </LinearLayout>
 
-            <!--<LinearLayout-->
-            <!--android:id="@+id/setting_sync_frequency"-->
-            <!--style="@style/SettingItem"-->
-            <!--android:orientation="horizontal">-->
-            <!--<TextView-->
-            <!--android:id="@+id/setting_sync_frequency_title"-->
-            <!--style="@style/SettingItemTitleHorizontal"-->
-            <!--android:text="@string/setting_sync_frequency_title" />-->
-            <!--<TextView-->
-            <!--android:id="@+id/setting_sync_frequency_summary"-->
-            <!--style="@style/SettingItemSummary"-->
-            <!--android:text="30 分钟 / 1 次"/>-->
-            <!--</LinearLayout>-->
-
             <LinearLayout
-                style="@style/SettingItem"
-                android:gravity="center_vertical">
-                <LinearLayout
+                android:id="@+id/setting_auto_sync_on_wifi"
+                tools:visibility="visible"
+                android:visibility="gone"
+                android:background="?android:attr/selectableItemBackground"
+                style="@style/SettingItem">
+
+                <TextView
+                    android:id="@+id/setting_auto_sync_on_wifi_title"
                     android:layout_width="0dp"
                     android:layout_weight="1"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical">
-                    <TextView
-                        android:id="@+id/setting_sync_all_starred_title"
-
-                        style="@style/SettingItemTitle"
-                        android:text="@string/setting_sync_all_starred_title" />
-                    <TextView
-                        android:id="@+id/setting_sync_all_starred_tips"
-                        style="@style/SettingItemTips"
-                        android:text="@string/setting_sync_all_starred_tips" />
-                </LinearLayout>
+                    style="@style/SettingItemTitle2"
+                    android:text="@string/setting_auto_sync_on_wifi_title" />
                 <com.kyleduo.switchbutton.SwitchButton
-                    android:id="@+id/setting_sync_all_starred_sb_flyme"
+                    android:id="@+id/setting_auto_sync_on_wifi_sb"
                     style="@style/SwitchButtonStyle"
-                    android:onClick="onSBClick" />
+                    android:onClick="onSBClick"
+                    android:checked="true" />
             </LinearLayout>
 
             <LinearLayout
-                android:id="@+id/setting_clear_day"
-                style="@style/SettingItem"
-                android:onClick="showClearBeforeDay"
-                android:orientation="horizontal">
-
+                android:id="@+id/setting_auto_sync_frequency"
+                tools:visibility="visible"
+                android:visibility="gone"
+                android:onClick="onClickAutoSyncFrequencySelect"
+                style="@style/SettingItem">
                 <TextView
-                    android:id="@+id/setting_clear_day_title"
                     style="@style/SettingItemTitleHorizontal"
-                    android:text="@string/setting_clear_day_title" />
-
+                    android:background="?android:attr/selectableItemBackgroundBorderless"
+                    android:text="@string/setting_sync_frequency_title" />
                 <TextView
-                    android:id="@+id/setting_clear_day_summary"
+                    android:id="@+id/setting_sync_frequency_summary"
                     style="@style/SettingItemSummary"
-                    android:layout_height="wrap_content"
-                    android:text="10 天" />
+                    android:text="30 分钟" />
             </LinearLayout>
 
             <LinearLayout
                 android:id="@+id/setting_down_img"
                 style="@style/SettingItem"
                 android:gravity="center_vertical">
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_weight="1"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical">
-                    <TextView
-                        android:id="@+id/setting_down_img_title"
 
-                        style="@style/SettingItemTitle"
-                        android:text="@string/setting_down_img_title" />
-                    <TextView
-                        android:id="@+id/setting_down_img_tips"
-                        style="@style/SettingItemTips"
-                        android:text="@string/setting_down_img_tips"
-                        android:textSize="12sp"/>
-                </LinearLayout>
+                <TextView
+                    android:id="@+id/setting_down_img_title"
+                    style="@style/SettingItemTitle2"
+                    android:text="@string/setting_down_img_title" />
                 <com.kyleduo.switchbutton.SwitchButton
-                    android:id="@+id/setting_down_img_sb_flyme"
+                    android:id="@+id/setting_down_img_sb"
                     style="@style/SwitchButtonStyle"
                     android:allowUndo="false"
                     android:checked="false"
@@ -155,31 +107,184 @@
             </LinearLayout>
             <LinearLayout
                 android:visibility="gone"
-                android:id="@+id/setting_inoreader_proxy"
-                style="@style/SettingItem"
-                android:gravity="center_vertical">
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_weight="1"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical">
-                    <TextView
-                        android:id="@+id/setting_inoreader_proxy_title"
+                tools:visibility="visible"
+                style="@style/SettingItem">
 
-                        style="@style/SettingItemTitle"
-                        android:text="@string/setting_inoreader_proxy_title" />
-                    <TextView
-                        android:id="@+id/setting_inoreader_proxy_tips"
-                        style="@style/SettingItemTips"
-                        android:text="@string/setting_inoreader_proxy_tips"
-                        android:textSize="12sp"/>
-                </LinearLayout>
+                <TextView
+                    android:id="@+id/setting_proxy_title"
+                    style="@style/SettingItemTitle2"
+                    android:text="@string/setting_proxy_title" />
                 <com.kyleduo.switchbutton.SwitchButton
-                    android:id="@+id/setting_inoreader_proxy_sb_flyme"
+                    android:id="@+id/setting_proxy_sb"
                     style="@style/SwitchButtonStyle"
-                    android:allowUndo="false"
                     android:checked="false"
                     android:onClick="onSBClick" />
+            </LinearLayout>
+
+
+            <TextView
+                android:id="@+id/setting_display_icon"
+                style="@style/SettingItemHeader"
+                tools:text="界面样式"
+                android:text="同步" />
+            <!--<LinearLayout style="@style/SettingItem">-->
+            <!--<TextView-->
+            <!--android:id="@+id/setting_day_theme_title"-->
+            <!--style="@style/SettingItemTitle2"-->
+            <!--android:text="@string/setting_day_theme_title" />-->
+            <!--<TextView-->
+            <!--style="@style/SettingItemSummary"-->
+            <!--android:text="原野绿"/>-->
+            <!--</LinearLayout>-->
+
+            <!--<LinearLayout style="@style/SettingItem">-->
+            <!--<TextView-->
+            <!--android:id="@+id/setting_night_theme_title"-->
+            <!--style="@style/SettingItemTitle2"-->
+            <!--android:text="@string/setting_night_theme_title" />-->
+            <!--<TextView-->
+            <!--style="@style/SettingItemSummary"-->
+            <!--android:text="深空灰"/>-->
+            <!--</LinearLayout>-->
+
+
+            <LinearLayout
+                android:id="@+id/setting_auto_toggle_theme"
+                style="@style/SettingItem"
+                android:gravity="center_vertical">
+
+                <TextView
+                    android:id="@+id/setting_auto_toggle_theme_title"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    style="@style/SettingItemTitle2"
+                    android:text="@string/setting_auto_toggle_theme_title" />
+                <com.kyleduo.switchbutton.SwitchButton
+                    android:id="@+id/setting_auto_toggle_theme_sb"
+                    style="@style/SwitchButtonStyle"
+                    android:onClick="onSBClick"
+                    android:checked="true" />
+            </LinearLayout>
+
+            <!--<LinearLayout-->
+            <!--android:id="@+id/setting_night_time_interval"-->
+            <!--style="@style/SettingItem">-->
+            <!--<TextView-->
+            <!--android:id="@+id/setting_night_time_interval_title"-->
+            <!--style="@style/SettingItemTitle2"-->
+            <!--android:text="@string/setting_night_time_interval_title" />-->
+            <!--<TextView-->
+            <!--style="@style/SettingItemSummary"-->
+            <!--android:text="20:00 - 08:00"/>-->
+            <!--</LinearLayout>-->
+
+            <!--<LinearLayout style="@style/SettingItem">-->
+            <!--<TextView-->
+            <!--android:id="@+id/setting_type_title"-->
+            <!--style="@style/SettingItemTitle2"-->
+            <!--android:text="@string/setting_type_title"-->
+            <!--android:drawableRight="@drawable/ic_arrow_right"/>-->
+            <!--</LinearLayout>-->
+            <!--<LinearLayout style="@style/SettingItem">-->
+            <!--<TextView-->
+            <!--android:id="@+id/setting_language_title"-->
+            <!--style="@style/SettingItemTitle2"-->
+            <!--android:text="@string/setting_language_title"/>-->
+            <!--<TextView-->
+            <!--style="@style/SettingItemSummary"-->
+            <!--android:text="中文"/>-->
+            <!--</LinearLayout>-->
+
+            <!--<TextView-->
+            <!--style="@style/SettingItemHeader"-->
+            <!--android:text="操作" />-->
+
+            <LinearLayout
+                android:id="@+id/setting_link_open_mode"
+                style="@style/SettingItem">
+
+                <TextView
+                    android:id="@+id/setting_link_open_mode_title"
+                    style="@style/SettingItemTitle2"
+                    android:text="@string/setting_link_open_mode_title" />
+                <com.kyleduo.switchbutton.SwitchButton
+                    android:id="@+id/setting_link_open_mode_sb"
+                    style="@style/SwitchButtonStyle"
+                    android:checked="false"
+                    android:onClick="onSBClick" />
+            </LinearLayout>
+
+
+            <TextView
+                style="@style/SettingItemHeader"
+                android:text="数据" />
+            <LinearLayout
+                android:id="@+id/setting_clear_day"
+                android:onClick="showClearBeforeDay"
+                style="@style/SettingItem">
+                <TextView
+                    android:id="@+id/setting_clear_day_title"
+                    style="@style/SettingItemTitle2"
+                    android:text="@string/setting_clear_day_title" />
+                <TextView
+                    android:id="@+id/setting_clear_day_summary"
+                    style="@style/SettingItemSummary"
+                    android:text="10 天" />
+            </LinearLayout>
+            <!--<LinearLayout style="@style/SettingItem">-->
+            <!--<TextView-->
+            <!--android:id="@+id/setting_clear_cache_title"-->
+            <!--style="@style/SettingItemTitle2"-->
+            <!--android:text="@string/setting_clear_cache_title"/>-->
+            <!--</LinearLayout>-->
+
+            <!--<LinearLayout style="@style/SettingItem">-->
+            <!--<TextView-->
+            <!--android:id="@+id/setting_backup_now_title"-->
+            <!--style="@style/SettingItemTitle2"-->
+            <!--android:text="@string/setting_backup_now_title"/>-->
+            <!--</LinearLayout>-->
+            <!--<LinearLayout style="@style/SettingItem">-->
+            <!--<TextView-->
+            <!--android:id="@+id/setting_restore_backup_title"-->
+            <!--style="@style/SettingItemTitle2"-->
+            <!--android:text="@string/setting_restore_backup_title"/>-->
+            <!--</LinearLayout>-->
+
+
+            <TextView
+                style="@style/SettingItemHeader"
+                android:text="关于" />
+
+
+            <LinearLayout
+                android:visibility="gone"
+                android:id="@+id/setting_license"
+                style="@style/SettingItem"
+                android:orientation="horizontal">
+                <TextView
+                    android:id="@+id/setting_license_title"
+
+                    style="@style/SettingItemTitleHorizontal"
+                    android:text="@string/setting_license_title" />
+                <TextView
+                    android:id="@+id/setting_license_summary"
+                    style="@style/SettingItemSummary"
+                    android:text="More" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/setting_about"
+                style="@style/SettingItem"
+                android:onClick="showAbout"
+                android:orientation="horizontal">
+                <TextView
+                    android:id="@+id/setting_about_title"
+                    style="@style/SettingItemTitleHorizontal"
+                    android:text="@string/setting_about_title" />
+                <TextView
+                    android:id="@+id/setting_about_summary"
+                    style="@style/SettingItemSummary" />
             </LinearLayout>
 
             <!--<LinearLayout-->
@@ -207,35 +312,6 @@
             <!--android:onClick="onSBClick" />-->
             <!--</LinearLayout>-->
 
-            <LinearLayout
-                android:id="@+id/setting_auto_toggle_theme"
-                style="@style/SettingItem"
-                android:gravity="center_vertical">
-
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_weight="1"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical">
-
-                    <TextView
-                        android:id="@+id/setting_auto_toggle_theme_title"
-
-                        style="@style/SettingItemTitle"
-                        android:text="@string/setting_auto_toggle_theme_title" />
-
-                    <TextView
-                        android:id="@+id/setting_auto_toggle_theme_tips"
-                        style="@style/SettingItemTips"
-                        android:text="@string/setting_auto_toggle_theme_tips" />
-                </LinearLayout>
-
-                <com.kyleduo.switchbutton.SwitchButton
-                    android:id="@+id/setting_auto_toggle_theme_sb_flyme"
-                    style="@style/SwitchButtonStyle"
-                    android:checked="false"
-                    android:onClick="onSBClick" />
-            </LinearLayout>
 
             <!--<LinearLayout-->
             <!--android:id="@+id/setting_left_right_slide"-->
@@ -267,191 +343,108 @@
             <!--android:onClick="onSBClick"/>-->
             <!--</LinearLayout>-->
 
-            <LinearLayout
-                android:id="@+id/setting_order_tagfeed"
-                style="@style/SettingItem"
-                android:gravity="center_vertical">
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_weight="1"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical">
-                    <TextView
-                        android:id="@+id/setting_order_tagfeed_title"
-
-                        style="@style/SettingItemTitle"
-                        android:text="@string/setting_order_tagfeed_title" />
-                    <TextView
-                        android:id="@+id/setting_order_tagfeed_tips"
-                        style="@style/SettingItemTips"
-                        android:text="@string/setting_order_tagfeed_tips"/>
-                </LinearLayout>
-                <com.kyleduo.switchbutton.SwitchButton
-                    android:id="@+id/setting_order_tagfeed_sb_flyme"
-                    style="@style/SwitchButtonStyle"
-                    android:checked="false"
-                    android:onClick="onSBClick"/>
-            </LinearLayout>
-
-            <LinearLayout
-                android:visibility="gone"
-                android:id="@+id/setting_link_open_mode"
-                style="@style/SettingItem"
-                android:gravity="center_vertical">
-
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_weight="1"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical">
-
-                    <TextView
-                        android:id="@+id/setting_link_open_mode_title"
-
-                        style="@style/SettingItemTitle"
-                        android:text="@string/setting_link_open_mode_title" />
-
-                    <TextView
-                        android:id="@+id/setting_link_open_mode_tips"
-                        style="@style/SettingItemTips"
-                        android:text="@string/setting_link_open_mode_tips" />
-                </LinearLayout>
-
-                <com.kyleduo.switchbutton.SwitchButton
-                    android:id="@+id/setting_link_open_mode_sb_flyme"
-                    style="@style/SwitchButtonStyle"
-                    android:checked="false"
-                    android:onClick="onSBClick" />
-            </LinearLayout>
-
-            <LinearLayout
-                android:visibility="gone"
-                android:id="@+id/setting_cache_path_starred"
-                style="@style/SettingItem"
-                android:orientation="horizontal">
-                <TextView
-                    android:id="@+id/setting_cache_path_starred_title"
-
-                    style="@style/SettingItemTitle"
-                    tools:text="加星文章保存位置"
-                    android:text="@string/setting_cache_path_starred_title" />
-                <TextView
-                    android:id="@+id/setting_cache_path_starred_summary"
-                    style="@style/SettingItemSummary"
-                    android:textSize="12sp" />
-            </LinearLayout>
-            <LinearLayout
-                android:visibility="gone"
-                android:id="@+id/setting_license"
-                style="@style/SettingItem"
-                android:orientation="horizontal">
-                <TextView
-                    android:id="@+id/setting_license_title"
-
-                    style="@style/SettingItemTitleHorizontal"
-                    android:text="@string/setting_license_title" />
-                <TextView
-                    android:id="@+id/setting_license_summary"
-                    style="@style/SettingItemSummary"
-                    android:text="More" />
-            </LinearLayout>
-
-            <LinearLayout
-                android:id="@+id/setting_about"
-                style="@style/SettingItem"
-                android:onClick="showAbout"
-                android:orientation="horizontal">
-                <TextView
-                    android:id="@+id/setting_about_title"
-                    style="@style/SettingItemTitleHorizontal"
-                    android:text="@string/setting_about_title" />
-                <TextView
-                    android:id="@+id/setting_about_summary"
-                    style="@style/SettingItemSummary"
-                    android:text="@string/app_version" />
-            </LinearLayout>
-
-            <LinearLayout
-                android:id="@+id/setting_join_qqgroup"
-                style="@style/SettingItem"
-                android:onClick="joinQQGroup"
-                android:orientation="horizontal">
-
-                <TextView
-                    android:id="@+id/setting_join_qqgroup_title"
-                    style="@style/SettingItemTitleHorizontal"
-                    android:text="@string/setting_qq_group_title" />
-
-                <TextView
-                    android:id="@+id/setting_join_qqgroup_summary"
-                    style="@style/SettingItemSummary"
-                    android:text="@string/setting_qq_group_summary" />
-            </LinearLayout>
-            <!--<TextView-->
-            <!--android:textSize="16sp"-->
-            <!--android:textColor="@color/shade"-->
+            <!--<LinearLayout-->
+            <!--android:id="@+id/setting_join_qqgroup"-->
             <!--style="@style/SettingItem"-->
-            <!--android:layout_gravity="center"-->
-            <!--android:id="@+id/setting_qq_group_button"-->
-            <!--android:layout_width="wrap_content"-->
-            <!--android:layout_height="match_parent"-->
             <!--android:onClick="joinQQGroup"-->
-            <!--android:text="@string/setting_qq_group_title" />-->
+            <!--android:orientation="horizontal">-->
+
             <!--<TextView-->
-            <!--android:textSize="16sp"-->
-            <!--android:textColor="@color/shade"-->
+            <!--android:id="@+id/setting_join_qqgroup_title"-->
+            <!--style="@style/SettingItemTitleHorizontal"-->
+            <!--android:text="@string/setting_qq_group_title" />-->
+
+            <!--<TextView-->
+            <!--android:id="@+id/setting_join_qqgroup_summary"-->
+            <!--style="@style/SettingItemSummary"-->
+            <!--android:text="@string/setting_qq_group_summary" />-->
+            <!--</LinearLayout>-->
+
+            <!--<TextView-->
+            <!--android:visibility="gone"-->
+            <!--android:id="@+id/setting_handle_saved_pages"-->
+            <!--android:textSize="18sp"-->
+            <!--android:textColor="@color/material_red_400"-->
             <!--style="@style/SettingItem"-->
             <!--android:layout_gravity="center"-->
-            <!--android:id="@+id/setting_feedback_button"-->
-            <!--android:layout_width="wrap_content"-->
+            <!--android:layout_width="match_parent"-->
             <!--android:layout_height="match_parent"-->
-            <!--android:onClick="onClickFeedback"-->
-            <!--android:text="@string/setting_feedback_title" />-->
+            <!--android:paddingTop="5dp"-->
+            <!--android:paddingBottom="5dp"-->
+            <!--android:gravity="center"-->
+            <!--android:onClick="onClickHandleSavedPages"-->
+            <!--android:text="@string/setting_handle_saved_pages_title"-->
+            <!--android:background="?android:attr/selectableItemBackground"-->
+            <!--android:clickable="true" />-->
+
             <TextView
+                android:visibility="gone"
+                android:id="@+id/setting_backup"
                 android:textSize="18sp"
                 android:textColor="@color/material_red_400"
                 style="@style/SettingItem"
                 android:layout_gravity="center"
-                android:id="@+id/setting_esc_button"
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="match_parent"
+                android:paddingTop="5dp"
+                android:paddingBottom="5dp"
+                android:gravity="center"
+                android:onClick="onClickBackup"
+                android:text="备份未读数据"
+                android:background="?android:attr/selectableItemBackground"
+                android:clickable="true" />
+
+            <TextView
+                android:visibility="gone"
+                android:id="@+id/setting_restore"
+                android:textSize="18sp"
+                android:textColor="@color/material_red_400"
+                style="@style/SettingItem"
+                android:layout_gravity="center"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:paddingTop="5dp"
+                android:paddingBottom="5dp"
+                android:gravity="center"
+                android:onClick="onClickRestore"
+                android:text="恢复已备份的数据"
+                android:background="?android:attr/selectableItemBackground"
+                android:clickable="true" />
+
+            <TextView
+                android:visibility="gone"
+                android:id="@+id/setting_read_config"
+                android:textSize="18sp"
+                android:textColor="@color/material_red_400"
+                style="@style/SettingItem"
+                android:layout_gravity="center"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:paddingTop="5dp"
+                android:paddingBottom="5dp"
+                android:gravity="center"
+                android:onClick="onClickReadConfig"
+                android:text="读取配置"
+                android:background="?android:attr/selectableItemBackground"
+                android:clickable="true" />
+
+            <TextView
+                android:id="@+id/setting_esc_button"
+                android:textSize="18sp"
+                android:textColor="@color/material_red_400"
+                style="@style/SettingItem"
+                android:layout_gravity="center"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:paddingTop="5dp"
+                android:paddingBottom="5dp"
+                android:gravity="center"
                 android:onClick="onClickEsc"
-                android:text="@string/setting_esc_title" />
+                android:text="@string/setting_esc_title"
+                android:background="?android:attr/selectableItemBackgroundBorderless"
+                android:clickable="true" />
 
 
-            <!--<LinearLayout-->
-            <!--android:id="@+id/setting_clear_log"-->
-            <!--style="@style/SettingItem"-->
-            <!--android:orientation="horizontal">-->
-            <!--</LinearLayout>-->
-            <!--<LinearLayout-->
-            <!--android:visibility="gone"-->
-            <!--android:id="@+id/setting_update_article_tag"-->
-            <!--style="@style/SettingItem"-->
-            <!--android:orientation="vertical">-->
-            <!--<Button-->
-            <!--android:id="@+id/setting_clear_log_button"-->
-            <!--android:layout_width="wrap_content"-->
-            <!--android:layout_height="match_parent"-->
-            <!--android:layout_marginBottom="6dp"-->
-            <!--android:onClick="clearLog"-->
-            <!--android:text="@string/setting_clear_log_title" />-->
-            <!--<Button-->
-            <!--android:id="@+id/setting_clear_error_cache"-->
-            <!--android:layout_width="wrap_content"-->
-            <!--android:layout_height="match_parent"-->
-            <!--android:onClick="onClickClearErrorCache"-->
-            <!--android:layout_marginBottom="6dp"-->
-            <!--android:text="@string/setting_clear_error_cache" />-->
-
-            <!--<Button-->
-            <!--android:id="@+id/setting_update_article_tag_button"-->
-            <!--android:layout_width="wrap_content"-->
-            <!--android:layout_height="match_parent"-->
-            <!--android:onClick="onClickUpdateArticle"-->
-            <!--android:layout_marginBottom="6dp"-->
-            <!--android:text="@string/setting_update_article_tag_title" />-->
-            <!--</LinearLayout>-->
         </LinearLayout>
     </android.support.v4.widget.NestedScrollView>
 

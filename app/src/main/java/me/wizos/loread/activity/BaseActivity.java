@@ -9,7 +9,7 @@ import com.socks.library.KLog;
 
 import me.wizos.loread.App;
 import me.wizos.loread.R;
-import me.wizos.loread.data.PrefUtils;
+import me.wizos.loread.data.WithPref;
 import me.wizos.loread.view.colorful.Colorful;
 
 /**
@@ -67,7 +67,7 @@ public abstract class BaseActivity extends AppCompatActivity {
     protected void showCurrentTheme() {
         Colorful.Builder mColorfulBuilder = new Colorful.Builder(this);
         mColorful = buildColorful(mColorfulBuilder).create();
-        if (PrefUtils.i().getThemeMode() == App.theme_Day) {
+        if (WithPref.i().getThemeMode() == App.Theme_Day) {
             mColorful.setTheme(R.style.AppTheme_Day);
         } else {
             mColorful.setTheme(R.style.AppTheme_Night);
@@ -77,12 +77,12 @@ public abstract class BaseActivity extends AppCompatActivity {
      * 手动切换主题并保存
      */
     protected void manualToggleTheme() {
-        if (PrefUtils.i().getThemeMode() == App.theme_Day) {
+        if (WithPref.i().getThemeMode() == App.Theme_Day) {
             mColorful.setTheme(R.style.AppTheme_Night);
-            PrefUtils.i().setThemeMode(App.theme_Night);
+            WithPref.i().setThemeMode(App.Theme_Night);
         } else {
             mColorful.setTheme(R.style.AppTheme_Day);
-            PrefUtils.i().setThemeMode(App.theme_Day);
+            WithPref.i().setThemeMode(App.Theme_Day);
         }
     }
 

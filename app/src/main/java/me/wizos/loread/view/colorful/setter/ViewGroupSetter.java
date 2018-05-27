@@ -81,6 +81,9 @@ public class ViewGroupSetter extends ViewSetter {
     @Override
     public void setValue(Theme newTheme, int themeId) {
         int alpha = 255;
+        if (mView == null) {
+            return;
+        }
         if (mView.getBackground() != null) {
             alpha = mView.getBackground().getAlpha();// 自加。保留透明度信息。
         }

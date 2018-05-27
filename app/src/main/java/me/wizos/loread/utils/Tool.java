@@ -7,7 +7,8 @@ import com.socks.library.KLog;
 import me.wizos.loread.App;
 import me.wizos.loread.BuildConfig;
 import me.wizos.loread.R;
-import me.wizos.loread.data.PrefUtils;
+import me.wizos.loread.data.WithPref;
+import me.wizos.loread.view.WebViewS;
 
 /**
  * 一些比较杂的工具函数
@@ -34,16 +35,13 @@ public class Tool {
      * @return
      */
     public static boolean canDownImg() {
-        if (!PrefUtils.i().isDownImgWifi() && !HttpUtil.isNetworkAvailable()) {
+        if (!WithPref.i().isDownImgWifi() && !HttpUtil.isNetworkAvailable()) {
 //            ToastUtil.showShort(App.i().getString(R.string.toast_not_network));
             return false;
         }
-        if (PrefUtils.i().isDownImgWifi() && !HttpUtil.isWiFiUsed()) {
-            ToastUtil.showShort(App.i().getString(R.string.toast_not_wifi_mode));
-            return false;
-        }
-        return true;
+        return !(WithPref.i().isDownImgWifi() && !HttpUtil.isWiFiUsed());
     }
+
 
     public static void showLong(String msg) {
         if (BuildConfig.DEBUG) {
@@ -68,9 +66,35 @@ public class Tool {
     }
 
     public static void setBackgroundColor(View object) {
-        if (PrefUtils.i().getThemeMode() == App.theme_Night) {
+        if (WithPref.i().getThemeMode() == App.Theme_Night) {
             object.setBackgroundColor(App.i().getResources().getColor(R.color.article_dark_background));
+        } else {
+            object.setBackgroundColor(App.i().getResources().getColor(R.color.white));
         }
+    }
+
+    public static void setWebViewsBGColor() {
+        if (WithPref.i().getThemeMode() == App.Theme_Night) {
+            for (WebViewS webViewS : App.i().mWebViewCaches) {
+                webViewS.setBackgroundColor(App.i().getResources().getColor(R.color.article_dark_background));
+            }
+        } else {
+            for (WebViewS webViewS : App.i().mWebViewCaches) {
+                webViewS.setBackgroundColor(App.i().getResources().getColor(R.color.white));
+            }
+        }
+    }
+
+
+    /**
+     * dp转换成px
+     *
+     * @param dp dp
+     * @return px值
+     */
+    public static int dp2px(float dp) {
+        final float scale = App.i().getResources().getDisplayMetrics().density;
+        return (int) (dp * scale + 0.5f);
     }
 
 
@@ -93,7 +117,7 @@ public class Tool {
 //        }
 //        ArrayList<String> idListMD5 = new ArrayList<>(allArtsBeforeTime.size());
 //        for (Article article : allArtsBeforeTime) {
-//            idListMD5.add(StringUtil.stringToMD5(article.getId()));
+//            idListMD5.add(StringUtil.str2MD5(article.getId()));
 //        }
 //        KLog.i("清除B：" + clearTime + "--" + allArtsBeforeTime.size() + "--" + days);
 //        FileUtil.deleteHtmlDirList(idListMD5);
@@ -116,7 +140,7 @@ public class Tool {
 //                KLog.e("该文件存在"+  "==" + files[0].getAbsolutePath()  );
 //            }
 //        }
-//        WithDB.i().saveArticleList(articles);
+//        WithDB.i().saveArticles(articles);
 //    }
 //
 //    private void up3(){
@@ -154,7 +178,7 @@ public class Tool {
 //                article.setReadState(Api.ART_UNREADING);
 //            }
 //        }
-//        WithDB.i().saveArticleList(articles);
+//        WithDB.i().saveArticles(articles);
 //    }
 //
 //

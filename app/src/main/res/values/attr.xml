@@ -14,6 +14,7 @@
     <attr name="lv_item_bg" format="reference|color" />
     <attr name="lv_item_fg" format="reference|color" />
     <attr name="lv_item_title_color" format="reference|color" />
+    <attr name="setting_header_title_color" format="reference|color" />
     <attr name="lv_item_desc_color" format="reference|color" />
     <attr name="lv_item_info_color" format="reference|color" />
     <attr name="lv_item_divider" format="reference|color"/>

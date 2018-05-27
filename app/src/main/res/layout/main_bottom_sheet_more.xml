@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="?attr/root_view_bg"
+    android:orientation="vertical"
+    android:paddingStart="20dp"
+    android:paddingEnd="10dp"
+    android:paddingTop="10dp"
+    android:paddingBottom="20dp">
+
+    <LinearLayout
+        android:id="@+id/more_setting"
+        style="@style/SettingItem">
+
+        <TextView
+            android:id="@+id/more_setting_title"
+            style="@style/BottomSheetItemTitle"
+            android:text="@string/more_setting" />
+
+        <me.wizos.loread.view.IconFontView
+            android:id="@+id/more_setting_icon"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:gravity="center_vertical|end"
+            android:paddingEnd="10dp"
+            android:textColor="?attr/lv_item_title_color"
+            android:text="@string/font_arrow_right" />
+    </LinearLayout>
+
+    <LinearLayout style="@style/SettingItem">
+
+        <TextView
+            android:id="@+id/auto_mark_when_scrolling_title"
+            style="@style/BottomSheetItemTitle"
+            android:text="@string/auto_mark_when_scrolling" />
+
+        <com.kyleduo.switchbutton.SwitchButton
+            android:id="@+id/auto_mark_when_scrolling_switch"
+            style="@style/SwitchButtonStyle" />
+    </LinearLayout>
+
+    <LinearLayout style="@style/SettingItem">
+
+        <TextView
+            android:id="@+id/down_img_on_wifi_title"
+            style="@style/BottomSheetItemTitle"
+            android:text="@string/down_img_on_wifi" />
+
+        <com.kyleduo.switchbutton.SwitchButton
+            android:id="@+id/down_img_on_wifi_switch"
+            style="@style/SwitchButtonStyle" />
+    </LinearLayout>
+
+
+    <LinearLayout style="@style/SettingItem">
+
+        <TextView
+            android:id="@+id/night_theme_title"
+            style="@style/BottomSheetItemTitle"
+            android:text="@string/night_theme" />
+
+        <com.kyleduo.switchbutton.SwitchButton
+            android:id="@+id/night_theme_switch"
+            style="@style/SwitchButtonStyle" />
+    </LinearLayout>
+
+    <!--<LinearLayout style="@style/SettingItem"-->
+    <!--android:gravity="center_vertical"-->
+    <!--android:orientation="horizontal">-->
+    <!--<TextView-->
+    <!--android:id="@+id/article_list_order_title"-->
+    <!--style="@style/BottomSheetItemTitle"-->
+    <!--android:text="@string/article_list_order" />-->
+    <!--<TextView-->
+    <!--android:id="@+id/article_list_order_radio"-->
+    <!--android:layout_width="wrap_content"-->
+    <!--android:layout_height="wrap_content"-->
+    <!--android:paddingLeft="10dp"-->
+    <!--android:paddingRight="10dp"-->
+    <!--android:paddingTop="4dp"-->
+    <!--android:paddingBottom="4dp"-->
+    <!--android:layout_marginEnd="10dp"-->
+    <!--android:layout_marginStart="10dp"-->
+    <!--android:text="@string/article_list_order_desc"-->
+    <!--android:textSize="12sp"-->
+    <!--android:textColor="#28A4E9"-->
+    <!--android:background="@drawable/corners_bg_checked" />-->
+    <!--</LinearLayout>-->
+
+    <LinearLayout style="@style/SettingItem">
+
+        <TextView
+            android:id="@+id/article_list_state_title"
+            style="@style/BottomSheetItemTitle"
+            android:text="@string/article_list_state" />
+
+        <RadioGroup
+            android:id="@+id/article_list_state_radio_group"
+            android:paddingLeft="10dp"
+            android:paddingRight="10dp"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <RadioButton
+                android:checked="false"
+                android:id="@+id/radio_all"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingLeft="10dp"
+                android:paddingRight="10dp"
+                android:paddingTop="4dp"
+                android:paddingBottom="4dp"
+                android:textSize="12sp"
+                android:text="@string/all"
+                android:button="@null"
+                android:textColor="@drawable/selector_corners_bg"
+                android:background="@drawable/corners_bg_uncheck" />
+
+            <RadioButton
+                android:id="@+id/radio_unread"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingLeft="10dp"
+                android:paddingRight="10dp"
+                android:paddingTop="4dp"
+                android:paddingBottom="4dp"
+                android:layout_marginStart="10dp"
+                android:checked="true"
+                android:text="@string/unread"
+                android:textSize="12sp"
+                android:button="@null"
+                android:textColor="@drawable/selector_corners_bg"
+                android:background="@drawable/corners_bg_uncheck" />
+
+            <RadioButton
+                android:checked="false"
+                android:id="@+id/radio_starred"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingLeft="10dp"
+                android:paddingRight="10dp"
+                android:paddingTop="4dp"
+                android:paddingBottom="4dp"
+                android:layout_marginStart="10dp"
+                android:text="@string/starred"
+                android:textSize="12sp"
+                android:button="@null"
+                android:textColor="@drawable/selector_corners_bg"
+                android:background="@drawable/corners_bg_uncheck" />
+        </RadioGroup>
+    </LinearLayout>
+
+
+</LinearLayout>
