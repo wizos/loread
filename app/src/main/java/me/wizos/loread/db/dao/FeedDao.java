@@ -60,7 +60,7 @@ public class FeedDao extends AbstractDao<Feed, String> {
      * Creates the underlying database table.
      */
     public static void createTable(Database db, boolean ifNotExists) {
-        String constraint = ifNotExists ? "IF NOT EXISTS " : "";
+        String constraint = ifNotExists ? "IF NOT EXISTS ": "";
         db.execSQL("CREATE TABLE " + constraint + "\"FEED\" (" + //
                 "\"ID\" TEXT PRIMARY KEY NOT NULL ," + // 0: id
                 "\"TITLE\" TEXT NOT NULL ," + // 1: title
@@ -76,9 +76,7 @@ public class FeedDao extends AbstractDao<Feed, String> {
                 "\"NEWEST_ITEM_TIMESTAMP_USEC\" INTEGER);"); // 11: newestItemTimestampUsec
     }
 
-    /**
-     * Drops the underlying database table.
-     */
+    /** Drops the underlying database table. */
     public static void dropTable(Database db, boolean ifExists) {
         String sql = "DROP TABLE " + (ifExists ? "IF EXISTS " : "") + "\"FEED\"";
         db.execSQL(sql);
@@ -89,52 +87,52 @@ public class FeedDao extends AbstractDao<Feed, String> {
         stmt.clearBindings();
         stmt.bindString(1, entity.getId());
         stmt.bindString(2, entity.getTitle());
-
+ 
         String categoryid = entity.getCategoryid();
         if (categoryid != null) {
             stmt.bindString(3, categoryid);
         }
-
+ 
         String categorylabel = entity.getCategorylabel();
         if (categorylabel != null) {
             stmt.bindString(4, categorylabel);
         }
-
+ 
         String sortid = entity.getSortid();
         if (sortid != null) {
             stmt.bindString(5, sortid);
         }
-
+ 
         Long firstitemmsec = entity.getFirstitemmsec();
         if (firstitemmsec != null) {
             stmt.bindLong(6, firstitemmsec);
         }
-
+ 
         String url = entity.getUrl();
         if (url != null) {
             stmt.bindString(7, url);
         }
-
+ 
         String htmlurl = entity.getHtmlurl();
         if (htmlurl != null) {
             stmt.bindString(8, htmlurl);
         }
-
+ 
         String iconurl = entity.getIconurl();
         if (iconurl != null) {
             stmt.bindString(9, iconurl);
         }
-
+ 
         String openMode = entity.getOpenMode();
         if (openMode != null) {
             stmt.bindString(10, openMode);
         }
-
+ 
         Integer unreadCount = entity.getUnreadCount();
         if (unreadCount != null) {
             stmt.bindLong(11, unreadCount);
         }
-
+ 
         Long newestItemTimestampUsec = entity.getNewestItemTimestampUsec();
         if (newestItemTimestampUsec != null) {
             stmt.bindLong(12, newestItemTimestampUsec);
@@ -146,52 +144,52 @@ public class FeedDao extends AbstractDao<Feed, String> {
         stmt.clearBindings();
         stmt.bindString(1, entity.getId());
         stmt.bindString(2, entity.getTitle());
-
+ 
         String categoryid = entity.getCategoryid();
         if (categoryid != null) {
             stmt.bindString(3, categoryid);
         }
-
+ 
         String categorylabel = entity.getCategorylabel();
         if (categorylabel != null) {
             stmt.bindString(4, categorylabel);
         }
-
+ 
         String sortid = entity.getSortid();
         if (sortid != null) {
             stmt.bindString(5, sortid);
         }
-
+ 
         Long firstitemmsec = entity.getFirstitemmsec();
         if (firstitemmsec != null) {
             stmt.bindLong(6, firstitemmsec);
         }
-
+ 
         String url = entity.getUrl();
         if (url != null) {
             stmt.bindString(7, url);
         }
-
+ 
         String htmlurl = entity.getHtmlurl();
         if (htmlurl != null) {
             stmt.bindString(8, htmlurl);
         }
-
+ 
         String iconurl = entity.getIconurl();
         if (iconurl != null) {
             stmt.bindString(9, iconurl);
         }
-
+ 
         String openMode = entity.getOpenMode();
         if (openMode != null) {
             stmt.bindString(10, openMode);
         }
-
+ 
         Integer unreadCount = entity.getUnreadCount();
         if (unreadCount != null) {
             stmt.bindLong(11, unreadCount);
         }
-
+ 
         Long newestItemTimestampUsec = entity.getNewestItemTimestampUsec();
         if (newestItemTimestampUsec != null) {
             stmt.bindLong(12, newestItemTimestampUsec);
@@ -207,7 +205,7 @@ public class FeedDao extends AbstractDao<Feed, String> {
     @Override
     public String readKey(Cursor cursor, int offset) {
         return cursor.getString(offset + 0);
-    }
+    }    
 
     @Override
     public Feed readEntity(Cursor cursor, int offset) {
@@ -227,7 +225,7 @@ public class FeedDao extends AbstractDao<Feed, String> {
         );
         return entity;
     }
-
+     
     @Override
     public void readEntity(Cursor cursor, Feed entity, int offset) {
         entity.setId(cursor.getString(offset + 0));
@@ -242,13 +240,13 @@ public class FeedDao extends AbstractDao<Feed, String> {
         entity.setOpenMode(cursor.isNull(offset + 9) ? null : cursor.getString(offset + 9));
         entity.setUnreadCount(cursor.isNull(offset + 10) ? null : cursor.getInt(offset + 10));
         entity.setNewestItemTimestampUsec(cursor.isNull(offset + 11) ? null : cursor.getLong(offset + 11));
-    }
-
+     }
+    
     @Override
     protected final String updateKeyAfterInsert(Feed entity, long rowId) {
         return entity.getId();
     }
-
+    
     @Override
     public String getKey(Feed entity) {
         if (entity != null) {
@@ -268,9 +266,7 @@ public class FeedDao extends AbstractDao<Feed, String> {
         return true;
     }
 
-    /**
-     * Internal query to resolve the "feeds" to-many relationship of Tag.
-     */
+    /** Internal query to resolve the "feeds" to-many relationship of Tag. */
     public List<Feed> _queryTag_Feeds(String categoryid) {
         synchronized (this) {
             if (tag_FeedsQuery == null) {

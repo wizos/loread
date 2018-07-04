@@ -21,6 +21,7 @@ import butterknife.ButterKnife;
 import me.wizos.loread.App;
 import me.wizos.loread.BuildConfig;
 import me.wizos.loread.R;
+import me.wizos.loread.bean.config.GlobalConfig;
 import me.wizos.loread.data.WithPref;
 import me.wizos.loread.utils.FileUtil;
 import me.wizos.loread.view.colorful.Colorful;
@@ -176,7 +177,7 @@ public class SettingActivity extends BaseActivity {
 
 
         downImgWifi = findViewById(R.id.setting_down_img_sb);
-        downImgWifi.setChecked(WithPref.i().isDownImgWifi());
+        downImgWifi.setChecked(WithPref.i().isDownImgOnlyWifi());
 
         clearBeforeDaySummary = findViewById(R.id.setting_clear_day_summary);
         clearBeforeDaySummary.setText(getResources().getString(R.string.clear_day_summary, String.valueOf(WithPref.i().getClearBeforeDay())));
@@ -188,12 +189,12 @@ public class SettingActivity extends BaseActivity {
         } else {
             autoSyncFrequencySummary.setText(getResources().getString(R.string.xx_minute, autoSyncFrequency + ""));
         }
-        View openLinkMode = findViewById(R.id.setting_link_open_mode);
         sysBrowserOpenLink = findViewById(R.id.setting_link_open_mode_sb);
         sysBrowserOpenLink.setChecked(WithPref.i().isSysBrowserOpenLink());
-        if (BuildConfig.DEBUG) {
-            openLinkMode.setVisibility(View.GONE);
-        }
+//        View openLinkMode = findViewById(R.id.setting_link_open_mode);
+//        if (!BuildConfig.DEBUG) {
+//            openLinkMode.setVisibility(View.GONE);
+//        }
 
         autoToggleTheme = findViewById(R.id.setting_auto_toggle_theme_sb);
         autoToggleTheme.setChecked(WithPref.i().isAutoToggleTheme());
@@ -459,7 +460,8 @@ public class SettingActivity extends BaseActivity {
                 .canceledOnTouchOutside(false)
                 .progressIndeterminateStyle(false)
                 .show();
-        App.i().initFeedsConfig();
+//        App.i().initFeedsConfig();
+        GlobalConfig.i().reInit();
         materialDialog.dismiss();
     }
 
@@ -474,12 +476,12 @@ public class SettingActivity extends BaseActivity {
     }
 
 
-//    public void onClickFeedback(View view) {
-//        Intent intent = new Intent();
-//        intent.setAction(android.content.Intent.ACTION_VIEW);
-//        intent.loadDataWithBaseURL(Uri.parse("http://support.qq.com/embed/15424"));
-//        startActivity(intent); // 目前无法做那那种可以选择打开方式的
-//    }
+    public void onClickFeedback(View view) {
+        Intent intent = new Intent(SettingActivity.this, WebActivity.class);
+        intent.setData(Uri.parse("https://support.qq.com/products/15424"));
+        startActivity(intent);
+        overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
+    }
 
 //    public void onClickAutoSyncFrequency(View view){
 //        MaterialDialog dialog = new MaterialDialog.Builder(this)

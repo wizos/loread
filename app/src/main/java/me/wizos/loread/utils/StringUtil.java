@@ -6,14 +6,16 @@ import android.text.TextUtils;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 import java.io.File;
 import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -64,7 +66,7 @@ public class StringUtil {
     public static boolean isBlank(List list){return  list==null || list.isEmpty() || list.size()==0;}
 
 
-    public static String formatContentForSave(String title, String content) {
+    private static String getFormatContentForSave(String title, String content) {
         Document document = Jsoup.parseBodyFragment(content);
         Elements elements = document.getElementsByTag("img");
         String url, filePath;
@@ -81,19 +83,18 @@ public class StringUtil {
     /**
      * 这里没有直接将原始的文章内容给到 webView 加载，再去 webView 中初始化占位图并懒加载。
      * 是因为这样 WebView 刚启动时，有的图片因为还没有被 js 替换为占位图，而展示一个错误图。
-     * <p>
-     * 这里直接将内容初始化好，再让 WebView 执行懒加载的 js 去给没有加载本地图的 src 执行下载任务
+     * 这里直接将内容初始化好，再让 WebView 执行懒加载的 js 去给没有加载本地图的 src 执行下载任务。
      */
-    public static String initContent(Article article) {
+    private static String getFormatContentForDisplay(Article article) {
         String cacheUrl;
         String originalUrl;
         String imageHolder;
-        if (!HttpUtil.isNetworkAvailable()) { // 没有网络
+        if (!NetworkUtil.isNetworkAvailable()) { // 没有网络
             imageHolder = "file:///android_asset/image/image_holder_load_failed.png";
-        } else if (WithPref.i().isDownImgWifi() && !HttpUtil.isWiFiUsed()) { // 开启省流量，蜂窝模式
+        } else if (WithPref.i().isDownImgOnlyWifi() && !NetworkUtil.isWiFiUsed()) { // 开启省流量，蜂窝模式
             imageHolder = "file:///android_asset/image/image_holder_click_to_load.png";
         } else {
-            imageHolder = "file:///android_asset/image/image_holder_loading.gif";
+            imageHolder = "file:///android_asset/image/image_holder_loading.png";
         }
 
         String articleContent = article.getContent();
@@ -101,28 +102,103 @@ public class StringUtil {
             return "";
         }
         Document document = Jsoup.parseBodyFragment(articleContent);
-        Elements elements = document.getElementsByTag("img");
+
+        Elements imgs = document.getElementsByTag("img");
+        Element img;
         String idInMD5 = StringUtil.str2MD5(article.getId());
-        for (int i = 0, size = elements.size(); i < size; i++) {
-            originalUrl = elements.get(i).attr("src");
-            elements.get(i).attr("original-src", originalUrl);
+        for (int i = 0, size = imgs.size(); i < size; i++) {
+            img = imgs.get(i);
+            originalUrl = img.attr("src");
+            img.attr("original-src", originalUrl);
             cacheUrl = FileUtil.readCacheFilePath(idInMD5, i, originalUrl);
             if (cacheUrl != null) {
-                elements.get(i).attr("src", cacheUrl);
+                img.attr("src", cacheUrl);
             } else {
-                elements.get(i).attr("src", imageHolder);
+                img.attr("src", imageHolder);
             }
+            img.attr("width", "100%");
+            img.attr("height", "auto");
+        }
+
+        Elements videos = document.getElementsByTag("video");
+        for (int i = 0, size = videos.size(); i < size; i++) {
+            videos.get(i).attr("class", "video-js vjs-default-skin vjs-fluid vjs-big-play-centered");
+            videos.get(i).attr("data-setup", "{}");
+            videos.get(i).attr("preload", "metadata");
+            videos.get(i).attr("style", "width:100%;height:100%");
+            videos.get(i).attr("controls", "controls");
+        }
+
+        Elements audios = document.getElementsByTag("audio");
+        for (int i = 0, size = audios.size(); i < size; i++) {
+            audios.get(i).attr("controls", "controls");
+        }
+
+        // 在 iframe 的外层加一个相对路径的 div，便于在js中给 iframe 加一个绝对位置的蒙层
+        Elements iframes = document.getElementsByTag("iframe");
+        Element iframe;
+        for (int i = 0, size = iframes.size(); i < size; i++) {
+            iframe = iframes.get(i);
+            iframe.wrap("<div style=\"position:relative;\"></div>");
+        }
+
+        Elements embeds = document.getElementsByTag("embed");
+        Element embed;
+        for (int i = 0, size = embeds.size(); i < size; i++) {
+            embed = embeds.get(i);
+            embed.wrap("<div style=\"position:relative;\"></div>");
         }
 
         articleContent = document.body().html();
+//        KLog.e("视频", articleContent );
         return articleContent;
     }
 
-    public static String getHtml(Article article) {
-        return getHtml(article, null);
+
+    private static String getOptimizedAuthor(String feedTitle, String articleAuthor) {
+        if (TextUtils.isEmpty(articleAuthor) || feedTitle.toLowerCase().contains(articleAuthor.toLowerCase())) {
+            return feedTitle;
+        } else if (articleAuthor.toLowerCase().contains(feedTitle.toLowerCase())) {
+            return articleAuthor;
+        } else {
+            return feedTitle + "@" + articleAuthor;
+        }
     }
 
-    public static String getHtml(Article article, String content) {
+
+    public static String getHtmlForSave(Article article, String title) {
+//        if ( TextUtils.isEmpty( title )){
+//            title = getOptimizedNameForSave(article.getTitle());
+//        }
+        String published = TimeUtil.stampToTime(article.getPublished() * 1000, "yyyy-MM-dd HH:mm");
+        String canonical = article.getCanonical();
+        String content = getFormatContentForSave(title, article.getContent());
+        String author = getOptimizedAuthor(article.getOriginTitle(), article.getAuthor());
+
+        return "<!DOCTYPE html>" +
+                "<html>" +
+                "<head>" +
+                "<meta charset=\"UTF-8\">" +
+                "<link rel=\"stylesheet\" type=\"text/css\" href=\"./normalize.css\" />" +
+                "<title>" + title + "</title>" +
+                "</head><body>" +
+                "<article id=\"article\" >" +
+                "<header id=\"header\">" +
+                "<h1 id=\"title\"><a href=\"" + canonical + "\">" + title + "</a></h1>" +
+                "<p id=\"author\">" + author + "</p>" +
+                "<p id=\"pubDate\">" + published + "</p>" +
+                "</header>" +
+                "<section id=\"content\">" + content + "</section>" +
+                "</article>" +
+                "</body></html>";
+    }
+
+
+    public static String getHtmlForDisplay(Article article) {
+        return getHtmlForDisplay(article, null);
+    }
+
+    public static String getHtmlForDisplay(Article article, String content) {
         if (null == article) {
             return "";
         }
@@ -140,22 +216,27 @@ public class StringUtil {
             themeCssPath = "file:///android_asset/css/article_theme_night.css";
         }
 
-        String author = article.getAuthor();
-        if (TextUtils.isEmpty(author) ||
-                article.getOriginTitle().toLowerCase().contains(author.toLowerCase()) ||
-                author.toLowerCase().contains(article.getOriginTitle().toLowerCase())) {
-            author = article.getOriginTitle();
-        } else {
-            author = article.getOriginTitle() + "@" + article.getAuthor();
-        }
+        String author = getOptimizedAuthor(article.getOriginTitle(), article.getAuthor());
+
         if (TextUtils.isEmpty(content)) {
-            content = initContent(article);
+            content = getFormatContentForDisplay(article);
         }
-        return "<!DOCTYPE html><html><head><meta charset=\"UTF-8\">" +
-                "<link rel=\"stylesheet\" type=\"text/css\" href=\"" + typesettingCssPath + "\" />" +
-                "<link rel=\"stylesheet\" type=\"text/css\" href=\"" + themeCssPath + "\" />" +
+
+        String videoJS = "", videoCSS = "";
+        if (!TextUtils.isEmpty(content) && content.indexOf("<video") != -1) {
+            videoCSS = "<link rel=\"stylesheet\" type=\"text/css\" href=\"file:///android_asset/video-js/video-js.css\"/>";
+            videoJS = "<script src=\"file:///android_asset/video-js/video.js\"></script>";
+        }
+
+        return "<!DOCTYPE html><html><head>" +
+                "<meta charset=\"UTF-8\">" +
+                "<meta name=\"referrer\" content=\"origin\">" +
+                "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0, user-scalable=no\">" +
+                "<link rel=\"stylesheet\" type=\"text/css\" href=\"" + typesettingCssPath + "\"/>" +
+                "<link rel=\"stylesheet\" type=\"text/css\" href=\"" + themeCssPath + "\"/>" +
+                videoCSS +
+                "<title>" + article.getTitle() + "</title>" +
                 "</head><body>" +
-//                "<article id=\"article\" >" +
                 "<article id=\"" + article.getId() + "\" >" +
                 "<header id=\"header\">" +
                 "<h1 id=\"title\"><a href=\"" + article.getCanonical() + "\">" + article.getTitle() + "</a></h1>" +
@@ -166,14 +247,16 @@ public class StringUtil {
                 "<section id=\"content\">" + content +
                 "</section>" +
                 "</article>" +
-                "<script src=\"file:///android_asset/js/zepto.min.js\"></script>" +
+                "<script src=\"file:///android_asset/js/zepto.min.js\"></script>" + // defer
                 "<script src=\"file:///android_asset/js/lazyload.js\"></script>" +
-                "<script src=\"file:///android_asset/js/image.js\"></script>" +
+                "<script src=\"file:///android_asset/js/media.js\"></script>" +
+                videoJS +
                 "</body></html>";
     }
 
 
-    private static List<String> format = new ArrayList<>();
+    //    private static List<String> format = new ArrayList<>();
+    private static Set<String> formats = new HashSet<>();
     private static final String JPG = ".jpg";
     private static final String JPEG = ".jpeg";
     private static final String PNG = ".png";
@@ -181,11 +264,16 @@ public class StringUtil {
     private static final String GIF = ".gif";
 
     static {
-        format.add(JPG);
-        format.add(JPEG);
-        format.add(PNG);
-        format.add(WEBP);
-        format.add(GIF);
+//        format.add(JPG);
+//        format.add(JPEG);
+//        format.add(PNG);
+//        format.add(WEBP);
+//        format.add(GIF);
+        formats.add(JPG);
+        formats.add(JPEG);
+        formats.add(PNG);
+        formats.add(WEBP);
+        formats.add(GIF);
     }
 
     /**
@@ -196,7 +284,7 @@ public class StringUtil {
      */
     public static String getImageSuffix(String url) {
         String suffix = url.substring(url.lastIndexOf("."), url.length());
-        if (!format.contains(suffix.toLowerCase())) {
+        if (!formats.contains(suffix.toLowerCase())) {
             return JPG;
         }
         return suffix;
@@ -292,7 +380,7 @@ public class StringUtil {
     }
 
     /**
-     * 获取修整后的概要
+     * 获取修整后的文章，主要是过滤一些无用的标签
      *
      * @param tempHtml 原文
      * @return

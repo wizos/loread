@@ -1,0 +1,43 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context=".activity.WebActivity">
+
+    <item
+        android:id="@+id/web_menu_user_agent"
+        android:title="UA标识"
+        android:icon="@drawable/ic_user_agent"
+        android:enabled="true"
+        android:visible="true"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/web_menu_open_by_sys"
+        android:title="用系统浏览器打开"
+        android:icon="@drawable/ic_browser"
+        android:enabled="true"
+        android:visible="true"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/web_menu_copy_link"
+        android:icon="@drawable/ic_copy_link"
+        android:title="复制当前链接"
+        android:enabled="true"
+        android:visible="true"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/web_menu_share"
+        android:icon="@drawable/ic_share"
+        android:title="分享"
+        android:enabled="true"
+        android:visible="true"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/web_menu_refresh"
+        android:icon="@drawable/ic_refresh"
+        android:title="刷新"
+        android:enabled="true"
+        android:visible="true"
+        app:showAsAction="never" />
+
+</menu>

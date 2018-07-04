@@ -28,21 +28,17 @@
             tools:navigationIcon="@drawable/state_star">
             <TextView
                 android:id="@+id/main_toolbar_hint"
-                android:minWidth="40dp"
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
                 android:layout_gravity="end|center"
+                android:minWidth="40dp"
                 android:paddingEnd="12dp"
                 android:background="?android:attr/selectableItemBackgroundBorderless"
                 android:clickable="true"
                 android:gravity="center|end"
                 android:textSize="12sp"
                 tools:text="12" />
-            <!--<me.wizos.loread.view.IconFontView-->
-            <!--android:id="@+id/main_toolbar_readability"-->
-            <!--style="@style/top_bar_iconfont"-->
-            <!--android:layout_gravity="end|center"-->
-            <!--android:text="@string/font_theme" />-->
+
 
         </android.support.v7.widget.Toolbar>
 
@@ -127,6 +123,13 @@
                     android:layout_toEndOf="@id/main_bottombar_tag"
                     android:onClick="onQuickSettingIconClicked" />
 
+                <me.wizos.loread.view.IconFontView
+                    android:id="@+id/main_bottombar_refresh_articles"
+                    style="@style/bottom_bar_iconfont"
+                    android:layout_alignParentEnd="true"
+                    android:visibility="gone"
+                    android:text="@string/font_update"
+                    android:onClick="clickRefreshIcon" />
             </RelativeLayout>
         </RelativeLayout>
     </me.wizos.loread.view.SwipeRefreshLayoutS>

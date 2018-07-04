@@ -152,7 +152,7 @@ public class WithPref {
     }
 
 
-    public boolean isDownImgWifi() {
+    public boolean isDownImgOnlyWifi() {
         return read("DownImgWifi", true);
     }
 
@@ -182,12 +182,23 @@ public class WithPref {
 
     /* 操作 */
     public boolean isSysBrowserOpenLink() {
-        return read("SysBrowserOpenLink", true);
+        return read("SysBrowserOpenLink", false);
     }
 
     public void setSysBrowserOpenLink(boolean is) {
         save("SysBrowserOpenLink", is);
     }
+
+
+    // 是否有选择过默认的图片浏览器
+    public boolean hadAskImageOpenMode() {
+        return read("HadAskImageOpenMode", false);
+    }
+
+    public void setHadAskImageOpenMode(boolean hadAskImageOpenMode) {
+        save("HadAskImageOpenMode", hadAskImageOpenMode);
+    }
+
 
     //是否为滚动标记为已读
     public boolean isScrollMark() {
@@ -279,21 +290,30 @@ public class WithPref {
     }
 
 
-    public String getDefaultGroupName() {
-        return read("defaultGroupName", "未分组");
+//    public String getDefaultGroupName() {
+//        return read("defaultGroupName", "未分组");
+//    }
+//
+//    public void setDefaultGroupName(String defaultGroupName) {
+//        save("defaultGroupName", defaultGroupName);
+//    }
+//
+//
+//    public long getNewestItemTimestampUsec() {
+//        return read("newestItemTimestampUsec", 0L);
+//    }
+//
+//    public void setNewestItemTimestampUsec(long newestItemTimestampUsec) {
+//        save("newestItemTimestampUsec", newestItemTimestampUsec);
+//    }
+
+
+    public String getUserAgent() {
+        return read("UserAgent", null);
     }
 
-    public void setDefaultGroupName(String defaultGroupName) {
-        save("defaultGroupName", defaultGroupName);
-    }
-
-
-    public long getNewestItemTimestampUsec() {
-        return read("newestItemTimestampUsec", 0L);
-    }
-
-    public void setNewestItemTimestampUsec(long newestItemTimestampUsec) {
-        save("newestItemTimestampUsec", newestItemTimestampUsec);
+    public void setUserAgent(String userAgent) {
+        save("UserAgent", userAgent);
     }
 
 }

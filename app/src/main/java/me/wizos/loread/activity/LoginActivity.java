@@ -231,6 +231,7 @@ public class LoginActivity extends BaseActivity implements View.OnLayoutChangeLi
                         Intent intentToActivity = new Intent(LoginActivity.this, MainActivity.class);
                         startActivity(intentToActivity);
                         LoginActivity.this.finish();
+                        overridePendingTransition(R.anim.in_from_bottom, R.anim.out_from_bottom);
                         break;
                     // 文章获取失败
                     case Api.N_ERROR:

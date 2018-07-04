@@ -4,7 +4,6 @@ package me.wizos.loread.net;
 
 import java.util.ArrayList;
 
-import me.wizos.loread.App;
 import me.wizos.loread.bean.gson.itemContents.Items;
 
 /**
@@ -61,13 +60,11 @@ public class Api {
 
     public static final String EXT_TMP = ".tmp";
     public static final String Referer = "Referer";
-    public static final String UserAgent = "User-Agent";
-    public static final String Auto = "User-Agent";
-
-
-    public static String getLabelStreamFlag() {
-        return "user/" + App.UserID + "/label/";
-    }
+//    public static final String UserAgent = "User-Agent";
+//    public static final String Auto = "User-Agent";
+//    public static String getLabelStreamFlag() {
+//        return "user/" + App.UserID + "/label/";
+//    }
 
 
     /*
@@ -97,7 +94,7 @@ public class Api {
     public static final String DISPLAY_LINK = "webpage";
 
 
-    public static final int INIT_IMAGE_BRIDGE = 4;
+//    public static final int INIT_IMAGE_BRIDGE = 4;
 
     public static final int MSG_DOUBLE_TAP = -1;
 

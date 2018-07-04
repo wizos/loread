@@ -287,6 +287,22 @@
                     style="@style/SettingItemSummary" />
             </LinearLayout>
 
+            <LinearLayout
+                android:id="@+id/setting_feedback"
+                style="@style/SettingItem"
+                android:onClick="onClickFeedback"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/setting_feedback_title"
+                    style="@style/SettingItemTitleHorizontal"
+                    android:text="@string/setting_feedback_title" />
+
+                <TextView
+                    android:id="@+id/setting_feedback_summary"
+                    style="@style/SettingItemSummary" />
+            </LinearLayout>
+
             <!--<LinearLayout-->
             <!--android:id="@+id/setting_scroll_mark"-->
             <!--style="@style/SettingItem"-->
@@ -348,7 +364,6 @@
             <!--style="@style/SettingItem"-->
             <!--android:onClick="joinQQGroup"-->
             <!--android:orientation="horizontal">-->
-
             <!--<TextView-->
             <!--android:id="@+id/setting_join_qqgroup_title"-->
             <!--style="@style/SettingItemTitleHorizontal"-->

@@ -1,7 +1,10 @@
 package me.wizos.loread.utils;
 
+import android.content.Context;
 import android.os.Environment;
 import android.text.TextUtils;
+import android.util.ArrayMap;
+import android.webkit.URLUtil;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
@@ -12,13 +15,19 @@ import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
+import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import me.wizos.loread.App;
 import me.wizos.loread.data.WithDB;
@@ -41,19 +50,15 @@ public class FileUtil {
     }
 
 
-    public static void deleteHtmlDirList2(ArrayList<String> fileNameInMD5List) {
+    public static void deleteHtmlDirList(ArrayList<String> fileNameInMD5List) {
         String externalCacheDir = App.externalFilesDir + "/cache/";
         for (String fileNameInMD5 : fileNameInMD5List) {
+//            KLog.e("删除文件：" +  externalCacheDir + fileNameInMD5 );
             deleteHtmlDir(new File(externalCacheDir + fileNameInMD5));
         }
     }
 
-    public static void deleteHtmlDirList(ArrayList<String> fileNameInMD5List) {
-        for (String fileNameInMD5:fileNameInMD5List){
-            deleteHtmlDir(new File(App.cacheRelativePath + fileNameInMD5 + "_files"));
-            new File(App.cacheRelativePath + fileNameInMD5 + ".html").delete();
-        }
-    }
+
     /**
      * 递归删除应用下的缓存
      * @param dir 需要删除的文件或者文件目录
@@ -77,12 +82,17 @@ public class FileUtil {
 
     public static boolean moveFile(String srcFileName, String destFileName) {
         File srcFile = new File(srcFileName);
+        KLog.e("文件是否存在：" + srcFile.exists() + destFileName);
         if (!srcFile.exists() || !srcFile.isFile()) {
             return false;
         }
 
         File destFile = new File(destFileName);
-        if ( destFile.exists() && destFile.getParent()!=null){
+//        if ( destFile.exists() && destFile.getParent()!=null){
+//            destFile.getParentFile().mkdirs();
+//        }
+
+        if (!destFile.getParentFile().exists()) {
             destFile.getParentFile().mkdirs();
         }
         return srcFile.renameTo( destFile );
@@ -168,7 +178,7 @@ public class FileUtil {
             unreadIds.add(article.getId());
         }
         content = gson.toJson(unreadIds);
-        saveFile(App.externalFilesDir + "/config/unreadIds-backup.json", content);
+        saveStringToFile(App.externalFilesDir + "/config/unreadIds-backup.json", content);
 
 //        articles = WithDB.i().getArtsStared();
 //        List<String> staredIds = new ArrayList<>(articles.size());
@@ -176,68 +186,18 @@ public class FileUtil {
 //            staredIds.add(article.getId());
 //        }
 //        content = gson.toJson(staredIds);
-//        saveFile(App.storeRelativePath + "staredIds.backup",content);
+//        saveStringToFile(App.storeRelativePath + "staredIds.backup",content);
     }
 
 
     public static void saveArticle(String dir, Article article) {
         String title = StringUtil.getOptimizedNameForSave(article.getTitle());
         String filePathTitle = dir + title;
-
-        String published = TimeUtil.stampToTime(article.getPublished() * 1000, "yyyy-MM-dd HH:mm");
-        String canonical = article.getCanonical();
-        String content = StringUtil.formatContentForSave(title, article.getContent());
-        String author = article.getAuthor();
-
-        if (TextUtils.isEmpty(author) ||
-                article.getOriginTitle().toLowerCase().contains(author.toLowerCase()) ||
-                author.toLowerCase().contains(article.getOriginTitle().toLowerCase())) {
-            author = article.getOriginTitle();
-        } else {
-            author = article.getOriginTitle() + "@" + article.getAuthor();
-        }
-
-        content = "<!DOCTYPE html><html><head><meta charset=\"UTF-8\">" +
-                "<link rel=\"stylesheet\" type=\"text/css\" href=\"./normalize.css\" />" +
-//                "<link rel=\"stylesheet\" type=\"text/css\" href=\"./markdown.css\" />" +
-//                "<link rel=\"stylesheet\" type=\"text/css\" href=\"./customer.css\" />" +
-                "</head><body>" +
-                "<article id=\"article\" >" +
-                "<header id=\"header\">" +
-                "<h1 id=\"title\"><a href=\"" + canonical + "\">" + title + "</a></h1>" +
-                "<p id=\"author\">" + author + "</p>" +
-                "<p id=\"pubDate\">" + published + "</p>" +
-                "</header>" +
-                "<section id=\"content\">" + content + "</section>" +
-                "</article>" +
-                "</body></html>";
+        String html = StringUtil.getHtmlForSave(article, title);
 
         String idInMD5 = StringUtil.str2MD5(article.getId());
-        saveFile(filePathTitle + ".html", content);
+        saveStringToFile(filePathTitle + ".html", html);
         moveDir(App.externalFilesDir + "/cache/" + idInMD5 + "/" + idInMD5 + "_files", filePathTitle + "_files");
-    }
-
-
-    public static void saveFile(String filePath, String fileContent) {
-        if( !isExternalStorageWritable() ){return;}
-//        添加文件写入和创建的权限
-//        String aaa = Environment.getExternalStorageDirectory() + File.separator + "aaa.txt";
-//        Environment.getExternalStorageDirectory() 获得sd卡根目录   File.separator 代表 / 分隔符
-        File file = new File( filePath );
-        File folder =  file.getParentFile();
-
-        try {
-            if (!folder.exists()) {
-                folder.mkdirs();
-            }
-//            KLog.d("【】" + file.toString() + "--"+ folder.toString());
-            FileWriter fileWriter = new FileWriter(file,false); //在 (file,false) 后者表示在 fileWriter 对文件再次写入时，是否会在该文件的结尾续写，true 是续写，false 是覆盖。
-            fileWriter.write( fileContent );
-            fileWriter.flush();  // 刷新该流中的缓冲。将缓冲区中的字符数据保存到目的文件中去。
-            fileWriter.close();  // 关闭此流。在关闭前会先刷新此流的缓冲区。在关闭后，再写入或者刷新的话，会抛IOException异常。
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
     }
 
     public static String readFile(String filePath) {
@@ -277,6 +237,156 @@ public class FileUtil {
     }
 
 
+    //文件拷贝
+    //要复制的目录下的所有非子目录(文件夹)文件拷贝
+    public static int copyFile(String fromFile, String toFile) {
+        try {
+            InputStream fosfrom = new FileInputStream(fromFile);
+            OutputStream fosto = new FileOutputStream(toFile);
+            byte bt[] = new byte[1024];
+            int c;
+            while ((c = fosfrom.read(bt)) > 0) {
+                fosto.write(bt, 0, c);
+            }
+            fosfrom.close();
+            fosto.close();
+            KLog.e("图片复制完成" + fosfrom.available() + new File(fromFile).exists());
+            return 0;
+        } catch (Exception ex) {
+            KLog.e("报错", ex);
+            ex.printStackTrace();
+            return -1;
+        }
+    }
+
+
+    /**
+     * 根据文件路径拷贝文件
+     *
+     * @param srcFile  源文件
+     * @param destPath 目标文件路径
+     * @return boolean 成功true、失败false
+     */
+    public static boolean copyFile(File srcFile, String destPath) {
+        return copyFile(srcFile, new File(destPath));
+    }
+
+
+    /**
+     * 使用 FileChannels 来复制文件，效率最好，但是 Channel 经常会中途关闭，导致复制吃的图片文件不完整
+     *
+     * @throws IOException
+     */
+    public static void copy(File source, File dest) throws IOException {
+        if (!isExternalStorageWritable()) {
+            return;
+        }
+        if (!source.exists()) {
+            return;
+        }
+        if (!dest.getParentFile().exists()) {
+            dest.getParentFile().mkdirs();
+        }
+        FileChannel inputChannel = null;
+        FileChannel outputChannel = null;
+        try {
+            inputChannel = new FileInputStream(source).getChannel();
+            outputChannel = new FileOutputStream(dest).getChannel();
+            outputChannel.transferFrom(inputChannel, 0, inputChannel.size());
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (inputChannel != null) {
+                inputChannel.close();
+            }
+            if (outputChannel != null) {
+                outputChannel.close();
+            }
+        }
+    }
+
+    public static boolean copyFile(File srcFile, File destFile) {
+        boolean result = false;
+        if (!isExternalStorageWritable()) {
+            return false;
+        }
+
+        if ((srcFile == null) || (destFile == null) || !srcFile.exists()) {
+            return false;
+        }
+
+
+        if (destFile.exists()) {
+//            dest.delete(); // delete file
+            return false;
+        } else if (!destFile.getParentFile().exists()) {
+            destFile.getParentFile().mkdirs();
+        }
+
+        FileChannel srcChannel = null;
+        FileChannel dstChannel = null;
+
+        try {
+            srcChannel = new FileInputStream(srcFile).getChannel();
+            dstChannel = new FileOutputStream(destFile).getChannel();
+            srcChannel.transferTo(0, srcChannel.size(), dstChannel);
+            result = true;
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+            return result;
+        } catch (IOException e) {
+            e.printStackTrace();
+            return result;
+        }
+        try {
+            srcChannel.close();
+            dstChannel.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return result;
+    }
+
+
+    public static boolean copyFileToPictures(File srcFile) {
+        File loreadDir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES).getAbsolutePath() + File.separator + "知微");
+        if (!loreadDir.exists()) {
+            loreadDir.mkdirs();
+        }
+        String fileName = srcFile.getName();
+        String suffix = "";
+        if (fileName.contains(".")) {
+            suffix = fileName.substring(fileName.lastIndexOf("."));
+        } else {
+            suffix = getImageSuffix(srcFile);
+        }
+        File destFile = new File(loreadDir.getAbsolutePath() + File.separator + TimeUtil.getCurrentDate("yyyyMMdd_HHmmss") + suffix);
+        return copyFile(srcFile, destFile);
+    }
+
+
+    public static void saveStringToFile(String filePath, String fileContent) {
+        if (!isExternalStorageWritable()) {
+            return;
+        }
+        File file = new File(filePath);
+        File folder = file.getParentFile();
+
+        try {
+            if (!folder.exists()) {
+                folder.mkdirs();
+            }
+//            KLog.d("【】" + file.toString() + "--"+ folder.toString());
+            FileWriter fileWriter = new FileWriter(file, false); //在 (file,false) 后者表示在 fileWriter 对文件再次写入时，是否会在该文件的结尾续写，true 是续写，false 是覆盖。
+            fileWriter.write(fileContent);
+            fileWriter.flush();  // 刷新该流中的缓冲。将缓冲区中的字符数据保存到目的文件中去。
+            fileWriter.close();  // 关闭此流。在关闭前会先刷新此流的缓冲区。在关闭后，再写入或者刷新的话，会抛IOException异常。
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+
     // 保存图片到手机指定目录
     public static void saveBitmap(String filePath, String fileName, byte[] bytes) {
         // 判断SD卡是否存在，并且是否具有读写权限
@@ -302,21 +412,6 @@ public class FileUtil {
                 e.printStackTrace();
             }
         }
-    }
-
-
-
-    /**
-     * @param dir 目录名称
-     * @return 带有完整的相对路径的 path
-     * "/storage/emulated/0/Android/data/me.wizos.loread/files/" + Dir + "/"
-     */
-    public static String getRelativeDir(String dir) {
-        return App.externalFilesDir + File.separator + dir + File.separator;
-    }
-
-    public static String getAbsoluteDir(String dir) {
-        return "file://" + App.externalFilesDir + File.separator + dir + File.separator;
     }
 
 
@@ -369,9 +464,55 @@ public class FileUtil {
         }
     }
 
-    public static String getImageType(File file) {
+
+    /**
+     * @param dir 目录名称
+     * @return 带有完整的相对路径的 path
+     * "/storage/emulated/0/Android/data/me.wizos.loread/files/" + Dir + "/"
+     */
+    public static String getRelativeDir(String dir) {
+        return App.externalFilesDir + File.separator + dir + File.separator;
+    }
+
+    public static String getAbsoluteDir(String dir) {
+        return "file://" + App.externalFilesDir + File.separator + dir + File.separator;
+    }
+
+
+    public static String getImageSuffix(File imageFile) {
         try {
-            InputStream in = new FileInputStream(file);
+            FileInputStream in = new FileInputStream(imageFile);
+//            byte[] b = getBytes(in, 10);
+            byte[] b = new byte[10];
+            in.read(b, 0, 10); //读取文件中的内容到b[]数组,//读取 nums 个字节赋值给 b
+            byte b0 = b[0];
+            byte b1 = b[1];
+            byte b2 = b[2];
+            byte b3 = b[3];
+            byte b6 = b[6];
+            byte b7 = b[7];
+            byte b8 = b[8];
+            byte b9 = b[9];
+            in.close();
+            if (b0 == (byte) 'G' && b1 == (byte) 'I' && b2 == (byte) 'F') {
+                return ".gif";
+            } else if (b1 == (byte) 'P' && b2 == (byte) 'N' && b3 == (byte) 'G') {
+                return ".png";
+            } else if (b6 == (byte) 'J' && b7 == (byte) 'F' && b8 == (byte) 'I' && b9 == (byte) 'F') {
+                return ".jpg";
+            } else if (b6 == (byte) 'E' && b7 == (byte) 'x' && b8 == (byte) 'i' && b9 == (byte) 'f') {
+                return ".jpg";
+            } else {
+                return ".jpg";
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "";
+        }
+    }
+
+    public static String getImageSuffix(InputStream in) {
+        try {
             byte[] b = getBytes(in, 10);
             byte b0 = b[0];
             byte b1 = b[1];
@@ -397,32 +538,20 @@ public class FileUtil {
         }
     }
 
-    public static String getImageType(InputStream in) {
+    private static byte[] getBytes(InputStream in, int nums) {
+        byte b[] = new byte[nums];     //创建合适文件大小的数组
         try {
-            byte[] b = getBytes(in, 10);
-            byte b0 = b[0];
-            byte b1 = b[1];
-            byte b2 = b[2];
-            byte b3 = b[3];
-            byte b6 = b[6];
-            byte b7 = b[7];
-            byte b8 = b[8];
-            byte b9 = b[9];
-            if (b0 == (byte) 'G' && b1 == (byte) 'I' && b2 == (byte) 'F') {
-                return ".gif";
-            } else if (b1 == (byte) 'P' && b2 == (byte) 'N' && b3 == (byte) 'G') {
-                return ".png";
-            } else if (b6 == (byte) 'J' && b7 == (byte) 'F' && b8 == (byte) 'I' && b9 == (byte) 'F') {
-                return ".jpg";
-            } else if (b6 == (byte) 'E' && b7 == (byte) 'x' && b8 == (byte) 'i' && b9 == (byte) 'f') {
-                return ".jpg";
-            } else {
-                return ".jpg";
-            }
-        } catch (Exception e) {
-            return "";
+//            in.skip(9);//跳过前9个字节
+            int read = in.read(b, 0, nums); //读取文件中的内容到b[]数组,//读取 nums 个字节赋值给 b
+//            in.close();
+            KLog.e("read =" + read);
+            KLog.e("b =" + b[0]);
+        } catch (IOException e) {
+            e.printStackTrace();
         }
+        return b;
     }
+
 
 
     public static String reviseSrc(String url){
@@ -442,19 +571,61 @@ public class FileUtil {
     }
 
 
-    private static byte[] getBytes(InputStream in,int nums){
-        byte b[]= new byte[nums];     //创建合适文件大小的数组
+    public static String guessFileName(String url, String contentDisposition, String mimeType) {
+        // 处理会把 epub 文件，识别为 bin 文件的 bug：https://blog.csdn.net/imesong/article/details/45568697
+        String fileNameByGuess = URLUtil.guessFileName(url, contentDisposition, mimeType);
+        if ("application/octet-stream".equals(mimeType)) {
+            if (TextUtils.isEmpty(contentDisposition)) {
+                // 从路径中获取
+                fileNameByGuess = url.substring(url.lastIndexOf("/") + 1);
+            } else {
+                fileNameByGuess = contentDisposition.substring(contentDisposition.indexOf("filename=") + 9);
+            }
+
+//            int index = contentDisposition.indexOf("filename=");
+//            if( index != -1 ){
+//                fileNameByGuess = contentDisposition.substring( index + 9 );
+//            }
+        }
+        // 处理 url 中包含乱码中文的问题
         try {
-//            in.skip(9);//跳过前9个字节
-            int read  = in.read(b,0,nums); //读取文件中的内容到b[]数组,//读取 nums 个字节赋值给 b
-//            in.close();
-            KLog.d("read ="+ read );
-            KLog.d("b ="+ b[0]);
-        } catch (IOException e) {
+            fileNameByGuess = URLDecoder.decode(fileNameByGuess, "UTF-8");
+        } catch (UnsupportedEncodingException e){
             e.printStackTrace();
         }
-        return b;
+
+        return fileNameByGuess;
     }
 
+
+    public static void clear(Context context) {
+        List<Article> articles = WithDB.i().getArtsAll();
+        Article article = new Article();
+        ArrayMap<String, Integer> idsMap = new ArrayMap<>(articles.size());
+        for (int i = 0, size = articles.size(); i < size; i++) {
+            article = articles.get(i);
+            idsMap.put(StringUtil.str2MD5(article.getId()), 1);
+        }
+
+        File dir = new File(context.getExternalFilesDir(null) + "/cache/");
+        KLog.e("数量：" + dir.listFiles().length);
+        File[] files = dir.listFiles();
+        File file = null;
+        String idInMD5 = "";
+        for (int i = 0, size = files.length; i < size; i++) {
+            file = files[i];
+            if (idsMap.get(file.getName()) != null) {
+                idsMap.put(file.getName(), 2);
+            }
+        }
+
+        for (Map.Entry<String, Integer> entry : idsMap.entrySet()) {
+//            KLog.e("最终" + entry.getKey() );
+            if (entry.getValue() == 2) {
+                KLog.e("获得文章标题：" + entry.getKey());
+                deleteHtmlDir(new File(context.getExternalFilesDir(null) + "/cache/" + entry.getKey()));
+            }
+        }
+    }
 
 }

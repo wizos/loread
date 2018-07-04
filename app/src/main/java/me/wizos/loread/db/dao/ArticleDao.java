@@ -67,7 +67,7 @@ public class ArticleDao extends AbstractDao<Article, String> {
      * Creates the underlying database table.
      */
     public static void createTable(Database db, boolean ifNotExists) {
-        String constraint = ifNotExists ? "IF NOT EXISTS " : "";
+        String constraint = ifNotExists ? "IF NOT EXISTS ": "";
         db.execSQL("CREATE TABLE " + constraint + "\"ARTICLE\" (" + //
                 "\"ID\" TEXT PRIMARY KEY NOT NULL ," + // 0: id
                 "\"CRAWL_TIME_MSEC\" INTEGER," + // 1: crawlTimeMsec
@@ -93,9 +93,7 @@ public class ArticleDao extends AbstractDao<Article, String> {
                 "\"ORIGIN_HTML_URL\" TEXT);"); // 21: originHtmlUrl
     }
 
-    /**
-     * Drops the underlying database table.
-     */
+    /** Drops the underlying database table. */
     public static void dropTable(Database db, boolean ifExists) {
         String sql = "DROP TABLE " + (ifExists ? "IF EXISTS " : "") + "\"ARTICLE\"";
         db.execSQL(sql);
@@ -105,107 +103,107 @@ public class ArticleDao extends AbstractDao<Article, String> {
     protected final void bindValues(DatabaseStatement stmt, Article entity) {
         stmt.clearBindings();
         stmt.bindString(1, entity.getId());
-
+ 
         Long crawlTimeMsec = entity.getCrawlTimeMsec();
         if (crawlTimeMsec != null) {
             stmt.bindLong(2, crawlTimeMsec);
         }
-
+ 
         Long timestampUsec = entity.getTimestampUsec();
         if (timestampUsec != null) {
             stmt.bindLong(3, timestampUsec);
         }
-
+ 
         String categories = entity.getCategories();
         if (categories != null) {
             stmt.bindString(4, categories);
         }
-
+ 
         String title = entity.getTitle();
         if (title != null) {
             stmt.bindString(5, title);
         }
-
+ 
         Long published = entity.getPublished();
         if (published != null) {
             stmt.bindLong(6, published);
         }
-
+ 
         Long updated = entity.getUpdated();
         if (updated != null) {
             stmt.bindLong(7, updated);
         }
-
+ 
         Long starred = entity.getStarred();
         if (starred != null) {
             stmt.bindLong(8, starred);
         }
-
+ 
         String enclosure = entity.getEnclosure();
         if (enclosure != null) {
             stmt.bindString(9, enclosure);
         }
-
+ 
         String canonical = entity.getCanonical();
         if (canonical != null) {
             stmt.bindString(10, canonical);
         }
-
+ 
         String alternate = entity.getAlternate();
         if (alternate != null) {
             stmt.bindString(11, alternate);
         }
-
+ 
         String summary = entity.getSummary();
         if (summary != null) {
             stmt.bindString(12, summary);
         }
-
+ 
         String content = entity.getContent();
         if (content != null) {
             stmt.bindString(13, content);
         }
-
+ 
         String author = entity.getAuthor();
         if (author != null) {
             stmt.bindString(14, author);
         }
-
+ 
         String readState = entity.getReadState();
         if (readState != null) {
             stmt.bindString(15, readState);
         }
-
+ 
         String starState = entity.getStarState();
         if (starState != null) {
             stmt.bindString(16, starState);
         }
-
+ 
         String saveDir = entity.getSaveDir();
         if (saveDir != null) {
             stmt.bindString(17, saveDir);
         }
-
+ 
         String imgState = entity.getImgState();
         if (imgState != null) {
             stmt.bindString(18, imgState);
         }
-
+ 
         String coverSrc = entity.getCoverSrc();
         if (coverSrc != null) {
             stmt.bindString(19, coverSrc);
         }
-
+ 
         String originStreamId = entity.getOriginStreamId();
         if (originStreamId != null) {
             stmt.bindString(20, originStreamId);
         }
-
+ 
         String originTitle = entity.getOriginTitle();
         if (originTitle != null) {
             stmt.bindString(21, originTitle);
         }
-
+ 
         String originHtmlUrl = entity.getOriginHtmlUrl();
         if (originHtmlUrl != null) {
             stmt.bindString(22, originHtmlUrl);
@@ -216,107 +214,107 @@ public class ArticleDao extends AbstractDao<Article, String> {
     protected final void bindValues(SQLiteStatement stmt, Article entity) {
         stmt.clearBindings();
         stmt.bindString(1, entity.getId());
-
+ 
         Long crawlTimeMsec = entity.getCrawlTimeMsec();
         if (crawlTimeMsec != null) {
             stmt.bindLong(2, crawlTimeMsec);
         }
-
+ 
         Long timestampUsec = entity.getTimestampUsec();
         if (timestampUsec != null) {
             stmt.bindLong(3, timestampUsec);
         }
-
+ 
         String categories = entity.getCategories();
         if (categories != null) {
             stmt.bindString(4, categories);
         }
-
+ 
         String title = entity.getTitle();
         if (title != null) {
             stmt.bindString(5, title);
         }
-
+ 
         Long published = entity.getPublished();
         if (published != null) {
             stmt.bindLong(6, published);
         }
-
+ 
         Long updated = entity.getUpdated();
         if (updated != null) {
             stmt.bindLong(7, updated);
         }
-
+ 
         Long starred = entity.getStarred();
         if (starred != null) {
             stmt.bindLong(8, starred);
         }
-
+ 
         String enclosure = entity.getEnclosure();
         if (enclosure != null) {
             stmt.bindString(9, enclosure);
         }
-
+ 
         String canonical = entity.getCanonical();
         if (canonical != null) {
             stmt.bindString(10, canonical);
         }
-
+ 
         String alternate = entity.getAlternate();
         if (alternate != null) {
             stmt.bindString(11, alternate);
         }
-
+ 
         String summary = entity.getSummary();
         if (summary != null) {
             stmt.bindString(12, summary);
         }
-
+ 
         String content = entity.getContent();
         if (content != null) {
             stmt.bindString(13, content);
         }
-
+ 
         String author = entity.getAuthor();
         if (author != null) {
             stmt.bindString(14, author);
         }
-
+ 
         String readState = entity.getReadState();
         if (readState != null) {
             stmt.bindString(15, readState);
         }
-
+ 
         String starState = entity.getStarState();
         if (starState != null) {
             stmt.bindString(16, starState);
         }
-
+ 
         String saveDir = entity.getSaveDir();
         if (saveDir != null) {
             stmt.bindString(17, saveDir);
         }
-
+ 
         String imgState = entity.getImgState();
         if (imgState != null) {
             stmt.bindString(18, imgState);
         }
-
+ 
         String coverSrc = entity.getCoverSrc();
         if (coverSrc != null) {
             stmt.bindString(19, coverSrc);
         }
-
+ 
         String originStreamId = entity.getOriginStreamId();
         if (originStreamId != null) {
             stmt.bindString(20, originStreamId);
         }
-
+ 
         String originTitle = entity.getOriginTitle();
         if (originTitle != null) {
             stmt.bindString(21, originTitle);
         }
-
+ 
         String originHtmlUrl = entity.getOriginHtmlUrl();
         if (originHtmlUrl != null) {
             stmt.bindString(22, originHtmlUrl);
@@ -326,7 +324,7 @@ public class ArticleDao extends AbstractDao<Article, String> {
     @Override
     public String readKey(Cursor cursor, int offset) {
         return cursor.getString(offset + 0);
-    }
+    }    
 
     @Override
     public Article readEntity(Cursor cursor, int offset) {
@@ -356,7 +354,7 @@ public class ArticleDao extends AbstractDao<Article, String> {
         );
         return entity;
     }
-
+     
     @Override
     public void readEntity(Cursor cursor, Article entity, int offset) {
         entity.setId(cursor.getString(offset + 0));
@@ -381,13 +379,13 @@ public class ArticleDao extends AbstractDao<Article, String> {
         entity.setOriginStreamId(cursor.isNull(offset + 19) ? null : cursor.getString(offset + 19));
         entity.setOriginTitle(cursor.isNull(offset + 20) ? null : cursor.getString(offset + 20));
         entity.setOriginHtmlUrl(cursor.isNull(offset + 21) ? null : cursor.getString(offset + 21));
-    }
-
+     }
+    
     @Override
     protected final String updateKeyAfterInsert(Article entity, long rowId) {
         return entity.getId();
     }
-
+    
     @Override
     public String getKey(Article entity) {
         if (entity != null) {
@@ -407,9 +405,7 @@ public class ArticleDao extends AbstractDao<Article, String> {
         return true;
     }
 
-    /**
-     * Internal query to resolve the "items" to-many relationship of Feed.
-     */
+    /** Internal query to resolve the "items" to-many relationship of Feed. */
     public List<Article> _queryFeed_Items(String categories) {
         synchronized (this) {
             if (feed_ItemsQuery == null) {

@@ -48,7 +48,7 @@ public class TagDao extends AbstractDao<Tag, String> {
      * Creates the underlying database table.
      */
     public static void createTable(Database db, boolean ifNotExists) {
-        String constraint = ifNotExists ? "IF NOT EXISTS " : "";
+        String constraint = ifNotExists ? "IF NOT EXISTS ": "";
         db.execSQL("CREATE TABLE " + constraint + "\"TAG\" (" + //
                 "\"ID\" TEXT PRIMARY KEY NOT NULL ," + // 0: id
                 "\"SORTID\" TEXT NOT NULL ," + // 1: sortid
@@ -57,9 +57,7 @@ public class TagDao extends AbstractDao<Tag, String> {
                 "\"NEWEST_ITEM_TIMESTAMP_USEC\" INTEGER);"); // 4: newestItemTimestampUsec
     }
 
-    /**
-     * Drops the underlying database table.
-     */
+    /** Drops the underlying database table. */
     public static void dropTable(Database db, boolean ifExists) {
         String sql = "DROP TABLE " + (ifExists ? "IF EXISTS " : "") + "\"TAG\"";
         db.execSQL(sql);
@@ -70,17 +68,17 @@ public class TagDao extends AbstractDao<Tag, String> {
         stmt.clearBindings();
         stmt.bindString(1, entity.getId());
         stmt.bindString(2, entity.getSortid());
-
+ 
         String title = entity.getTitle();
         if (title != null) {
             stmt.bindString(3, title);
         }
-
+ 
         Integer unreadCount = entity.getUnreadCount();
         if (unreadCount != null) {
             stmt.bindLong(4, unreadCount);
         }
-
+ 
         Long newestItemTimestampUsec = entity.getNewestItemTimestampUsec();
         if (newestItemTimestampUsec != null) {
             stmt.bindLong(5, newestItemTimestampUsec);
@@ -92,17 +90,17 @@ public class TagDao extends AbstractDao<Tag, String> {
         stmt.clearBindings();
         stmt.bindString(1, entity.getId());
         stmt.bindString(2, entity.getSortid());
-
+ 
         String title = entity.getTitle();
         if (title != null) {
             stmt.bindString(3, title);
         }
-
+ 
         Integer unreadCount = entity.getUnreadCount();
         if (unreadCount != null) {
             stmt.bindLong(4, unreadCount);
         }
-
+ 
         Long newestItemTimestampUsec = entity.getNewestItemTimestampUsec();
         if (newestItemTimestampUsec != null) {
             stmt.bindLong(5, newestItemTimestampUsec);
@@ -118,7 +116,7 @@ public class TagDao extends AbstractDao<Tag, String> {
     @Override
     public String readKey(Cursor cursor, int offset) {
         return cursor.getString(offset + 0);
-    }
+    }    
 
     @Override
     public Tag readEntity(Cursor cursor, int offset) {
@@ -131,7 +129,7 @@ public class TagDao extends AbstractDao<Tag, String> {
         );
         return entity;
     }
-
+     
     @Override
     public void readEntity(Cursor cursor, Tag entity, int offset) {
         entity.setId(cursor.getString(offset + 0));
@@ -139,13 +137,13 @@ public class TagDao extends AbstractDao<Tag, String> {
         entity.setTitle(cursor.isNull(offset + 2) ? null : cursor.getString(offset + 2));
         entity.setUnreadCount(cursor.isNull(offset + 3) ? null : cursor.getInt(offset + 3));
         entity.setNewestItemTimestampUsec(cursor.isNull(offset + 4) ? null : cursor.getLong(offset + 4));
-    }
-
+     }
+    
     @Override
     protected final String updateKeyAfterInsert(Tag entity, long rowId) {
         return entity.getId();
     }
-
+    
     @Override
     public String getKey(Tag entity) {
         if (entity != null) {
@@ -164,5 +162,5 @@ public class TagDao extends AbstractDao<Tag, String> {
     protected final boolean isEntityUpdateable() {
         return true;
     }
-
+    
 }

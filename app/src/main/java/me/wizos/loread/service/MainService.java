@@ -30,7 +30,7 @@ import me.wizos.loread.net.Api;
 import me.wizos.loread.net.DataApi;
 import me.wizos.loread.net.InoApi;
 import me.wizos.loread.utils.FileUtil;
-import me.wizos.loread.utils.HttpUtil;
+import me.wizos.loread.utils.NetworkUtil;
 import me.wizos.loread.utils.StringUtil;
 import me.wizos.loread.utils.ToastUtil;
 
@@ -56,12 +56,19 @@ public class MainService extends IntentService {
     @Override
     public void onCreate() {
         super.onCreate();
+        EventBus.getDefault().register(this);
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        EventBus.getDefault().unregister(this);
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void onReceiveesult(Sync sync) {
         int result = sync.result;
-        KLog.e("接收到的数据为：" + result);
+//        KLog.e("接收到的数据为：" + result);
         switch (result) {
             case Sync.STOP:
                 stopSelf();
@@ -71,16 +78,12 @@ public class MainService extends IntentService {
         }
     }
     @Override
-    public void onDestroy() {
-        super.onDestroy();
-    }
-    @Override
     protected void onHandleIntent(Intent intent) {
         if (intent == null) {
             return;
         }
 
-        if (App.i().isSyncing || !HttpUtil.isNetworkAvailable()) {
+        if (App.i().isSyncing || !NetworkUtil.isNetworkAvailable()) {
             return;
         }
 
@@ -149,7 +152,7 @@ public class MainService extends IntentService {
             HashSet<String> staredRefsList = DataApi.i().fetchStaredRefs2();
 
 
-            KLog.e("1 - 同步文章内容");
+//            KLog.e("1 - 同步文章内容");
             ArrayList<HashSet<String>> refsList = DataApi.i().splitRefs2(unreadRefsList, staredRefsList);
             int readySyncArtsCapacity = refsList.get(0).size() + refsList.get(1).size() + refsList.get(2).size();
             List<String> ids;
@@ -159,7 +162,7 @@ public class MainService extends IntentService {
             ids = new ArrayList<>(refsList.get(0));
             needFetchCount = ids.size();
             hadFetchCount = 0;
-            KLog.e("栈的数量A:" + ids.size());
+//            KLog.e("栈的数量A:" + ids.size());
             while (needFetchCount > 0) {
                 num = Math.min(needFetchCount, InoApi.i().FETCH_CONTENT_EACH_CNT);
                 tempArticleList = DataApi.i().fetchContentsUnreadUnstar2(ids.subList(hadFetchCount, hadFetchCount = hadFetchCount + num));
@@ -377,7 +380,7 @@ public class MainService extends IntentService {
             idListMD5.add(StringUtil.str2MD5(article.getId()));
         }
         KLog.i("清除B：" + clearTime + "--" + allArtsBeforeTime.size());
-        FileUtil.deleteHtmlDirList2(idListMD5);
+        FileUtil.deleteHtmlDirList(idListMD5);
         WithDB.i().delArt(allArtsBeforeTime);
         System.gc();
     }

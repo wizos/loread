@@ -1,0 +1,15 @@
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:windowBackground="@android:color/transparent"
+    android:windowIsTranslucent="true"
+    tools:context="me.wizos.loread.activity.ImageActivity">
+
+    <!--<com.wingsofts.dragphotoview.DragPhotoView-->
+    <!--<com.github.chrisbanes.photoview.PhotoView-->
+    <me.wizos.loread.view.DragPhotoView
+        android:id="@+id/image_photo_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+</FrameLayout>

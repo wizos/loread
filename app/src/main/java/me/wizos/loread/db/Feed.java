@@ -1,7 +1,5 @@
 package me.wizos.loread.db;
 
-import com.socks.library.KLog;
-
 import org.greenrobot.greendao.DaoException;
 import org.greenrobot.greendao.annotation.Entity;
 import org.greenrobot.greendao.annotation.Generated;
@@ -13,8 +11,6 @@ import org.greenrobot.greendao.annotation.ToMany;
 
 import java.util.List;
 
-import me.wizos.loread.App;
-import me.wizos.loread.bean.config.FeedConfig;
 import me.wizos.loread.db.dao.ArticleDao;
 import me.wizos.loread.db.dao.DaoSession;
 import me.wizos.loread.db.dao.FeedDao;
@@ -40,72 +36,57 @@ public class Feed {
     private Integer unreadCount;
     private Long newestItemTimestampUsec;
 
-    public FeedConfig getConfig() {
-        try {
-            return App.feedsConfigMap.get(id);
-        } catch (Exception e) {
-            KLog.e(e);
-            return null;
-        }
-    }
+//    public FeedConfig getConfig() {
+//        try {
+//            return App.feedsConfigMap.get(id);
+//        } catch (Exception e) {
+//            KLog.e(e);
+//            return null;
+//        }
+//    }
 
-    public String getReferer() {
-        try {
-            return App.feedsConfigMap.get(id).getReferer();
-        } catch (Exception e) {
-//            KLog.e("【1】", App.feedsConfigMap + "  "  + id );
-            KLog.e(e);
-            return "";
-        }
-    }
+//    public String getDisplayMode() {
+//        return GlobalConfig.i().getDisplayMode(id);
+//
+////        try {
+////            return App.feedsConfigMap.get(id).getDisplayRouter();
+////        } catch (Exception e) {
+//////            KLog.e("【2】", App.feedsConfigMap + "  "  + id );
+////            KLog.e(e);
+////            return "";
+////        }
+//    }
 
-    public String getDisplayMode() {
-        try {
-            return App.feedsConfigMap.get(id).getOpenMode();
-        } catch (Exception e) {
-//            KLog.e("【2】", App.feedsConfigMap + "  "  + id );
-            KLog.e(e);
-            return "";
-        }
-    }
+//    public String getUserAgent() {
+//        try {
+//            return App.feedsConfigMap.get(id).getUserAgent();
+//        } catch (Exception e) {
+////            KLog.e("【3】", App.feedsConfigMap + "  "  + id );
+//            KLog.e(e);
+//            return "";
+//        }
+//    }
 
-    public String getUserAgent() {
-        try {
-            return App.feedsConfigMap.get(id).getUserAgent();
-        } catch (Exception e) {
-//            KLog.e("【3】", App.feedsConfigMap + "  "  + id );
-            KLog.e(e);
-            return "";
-        }
-    }
 
-    public void setReferer(String referer) {
-        try {
-            App.feedsConfigMap.get(id).setReferer(referer);
-        } catch (Exception e) {
-            App.feedsConfigMap.put(id, new FeedConfig(null, referer, null));
-        }
-    }
+//    public void setDisplayMode(String displayMode) {
+//        try {
+//            App.feedsConfigMap.get(id).setOpenMode(displayMode);
+//        } catch (Exception e) {
+//            App.feedsConfigMap.put(id, new FeedConfig(displayMode, null, null));
+//        }
+//    }
 
-    public void setDisplayMode(String displayMode) {
-        try {
-            App.feedsConfigMap.get(id).setOpenMode(displayMode);
-        } catch (Exception e) {
-            App.feedsConfigMap.put(id, new FeedConfig(displayMode, null, null));
-        }
-    }
+//    public void setUserAgent(String userAgent) {
+//        try {
+//            App.feedsConfigMap.get(id).setUserAgent(userAgent);
+//        } catch (Exception e) {
+//            App.feedsConfigMap.put(id, new FeedConfig(null, null, userAgent));
+//        }
+//    }
 
-    public void setUserAgent(String userAgent) {
-        try {
-            App.feedsConfigMap.get(id).setUserAgent(userAgent);
-        } catch (Exception e) {
-            App.feedsConfigMap.put(id, new FeedConfig(null, null, userAgent));
-        }
-    }
-
-    public void saveConfig() {
-        App.i().saveFeedsConfig();
-    }
+//    public void saveConfig() {
+//        App.i().saveFeedsConfig();
+//    }
 
 
     @ToMany(joinProperties = {

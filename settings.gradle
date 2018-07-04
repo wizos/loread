@@ -1,2 +1,1 @@
-include ':app', ':scrolllayout', ':swipelayout', ':circletimeview', ':agentweb-core',':luban'
-//, ':sweetsheet' , ':grouplistview'
+include ':app', ':swipelayout', ':agentweb-core'

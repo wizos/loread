@@ -22,6 +22,7 @@ import java.util.List;
 
 import me.wizos.loread.App;
 import me.wizos.loread.R;
+import me.wizos.loread.bean.config.GlobalConfig;
 import me.wizos.loread.data.WithDB;
 import me.wizos.loread.db.Feed;
 import me.wizos.loread.db.Tag;
@@ -34,9 +35,9 @@ import me.wizos.loread.utils.ToastUtil;
  */
 
 public class FeedConfigDialog {
-    String selectedFeedDisplayMode = Api.DISPLAY_RSS;
-    Tag selectedFeedGroup;
-    EditText feedNameEdit;
+    private String selectedFeedDisplayMode = Api.DISPLAY_RSS;
+    private Tag selectedFeedGroup;
+    private EditText feedNameEdit;
 
     private StringCallback stringCallback;
 
@@ -69,9 +70,11 @@ public class FeedConfigDialog {
                         Feed feedx = feed;
                         renameFeed(feedNameEdit.getText().toString(), feedx);
                         if (!selectedFeedDisplayMode.equals(Api.DISPLAY_RSS)) {
-                            feed.setDisplayMode(selectedFeedDisplayMode);
+//                            feed.setDisplayMode(selectedFeedDisplayMode);
+                            GlobalConfig.i().addDisplayRouter(feed.getId(), selectedFeedDisplayMode);
                         } else {
-                            feed.setDisplayMode(null);
+//                            feed.setDisplayMode(null);
+                            GlobalConfig.i().removeDisplayRouter(feed.getId());
                         }
 
                         if (selectedFeedGroup != null && selectedFeedGroup.getId() != null && !feed.getCategoryid().equals(selectedFeedGroup.getId())) {
@@ -79,7 +82,8 @@ public class FeedConfigDialog {
                             KLog.e("改变feed的分组");
                         }
                         feedx.update();
-                        feedx.saveConfig();
+//                        feedx.saveConfig();
+                        GlobalConfig.i().save();
                         dialog.dismiss();
                     }
                 }).build();
@@ -92,11 +96,17 @@ public class FeedConfigDialog {
 
         TextView feedOpenModeSelect = (TextView) dialog.findViewById(R.id.feed_open_mode_select);
 
-        if (TextUtils.isEmpty(feed.getDisplayMode())) {
+//        if (TextUtils.isEmpty(feed.getDisplayMode())) {
+//            selectedFeedDisplayMode = Api.DISPLAY_RSS;
+//        } else {
+//            selectedFeedDisplayMode = feed.getDisplayMode();
+//        }
+        if (TextUtils.isEmpty(GlobalConfig.i().getDisplayMode(feed.getId()))) {
             selectedFeedDisplayMode = Api.DISPLAY_RSS;
         } else {
-            selectedFeedDisplayMode = feed.getDisplayMode();
+            selectedFeedDisplayMode = GlobalConfig.i().getDisplayMode(feed.getId());
         }
+
         feedOpenModeSelect.setText(selectedFeedDisplayMode);
         feedOpenModeSelect.setOnClickListener(new View.OnClickListener() {
             @Override

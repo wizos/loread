@@ -1,45 +1,56 @@
-/* RESET
-/********/
-
+/* #203238 浅绿
+  #141e21;  深绿
+***/
+ 
 body {
     color: #97A0A5;
     background-color:rgba(0,0,0,0);
     background-color: #202B2F;
 }
 
-/* TABLES
+/* 标题
 =============================================================================*/
-
-table {
-    background-color: #202B2F;
-}
-
-h1 {
+h1,h2 {
     color: #E3E8E7;
 }
 h2 {
     border-bottom: 1px solid #ccc;
-    color: #E3E8E7;
 }
 hr {
-    background-color: #141e21; // 深绿
-}
-
-code, tt , pre ,img {
-    background-color: #141e21; // 深绿
-    border: 1px solid #203238; // 浅绿
+    background-color: #141e21;
 }
 
 
-table th, table td {
-    border: 1px solid #203238;
-    padding: 6px 13px;
-}
-
-table tr {
-    background-color: #203238; // 浅绿
-    border-top: 1px solid #203238;
-}
-table tr:nth-child(2n) {
+/* 表格
+=============================================================================*/
+table{
     background-color: #203238;
+}
+table th, table td {
+    border: 1px solid #212121;
+}
+/*单数行*/
+/*table tr {
+    background-color: #203238;
+}*/
+
+/*双数行*/
+/*table tr:nth-child(2n) {
+    background-color: #203238;
+}*/
+
+
+/* 代码
+=============================================================================*/
+code, tt , pre {
+    background-color: #141e21;
+    border: 1px solid #203238;
+}
+
+
+/* 图片
+=============================================================================*/
+/* 降低图片亮度 */
+img,video,iframe,embed {
+    -webkit-filter:brightness(0.75);
 }

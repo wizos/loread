@@ -102,31 +102,38 @@ public class TimeUtil {
     public static int getCurrentHour() {
         Calendar currentDate = new GregorianCalendar(Locale.CHINA);
         int hour = currentDate.get(Calendar.HOUR_OF_DAY);
-        KLog.i("当前的小时为" + hour);
         return hour;
+    }
+
+    /**
+     * 获取给定格式的当前时间
+     *
+     * @param format 时间的格式
+     * @return
+     */
+    public static String getCurrentDate(String format) {
+        Date date = new Date(System.currentTimeMillis());
+        SimpleDateFormat dateFormat = new SimpleDateFormat(format, Locale.getDefault());
+        return dateFormat.format(date);
     }
 
     public static String getCurrentDateID(int position) {
         Date dateID = new Date(System.currentTimeMillis() + position*24*3600*1000L); // 因为后面算的数目太大，超出其格式 int 的范围，所以加 L 使用 Long 类型
-        SimpleDateFormat dateYMD = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
-        SimpleDateFormat dateHMS = new SimpleDateFormat("HH:mm:ss", Locale.getDefault());
+//        SimpleDateFormat dateYMD = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+//        SimpleDateFormat dateHMS = new SimpleDateFormat("HH:mm:ss", Locale.getDefault());
         SimpleDateFormat dateYMDHMS = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault());
         return dateYMDHMS.format(dateID);
     }
 
-    // 因为后面算的数目太大，超出其格式 int 的范围，所以加 L 使用 Long 类型
-    private static Date getDateTime(int position) {
-        return new Date(System.currentTimeMillis() + position * 24 * 3600 * 1000L);
-    }
-    public static String getDate(int position){
-        SimpleDateFormat dateYMD = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
-        return dateYMD.format(getDateTime(position));
-    }
-    public static String getNow() {
-        SimpleDateFormat dateHM = new SimpleDateFormat("HH:mm", Locale.getDefault());
 
-        System.out.println("【当前】");
-        return dateHM.format(getDateTime(0));
+    /**
+     * 将时间戳（毫秒）转换为时间（yyyy-MM-dd HH:mm:ss）
+     */
+    public static String stampToTime(long stamp, String pattern) {
+        SimpleDateFormat dateFormat = new SimpleDateFormat(pattern, Locale.getDefault());
+        Date date = new Date(stamp);
+//        Timestamp date = new Timestamp( stamp );
+        return dateFormat.format(date);
     }
 
     public static boolean compare(String HM1, String HM2) {
@@ -143,14 +150,5 @@ public class TimeUtil {
         }
     }
 
-    /**
-     * 将时间戳（毫秒）转换为时间（yyyy-MM-dd HH:mm:ss）
-     */
-    public static String stampToTime(long stamp, String pattern) {
-        SimpleDateFormat dateFormat = new SimpleDateFormat(pattern, Locale.getDefault());
-        Date date = new Date(stamp);
-//        Timestamp date = new Timestamp( stamp );
-        return dateFormat.format(date);
-    }
 
 }

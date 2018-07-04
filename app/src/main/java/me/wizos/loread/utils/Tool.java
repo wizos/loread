@@ -1,8 +1,11 @@
 package me.wizos.loread.utils;
 
+import android.content.Context;
 import android.view.View;
 
 import com.socks.library.KLog;
+
+import java.text.DecimalFormat;
 
 import me.wizos.loread.App;
 import me.wizos.loread.BuildConfig;
@@ -23,25 +26,6 @@ public class Tool {
             ToastUtil.showShort(msg);
         }
     }
-
-
-    /**
-     * 能否下载图片分以下几种情况：
-     * 1，开启省流量 & Wifi 可用
-     * 2，开启省流量 & Wifi 不可用
-     * 3，关闭省流量 & 网络 可用
-     * 4，关闭省流量 & 网络 不可用
-     *
-     * @return
-     */
-    public static boolean canDownImg() {
-        if (!WithPref.i().isDownImgWifi() && !HttpUtil.isNetworkAvailable()) {
-//            ToastUtil.showShort(App.i().getString(R.string.toast_not_network));
-            return false;
-        }
-        return !(WithPref.i().isDownImgWifi() && !HttpUtil.isWiFiUsed());
-    }
-
 
     public static void showLong(String msg) {
         if (BuildConfig.DEBUG) {
@@ -86,15 +70,29 @@ public class Tool {
     }
 
 
-    /**
-     * dp转换成px
-     *
-     * @param dp dp
-     * @return px值
-     */
-    public static int dp2px(float dp) {
-        final float scale = App.i().getResources().getDisplayMetrics().density;
-        return (int) (dp * scale + 0.5f);
+    public static String getNetFileSizeDescription(Context context, long size) {
+        if (context != null && size == -1) {
+            return context.getString(R.string.unknow);
+        }
+        StringBuffer bytes = new StringBuffer();
+        DecimalFormat format = new DecimalFormat("###.0");
+        if (size >= 1024 * 1024 * 1024) {
+            double i = (size / (1024.0 * 1024.0 * 1024.0));
+            bytes.append(format.format(i)).append("GB");
+        } else if (size >= 1024 * 1024) {
+            double i = (size / (1024.0 * 1024.0));
+            bytes.append(format.format(i)).append("MB");
+        } else if (size >= 1024) {
+            double i = (size / (1024.0));
+            bytes.append(format.format(i)).append("KB");
+        } else if (size < 1024) {
+            if (size <= 0) {
+                bytes.append("0B");
+            } else {
+                bytes.append((int) size).append("B");
+            }
+        }
+        return bytes.toString();
     }
 
 

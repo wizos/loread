@@ -3,30 +3,27 @@
 
 buildscript {
     repositories {
-        jcenter()
-//        maven{ url 'http://maven.aliyun.com/nexus/content/groups/public/'}
         google()
+        maven { url "https://jitpack.io" }
+        jcenter()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:3.0.1' // 4.0.1-all
+        classpath 'com.android.tools.build:gradle:3.1.3' // 4.0.1-all
         classpath 'org.greenrobot:greendao-gradle-plugin:3.2.2' // add plugin
         //butterknife的新版插件必须在此处作配置
         classpath 'com.jakewharton:butterknife-gradle-plugin:8.8.1'
         // 为了 AgentWeb 安装的插件
-        classpath 'com.novoda:bintray-release:0.5.0'
+//        classpath 'com.novoda:bintray-release:0.5.0'
         classpath fileTree(dir: 'plugin', include: ['*.jar'])
-//        classpath 'com.neenbedankt.gradle.plugins:android-apt:1.8'
-        // NOTE: Do not place your application dependencies here; they belong
-        // in the individual module build.gradle files
     }
 }
 
 allprojects {
     repositories {
-        jcenter()
-        maven { url "https://jitpack.io" }
-//        maven { url 'http://maven.aliyun.com/nexus/content/groups/public/'}
         google()
+        maven { url "https://jitpack.io" }
+        jcenter()
+//        maven { url 'http://maven.aliyun.com/nexus/content/groups/public/'}
     }
 }
 

@@ -38,4 +38,6 @@ public interface ImageBridge {
     void openLink(String link);
 
     void tryInitJs(String articleId);
+    // 切换屏幕方向，为播放iframe视频而用
+//    void toggleScreenOrientation();
 }

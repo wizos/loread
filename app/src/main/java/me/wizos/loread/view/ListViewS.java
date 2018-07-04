@@ -72,7 +72,7 @@ public class ListViewS extends ListView implements Handler.Callback, SwipeDragLa
                     //如果设置了监听器的话，就触发
                     if (mOnListItemLongClickListener != null && position == pointToPosition(lastX, lastY)) {
                         mOnListItemLongClickListener.onListItemLongClick(view, position);
-                        KLog.d("==" + msg.what);
+                        KLog.e("==" + msg.what);
 //                        mVibrator.vibrate(100); // 触发震动
                     }
                 }
@@ -80,7 +80,6 @@ public class ListViewS extends ListView implements Handler.Callback, SwipeDragLa
             default:
                 break;
         }
-        KLog.d("---" + msg.what + "==" + mState + "==" + mOnListItemLongClickListener);
         return true;
     }
 
@@ -143,6 +142,7 @@ public class ListViewS extends ListView implements Handler.Callback, SwipeDragLa
                 mState = STATE_DOWN;
                 sendLongClickMessage(pointToPosition(downX, downY)); // FIXME: 2016/5/4 【添加】修复 长按 bug
                 break;
+            // 这个是实现多点的关键，当屏幕检测到有多个手指同时按下之后，就触发了这个事件
             case MotionEvent.ACTION_POINTER_DOWN:
                 removeLongClickMessage();
 //                mState = STATE_MORE_FINGERS;
@@ -223,9 +223,6 @@ public class ListViewS extends ListView implements Handler.Callback, SwipeDragLa
         return ((ev.getX() - downX > mShortestDistance || ev.getX() - downX < -mShortestDistance) &&
                 ev.getY() - downY < mShortestDistance && ev.getY() - downY > -mShortestDistance);
     }
-
-
-
 
     /**
      * 设置列表项左右滑动时的监听器

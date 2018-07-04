@@ -35,6 +35,8 @@
     <string name="main_toolbar_hint_sync_log">7 - 同步离线操作信息</string>
     <string name="main_toolbar_hint_sync_all_stared_content">同步所有加星文章[%1$d]</string>
 
+    <string name="de_fault">默认</string>
+    <string name="custom">自定义</string>
     <string name="agree">同意</string>
     <string name="confirm">确认</string>
     <string name="disagree">取消</string>
@@ -201,6 +203,7 @@
     <string name="font_open_link_by_browser">&#xe678;</string>
     <string name="font_get_readability">&#xe611;</string>
     <string name="font_feed_config">&#xe72b;</string>
+    <string name="font_update">&#xe645;</string>
 
 
     <!--准备删除-->
@@ -212,7 +215,6 @@
 
     <!--气泡-->
     <string name="font_untag_article">&#xe84d;</string>
-    <!--<string name="font_download_again">&#xe645;</string>-->
     <!--<string name="font_open_in_window">&#xe610;</string>-->
 
 
@@ -233,6 +235,9 @@
     <string name="xx_minute">%1$s 分钟</string>
     <string name="xx_hour">%1$s 小时</string>
     <string name="clear_day_summary">%1$s 天</string>
+
+    <string name="image_dialog_save_img">保存图片</string>
+    <string name="image_dialog_share_img">分享图片</string>
 
 
     <string name="main_tag_dialog_rename">重命名</string>
@@ -323,6 +328,11 @@
     <string name="get_readability">获取正文</string>
     <string name="translation">翻译</string>
     <string name="open_link_by_browser">查看原文</string>
+
+    <string name="title_activity_image">查看图片</string>
+    <string name="download_file_position">下载到目录：Download</string>
+    <string name="file_size">文件大小：%1$s</string>
+    <string name="unknow">未知</string>
 
 
 </resources>

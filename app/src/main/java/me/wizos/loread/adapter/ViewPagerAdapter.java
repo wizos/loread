@@ -141,11 +141,11 @@
 //    }
 //
 //    private String initContent1(Article article ){
-//        return article.getHtml();
+//        return article.getHtmlForDisplay();
 //    }
 //
 //    private String initContent2(Article article ){
-//        String articleContent = article.getHtml();
+//        String articleContent = article.getHtmlForDisplay();
 //        Document document = Jsoup.parseBodyFragment(articleContent);
 //        Elements elements = document.getElementsByTag("img");
 //
@@ -176,10 +176,10 @@
 //            imageHolder = "file:///android_asset/image/image_holder_click_to_load.png";
 //            KLog.e("ImageBridge", "开启省流量，蜂窝模式");
 //        }else {
-//            imageHolder = "file:///android_asset/image/image_holder_loading.gif";
+//            imageHolder = "file:///android_asset/image/image_holder_loading.png";
 //        }
 //
-//        String articleContent = article.getHtml();
+//        String articleContent = article.getHtmlForDisplay();
 //        Document document = Jsoup.parseBodyFragment(articleContent);
 //        Elements elements = document.getElementsByTag("img");
 //

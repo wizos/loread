@@ -245,7 +245,6 @@ Code 	Description
     }
 
     public void markArticleReaded(String articleID, StringCallback cb) {
-        KLog.i("【markArticleReaded】 ");
         FormBody.Builder builder = new FormBody.Builder();
         builder.add("a", "user/-/state/com.google/read");
         builder.add("i", articleID);
@@ -253,7 +252,6 @@ Code 	Description
     }
 
     public void markArticleUnread(String articleID, StringCallback cb) {
-//        KLog.i("【markArticleUnread】 ");
         FormBody.Builder builder = new FormBody.Builder();
         builder.add("r", "user/-/state/com.google/read");
         builder.add("i", articleID);

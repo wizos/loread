@@ -192,7 +192,7 @@ public class DataApi {
             feed.setUrl(subscriptions.getUrl());
             feed.setHtmlurl(subscriptions.getHtmlUrl());
             feed.setIconurl(subscriptions.getIconUrl());
-//            feed.setOpenMode(Api.DISPLAY_RSS);
+//            feed.setDisplayRouter(Api.DISPLAY_RSS);
             feedList.add(feed);
         }
         // TODO: 2017/10/14 少了保存 List
@@ -534,7 +534,7 @@ public class DataApi {
 //    }
 
     public ArrayList<HashSet<String>> splitRefs2(HashSet<String> tempUnreadIds, HashSet<String> tempStarredIds) {
-        KLog.e("【reRefs1】云端未读" + tempUnreadIds.size() + "，云端加星" + tempStarredIds.size());
+//        KLog.e("【reRefs1】云端未读" + tempUnreadIds.size() + "，云端加星" + tempStarredIds.size());
         int arrayCapacity = tempUnreadIds.size() > tempStarredIds.size() ? tempStarredIds.size() : tempUnreadIds.size();
 
         HashSet<String> reUnreadUnstarRefs = new HashSet<>(tempUnreadIds.size());
@@ -555,7 +555,7 @@ public class DataApi {
         refsList.add(reUnreadUnstarRefs);
         refsList.add(reReadStarredRefs);
         refsList.add(reUnreadStarredRefs);
-        KLog.e("【reRefs2】" + reUnreadUnstarRefs.size() + "--" + reReadStarredRefs.size() + "--" + reUnreadStarredRefs.size());
+//        KLog.e("【reRefs2】" + reUnreadUnstarRefs.size() + "--" + reReadStarredRefs.size() + "--" + reUnreadStarredRefs.size());
         return refsList;
     }
 
@@ -635,7 +635,7 @@ public class DataApi {
             return null;
         }
         ArrayList<Article> articleList = new ArrayList<>(itemsList.size());
-        String summary = "", html = "";
+        String summary = "", html = "", audioHtml;
         Article article;
         Gson gson = new Gson();
         Elements elements;
@@ -668,19 +668,24 @@ public class DataApi {
 
             html = items.getSummary().getContent();
             html = StringUtil.getOptimizedContent(html);
+
+            if (items.getEnclosure() != null && items.getEnclosure().size() > 0 && (items.getEnclosure().get(0).getType().startsWith("audio"))) {
+                html = html + "<br><audio src=\"" + items.getEnclosure().get(0).getHref() + "\" preload=\"auto\" type=\"" + items.getEnclosure().get(0).getType() + "\" controls></audio>";
+            }
+
             summary = StringUtil.getOptimizedSummary(html);
             article.setSummary(summary);
             article.setContent(html);
 
-
-            if (items.getEnclosure() != null && items.getEnclosure().size() > 0 && (items.getEnclosure().get(0).getType().startsWith("image") || items.getEnclosure().get(0).getType().startsWith("parsedImg"))) {
-                article.setCoverSrc(items.getEnclosure().get(0).getHref());
-            } else {
-                elements = Jsoup.parseBodyFragment(article.getContent() == null ? "" : article.getContent()).getElementsByTag("img");
-                if (elements.size() > 0) {
-                    article.setCoverSrc(elements.attr("src"));
-                }
+//            if (items.getEnclosure() != null && items.getEnclosure().size() > 0 && (items.getEnclosure().get(0).getType().startsWith("image") || items.getEnclosure().get(0).getType().startsWith("parsedImg"))) {
+//                article.setCoverSrc(items.getEnclosure().get(0).getHref());
+//            }
+            // 获取第1个图片作为封面
+            elements = Jsoup.parseBodyFragment(article.getContent() == null ? "" : article.getContent()).getElementsByTag("img");
+            if (elements.size() > 0) {
+                article.setCoverSrc(elements.attr("src"));
             }
+
 
             // 自己设置的字段
 //            KLog.i("【增加文章】" + article.getId());
@@ -725,6 +730,33 @@ public class DataApi {
     public void markArticleReaded(String articleID, StringCallback cb) {
         InoApi.i().markArticleReaded(articleID, cb);
     }
+
+//    public void markArticleReaded(final Article article) {
+//        if (article == null) {
+//            return;
+//        }
+//
+//        InoApi.i().markArticleReaded(article.getId(), new StringCallback() {
+//            @Override
+//            public void onSuccess(Response<String> response) {
+//            }
+//
+//            @Override
+//            public void onError(Response<String> response) {
+//                // 修改数据库
+//                article.setReadState(Api.ART_UNREAD);
+//                WithDB.i().saveArticle(article);
+//                // 修改内存中的未读计数
+//                DataApi.i().changeUnreadCount(article.getOriginStreamId(), 1);
+//                // 通知各引用该值的，修改其数据
+//                EventBus.getDefault().post();
+//            }
+//        });
+//
+//        article.setReadState(Api.ART_READED);
+//        WithDB.i().saveArticle(article);
+//        DataApi.i().changeUnreadCount(article.getOriginStreamId(), -1);
+//    }
 
     public void markArticleUnread(String articleID, StringCallback cb) {
         InoApi.i().markArticleUnread(articleID, cb);

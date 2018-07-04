@@ -2,19 +2,19 @@ package me.wizos.loread.view;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
-import android.content.Intent;
-import android.net.Uri;
-import android.text.TextUtils;
+import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewParent;
-import android.webkit.DownloadListener;
 import android.webkit.WebSettings;
-
-import com.socks.library.KLog;
+import android.webkit.WebView;
 
 import me.wizos.loread.App;
-import me.wizos.loread.db.Article;
-import me.wizos.loread.utils.StringUtil;
+import me.wizos.loread.service.NetworkStatus;
+import me.wizos.loread.view.webview.NestedScrollWebView;
+import me.wizos.loread.view.webview.VideoImpl;
+
+//import com.tencent.smtt.sdk.DownloadListener;
+//import com.tencent.smtt.sdk.WebSettings;
 
 
 /**
@@ -34,23 +34,46 @@ public class WebViewS extends NestedScrollWebView {
         super(activity);
         initSettingsForWebPage();
 
-        /**
-         * https://www.jianshu.com/p/6e38e1ef203a
-         * 让 WebView 支持文件下载，主要思路有：1、跳转浏览器下载；2、使用系统的下载服务；3、自定义下载任务
-         */
-        this.setDownloadListener(new DownloadListener() {
+//        作者：Wing_Li
+//        链接：https://www.jianshu.com/p/3fcf8ba18d7f
+        setOnLongClickListener(new View.OnLongClickListener() {
             @Override
-            public void onDownloadStart(String url, String userAgent, String contentDisposition, String mimetype, long contentLength) {
-                KLog.e("跳转浏览器下载", "contentLength=" + contentLength);
-                Intent intent = new Intent(Intent.ACTION_VIEW);
-                intent.addCategory(Intent.CATEGORY_BROWSABLE);
-                intent.setData(Uri.parse(url));
-//                activity继承了context重载了startActivity方法,如果使用acitvity中的startActivity，不会有任何限制。
-//                而如果直接使用context的startActivity则会报上面的错误，根据错误提示信息,可以得知,如果要使用这种方式需要打开新的TASK。
-                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                App.i().startActivity(intent);
+            public boolean onLongClick(View v) {
+                HitTestResult result = ((WebViewS) v).getHitTestResult();
+                if (null == result) {
+                    return false;
+                }
+                int type = result.getType();
+                if (type == WebView.HitTestResult.UNKNOWN_TYPE) {
+                    return false;
+                }
+
+                // 这里可以拦截很多类型，我们只处理图片类型就可以了
+                switch (type) {
+                    case WebView.HitTestResult.PHONE_TYPE: // 处理拨号
+                        break;
+                    case WebView.HitTestResult.EMAIL_TYPE: // 处理Email
+                        break;
+                    case WebView.HitTestResult.GEO_TYPE: // 地图类型
+                        break;
+                    case WebView.HitTestResult.SRC_ANCHOR_TYPE: // 超链接
+                        break;
+                    case WebView.HitTestResult.SRC_IMAGE_ANCHOR_TYPE:
+                        break;
+                    case WebView.HitTestResult.IMAGE_TYPE: // 处理长按图片的菜单项
+                        // 获取图片的路径
+                        String saveImgUrl = result.getExtra();
+
+                        // 跳转到图片详情页，显示图片
+
+                        break;
+                    default:
+                        break;
+                }
+                return true;
             }
         });
+
     }
 
 
@@ -63,46 +86,70 @@ public class WebViewS extends NestedScrollWebView {
 //        Tool.setBackgroundColor(this);
         // 先设置背景色为tranaparent 透明色
         this.setBackgroundColor(0);
-        WebSettings webSetting = this.getSettings();
-        webSetting.setJavaScriptEnabled(true);
+        WebSettings webSettings = this.getSettings();
+        webSettings.setJavaScriptEnabled(true);
 
         // 设置使用 宽 的 Viewpoint,默认是false
         // Android browser以及chrome for Android的设置是`true`，而WebView的默认设置是`false`
         // 如果设置为`true`,那么网页的可用宽度为`980px`,并且可以通过 meta data来设置，如果设置为`false`,那么可用区域和WebView的显示区域有关.
         // 设置此属性，可任意比例缩放
-        webSetting.setUseWideViewPort(false);
+        webSettings.setUseWideViewPort(true);
         // 缩放至屏幕的大小，如果webview内容宽度大于显示区域的宽度,那么将内容缩小,以适应显示区域的宽度, 默认是false
-        webSetting.setLoadWithOverviewMode(true);
+        webSettings.setLoadWithOverviewMode(true);
+        webSettings.setTextZoom(100);
         // 设置可以支持缩放
-        webSetting.setSupportZoom(false);
-        webSetting.setAllowFileAccess(true); // 允许访问文件
+        webSettings.setSupportZoom(true);
         // 默认的缩放控制器
-        webSetting.setBuiltInZoomControls(false);
+        webSettings.setBuiltInZoomControls(true);
         // 默认的+/-缩放控制
-        webSetting.setDisplayZoomControls(false);
+        webSettings.setDisplayZoomControls(false);
         // NARROW_COLUMNS 适应内容大小 ， SINGLE_COLUMN 自适应屏幕
-        webSetting.setLayoutAlgorithm(WebSettings.LayoutAlgorithm.SINGLE_COLUMN);
+        webSettings.setLayoutAlgorithm(WebSettings.LayoutAlgorithm.SINGLE_COLUMN);
         // 设置渲染线程的优先级。该方法在 Api 18之后被废弃,优先级由WebView自己管理。不过任然建议将其设置为 HIGH,来提高页面渲染速度
-        webSetting.setRenderPriority(WebSettings.RenderPriority.HIGH);
+        webSettings.setRenderPriority(WebSettings.RenderPriority.HIGH);
         // 支持通过js打开新的窗口
-        webSetting.setJavaScriptCanOpenWindowsAutomatically(false);
-        webSetting.setDomStorageEnabled(true);//临时简单的缓存（必须保留，否则无法播放优酷视频网页，其他的可以）
+        webSettings.setJavaScriptCanOpenWindowsAutomatically(false);
 
+        /* 缓存 */
+        webSettings.setDomStorageEnabled(true); // 临时简单的缓存（必须保留，否则无法播放优酷视频网页，其他的可以）
+        webSettings.setAppCacheEnabled(true); // 支持H5的 application cache 的功能
+        // webSettings.setDatabaseEnabled(true);  // 支持javascript读写db
 
-//        webSetting.setBlockNetworkImage(true);
+        // 允许在Android 5.0上 Webview 加载 Http 与 Https 混合内容。作者：Wing_Li，链接：https://www.jianshu.com/p/3fcf8ba18d7f
+        webSettings.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
+
+        /* 新增 */
+        // 通过 file url 加载的 Javascript 读取其他的本地文件 .建议关闭
+        webSettings.setAllowFileAccessFromFileURLs(false);
+        // 允许通过 file url 加载的 Javascript 可以访问其他的源，包括其他的文件和 http，https 等其他的源
+        webSettings.setAllowUniversalAccessFromFileURLs(false);
+        // 允许访问文件
+        webSettings.setAllowFileAccess(true);
+
+        // 保存密码数据
+        webSettings.setSavePassword(true);
+        // 保存表单数据
+        webSettings.setSaveFormData(true);
+
+        if (App.networkStatus.equals(NetworkStatus.NETWORK_NONE)) {
+            //没网，则从本地获取，即离线加载
+            webSettings.setCacheMode(WebSettings.LOAD_CACHE_ELSE_NETWORK);
+        } else {
+            //根据cache-control获取数据。
+            webSettings.setCacheMode(WebSettings.LOAD_DEFAULT);
+        }
+
+//        webSettings.setBlockNetworkImage(true);
         // 设置在页面装载完成之后再去加载图片
-//        webSetting.setLoadsImagesAutomatically(false);
-//        webSetting.setAllowFileAccess(true); // 允许访问文件
-//        webSetting.setSupportMultipleWindows(true);
-//        webSetting.setGeolocationEnabled(true);
-//        webSetting.setAppCacheEnabled(true); // 支持H5的 application cache 的功能
-//        webSetting.setAppCacheMaxSize(Long.MAX_VALUE);
+//        webSettings.setLoadsImagesAutomatically(false);
+//        webSettings.setSupportMultipleWindows(true);
+//        webSettings.setGeolocationEnabled(true);
+//        webSettings.setAppCacheMaxSize(Long.MAX_VALUE);
 //        webView.setLayerType(View.LAYER_TYPE_HARDWARE, null); // 硬件加速
-//        webSetting.setDatabaseEnabled(true); // 支持javascript读写db
-//        webSetting.setPageCacheCapacity(IX5WebSettings.DEFAULT_CACHE_CAPACITY);
-//        webSetting.setCacheMode(WebSettings.LOAD_DEFAULT);
-//        webSetting.setPluginState(WebSettings.PluginState.ON_DEMAND);
-//        webSetting.setPluginState(WebSettings.PluginState.ON_DEMAND);
+//        webSettings.setDatabaseEnabled(true); // 支持javascript读写db
+//        webSettings.setPageCacheCapacity(IX5WebSettings.DEFAULT_CACHE_CAPACITY);
+//        webSettings.setCacheMode(WebSettings.LOAD_DEFAULT);
+//        webSettings.setPluginState(WebSettings.PluginState.ON_DEMAND);
         // this.getSettingsExtension().setPageCacheCapacity(IX5WebSettings.DEFAULT_CACHE_CAPACITY);//extension
 //        this.evaluateJavascript();//  Android 4.4之后使用evaluateJavascript调用有返回值的JS方法
     }
@@ -112,6 +159,10 @@ public class WebViewS extends NestedScrollWebView {
     public void destroy() {
         // 链接：http://www.jianshu.com/p/3e8f7dbb0dc7
         // 如果先调用destroy()方法，则会命中if (isDestroyed()) return;这一行代码，需要先onDetachedFromWindow()，再 destory()
+        // 在关闭了Activity时，如果Webview的音乐或视频，还在播放。就必须销毁Webview
+        // 但是注意：webview调用destory时,webview仍绑定在Activity上
+        // 这是由于自定义webview构建时传入了该Activity的context对象
+        // 因此需要先从父容器中移除webview,然后再销毁webview
         ViewParent parent = this.getParent();
         if (parent != null) {
             ((ViewGroup) parent).removeView(this);
@@ -123,7 +174,7 @@ public class WebViewS extends NestedScrollWebView {
         clearCache(false);
         clearHistory();
         removeAllViews();
-//        loadData("", "text/html", "UTF-8");
+//        loadData("", "text/html", "UTF-8"); // 不能用，会造成内存泄漏
 //        setWebViewClient(null);
         super.destroy();
     }
@@ -137,80 +188,60 @@ public class WebViewS extends NestedScrollWebView {
 //        setWebViewClient(null);
     }
 
-    private String firstUrl;
-    private String initialBaseUrl;
-    private String initialContent;
-    private final String initialUrl = "loread://initial.html";
+    private VideoImpl videoState;
 
-
-    /**
-     * 为了页面能正常回退到 加载自制内容的 页面，所以在第一次跳转url内容时，记录下url
-     *
-     * @param firstUrl
-     */
-    public void setFirstUrl(String firstUrl) {
-        if (TextUtils.isEmpty(this.firstUrl)) {
-            this.firstUrl = firstUrl;
-        }
-    }
-
-
-    @Override
-    public boolean canGoBack() {
-        if (this.getUrl().equals(initialUrl)) {
+    public boolean isFullScreenPlaying() {
+        if (videoState == null) {
             return false;
         }
-        return super.canGoBack();
+        return videoState.isPlaying();
     }
 
-    @Override
-    public void goBack() {
-        KLog.e("当前url：" + this.getUrl() + "   第一次跳出的url：" + firstUrl);
-        if (this.getUrl().equals(firstUrl)) {
-            loadArticlePage(article);
-//            loadDataWithBaseURL(App.webViewBaseUrl, StringUtil.getHtml(article), "text/html", "UTF-8", this.initialUrl);
-            firstUrl = null;
-        } else {
-            super.goBack();
+    public void setVideoState(VideoImpl videoState) {
+        this.videoState = videoState;
+    }
+
+    public void onHideCustomView() {
+        if (videoState == null) {
+            videoState.onHideCustomView();
         }
     }
-
 
     /**
      * 不要将 base url 设为 null
      */
-    public void loadDataWithBaseURL(String baseUrl, String content) {
-        String initialUrl = null;
-        if (initialContent == null) {
-            this.initialBaseUrl = App.webViewBaseUrl;
-            this.initialContent = TextUtils.isEmpty(content) ? "" : content;
-            initialUrl = this.initialUrl;
-        }
-        loadDataWithBaseURL(App.webViewBaseUrl, content, "text/html", "UTF-8", initialUrl);
+    public void loadData(String htmlContent) {
+        loadDataWithBaseURL(App.webViewBaseUrl, htmlContent, "text/html", "UTF-8", null);
     }
 
+//    public void loadDataWithBaseURL(String baseUrl, String content) {
+//        String initialUrl = null;
+//        if (initialContent == null) {
+//            this.initialBaseUrl = App.webViewBaseUrl;
+//            this.initialContent = TextUtils.isEmpty(content) ? "" : content;
+//            initialUrl = this.initialUrl;
+//        }
+//        loadDataWithBaseURL(App.webViewBaseUrl, content, "text/html", "UTF-8", initialUrl);
+//    }
+//    public void loadHolderPage() {
+//        loadDataWithBaseURL(App.webViewBaseUrl, "", "text/html", "UTF-8", null);
+//        clearHistory();
+//    }
 
-    public void loadHolderPage() {
-        loadDataWithBaseURL(App.webViewBaseUrl, "", "text/html", "UTF-8", null);
-        clearHistory();
-    }
+//    private Article article;
 
-    private Article article;
+//    public void loadArticlePage(Article article) {
+////        this.article = article;
+//        loadDataWithBaseURL(App.webViewBaseUrl, StringUtil.getHtmlForDisplay(article), "text/html", "UTF-8", this.initialUrl);
+//    }
+//    public void loadArticlePage(Article article, String content) {
+//        loadDataWithBaseURL(App.webViewBaseUrl, StringUtil.getHtmlForDisplay(article, content), "text/html", "UTF-8", this.initialUrl);
+//    }
 
-    public void loadArticlePage(Article article) {
+//    public Article getArticle() {
+//        return article;
+//    }
+//    public void setArticle(Article article) {
 //        this.article = article;
-        loadDataWithBaseURL(App.webViewBaseUrl, StringUtil.getHtml(article), "text/html", "UTF-8", this.initialUrl);
-    }
-
-    public void loadArticlePage(Article article, String content) {
-        loadDataWithBaseURL(App.webViewBaseUrl, StringUtil.getHtml(article, content), "text/html", "UTF-8", this.initialUrl);
-    }
-
-    public Article getArticle() {
-        return article;
-    }
-
-    public void setArticle(Article article) {
-        this.article = article;
-    }
+//    }
 }

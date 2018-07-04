@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:focusable="true"
+    android:focusableInTouchMode="true">
+
+    <EditText
+        android:id="@+id/file_name_edit"
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        android:gravity="center_vertical"
+        android:textSize="14sp"
+        tools:text="13sdddddddddddd答复打发斯蒂芬毒贩夫妇p"
+        android:ellipsize="end"
+        android:singleLine="true" />
+
+    <TextView
+        android:id="@+id/file_download_dir"
+        android:layout_width="match_parent"
+        android:layout_height="30dp"
+        android:gravity="center_vertical"
+        android:textSize="12sp"
+        android:text="@string/download_file_position"
+        android:layout_below="@id/file_name_edit" />
+
+    <TextView
+        android:id="@+id/file_size"
+        android:layout_width="match_parent"
+        android:layout_height="30dp"
+        android:gravity="center_vertical"
+        android:textSize="12sp"
+        tools:text="文件大小"
+        android:layout_below="@id/file_download_dir" />
+</RelativeLayout>

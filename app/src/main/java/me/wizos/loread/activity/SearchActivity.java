@@ -19,6 +19,7 @@ import android.widget.ListView;
 import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.request.RequestOptions;
 import com.google.gson.Gson;
 import com.lzy.okgo.callback.StringCallback;
 import com.lzy.okgo.model.Response;
@@ -46,6 +47,7 @@ import me.wizos.loread.view.SwipeRefreshLayoutS;
 import me.wizos.loread.view.colorful.Colorful;
 import me.wizos.loread.view.colorful.setter.ViewGroupSetter;
 
+
 public class SearchActivity extends BaseActivity {
     protected static final String TAG = "SearchActivity";
     private EditText searchView;
@@ -55,7 +57,7 @@ public class SearchActivity extends BaseActivity {
     private ArrayList<FeedlyFeed> feedlyFeeds = new ArrayList<>();
     private SearchListViewAdapter listViewAdapter;
     private View wordHeaderView, resultCountHeaderView;
-
+    private RequestOptions options;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -63,6 +65,10 @@ public class SearchActivity extends BaseActivity {
         setContentView(R.layout.activity_search);
         initToolbar();
         initView();
+        options = new RequestOptions()
+                .placeholder(R.mipmap.ic_launcher)
+                .circleCrop()
+                .centerCrop();
     }
 
     private void initView() {
@@ -142,26 +148,29 @@ public class SearchActivity extends BaseActivity {
         listView.setEnabled(false);
         listView.removeHeaderView(wordHeaderView);
         listView.removeHeaderView(resultCountHeaderView);
+//        OkGo.cancelTag();
         SearchApi.i().asyncFetchSearchResult(searchView.getText().toString(), new StringCallback() {
             @Override
             public void onSuccess(Response<String> response) {
                 try {
                     FeedlyFeedsSearchResult searchResult = new Gson().fromJson(response.body(), FeedlyFeedsSearchResult.class);
-                    if (searchResult != null && !TextUtils.isEmpty(searchResult.getHint()) && searchResult.getHint().equals(searchView.getText().toString())
-                            && searchResult.getResults() != null && searchResult.getResults().size() != 0) {
+                    if (searchResult != null && searchResult.getResults() != null && searchResult.getResults().size() != 0) {
                         feedlyFeeds = searchResult.getResults();
-                        KLog.e("点击搜索" + searchView.getText().toString() + feedlyFeeds.size());
+//                        KLog.e("点击搜索" + searchView.getText().toString() + feedlyFeeds.size());
 //                        ToastUtil.showShort("已获取到" + feedlyFeeds.size() + "个订阅源");
-                        listViewAdapter = new SearchListViewAdapter(SearchActivity.this, feedlyFeeds);
-                        TextView textView = resultCountHeaderView.findViewById(R.id.search_feeds_result_count);
-                        textView.setText(getString(R.string.search_cloudy_feeds_result_count, feedlyFeeds.size()));
-                        listView.addHeaderView(resultCountHeaderView);
-                        listView.setAdapter(listViewAdapter);
-                        swipeRefreshLayoutS.setRefreshing(false);
-                        listView.setEnabled(true);
+                    } else {
+                        feedlyFeeds = new ArrayList<FeedlyFeed>();
                     }
+                    listViewAdapter = new SearchListViewAdapter(SearchActivity.this, feedlyFeeds);
+                    TextView textView = resultCountHeaderView.findViewById(R.id.search_feeds_result_count);
+                    textView.setText(getString(R.string.search_cloudy_feeds_result_count, feedlyFeeds.size()));
+                    listView.addHeaderView(resultCountHeaderView);
+                    listView.setAdapter(listViewAdapter);
+                    swipeRefreshLayoutS.setRefreshing(false);
+                    listView.setEnabled(true);
                 } catch (Exception e) {
-                    KLog.e(e);
+                    e.printStackTrace();
+//                    KLog.e("报错","失败了");
                     onError(response);
                 }
             }
@@ -260,7 +269,8 @@ public class SearchActivity extends BaseActivity {
                 cvh.feedSummary.setText("");
             }
 //            KLog.e("当前view是：" + position +"  " + convertView.getId() + "");
-            Glide.with(SearchActivity.this).load(feedlyFeed.getVisualUrl()).placeholder(R.mipmap.ic_launcher).into(cvh.feedIcon);
+//            Glide.with(SearchActivity.this).load(feedlyFeed.getVisualUrl()).centerCrop().into(cvh.feedIcon);
+            Glide.with(SearchActivity.this).load(feedlyFeed.getVisualUrl()).apply(options).into(cvh.feedIcon);
 
             cvh.feedUrl.setText(feedlyFeed.getFeedId().replaceFirst("feed/", ""));
             cvh.feedSubsVelocity.setText(getString(R.string.search_result_subs, feedlyFeed.getSubscribers(), feedlyFeed.getVelocity() + ""));
@@ -348,6 +358,7 @@ public class SearchActivity extends BaseActivity {
         intent.putExtra("searchWord", searchView.getText().toString());
         this.setResult(Api.ActivityResult_SearchLocalArtsToMain, intent);
         this.finish();
+        overridePendingTransition(R.anim.in_from_bottom, R.anim.out_from_bottom);
     }
 //    public void OnSubFeedClicked(View view){
 //        Tool.showLong("此处要订阅源");

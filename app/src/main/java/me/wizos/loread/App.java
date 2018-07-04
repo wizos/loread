@@ -1,8 +1,9 @@
 package me.wizos.loread;
 
 import android.app.Application;
+import android.content.Intent;
 import android.content.MutableContextWrapper;
-import android.os.Handler;
+import android.os.AsyncTask;
 import android.support.v4.util.ArrayMap;
 import android.text.TextUtils;
 
@@ -10,7 +11,6 @@ import com.bumptech.glide.Glide;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.lzy.okgo.OkGo;
-import com.lzy.okgo.https.HttpsUtils;
 import com.socks.library.KLog;
 import com.tencent.bugly.crashreport.CrashReport;
 
@@ -19,10 +19,12 @@ import org.greenrobot.eventbus.EventBus;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
 
+import me.wizos.loread.activity.MainActivity;
 import me.wizos.loread.bean.config.FeedConfig;
+import me.wizos.loread.bean.config.GlobalConfig;
 import me.wizos.loread.data.WithDB;
 import me.wizos.loread.data.WithPref;
 import me.wizos.loread.db.Article;
@@ -34,10 +36,13 @@ import me.wizos.loread.db.dao.SQLiteOpenHelperS;
 import me.wizos.loread.event.Sync;
 import me.wizos.loread.net.Api;
 import me.wizos.loread.net.InoApi;
+import me.wizos.loread.service.NetworkStatus;
 import me.wizos.loread.utils.FileUtil;
+import me.wizos.loread.utils.NetworkUtil;
 import me.wizos.loread.utils.TimeUtil;
 import me.wizos.loread.view.WebViewS;
-import okhttp3.OkHttpClient;
+
+//import com.squareup.leakcanary.LeakCanary;
 
 //import com.squareup.leakcanary.LeakCanary;
 
@@ -46,7 +51,7 @@ import okhttp3.OkHttpClient;
  *
  * Created by Wizos on 2015/12/24.
  * */
-public class App extends Application{
+public class App extends Application implements Thread.UncaughtExceptionHandler {
     /**
      * 此处的单例不会造成内存泄露，因为 App 本身就是全局的单例
      */
@@ -71,19 +76,17 @@ public class App extends Application{
     public static List<Article> articleList = new ArrayList<>();
     public static List<Tag> tagList = new ArrayList<>();
 
-    public static Handler artHandler;
     public boolean isSyncing = false;
     public static boolean isSyncingUnreadCount = false;
 
-
     public static String cacheRelativePath, boxRelativePath, storeRelativePath;
     public static String externalFilesDir;
-    public static String externalCachesDir;
     public static String webViewBaseUrl;
-    public static OkHttpClient imgHttpClient;
+    //    public static String externalCachesDir;
+//    public static OkHttpClient imgHttpClient;
 //    public static String boxReadRelativePath, storeReadRelativePath;
 //    public static String logRelativePath,logAbsolutePath;
-
+    public static NetworkStatus networkStatus;
     private static DaoSession daoSession;
 
     public static App i() {
@@ -91,10 +94,11 @@ public class App extends Application{
     }
 
 
+
     /**
      * 首次打开 ArticleActivity 时，将生成的 WebView 缓存在这里，从而再次打开 ArticleActivity 时，加快文章的渲染速度，效果明显。
      */
-    public List<WebViewS> mWebViewCaches = new ArrayList<>();
+    public List<WebViewS> mWebViewCaches;
 
     @Override
     public void onCreate() {
@@ -105,27 +109,22 @@ public class App extends Application{
         WithDB.i();
         initVar();
         initApiConfig();
+//        initGlobalConfig();
         initFeedsConfig();
         initAutoToggleTheme();
         initLogAndCrash();
         InoApi.i().initAuthHeaders();
         // 初始化网络框架
         OkGo.getInstance().init(this);
-        buildImgClient();
+//        initX5Web();
+        // 初始化网络状态
+        App.networkStatus = NetworkUtil.getNetWorkState();
 
         initUnreadCount();
         initFeedsCategoryid();
-
-        // 链接：https://www.jianshu.com/p/fc7909e24178
-        // 第一次打开 Web 页面 ， 使用 WebView 加载页面的时候特别慢 ，第二次打开就能明显的感觉到速度有提升 ，为什么 ？
-        // 是因为在你第一次加载页面的时候 WebView 内核并没有初始化 ， 所以在第一次加载页面的时候需要耗时去初始化 WebView 内核 。
-        // 提前初始化 WebView 内核 ，例如如下把它放到了 Application 里面去初始化 , 在页面里可以直接使用该 WebView
-        // 但是这里会影响，从 webview 中打开对话框
-        mWebViewCaches.add(new WebViewS(new MutableContextWrapper(this)));
-        mWebViewCaches.add(new WebViewS(new MutableContextWrapper(this)));
-        mWebViewCaches.add(new WebViewS(new MutableContextWrapper(this)));
-
-
+        initWebView();
+        Thread.setDefaultUncaughtExceptionHandler(this);
+//        FileUtil.clear(this);
 //        JobManager.create(this).addJobCreator(new JobCreateRouter());
 //        JobManager.instance().cancelAllForTag("job_sync");
         /*
@@ -136,6 +135,29 @@ public class App extends Application{
          */
 //        JobConfig.setAllowSmallerIntervalsForMarshmallow(true);
     }
+
+    @Override
+    public void uncaughtException(Thread thread, Throwable ex) {
+        Intent intent = new Intent(this, MainActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+        startActivity(intent);
+        android.os.Process.killProcess(android.os.Process.myPid());
+    }
+
+
+    private void initWebView() {
+        mWebViewCaches = new ArrayList<>();
+        // 链接：https://www.jianshu.com/p/fc7909e24178
+        // 第一次打开 Web 页面 ， 使用 WebView 加载页面的时候特别慢 ，第二次打开就能明显的感觉到速度有提升 ，为什么 ？
+        // 是因为在你第一次加载页面的时候 WebView 内核并没有初始化 ， 所以在第一次加载页面的时候需要耗时去初始化 WebView 内核 。
+        // 提前初始化 WebView 内核 ，例如如下把它放到了 Application 里面去初始化 , 在页面里可以直接使用该 WebView
+        // 但是这里会影响，从 webview 中打开对话框
+        mWebViewCaches.add(new WebViewS(new MutableContextWrapper(this)));
+        mWebViewCaches.add(new WebViewS(new MutableContextWrapper(this)));
+        mWebViewCaches.add(new WebViewS(new MutableContextWrapper(this)));
+    }
+
+
 
 
     /**
@@ -185,18 +207,17 @@ public class App extends Application{
         if (BuildConfig.DEBUG) {
             // 测试的时候设为 true
             CrashReport.initCrashReport(App.i(), "900044326", true);
+            KLog.init(true);
+//            initLeakCanary();
         } else {
             CrashReport.initCrashReport(App.i(), "900044326", false);
-        }
-        if (BuildConfig.DEBUG) {
-            KLog.init(true);
-        } else {
             KLog.init(false);
         }
+
     }
 
 
-//  内存泄漏检测工具
+////  内存泄漏检测工具
 //    private void initLeakCanary() {
 //        if (LeakCanary.isInAnalyzerProcess(this)) {
 //            return;
@@ -219,17 +240,6 @@ public class App extends Application{
         boxRelativePath = FileUtil.getRelativeDir(Api.SAVE_DIR_BOX);
         storeRelativePath = FileUtil.getRelativeDir(Api.SAVE_DIR_STORE);
         webViewBaseUrl = "file://" + externalFilesDir + "/cache/";
-//        cacheAbsolutePath = FileUtil.getAbsoluteDir(Api.SAVE_DIR_CACHE); // 仅在储存于 html 时使用
-//        boxAbsolutePath = FileUtil.getAbsoluteDir(Api.SAVE_DIR_BOX);
-//        storeAbsolutePath = FileUtil.getAbsoluteDir(Api.SAVE_DIR_STORE);
-
-//        logRelativePath = FileUtil.getRelativeDir("log");
-//        logAbsolutePath = FileUtil.getAbsoluteDir("log");
-
-//        boxReadRelativePath = FileUtil.getRelativeDir("boxRead");
-//        storeReadRelativePath = FileUtil.getRelativeDir("storeRead");
-//        boxReadAbsolutePath = FileUtil.getAbsoluteDir( "boxRead" );
-//        storeReadAbsolutePath = FileUtil.getAbsoluteDir( "storeRead" );
     }
 
     private void initApiConfig() {
@@ -243,7 +253,7 @@ public class App extends Application{
         UserID = WithPref.i().getUseId();
         StreamState = WithPref.i().getStreamState();
         StreamId = WithPref.i().getStreamId();
-        KLog.e(StreamState + "  " + StreamId + "  ");
+//        KLog.e(StreamState + "  " + StreamId + "  ");
         if (StreamId == null || StreamId.equals("")) {
             StreamId = "user/" + UserID + Api.U_READING_LIST;
         }
@@ -266,8 +276,7 @@ public class App extends Application{
                 StreamTitle = getString(R.string.main_activity_title_all);
             }
         }
-
-        KLog.e("此时StreamId为：" + StreamId + "   此时 Title 为：" + StreamTitle);
+//        KLog.e("此时StreamId为：" + StreamId + "   此时 Title 为：" + StreamTitle);
     }
 
 
@@ -276,7 +285,7 @@ public class App extends Application{
     public static ConcurrentHashMap<String, String> feedsCategoryIdMap = new ConcurrentHashMap<>();
 
     private void initUnreadCount() {
-        new Thread(new Runnable() {
+        AsyncTask.SERIAL_EXECUTOR.execute(new Runnable() {
             @Override
             public void run() {
                 if (TextUtils.isEmpty(WithPref.i().getAuth())) {
@@ -296,7 +305,7 @@ public class App extends Application{
                     unreadCountMap.put(feeds.get(i).getId(), WithDB.i().getUnreadArtsCountByFeed(feeds.get(i).getId()));
                 }
             }
-        }).start();
+        });
     }
 
     public void initFeedsCategoryid() {
@@ -317,43 +326,83 @@ public class App extends Application{
     }
 
 
-    public void initFeedsConfig() {
-        Gson gson = new Gson();
-        String feedsConfig;
+//    public GlobalConfig globalConfig;
+//    public void initGlobalConfig() {
+//        Gson gson = new Gson();
+//        String config;
+//
+//        config = FileUtil.readFile(externalFilesDir + "/config/global-config.json");
+//        if (TextUtils.isEmpty(config)) {
+//            globalConfig = new GlobalConfig();
+//            ArrayList<UserAgent> userAgents = new ArrayList<>(2);
+//            userAgents.add(new UserAgent("iPhone", "Mozilla/5.0 (iPhone; CPU iPhone OS 11_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/11.0 Mobile/15E148 Safari/604.1"));
+//            userAgents.add(new UserAgent("Android", "Mozilla/5.0 (Linux; U; Android 5.1; zh-cn; MX5 Build/LMY47I) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/11.0 Mobile/15E148 Safari/604.1"));
+//            userAgents.add(new UserAgent("Chrome(PC)", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/66.0.3359.181 Safari/537.36"));
+//            globalConfig.setUserAgents(userAgents);
+//            globalConfig.setUserAgentIndex(-1);
+//            saveGlobalConfig();
+//        }else {
+//            globalConfig = gson.fromJson(config, new TypeToken<GlobalConfig>() {}.getType());
+//        }
+//    }
+//    public void saveGlobalConfig() {
+//        AsyncTask.SERIAL_EXECUTOR.execute(new Runnable() {
+//            @Override public void run() {
+//                FileUtil.saveStringToFile(getExternalFilesDir(null) + "/config/global-config.json", new GsonBuilder().setPrettyPrinting().create().toJson(globalConfig));
+//            }
+//        });
+//    }
 
-        feedsConfig = FileUtil.readFile(externalFilesDir + "/config/feeds-config.json");
+
+    public void initFeedsConfig() {
+        File feedsFile = new File(externalFilesDir + "/config/feeds-config.json");
+        if (!feedsFile.exists()) {
+            return;
+        }
+
+        Gson gson = new Gson();
+        String feedsConfig = FileUtil.readFile(externalFilesDir + "/config/feeds-config.json");
+        if (TextUtils.isEmpty(feedsConfig)) {
+            return;
+        }
 
         feedsConfigMap = gson.fromJson(feedsConfig, new TypeToken<ArrayMap<String, FeedConfig>>() {
         }.getType());
         if (feedsConfigMap == null) {
-            feedsConfigMap = new ArrayMap<>();
+            return;
         }
-//        String referers = FileUtil.readFile(getExternalFilesDir(null) + "/config/referers.json" );
-//        feedsConfigMap = gson.fromJson(referers, ArrayMap.class);
-    }
 
-    public void saveFeedsConfig() {
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                FileUtil.saveFile(getExternalFilesDir(null) + "/config/feeds-config.json", new Gson().toJson(feedsConfigMap));
+        ArrayMap<String, String> refererRouter = new ArrayMap<>();
+        ArrayMap<String, String> userAgentRouter = new ArrayMap<>();
+        ArrayMap<String, String> displayRouter = new ArrayMap<>();
+        Feed feed;
+        for (Map.Entry<String, FeedConfig> entry : feedsConfigMap.entrySet()) {
+            if (!TextUtils.isEmpty(entry.getValue().getOpenMode())) {
+                displayRouter.put(entry.getKey(), entry.getValue().getOpenMode());
             }
-        }).start();
+            feed = WithDB.i().getFeed(entry.getKey());
+            if (!TextUtils.isEmpty(entry.getValue().getReferer()) && feed != null) {
+                refererRouter.put(feed.getHtmlurl(), entry.getValue().getReferer());
+            }
+
+            if (!TextUtils.isEmpty(entry.getValue().getUserAgent())) {
+                userAgentRouter.put(WithDB.i().getFeed(entry.getKey()).getHtmlurl(), entry.getValue().getUserAgent());
+            }
+        }
+        GlobalConfig.i().getDisplayRouter().putAll(displayRouter);
+        GlobalConfig.i().getRefererRouter().putAll(refererRouter);
+        GlobalConfig.i().getUserAgentsRouter().putAll(userAgentRouter);
+
+        GlobalConfig.i().save();
+        feedsFile.delete();
     }
 
-//    private ArrayMap<String,String> feedsReferer = new ArrayMap<>();
-//    private ArrayMap<String,String> feedsOpenMode = new ArrayMap<>();
-//    private ArrayMap<String,String> feedsUserAgent = new ArrayMap<>();
-//    public void initFeedsConfig2(){
-//        Gson gson = new Gson();
-//        String feedsRefererContent = FileUtil.readFile(getExternalFilesDir(null) + "/config/feeds-referer.json" );
-//        feedsReferer = gson.fromJson(feedsRefererContent, new TypeToken<ArrayMap<String,String>>() {}.getType());
-//
-//        String feedsOpenModeContent = FileUtil.readFile(getExternalFilesDir(null) + "/config/feeds-open-mode.json" );
-//        feedsOpenMode = gson.fromJson(feedsOpenModeContent, new TypeToken<ArrayMap<String,String>>() {}.getType());
-//
-//        String feedsUserAgentContent = FileUtil.readFile(getExternalFilesDir(null) + "/config/feeds-user-agent.json" );
-//        feedsUserAgent = gson.fromJson(feedsUserAgentContent, new TypeToken<ArrayMap<String,String>>() {}.getType());
+//    public void saveFeedsConfig() {
+//        AsyncTask.SERIAL_EXECUTOR.execute(new Runnable() {
+//            @Override public void run() {
+//                FileUtil.saveStringToFile(getExternalFilesDir(null) + "/config/feeds-config.json", new GsonBuilder().setPrettyPrinting().create().toJson(feedsConfigMap));
+//            }
+//        });
 //    }
 
 
@@ -361,7 +410,7 @@ public class App extends Application{
     public void clearApiData() {
         WithPref.i().clear();
         WithDB.i().clear();
-        FileUtil.deleteHtmlDir(new File(App.cacheRelativePath));
+        FileUtil.deleteHtmlDir(new File(getExternalFilesDir(null) + "/cache/"));
         OkGo.getInstance().cancelAll();
         EventBus.getDefault().post(new Sync(Sync.STOP));
     }
@@ -370,7 +419,7 @@ public class App extends Application{
     public static boolean hadAutoToggleTheme = false;
 
     protected void initAutoToggleTheme() {
-        KLog.e(" 初始化主题" + WithPref.i().isAutoToggleTheme() + TimeUtil.getCurrentHour());
+//        KLog.e(" 初始化主题" + WithPref.i().isAutoToggleTheme() + TimeUtil.getCurrentHour());
         if (!WithPref.i().isAutoToggleTheme()) {
             return;
         }
@@ -428,15 +477,16 @@ public class App extends Application{
     }
 
 
-    public void buildImgClient() {
-        OkHttpClient.Builder builder = new OkHttpClient.Builder();
-        builder.readTimeout(60000L, TimeUnit.MILLISECONDS);
-        builder.writeTimeout(60000L, TimeUnit.MILLISECONDS);
-        builder.connectTimeout(30000L, TimeUnit.MILLISECONDS);
-        HttpsUtils.SSLParams sslParams = HttpsUtils.getSslSocketFactory();
-        builder.sslSocketFactory(sslParams.sSLSocketFactory, sslParams.trustManager);
-        builder.hostnameVerifier(HttpsUtils.UnSafeHostnameVerifier);
-        imgHttpClient = builder.build();
-    }
+//    public void buildImgClient() {
+//        OkHttpClient.Builder builder = new OkHttpClient.Builder();
+//        builder.readTimeout(60000L, TimeUnit.MILLISECONDS);
+//        builder.writeTimeout(60000L, TimeUnit.MILLISECONDS);
+//        builder.connectTimeout(30000L, TimeUnit.MILLISECONDS);
+//        HttpsUtils.SSLParams sslParams = HttpsUtils.getSslSocketFactory();
+//        builder.sslSocketFactory(sslParams.sSLSocketFactory, sslParams.trustManager);
+//        builder.hostnameVerifier(HttpsUtils.UnSafeHostnameVerifier);
+//        imgHttpClient = builder.build();
+//    }
+
 
 }

@@ -7,12 +7,15 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.WRITE_SETTINGS" />
     <uses-permission android:name="android.permission.MOUNT_UNMOUNT_FILESYSTEMS" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.READ_LOGS" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
+
+    <!-- 读取，写出外置SD卡内容的权限该目录-->
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 
     <!-- 应用可以监听该广播，成为自启动权限，但是这样会有很多缺点，最大的缺点就是拖慢开机进度，影响用户体验 -->
     <!-- <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/> -->
@@ -39,10 +42,10 @@
         </activity>
         <activity
             android:name=".activity.MainActivity"
+            android:configChanges="orientation|screenSize|keyboardHidden"
             android:label="@string/app_name"
             android:launchMode="singleTask"
             android:screenOrientation="portrait"
-            android:configChanges="orientation|screenSize|keyboardHidden"
             android:theme="@style/AppTheme.Day.NoActionBar" />
 
         <!-- android:parentActivityName="me.wizos.loread.activity.MainActivity" -->
@@ -56,7 +59,7 @@
             android:name=".activity.LoginActivity"
             android:configChanges="orientation|screenSize|keyboardHidden"
             android:label="@string/title_activity_login"
-            android:launchMode="singleTop"
+            android:launchMode="singleTask"
             android:screenOrientation="portrait"
             android:theme="@style/AppTheme.Day.NoActionBar"
             android:windowSoftInputMode="adjustResize|stateHidden" />
@@ -65,39 +68,66 @@
             android:configChanges="orientation|screenSize|keyboardHidden"
             android:hardwareAccelerated="true"
             android:label="@string/app_name"
-            android:parentActivityName=".activity.MainActivity"
+            android:launchMode="singleTop"
             android:screenOrientation="portrait"
             android:theme="@style/AppTheme.Day.NoActionBar"
-            android:windowSoftInputMode="adjustResize|stateHidden" />
+            android:windowSoftInputMode="adjustResize|stateHidden"></activity>
+
+        <activity
+            android:name=".activity.WebActivity"
+            android:configChanges="orientation|screenSize|keyboardHidden"
+            android:hardwareAccelerated="true"
+            android:launchMode="singleTop"
+            android:theme="@style/AppTheme.Day.NoActionBar">
+            <!--最好不要注册为系统浏览器组件，不然当被设为系统默认的浏览器时，因为我没有处理添加下载监听，和默认打开系统浏览器的事件，会导致循环在这个页面-->
+            <!--<intent-filter>-->
+            <!--<action android:name="android.intent.action.VIEW"/>-->
+            <!--<category android:name="android.intent.category.DEFAULT"/>-->
+            <!--<category android:name="android.intent.category.BROWSABLE"/>-->
+            <!--<data android:scheme="http"/>-->
+            <!--<data android:scheme="https"/>-->
+            <!--</intent-filter>-->
+        </activity>
+        <activity
+            android:name=".activity.SearchActivity"
+            android:launchMode="singleTop"
+            android:parentActivityName=".activity.MainActivity"
+            android:screenOrientation="portrait"
+            android:theme="@style/AppTheme.Day.NoActionBar" />
+
+        <activity
+            android:name=".activity.ImageActivity"
+            android:launchMode="singleTask"
+            android:configChanges="orientation|keyboardHidden|screenSize"
+            android:label="@string/title_activity_image"
+            android:theme="@style/FullscreenTheme">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data
+                    android:mimeType="image/*"
+                    android:scheme="file" />
+            </intent-filter>
+        </activity>
+
         <activity
             android:name=".activity.SettingActivity"
             android:label="@string/setting_activity_title"
             android:parentActivityName=".activity.MainActivity"
-            android:screenOrientation="portrait"
-            android:theme="@style/AppTheme.Day.NoActionBar" />
-        <activity
-            android:name=".activity.SearchActivity"
-            android:parentActivityName=".activity.MainActivity"
+            android:launchMode="singleTask"
             android:screenOrientation="portrait"
             android:theme="@style/AppTheme.Day.NoActionBar" />
 
-        <activity
-            android:name=".activity.WebActivity"
-            android:parentActivityName=".activity.MainActivity"
-            android:configChanges="orientation|screenSize|keyboardHidden" />
+        <receiver android:name=".service.NetworkStateReceiver">
+            <intent-filter>
+                <action android:name="android.net.conn.CONNECTIVITY_CHANGE" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </receiver>
 
-        <!-- <service -->
-        <!-- android:name=".service.AutoRefreshService" -->
-        <!-- android:exported="true" -->
-        <!-- android:permission="com.google.android.gms.permission.BIND_NETWORK_TASK_SERVICE"> -->
-        <!-- <intent-filter> -->
-        <!-- <action android:name="com.google.android.gms.gcm.ACTION_TASK_READY" /> -->
-        <!-- </intent-filter> -->
-        <!-- </service> -->
-        <!-- <service android:name="me.wizos.loread.service.MainService" /> -->
         <service android:name=".service.MainService" />
 
-        <activity android:name=".activity.TestActivity" />
+        <activity android:name=".text.TestActivity" />
     </application>
 
 </manifest>

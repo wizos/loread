@@ -7,7 +7,6 @@ import android.graphics.Color;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.Message;
 import android.support.design.widget.BottomSheetBehavior;
 import android.support.design.widget.BottomSheetDialog;
 import android.support.v7.widget.Toolbar;
@@ -56,7 +55,7 @@ import me.wizos.loread.net.Api;
 import me.wizos.loread.net.DataApi;
 import me.wizos.loread.net.InoApi;
 import me.wizos.loread.service.MainService;
-import me.wizos.loread.utils.HttpUtil;
+import me.wizos.loread.utils.NetworkUtil;
 import me.wizos.loread.utils.ScreenUtil;
 import me.wizos.loread.utils.SnackbarUtil;
 import me.wizos.loread.utils.StringUtil;
@@ -81,14 +80,23 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
     private SwipeRefreshLayoutS swipeRefreshLayoutS;
     private ListViewS articleListView;
     private MainListViewAdapter articleListAdapter;
+    private IconFontView refreshIcon;
+    private ExpandableListViewS tagListView;
+    private ExpandableListAdapterS tagListAdapter;
+    private View headerPinnedView, headerHomeView;
+
     private static int tagCount;
+
+//    private ImageLoader imageLoader;
+//    private boolean isFirstIn = true;
+//    private int firstVisibleItemPosition;
+//    private int lastVisibleItemPosition;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
         EventBus.getDefault().register(this);
-//        initService();
         initToolbar();
         initIconView();
         initArtListView();
@@ -99,10 +107,10 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
         autoMarkReaded = WithPref.i().isScrollMark();
 
         initHeartbeat();
-        if (savedInstanceState != null) {
-            final int position = savedInstanceState.getInt("listItemFirstVisiblePosition");
-            slvSetSelection(position);
-        }
+//        if (savedInstanceState != null) {
+//            final int position = savedInstanceState.getInt("listItemFirstVisiblePosition");
+//            slvSetSelection(position);
+//        }
         Intent intent = getIntent();
         if ("firstSetupStart".equals(intent.getAction())) {
             startSyncService(Api.SYNC_ALL);
@@ -111,11 +119,16 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
     }
 
 
-    @Override
-    protected void onSaveInstanceState(Bundle outState) {
-        outState.putInt("listItemFirstVisiblePosition", articleListView.getFirstVisiblePosition());
-        super.onSaveInstanceState(outState);
-    }
+//    @Override
+//    protected void onSaveInstanceState(Bundle outState) {
+//        outState.putInt("listItemFirstVisiblePosition", articleListView.getFirstVisiblePosition());
+//        super.onSaveInstanceState(outState);
+//    }
+
+//    @Override
+//    protected void onRestoreInstanceState(Bundle outState) {
+//        super.onRestoreInstanceState(outState);
+//    }
 
     @Override
     protected void onResume(){
@@ -146,8 +159,12 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
                             @Override
                             public void onClick(View v) {
                                 refreshData();
+                                IconFontView loadNewArticlesIcon = findViewById(R.id.main_bottombar_refresh_articles);
+                                loadNewArticlesIcon.setVisibility(View.GONE);
                             }
                         }).show();
+                IconFontView loadNewArticlesIcon = findViewById(R.id.main_bottombar_refresh_articles);
+                loadNewArticlesIcon.setVisibility(View.VISIBLE);
                 break;
             // 文章获取失败
             case Sync.ERROR:
@@ -183,14 +200,14 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
 
 
     private void initHeartbeat() {
-        KLog.e("时间间隔" + WithPref.i().getAutoSyncFrequency());
+//        KLog.e("时间间隔" + WithPref.i().getAutoSyncFrequency());
         maHandler.postDelayed(new Runnable() {
             @Override
             public void run() {
                 if (!WithPref.i().isAutoSync()) {
                     return;
                 }
-                if (WithPref.i().isAutoSyncOnWifi() && !HttpUtil.isWiFiUsed()) {
+                if (WithPref.i().isAutoSyncOnWifi() && !NetworkUtil.isWiFiUsed()) {
                     return;
                 }
                 startSyncService(Api.SYNC_HEARTBEAT);
@@ -203,13 +220,15 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
     protected void initIconView() {
         vToolbarHint = findViewById(R.id.main_toolbar_hint);
         vPlaceHolder = findViewById(R.id.main_placeholder);
+        refreshIcon = findViewById(R.id.main_bottombar_refresh_articles);
     }
+
 
     //    @OnClick(R.id.main_bottombar_search)
     public void clickSearchIcon(View view) {
         Intent intent = new Intent(MainActivity.this, SearchActivity.class);
         startActivityForResult(intent, 0);
-        overridePendingTransition(R.anim.in_from_bottom, R.anim.exit_anim);
+        overridePendingTransition(R.anim.in_from_bottom, R.anim.fade_out);
     }
 
     protected void initSwipeRefreshLayout() {
@@ -230,6 +249,8 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
         }
         KLog.i("【刷新中】");
         startSyncService(Api.SYNC_ALL);
+        swipeRefreshLayoutS.setRefreshing(true);
+        swipeRefreshLayoutS.setEnabled(false);
     }
 
     // 按下back键时会调用onDestroy()销毁当前的activity，重新启动此activity时会调用onCreate()重建；
@@ -240,8 +261,6 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
         // 这样做的好处是在Acticity退出的时候，可以避免内存泄露。因为 handler 内可能引用 Activity ，导致 Activity 退出后，内存泄漏。
         maHandler.removeCallbacksAndMessages(null);
         EventBus.getDefault().unregister(this);
-
-
         super.onDestroy();
     }
 
@@ -256,15 +275,7 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
 
     // 这里不必和 ArticleActivity 一样写成静态内部类，用来防止因持有外部的Activity而造成内存泄漏。
     // 因为MainActivity基本只有一个实例，且不会反复创建、销毁，所以不用担心回收造成的内存泄漏问题。
-    private Handler maHandler = new Handler(new Handler.Callback() {
-        @Override
-        public boolean handleMessage(Message msg) {
-//            String tips = msg.getData().getString("tips");
-//            KLog.i("【handler】" + msg.what + "---" + "---");
-            return false;
-        }
-    });
-
+    private Handler maHandler = new Handler();
 
     /**
      * App.StreamState 包含 3 个状态：All，Unread，Stared
@@ -272,12 +283,16 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
      * */
     protected void refreshData() { // 获取 App.articleList , 并且根据 App.articleList 的到未读数目
         KLog.e("refreshData：" + App.StreamId + "  " + App.StreamState + "   " + App.UserID);
+        // 取消所有下载图片的任务，防止下载后去加载到imageview中
+//        imageLoader.cancelAllLoadTask();
+//        isFirstIn = true;
         getArtData();
         getTagData();
         articleListAdapter = new MainListViewAdapter(this, App.articleList, articleListView);
         articleListView.setAdapter(articleListAdapter);
         tagListAdapter.notifyDataSetChanged();
         loadViewByData();
+        refreshIcon.setVisibility(View.GONE);
     }
 
 
@@ -382,13 +397,13 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
         }
 
         // 每次重新加载列表数据的时候，应该把 ArticleListAdapter 和 TagListAdapter 都更新一下。
-//        adapter中的数据源集合或数组等必须是同一个数据源，也就是同一个对象。
-//        当数据源发生变化的时候，我们会调用adaper的notifyDataSetChanged()方法。
-//        当直接将从数据库或者其他方式获取的数据源集合或者数组直接赋值给当前数据源时，相当于当前数据源的对象发生了变化。
-//        当前对象已经不是adapter中的对象了，所以adaper调用notifyDataSetChanged()方法不会进行刷新数据和界面的操作。
+        // adapter中的数据源集合或数组等必须是同一个数据源，也就是同一个对象。
+        // 当数据源发生变化的时候，我们会调用adaper的notifyDataSetChanged()方法。
+        // 当直接将从数据库或者其他方式获取的数据源集合或者数组直接赋值给当前数据源时，相当于当前数据源的对象发生了变化。
+        // 当前对象已经不是adapter中的对象了，所以adaper调用notifyDataSetChanged()方法不会进行刷新数据和界面的操作。
         KLog.e("loadViewByData" + "=" + "=" + App.tagList.size());
         // 在setSupportActionBar(toolbar)之后调用toolbar.setTitle()的话。 在onCreate()中调用无效。在onStart()中调用无效。 在onResume()中调用有效。
-//        toolbar.setTitle(App.StreamTitle);
+        // toolbar.setTitle(App.StreamTitle);
         getSupportActionBar().setTitle(App.StreamTitle);
         toolbar.setSubtitle(null);
 //        KLog.e("loadViewByData","此时StreamId为：" + App.StreamId +  "   此时 Title 为：" +  App.StreamTitle );
@@ -404,12 +419,6 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
         vToolbarHint.setText(String.valueOf( tagCount ));
     }
 
-
-    private ExpandableListViewS tagListView;
-    private ExpandableListAdapterS tagListAdapter;
-    private View headerPinnedView, headerHomeView;
-
-
     public void showTagDialog(final Tag tag) {
         // 重命名弹窗的适配器
         MaterialSimpleListAdapter adapter = new MaterialSimpleListAdapter(MainActivity.this);
@@ -422,22 +431,20 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
                 .adapter(adapter, new MaterialDialog.ListCallback() {
                     @Override
                     public void onSelection(MaterialDialog dialog, View itemView, int which, CharSequence text) {
-                        switch (which) {
-                            case 0:
-                                new MaterialDialog.Builder(MainActivity.this)
-                                        .title(R.string.rename)
-                                        .inputType(InputType.TYPE_CLASS_TEXT)
-                                        .inputRange(1, 22)
-                                        .input(null, tag.getTitle(), new MaterialDialog.InputCallback() {
-                                            @Override
-                                            public void onInput(MaterialDialog dialog, CharSequence input) {
-                                                renameTag(input.toString(), tag);
-                                            }
-                                        })
-                                        .positiveText(R.string.confirm)
-                                        .negativeText(android.R.string.cancel)
-                                        .show();
-                                break;
+                        if (which == 0) {
+                            new MaterialDialog.Builder(MainActivity.this)
+                                    .title(R.string.rename)
+                                    .inputType(InputType.TYPE_CLASS_TEXT)
+                                    .inputRange(1, 22)
+                                    .input(null, tag.getTitle(), new MaterialDialog.InputCallback() {
+                                        @Override
+                                        public void onInput(MaterialDialog dialog, CharSequence input) {
+                                            renameTag(input.toString(), tag);
+                                        }
+                                    })
+                                    .positiveText(R.string.confirm)
+                                    .negativeText(android.R.string.cancel)
+                                    .show();
                         }
                         dialog.dismiss();
                     }
@@ -587,7 +594,7 @@ public void onTagIconClicked2(View view) {
 //        intent.putExtra("ListCount", App.articleList.size());
 ////        intent.putExtra("NoTagCount", getNoTagList2().size());
 //        startActivityForResult(intent, 0);
-//        overridePendingTransition( R.anim.in_from_bottom, R.anim.exit_anim );
+//        overridePendingTransition( R.anim.in_from_bottom, R.anim.fade_out );
 
 //        toolbar.setVisibility(View.GONE);
 //        FrameLayout frameLayout = findViewById(R.id.main_fragment_container);
@@ -729,11 +736,12 @@ public void onTagIconClicked2(View view) {
         if (articleListView == null) {
             return;
         }
+//        imageLoader = new ImageLoader(this,articleListView);
         // 由于item内有view添加了onItemClickListener,所以事件被消耗，没有回调到ListView OnItemLongClick方法。
         articleListView.setOnListItemLongClickListener(new ListViewS.OnListItemLongClickListener() {
             @Override
             public void onListItemLongClick(View view, final int position) {
-                KLog.e("长按===");
+//                KLog.e("长按===");
                 final MaterialSimpleListAdapter adapter = new MaterialSimpleListAdapter(MainActivity.this);
                 adapter.add(new MaterialSimpleListItem.Builder(MainActivity.this)
                         .content(R.string.main_slv_dialog_mark_up)
@@ -791,10 +799,13 @@ public void onTagIconClicked2(View view) {
             }
         });
 
+
         articleListView.setOnScrollListener(new AbsListView.OnScrollListener() {
             @Override
-            public void onScrollStateChanged(AbsListView absListView, int i) {
-
+            public void onScrollStateChanged(AbsListView absListView, int scrollState) {
+//                if( scrollState==SCROLL_STATE_IDLE ){
+//                    imageLoader.loadImages(firstVisibleItemPosition,lastVisibleItemPosition);
+//                }
             }
 
             @Override
@@ -803,6 +814,16 @@ public void onTagIconClicked2(View view) {
                 Integer[] index = new Integer[2];
                 index[0] = firstVisibleItem;
                 new MarkReadedAsyncTask().execute(index);
+
+//                firstVisibleItemPosition = firstVisibleItem;
+//                lastVisibleItemPosition = firstVisibleItem + visibleItemCount;
+//                // 当首次显示listview时加载图片
+//                if( isFirstIn && visibleItemCount>0 ){
+//                    imageLoader.loadImages(firstVisibleItemPosition,lastVisibleItemPosition);
+//                    isFirstIn = false;
+//                }
+//                // 取消滚出屏幕的下载任务
+//                imageLoader.cancelLoadTask(firstVisibleItem-1);
             }
         });
 
@@ -865,10 +886,11 @@ public void onTagIconClicked2(View view) {
                 String articleID = App.articleList.get(position).getId();
                 Intent intent = new Intent(MainActivity.this, ArticleActivity.class);
                 intent.putExtra("articleID", articleID);
-                intent.putExtra("articleNo", position); // 下标从 0 开始
+                // 下标从 0 开始
+                intent.putExtra("articleNo", position);
                 intent.putExtra("articleCount", App.articleList.size());
                 startActivityForResult(intent, 0);
-                overridePendingTransition(R.anim.in_from_bottom, R.anim.exit_anim);
+                overridePendingTransition(R.anim.in_from_bottom, R.anim.fade_out);
 //                KLog.i("点击了" + articleID + position + "-" + App.articleList.size());
             }
 
@@ -976,6 +998,7 @@ public void onTagIconClicked2(View view) {
         protected void onProgressUpdate(Integer... progress) {
             changeItemNum(progress[0]);
             articleListAdapter.notifyDataSetChanged();
+            // 应该是去通知对应的那个 item 改变。
         }
     }
 
@@ -1050,10 +1073,10 @@ public void onTagIconClicked2(View view) {
                 if (articleNo > articleListView.getLastVisiblePosition()) {
                     slvSetSelection(articleNo);
                 }
-                KLog.e("【onActivityResult】" + articleNo + "  " + articleListView.getLastVisiblePosition());
+//                KLog.e("【onActivityResult】" + articleNo + "  " + articleListView.getLastVisiblePosition());
                 break;
             case Api.ActivityResult_SearchLocalArtsToMain:
-                KLog.e("被搜索的词是" + intent.getExtras().getString("searchWord"));
+//                KLog.e("被搜索的词是" + intent.getExtras().getString("searchWord"));
                 showSearchResult(intent.getExtras().getString("searchWord"));
                 break;
             default:
@@ -1071,6 +1094,9 @@ public void onTagIconClicked2(View view) {
         });
     }
 
+    public void clickRefreshIcon(View view) {
+        refreshData();
+    }
 
     private BottomSheetDialog quickSettingDialog;
     public void onQuickSettingIconClicked(View view) {
@@ -1090,7 +1116,7 @@ public void onTagIconClicked2(View view) {
         SwitchButton nightThemeWifiSwitch = quickSettingDialog.findViewById(R.id.night_theme_switch);
 
         autoMarkWhenScrolling.setChecked(WithPref.i().isScrollMark());
-        downImgOnWifiSwitch.setChecked(WithPref.i().isDownImgWifi());
+        downImgOnWifiSwitch.setChecked(WithPref.i().isDownImgOnlyWifi());
         nightThemeWifiSwitch.setChecked(WithPref.i().getThemeMode() == App.Theme_Night);
 
         quickSettingDialog.show();
@@ -1100,7 +1126,7 @@ public void onTagIconClicked2(View view) {
                 quickSettingDialog.dismiss();
                 Intent intent = new Intent(MainActivity.this, SettingActivity.class);
                 startActivity(intent);
-                overridePendingTransition(R.anim.in_from_bottom, R.anim.exit_anim);
+                overridePendingTransition(R.anim.in_from_bottom, R.anim.fade_out);
 //                startActivityForResult(intent, 0);
             }
         });
@@ -1161,7 +1187,6 @@ public void onTagIconClicked2(View view) {
         if (maHandler.hasMessages(Api.MSG_DOUBLE_TAP)) {
             maHandler.removeMessages(Api.MSG_DOUBLE_TAP);
             articleListView.smoothScrollToPosition(0);
-//            FileUtil.updateHtmlDir2();
         } else {
             maHandler.sendEmptyMessageDelayed(Api.MSG_DOUBLE_TAP, ViewConfiguration.getDoubleTapTimeout());
         }
@@ -1297,6 +1322,7 @@ public void onTagIconClicked2(View view) {
 //                .textColor(R.id.main_bottombar_star, R.attr.bottombar_fg)
                 .textColor(R.id.main_bottombar_setting, R.attr.bottombar_fg)
                 .textColor(R.id.main_bottombar_tag, R.attr.bottombar_fg)
+                .textColor(R.id.main_bottombar_refresh_articles, R.attr.bottombar_fg)
 
                 // 设置 listview 背景色
                 // 这里做设置，实质是将View（根据Activity的findViewById），并直接添加到 colorful 内的 mElements 中。
@@ -1307,167 +1333,4 @@ public void onTagIconClicked2(View view) {
                 .setter(artListViewSetter);
         return mColorfulBuilder;
     }
-
-
-//    private void addReadedList(ArrayList<Article> artList){
-//        if(artList.size() == 0){return;}
-//        List<String> articleIDs = new ArrayList<>(artList.size());
-//        for (Article article : artList) {
-//
-//            articleIDs.add(article.getId());
-//            article.setReadState(Api.ART_READED);
-//        }
-//        DataApi.i().markArticleListReaded(articleIDs, null);
-//        changeItemNum(-artList.size());
-//
-//        WithDB.i().saveArticles(artList);
-//        articleListAdapter.notifyDataSetChanged();
-//    }
-
-//    public void onClickedArticleListOrder(final View view) {
-//        KLog.e("onClickedArticleListOrder图标被点击");
-//        PopupMenu popupMenu = new PopupMenu(this, view);
-//        MenuInflater menuInflater = popupMenu.getMenuInflater();
-//        popupMenu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
-//            @Override
-//            public boolean onMenuItemClick(MenuItem menuItem) {
-//                switch (menuItem.getItemId()) {
-//                    case R.id.list_order_desc:
-//                        KLog.e("排序规则为 Desc");
-//                        break;
-//                    case R.id.list_order_asc:
-//                        App.StreamState = Api.ART_UNREAD;
-//                        KLog.e("排序规则为 Asc");
-//                        break;
-//                    default:
-//                        break;
-//                }
-//                TextView textView = (TextView) view;
-//                textView.setText(menuItem.getTitle());
-//                quickSettingDialog.dismiss();
-//                return false;
-//            }
-//        });
-//        menuInflater.inflate(R.menu.menu_article_list_order, popupMenu.getMenu());
-//        popupMenu.show();
-//    }
-//
-//    public void onArticleListStateIconClicked(final View view) {
-//        PopupMenu popupMenu = new PopupMenu(this, view);
-//        MenuInflater menuInflater = popupMenu.getMenuInflater();
-//        popupMenu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
-//            @Override
-//            public boolean onMenuItemClick(MenuItem menuItem) {
-//                switch (menuItem.getItemId()) {
-//                    case R.id.list_state_all:
-//                        App.StreamState = Api.ART_ALL;
-//                        break;
-//                    case R.id.list_state_unread:
-//                        App.StreamState = Api.ART_UNREAD;
-//                        break;
-//                    case R.id.list_state_starred:
-//                        App.StreamState = Api.ART_STARED;
-//                        break;
-//                    default:
-//                        App.StreamState = Api.ART_UNREAD;
-//                        break;
-//                }
-//                TextView textView = (TextView) view;
-//                textView.setText(menuItem.getTitle());
-//                return false;
-//            }
-//        });
-//        menuInflater.inflate(R.menu.menu_article_list_state, popupMenu.getMenu());
-//        popupMenu.show();
-//    }
-
-
-//    private LocalBroadcastManager manager;
-//    private BroadcastReceiver localReceiver;
-//    private void initBroadcastReceiver(){
-//        manager = LocalBroadcastManager.getInstance(this);
-//        // 先创建一个 BroadcastReceiver 实例
-//        localReceiver = new BroadcastReceiver() {
-//            @Override
-//            public void onReceive(Context context, Intent intent ) {
-//                String data = intent.getStringExtra(Api.NOTICE);
-//                KLog.e( "接收到的数据为：", data );
-//                switch (data) {
-//                    case Api.N_START:
-//                        swipeRefreshLayoutS.setRefreshing(true);
-//                        swipeRefreshLayoutS.setEnabled(false);
-//                        break;
-//                    case Api.N_COMPLETED:
-//                        swipeRefreshLayoutS.setRefreshing(false);
-//                        swipeRefreshLayoutS.setEnabled(true);
-//                        toolbar.setSubtitle(null);
-////                        refreshData();
-//
-//                        SnackbarUtil.Long(articleListView,"有新文章")
-////                                .above(bt_gravity_center,total,16,16)
-//                                .setAction("查看", new View.OnClickListener() {
-//                                    @Override
-//                                    public void onClick(View v) {
-//                                        refreshData();
-//                                    }
-//                                }).show();
-//                        break;
-//                    // 文章获取失败
-//                    case Api.N_ERROR:
-//                        swipeRefreshLayoutS.setRefreshing(false);
-//                        swipeRefreshLayoutS.setEnabled(true);
-//                        vToolbarHint.setText(String.valueOf(tagCount));
-//                        toolbar.setSubtitle(null);
-//                        break;
-//                    case Api.N_NEWS:
-//                        KLog.e("心跳同步完成");
-//                        SnackbarUtil.Long(articleListView,"有新的文章")
-////                                .above(bt_gravity_center,total,16,16)
-//                                .setAction("点击更新", new View.OnClickListener() {
-//                                    @Override
-//                                    public void onClick(View v) {
-//                                        refreshData();
-//                                    }
-//                                }).show();
-//                        break;
-//                    default:
-//                        toolbar.setSubtitle(data);
-//                        break;
-//                }
-//            }
-//        };
-////         动态注册这个 receiver 实例，记得在不需要时注销
-//        manager.registerReceiver(localReceiver, new IntentFilter(Api.SYNC_ALL));
-//    }
-
-
-//    private Intent intent;
-//    private void initService() {
-//        intent = new Intent(this, MainService.class);
-//        bindService(intent, connection, BIND_AUTO_CREATE);
-//    }
-//
-//    // 先创建一个 ServiceConnection 匿名类，重写 onServiceConnected()、onServiceDisconnected()。这两个方法分别会在Activity与Service建立关联和解除关联的时候调用。
-//    // 在onServiceConnected()方法中，我们又通过向下转型得到了MyBinder的实例，有了这个实例，Activity和Service之间的关系就变得非常紧密了。
-//    private ServiceConnection connection = new ServiceConnection() {
-//        @Override
-//        public void onServiceDisconnected(ComponentName name) {
-//            KLog.e("与MainService的连接断开");
-//        }
-//        // onServiceConnected在绑定成功时进行回调，但不保证在执行binService后立马回调。
-//        // 我们在onCreate方法中绑定后立马获取service实例，但此时不保证onServiceConnected已经被回调。 也就是我们onCreate方法执行时onServiceConnected还没有别调用。此时当然mService还为空了。
-//        @Override
-//        public void onServiceConnected(ComponentName name, IBinder service) {
-//            // 通过Binder，实现Activity与Service通信
-//            MainService.ServiceBinder mBinderService = (MainService.ServiceBinder) service;
-//            MainService mainService = mBinderService.getService();
-//            mainService.regHandler(maHandler);//TODO:考虑内存泄露
-//            if (WithPref.i().isSyncFirstOpen() && !swipeRefreshLayoutS.isRefreshing()) {
-//                ToastUtil.showShort("开始同步");
-//                swipeRefreshLayoutS.setEnabled(false);
-//                startSyncService();
-//            }
-//            KLog.e("与MainService的连接开始");
-//        }
-//    };
 }

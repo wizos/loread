@@ -65,6 +65,16 @@ public class ScreenUtil {
         return (int) (spValue * scaledDensity + 0.5f);
     }
 
+    /**
+     * dp转换成px
+     *
+     * @param dp dp
+     * @return px值
+     */
+    public static int dp2px(float dp) {
+        final float scale = App.i().getResources().getDisplayMetrics().density;
+        return (int) (dp * scale + 0.5f);
+    }
 
     /**
      * 获取屏幕的宽度
