@@ -21,9 +21,9 @@ var loaded = false;
 
 var articleId = $('article').attr('id');
 //ImageBridge.log("==============================================media文件被执行"  + articleId );
-// 在这里调用是因为在第一次打开ArticleActivity时，渲染WebView的内容比较慢，此时去调用setupImage不会执行。
+// 在这里调用是因为在第一次打开ArticleActivity时，渲染WebView的内容比较慢，此时在ArticleActivity中调用setupImage不会执行。
 // 所以等WebView加载到这个文件时，尝试再去执行tryInitJs，当此页面等于当前展示的文章时，就执行setupImage。
-// 不能直接在这里就初始化了，因为在viewpager中预加载而生成webview的时候，这里的懒加载就被触发了
+// 之所以不能直接就执行setupImage，因为在viewpager中预加载而生成webview的时候，这里的懒加载就被触发了，3个webview首屏的图片就都被触发下载了
 setTimeout( ImageBridge.tryInitJs(articleId),100 );
 
 

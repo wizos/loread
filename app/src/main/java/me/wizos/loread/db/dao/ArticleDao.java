@@ -404,7 +404,7 @@ public class ArticleDao extends AbstractDao<Article, String> {
     protected final boolean isEntityUpdateable() {
         return true;
     }
-
+    
     /** Internal query to resolve the "items" to-many relationship of Feed. */
     public List<Article> _queryFeed_Items(String categories) {
         synchronized (this) {

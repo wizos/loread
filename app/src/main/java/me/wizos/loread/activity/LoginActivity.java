@@ -4,13 +4,13 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.content.LocalBroadcastManager;
 import android.text.TextUtils;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.Space;
 
 import com.kyleduo.switchbutton.SwitchButton;
 import com.socks.library.KLog;
@@ -18,6 +18,8 @@ import com.socks.library.KLog;
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
+
+import java.util.Locale;
 
 import me.wizos.loread.R;
 import me.wizos.loread.data.WithPref;
@@ -28,7 +30,7 @@ import me.wizos.loread.utils.ToastUtil;
 import me.wizos.loread.view.colorful.Colorful;
 
 /**
- * Created by Wizos on 2016/3/5.
+ * @author Wizos on 2016/3/5.
  */
 public class LoginActivity extends BaseActivity implements View.OnLayoutChangeListener{
     protected static final String TAG = "LoginActivity";
@@ -41,11 +43,11 @@ public class LoginActivity extends BaseActivity implements View.OnLayoutChangeLi
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
-        KLog.d("【未登录】");
+        KLog.e("【未登录】");
         forInput();
         initView();
         recoverData();
-        initBroadcast();
+//        initBroadcast();
         //注册
         EventBus.getDefault().register(this);
     }
@@ -82,7 +84,7 @@ public class LoginActivity extends BaseActivity implements View.OnLayoutChangeLi
             loginButton.setEnabled(true);
             idEditText.setEnabled(true);
             pdEditText.setEnabled(true);
-            ToastUtil.showLong(getString(R.string.tips_login_failure) + loginEvent.getInfo());
+            ToastUtil.showLong(getString(R.string.tips_login_failure));
         }
     }
 
@@ -130,16 +132,16 @@ public class LoginActivity extends BaseActivity implements View.OnLayoutChangeLi
 
     @Override
     public void onLayoutChange(View v, int left, int top, int right,int bottom, int oldLeft, int oldTop, int oldRight, int oldBottom) {
-        Space space = findViewById(R.id.login_space_a);
-        if(oldBottom != 0 && bottom != 0 &&(oldBottom - bottom > keyHeight)){
-//            if(space.getVisibility() == View.VISIBLE){
-//                space.setVisibility(View.GONE);
-//            }
-        }else if(oldBottom != 0 && bottom != 0 &&(bottom - oldBottom > keyHeight)){
-//            if(space.getVisibility() == View.GONE){
-//                space.setVisibility(View.VISIBLE);
-//            }
-        }
+//        Space space = findViewById(R.id.login_space_a);
+//        if(oldBottom != 0 && bottom != 0 &&(oldBottom - bottom > keyHeight)){
+////            if(space.getVisibility() == View.VISIBLE){
+////                space.setVisibility(View.GONE);
+////            }
+//        }else if(oldBottom != 0 && bottom != 0 &&(bottom - oldBottom > keyHeight)){
+////            if(space.getVisibility() == View.GONE){
+////                space.setVisibility(View.VISIBLE);
+////            }
+//        }
     }
 
 
@@ -167,39 +169,6 @@ public class LoginActivity extends BaseActivity implements View.OnLayoutChangeLi
         KLog.i("【handler】" + "-");
     }
 
-//    private void startLogin2() {
-//        new Thread(new Runnable() {
-//            @Override
-//            public void run() {
-//                try {
-//                    boolean loginResult = DataApi.i().clientLogin(mAccountID, mAccountPD);
-//                    if (!loginResult) {
-//                        ToastUtil.showLong(getString(R.string.tips_login_failure));
-//                    }
-//                    DataApi.i().fetchUserInfo();
-//                    Intent intentToActivity = new Intent(LoginActivity.this, MainActivity.class);
-//                    startActivity(intentToActivity);
-//                    LoginActivity.this.finish();
-//                } catch (HttpException e) {
-//                    e.printStackTrace();
-//                    Tool.showLong("login时出了异常：HttpException");
-//                } catch (IOException e) {
-//                    e.printStackTrace();
-//                    Tool.showLong("login时出了异常：IOException");
-//                } catch (IllegalStateException e) {
-//                    e.printStackTrace();
-//                    Tool.showLong("login时出了异常：IllegalStateException");
-//                } finally {
-//                    loginButton.post(new Runnable() {// 用 post 可以解决在非主线程运行，会报错
-//                        @Override
-//                        public void run() {
-//                            loginButton.setEnabled(true);
-//                        }
-//                    });
-//                }
-//            }
-//        }).start();
-//    }
 
     private void startLogin() {
         loginButton.setEnabled(false);
@@ -213,6 +182,17 @@ public class LoginActivity extends BaseActivity implements View.OnLayoutChangeLi
         startService(intent);
     }
 
+    public void clickRegister(View view) {
+        Intent intent = new Intent(LoginActivity.this, WebActivity.class);
+        intent.setData(Uri.parse("https://www.inoreader.com/?lang=" + Locale.getDefault()));
+        startActivity(intent);
+        overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
+
+//        new MaterialDialog.Builder(this)
+////                .title(R.string.article_about_dialog_title)
+//                .content("请前往")
+//                .show();
+    }
 
     private LocalBroadcastManager manager;
     private BroadcastReceiver localReceiver;
@@ -250,6 +230,26 @@ public class LoginActivity extends BaseActivity implements View.OnLayoutChangeLi
         manager.registerReceiver(localReceiver, new IntentFilter(Api.SYNC_ALL));
     }
 
+//    public void clickRegister(View view){
+//        long time = System.currentTimeMillis();
+//        WebViewS webViewS = new WebViewS(this);
+//        KLog.e("耗时a：" + (System.currentTimeMillis() - time));
+//
+//        webViewS.destroy();
+//
+//        time = System.currentTimeMillis();
+//        WebViewS webView2 = new WebViewS(this);
+//        KLog.e("耗时b：" + (System.currentTimeMillis() - time));
+//
+//
+//        webView2.destroy();
+//
+//        time = System.currentTimeMillis();
+//        WebViewS webView3 = new WebViewS(this);
+//        KLog.e("耗时c：" + (System.currentTimeMillis() - time));
+//
+//        webView3.destroy();
+//    }
 
     public void onSBClick(View view){
         SwitchButton v = (SwitchButton)view;

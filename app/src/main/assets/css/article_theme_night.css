@@ -1,10 +1,10 @@
 /* #203238 浅绿
   #141e21;  深绿
+    background-color:rgba(0,0,0,0);
 ***/
  
 body {
     color: #97A0A5;
-    background-color:rgba(0,0,0,0);
     background-color: #202B2F;
 }
 

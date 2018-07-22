@@ -9,10 +9,16 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
+import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
+import java.net.MalformedURLException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -80,12 +86,25 @@ public class StringUtil {
     }
 
 
+//    /**
+//     */
+//    private static String getFormatContentForDisplay(Article article) {
+//        return getFormatContentForDisplay(article.getId(),article.getContent());
+//    }
+
     /**
+     * 格式化给定的文本，用于展示
      * 这里没有直接将原始的文章内容给到 webView 加载，再去 webView 中初始化占位图并懒加载。
      * 是因为这样 WebView 刚启动时，有的图片因为还没有被 js 替换为占位图，而展示一个错误图。
      * 这里直接将内容初始化好，再让 WebView 执行懒加载的 js 去给没有加载本地图的 src 执行下载任务。
+     * @param articleID
+     * @param content
+     * @return
      */
-    private static String getFormatContentForDisplay(Article article) {
+    private static String getFormatContentForDisplay(String articleID, String content) {
+        if (TextUtils.isEmpty(content)) {
+            return "";
+        }
         String cacheUrl;
         String originalUrl;
         String imageHolder;
@@ -97,15 +116,14 @@ public class StringUtil {
             imageHolder = "file:///android_asset/image/image_holder_loading.png";
         }
 
-        String articleContent = article.getContent();
-        if (TextUtils.isEmpty(articleContent)) {
-            return "";
-        }
-        Document document = Jsoup.parseBodyFragment(articleContent);
+        Document document = Jsoup.parseBodyFragment(content);
+        document = ColorUtil.mod(document);
+
+        document.select("[src='']").remove();
 
         Elements imgs = document.getElementsByTag("img");
         Element img;
-        String idInMD5 = StringUtil.str2MD5(article.getId());
+        String idInMD5 = StringUtil.str2MD5(articleID);
         for (int i = 0, size = imgs.size(); i < size; i++) {
             img = imgs.get(i);
             originalUrl = img.attr("src");
@@ -139,21 +157,53 @@ public class StringUtil {
         Element iframe;
         for (int i = 0, size = iframes.size(); i < size; i++) {
             iframe = iframes.get(i);
-            iframe.wrap("<div style=\"position:relative;\"></div>");
+            if (!iframe.hasAttr("src")) {
+                iframe.remove();
+            } else {
+                iframe.wrap("<div style=\"position:relative;\"></div>");
+            }
         }
 
         Elements embeds = document.getElementsByTag("embed");
         Element embed;
         for (int i = 0, size = embeds.size(); i < size; i++) {
             embed = embeds.get(i);
-            embed.wrap("<div style=\"position:relative;\"></div>");
+            if (!embed.hasAttr("src")) {
+                embed.remove();
+            } else {
+                embed.wrap("<div style=\"position:relative;\"></div>");
+            }
         }
 
-        articleContent = document.body().html();
-//        KLog.e("视频", articleContent );
-        return articleContent;
+        content = document.body().html();
+//        KLog.e("视频", content );
+        return content;
     }
 
+
+//    private static String keyword;
+//    public static String getKeyWord(Node node) {
+//        if (node instanceof Element) {
+//            Element tag = (Element) node;
+//
+//            for (Node childNode : tag.childNodes()) {
+//                KLog.e("====循环猜测");
+//                keyword = getKeyWord(childNode);
+//                if( !TextUtils.isEmpty(keyword) ){
+//                    return keyword;
+//                }
+////                return getKeyWord(childNode);
+//            }
+//            KLog.e("猜关键字是1：" + tag.text() );
+//            return tag.text();
+//        } else if (node instanceof TextNode) {
+//            TextNode tn = (TextNode) node;
+//            KLog.e("猜关键字是2：" + tn.text() );
+//            return tn.text();
+//        } else {
+//            return "";
+//        }
+//    }
 
     private static String getOptimizedAuthor(String feedTitle, String articleAuthor) {
         if (TextUtils.isEmpty(articleAuthor) || feedTitle.toLowerCase().contains(articleAuthor.toLowerCase())) {
@@ -166,7 +216,7 @@ public class StringUtil {
     }
 
 
-    public static String getHtmlForSave(Article article, String title) {
+    public static String getPageForSave(Article article, String title) {
 //        if ( TextUtils.isEmpty( title )){
 //            title = getOptimizedNameForSave(article.getTitle());
 //        }
@@ -194,11 +244,11 @@ public class StringUtil {
     }
 
 
-    public static String getHtmlForDisplay(Article article) {
-        return getHtmlForDisplay(article, null);
+    public static String getPageForDisplay(Article article) {
+        return getPageForDisplay(article, article.getContent());
     }
 
-    public static String getHtmlForDisplay(Article article, String content) {
+    public static String getPageForDisplay(Article article, String content) {
         if (null == article) {
             return "";
         }
@@ -218,15 +268,14 @@ public class StringUtil {
 
         String author = getOptimizedAuthor(article.getOriginTitle(), article.getAuthor());
 
-        if (TextUtils.isEmpty(content)) {
-            content = getFormatContentForDisplay(article);
-        }
+        content = getFormatContentForDisplay(article.getId(), content);
 
         String videoJS = "", videoCSS = "";
         if (!TextUtils.isEmpty(content) && content.indexOf("<video") != -1) {
             videoCSS = "<link rel=\"stylesheet\" type=\"text/css\" href=\"file:///android_asset/video-js/video-js.css\"/>";
             videoJS = "<script src=\"file:///android_asset/video-js/video.js\"></script>";
         }
+
 
         return "<!DOCTYPE html><html><head>" +
                 "<meta charset=\"UTF-8\">" +
@@ -255,20 +304,13 @@ public class StringUtil {
     }
 
 
-    //    private static List<String> format = new ArrayList<>();
     private static Set<String> formats = new HashSet<>();
     private static final String JPG = ".jpg";
     private static final String JPEG = ".jpeg";
     private static final String PNG = ".png";
     private static final String WEBP = ".webp";
     private static final String GIF = ".gif";
-
     static {
-//        format.add(JPG);
-//        format.add(JPEG);
-//        format.add(PNG);
-//        format.add(WEBP);
-//        format.add(GIF);
         formats.add(JPG);
         formats.add(JPEG);
         formats.add(PNG);
@@ -303,7 +345,12 @@ public class StringUtil {
         }
         String fileName;
         int separatorIndex = url.lastIndexOf("/") + 1;
+        // 减少文件名太长的情况
         fileName = url.substring(separatorIndex, url.length());
+        if (fileName.length() > 128) {
+            fileName = fileName.substring(0, 128);
+        }
+
         fileName = StringUtil.getOptimizedNameForSave(fileName);
         return fileName;
     }
@@ -319,10 +366,6 @@ public class StringUtil {
         fileName = Html.fromHtml(fileName).toString();
         fileName = EmojiUtil.filterEmoji(fileName);
         fileName = StringUtil.filterChar(fileName);
-//        KLog.e("优化后的文件名C：" + fileName + "=" + fileName.trim());
-//        if (fileName.equals("")) {
-//            fileName = "WuTi_" + getRandomString(6).toLowerCase();
-//        }
         return fileName.trim();
     }
 
@@ -339,10 +382,10 @@ public class StringUtil {
                 .replace("<", "")
                 .replace(">", "")
                 .replace("|", "")
-//                .replace("%", "_")
+                .replace("%", "_")
 //                .replace("#", "_")
+                .replace("&amp;", "_")
 //                .replace("&", "_")
-                .replace("&amp;", "&")
                 .replace("\n", "_");
     }
 
@@ -482,6 +525,38 @@ public class StringUtil {
 //    }
 
 
+    /**
+     * 从meta中获取页面编码
+     *
+     * @param html
+     * @return
+     */
+    public static String getEncodingByMeta(String html) {
+        String charset = null, temp = "";
+        List<String> lines = new ArrayList<>();
+        try {
+            BufferedReader in = new BufferedReader(new InputStreamReader(new ByteArrayInputStream(html.getBytes())));
+            while ((temp = in.readLine()) != null) {
+                lines.add(temp);
+            }
+
+            for (String line : lines) {
+                if (line.contains("http-equiv") && line.contains("charset")) {
+//                    KLog.e(line);
+                    String tmp = line.split(";")[1];
+                    charset = tmp.substring(tmp.indexOf("=") + 1, tmp.indexOf("\""));
+                    break;
+                }
+            }
+            return charset;
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+            return charset;
+        } catch (IOException e) {
+            e.printStackTrace();
+            return charset;
+        }
+    }
 
     /**
      * 获取字符串编码格式
@@ -489,7 +564,7 @@ public class StringUtil {
      * @param str
      * @return
      */
-    private static String getEncode(String str) {
+    public static String getEncode(String str) {
         final String[] encodes = new String[]{"UTF-8", "GBK", "GB2312", "ISO-8859-1", "ISO-8859-2"};
         byte[] data = str.getBytes();
         byte[] b = null;

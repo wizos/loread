@@ -16,6 +16,7 @@ import java.util.regex.Pattern;
 import me.wizos.loread.App;
 import me.wizos.loread.data.WithPref;
 import okhttp3.FormBody;
+import okhttp3.OkHttpClient;
 
 
 /**
@@ -228,11 +229,26 @@ Code 	Description
         WithHttp.i().asyncPost(HOST + EDIT_FEED, builder, authHeaders, cb);
     }
 
+    public void renameFeed(OkHttpClient httpClient, String feedId, String renamedTitle, StringCallback cb) {
+        FormBody.Builder builder = new FormBody.Builder();
+//        builder.add("ac", "edit"); // 可省略
+        builder.add("s", feedId);
+        builder.add("t", renamedTitle);
+        WithHttp.i().asyncPost(httpClient, HOST + EDIT_FEED, builder, authHeaders, cb);
+    }
+
     public void unsubscribeFeed(String feedId, StringCallback cb) {
         FormBody.Builder builder = new FormBody.Builder();
         builder.add("ac", "unsubscribe");
         builder.add("s", feedId);
         WithHttp.i().asyncPost(HOST + EDIT_FEED, builder, authHeaders, cb);
+    }
+
+    public void unsubscribeFeed(OkHttpClient httpClient, String feedId, StringCallback cb) {
+        FormBody.Builder builder = new FormBody.Builder();
+        builder.add("ac", "unsubscribe");
+        builder.add("s", feedId);
+        WithHttp.i().asyncPost(httpClient, HOST + EDIT_FEED, builder, authHeaders, cb);
     }
 
     public void markArticleListReaded(List<String> articleIDs, StringCallback cb) {
@@ -249,6 +265,13 @@ Code 	Description
         builder.add("a", "user/-/state/com.google/read");
         builder.add("i", articleID);
         WithHttp.i().asyncPost(HOST + EDIT_TAG, builder, authHeaders, cb);
+    }
+
+    public void markArticleReaded(OkHttpClient httpClient, String articleID, StringCallback cb) {
+        FormBody.Builder builder = new FormBody.Builder();
+        builder.add("a", "user/-/state/com.google/read");
+        builder.add("i", articleID);
+        WithHttp.i().asyncPost(httpClient, HOST + EDIT_TAG, builder, authHeaders, cb);
     }
 
     public void markArticleUnread(String articleID, StringCallback cb) {

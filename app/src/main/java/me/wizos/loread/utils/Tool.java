@@ -11,7 +11,6 @@ import me.wizos.loread.App;
 import me.wizos.loread.BuildConfig;
 import me.wizos.loread.R;
 import me.wizos.loread.data.WithPref;
-import me.wizos.loread.view.WebViewS;
 
 /**
  * 一些比较杂的工具函数
@@ -24,13 +23,6 @@ public class Tool {
         if (BuildConfig.DEBUG) {
             KLog.e(msg);
             ToastUtil.showShort(msg);
-        }
-    }
-
-    public static void showLong(String msg) {
-        if (BuildConfig.DEBUG) {
-            KLog.e(msg);
-            ToastUtil.showLong(msg);
         }
     }
 
@@ -57,17 +49,17 @@ public class Tool {
         }
     }
 
-    public static void setWebViewsBGColor() {
-        if (WithPref.i().getThemeMode() == App.Theme_Night) {
-            for (WebViewS webViewS : App.i().mWebViewCaches) {
-                webViewS.setBackgroundColor(App.i().getResources().getColor(R.color.article_dark_background));
-            }
-        } else {
-            for (WebViewS webViewS : App.i().mWebViewCaches) {
-                webViewS.setBackgroundColor(App.i().getResources().getColor(R.color.white));
-            }
-        }
-    }
+//    public static void setWebViewsBGColor() {
+//        if (WithPref.i().getThemeMode() == App.Theme_Night) {
+//            for (WebViewS webViewS : App.i().mWebViewCaches) {
+//                webViewS.setBackgroundColor(App.i().getResources().getColor(R.color.article_dark_background));
+//            }
+//        } else {
+//            for (WebViewS webViewS : App.i().mWebViewCaches) {
+//                webViewS.setBackgroundColor(App.i().getResources().getColor(R.color.white));
+//            }
+//        }
+//    }
 
 
     public static String getNetFileSizeDescription(Context context, long size) {

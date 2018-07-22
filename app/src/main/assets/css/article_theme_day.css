@@ -1,8 +1,8 @@
-/* #f8f8f8;灰白 */
+/* #f8f8f8;灰白
+    background-color:rgba(0,0,0,0);*/
 
 body {
     color: #333;
-    background-color:rgba(0,0,0,0);
     background-color: #FFFFFF;
 }
 /* 标题

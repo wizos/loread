@@ -12,6 +12,7 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.lzy.okgo.OkGo;
 import com.socks.library.KLog;
+import com.tencent.bugly.Bugly;
 import com.tencent.bugly.crashreport.CrashReport;
 
 import org.greenrobot.eventbus.EventBus;
@@ -22,7 +23,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import me.wizos.loread.activity.MainActivity;
+import me.wizos.loread.activity.SplashActivity;
 import me.wizos.loread.bean.config.FeedConfig;
 import me.wizos.loread.bean.config.GlobalConfig;
 import me.wizos.loread.data.WithDB;
@@ -36,7 +37,6 @@ import me.wizos.loread.db.dao.SQLiteOpenHelperS;
 import me.wizos.loread.event.Sync;
 import me.wizos.loread.net.Api;
 import me.wizos.loread.net.InoApi;
-import me.wizos.loread.service.NetworkStatus;
 import me.wizos.loread.utils.FileUtil;
 import me.wizos.loread.utils.NetworkUtil;
 import me.wizos.loread.utils.TimeUtil;
@@ -86,7 +86,7 @@ public class App extends Application implements Thread.UncaughtExceptionHandler 
 //    public static OkHttpClient imgHttpClient;
 //    public static String boxReadRelativePath, storeReadRelativePath;
 //    public static String logRelativePath,logAbsolutePath;
-    public static NetworkStatus networkStatus;
+//    public static NetworkStatus networkStatus;
     private static DaoSession daoSession;
 
     public static App i() {
@@ -109,22 +109,23 @@ public class App extends Application implements Thread.UncaughtExceptionHandler 
         WithDB.i();
         initVar();
         initApiConfig();
-//        initGlobalConfig();
         initFeedsConfig();
         initAutoToggleTheme();
+//        initLeakCanary();
+        WithDB.i().coverSaveFeeds(WithDB.i().getUnreadArtsCountByFeed3());
         initLogAndCrash();
         InoApi.i().initAuthHeaders();
         // 初始化网络框架
         OkGo.getInstance().init(this);
-//        initX5Web();
         // 初始化网络状态
-        App.networkStatus = NetworkUtil.getNetWorkState();
+        NetworkUtil.THE_NETWORK = NetworkUtil.getNetWorkState();
 
-        initUnreadCount();
+//        initUnreadCount();
         initFeedsCategoryid();
         initWebView();
         Thread.setDefaultUncaughtExceptionHandler(this);
 //        FileUtil.clear(this);
+        // 使用handler不断的发送延时消息可以实现循环监听，内存占用也不大，https://www.cnblogs.com/benhero/p/4521727.html
 //        JobManager.create(this).addJobCreator(new JobCreateRouter());
 //        JobManager.instance().cancelAllForTag("job_sync");
         /*
@@ -138,20 +139,23 @@ public class App extends Application implements Thread.UncaughtExceptionHandler 
 
     @Override
     public void uncaughtException(Thread thread, Throwable ex) {
-        Intent intent = new Intent(this, MainActivity.class);
+        KLog.e("子线程意外报错");
+        ex.printStackTrace();
+        Intent intent = new Intent(this, SplashActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
-        startActivity(intent);
         android.os.Process.killProcess(android.os.Process.myPid());
+        startActivity(intent);
     }
 
 
     private void initWebView() {
-        mWebViewCaches = new ArrayList<>();
         // 链接：https://www.jianshu.com/p/fc7909e24178
         // 第一次打开 Web 页面 ， 使用 WebView 加载页面的时候特别慢 ，第二次打开就能明显的感觉到速度有提升 ，为什么 ？
         // 是因为在你第一次加载页面的时候 WebView 内核并没有初始化 ， 所以在第一次加载页面的时候需要耗时去初始化 WebView 内核 。
         // 提前初始化 WebView 内核 ，例如如下把它放到了 Application 里面去初始化 , 在页面里可以直接使用该 WebView
         // 但是这里会影响，从 webview 中打开对话框
+//        new WebViewS(new MutableContextWrapper(this)).destroy();
+        mWebViewCaches = new ArrayList<>();
         mWebViewCaches.add(new WebViewS(new MutableContextWrapper(this)));
         mWebViewCaches.add(new WebViewS(new MutableContextWrapper(this)));
         mWebViewCaches.add(new WebViewS(new MutableContextWrapper(this)));
@@ -204,35 +208,29 @@ public class App extends Application implements Thread.UncaughtExceptionHandler 
 
     private void initLogAndCrash() {
         CrashReport.setIsDevelopmentDevice(this, BuildConfig.DEBUG);
-        if (BuildConfig.DEBUG) {
-            // 测试的时候设为 true
-            CrashReport.initCrashReport(App.i(), "900044326", true);
-            KLog.init(true);
-//            initLeakCanary();
-        } else {
-            CrashReport.initCrashReport(App.i(), "900044326", false);
-            KLog.init(false);
-        }
+//        CrashReport.initCrashReport(App.i(), "900044326",  BuildConfig.DEBUG);
+        Bugly.init(getApplicationContext(), "900044326", BuildConfig.DEBUG);
+        KLog.init(BuildConfig.DEBUG);
 
     }
 
 
-////  内存泄漏检测工具
+//  内存泄漏检测工具
 //    private void initLeakCanary() {
 //        if (LeakCanary.isInAnalyzerProcess(this)) {
 //            return;
 //        }
 //        LeakCanary.install(this);
 //    }
-
-
-    public void readHost() {
-        if (!WithPref.i().isInoreaderProxy()) {
-            Api.HOST = InoApi.HOST;
-        }else {
-            Api.HOST = WithPref.i().getInoreaderProxyHost();
-        }
-    }
+//
+//
+//    public void readHost() {
+//        if (!WithPref.i().isInoreaderProxy()) {
+//            Api.HOST = InoApi.HOST;
+//        }else {
+//            Api.HOST = WithPref.i().getInoreaderProxyHost();
+//        }
+//    }
 
     private void initVar() {
         externalFilesDir = getExternalFilesDir(null) + "";
@@ -297,7 +295,7 @@ public class App extends Application implements Thread.UncaughtExceptionHandler 
 
                 List<Tag> tags = WithDB.i().getTags();
                 for (int i = 0, size = tags.size(); i < size; i++) {
-                    unreadCountMap.put(tags.get(i).getId(), WithDB.i().getUnreadArtsCountByTag(tags.get(i)));
+                    unreadCountMap.put(tags.get(i).getId(), WithDB.i().getUnreadArtsCountByTag(tags.get(i).getId()));
                 }
 
                 List<Feed> feeds = WithDB.i().getFeeds();
@@ -348,7 +346,7 @@ public class App extends Application implements Thread.UncaughtExceptionHandler 
 //    public void saveGlobalConfig() {
 //        AsyncTask.SERIAL_EXECUTOR.execute(new Runnable() {
 //            @Override public void run() {
-//                FileUtil.saveStringToFile(getExternalFilesDir(null) + "/config/global-config.json", new GsonBuilder().setPrettyPrinting().create().toJson(globalConfig));
+//                FileUtil.save(getExternalFilesDir(null) + "/config/global-config.json", new GsonBuilder().setPrettyPrinting().create().toJson(globalConfig));
 //            }
 //        });
 //    }
@@ -400,7 +398,7 @@ public class App extends Application implements Thread.UncaughtExceptionHandler 
 //    public void saveFeedsConfig() {
 //        AsyncTask.SERIAL_EXECUTOR.execute(new Runnable() {
 //            @Override public void run() {
-//                FileUtil.saveStringToFile(getExternalFilesDir(null) + "/config/feeds-config.json", new GsonBuilder().setPrettyPrinting().create().toJson(feedsConfigMap));
+//                FileUtil.save(getExternalFilesDir(null) + "/config/feeds-config.json", new GsonBuilder().setPrettyPrinting().create().toJson(feedsConfigMap));
 //            }
 //        });
 //    }
@@ -435,27 +433,6 @@ public class App extends Application implements Thread.UncaughtExceptionHandler 
         }
     }
 
-    /**
-     * 手动去指定夜间时间意义不大，可以不做，只会徒增系统复杂性而已
-     */
-//    protected void initAutoToggleTheme2() {
-//        KLog.e(" 初始化主题" + WithPref.i().isAutoToggleTheme() + TimeUtil.getCurrentHour() );
-//        if (!WithPref.i().isAutoToggleTheme()) {
-//            return;
-//        }
-//
-//        int lastThemeMode = WithPref.i().getThemeMode();
-//        String now = TimeUtil.getNow();
-//        if(TimeUtil.compare(now,WithPref.i().getNightThemeStartTime()) || TimeUtil.compare(now,WithPref.i().getNightThemeEndTime()) ){
-//            WithPref.i().setThemeMode(App.Theme_Night);
-//        }else {
-//            WithPref.i().setThemeMode(App.Theme_Day);
-//        }
-//
-//        if(WithPref.i().getThemeMode() != lastThemeMode){
-//            hadAutoToggleTheme = true;
-//        }
-//    }
 
 
     // 官方推荐将获取 DaoMaster 对象的方法放到 Application 层，这样将避免多次创建生成 Session 对象
@@ -476,16 +453,16 @@ public class App extends Application implements Thread.UncaughtExceptionHandler 
         return daoSession;
     }
 
-
-//    public void buildImgClient() {
-//        OkHttpClient.Builder builder = new OkHttpClient.Builder();
-//        builder.readTimeout(60000L, TimeUnit.MILLISECONDS);
-//        builder.writeTimeout(60000L, TimeUnit.MILLISECONDS);
-//        builder.connectTimeout(30000L, TimeUnit.MILLISECONDS);
+//    OkHttpClient httpClient;
+//    public void buildHttpClient() {
 //        HttpsUtils.SSLParams sslParams = HttpsUtils.getSslSocketFactory();
-//        builder.sslSocketFactory(sslParams.sSLSocketFactory, sslParams.trustManager);
-//        builder.hostnameVerifier(HttpsUtils.UnSafeHostnameVerifier);
-//        imgHttpClient = builder.build();
+//        OkHttpClient httpClient = new OkHttpClient.Builder()
+//                .readTimeout(30000L, TimeUnit.MILLISECONDS) // 默认 10000
+//                .writeTimeout(30000L, TimeUnit.MILLISECONDS) // 默认 10000
+//                .connectTimeout(30000L, TimeUnit.MILLISECONDS) // 默认 10000
+////                .sslSocketFactory(sslParams.sSLSocketFactory, sslParams.trustManager)
+//                .hostnameVerifier(HttpsUtils.UnSafeHostnameVerifier)
+//                .build();
 //    }
 
 

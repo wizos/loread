@@ -81,7 +81,6 @@ public class WebActivity extends BaseActivity {
             link = getIntent().getStringExtra(Intent.EXTRA_TEXT);
         }
         KLog.e("获取到链接，准备跳转" + link);
-
         initWebView(link);
     }
 
@@ -235,7 +234,9 @@ public class WebActivity extends BaseActivity {
         }
         @Override
         public boolean shouldOverrideUrlLoading(final WebView view, String url) {
-            //优酷想唤起自己应用播放该视频 ， 下面拦截地址返回 true  则会在应用内 H5 播放 ，禁止优酷唤起播放该视频， 如果返回 false ， DefaultWebClient  会根据intent 协议处理 该地址 ， 首先匹配该应用存不存在 ，如果存在 ， 唤起该应用播放 ， 如果不存在 ， 则跳到应用市场下载该应用 .
+            // 优酷想唤起自己应用播放该视频，下面拦截地址返回true则会在应用内 H5 播放，禁止优酷唤起播放该视频。
+            // 如果返回false ， DefaultWebClient 会根据intent协议处理该地址，首先匹配该应用存不存在，
+            // 如果存在，唤起该应用播放，如果不存在，则跳到应用市场下载该应用 .
             if (url.startsWith("http") || url.startsWith("https")) {
                 return false;
             }
@@ -261,11 +262,8 @@ public class WebActivity extends BaseActivity {
                             }
                         })
                         .show();
-            } else {
-                // TODO: 2018/4/25  说明系统中不存在这个activity。弹出一个Toast提示是否要用外部应用打开
-                KLog.e("本地未安装能打开scheme链接的应用");
             }
-            return true;
+            return false;
         }
 
         @Override
@@ -465,6 +463,12 @@ public class WebActivity extends BaseActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        agentWeb.getWebCreator().getWebView().stopLoading();
+        agentWeb.getWebCreator().getWebView().clearCache(true);
+        agentWeb.getWebCreator().getWebView().clearHistory();
+        agentWeb.getWebCreator().getWebView().getSettings().setJavaScriptEnabled(false);
+        agentWeb.getWebCreator().getWebView().removeAllViews();
+        agentWeb.getWebCreator().getWebParentLayout().removeAllViews();
         agentWeb.getWebLifeCycle().onDestroy();
 //        webViewS.destroy();
     }
@@ -476,4 +480,126 @@ public class WebActivity extends BaseActivity {
                 .backgroundColor(R.id.web_toolbar, R.attr.topbar_bg);
         return mColorfulBuilder;
     }
+
+
+    /**
+     *
+     作者：AmatorLee
+     链接：https://www.jianshu.com/p/b008e04987e0
+     來源：简书
+     简书著作权归作者所有，任何形式的转载都请联系作者获得授权并注明出处。
+
+
+     #####二、仿魅族应用商店应用详情效果
+     作为一个多年的魅族手机使用者，看起来魅族的应用商店也挺不错的，来看看要实现的效果（**注：实现效果而非实现实现界面**）
+
+     ![sheet](http://upload-images.jianshu.io/upload_images/2605454-3b9fc78ca7aaaa87.gif?imageMogr2/auto-orient/strip)
+
+     1. 思路一：使用Activity实现，但是这样需要解决的问题有：
+     1.  Activity进场/出场动画
+     2.     对于滑动的监听
+     3. 对状态栏的动态改变
+
+     2. 思路二：由于我们这边使用的是Behaviour，而系统给我们提供了一个```BottomSheetBehavior```应该可以完美的给我们解决滑动的问题，但是Activity方面的问题依然存在，然后找到了一个强大的Dialog(```BottomSheetDialog```)和一个DialogFragment(```BottomSheetDialogFragment```),,以我夜观天象应该这个就是实现了``````BottomSheetBehavior```的View，很好很强大。
+     我们来看看我们是怎样是实现的：
+
+     作者：AmatorLee
+     链接：https://www.jianshu.com/p/b008e04987e0
+     來源：简书
+     简书著作权归作者所有，任何形式的转载都请联系作者获得授权并注明出处。
+     */
+//    private void test(){
+//
+//        /**
+//         * BottomSheetDialog
+//         */
+//        Button btnShowDialog = (Button) findViewById(R.id.bottom_pull_sheet);
+//        mDatas = new ArrayList<>();
+//        View inflate = getLayoutInflater().inflate(R.layout.dialog_bottom_sheet, null);
+////        mLeftIcon = inflate.findViewById(R.id.delete);
+////        mLeftIcon.setOnClickListener(new View.OnClickListener() {
+////            @Override
+////            public void onClick(View view) {
+////                if (mBottomSheetDialog != null && mBottomSheetDialog.isShowing()) {
+////                    mBottomSheetDialog.dismiss();
+////                }
+////            }
+////        });
+////        RecyclerView recyclerView = inflate.findViewById(R.id.recyclerView);
+////        mDatas = new ArrayList<>();
+////        for (int i = 0; i < 50; i++) {
+////            mDatas.add("这是第" + i + "个数据");
+////        }
+////        recyclerView.addItemDecoration(new DividerItemDecoration(this, DividerItemDecoration.VERTICAL));
+////        recyclerView.setLayoutManager(new LinearLayoutManager(this));
+////        Adapter adapter = new Adapter();
+////        recyclerView.setAdapter(adapter);
+//
+//        BottomSheetDialog mBottomSheetDialog = new BottomSheetDialog(this);
+//        mBottomSheetDialog.setContentView(inflate);
+//        View container = mBottomSheetDialog.getDelegate().findViewById(android.support.design.R.id.design_bottom_sheet);
+//        final BottomSheetBehavior containerBehaviour = BottomSheetBehavior.from(container);
+//        containerBehaviour.setBottomSheetCallback(new BottomSheetBehavior.BottomSheetCallback() {
+//            @Override
+//            public void onStateChanged(@NonNull View bottomSheet, int newState) {
+//                KLog.e(TAG, "onStateChanged: newState === " + newState);
+//                if (newState == BottomSheetBehavior.STATE_HIDDEN) {
+//                    mBottomSheetDialog.dismiss();
+//                    containerBehaviour.setState(BottomSheetBehavior.STATE_COLLAPSED);
+//                } else if (newState == BottomSheetBehavior.STATE_COLLAPSED) {
+//                    //强制修改弹出高度为屏幕高度的0.9倍，不做此操作仅仅有CollapSed/Expand两种，就是0.5和1倍展开的效果
+//                    containerBehaviour.setPeekHeight((int) (0.9 * height));
+//                }
+//            }
+//
+//            @Override
+//            public void onSlide(@NonNull View bottomSheet, float slideOffset) {
+//                KLog.d("BottomBahaviour", "onSlide: slideOffset====" + slideOffset);
+//                if (slideOffset == 1.0) {
+////                    mLeftIcon.setImageResource(R.drawable.back);
+//                    // containerBehaviour.setPeekHeight(height + getStatusBarHeight());
+//                    //修改状态栏
+//                    mBottomSheetDialog.getWindow().addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
+//                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+//                        mBottomSheetDialog.getWindow().setStatusBarColor(getResources().getColor(android.R.color.transparent));
+//                        try {
+//                            //修改魅族系统状态栏字体颜色
+//                            WindowManager.LayoutParams lp = mBottomSheetDialog.getWindow().getAttributes();
+//                            Field darkFlag = WindowManager.LayoutParams.class
+//                                    .getDeclaredField("MEIZU_FLAG_DARK_STATUS_BAR_ICON");
+//                            Field meizuFlags = WindowManager.LayoutParams.class
+//                                    .getDeclaredField("meizuFlags");
+//                            darkFlag.setAccessible(true);
+//                            meizuFlags.setAccessible(true);
+//                            int bit = darkFlag.getInt(null);
+//                            int value = meizuFlags.getInt(lp);
+//                            value |= bit;
+//                            meizuFlags.setInt(lp, value);
+//                            mBottomSheetDialog.getWindow().setAttributes(lp);
+//
+//                        } catch (Exception e) {
+//
+//                        }
+//                    }
+//                } else {
+//
+//                    mLeftIcon.setImageResource(R.drawable.icon_delete);
+//                }
+//            }
+//        });
+//
+//        btnShowDialog.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View view) {
+//                if (!mBottomSheetDialog.isShowing()) {
+//                    containerBehaviour.setPeekHeight((int) (0.9 * height));
+//                    mBottomSheetDialog.show();
+//                } else {
+//                    mBottomSheetDialog.dismiss();
+//                }
+//            }
+//        });
+//    }
+
+
 }

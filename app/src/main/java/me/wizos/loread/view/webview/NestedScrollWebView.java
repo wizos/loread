@@ -21,7 +21,6 @@ import android.support.v4.view.NestedScrollingChildHelper;
 import android.support.v4.view.ViewCompat;
 import android.view.MotionEvent;
 import android.view.ViewConfiguration;
-import android.webkit.WebView;
 
 //import com.tencent.smtt.sdk.WebView;
 
@@ -32,7 +31,7 @@ import android.webkit.WebView;
  * @since 4.0.0
  */
 
-public class NestedScrollWebView extends WebView implements NestedScrollingChild {
+public class NestedScrollWebView extends FastScrollWebView implements NestedScrollingChild {
     /***
      * 方法一
      * https://github.com/fashare2015/NestedScrollWebView

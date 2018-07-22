@@ -1,4 +1,4 @@
-package me.wizos.loread.view;
+package me.wizos.loread.view.ListView;
 
 import android.content.Context;
 import android.os.Handler;
@@ -7,7 +7,6 @@ import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.AdapterView;
-import android.widget.ListView;
 
 import com.ditclear.swipelayout.SwipeDragLayout;
 import com.socks.library.KLog;
@@ -16,7 +15,7 @@ import com.socks.library.KLog;
  * Created by Wizos on 2017/12/24.
  */
 
-public class ListViewS extends ListView implements Handler.Callback, SwipeDragLayout.SwipeListener {
+public class ListViewS extends FastScrollListView implements Handler.Callback, SwipeDragLayout.SwipeListener {
 
     /* handler */
     private Handler mHandler;
@@ -30,6 +29,13 @@ public class ListViewS extends ListView implements Handler.Callback, SwipeDragLa
     }
 
     public ListViewS(Context context, AttributeSet attrs, int defStyleAttr) {
+        // 设置水波纹背景，无效
+//        TypedValue typedValue = new TypedValue();
+//        getContext().getTheme().resolveAttribute(android.R.attr.selectableItemBackground,typedValue, true);
+//        int[] attribute = new int[]{android.R.attr.selectableItemBackground};
+//        TypedArray typedArray = getContext().getTheme().obtainStyledAttributes(typedValue.resourceId, attribute);
+//        setBackground(typedArray.getDrawable(0));
+//        typedArray.recycle();
         super(context, attrs, defStyleAttr);
         mHandler = new Handler(this);
     }

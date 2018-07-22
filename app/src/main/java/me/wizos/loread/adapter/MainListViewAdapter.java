@@ -24,7 +24,7 @@ import me.wizos.loread.net.Api;
 import me.wizos.loread.utils.NetworkUtil;
 import me.wizos.loread.utils.TimeUtil;
 import me.wizos.loread.view.IconFontView;
-import me.wizos.loread.view.ListViewS;
+import me.wizos.loread.view.ListView.ListViewS;
 
 
 /**
@@ -88,7 +88,7 @@ public class MainListViewAdapter extends ArrayAdapter<Article> {
             cvh.articleSave = convertView.findViewById(R.id.main_slv_item_icon_save);
             cvh.markLeft = convertView.findViewById(R.id.main_list_item_menu_left);
             cvh.markRight = convertView.findViewById(R.id.main_list_item_menu_right);
-            swipeDragLayout = convertView.findViewById(R.id.swip_layout);
+            swipeDragLayout = convertView.findViewById(R.id.swipe_layout);
             swipeDragLayout.addListener(slv);
 
             convertView.setTag(cvh);

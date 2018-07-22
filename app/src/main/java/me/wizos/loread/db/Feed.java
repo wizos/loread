@@ -33,61 +33,8 @@ public class Feed {
     private String htmlurl;
     private String iconurl;
     private String openMode;
-    private Integer unreadCount;
+    private Integer unreadCount = 0;
     private Long newestItemTimestampUsec;
-
-//    public FeedConfig getConfig() {
-//        try {
-//            return App.feedsConfigMap.get(id);
-//        } catch (Exception e) {
-//            KLog.e(e);
-//            return null;
-//        }
-//    }
-
-//    public String getDisplayMode() {
-//        return GlobalConfig.i().getDisplayMode(id);
-//
-////        try {
-////            return App.feedsConfigMap.get(id).getDisplayRouter();
-////        } catch (Exception e) {
-//////            KLog.e("【2】", App.feedsConfigMap + "  "  + id );
-////            KLog.e(e);
-////            return "";
-////        }
-//    }
-
-//    public String getUserAgent() {
-//        try {
-//            return App.feedsConfigMap.get(id).getUserAgent();
-//        } catch (Exception e) {
-////            KLog.e("【3】", App.feedsConfigMap + "  "  + id );
-//            KLog.e(e);
-//            return "";
-//        }
-//    }
-
-
-//    public void setDisplayMode(String displayMode) {
-//        try {
-//            App.feedsConfigMap.get(id).setOpenMode(displayMode);
-//        } catch (Exception e) {
-//            App.feedsConfigMap.put(id, new FeedConfig(displayMode, null, null));
-//        }
-//    }
-
-//    public void setUserAgent(String userAgent) {
-//        try {
-//            App.feedsConfigMap.get(id).setUserAgent(userAgent);
-//        } catch (Exception e) {
-//            App.feedsConfigMap.put(id, new FeedConfig(null, null, userAgent));
-//        }
-//    }
-
-//    public void saveConfig() {
-//        App.i().saveFeedsConfig();
-//    }
-
 
     @ToMany(joinProperties = {
             @JoinProperty(name = "id", referencedName = "categories")

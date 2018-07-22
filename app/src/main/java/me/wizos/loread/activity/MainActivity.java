@@ -60,11 +60,10 @@ import me.wizos.loread.utils.ScreenUtil;
 import me.wizos.loread.utils.SnackbarUtil;
 import me.wizos.loread.utils.StringUtil;
 import me.wizos.loread.utils.ToastUtil;
-import me.wizos.loread.utils.Tool;
 import me.wizos.loread.utils.UnreadCountUtil;
 import me.wizos.loread.view.ExpandableListViewS;
 import me.wizos.loread.view.IconFontView;
-import me.wizos.loread.view.ListViewS;
+import me.wizos.loread.view.ListView.ListViewS;
 import me.wizos.loread.view.SwipeRefreshLayoutS;
 import me.wizos.loread.view.colorful.Colorful;
 import me.wizos.loread.view.colorful.setter.ViewGroupSetter;
@@ -106,7 +105,11 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
 //        KLog.i("列表数目：" + App.articleList.size() + "  当前状态：" + App.StreamState);
         autoMarkReaded = WithPref.i().isScrollMark();
 
-        initHeartbeat();
+//        initHeartbeat();
+//        if (WithPref.i().isAutoSync()) {
+        maHandler.postDelayed(heartbeatTask, WithPref.i().getAutoSyncFrequency() * 60000);
+//        }
+
 //        if (savedInstanceState != null) {
 //            final int position = savedInstanceState.getInt("listItemFirstVisiblePosition");
 //            slvSetSelection(position);
@@ -137,6 +140,7 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
             articleListAdapter.notifyDataSetChanged();
         }
         showAutoSwitchThemeSnackBar();
+        tagCount = UnreadCountUtil.getUnreadCount(App.StreamId);
 //        KLog.i("【onResume】" + App.StreamState + "---" + toolbar.getTitle() + "===" + App.StreamId);
     }
 
@@ -198,6 +202,20 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
         }
     }
 
+
+    Runnable heartbeatTask = new Runnable() {
+        @Override
+        public void run() {
+            if (!WithPref.i().isAutoSync()) {
+                return;
+            }
+            if (WithPref.i().isAutoSyncOnWifi() && !NetworkUtil.isWiFiUsed()) {
+                return;
+            }
+            startSyncService(Api.SYNC_HEARTBEAT);
+            maHandler.postDelayed(this, WithPref.i().getAutoSyncFrequency() * 60000);
+        }
+    };
 
     private void initHeartbeat() {
 //        KLog.e("时间间隔" + WithPref.i().getAutoSyncFrequency());
@@ -370,20 +388,58 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
         tagListTemp.add(rootTag);
         tagListTemp.add(noLabelTag);
         tagListTemp.addAll(WithDB.i().getTags());
+        App.i().updateTagList(tagListTemp);
+    }
 
-//        List<Tag> tagListTemp = WithDB.i().getTags();
-//        if(tagListTemp!=null && !tagListTemp.get(0).getId().contains(Api.U_NO_LABEL)){
+
+//
+//    private class dataTask extends AsyncTask<String, String, ArrayMap<Tag,List<Feed>>> {
+//        dataTask() {
+//        }
+//
+//        @Override
+//        protected ArrayMap<Tag,List<Feed>> doInBackground(String... params) {
+//            if (isCancelled()) {
+//                return null;
+//            }
+//            Tag rootTag = new Tag();
 //            Tag noLabelTag = new Tag();
+//            long userID = WithPref.i().getUseId();
+//            rootTag.setTitle(App.i().getString(R.string.main_activity_title_all));
 //            noLabelTag.setTitle(App.i().getString(R.string.main_activity_title_untag));
-//            noLabelTag.setId("user/" +  WithPref.i().getUseId() + Api.U_NO_LABEL);
+//
+//            rootTag.setId("user/" + userID + Api.U_READING_LIST);
+//            rootTag.setSortid("00000000");
+//            rootTag.__setDaoSession(App.i().getDaoSession());
+//
+//            noLabelTag.setId("user/" + userID + Api.U_NO_LABEL);
 //            noLabelTag.setSortid("00000001");
 //            noLabelTag.__setDaoSession(App.i().getDaoSession());
-//            tagListTemp.add(0,noLabelTag);
+//
+//            List<Tag> tagListTemp = new ArrayList<>();
+//            tagListTemp.add(rootTag);
+//            tagListTemp.add(noLabelTag);
+//            tagListTemp.addAll(WithDB.i().getTags());
+//
+//            for (Tag tag:tagListTemp) {
+//
+//            }
+//
+//            App.i().updateTagList(tagListTemp);
+//
+//
+//            return WithDB.i().getUnreadArtsCountByFeed2(feedId);
 //        }
-        App.i().updateTagList(tagListTemp);
+//
+//        /**
+//         * 在doInbackground之后执行
+//         */
+//        @Override
+//        protected void onPostExecute(ArrayMap<Tag,List<Feed>> stream) {
+//            tagListAdapter.updateData(stream);
+//        }
+//    }
 
-//        KLog.e("【listTag】 " );
-    }
 
 
     private void loadViewByData() {
@@ -408,10 +464,10 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
         toolbar.setSubtitle(null);
 //        KLog.e("loadViewByData","此时StreamId为：" + App.StreamId +  "   此时 Title 为：" +  App.StreamTitle );
 
-//        tagCount = App.articleList.size();
-        tagCount = UnreadCountUtil.getTagUnreadCount(App.StreamId);
+        tagCount = UnreadCountUtil.getUnreadCount(App.StreamId);
         vToolbarHint.setText(String.valueOf(tagCount));
     }
+
 
 
     private void changeItemNum(int offset){
@@ -781,11 +837,14 @@ public void onTagIconClicked2(View view) {
                                         Article article = App.articleList.get(position);
                                         if (article.getReadState().equals(Api.ART_READED)) {
                                             DataApi.i().markArticleUnread(article.getId(), null);
-                                            DataApi.i().changeUnreadCount(article.getOriginStreamId(), 1);
+//                                            DataApi.i().changeUnreadCount(article.getOriginStreamId(), 1);
                                             changeItemNum(1);
                                         }
-                                        article.setReadState(Api.ART_UNREADING);
-                                        WithDB.i().saveArticle(article);
+//                                        article.setReadState(Api.ART_UNREADING);
+//                                        WithDB.i().saveArticle(article);
+                                        // 方法2
+                                        WithDB.i().setUnreading(article);
+
                                         articleListAdapter.notifyDataSetChanged();
                                         break;
                                     default:
@@ -885,13 +944,13 @@ public void onTagIconClicked2(View view) {
                 }
                 String articleID = App.articleList.get(position).getId();
                 Intent intent = new Intent(MainActivity.this, ArticleActivity.class);
-                intent.putExtra("articleID", articleID);
+                intent.putExtra("articleId", articleID);
                 // 下标从 0 开始
                 intent.putExtra("articleNo", position);
                 intent.putExtra("articleCount", App.articleList.size());
                 startActivityForResult(intent, 0);
                 overridePendingTransition(R.anim.in_from_bottom, R.anim.fade_out);
-//                KLog.i("点击了" + articleID + position + "-" + App.articleList.size());
+                KLog.i("点击了" + articleID + "   " + position + "   " + articleID + "    " + App.articleList.size());
             }
 
             @Override
@@ -911,16 +970,20 @@ public void onTagIconClicked2(View view) {
                     && lastAutoMarkPos != firstVisibleItemPos
                     && App.articleList.get(firstVisibleItemPos).getReadState().equals(Api.ART_UNREAD)) {
 
-                App.articleList.get(firstVisibleItemPos).setReadState(Api.ART_READED);
                 DataApi.i().markArticleReaded(App.articleList.get(firstVisibleItemPos).getId(), null);
-                WithDB.i().saveArticle(App.articleList.get(firstVisibleItemPos));
-                DataApi.i().changeUnreadCount(App.articleList.get(firstVisibleItemPos).getOriginStreamId(), -1);
+
+                // 方法1
+                // App.articleList.get(firstVisibleItemPos).setReadState(Api.ART_READED);
+                // WithDB.i().saveArticle(App.articleList.get(firstVisibleItemPos));
+                // 方法2
+                WithDB.i().setReaded(App.articleList.get(firstVisibleItemPos));
+
+//                DataApi.i().changeUnreadCount(App.articleList.get(firstVisibleItemPos).getOriginStreamId(), -1);
                 lastAutoMarkPos = firstVisibleItemPos;
                 publishProgress(-1);
 //              KLog.e("标记已读：" + lastAutoMarkPos);
             }
 
-            //提交之后，会执行onProcessUpdate方法
             //返回结果
             return 0;
         }
@@ -952,7 +1015,7 @@ public void onTagIconClicked2(View view) {
                     App.articleList.get(i).setReadState(Api.ART_READED);
                     articleList.add(App.articleList.get(i));
                     articleIDs.add(App.articleList.get(i).getId());
-                    DataApi.i().changeUnreadCount(App.articleList.get(i).getOriginStreamId(), -1);
+//                    DataApi.i().changeUnreadCount(App.articleList.get(i).getOriginStreamId(), -1);
                 }
             }
             if (articleIDs.size() == 0) {
@@ -1016,19 +1079,33 @@ public void onTagIconClicked2(View view) {
 
     private void toggleReadState(final Article article) {
         if (autoMarkReaded && article.getReadState().equals(Api.ART_UNREAD)) {
-            article.setReadState(Api.ART_UNREADING);
+//            article.setReadState(Api.ART_UNREADING);
+
+            // 方法2
+            WithDB.i().setUnreading(article);
         } else if (article.getReadState().equals(Api.ART_READED)) {
             DataApi.i().markArticleUnread(article.getId(), null);
-            article.setReadState(Api.ART_UNREADING);
-            DataApi.i().changeUnreadCount(article.getOriginStreamId(), 1);
+
+            // 方法1
+            // article.setReadState(Api.ART_UNREADING);
+
+            // 方法2
+            WithDB.i().setUnreading(article);
+
+//            DataApi.i().changeUnreadCount(article.getOriginStreamId(), 1);
             changeItemNum( 1 );
         }else {
             DataApi.i().markArticleReaded(article.getId(), null);
-            article.setReadState(Api.ART_READED);
-            DataApi.i().changeUnreadCount(article.getOriginStreamId(), -1);
+
+//            article.setReadState(Api.ART_READED);
+
+            // 方法2
+            WithDB.i().setReaded(article);
+
+//            DataApi.i().changeUnreadCount(article.getOriginStreamId(), -1);
             changeItemNum( -1 );
         }
-        WithDB.i().saveArticle(article);
+//        WithDB.i().saveArticle(article);
         articleListAdapter.notifyDataSetChanged();
     }
 
@@ -1149,7 +1226,7 @@ public void onTagIconClicked2(View view) {
             public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
                 quickSettingDialog.dismiss();
                 manualToggleTheme();
-                Tool.setWebViewsBGColor();
+//                Tool.setWebViewsBGColor();
             }
         });
 
@@ -1264,10 +1341,13 @@ public void onTagIconClicked2(View view) {
         artListViewSetter.childViewBgColor(R.id.main_list_item_surface, R.attr.root_view_bg);
         artListViewSetter.childViewBgColor(R.id.main_list_item_menu_left, R.attr.root_view_bg);
         artListViewSetter.childViewBgColor(R.id.main_list_item_menu_right, R.attr.root_view_bg);
+        artListViewSetter.childViewBgColor(R.id.swipe_layout, R.attr.root_view_bg);
 
         ViewGroupSetter relative = new ViewGroupSetter(relativeLayout);
         relative.childViewBgColor(R.id.main_tag_close, R.attr.bottombar_bg);
         relative.childViewTextColor(R.id.main_tag_close, R.attr.bottombar_fg);
+        relative.childViewBgColor(R.id.sheet_tag, R.attr.bottombar_bg);
+        relative.childViewBgColor(R.id.main_tag_list_view, R.attr.bottombar_bg);
 
         // 绑定ListView的Item View中的news_title视图，在换肤时修改它的text_color属性
         ViewGroupSetter tagListViewSetter = new ViewGroupSetter(tagListView);
@@ -1300,7 +1380,7 @@ public void onTagIconClicked2(View view) {
 //                .textColor(R.id.main_scroll_layout_title, R.attr.bottombar_fg)
 //                .backgroundColor(R.id.main_scrolllayout_divider, R.attr.bottombar_divider)
 
-//                .backgroundColor(R.id.main_tag_list_view, R.attr.bottombar_bg) // 这个不生效
+                .backgroundColor(R.id.main_tag_list_view, R.attr.bottombar_bg) // 这个不生效
 //                .backgroundColor(R.id.main_tag_bg, R.attr.bottombar_bg) // 这个不生效
 
                 .textColor(R.id.header_item_icon, R.attr.tag_slv_item_icon)

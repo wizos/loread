@@ -5,17 +5,14 @@ import android.content.Context;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewParent;
+import android.webkit.CookieManager;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 
+import com.socks.library.KLog;
+
 import me.wizos.loread.App;
-import me.wizos.loread.service.NetworkStatus;
 import me.wizos.loread.view.webview.NestedScrollWebView;
-import me.wizos.loread.view.webview.VideoImpl;
-
-//import com.tencent.smtt.sdk.DownloadListener;
-//import com.tencent.smtt.sdk.WebSettings;
-
 
 /**
  * @author Wizos on 2017/7/3.
@@ -26,12 +23,12 @@ import me.wizos.loread.view.webview.VideoImpl;
 public class WebViewS extends NestedScrollWebView {
 
     @SuppressLint("NewApi")
-    public WebViewS(Context activity) {
+    public WebViewS(Context context) {
         // 传入 application context 来防止 activity 引用被滥用。
         // 创建 WebView 传的是 Application ， Application 本身是无法弹 Dialog 的 。 所以只能无反应 ！
         // 这个问题解决方案只要你创建 WebView 时候传入 Activity ， 或者 自己实现 onJsAlert 方法即可。
 
-        super(activity);
+        super(context);
         initSettingsForWebPage();
 
 //        作者：Wing_Li
@@ -51,21 +48,24 @@ public class WebViewS extends NestedScrollWebView {
                 // 这里可以拦截很多类型，我们只处理图片类型就可以了
                 switch (type) {
                     case WebView.HitTestResult.PHONE_TYPE: // 处理拨号
+                        KLog.e("长按手机号");
                         break;
                     case WebView.HitTestResult.EMAIL_TYPE: // 处理Email
+                        KLog.e("长按邮件");
                         break;
                     case WebView.HitTestResult.GEO_TYPE: // 地图类型
+                        KLog.e("长按地图");
                         break;
                     case WebView.HitTestResult.SRC_ANCHOR_TYPE: // 超链接
+                        KLog.e("长按超链接");
                         break;
                     case WebView.HitTestResult.SRC_IMAGE_ANCHOR_TYPE:
                         break;
                     case WebView.HitTestResult.IMAGE_TYPE: // 处理长按图片的菜单项
                         // 获取图片的路径
                         String saveImgUrl = result.getExtra();
-
+                        KLog.e("长按图片：" + saveImgUrl);
                         // 跳转到图片详情页，显示图片
-
                         break;
                     default:
                         break;
@@ -81,6 +81,9 @@ public class WebViewS extends NestedScrollWebView {
     // 忽略 SetJavaScriptEnabled 的报错
     @SuppressLint("SetJavaScriptEnabled")
     private void initSettingsForWebPage() {
+        setHorizontalScrollBarEnabled(false);
+        setVerticalScrollBarEnabled(false);
+        setScrollbarFadingEnabled(false);
 
         // 实现 webview 的背景颜色与当前主题色一致
 //        Tool.setBackgroundColor(this);
@@ -88,6 +91,7 @@ public class WebViewS extends NestedScrollWebView {
         this.setBackgroundColor(0);
         WebSettings webSettings = this.getSettings();
         webSettings.setJavaScriptEnabled(true);
+
 
         // 设置使用 宽 的 Viewpoint,默认是false
         // Android browser以及chrome for Android的设置是`true`，而WebView的默认设置是`false`
@@ -97,16 +101,22 @@ public class WebViewS extends NestedScrollWebView {
         // 缩放至屏幕的大小，如果webview内容宽度大于显示区域的宽度,那么将内容缩小,以适应显示区域的宽度, 默认是false
         webSettings.setLoadWithOverviewMode(true);
         webSettings.setTextZoom(100);
+        // 设置最小的字号，默认为8
+        webSettings.setMinimumFontSize(10);
+        // 设置最小的本地字号，默认为8
+        webSettings.setMinimumLogicalFontSize(10);
+
         // 设置可以支持缩放
         webSettings.setSupportZoom(true);
         // 默认的缩放控制器
         webSettings.setBuiltInZoomControls(true);
         // 默认的+/-缩放控制
         webSettings.setDisplayZoomControls(false);
+        webSettings.setDefaultTextEncodingName("UTF-8");
         // NARROW_COLUMNS 适应内容大小 ， SINGLE_COLUMN 自适应屏幕
-        webSettings.setLayoutAlgorithm(WebSettings.LayoutAlgorithm.SINGLE_COLUMN);
-        // 设置渲染线程的优先级。该方法在 Api 18之后被废弃,优先级由WebView自己管理。不过任然建议将其设置为 HIGH,来提高页面渲染速度
-        webSettings.setRenderPriority(WebSettings.RenderPriority.HIGH);
+        webSettings.setLayoutAlgorithm(WebSettings.LayoutAlgorithm.NORMAL);
+//        webSettings.setLayoutAlgorithm(WebSettings.LayoutAlgorithm.SINGLE_COLUMN);
+
         // 支持通过js打开新的窗口
         webSettings.setJavaScriptCanOpenWindowsAutomatically(false);
 
@@ -131,13 +141,23 @@ public class WebViewS extends NestedScrollWebView {
         // 保存表单数据
         webSettings.setSaveFormData(true);
 
-        if (App.networkStatus.equals(NetworkStatus.NETWORK_NONE)) {
-            //没网，则从本地获取，即离线加载
-            webSettings.setCacheMode(WebSettings.LOAD_CACHE_ELSE_NETWORK);
-        } else {
-            //根据cache-control获取数据。
-            webSettings.setCacheMode(WebSettings.LOAD_DEFAULT);
-        }
+        //根据cache-control获取数据。
+        webSettings.setCacheMode(WebSettings.LOAD_DEFAULT);
+//        if (NetworkUtil.THE_NETWORK == NetworkUtil.NETWORK_NONE) {
+//            //没网，则从本地获取，即离线加载
+//            webSettings.setCacheMode(WebSettings.LOAD_CACHE_ELSE_NETWORK);
+//        } else {
+//            //根据cache-control获取数据。
+//            webSettings.setCacheMode(WebSettings.LOAD_DEFAULT);
+//        }
+
+        webSettings.setMediaPlaybackRequiresUserGesture(true);
+
+        CookieManager instance = CookieManager.getInstance();
+        instance.setAcceptCookie(true);
+        instance.setAcceptThirdPartyCookies(this, true);
+
+
 
 //        webSettings.setBlockNetworkImage(true);
         // 设置在页面装载完成之后再去加载图片
@@ -158,54 +178,38 @@ public class WebViewS extends NestedScrollWebView {
     @Override
     public void destroy() {
         // 链接：http://www.jianshu.com/p/3e8f7dbb0dc7
-        // 如果先调用destroy()方法，则会命中if (isDestroyed()) return;这一行代码，需要先onDetachedFromWindow()，再 destory()
-        // 在关闭了Activity时，如果Webview的音乐或视频，还在播放。就必须销毁Webview
-        // 但是注意：webview调用destory时,webview仍绑定在Activity上
-        // 这是由于自定义webview构建时传入了该Activity的context对象
-        // 因此需要先从父容器中移除webview,然后再销毁webview
-        ViewParent parent = this.getParent();
-        if (parent != null) {
-            ((ViewGroup) parent).removeView(this);
+        // 如果先调用destroy()方法，则会命中if (isDestroyed()) return;这一行代码，需要先onDetachedFromWindow()，再 destory()。
+        // 在关闭了Activity时，如果Webview的音乐或视频，还在播放。就必须销毁Webview。
+        // 但注意：webview调用destory时，仍绑定在Activity上，这是由于webview构建时传入了Activity对象。
+        // 因此需要先从父容器中移除webview，然后再销毁webview。
+        try {
+            ViewParent parent = this.getParent();
+            if (parent != null) {
+                ((ViewGroup) parent).removeView(this);
+            }
+            stopLoading();
+            // 退出时调用此方法，移除绑定的服务，否则某些特定系统会报错
+            getSettings().setJavaScriptEnabled(false);
+            clearCache(true);
+            clearHistory();
+            removeAllViews();
+        } catch (Exception e) {
+            KLog.e("报错");
+            e.printStackTrace();
         }
 
-        stopLoading();
-        // 退出时调用此方法，移除绑定的服务，否则某些特定系统会报错
-        getSettings().setJavaScriptEnabled(false);
-        clearCache(false);
-        clearHistory();
-        removeAllViews();
-//        loadData("", "text/html", "UTF-8"); // 不能用，会造成内存泄漏
-//        setWebViewClient(null);
         super.destroy();
     }
 
 
-    public void clear() {
-        removeJavascriptInterface("ImageBridge");
-        loadData("", "text/html", "UTF-8");
-        removeAllViews();
-        clearHistory();
-//        setWebViewClient(null);
-    }
+//    public void clear() {
+//        removeJavascriptInterface("ImageBridge");
+//        loadData("", "text/html", "UTF-8");
+//        removeAllViews();
+//        clearHistory();
+//    }
 
-    private VideoImpl videoState;
 
-    public boolean isFullScreenPlaying() {
-        if (videoState == null) {
-            return false;
-        }
-        return videoState.isPlaying();
-    }
-
-    public void setVideoState(VideoImpl videoState) {
-        this.videoState = videoState;
-    }
-
-    public void onHideCustomView() {
-        if (videoState == null) {
-            videoState.onHideCustomView();
-        }
-    }
 
     /**
      * 不要将 base url 设为 null
@@ -213,35 +217,4 @@ public class WebViewS extends NestedScrollWebView {
     public void loadData(String htmlContent) {
         loadDataWithBaseURL(App.webViewBaseUrl, htmlContent, "text/html", "UTF-8", null);
     }
-
-//    public void loadDataWithBaseURL(String baseUrl, String content) {
-//        String initialUrl = null;
-//        if (initialContent == null) {
-//            this.initialBaseUrl = App.webViewBaseUrl;
-//            this.initialContent = TextUtils.isEmpty(content) ? "" : content;
-//            initialUrl = this.initialUrl;
-//        }
-//        loadDataWithBaseURL(App.webViewBaseUrl, content, "text/html", "UTF-8", initialUrl);
-//    }
-//    public void loadHolderPage() {
-//        loadDataWithBaseURL(App.webViewBaseUrl, "", "text/html", "UTF-8", null);
-//        clearHistory();
-//    }
-
-//    private Article article;
-
-//    public void loadArticlePage(Article article) {
-////        this.article = article;
-//        loadDataWithBaseURL(App.webViewBaseUrl, StringUtil.getHtmlForDisplay(article), "text/html", "UTF-8", this.initialUrl);
-//    }
-//    public void loadArticlePage(Article article, String content) {
-//        loadDataWithBaseURL(App.webViewBaseUrl, StringUtil.getHtmlForDisplay(article, content), "text/html", "UTF-8", this.initialUrl);
-//    }
-
-//    public Article getArticle() {
-//        return article;
-//    }
-//    public void setArticle(Article article) {
-//        this.article = article;
-//    }
 }

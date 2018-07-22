@@ -12,8 +12,9 @@ import com.socks.library.KLog;
 
 import java.io.IOException;
 
-import me.wizos.loread.utils.Tool;
+import me.wizos.loread.utils.ToastUtil;
 import okhttp3.FormBody;
+import okhttp3.OkHttpClient;
 
 /**
  * Created by Wizos on 2017/10/12.
@@ -83,7 +84,7 @@ public class WithHttp {
 
                 @Override
                 public void onError(Response<String> response) {
-                    Tool.showShort("asyncPost文章状态失败" + response.body());
+                    ToastUtil.showLong("文章状态同步失败，请稍后再试");
                 }
             };
         }
@@ -96,20 +97,31 @@ public class WithHttp {
         post.execute(cb);
     }
 
+    public void asyncPost(OkHttpClient httpClient, String url, FormBody.Builder bodyBuilder, HttpHeaders httpHeaders, StringCallback cb) {
+        if (cb == null) {
+            cb = new StringCallback() {
+                @Override
+                public void onSuccess(Response<String> response) {
+                    if (!response.body().equals("OK")) {
+                        this.onError(response);
+                    }
+                }
 
-//    public void exeRequest(Request request, StringCallback cb) {
-//        KLog.e("执行exeRequest");
-//        request.execute(cb);
-//    }
-
-
-//    public void asyncGetImg(OkHttpClient imgHttpClient, final Img img, FileCallback fileCallback) {
-//        OkGo.<File>get(img.getSrc())
-//                .tag(img.getArticleId())
-//                .client(imgHttpClient)
-//                .execute(fileCallback);
-//    }
-
+                @Override
+                public void onError(Response<String> response) {
+                    ToastUtil.showLong("文章状态同步失败，请稍后再试");
+                }
+            };
+        }
+        PostRequest<String> post = OkGo.post(url);
+        if (bodyBuilder != null) {
+            post.upRequestBody(bodyBuilder.build());
+        }
+        post.tag(url)
+                .client(httpClient)
+                .headers(httpHeaders)
+                .execute(cb);
+    }
 }
 
 

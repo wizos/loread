@@ -141,11 +141,11 @@
 //    }
 //
 //    private String initContent1(Article article ){
-//        return article.getHtmlForDisplay();
+//        return article.getPageForDisplay();
 //    }
 //
 //    private String initContent2(Article article ){
-//        String articleContent = article.getHtmlForDisplay();
+//        String articleContent = article.getPageForDisplay();
 //        Document document = Jsoup.parseBodyFragment(articleContent);
 //        Elements elements = document.getElementsByTag("img");
 //
@@ -179,7 +179,7 @@
 //            imageHolder = "file:///android_asset/image/image_holder_loading.png";
 //        }
 //
-//        String articleContent = article.getHtmlForDisplay();
+//        String articleContent = article.getPageForDisplay();
 //        Document document = Jsoup.parseBodyFragment(articleContent);
 //        Elements elements = document.getElementsByTag("img");
 //

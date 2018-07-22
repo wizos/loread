@@ -35,7 +35,7 @@ public class Api {
 //    public static final String U_Stream_Contents_Atom ="/reader/atom";
 //    public static final String U_Stream_Contents_User ="/reader/api/0/stream/contents/user/";
 
-    public static final String U_Search = "state/com.google/search";
+    public static final String U_Search = "/state/com.google/search";
     public static final String U_READING_LIST ="/state/com.google/reading-list";
     public static final String U_NO_LABEL ="/state/com.google/no-label";
     public static final String U_STARRED = "/state/com.google/starred";

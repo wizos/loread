@@ -178,7 +178,7 @@ public class FileUtil {
             unreadIds.add(article.getId());
         }
         content = gson.toJson(unreadIds);
-        saveStringToFile(App.externalFilesDir + "/config/unreadIds-backup.json", content);
+        save(App.externalFilesDir + "/config/unreadIds-backup.json", content);
 
 //        articles = WithDB.i().getArtsStared();
 //        List<String> staredIds = new ArrayList<>(articles.size());
@@ -186,17 +186,17 @@ public class FileUtil {
 //            staredIds.add(article.getId());
 //        }
 //        content = gson.toJson(staredIds);
-//        saveStringToFile(App.storeRelativePath + "staredIds.backup",content);
+//        save(App.storeRelativePath + "staredIds.backup",content);
     }
 
 
     public static void saveArticle(String dir, Article article) {
         String title = StringUtil.getOptimizedNameForSave(article.getTitle());
         String filePathTitle = dir + title;
-        String html = StringUtil.getHtmlForSave(article, title);
+        String html = StringUtil.getPageForSave(article, title);
 
         String idInMD5 = StringUtil.str2MD5(article.getId());
-        saveStringToFile(filePathTitle + ".html", html);
+        save(filePathTitle + ".html", html);
         moveDir(App.externalFilesDir + "/cache/" + idInMD5 + "/" + idInMD5 + "_files", filePathTitle + "_files");
     }
 
@@ -365,7 +365,7 @@ public class FileUtil {
     }
 
 
-    public static void saveStringToFile(String filePath, String fileContent) {
+    public static void save(String filePath, String fileContent) {
         if (!isExternalStorageWritable()) {
             return;
         }

@@ -12,6 +12,8 @@
         <item name="toolbarStyle">@style/MyToolbar</item>
         <item name="android:windowContentTransitions">true</item>
         <item name="toolbarNavigationButtonStyle">@style/MyToolbar.Navigation</item>
+        <!--去掉toolbar下的阴影-->
+        <item name="elevation">0dp</item>
         <!--<item name="app:subtitleTextAppearance">@style/MyToolbar.SubTitle</item>-->
         <!--app:subtitleTextAppearance="@style/toolbar_subtitle_style"-->
         <!--<item name="android:windowDrawsSystemBarBackgrounds">true</item>-->
@@ -21,7 +23,7 @@
         <!--<item name="android:windowBackground">@null</item>-->
     </style>
 
-    <style name="AppBaseTheme.welcome" parent="Theme.AppCompat.Light.DarkActionBar">
+    <style name="AppBaseTheme.SplashTheme" parent="Theme.AppCompat.Light.DarkActionBar">
         <item name="android:windowBackground">@drawable/splash_layers</item>
         <item name="android:windowNoTitle">true</item>
         <item name="android:windowFullscreen">true</item>

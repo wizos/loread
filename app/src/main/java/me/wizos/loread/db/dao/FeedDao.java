@@ -265,7 +265,7 @@ public class FeedDao extends AbstractDao<Feed, String> {
     protected final boolean isEntityUpdateable() {
         return true;
     }
-
+    
     /** Internal query to resolve the "feeds" to-many relationship of Tag. */
     public List<Feed> _queryTag_Feeds(String categoryid) {
         synchronized (this) {

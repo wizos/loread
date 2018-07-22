@@ -17,13 +17,14 @@
         android:layout_height="wrap_content">
         <android.support.v7.widget.Toolbar
             android:id="@+id/web_toolbar"
-            app:layout_scrollFlags="scroll|enterAlways"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
             android:background="?attr/topbar_bg"
+            app:navigationIcon="@drawable/ic_close"
             app:contentInsetStartWithNavigation="0dp"
             app:subtitleTextAppearance="@style/MyToolbar.SubTitle"
-            tools:title="博谈" />
+            app:layout_scrollFlags="scroll|enterAlways"
+            tools:title="网页标题" />
     </android.support.design.widget.AppBarLayout>
 
 </android.support.design.widget.CoordinatorLayout>

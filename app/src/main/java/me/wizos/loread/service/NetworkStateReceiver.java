@@ -5,7 +5,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.net.ConnectivityManager;
 
-import me.wizos.loread.App;
 import me.wizos.loread.utils.NetworkUtil;
 
 /**
@@ -16,7 +15,7 @@ public class NetworkStateReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
         if (ConnectivityManager.CONNECTIVITY_ACTION.equals(intent.getAction())) {
-            App.networkStatus = NetworkUtil.getNetWorkState();
+            NetworkUtil.THE_NETWORK = NetworkUtil.getNetWorkState();
         }
     }
 }

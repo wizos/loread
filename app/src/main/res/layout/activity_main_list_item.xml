@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/main_slv_item"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
@@ -18,16 +17,17 @@
     <!--MarginStart指的是控件距离开头View部分的间距大小，MarginLeft则指的是控件距离左边View部分的间距大小，MarginEnd和MarginRight同理。-->
     <!--一般情况下，View开始部分就是左边，但是有的语言目前为止还是按照从右往左的顺序来书写的-->
     <com.ditclear.swipelayout.SwipeDragLayout
-        android:id="@+id/swip_layout"
+        android:id="@+id/swipe_layout"
+        android:background="?attr/root_view_bg"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:clickable="true"
-        app:ios="true"
-        app:click_to_close="true">
+        android:layout_height="wrap_content">
 
+        <!--android:clickable="true"-->
+        <!--app:ios="true"-->
+        <!--app:click_to_close="true"-->
+        <!--android:background="?attr/root_view_bg"-->
         <me.wizos.loread.view.IconFontView
             android:id="@+id/main_list_item_menu_left"
-            android:background="?attr/root_view_bg"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             tools:visibility="visible"
@@ -52,7 +52,9 @@
             android:id="@+id/main_list_item_surface"
             android:background="?attr/root_view_bg"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            android:layout_height="wrap_content"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp">
 
             <RelativeLayout
                 android:id="@+id/main_slv_item_text"

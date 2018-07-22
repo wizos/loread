@@ -11,12 +11,16 @@ import me.wizos.loread.App;
  * 内部设置
  */
 public class WithPref {
+    private static final String TAG = "WithPref";
     private static WithPref withPref;
     private static SharedPreferences mySharedPreferences;
     private static SharedPreferences.Editor editor;
 
+    // TODO: 2018/7/14 修整代码，将setXXX，getXXX，统一改为setOOO(XXX，defValue) 的形式
     public static final String PREF_NAME = App.APP_NAME_EN;
+    public static final String AUTH = "Auth";
 //    public static final String REFRESH_INTERVAL = "refresh.interval";
+
 //    public static final String SIXTY_MINUTES = "3600000";
 
 

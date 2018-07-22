@@ -8,14 +8,73 @@ import com.socks.library.KLog;
 
 import org.greenrobot.greendao.database.Database;
 
+import me.wizos.loread.net.Api;
+
 /**
- * Created by Wizos on 2018/3/13.
+ * @author Wizos on 2018/3/13.
  */
 
 public class SQLiteOpenHelperS extends DaoMaster.OpenHelper {
     public SQLiteOpenHelperS(Context context, String name, SQLiteDatabase.CursorFactory factory) {
         super(context, name, factory);
     }
+
+
+    @Override
+    public void onOpen(SQLiteDatabase db) {
+        super.onOpen(db);
+        if (!db.isReadOnly()) {
+            // 启用外键约束
+            db.setForeignKeyConstraintsEnabled(true);
+        }
+        createViewsAndTriggers(db);
+    }
+
+    /**
+     * 创建视图与触发器
+     *
+     * @param db
+     */
+    private void createViewsAndTriggers(SQLiteDatabase db) {
+        // arrayOf(COL_ID, COL_TITLE, COL_URL, COL_TAG, COL_CUSTOM_TITLE, COL_NOTIFY, COL_IMAGEURL, COL_UNREADCOUNT)
+//        String[] coumle = new String[]{ FeedDao.Properties.Id , FeedDao.Properties.Title };
+        String CREATE_COUNT_VIEW =
+                "CREATE TEMP VIEW IF NOT EXISTS FEED_UNREAD_COUNT" +
+//                        "  AS SELECT " + FeedDao.Properties.Id.columnName + "," + FeedDao.Properties.Title.columnName + "," + FeedDao.Properties.Url.columnName + "," + FeedDao.Properties.Categoryid.columnName + ",UNREADCOUNT" +
+                        "  AS SELECT ID,TITLE,CATEGORYID,CATEGORYLABEL,SORTID,FIRSTITEMMSEC,URL,HTMLURL,ICONURL,OPEN_MODE,NEWEST_ITEM_TIMESTAMP_USEC,UNREADCOUNT" +
+                        "  FROM " + FeedDao.TABLENAME +
+                        "  LEFT JOIN (SELECT COUNT(1) AS UNREADCOUNT, " + ArticleDao.Properties.OriginStreamId.columnName +
+                        "  FROM " + ArticleDao.TABLENAME +
+                        "  WHERE " + ArticleDao.Properties.ReadState.columnName + " != '" + Api.ART_READED + "'" +
+                        "  GROUP BY " + ArticleDao.Properties.OriginStreamId.columnName + " )" +
+                        "  ON " + FeedDao.Properties.Id.columnName + " = " + ArticleDao.Properties.OriginStreamId.columnName;
+
+
+        db.execSQL(CREATE_COUNT_VIEW);
+
+        String CREATE_TAG_TRIGGER =
+                "CREATE TEMP TRIGGER IF NOT EXISTS UNREAD" +
+                        "  AFTER UPDATE OF READ_STATE" +
+                        "  ON ARTICLE" +
+                        "  WHEN" +
+                        "  new.READ_STATE IS NOT old.READ_STATE" +
+                        "  BEGIN" +
+                        "  UPDATE FEED" +
+
+                        "    SET UNREAD_COUNT = UNREAD_COUNT - 1;" +
+
+                        "  WHERE ID IS old.ORIGIN_STREAM_ID; " +
+                        "  END";
+//        db.execSQL( CREATE_TAG_TRIGGER );
+        KLog.e("数据库，创建触发器：" + CREATE_TAG_TRIGGER);
+//                "        SET UNREAD_COUNT = new.$COL_TAG,\n" +
+//                "                $COL_FEEDTITLE = new.$COL_TITLE\n" +
+//                "        WHERE $COL_FEED IS old.$COL_ID;\n" +
+//                "        END";
+        // 当前值不等于旧值，如果新值为read，旧值可能为unread，unreading ， 减一
+        // 如果旧值为read，加一
+    }
+
 
     @Override
     public void onUpgrade(Database db, int oldVersion, int newVersion) {

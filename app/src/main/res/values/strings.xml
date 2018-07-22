@@ -166,7 +166,6 @@
 
     <string name="font_setting">&#xe61f;</string>
     <string name="font_theme">&#xe650;</string>
-    <string name="font_readability">&#xe65b;</string>
 
     <string name="font_unsave">&#xe604;</string>
     <string name="font_saved">&#xe605;</string>
@@ -200,8 +199,9 @@
     <string name="font_archive">&#xe680;</string>
 
     <string name="font_translation">&#xe6ba;</string>
-    <string name="font_open_link_by_browser">&#xe678;</string>
-    <string name="font_get_readability">&#xe611;</string>
+    <string name="font_chrome">&#xe678;</string>
+    <string name="font_book">&#xe65b;</string>
+    <string name="font_readability">&#xe611;</string>
     <string name="font_feed_config">&#xe72b;</string>
     <string name="font_update">&#xe645;</string>
 
@@ -253,6 +253,9 @@
 
 
     <string name="toast_get_readability_ing">正在获取全文</string>
+    <string name="toast_get_readability_success">获取全文成功</string>
+    <string name="toast_get_readability_failure">获取全文失败</string>
+    <string name="toast_cancel_readability">已取消展示获取的全文</string>
 
 
     <string name="rename">编辑名称</string>
@@ -265,7 +268,7 @@
 
     <string name="search_cloudy_feeds_result_count">已搜到 %1$d 个订阅源</string>
     <string name="search_header_search_cloudy_feeds">搜索订阅源</string>
-    <string name="search_header_search_local_articles">搜索本地文章</string>
+    <string name="search_header_search_local_articles">搜索手机上的文章</string>
 
     <string name="toast_login_for_auth">过太久了，请重新登录吧</string>
 
@@ -327,7 +330,7 @@
     <string name="feed_config">配置该源</string>
     <string name="get_readability">获取正文</string>
     <string name="translation">翻译</string>
-    <string name="open_link_by_browser">查看原文</string>
+    <string name="open_original_article">查看原文</string>
 
     <string name="title_activity_image">查看图片</string>
     <string name="download_file_position">下载到目录：Download</string>

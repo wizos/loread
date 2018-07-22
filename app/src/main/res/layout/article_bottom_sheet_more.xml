@@ -104,7 +104,7 @@
                 android:layout_height="40dp"
                 android:textSize="24sp"
                 android:gravity="center"
-                android:text="@string/font_open_link_by_browser"
+                android:text="@string/font_chrome"
                 android:textColor="?attr/icon_title_color" />
 
             <TextView
@@ -114,7 +114,7 @@
                 android:gravity="center"
                 android:textSize="10sp"
                 android:textColor="?attr/icon_title_color"
-                android:text="@string/open_link_by_browser" />
+                android:text="@string/open_original_article" />
         </LinearLayout>
 
 
@@ -131,7 +131,7 @@
                 android:layout_height="40dp"
                 android:textSize="24sp"
                 android:gravity="center"
-                android:text="@string/font_get_readability"
+                android:text="@string/font_readability"
                 android:textColor="?attr/icon_title_color" />
 
             <TextView

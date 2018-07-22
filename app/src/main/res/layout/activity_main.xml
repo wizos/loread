@@ -18,14 +18,14 @@
 
         <android.support.v7.widget.Toolbar
             android:id="@+id/main_toolbar"
-            app:layout_scrollFlags="scroll|enterAlways"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
             android:background="?attr/topbar_bg"
+            tools:title="博谈"
+            tools:navigationIcon="@drawable/state_star"
             app:contentInsetStartWithNavigation="0dp"
             app:subtitleTextAppearance="@style/MyToolbar.SubTitle"
-            tools:title="博谈"
-            tools:navigationIcon="@drawable/state_star">
+            app:layout_scrollFlags="scroll|enterAlways">
             <TextView
                 android:id="@+id/main_toolbar_hint"
                 android:layout_width="wrap_content"
@@ -38,8 +38,6 @@
                 android:gravity="center|end"
                 android:textSize="12sp"
                 tools:text="12" />
-
-
         </android.support.v7.widget.Toolbar>
 
     </android.support.design.widget.AppBarLayout>
@@ -59,20 +57,21 @@
 
 
             <!--android:scrollbars="vertical"-->
-            <!--android:fastScrollEnabled="true"-->
 
-            <me.wizos.loread.view.ListViewS
+            <me.wizos.loread.view.ListView.ListViewS
                 android:id="@+id/main_slv"
                 app:layout_behavior="@string/appbar_scrolling_view_behavior"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:paddingStart="12dp"
-                android:paddingEnd="12dp"
+                android:choiceMode="singleChoice"
                 android:animateLayoutChanges="true"
                 android:headerDividersEnabled="false"
                 android:background="?attr/root_view_bg"
                 android:layout_above="@+id/main_bottombar" />
 
+            <!--android:fastScrollEnabled="true"-->
+            <!--android:background="?attr/root_view_bg"-->
+            <!--android:background="?android:selectableItemBackground"-->
 
             <me.wizos.loread.view.IconFontView
                 android:id="@+id/main_placeholder"

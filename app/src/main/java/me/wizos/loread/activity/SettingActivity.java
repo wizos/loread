@@ -5,6 +5,7 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v7.widget.Toolbar;
 import android.text.InputType;
@@ -12,6 +13,7 @@ import android.view.View;
 import android.widget.CompoundButton;
 import android.widget.TextView;
 
+import com.afollestad.materialdialogs.DialogAction;
 import com.afollestad.materialdialogs.MaterialDialog;
 import com.kyleduo.switchbutton.SwitchButton;
 import com.socks.library.KLog;
@@ -411,10 +413,21 @@ public class SettingActivity extends BaseActivity {
     private MaterialDialog materialDialog;
 
     public void onClickEsc(View view) {
-        App.i().clearApiData();
-        Intent intent = new Intent(SettingActivity.this, LoginActivity.class).setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
-        startActivity(intent);
-        this.finish();
+        new MaterialDialog.Builder(SettingActivity.this)
+                .content("确定要退出账号吗？\n退出后所有数据将被删除！")
+                .negativeText("取消")
+                .positiveText(R.string.agree)
+                .onPositive(new MaterialDialog.SingleButtonCallback() {
+                    @Override
+                    public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
+                        App.i().clearApiData();
+                        Intent intent = new Intent(SettingActivity.this, LoginActivity.class).setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
+                        startActivity(intent);
+                        SettingActivity.this.finish();
+                        overridePendingTransition(R.anim.fade_in, R.anim.out_from_bottom);
+                    }
+                })
+                .show();
     }
 
 

@@ -192,7 +192,7 @@ public class GlobalConfig {
 
 
     public void save() {
-        FileUtil.saveStringToFile(App.i().getExternalFilesDir(null) + "/config/global-config.json", new GsonBuilder().setPrettyPrinting().create().toJson(globalConfig));
+        FileUtil.save(App.i().getExternalFilesDir(null) + "/config/global-config.json", new GsonBuilder().setPrettyPrinting().create().toJson(globalConfig));
     }
 
     public void reInit() {

@@ -44,6 +44,7 @@ import me.wizos.loread.db.Feed;
 import me.wizos.loread.db.Tag;
 import me.wizos.loread.event.Sync;
 import me.wizos.loread.utils.StringUtil;
+import okhttp3.OkHttpClient;
 
 /**
  * 该类处于 获取 -> 处理 -> 输出 数据的处理一层。主要任务是处理、保存业务数据。
@@ -719,8 +720,15 @@ public class DataApi {
         InoApi.i().renameFeed(feedId, renamedTitle, cb);
     }
 
+    public void renameFeed(OkHttpClient httpClient, String feedId, String renamedTitle, StringCallback cb) {
+        InoApi.i().renameFeed(httpClient, feedId, renamedTitle, cb);
+    }
     public void unsubscribeFeed(String feedId, StringCallback cb) {
         InoApi.i().unsubscribeFeed(feedId, cb);
+    }
+
+    public void unsubscribeFeed(OkHttpClient httpClient, String feedId, StringCallback cb) {
+        InoApi.i().unsubscribeFeed(httpClient, feedId, cb);
     }
 
     public void markArticleListReaded(List<String> articleIDs, StringCallback cb) {
@@ -730,6 +738,11 @@ public class DataApi {
     public void markArticleReaded(String articleID, StringCallback cb) {
         InoApi.i().markArticleReaded(articleID, cb);
     }
+
+    public void markArticleReaded(OkHttpClient httpClient, String articleID, StringCallback cb) {
+        InoApi.i().markArticleReaded(httpClient, articleID, cb);
+    }
+
 
 //    public void markArticleReaded(final Article article) {
 //        if (article == null) {
@@ -771,29 +784,6 @@ public class DataApi {
     }
 
 
-    public void changeUnreadCount2(String feedId, int offset) {
-        if (TextUtils.isEmpty(feedId)) {
-            return;
-        }
-        Feed feed = WithDB.i().getFeed(feedId);
-        if (feed == null) {
-            return;
-        }
-        try {
-            KLog.e("Feed" + feed.getUnreadCount() + "  " + offset);
-            feed.setUnreadCount(feed.getUnreadCount() + offset);
-            feed.update();
-//            Tag tag = WithDB.i().getTag(feed.getCategoryid());
-//            if( tag == null ){
-//                return;
-//            }
-//            tag.setUnreadCount(tag.getUnreadCount()+ offset);
-//            tag.update();
-            commitUnreadOffset(feedId, offset);
-        } catch (Exception e) {
-        }
-    }
-
 
     /**
      * 修改内存中未读的计数
@@ -802,53 +792,31 @@ public class DataApi {
      * @param offset
      */
     public void changeUnreadCount(String feedId, int offset) {
-        KLog.e("feedID：" + feedId);
-        if (TextUtils.isEmpty(feedId)) {
-            return;
-        }
-
-        try {
-            int count;
-            if (App.unreadCountMap.containsKey(feedId)) {
-                count = App.unreadCountMap.get(feedId);
-                App.unreadCountMap.put(feedId, count + offset);
-            }
-
-            KLog.e("是否有包含这个feed的tag：" + feedId + App.feedsCategoryIdMap.containsKey(feedId));
-
-            if (App.feedsCategoryIdMap.containsKey(feedId)) {
-                count = App.unreadCountMap.get(App.feedsCategoryIdMap.get(feedId));
-                App.unreadCountMap.put(App.feedsCategoryIdMap.get(feedId), count + offset);
-                KLog.e("计数" + (count + offset));
-            }
-            commitUnreadOffset(feedId, offset);
-        } catch (Exception e) {
-            KLog.e("报错" + e);
-        }
-    }
-
-//    public void changeUnreadCount3(String feedId, int offset) {
-//        if(TextUtils.isEmpty(feedId)){
+//        KLog.e("feedID：" + feedId);
+//        if (TextUtils.isEmpty(feedId)) {
 //            return;
 //        }
 //
 //        try {
-//            UnreadCounts unreadCounts = App.unreadCountMap.get(feedId);
-//            if( unreadCounts == null ){
-//                return;
+//            int count;
+//            if (App.unreadCountMap.containsKey(feedId)) {
+//                count = App.unreadCountMap.get(feedId);
+//                App.unreadCountMap.put(feedId, count + offset);
 //            }
-//            unreadCounts.setCount(unreadCounts.getCount() + offset);
-//            App.unreadCountMap.put(feedId, unreadCounts);
 //
-//            unreadCounts = App.unreadCountMap.get(App.feedsCategoryIdMap.get(feedId));
-//            if( unreadCounts == null ){
-//                return;
+//            KLog.e("是否有包含这个feed的tag：" + feedId + App.feedsCategoryIdMap.containsKey(feedId));
+//
+//            if (App.feedsCategoryIdMap.containsKey(feedId)) {
+//                count = App.unreadCountMap.get(App.feedsCategoryIdMap.get(feedId));
+//                App.unreadCountMap.put(App.feedsCategoryIdMap.get(feedId), count + offset);
+//                KLog.e("计数" + (count + offset));
 //            }
-//            unreadCounts.setCount(unreadCounts.getCount() + offset);
-//            App.unreadCountMap.put(feedId, unreadCounts);
-//        }catch (Exception e){
+//            commitUnreadOffset(feedId, offset);
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//            KLog.e("报错" + e);
 //        }
-//    }
+    }
 
     /**
      * 当正在初始化 UnreadCount 时，将本地临时做的变动缓存起来，待初始化完成再重新赋值一次。

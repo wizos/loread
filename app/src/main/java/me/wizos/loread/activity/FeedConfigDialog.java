@@ -1,5 +1,7 @@
 package me.wizos.loread.activity;
 
+import android.content.ClipData;
+import android.content.ClipboardManager;
 import android.content.Context;
 import android.graphics.Color;
 import android.support.annotation.NonNull;
@@ -51,7 +53,7 @@ public class FeedConfigDialog {
         }
         MaterialDialog dialog = new MaterialDialog.Builder(context)
                 .title("配置该源")
-                .customView(R.layout.config_feed_view, true)
+                .customView(R.layout.config_feed_view2, true)
                 .positiveText("确认")
                 .negativeText("取消")
                 .neutralText("退订")
@@ -93,6 +95,21 @@ public class FeedConfigDialog {
         feedNameEdit = (EditText) dialog.findViewById(R.id.feed_name_edit);
         feedNameEdit.setText(feed.getTitle());
 
+        TextView feedLink = (TextView) dialog.findViewById(R.id.feed_link);
+        feedLink.setText(feed.getId().substring(5));
+        feedLink.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                //获取剪贴板管理器：
+                ClipboardManager cm = (ClipboardManager) context.getSystemService(Context.CLIPBOARD_SERVICE);
+                // 创建普通字符型ClipData
+                ClipData mClipData = ClipData.newPlainText("RSS Link", feed.getId().substring(5));
+                // 将ClipData内容放到系统剪贴板里。
+                cm.setPrimaryClip(mClipData);
+                ToastUtil.showShort("复制成功！");
+            }
+        });
+
 
         TextView feedOpenModeSelect = (TextView) dialog.findViewById(R.id.feed_open_mode_select);
 
@@ -114,7 +131,6 @@ public class FeedConfigDialog {
                 showDefaultDisplayModePopupMenu(context, view);
             }
         });
-
 
 //        TextView feedTagSelect = (TextView) dialog.findViewById(R.id.feed_tag_select);
 //        feedTagSelect.setText(feed.getCategorylabel());
@@ -192,29 +208,7 @@ public class FeedConfigDialog {
             return;
         }
         DataApi.i().unsubscribeFeed(feed.getId(), stringCallback);
-    }
-
-
-    public void showClassPopupMenu(final Context context, final View view) {
-        KLog.e("onClickedArticleListOrder图标被点击");
-        PopupMenu popupMenu = new PopupMenu(context, view);
-        Menu menuList = popupMenu.getMenu();
-        final List<Tag> tagsList = WithDB.i().getTags();
-        for (int i = 0, size = tagsList.size(); i < size; i++) {
-            // GroupId, ItemId, Order/位置，标题
-            menuList.add(0, i, i, tagsList.get(i).getTitle());
-        }
-
-        popupMenu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
-            @Override
-            public boolean onMenuItemClick(MenuItem menuItem) {
-                selectedFeedGroup = tagsList.get(menuItem.getItemId());
-                ((TextView) view).setText(menuItem.getTitle());
-                KLog.e("选择：" + menuItem.getTitle() + menuItem.getItemId() + "   " + menuItem.getGroupId() + "   " + menuItem.getOrder());
-                return false;
-            }
-        });
-        popupMenu.show();
+        ToastUtil.showLong("退订成功");
     }
 
     private void unsubscribeFeed(final Feed feed) {
@@ -244,4 +238,26 @@ public class FeedConfigDialog {
         });
     }
 
+
+    public void showClassPopupMenu(final Context context, final View view) {
+        KLog.e("onClickedArticleListOrder图标被点击");
+        PopupMenu popupMenu = new PopupMenu(context, view);
+        Menu menuList = popupMenu.getMenu();
+        final List<Tag> tagsList = WithDB.i().getTags();
+        for (int i = 0, size = tagsList.size(); i < size; i++) {
+            // GroupId, ItemId, Order/位置，标题
+            menuList.add(0, i, i, tagsList.get(i).getTitle());
+        }
+
+        popupMenu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem menuItem) {
+                selectedFeedGroup = tagsList.get(menuItem.getItemId());
+                ((TextView) view).setText(menuItem.getTitle());
+                KLog.e("选择：" + menuItem.getTitle() + menuItem.getItemId() + "   " + menuItem.getGroupId() + "   " + menuItem.getOrder());
+                return false;
+            }
+        });
+        popupMenu.show();
+    }
 }

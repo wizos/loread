@@ -6,7 +6,6 @@ import android.net.NetworkInfo;
 
 import me.wizos.loread.App;
 import me.wizos.loread.data.WithPref;
-import me.wizos.loread.service.NetworkStatus;
 
 
 /**
@@ -14,28 +13,33 @@ import me.wizos.loread.service.NetworkStatus;
  * @version 1.0
  */
 public class NetworkUtil {
+    public static final int NETWORK_NONE = 0;
+    public static final int NETWORK_MOBILE = 1;
+    public static final int NETWORK_WIFI = 2;
+    public static int THE_NETWORK = 0;
+
     /**
      * 判断网络的状态
      */
-    public static NetworkStatus getNetWorkState() {
+    public static int getNetWorkState() {
         ConnectivityManager connectivityManager = (ConnectivityManager) App.i().getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo networkInfo = connectivityManager.getActiveNetworkInfo();
         if (networkInfo != null && networkInfo.isConnected()) {
             if (networkInfo.getType() == (ConnectivityManager.TYPE_WIFI)) {
-                return NetworkStatus.NETWORK_WIFI;
+                return NETWORK_WIFI;
             } else if (networkInfo.getType() == (ConnectivityManager.TYPE_MOBILE)) {
-                return NetworkStatus.NETWORK_MOBILE;
+                return NETWORK_MOBILE;
             }
         }
-        return NetworkStatus.NETWORK_NONE;
+        return NETWORK_NONE;
     }
 
     public static boolean isNetworkAvailable() {
-        return App.networkStatus != NetworkStatus.NETWORK_NONE;
+        return THE_NETWORK != NETWORK_NONE;
     }
 
     public static boolean isWiFiUsed() {
-        return App.networkStatus == NetworkStatus.NETWORK_WIFI;
+        return THE_NETWORK == NETWORK_WIFI;
     }
 
 
@@ -45,15 +49,15 @@ public class NetworkUtil {
             return false;
         }
         // 开启了仅Wifi情况下载，但是不处于wifi状态
-        return !(WithPref.i().isDownImgOnlyWifi() && App.networkStatus != NetworkStatus.NETWORK_WIFI);
+        return !(WithPref.i().isDownImgOnlyWifi() && THE_NETWORK != NETWORK_WIFI);
     }
 
-    public static boolean canDownImg1() {
-        if (!WithPref.i().isDownImgOnlyWifi() && !NetworkUtil.isNetworkAvailable()) {
-            return false;
-        }
-        return !(WithPref.i().isDownImgOnlyWifi() && !NetworkUtil.isWiFiUsed());
-    }
+//    public static boolean canDownImg1() {
+//        if (!WithPref.i().isDownImgOnlyWifi() && !NetworkUtil.isNetworkAvailable()) {
+//            return false;
+//        }
+//        return !(WithPref.i().isDownImgOnlyWifi() && !NetworkUtil.isWiFiUsed());
+//    }
 
 
 //    /**

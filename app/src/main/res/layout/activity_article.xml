@@ -24,15 +24,19 @@
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
             android:background="?attr/topbar_bg"
-            app:contentInsetStart="0dp"
+            tools:title="源标题"
+            tools:navigationIcon="@drawable/ic_close"
+            app:contentInsetStartWithNavigation="0dp"
+            app:subtitleTextAppearance="@style/MyToolbar.SubTitle"
             app:layout_scrollFlags="scroll|enterAlways|snap">
 
-            <me.wizos.loread.view.IconFontView
-                android:id="@+id/art_bottombar_save"
-                style="@style/top_bar_iconfont"
-                android:layout_gravity="center"
-                android:gravity="center"
-                android:text="@string/font_unsave" />
+            <!--app:contentInsetStart="0dp"-->
+            <!--<me.wizos.loread.view.IconFontView-->
+            <!--android:id="@+id/art_bottombar_save"-->
+            <!--style="@style/top_bar_iconfont"-->
+            <!--android:layout_gravity="center"-->
+            <!--android:gravity="center"-->
+            <!--android:text="@string/font_unsave" />-->
 
             <TextView
                 android:id="@+id/art_toolbar_num"
@@ -93,8 +97,8 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:paddingStart="60dp"
-            android:paddingEnd="60dp"
+            android:paddingStart="20dp"
+            android:paddingEnd="20dp"
             android:gravity="center"
             android:orientation="horizontal">
             <!--<me.wizos.loread.view.IconFontView-->
@@ -102,6 +106,24 @@
             <!--style="@style/bottom_bar_iconfont"-->
             <!--android:text="@string/font_label"-->
             <!--android:onClick="onTagClick"/>-->
+            <me.wizos.loread.view.IconFontView
+                android:id="@+id/article_bottombar_save"
+                style="@style/bottom_bar_iconfont"
+                android:text="@string/font_unsave"
+                android:visibility="gone" />
+
+            <me.wizos.loread.view.IconFontView
+                android:id="@+id/article_bottombar_feed_config"
+                style="@style/bottom_bar_iconfont"
+                android:text="@string/font_feed_config"
+                android:visibility="gone" />
+
+            <!--<me.wizos.loread.view.IconFontView-->
+            <!--android:id="@+id/article_bottombar_open_original_article"-->
+            <!--style="@style/bottom_bar_iconfont"-->
+            <!--android:text="@string/font_chrome"-->
+            <!--android:onClick="clickOpenOriginalArticle" />-->
+
             <me.wizos.loread.view.IconFontView
                 android:id="@+id/article_bottombar_star"
                 style="@style/bottom_bar_iconfont"
@@ -115,10 +137,30 @@
                 android:onClick="onReadClick" />
 
             <me.wizos.loread.view.IconFontView
-                android:id="@+id/article_bottombar_more"
+                android:id="@+id/article_bottombar_readability"
                 style="@style/bottom_bar_iconfont"
-                android:text="@string/font_more"
-                android:onClick="onClickMore" />
+                android:text="@string/font_readability"
+                android:onClick="clickReadability" />
+
+            <!--<me.wizos.loread.view.IconFontView-->
+            <!--android:id="@+id/article_bottombar_more"-->
+            <!--style="@style/bottom_bar_iconfont"-->
+            <!--android:text="@string/font_more"-->
+            <!--android:onClick="onClickMore" />-->
+
+
+            <!--<CheckBox-->
+            <!--android:checked="false"-->
+            <!--android:id="@+id/radio_all"-->
+            <!--android:layout_width="@dimen/bottom_bar_height"-->
+            <!--android:layout_height="@dimen/bottom_bar_height"-->
+            <!--android:gravity="center"-->
+            <!--android:padding="10dp"-->
+            <!--android:layout_marginStart="8dp"-->
+            <!--android:layout_marginEnd="8dp"-->
+            <!--android:button="@null"-->
+            <!--android:background="@drawable/selector_star" />-->
+
         </LinearLayout>
     </RelativeLayout>
 </android.support.design.widget.CoordinatorLayout>

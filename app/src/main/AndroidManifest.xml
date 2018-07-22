@@ -1,21 +1,32 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     package="me.wizos.loread">
 
+    <!--允许访问振动设备-->
     <uses-permission android:name="android.permission.VIBRATE" />
+    <!--网络相关权限-->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <!--访问电话状态-->
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
+    <!--允许读写系统设置项-->
     <uses-permission android:name="android.permission.WRITE_SETTINGS" />
+    <!--挂载、反挂载外部文件系统-->
     <uses-permission android:name="android.permission.MOUNT_UNMOUNT_FILESYSTEMS" />
-    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <!--读取系统底层日志-->
     <uses-permission android:name="android.permission.READ_LOGS" />
-    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <!--允许程序在手机屏幕关闭后后台进程仍然运行-->
+    <!--<uses-permission android:name="android.permission.WAKE_LOCK" />-->
 
+    <!--通过WiFi或移动基站的方式获取用户错略的经纬度信息，定位精度大概误差在30~1500米-->
+    <!--<uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />-->
     <!-- 读取，写出外置SD卡内容的权限该目录-->
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
 
     <!-- 应用可以监听该广播，成为自启动权限，但是这样会有很多缺点，最大的缺点就是拖慢开机进度，影响用户体验 -->
     <!-- <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/> -->
@@ -25,6 +36,7 @@
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
+        tools:replace="android:label"
         android:largeHeap="true"
         android:supportsRtl="true"
         android:theme="@style/AppTheme.Day">
@@ -33,7 +45,7 @@
             android:label="@string/app_name"
             android:launchMode="singleTask"
             android:screenOrientation="portrait"
-            android:theme="@style/AppBaseTheme.welcome">
+            android:theme="@style/AppBaseTheme.SplashTheme">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -66,12 +78,11 @@
         <activity
             android:name=".activity.ArticleActivity"
             android:configChanges="orientation|screenSize|keyboardHidden"
-            android:hardwareAccelerated="true"
             android:label="@string/app_name"
             android:launchMode="singleTop"
             android:screenOrientation="portrait"
             android:theme="@style/AppTheme.Day.NoActionBar"
-            android:windowSoftInputMode="adjustResize|stateHidden"></activity>
+            android:windowSoftInputMode="adjustResize|stateHidden" />
 
         <activity
             android:name=".activity.WebActivity"
@@ -118,6 +129,23 @@
             android:screenOrientation="portrait"
             android:theme="@style/AppTheme.Day.NoActionBar" />
 
+        <activity
+            android:name="com.tencent.bugly.beta.ui.BetaActivity"
+            android:configChanges="keyboardHidden|orientation|screenSize|locale"
+            android:theme="@android:style/Theme.Translucent" />
+        <!--如果您想兼容Android N或者以上的设备，必须要在AndroidManifest.xml文件中配置FileProvider来访问共享路径的文件。-->
+        <!--这里配置的两个外部存储路径是升级SDK下载的文件可能存在的路径，一定要按照上面格式配置，不然可能会出现错误。-->
+        <!--<provider-->
+        <!--android:name="android.support.v4.content.FileProvider"-->
+        <!--android:authorities="${applicationId}.fileProvider"-->
+        <!--android:exported="false"-->
+        <!--android:grantUriPermissions="true">-->
+        <!--<meta-data-->
+        <!--android:name="android.support.FILE_PROVIDER_PATHS"-->
+        <!--android:resource="@xml/provider_paths"/>-->
+        <!--</provider>-->
+
+
         <receiver android:name=".service.NetworkStateReceiver">
             <intent-filter>
                 <action android:name="android.net.conn.CONNECTIVITY_CHANGE" />
@@ -127,7 +155,7 @@
 
         <service android:name=".service.MainService" />
 
-        <activity android:name=".text.TestActivity" />
+        <activity android:name=".test.TestActivity" />
     </application>
 
 </manifest>

@@ -1,6 +1,8 @@
 package me.wizos.loread.adapter;
 
 import android.content.Context;
+import android.os.AsyncTask;
+import android.util.ArrayMap;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -10,6 +12,7 @@ import android.widget.TextView;
 
 import com.socks.library.KLog;
 
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -18,7 +21,7 @@ import me.wizos.loread.R;
 import me.wizos.loread.data.WithDB;
 import me.wizos.loread.db.Feed;
 import me.wizos.loread.db.Tag;
-import me.wizos.loread.utils.UnreadCountUtil;
+import me.wizos.loread.net.Api;
 import me.wizos.loread.view.ExpandableListViewS;
 import me.wizos.loread.view.IconFontView;
 
@@ -67,12 +70,6 @@ public class ExpandableListAdapterS extends BaseExpandableListAdapter implements
         }
     }
 
-    public void removeChild(int groupPos, int childPos) {
-        try {
-            tags.get(groupPos).getFeeds().remove(childPos);
-        } catch (Exception e) {
-        }
-    }
     //  获得父项的数量
     @Override
     public int getGroupCount() {
@@ -130,6 +127,13 @@ public class ExpandableListAdapterS extends BaseExpandableListAdapter implements
         TextView count;
     }
 
+//    private ArrayMap<Tag,List<Feed>> stream = new ArrayMap<>();
+//    public void updateData( ArrayMap<Tag,List<Feed>> stream){
+//        this.stream = stream;
+//    }
+
+
+
     @Override
     public View getGroupView(final int groupPos, final boolean isExpanded, View convertView, final ViewGroup parent) {
         ItemViewHolder groupViewHolder;
@@ -176,23 +180,24 @@ public class ExpandableListAdapterS extends BaseExpandableListAdapter implements
             groupViewHolder.groupPos = groupPos;
             groupViewHolder.title.setText(tag.getTitle());
 
-//            int count = 0;
-//            if (tag.getId().contains(Api.U_READING_LIST)) {
-//                count = WithDB.i().getUnreadArtsCount();
-//            } else if (tag.getId().contains(Api.U_NO_LABEL)) {
-//                count = WithDB.i().getUnreadArtsCountNoTag();
-//            } else {
-//                if( App.unreadCountMap.containsKey(tag.getId()) ){
-//                    count = App.unreadCountMap.get(tag.getId());
-//                    KLog.e("【getGroupView】复用" + tag.getId() + " -- " + tag.getTitle() + "--"  );
-//                }else {
-//                    count = WithDB.i().getUnreadArtsCountByTag(tag);
-//                    App.unreadCountMap.put(tag.getId(),count);
-//                    KLog.e("【getGroupView】初始" + tag.getId() + " -- " + tag.getTitle() + "--"  );
-//                }
-//            }
-            groupViewHolder.count.setText(String.valueOf(UnreadCountUtil.getTagUnreadCount(tag.getId())));
+            // 方法一
+            int count = 0;
+            if (tag.getId().contains(Api.U_READING_LIST)) {
+                count = WithDB.i().getUnreadArtsCount();
+            } else if (tag.getId().contains(Api.U_NO_LABEL)) {
+                count = WithDB.i().getUnreadArtsCountNoTag();
+            } else {
+                count = tag.getUnreadCount();
+            }
+            groupViewHolder.count.setText(String.valueOf(count));
 
+            // 方法2
+//            groupViewHolder.count.setText(String.valueOf( UnreadCountUtil.getTagUnreadCount(tag.getId()) ));
+//            count = UnreadCountUtil.getTagUnreadCount(tag.getId());
+
+
+            groupViewHolder.count.setText(String.valueOf(count));
+            groupViewHolder.count.setVisibility(count > 0 ? View.VISIBLE : View.INVISIBLE);
 
         } catch (Exception e) {
             groupViewHolder.id = "";
@@ -204,6 +209,9 @@ public class ExpandableListAdapterS extends BaseExpandableListAdapter implements
         return convertView;
     }
 
+
+    private ArrayMap<ItemViewHolder, QueryTask> map = new ArrayMap<>();
+    private QueryTask queryTask = null;
     //  获得子项显示的view
     @Override
     public View getChildView(int groupPos, int childPos, boolean isExpanded, View convertView, final ViewGroup parent) {
@@ -217,28 +225,56 @@ public class ExpandableListAdapterS extends BaseExpandableListAdapter implements
             convertView.setTag(childViewHolder);
         } else {
             childViewHolder = (ItemViewHolder) convertView.getTag();
+//            queryTask = map.get(childViewHolder);
+//            if( queryTask!=null  ){
+//                queryTask.cancel(true);
+//            }
         }
 
         try {
-            Feed feed = tags.get(groupPos).getFeeds().get(childPos);
+            final Feed feed = tags.get(groupPos).getFeeds().get(childPos);
             childViewHolder.id = feed.getId();
             childViewHolder.type = ItemViewHolder.TYPE_CHILD;
             childViewHolder.groupPos = groupPos;
             childViewHolder.childPos = childPos;
             childViewHolder.title.setText(feed.getTitle());
-//            childViewHolder.count.setText(String.valueOf(App.unreadCountMap.get(feed.getId())));
-            childViewHolder.count.setText(String.valueOf(feed.getUnreadCount()));
 
-            if (App.unreadCountMap.containsKey(feed.getId())) {
-                childViewHolder.count.setText(String.valueOf(App.unreadCountMap.get(feed.getId())));
-//                KLog.e("【getChildView】复用" + feed.getId() + " -- " + feed.getTitle());
-            } else {
-                int count = WithDB.i().getUnreadArtsCountByFeed(feed.getId());
-                App.unreadCountMap.put(feed.getId(), count);
-                childViewHolder.count.setText(String.valueOf(count));
-//                KLog.e("【getChildView】初始" + feed.getId() + " -- " + feed.getTitle());
-            }
+            Integer count;
+            count = feed.getUnreadCount();
+            childViewHolder.count.setText(String.valueOf(count));
 
+
+//            if (App.unreadCountMap.containsKey(feed.getId())) {
+//                count = App.unreadCountMap.get(feed.getId());
+////                KLog.e("【getChildView】复用" + feed.getId() + " -- " + feed.getTitle());
+//            } else {
+//                count = WithDB.i().getUnreadArtsCountByFeed(feed.getId());
+////                App.unreadCountMap.put(feed.getId(), count);
+//                KLog.e("数据库，【getChildView】初始" + feed.getId() + " -- " + feed.getTitle() + "  数量：" + count);
+//            }
+//            childViewHolder.count.setText(String.valueOf(count));
+
+            childViewHolder.count.setVisibility(count > 0 ? View.VISIBLE : View.INVISIBLE);
+
+            // 方法2
+//            childViewHolder.count.setVisibility(View.INVISIBLE);
+//            queryTask = new QueryTask(this,childViewHolder);
+//            queryTask.execute(feed.getId());
+//            map.put(childViewHolder,queryTask );
+
+            // 方法3
+//            WithDB.i().query2(feed.getId(), new DBInterface.Query() {
+//                @Override
+//                public void onQuerySuccess(String id, int entries) {
+//                    if( !childViewHolder.id.equals(id) ){
+//                        KLog.e(id + "获取到的错乱了");
+//                        return;
+//                    }
+//                    KLog.e(id + "获取正常的：" + entries);
+//                    childViewHolder.count.setText(String.valueOf(entries));
+//                    childViewHolder.count.setVisibility( entries > 0 ? View.VISIBLE : View.INVISIBLE );
+//                }
+//            });
         } catch (RuntimeException e) {
             childViewHolder.id = "";
             childViewHolder.type = ItemViewHolder.TYPE_CHILD;
@@ -249,6 +285,74 @@ public class ExpandableListAdapterS extends BaseExpandableListAdapter implements
         }
         return convertView;
     }
+
+
+    //
+    // Params, Progress, Result
+    private static class QueryTask extends AsyncTask<String, String, Integer> {
+        private WeakReference<ExpandableListAdapterS> mAdapter;
+        private ItemViewHolder childViewHolder;
+        private String feedId;
+
+        QueryTask(ExpandableListAdapterS adapter, ItemViewHolder childViewHolder) {
+            mAdapter = new WeakReference<>(adapter);
+            this.childViewHolder = childViewHolder;
+        }
+
+        @Override
+        protected Integer doInBackground(String... params) {
+            if (isCancelled()) {
+                return 0;
+            }
+            feedId = params[0];
+//            int count = WithDB.i().getUnreadArtsCountByFeed2(feedId);
+//            publishProgress(feedId,count+"");
+            //返回结果
+            return WithDB.i().getUnreadArtsCountByFeed2(feedId);
+        }
+
+        /**
+         * 在doInbackground之后执行
+         */
+        @Override
+        protected void onPostExecute(Integer count) {
+            try {
+                if (!childViewHolder.id.equals(feedId)) {
+                    KLog.e(feedId + "获取错乱了");
+                    return;
+                }
+                KLog.e(feedId + "获取正常的：" + count);
+                childViewHolder.count.setText(count + "");
+                childViewHolder.count.setVisibility(count > 0 ? View.VISIBLE : View.INVISIBLE);
+            } catch (Exception e) {
+                KLog.e("出错了");
+                e.printStackTrace();
+            }
+        }
+//        @Override
+//        protected void onProgressUpdate(String... progress) {
+//            if(isCancelled()){
+//                return;
+//            }
+//            String feedId = progress[0];
+//            String count = progress[1];
+//
+//            try {
+//                if( !childViewHolder.id.equals(feedId) ){
+//                    KLog.e(feedId + "获取错乱了");
+//                    return;
+//                }
+//
+//                KLog.e(feedId + "获取正常的：" + count);
+//                childViewHolder.count.setText( count );
+//                childViewHolder.count.setVisibility( Integer.valueOf(count) > 0 ? View.VISIBLE : View.INVISIBLE );
+//            }catch (Exception e){
+//                KLog.e("出错了");
+//                e.printStackTrace();
+//            }
+//        }
+    }
+
 
     //  子项是否可选中，如果需要设置子项的点击事件，需要返回true
     @Override
