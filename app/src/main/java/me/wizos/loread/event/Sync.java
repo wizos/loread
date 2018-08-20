@@ -17,6 +17,7 @@ public class Sync {
     public static final int ERROR = 3;
     public static final int STOP = 4; // 通知 Service 暂停同步
 
+
     public String notice;
     public int result;
 
@@ -28,5 +29,6 @@ public class Sync {
         this.result = success;
         this.notice = notice;
     }
+
 
 }

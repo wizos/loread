@@ -258,12 +258,11 @@ public class WebActivity extends BaseActivity {
                             @Override
                             public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
                                 startActivity(in);
-//                                overridePendingTransition(R.anim.fade_in, R.anim.out_from_bottom);
                             }
                         })
                         .show();
             }
-            return false;
+            return true;
         }
 
         @Override

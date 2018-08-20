@@ -28,15 +28,16 @@
             android:textSize="16sp"
             tools:text="这是父item" />
 
+
         <TextView
             android:id="@+id/child_item_count"
-            android:layout_width="80dp"
-            android:layout_height="match_parent"
-            android:paddingTop="15dp"
-            android:paddingBottom="15dp"
-            android:paddingEnd="20dp"
-            android:gravity="center_vertical|right"
-            android:textSize="14sp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:padding="5dp"
+            android:layout_marginEnd="20dp"
+            android:background="?attr/bubble_bg"
+            android:textSize="12sp"
             android:textColor="?attr/lv_item_desc_color"
             tools:text="-9.9" />
     </LinearLayout>

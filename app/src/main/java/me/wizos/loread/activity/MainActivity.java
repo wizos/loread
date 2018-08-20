@@ -60,7 +60,6 @@ import me.wizos.loread.utils.ScreenUtil;
 import me.wizos.loread.utils.SnackbarUtil;
 import me.wizos.loread.utils.StringUtil;
 import me.wizos.loread.utils.ToastUtil;
-import me.wizos.loread.utils.UnreadCountUtil;
 import me.wizos.loread.view.ExpandableListViewS;
 import me.wizos.loread.view.IconFontView;
 import me.wizos.loread.view.ListView.ListViewS;
@@ -82,9 +81,10 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
     private IconFontView refreshIcon;
     private ExpandableListViewS tagListView;
     private ExpandableListAdapterS tagListAdapter;
-    private View headerPinnedView, headerHomeView;
+    private View headerPinnedView;
+//    private View headerHomeView;
 
-    private static int tagCount;
+    private int tagCount;
 
 //    private ImageLoader imageLoader;
 //    private boolean isFirstIn = true;
@@ -128,19 +128,17 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
 //        super.onSaveInstanceState(outState);
 //    }
 
-//    @Override
-//    protected void onRestoreInstanceState(Bundle outState) {
-//        super.onRestoreInstanceState(outState);
-//    }
 
     @Override
     protected void onResume(){
         super.onResume();
         if (articleListAdapter != null) {
             articleListAdapter.notifyDataSetChanged();
+            KLog.e("通知articleList数据有变化");
         }
         showAutoSwitchThemeSnackBar();
-        tagCount = UnreadCountUtil.getUnreadCount(App.StreamId);
+//        tagCount = UnreadCountUtil.getUnreadCount(App.StreamId);
+        tagCount = App.articleList.size();
 //        KLog.i("【onResume】" + App.StreamState + "---" + toolbar.getTitle() + "===" + App.StreamId);
     }
 
@@ -287,7 +285,7 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
         Intent intent = new Intent(this, MainService.class);
         intent.setAction(action);
         startService(intent);
-        KLog.i("调用 MainService，开始 SYNC_ALL");
+        KLog.i("调用 SubService，开始 SYNC_ALL");
     }
 
 
@@ -300,15 +298,15 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
      * App.StreamId 至少包含 1 个状态： Reading-list
      * */
     protected void refreshData() { // 获取 App.articleList , 并且根据 App.articleList 的到未读数目
-        KLog.e("refreshData：" + App.StreamId + "  " + App.StreamState + "   " + App.UserID);
+        KLog.e("refreshData：" + App.StreamId + "  " + App.StreamState + " - " + App.StreamStatus + "   " + App.UserID);
         // 取消所有下载图片的任务，防止下载后去加载到imageview中
 //        imageLoader.cancelAllLoadTask();
 //        isFirstIn = true;
         getArtData();
-        getTagData();
         articleListAdapter = new MainListViewAdapter(this, App.articleList, articleListView);
         articleListView.setAdapter(articleListAdapter);
-        tagListAdapter.notifyDataSetChanged();
+//        getTagData();
+//        tagListAdapter.notifyDataSetChanged();
         loadViewByData();
         refreshIcon.setVisibility(View.GONE);
     }
@@ -316,31 +314,33 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
 
     private void initData() {
         getArtData();
-        getTagData();
         articleListAdapter = new MainListViewAdapter(this, App.articleList, articleListView);
         articleListView.setAdapter(articleListAdapter);
+        getTagData();
         tagListAdapter = new ExpandableListAdapterS(this, App.tagList, tagListView);
         tagListView.setAdapter(tagListAdapter);
         loadViewByData();
     }
 
-
+    @SuppressWarnings("unchecked")
     private void getArtData() {
-        // 最后的 300 * 1000L 是留前5分钟时间的不删除 WithPref.i().getClearBeforeDay()
-        long clearTime = System.currentTimeMillis() - WithPref.i().getClearBeforeDay() * 24 * 3600 * 1000L - 300 * 1000L;
         if (App.StreamId.startsWith("user/")) {
             if (App.StreamId.contains(Api.U_READING_LIST)) {
-                if (App.StreamState.contains(Api.ART_STARED)) {
+//                if (App.StreamState.contains(Api.ART_STARED)) {
+                if (App.StreamStatus == Api.STARED) {
                     App.articleList = WithDB.i().getArtsStared();
-                } else if (App.StreamState.contains(Api.ART_UNREAD)) {
+//                } else if (App.StreamState.contains(Api.ART_UNREAD)) {
+                } else if (App.StreamStatus == Api.UNREAD) {
                     App.articleList = WithDB.i().getArtsUnread();
                 } else {
-                    App.articleList = WithDB.i().getArtsAll(clearTime);
+                    App.articleList = WithDB.i().getArtsAll();
                 }
             } else if (App.StreamId.contains(Api.U_NO_LABEL)) {
-                if (App.StreamState.contains(Api.ART_STARED)) {
+//                if (App.StreamState.contains(Api.ART_STARED)) {
+                if (App.StreamStatus == Api.STARED) {
                     App.articleList = WithDB.i().getArtsStaredNoTag();
-                } else if (App.StreamState.contains(Api.ART_UNREAD)) {
+//                } else if (App.StreamState.contains(Api.ART_UNREAD)) {
+                } else if (App.StreamStatus == Api.UNREAD) {
                     App.articleList = WithDB.i().getArtsUnreadNoTag();
                 } else {
                     App.articleList = WithDB.i().getArtsAllNoTag();
@@ -348,21 +348,25 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
             } else {
                 // TEST:  测试
                 Tag theTag = WithDB.i().getTag(App.StreamId);
-                if (App.StreamState.contains(Api.ART_STARED)) {
+//                if (App.StreamState.contains(Api.ART_STARED)) {
+                if (App.StreamStatus == Api.STARED) {
                     App.articleList = WithDB.i().getArtsStaredInTag(theTag);
-                } else if (App.StreamState.contains(Api.ART_UNREAD)) {
+//                } else if (App.StreamState.contains(Api.ART_UNREAD)) {
+                } else if (App.StreamStatus == Api.UNREAD) {
                     App.articleList = WithDB.i().getArtsUnreadInTag(theTag);
                 } else {
-                    App.articleList = WithDB.i().getArtsAllInTag(theTag, clearTime);
+                    App.articleList = WithDB.i().getArtsAllInTag(theTag);
                 }
             }
         } else if (App.StreamId.startsWith("feed/")) {
-            if (App.StreamState.equals(Api.ART_STARED)) {
+//            if (App.StreamState.equals(Api.ART_STARED)) {
+            if (App.StreamStatus == Api.STARED) {
                 App.articleList = WithDB.i().getArtsStaredInFeed(App.StreamId);
-            } else if (App.StreamState.contains(Api.ART_UNREAD)) {
+//            } else if (App.StreamState.contains(Api.ART_UNREAD)) {
+            } else if (App.StreamStatus == Api.UNREAD) {
                 App.articleList = WithDB.i().getArtsUnreadInFeed(App.StreamId);
             } else {
-                App.articleList = WithDB.i().getArtsAllInFeed(App.StreamId, clearTime);
+                App.articleList = WithDB.i().getArtsAllInFeed(App.StreamId);
             }
             App.StreamTitle = WithDB.i().getFeed(App.StreamId).getTitle();
         }
@@ -392,56 +396,6 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
     }
 
 
-//
-//    private class dataTask extends AsyncTask<String, String, ArrayMap<Tag,List<Feed>>> {
-//        dataTask() {
-//        }
-//
-//        @Override
-//        protected ArrayMap<Tag,List<Feed>> doInBackground(String... params) {
-//            if (isCancelled()) {
-//                return null;
-//            }
-//            Tag rootTag = new Tag();
-//            Tag noLabelTag = new Tag();
-//            long userID = WithPref.i().getUseId();
-//            rootTag.setTitle(App.i().getString(R.string.main_activity_title_all));
-//            noLabelTag.setTitle(App.i().getString(R.string.main_activity_title_untag));
-//
-//            rootTag.setId("user/" + userID + Api.U_READING_LIST);
-//            rootTag.setSortid("00000000");
-//            rootTag.__setDaoSession(App.i().getDaoSession());
-//
-//            noLabelTag.setId("user/" + userID + Api.U_NO_LABEL);
-//            noLabelTag.setSortid("00000001");
-//            noLabelTag.__setDaoSession(App.i().getDaoSession());
-//
-//            List<Tag> tagListTemp = new ArrayList<>();
-//            tagListTemp.add(rootTag);
-//            tagListTemp.add(noLabelTag);
-//            tagListTemp.addAll(WithDB.i().getTags());
-//
-//            for (Tag tag:tagListTemp) {
-//
-//            }
-//
-//            App.i().updateTagList(tagListTemp);
-//
-//
-//            return WithDB.i().getUnreadArtsCountByFeed2(feedId);
-//        }
-//
-//        /**
-//         * 在doInbackground之后执行
-//         */
-//        @Override
-//        protected void onPostExecute(ArrayMap<Tag,List<Feed>> stream) {
-//            tagListAdapter.updateData(stream);
-//        }
-//    }
-
-
-
     private void loadViewByData() {
 //        KLog.i("【】" + App.StreamState + "--" + App.StreamTitle + "--" + App.StreamId + "--" + toolbar.getTitle() + App.articleList.size());
         if (StringUtil.isBlank(App.articleList)) {
@@ -464,15 +418,16 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
         toolbar.setSubtitle(null);
 //        KLog.e("loadViewByData","此时StreamId为：" + App.StreamId +  "   此时 Title 为：" +  App.StreamTitle );
 
-        tagCount = UnreadCountUtil.getUnreadCount(App.StreamId);
+//        tagCount = UnreadCountUtil.getUnreadCount(App.StreamId);
+        tagCount = App.articleList.size();
         vToolbarHint.setText(String.valueOf(tagCount));
     }
 
 
 
     private void changeItemNum(int offset){
-        tagCount = tagCount + offset;
-        vToolbarHint.setText(String.valueOf( tagCount ));
+//        tagCount = tagCount + offset;
+//        vToolbarHint.setText(String.valueOf( tagCount ));
     }
 
     public void showTagDialog(final Tag tag) {
@@ -641,37 +596,19 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
     }
 
 
-//    //定义一个startActivityForResult（）方法用到的整型值
-//    CustomBottomSheetDialogFragment fragment;
-public void onTagIconClicked2(View view) {
-//        Intent intent = new Intent(MainActivity.this, TagActivity.class);
-//        intent.putExtra("ListState", App.StreamState);
-//        intent.putExtra("ListTag", App.StreamId);
-//        intent.putExtra("ListCount", App.articleList.size());
-////        intent.putExtra("NoTagCount", getNoTagList2().size());
-//        startActivityForResult(intent, 0);
-//        overridePendingTransition( R.anim.in_from_bottom, R.anim.fade_out );
-
-//        toolbar.setVisibility(View.GONE);
-//        FrameLayout frameLayout = findViewById(R.id.main_fragment_container);
-//        frameLayout.setVisibility(View.VISIBLE);
-//        // 步骤3：创建需要添加的Fragment ：ExampleFragment
-//        TagFragment tagFragment = new TagFragment();
-////        FragmentTransaction fragmentTransaction =
-//        getFragmentManager().beginTransaction().add(R.id.main_fragment_container, tagFragment).commit();
-}
-
-    BottomSheetDialog tagBottomSheetDialog;
 
     public void onTagIconClicked1(View view) {
+        getTagData();
+        tagListAdapter = new ExpandableListAdapterS(this, App.tagList, tagListView);
+        tagListView.setAdapter(tagListAdapter);
         tagListAdapter.notifyDataSetChanged();
         tagBottomSheetDialog.show();
         KLog.e("tag按钮被点击");
     }
 
 
+    BottomSheetDialog tagBottomSheetDialog;
     RelativeLayout relativeLayout;
-
     public void initTagListView() {
         tagBottomSheetDialog = new BottomSheetDialog(MainActivity.this);
         tagBottomSheetDialog.setContentView(R.layout.main_bottom_sheet_tag);
@@ -829,13 +766,11 @@ public void onTagIconClicked2(View view) {
                                         break;
                                     case 1:
                                         showConfirmDialog(position, App.articleList.size(), dialog);
-//                                        index[0] = position;
-//                                        index[1] = App.articleList.size();
-//                                        changeReadedList.execute(index);
                                         break;
                                     case 2:
                                         Article article = App.articleList.get(position);
-                                        if (article.getReadState().equals(Api.ART_READED)) {
+//                                        if (article.getReadState().equals(Api.ART_READED)) {
+                                        if (article.getReadStatus() == Api.READED) {
                                             DataApi.i().markArticleUnread(article.getId(), null);
 //                                            DataApi.i().changeUnreadCount(article.getOriginStreamId(), 1);
                                             changeItemNum(1);
@@ -942,9 +877,19 @@ public void onTagIconClicked2(View view) {
                 if (position == -1) {
                     return;
                 }
-                String articleID = App.articleList.get(position).getId();
+
                 Intent intent = new Intent(MainActivity.this, ArticleActivity.class);
-                intent.putExtra("articleId", articleID);
+
+
+//                String[] articleIDs = new String[App.articleList.size()];
+//                for (int i=0, size = App.articleList.size(); i<size; i++){
+//                    articleIDs[i] = App.articleList.get(i).getId();
+//                }
+//                intent.putExtra("articleIDs",articleIDs);
+//                intent.putStringArrayListExtra("articleIDs",new ArrayList<String>(Arrays.asList(articleIDs)) );
+
+                String articleID = App.articleList.get(position).getId();
+                intent.putExtra("articleID", articleID);
                 // 下标从 0 开始
                 intent.putExtra("articleNo", position);
                 intent.putExtra("articleCount", App.articleList.size());
@@ -960,6 +905,7 @@ public void onTagIconClicked2(View view) {
         });
     }
 
+
     // Params, Progress, Result
     private class MarkReadedAsyncTask extends AsyncTask<Integer, Integer, Integer> {
         @Override
@@ -968,17 +914,12 @@ public void onTagIconClicked2(View view) {
 
             if (autoMarkReaded
                     && lastAutoMarkPos != firstVisibleItemPos
-                    && App.articleList.get(firstVisibleItemPos).getReadState().equals(Api.ART_UNREAD)) {
+//                    && App.articleList.get(firstVisibleItemPos).getReadState().equals(Api.ART_UNREAD)) {
+                    && App.articleList.get(firstVisibleItemPos).getReadStatus() == Api.UNREAD) {
 
                 DataApi.i().markArticleReaded(App.articleList.get(firstVisibleItemPos).getId(), null);
-
-                // 方法1
-                // App.articleList.get(firstVisibleItemPos).setReadState(Api.ART_READED);
-                // WithDB.i().saveArticle(App.articleList.get(firstVisibleItemPos));
                 // 方法2
                 WithDB.i().setReaded(App.articleList.get(firstVisibleItemPos));
-
-//                DataApi.i().changeUnreadCount(App.articleList.get(firstVisibleItemPos).getOriginStreamId(), -1);
                 lastAutoMarkPos = firstVisibleItemPos;
                 publishProgress(-1);
 //              KLog.e("标记已读：" + lastAutoMarkPos);
@@ -1010,14 +951,24 @@ public void onTagIconClicked2(View view) {
             List<Article> articleList = new ArrayList<>(endIndex - startIndex);
             List<String> articleIDs = new ArrayList<>(endIndex - startIndex);
 
+//            for (int i = startIndex; i < endIndex; i++) {
+//                if (App.articleList.get(i).getReadState().equals(Api.ART_UNREAD)) {
+//                    App.articleList.get(i).setReadState(Api.ART_READED);
+//                    articleList.add(App.articleList.get(i));
+//                    articleIDs.add(App.articleList.get(i).getId());
+////                    DataApi.i().changeUnreadCount(App.articleList.get(i).getOriginStreamId(), -1);
+//                }
+//            }
+
             for (int i = startIndex; i < endIndex; i++) {
-                if (App.articleList.get(i).getReadState().equals(Api.ART_UNREAD)) {
-                    App.articleList.get(i).setReadState(Api.ART_READED);
+                if (App.articleList.get(i).getReadStatus() == Api.UNREAD) {
+                    App.articleList.get(i).setReadStatus(Api.READED);
                     articleList.add(App.articleList.get(i));
                     articleIDs.add(App.articleList.get(i).getId());
 //                    DataApi.i().changeUnreadCount(App.articleList.get(i).getOriginStreamId(), -1);
                 }
             }
+
             if (articleIDs.size() == 0) {
                 onCancelled();
                 return 0;
@@ -1077,45 +1028,35 @@ public void onTagIconClicked2(View view) {
     }
 
 
+
     private void toggleReadState(final Article article) {
-        if (autoMarkReaded && article.getReadState().equals(Api.ART_UNREAD)) {
-//            article.setReadState(Api.ART_UNREADING);
-
-            // 方法2
+//        if (autoMarkReaded && article.getReadState().equals(Api.ART_UNREAD)) {
+//            WithDB.i().setUnreading(article);
+//        } else if (article.getReadState().equals(Api.ART_READED)) {
+        if (autoMarkReaded && article.getReadStatus() == Api.UNREAD) {
             WithDB.i().setUnreading(article);
-        } else if (article.getReadState().equals(Api.ART_READED)) {
+        } else if (article.getReadStatus() == Api.READED) {
             DataApi.i().markArticleUnread(article.getId(), null);
-
-            // 方法1
-            // article.setReadState(Api.ART_UNREADING);
-
-            // 方法2
             WithDB.i().setUnreading(article);
-
-//            DataApi.i().changeUnreadCount(article.getOriginStreamId(), 1);
             changeItemNum( 1 );
         }else {
             DataApi.i().markArticleReaded(article.getId(), null);
-
-//            article.setReadState(Api.ART_READED);
-
-            // 方法2
             WithDB.i().setReaded(article);
-
-//            DataApi.i().changeUnreadCount(article.getOriginStreamId(), -1);
             changeItemNum( -1 );
         }
-//        WithDB.i().saveArticle(article);
         articleListAdapter.notifyDataSetChanged();
     }
 
 
     private void toggleStarState(final Article article) {
-        if (article.getStarState().equals(Api.ART_STARED)) {
-            article.setStarState(Api.ART_UNSTAR);
+//        if (article.getStarState().equals(Api.ART_STARED)) {
+//            article.setStarState(Api.ART_UNSTAR);
+        if (article.getStarStatus() == Api.STARED) {
+            article.setStarStatus(Api.UNSTAR);
             DataApi.i().markArticleUnstar(article.getId(), null);
         }else {
-            article.setStarState(Api.ART_STARED);
+//            article.setStarState(Api.ART_STARED);
+            article.setStarStatus(Api.STARED);
             DataApi.i().markArticleStared(article.getId(), null);
             article.setStarred(System.currentTimeMillis() / 1000);
         }
@@ -1229,10 +1170,14 @@ public void onTagIconClicked2(View view) {
 //                Tool.setWebViewsBGColor();
             }
         });
+//        if (App.StreamState.equals(Api.ART_STARED)) {
+//            radioStarred.setChecked(true);
+//        } else if (App.StreamState.equals(Api.ART_UNREAD)) {
+//            radioUnread.setChecked(true);
 
-        if (App.StreamState.equals(Api.ART_STARED)) {
+        if (App.StreamStatus == Api.STARED) {
             radioStarred.setChecked(true);
-        } else if (App.StreamState.equals(Api.ART_UNREAD)) {
+        } else if (App.StreamStatus == Api.UNREAD) {
             radioUnread.setChecked(true);
         } else {
             radioAll.setChecked(true);
@@ -1242,13 +1187,16 @@ public void onTagIconClicked2(View view) {
             @Override
             public void onCheckedChanged(RadioGroup radioGroup, int i) {
                 if (i == radioStarred.getId()) {
-                    App.StreamState = Api.ART_STARED;
+//                    App.StreamState = Api.ART_STARED;
+                    App.StreamStatus = Api.STARED;
                     toolbar.setNavigationIcon(R.drawable.state_star);
                 } else if (i == radioUnread.getId()) {
-                    App.StreamState = Api.ART_UNREAD;
+//                    App.StreamState = Api.ART_UNREAD;
+                    App.StreamStatus = Api.UNREAD;
                     toolbar.setNavigationIcon(R.drawable.state_unread);
                 } else {
-                    App.StreamState = Api.ART_ALL;
+//                    App.StreamState = Api.ART_ALL;
+                    App.StreamStatus = Api.ALL;
                     toolbar.setNavigationIcon(R.drawable.state_all);
                 }
                 WithPref.i().setStreamState(App.StreamState);
@@ -1311,10 +1259,13 @@ public void onTagIconClicked2(View view) {
         // 决定左上角图标的左侧是否有向左的小箭头，true 有小箭头
         getSupportActionBar().setDisplayHomeAsUpEnabled(false);
         getSupportActionBar().setDisplayShowTitleEnabled(true);
-//        toolbar.setOnClickListener(this);
-        if (App.StreamState.equals(Api.ART_ALL)) {
+
+//        if (App.StreamState.equals(Api.ART_ALL)) {
+//            toolbar.setNavigationIcon(R.drawable.state_all);
+//        } else if (App.StreamState.equals(Api.ART_STARED)) {
+        if (App.StreamStatus == Api.ALL) {
             toolbar.setNavigationIcon(R.drawable.state_all);
-        } else if (App.StreamState.equals(Api.ART_STARED)) {
+        } else if (App.StreamStatus == Api.STARED) {
             toolbar.setNavigationIcon(R.drawable.state_star);
         } else {
             toolbar.setNavigationIcon(R.drawable.state_unread);
@@ -1355,22 +1306,25 @@ public void onTagIconClicked2(View view) {
         tagListViewSetter.childViewTextColor(R.id.group_item_icon, R.attr.tag_slv_item_icon);
         tagListViewSetter.childViewTextColor(R.id.group_item_title, R.attr.lv_item_title_color);
         tagListViewSetter.childViewTextColor(R.id.group_item_count, R.attr.lv_item_desc_color);
+        tagListViewSetter.childViewBgDrawable(R.id.group_item_count, R.attr.bubble_bg);
+
         tagListViewSetter.childViewBgColor(R.id.child_item, R.attr.bottombar_bg);  // 这个不生效，反而会影响底色修改
         tagListViewSetter.childViewTextColor(R.id.child_item_title, R.attr.lv_item_title_color);
         tagListViewSetter.childViewTextColor(R.id.child_item_count, R.attr.lv_item_desc_color);
+        tagListViewSetter.childViewBgDrawable(R.id.child_item_count, R.attr.bubble_bg);
 
-
-        ViewGroupSetter headerHomeViewSetter = new ViewGroupSetter((ViewGroup) headerHomeView);
-        headerHomeViewSetter.childViewBgColor(R.id.header_home, R.attr.bottombar_bg);  // 这个不生效，反而会影响底色修改
-        headerHomeViewSetter.childViewTextColor(R.id.header_home_icon, R.attr.tag_slv_item_icon);
-        headerHomeViewSetter.childViewTextColor(R.id.header_home_title, R.attr.lv_item_title_color);
-        headerHomeViewSetter.childViewTextColor(R.id.header_home_count, R.attr.lv_item_desc_color);
+//        ViewGroupSetter headerHomeViewSetter = new ViewGroupSetter((ViewGroup) headerHomeView);
+//        headerHomeViewSetter.childViewBgColor(R.id.header_home, R.attr.bottombar_bg);  // 这个不生效，反而会影响底色修改
+//        headerHomeViewSetter.childViewTextColor(R.id.header_home_icon, R.attr.tag_slv_item_icon);
+//        headerHomeViewSetter.childViewTextColor(R.id.header_home_title, R.attr.lv_item_title_color);
+//        headerHomeViewSetter.childViewTextColor(R.id.header_home_count, R.attr.lv_item_desc_color);
 
 
         ViewGroupSetter headerPinnedViewSetter = new ViewGroupSetter((ViewGroup) headerPinnedView);
         headerPinnedViewSetter.childViewTextColor(R.id.header_item_icon, R.attr.tag_slv_item_icon);
         headerPinnedViewSetter.childViewTextColor(R.id.header_item_title, R.attr.lv_item_title_color);
         headerPinnedViewSetter.childViewTextColor(R.id.header_item_count, R.attr.lv_item_desc_color);
+        headerPinnedViewSetter.childViewBgDrawable(R.id.header_item_count, R.attr.bubble_bg);
         headerPinnedViewSetter.childViewBgColor(R.id.header_item, R.attr.bottombar_bg);
 
         mColorfulBuilder
@@ -1379,6 +1333,7 @@ public void onTagIconClicked2(View view) {
 //                .backgroundColor(R.id.main_scroll_layout_bg, R.attr.bottombar_bg)
 //                .textColor(R.id.main_scroll_layout_title, R.attr.bottombar_fg)
 //                .backgroundColor(R.id.main_scrolllayout_divider, R.attr.bottombar_divider)
+
 
                 .backgroundColor(R.id.main_tag_list_view, R.attr.bottombar_bg) // 这个不生效
 //                .backgroundColor(R.id.main_tag_bg, R.attr.bottombar_bg) // 这个不生效
@@ -1408,7 +1363,7 @@ public void onTagIconClicked2(View view) {
                 // 这里做设置，实质是将View（根据Activity的findViewById），并直接添加到 colorful 内的 mElements 中。
                 .setter(relative)
                 .setter(headerPinnedViewSetter)
-                .setter(headerHomeViewSetter)
+//                .setter(headerHomeViewSetter)
                 .setter(tagListViewSetter)
                 .setter(artListViewSetter);
         return mColorfulBuilder;

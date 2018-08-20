@@ -48,7 +48,6 @@
             android:theme="@style/AppBaseTheme.SplashTheme">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
@@ -75,6 +74,8 @@
             android:screenOrientation="portrait"
             android:theme="@style/AppTheme.Day.NoActionBar"
             android:windowSoftInputMode="adjustResize|stateHidden" />
+        <!--硬件加速-->
+        <!--android:hardwareAccelerated="true"-->
         <activity
             android:name=".activity.ArticleActivity"
             android:configChanges="orientation|screenSize|keyboardHidden"
@@ -89,6 +90,7 @@
             android:configChanges="orientation|screenSize|keyboardHidden"
             android:hardwareAccelerated="true"
             android:launchMode="singleTop"
+            android:process=":sub"
             android:theme="@style/AppTheme.Day.NoActionBar">
             <!--最好不要注册为系统浏览器组件，不然当被设为系统默认的浏览器时，因为我没有处理添加下载监听，和默认打开系统浏览器的事件，会导致循环在这个页面-->
             <!--<intent-filter>-->
@@ -100,17 +102,11 @@
             <!--</intent-filter>-->
         </activity>
         <activity
-            android:name=".activity.SearchActivity"
-            android:launchMode="singleTop"
-            android:parentActivityName=".activity.MainActivity"
-            android:screenOrientation="portrait"
-            android:theme="@style/AppTheme.Day.NoActionBar" />
-
-        <activity
             android:name=".activity.ImageActivity"
             android:launchMode="singleTask"
             android:configChanges="orientation|keyboardHidden|screenSize"
             android:label="@string/title_activity_image"
+            android:process=":sub"
             android:theme="@style/FullscreenTheme">
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
@@ -120,6 +116,18 @@
                     android:scheme="file" />
             </intent-filter>
         </activity>
+
+        <service
+            android:name=".service.SubService"
+            android:process=":sub" />
+
+        <activity
+            android:name=".activity.SearchActivity"
+            android:launchMode="singleTop"
+            android:parentActivityName=".activity.MainActivity"
+            android:screenOrientation="portrait"
+            android:theme="@style/AppTheme.Day.NoActionBar" />
+
 
         <activity
             android:name=".activity.SettingActivity"

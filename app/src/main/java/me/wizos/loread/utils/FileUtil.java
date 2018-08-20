@@ -149,7 +149,8 @@ public class FileUtil {
             if (article == null) {
                 continue;
             }
-            article.setReadState(Api.ART_UNREADING);
+//            article.setReadState(Api.ART_UNREADING);
+            article.setReadStatus(Api.UNREADING);
             unreadArticles.add(article);
         }
         WithDB.i().saveArticles(unreadArticles);
@@ -599,7 +600,7 @@ public class FileUtil {
 
 
     public static void clear(Context context) {
-        List<Article> articles = WithDB.i().getArtsAll();
+        List<Article> articles = WithDB.i().getArtsAllNoOrder();
         Article article = new Article();
         ArrayMap<String, Integer> idsMap = new ArrayMap<>(articles.size());
         for (int i = 0, size = articles.size(); i < size; i++) {

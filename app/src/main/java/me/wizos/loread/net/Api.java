@@ -2,24 +2,13 @@ package me.wizos.loread.net;
 
 //import com.squareup.okhttp.Request;
 
-import java.util.ArrayList;
-
-import me.wizos.loread.bean.gson.itemContents.Items;
-
 /**
  * 基础的 Activity
  * Created by Wizos on 2016/3/5.
  */
 public class Api {
-    public static String MyFileType = ".loread";
-    public static String HOST = "";
-//    public static String INOREADER_ATUH = "";
-
-//    public static Request request;
-//    public static String ACTION_LOGIN = "login";
 //    static final String INOREADER_APP_ID = "1000001277";
 //    static final String INOREADER_APP_KEY = "8dByWzO4AYi425yx5glICKntEY2g3uJo";
-
 
 //    public static final String HOST_OFFICIAL = "https://www.inoreader.com";
 //    public static final String U_CLIENTLOGIN ="/accounts/ClientLogin";
@@ -35,16 +24,24 @@ public class Api {
 //    public static final String U_Stream_Contents_Atom ="/reader/atom";
 //    public static final String U_Stream_Contents_User ="/reader/api/0/stream/contents/user/";
 
+//    public static final String U_READED ="user/-/state/com.google/read";
+//    public static final String U_BROADCAST ="user/-/state/com.google/broadcast";
+//    public static final String U_LIKED ="user/-/state/com.google/like";
+//    public static final String U_SAVED ="user/-/state/com.google/saved-web-pages";
+
     public static final String U_Search = "/state/com.google/search";
     public static final String U_READING_LIST ="/state/com.google/reading-list";
     public static final String U_NO_LABEL ="/state/com.google/no-label";
     public static final String U_STARRED = "/state/com.google/starred";
     public static final String U_UNREAND ="/state/com.google/unread";
 
-//    public static String U_READED ="user/-/state/com.google/read";
-//    public static String U_BROADCAST ="user/-/state/com.google/broadcast";
-//    public static String U_LIKED ="user/-/state/com.google/like";
-//    public static String U_SAVED ="user/-/state/com.google/saved-web-pages";
+//    public static final String MARK_READED = "me.wizos.loread.mark.readed";
+//    public static final String MARK_UNREAD = "me.wizos.loread.mark.unread";
+//    public static final String MARK_STARED = "me.wizos.loread.mark.stared";
+//    public static final String MARK_UNSTAR = "me.wizos.loread.mark.unstar";
+//    public static final String MARK_SAVED = "me.wizos.loread.mark.saved";
+//    public static final String MARK_UNSAVE = "me.wizos.loread.mark.unsave";
+
 
     public static final String LOGIN = "me.wizos.loread.login";
     public static final String SYNC_ALL = "me.wizos.loread.sync.all";
@@ -60,12 +57,6 @@ public class Api {
 
     public static final String EXT_TMP = ".tmp";
     public static final String Referer = "Referer";
-//    public static final String UserAgent = "User-Agent";
-//    public static final String Auto = "User-Agent";
-//    public static String getLabelStreamFlag() {
-//        return "user/" + App.UserID + "/label/";
-//    }
-
 
     /*
     Streams 可以是 feeds, tags (folders) 或者是 system types.
@@ -93,56 +84,35 @@ public class Api {
     public static final String DISPLAY_READABILITY = "readability";
     public static final String DISPLAY_LINK = "webpage";
 
-
-//    public static final int INIT_IMAGE_BRIDGE = 4;
+    public static final int RSS = 0;
+    public static final int READABILITY = 1;
+    public static final int LINK = 2;
 
     public static final int MSG_DOUBLE_TAP = -1;
 
-    public static final int F_BITMAP = 3;
-
-    public static final int SYNC_START = 101;
-    public static final int SYNC_NEED_AUTH = 102;
-    public static final int SYNC_FAILURE = 0;
-    public static final int SYNC_SUCCESS = 100;
-    public static final int SYNC_PROCESS = -100;
-
-    public static final int S_BITMAP = 62;
-    public static final int S_Contents = 63; // 似乎没有被用到
-
-
-    public static ArrayList<Items> itemlist;
-
-    public static final int ReplaceImgSrc = 69;
-
-    public static final int ImgMeta_Downover = 1; // 下载完成
-    public static final int ImgMeta_Downing = 0; // 未下载
-    public static final String ImgState_Downing = "0";
-    public static final String ImgState_NoImg = "";
-    public static final String ImgState_Over = "1";
 
 
     /**
      * 是否需要改变这个为 int 以方便比较呢？
      */
-    public static final String ART_READED = "Readed";// 1 已读
-    public static final String ART_UNREADING = "UnReading"; // 00 强制未读
-    public static final String ART_UNREAD = "UnRead"; // 0 未读
-    public static final String ART_STARED = "Stared"; // 1
-    public static final String ART_UNSTAR = "UnStar"; // 0
-    public static final String ART_ALL = "%";
+    public static final int ALL = 0; // 状态为所有
+    public static final int UNREAD = 1; // 0 未读
+    public static final int READED = 2;// 1 已读
+    public static final int UNREADING = 3; // 00 强制未读
 
+    public static final int STARED = 4; // 1
+    public static final int UNSTAR = 5; // 0
+
+//    public static final String ART_READED = "Readed";// 1 已读
+//    public static final String ART_UNREADING = "UnReading"; // 00 强制未读
+//    public static final String ART_UNREAD = "UnRead"; // 0 未读
+
+//    public static final String ART_STARED = "Stared"; // 1
+//    public static final String ART_UNSTAR = "UnStar"; // 0
+//    public static final String ART_ALL = "%";
 
     public static final String SAVE_DIR_CACHE = "cache";
     public static final String SAVE_DIR_BOX = "box";
     public static final String SAVE_DIR_STORE = "store";
-    public static final String SAVE_DIR_BOXREAD = "boxRead";
-    public static final String SAVE_DIR_STOREREAD = "storeRead";
-
-
-//    public static final String LIST_READ = "Readed";
-//    public static final String LIST_UNREADING = "UnReading";
-//    public static final String LIST_UNSTAR = "UnStar";
-
-//    public static final String ARTICLE_HEADER = "UnRead";
 
 }

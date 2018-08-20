@@ -6,9 +6,12 @@ import android.database.sqlite.SQLiteDatabase;
 import com.github.yuweiguocn.library.greendao.MigrationHelper;
 import com.socks.library.KLog;
 
-import org.greenrobot.greendao.database.Database;
+import java.io.File;
 
+import me.wizos.loread.App;
+import me.wizos.loread.data.WithPref;
 import me.wizos.loread.net.Api;
+import me.wizos.loread.utils.FileUtil;
 
 /**
  * @author Wizos on 2018/3/13.
@@ -36,8 +39,6 @@ public class SQLiteOpenHelperS extends DaoMaster.OpenHelper {
      * @param db
      */
     private void createViewsAndTriggers(SQLiteDatabase db) {
-        // arrayOf(COL_ID, COL_TITLE, COL_URL, COL_TAG, COL_CUSTOM_TITLE, COL_NOTIFY, COL_IMAGEURL, COL_UNREADCOUNT)
-//        String[] coumle = new String[]{ FeedDao.Properties.Id , FeedDao.Properties.Title };
         String CREATE_COUNT_VIEW =
                 "CREATE TEMP VIEW IF NOT EXISTS FEED_UNREAD_COUNT" +
 //                        "  AS SELECT " + FeedDao.Properties.Id.columnName + "," + FeedDao.Properties.Title.columnName + "," + FeedDao.Properties.Url.columnName + "," + FeedDao.Properties.Categoryid.columnName + ",UNREADCOUNT" +
@@ -45,89 +46,149 @@ public class SQLiteOpenHelperS extends DaoMaster.OpenHelper {
                         "  FROM " + FeedDao.TABLENAME +
                         "  LEFT JOIN (SELECT COUNT(1) AS UNREADCOUNT, " + ArticleDao.Properties.OriginStreamId.columnName +
                         "  FROM " + ArticleDao.TABLENAME +
-                        "  WHERE " + ArticleDao.Properties.ReadState.columnName + " != '" + Api.ART_READED + "'" +
+//                        "  WHERE " + ArticleDao.Properties.ReadState.columnName + " != '" + Api.ART_READED + "'" +
+                        "  WHERE " + ArticleDao.Properties.ReadStatus.columnName + " != " + Api.READED +
                         "  GROUP BY " + ArticleDao.Properties.OriginStreamId.columnName + " )" +
                         "  ON " + FeedDao.Properties.Id.columnName + " = " + ArticleDao.Properties.OriginStreamId.columnName;
-
-
         db.execSQL(CREATE_COUNT_VIEW);
 
-        String CREATE_TAG_TRIGGER =
-                "CREATE TEMP TRIGGER IF NOT EXISTS UNREAD" +
-                        "  AFTER UPDATE OF READ_STATE" +
-                        "  ON ARTICLE" +
-                        "  WHEN" +
-                        "  new.READ_STATE IS NOT old.READ_STATE" +
-                        "  BEGIN" +
-                        "  UPDATE FEED" +
+        String MARK_READ_FEED =
+                "    CREATE TEMP TRIGGER IF NOT EXISTS MARK_READ_FEED" +
+                        "      AFTER UPDATE OF READ_STATUS" +
+                        "      ON ARTICLE" +
+                        "      WHEN (old.READ_STATUS = 1 AND new.READ_STATUS = 2)" +
+                        "      BEGIN" +
+                        "        UPDATE FEED" +
+                        "          SET UNREAD_COUNT = UNREAD_COUNT - 1" +
+                        "          WHERE ID IS old.ORIGIN_STREAM_ID;" +
+                        "      END";
+        String MARK_READ_TAG =
+                "    CREATE TEMP TRIGGER IF NOT EXISTS MARK_READ_TAG" +
+                        "      AFTER UPDATE OF UNREAD_COUNT" +
+                        "      ON FEED" +
+                        "      WHEN (new.UNREAD_COUNT = old.UNREAD_COUNT - 1)" +
+                        "      BEGIN" +
+                        "        UPDATE TAG" +
+                        "          SET UNREAD_COUNT = UNREAD_COUNT - 1" +
+                        "          WHERE ID IS old.CATEGORYID;" +
+                        "      END";
 
-                        "    SET UNREAD_COUNT = UNREAD_COUNT - 1;" +
+        String MARK_UNREAD_FEED =
+                "    CREATE TEMP TRIGGER IF NOT EXISTS MARK_UNREAD_FEED" +
+                        "      AFTER UPDATE OF READ_STATUS" +
+                        "      ON ARTICLE" +
+                        "      WHEN (old.READ_STATUS = 2 OR old.READ_STATUS = 1) AND new.READ_STATUS = 3" +
+                        "      BEGIN" +
+                        "        UPDATE FEED" +
+                        "          SET UNREAD_COUNT = UNREAD_COUNT + 1" +
+                        "          WHERE ID IS old.ORIGIN_STREAM_ID;" +
+                        "      END";
 
-                        "  WHERE ID IS old.ORIGIN_STREAM_ID; " +
-                        "  END";
-//        db.execSQL( CREATE_TAG_TRIGGER );
-        KLog.e("数据库，创建触发器：" + CREATE_TAG_TRIGGER);
-//                "        SET UNREAD_COUNT = new.$COL_TAG,\n" +
-//                "                $COL_FEEDTITLE = new.$COL_TITLE\n" +
-//                "        WHERE $COL_FEED IS old.$COL_ID;\n" +
-//                "        END";
+        String MARK_UNREAD_TAG =
+                "    CREATE TEMP TRIGGER IF NOT EXISTS MARK_UNREAD_TAG" +
+                        "      AFTER UPDATE OF UNREAD_COUNT" +
+                        "      ON FEED" +
+                        "      WHEN (new.UNREAD_COUNT = old.UNREAD_COUNT + 1)" +
+                        "      BEGIN" +
+                        "        UPDATE TAG" +
+                        "          SET UNREAD_COUNT = UNREAD_COUNT + 1" +
+                        "          WHERE ID IS old.CATEGORYID;" +
+                        "      END";
+
+//        String Test  =
+//                "    CREATE TEMP TRIGGER IF NOT EXISTS MARK_READ" +
+//                        "      AFTER UPDATE OF READ_STATUS" +
+//                        "      ON ARTICLE" +
+//                        "      WHEN (old.READ_STATUS = 2 AND new.READ_STATUS = 3)" +
+//                        "      BEGIN" +
+//                        "        UPDATE FEED" +
+//                        "          SET UNREAD_COUNT = UNREAD_COUNT + 1" +
+//                        "          WHERE ID IS old.ORIGIN_STREAM_ID;" +
+//                        "      END";
+
+//        db.execSQL( MARK_READ_FEED );
+//        db.execSQL( MARK_READ_TAG );
+//        db.execSQL( MARK_UNREAD_FEED );
+//        db.execSQL( MARK_UNREAD_TAG );
+//        KLog.e("数据库，创建触发器：" );
+
         // 当前值不等于旧值，如果新值为read，旧值可能为unread，unreading ， 减一
         // 如果旧值为read，加一
     }
 
 
     @Override
-    public void onUpgrade(Database db, int oldVersion, int newVersion) {
-//        // 增加新表不能用这个函数，用下面那个 StatisticDao.createTable(db,true);
-        // 后边填写所有的 Dao 类
-        KLog.e("升级", "准备开始升级数据库" + oldVersion);
-        MigrationHelper.migrate(db, ArticleDao.class, FeedDao.class, TagDao.class);
+    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+        KLog.e("升级，准备开始升级数据库" + oldVersion + "  =  " + newVersion);
 
 //        //记得要修改 DaoMaster 中的数据库版本号
-//        switch (oldVersion) {
-//            case 6:
-//                break;
-//            default:
-//                break;
-//        }
+        switch (oldVersion) {
+            case 7:
+                MigrationHelper.migrate(db, ArticleDao.class, FeedDao.class, TagDao.class);
+                updateHtmlDir();
+            case 8:
+                MigrationHelper.migrate(db, ArticleDao.class, FeedDao.class, TagDao.class);
+                updateData(db);
+            default:
+                break;
+        }
+
     }
 
 
 //    private MaterialDialog materialDialog;
 //    public void update() {
-////        materialDialog = new MaterialDialog.Builder(App.i())
-////                .title(R.string.is_update_title)
-////                .content(R.string.dialog_please_wait)
-////                .progress(true, 0)
-////                .canceledOnTouchOutside(false)
-////                .progressIndeterminateStyle(false)
-////                .show();
-////        new Thread(new Runnable() {
-////            @Override
-////            public void run() {
-////
-////
-////                materialDialog.dismiss();
-////            }
-////        }).start();
-//
-////        updateHtmlDir();
+//        materialDialog = new MaterialDialog.Builder(App.i())
+//                .title(R.string.is_update_title)
+//                .content(R.string.dialog_please_wait)
+//                .progress(true, 0)
+//                .canceledOnTouchOutside(false)
+//                .progressIndeterminateStyle(false)
+//                .show();
+//        materialDialog.dismiss();
 //    }
-//    public void updateHtmlDir(){
-//        File dir = new File(App.i().getExternalFilesDir(null) + "/cache/");
-//        File[] arts = dir.listFiles();
-//        KLog.e("文件数量：" + arts.length);
-//        String fileTitle;
-//        for (File sourceFile : arts) {
-//            if (sourceFile.isDirectory()){
-//                fileTitle = sourceFile.getName().substring( 0,sourceFile.getName().lastIndexOf("_"));
-//            }else {
-//                fileTitle = sourceFile.getName().substring( 0,sourceFile.getName().lastIndexOf("."));
-//            }
-//            KLog.e("文件名：" + fileTitle);
-//            FileUtil.moveDir(sourceFile.getAbsolutePath(), App.externalFilesDir + "/cache/" + fileTitle + "/" + sourceFile.getName());
-//        }
-//    }
+private void updateData(SQLiteDatabase db) {
+    String sql = "UPDATE ARTICLE SET READ_STATUS = 2 WHERE READ_STATE = 'Readed';";
+    db.execSQL(sql);
+    sql = "UPDATE ARTICLE SET READ_STATUS = 1 WHERE READ_STATE = 'UnRead';";
+    db.execSQL(sql);
+    sql = "UPDATE ARTICLE SET READ_STATUS = 3 WHERE READ_STATE = 'UnReading';";
+    db.execSQL(sql);
+    sql = "UPDATE ARTICLE SET STAR_STATUS = 4 WHERE STAR_STATE = 'Stared';";
+    db.execSQL(sql);
+    sql = "UPDATE ARTICLE SET STAR_STATUS = 5 WHERE STAR_STATE = 'UnStar';";
+    db.execSQL(sql);
+
+    if (WithPref.i().getStreamState().equals("%")) {
+        WithPref.i().setStreamStatus(Api.ALL);
+    } else if (WithPref.i().getStreamState().equals("Readed")) {
+        WithPref.i().setStreamStatus(Api.READED);
+    } else if (WithPref.i().getStreamState().equals("UnRead")) {
+        WithPref.i().setStreamStatus(Api.UNREAD);
+    } else if (WithPref.i().getStreamState().equals("UnReading")) {
+        WithPref.i().setStreamStatus(Api.UNREADING);
+    } else if (WithPref.i().getStreamState().equals("Stared")) {
+        WithPref.i().setStreamStatus(Api.STARED);
+    } else if (WithPref.i().getStreamState().equals("UnStar")) {
+        WithPref.i().setStreamStatus(Api.UNSTAR);
+    }
+}
+
+    public void updateHtmlDir() {
+        File dir = new File(App.i().getExternalFilesDir(null) + "/cache/");
+        File[] arts = dir.listFiles();
+        KLog.e("文件数量：" + arts.length);
+        String fileTitle;
+        for (File sourceFile : arts) {
+            if (sourceFile.isDirectory()) {
+                fileTitle = sourceFile.getName().substring(0, sourceFile.getName().lastIndexOf("_"));
+            } else {
+                fileTitle = sourceFile.getName().substring(0, sourceFile.getName().lastIndexOf("."));
+            }
+            KLog.e("文件名：" + fileTitle);
+            FileUtil.moveDir(sourceFile.getAbsolutePath(), App.externalFilesDir + "/cache/" + fileTitle + "/" + sourceFile.getName());
+        }
+    }
 
 
 }

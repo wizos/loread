@@ -49,6 +49,7 @@ public class ColorUtil {
     private final static int Color_Distance = 200;
 
     public static Document mod(Document doc) {
+
         Elements elements = doc.select("[style*=color]");
 //        KLog.e("颜色，获取到数量：" + elements.size());
         String style = null;
@@ -61,7 +62,8 @@ public class ColorUtil {
         for (Element element : elements) {
             style = element.attr("style");
             KLog.e("获取到的style： " + style);
-            // 先去掉背景色
+
+            // 先去掉背景色。在css中去掉？
             pattern = Pattern.compile(P_BACKGROUND_COLOR, Pattern.CASE_INSENSITIVE);
             m = pattern.matcher(style);
             style = m.replaceAll("");

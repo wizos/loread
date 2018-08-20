@@ -424,8 +424,10 @@ public class DataApi {
                 localUnreadArticlesMap.remove(articleId);
             } else {
                 article = WithDB.i().getArticle(articleId);
-                if (article != null && article.getReadState().equals(Api.ART_READED)) {
-                    article.setReadState(Api.ART_UNREAD);
+//                if (article != null && article.getReadState().equals(Api.ART_READED)) {
+//                    article.setReadState(Api.ART_UNREAD);
+                if (article != null && article.getReadStatus() == Api.READED) {
+                    article.setReadStatus(Api.UNREAD);
                     changedArticles.add(article);
                 } else {
                     // 本地无，而云端有，加入要请求的未读资源
@@ -437,7 +439,8 @@ public class DataApi {
             if (entry.getKey() != null) {
                 article = localUnreadArticlesMap.get(entry.getKey());
                 // 本地未读设为已读
-                article.setReadState(Api.ART_READED);
+//                article.setReadState(Api.ART_READED);
+                article.setReadStatus(Api.READED);
                 changedArticles.add(article);
             }
         }
@@ -479,7 +482,8 @@ public class DataApi {
             } else {
                 article = WithDB.i().getArticle(articleId);
                 if (article != null) {
-                    article.setStarState(Api.ART_STARED);
+//                    article.setStarState(Api.ART_STARED);
+                    article.setStarStatus(Api.STARED);
                     changedArticles.add(article);
                 } else {
                     tempStarredIds.add(articleId);// 本地无，而云远端有，加入要请求的未读资源
@@ -490,7 +494,8 @@ public class DataApi {
         for (Map.Entry<String, Article> entry : localStarredArticlesMap.entrySet()) {
             if (entry.getKey() != null) {
                 article = localStarredArticlesMap.get(entry.getKey());
-                article.setStarState(Api.ART_UNSTAR);
+//                article.setStarState(Api.ART_UNSTAR);
+                article.setStarStatus(Api.UNSTAR);
                 changedArticles.add(article);// 取消加星
             }
         }
@@ -564,8 +569,10 @@ public class DataApi {
         return parseItemContents2(InoApi.i().syncItemContents(ids), new ArticleChanger() {
             @Override
             public Article change(Article article) {
-                article.setReadState(Api.ART_UNREAD);
-                article.setStarState(Api.ART_UNSTAR);
+//                article.setReadState(Api.ART_UNREAD);
+//                article.setStarState(Api.ART_UNSTAR);
+                article.setReadStatus(Api.UNREAD);
+                article.setStarStatus(Api.UNSTAR);
                 return article;
             }
         });
@@ -575,8 +582,10 @@ public class DataApi {
         return parseItemContents2(InoApi.i().syncItemContents(ids), new ArticleChanger() {
             @Override
             public Article change(Article article) {
-                article.setReadState(Api.ART_UNREAD);
-                article.setStarState(Api.ART_STARED);
+//                article.setReadState(Api.ART_UNREAD);
+//                article.setStarState(Api.ART_STARED);
+                article.setReadStatus(Api.UNREAD);
+                article.setStarStatus(Api.STARED);
                 return article;
             }
         });
@@ -586,8 +595,10 @@ public class DataApi {
         return parseItemContents2(InoApi.i().syncItemContents(ids), new ArticleChanger() {
             @Override
             public Article change(Article article) {
-                article.setReadState(Api.ART_READED);
-                article.setStarState(Api.ART_STARED);
+//                article.setReadState(Api.ART_READED);
+//                article.setStarState(Api.ART_STARED);
+                article.setReadStatus(Api.READED);
+                article.setStarStatus(Api.STARED);
                 return article;
             }
         });
@@ -604,8 +615,10 @@ public class DataApi {
             WithDB.i().saveArticles(parseItemContents3(streamContents.getItems(), new ArticleChanger() {
                 @Override
                 public Article change(Article article) {
-                    article.setReadState(Api.ART_READED);
-                    article.setStarState(Api.ART_STARED);
+//                    article.setReadState(Api.ART_READED);
+//                    article.setStarState(Api.ART_STARED);
+                    article.setReadStatus(Api.READED);
+                    article.setStarStatus(Api.STARED);
                     return article;
                 }
             }));
@@ -615,10 +628,86 @@ public class DataApi {
     }
 
 
-    private interface ArticleChanger {
+    public interface ArticleChanger {
         Article change(Article article);
     }
 
+    public ArrayList<Article> parseItemContents(String info, ArticleChanger articleChanger) {
+        // 如果返回 null 会与正常获取到流末端时返回 continuation = null 相同，导致调用该函数的那端误以为是正常的 continuation = null
+        if (info == null || info.equals("")) {
+            return null;
+        }
+        Gson gson = new Gson();
+        StreamContents gsItemContents = gson.fromJson(info, StreamContents.class);
+        return parseItemContents(gsItemContents.getItems(), articleChanger);
+    }
+
+    public ArrayList<Article> parseItemContents(List<Items> itemsList, ArticleChanger articleChanger) {
+        // 如果返回 null 会与正常获取到流末端时返回 continuation = null 相同，导致调用该函数的那端误以为是正常的 continuation = null
+        if (itemsList == null || itemsList.size() <= 0) {
+            return null;
+        }
+        ArrayList<Article> articleList = new ArrayList<>(itemsList.size());
+        String summary = "", html = "", audioHtml;
+        Article article;
+        Gson gson = new Gson();
+        Elements elements;
+        for (Items items : itemsList) {
+//            if (WithDB.i().getArticleEchoes(items.getTitle(), items.getCanonical().get(0).getHref()) != 0) {
+//                KLog.e("重复文章：" + items.getTitle() );
+//                continue;
+//            }
+//            KLog.e("文章标题："+ items.getTitle() );
+
+            article = new Article();
+            // 返回的字段
+            article.setId(items.getId());
+            article.setCrawlTimeMsec(items.getCrawlTimeMsec());
+            article.setTimestampUsec(items.getTimestampUsec());
+            article.setCategories(gson.toJson(items.getCategories()));
+            article.setTitle(items.getTitle().replace("\r", "").replace("\n", ""));
+            article.setPublished(items.getPublished());
+            // 设置被加星的时间
+            article.setStarred(items.getStarred());
+            // items.getCanonical().get(0).getHref()
+            article.setCanonical(items.getCanonical().get(0).getHref());
+            // items.getAlternate().toString()
+            article.setAlternate(gson.toJson(items.getCanonical()));
+            article.setAuthor(items.getAuthor());
+            article.setOriginStreamId(items.getOrigin().getStreamId());
+            article.setOriginHtmlUrl(items.getOrigin().getHtmlUrl());
+            article.setOriginTitle(items.getOrigin().getTitle());
+
+            html = items.getSummary().getContent();
+            html = StringUtil.getOptimizedContent(html);
+
+            if (items.getEnclosure() != null && items.getEnclosure().size() > 0 && (items.getEnclosure().get(0).getType().startsWith("audio"))) {
+                html = html + "<br><audio src=\"" + items.getEnclosure().get(0).getHref() + "\" preload=\"auto\" type=\"" + items.getEnclosure().get(0).getType() + "\" controls></audio>";
+            }
+
+            summary = StringUtil.getOptimizedSummary(html);
+            article.setSummary(summary);
+            article.setContent(html);
+
+//            if (items.getEnclosure() != null && items.getEnclosure().size() > 0 && (items.getEnclosure().get(0).getType().startsWith("image") || items.getEnclosure().get(0).getType().startsWith("parsedImg"))) {
+//                article.setCoverSrc(items.getEnclosure().get(0).getHref());
+//            }
+            // 获取第1个图片作为封面
+            elements = Jsoup.parseBodyFragment(article.getContent() == null ? "" : article.getContent()).getElementsByTag("img");
+            if (elements.size() > 0) {
+                article.setCoverSrc(elements.attr("src"));
+            }
+
+
+            // 自己设置的字段
+//            KLog.i("【增加文章】" + article.getId());
+            article.setSaveDir(Api.SAVE_DIR_CACHE);
+            article = articleChanger.change(article);
+            articleList.add(article);
+        }
+//        WithDB.i().saveArticles(articleList);
+        return articleList;
+    }
 
     private ArrayList<Article> parseItemContents2(String info, ArticleChanger articleChanger) {
         // 如果返回 null 会与正常获取到流末端时返回 continuation = null 相同，导致调用该函数的那端误以为是正常的 continuation = null
@@ -655,7 +744,7 @@ public class DataApi {
             article.setCategories(gson.toJson(items.getCategories()));
             article.setTitle(items.getTitle().replace("\r", "").replace("\n", ""));
             article.setPublished(items.getPublished());
-            article.setUpdated(items.getUpdated());
+            article.setUpdated(System.currentTimeMillis());
             // 设置被加星的时间
             article.setStarred(items.getStarred());
             // items.getCanonical().get(0).getHref()
@@ -743,34 +832,6 @@ public class DataApi {
         InoApi.i().markArticleReaded(httpClient, articleID, cb);
     }
 
-
-//    public void markArticleReaded(final Article article) {
-//        if (article == null) {
-//            return;
-//        }
-//
-//        InoApi.i().markArticleReaded(article.getId(), new StringCallback() {
-//            @Override
-//            public void onSuccess(Response<String> response) {
-//            }
-//
-//            @Override
-//            public void onError(Response<String> response) {
-//                // 修改数据库
-//                article.setReadState(Api.ART_UNREAD);
-//                WithDB.i().saveArticle(article);
-//                // 修改内存中的未读计数
-//                DataApi.i().changeUnreadCount(article.getOriginStreamId(), 1);
-//                // 通知各引用该值的，修改其数据
-//                EventBus.getDefault().post();
-//            }
-//        });
-//
-//        article.setReadState(Api.ART_READED);
-//        WithDB.i().saveArticle(article);
-//        DataApi.i().changeUnreadCount(article.getOriginStreamId(), -1);
-//    }
-
     public void markArticleUnread(String articleID, StringCallback cb) {
         InoApi.i().markArticleUnread(articleID, cb);
     }
@@ -783,87 +844,5 @@ public class DataApi {
         InoApi.i().markArticleStared(articleID, cb);
     }
 
-
-
-    /**
-     * 修改内存中未读的计数
-     *
-     * @param feedId
-     * @param offset
-     */
-    public void changeUnreadCount(String feedId, int offset) {
-//        KLog.e("feedID：" + feedId);
-//        if (TextUtils.isEmpty(feedId)) {
-//            return;
-//        }
-//
-//        try {
-//            int count;
-//            if (App.unreadCountMap.containsKey(feedId)) {
-//                count = App.unreadCountMap.get(feedId);
-//                App.unreadCountMap.put(feedId, count + offset);
-//            }
-//
-//            KLog.e("是否有包含这个feed的tag：" + feedId + App.feedsCategoryIdMap.containsKey(feedId));
-//
-//            if (App.feedsCategoryIdMap.containsKey(feedId)) {
-//                count = App.unreadCountMap.get(App.feedsCategoryIdMap.get(feedId));
-//                App.unreadCountMap.put(App.feedsCategoryIdMap.get(feedId), count + offset);
-//                KLog.e("计数" + (count + offset));
-//            }
-//            commitUnreadOffset(feedId, offset);
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//            KLog.e("报错" + e);
-//        }
-    }
-
-    /**
-     * 当正在初始化 UnreadCount 时，将本地临时做的变动缓存起来，待初始化完成再重新赋值一次。
-     *
-     * @param feedId
-     * @param offset
-     */
-    public void commitUnreadOffset(String feedId, int offset) {
-        if (!App.isSyncingUnreadCount) {
-            return;
-        }
-        if (null == App.unreadOffsetMap) {
-            App.unreadOffsetMap = new ArrayMap<>();
-        }
-
-        int count;
-        if (!App.unreadOffsetMap.containsKey(feedId)) {
-            count = 0;
-        } else {
-            count = App.unreadOffsetMap.get(feedId);
-        }
-        App.unreadOffsetMap.put(feedId, count + offset);
-
-
-        if (!App.feedsCategoryIdMap.containsKey(feedId)) {
-            return;
-        }
-        if (!App.unreadOffsetMap.containsKey(App.feedsCategoryIdMap.get(feedId))) {
-            count = 0;
-        } else {
-            count = App.unreadOffsetMap.get(App.feedsCategoryIdMap.get(feedId));
-        }
-        App.unreadOffsetMap.put(App.feedsCategoryIdMap.get(feedId), count + offset);
-    }
-
-
-//    public void applyUnreadOffset(){
-//        if( null == App.unreadOffsetMap){
-//            return;
-//        }
-//
-//        for (Map.Entry<String, Integer> entry : App.unreadOffsetMap.entrySet()) {
-//            if (entry.getKey() != null && App.unreadCountMap.containsKey(entry.getKey())) {
-//                App.unreadCountMap.put(entry.getKey(), App.unreadCountMap.get(entry.getKey()) + entry.getValue());
-//            }
-//        }
-//        App.unreadOffsetMap = null;
-//    }
 
 }

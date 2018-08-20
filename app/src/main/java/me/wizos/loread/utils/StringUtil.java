@@ -118,7 +118,8 @@ public class StringUtil {
 
         Document document = Jsoup.parseBodyFragment(content);
         document = ColorUtil.mod(document);
-
+//        KLog.e("优化后的文本A：" + document.outerHtml() );
+        // 去掉src为空的标签
         document.select("[src='']").remove();
 
         Elements imgs = document.getElementsByTag("img");
@@ -176,7 +177,7 @@ public class StringUtil {
         }
 
         content = document.body().html();
-//        KLog.e("视频", content );
+//        KLog.e("优化后的文本B：" + content );
         return content;
     }
 

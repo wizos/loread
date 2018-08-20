@@ -271,6 +271,13 @@ public class WithPref {
         save("InoreaderProxyHost", host);
     }
 
+    public int getStreamStatus() {
+        return read("StreamStatus", 0);
+    }
+
+    public void setStreamStatus(int streamStatus) {
+        save("StreamStatus", streamStatus);
+    }
 
     public String getStreamState() {
         return read("ListState", "Unread");

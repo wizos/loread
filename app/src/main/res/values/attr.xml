@@ -33,4 +33,6 @@
 
     <attr name="bottombar_divider" format="reference|color" />
 
+    <attr name="bubble_bg" format="reference" />
+
 </resources>

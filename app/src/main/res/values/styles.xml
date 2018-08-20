@@ -14,6 +14,7 @@
         <item name="toolbarNavigationButtonStyle">@style/MyToolbar.Navigation</item>
         <!--去掉toolbar下的阴影-->
         <item name="elevation">0dp</item>
+
         <!--<item name="app:subtitleTextAppearance">@style/MyToolbar.SubTitle</item>-->
         <!--app:subtitleTextAppearance="@style/toolbar_subtitle_style"-->
         <!--<item name="android:windowDrawsSystemBarBackgrounds">true</item>-->
@@ -90,6 +91,9 @@
 
         <item name="setting_title">@color/main_day_dark</item>
         <item name="setting_tips">@color/main_day_info</item>
+
+        <!--<item name="bubble_bg">@color/white_toolbar_bg</item>-->
+        <item name="bubble_bg">@drawable/textview_border_day</item>
     </style>
 
 
@@ -128,6 +132,8 @@
 
         <item name="setting_title">@color/main_night_light</item>
         <item name="setting_tips">@color/main_night_info</item>
+
+        <item name="bubble_bg">@drawable/textview_border_night</item>
     </style>
 
     <style name="AppTheme.Day.NoActionBar">

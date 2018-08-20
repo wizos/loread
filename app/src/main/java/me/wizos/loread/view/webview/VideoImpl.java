@@ -32,9 +32,6 @@ import android.widget.FrameLayout;
 import java.util.HashSet;
 import java.util.Set;
 
-//import com.tencent.smtt.export.external.interfaces.IX5WebChromeClient;
-//import com.tencent.smtt.sdk.WebView;
-
 /**
  * @author cenxiaozhong
  */

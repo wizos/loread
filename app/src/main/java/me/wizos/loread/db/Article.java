@@ -11,6 +11,7 @@ public class Article {
     @Id
     @NotNull
     private String id;
+    // crawlTimeMsec和timetampusec是相同的日期，第一个是毫秒，第二个是微秒
     private Long crawlTimeMsec;
     private Long timestampUsec;
     private String categories;
@@ -24,6 +25,8 @@ public class Article {
     private String summary;
     private String content;
     private String author;
+    private Integer readStatus;
+    private Integer starStatus;
     private String readState;
     private String starState;
     private String saveDir;
@@ -34,13 +37,14 @@ public class Article {
     private String originHtmlUrl;
 
 
-    @Generated(hash = 652050881)
+    @Generated(hash = 159082649)
     public Article(@NotNull String id, Long crawlTimeMsec, Long timestampUsec,
-                   String categories, String title, Long published, Long updated,
-                   Long starred, String enclosure, String canonical, String alternate,
-                   String summary, String content, String author, String readState,
-                   String starState, String saveDir, String imgState, String coverSrc,
-                   String originStreamId, String originTitle, String originHtmlUrl) {
+                   String categories, String title, Long published, Long updated, Long starred,
+                   String enclosure, String canonical, String alternate, String summary,
+                   String content, String author, Integer readStatus, Integer starStatus,
+                   String readState, String starState, String saveDir, String imgState,
+                   String coverSrc, String originStreamId, String originTitle,
+                   String originHtmlUrl) {
         this.id = id;
         this.crawlTimeMsec = crawlTimeMsec;
         this.timestampUsec = timestampUsec;
@@ -55,6 +59,8 @@ public class Article {
         this.summary = summary;
         this.content = content;
         this.author = author;
+        this.readStatus = readStatus;
+        this.starStatus = starStatus;
         this.readState = readState;
         this.starState = starState;
         this.saveDir = saveDir;
@@ -243,5 +249,21 @@ public class Article {
 
     public void setOriginHtmlUrl(String originHtmlUrl) {
         this.originHtmlUrl = originHtmlUrl;
+    }
+
+    public Integer getReadStatus() {
+        return this.readStatus;
+    }
+
+    public Integer getStarStatus() {
+        return this.starStatus;
+    }
+
+    public void setReadStatus(Integer readStatus) {
+        this.readStatus = readStatus;
+    }
+
+    public void setStarStatus(Integer starStatus) {
+        this.starStatus = starStatus;
     }
 }

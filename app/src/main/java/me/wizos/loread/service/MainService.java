@@ -13,12 +13,10 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 
 import me.wizos.loread.App;
 import me.wizos.loread.R;
 import me.wizos.loread.activity.LoginActivity;
-import me.wizos.loread.bean.gson.UnreadCounts;
 import me.wizos.loread.data.WithDB;
 import me.wizos.loread.data.WithPref;
 import me.wizos.loread.db.Article;
@@ -88,6 +86,7 @@ public class MainService extends IntentService {
         }
 
         String action = intent.getAction();
+        KLog.e("获取到新的任务：" + action);
         if (Api.SYNC_ALL.equals(action) || Api.SYNC_HEARTBEAT.equals(action)) {
             syncAll();
         } else if (Api.CLEAR.equals(action)) {
@@ -98,6 +97,22 @@ public class MainService extends IntentService {
         } else if (Api.LOGIN.equals(action)) {
             login(intent);
         }
+
+//        else if(Api.MARK_READED.equals(action)){
+//            markReaded( intent.getIntExtra("articleNo",-1) );
+//        }else if(Api.MARK_UNREAD.equals(action)){
+//            markUnreading( intent.getIntExtra("articleNo",-1) );
+//        }else if(Api.MARK_STARED.equals(action)){
+//            markStared( intent.getIntExtra("articleNo",-1) );
+//        }else if(Api.MARK_UNSTAR.equals(action)){
+//            markUnstar( intent.getIntExtra("articleNo",-1) );
+//        }else if(Api.MARK_SAVED.equals(action)){
+//            markSaved( intent.getIntExtra("articleNo",-1) );
+//        }else if(Api.MARK_UNSAVE.equals(action)){
+//            markUnsave( intent.getIntExtra("articleNo",-1) );
+//        }
+//
+//        KLog.e("文章编号：" + intent.getIntExtra("articleNo",-1) );
     }
 
 
@@ -140,8 +155,6 @@ public class MainService extends IntentService {
 //            coverSavedTagFeed(tagList, feedList);
 
             saveTagFeedWithUnreadCount(tagList, feedList);
-//            sendSyncProcess(getString(R.string.main_toolbar_hint_sync_unread_count));
-//            DataApi.i().fetchUnreadCounts();
 
             KLog.e("3 - 同步未读信息");
             EventBus.getDefault().post(new Sync(Sync.DOING, App.i().getString(R.string.main_toolbar_hint_sync_unread_refs)));
@@ -164,9 +177,19 @@ public class MainService extends IntentService {
             needFetchCount = ids.size();
             hadFetchCount = 0;
 //            KLog.e("栈的数量A:" + ids.size());
+            final long syncTimeMillis = System.currentTimeMillis();
             while (needFetchCount > 0) {
-                num = Math.min(needFetchCount, InoApi.i().FETCH_CONTENT_EACH_CNT);
-                tempArticleList = DataApi.i().fetchContentsUnreadUnstar2(ids.subList(hadFetchCount, hadFetchCount = hadFetchCount + num));
+                num = Math.min(needFetchCount, InoApi.i().fetchContentCntForEach);
+//                tempArticleList = DataApi.i().fetchContentsUnreadUnstar2(ids.subList(hadFetchCount, hadFetchCount = hadFetchCount + num));
+                tempArticleList = DataApi.i().parseItemContents(InoApi.i().syncItemContents(ids.subList(hadFetchCount, hadFetchCount = hadFetchCount + num)), new DataApi.ArticleChanger() {
+                    @Override
+                    public Article change(Article article) {
+                        article.setReadStatus(Api.UNREAD);
+                        article.setStarStatus(Api.UNSTAR);
+                        article.setUpdated(syncTimeMillis);
+                        return article;
+                    }
+                });
                 WithDB.i().saveArticles(tempArticleList);
                 alreadySyncedArtsNum = alreadySyncedArtsNum + num;
                 EventBus.getDefault().post(new Sync(Sync.DOING, App.i().getString(R.string.main_toolbar_hint_sync_article_content, alreadySyncedArtsNum, readySyncArtsCapacity)));
@@ -179,8 +202,18 @@ public class MainService extends IntentService {
             hadFetchCount = 0;
 //            KLog.e("栈的数量B:" + ids.size());
             while (needFetchCount > 0) {
-                num = Math.min(needFetchCount, InoApi.i().FETCH_CONTENT_EACH_CNT);
-                tempArticleList = DataApi.i().fetchContentsReadStarred2(ids.subList(hadFetchCount, hadFetchCount = hadFetchCount + num));
+                num = Math.min(needFetchCount, InoApi.i().fetchContentCntForEach);
+//                tempArticleList = DataApi.i().fetchContentsReadStarred2(ids.subList(hadFetchCount, hadFetchCount = hadFetchCount + num));
+                tempArticleList = DataApi.i().parseItemContents(InoApi.i().syncItemContents(ids.subList(hadFetchCount, hadFetchCount = hadFetchCount + num)), new DataApi.ArticleChanger() {
+                    @Override
+                    public Article change(Article article) {
+                        article.setReadStatus(Api.READED);
+                        article.setStarStatus(Api.STARED);
+                        article.setUpdated(syncTimeMillis);
+                        return article;
+                    }
+                });
+
                 WithDB.i().saveArticles(tempArticleList);
                 alreadySyncedArtsNum = alreadySyncedArtsNum + num;
                 EventBus.getDefault().post(new Sync(Sync.DOING, App.i().getString(R.string.main_toolbar_hint_sync_article_content, alreadySyncedArtsNum, readySyncArtsCapacity)));
@@ -193,8 +226,17 @@ public class MainService extends IntentService {
             hadFetchCount = 0;
 //            KLog.e("栈的数量C:" + ids.size());
             while (needFetchCount > 0) {
-                num = Math.min(needFetchCount, InoApi.i().FETCH_CONTENT_EACH_CNT);
-                tempArticleList = DataApi.i().fetchContentsUnreadStarred2(ids.subList(hadFetchCount, hadFetchCount = hadFetchCount + num));
+                num = Math.min(needFetchCount, InoApi.i().fetchContentCntForEach);
+//                tempArticleList = DataApi.i().fetchContentsUnreadStarred2(ids.subList(hadFetchCount, hadFetchCount = hadFetchCount + num));
+                tempArticleList = DataApi.i().parseItemContents(InoApi.i().syncItemContents(ids.subList(hadFetchCount, hadFetchCount = hadFetchCount + num)), new DataApi.ArticleChanger() {
+                    @Override
+                    public Article change(Article article) {
+                        article.setReadStatus(Api.UNREAD);
+                        article.setStarStatus(Api.STARED);
+                        article.setUpdated(syncTimeMillis);
+                        return article;
+                    }
+                });
                 WithDB.i().saveArticles(tempArticleList);
                 alreadySyncedArtsNum = alreadySyncedArtsNum + num;
                 EventBus.getDefault().post(new Sync(Sync.DOING, App.i().getString(R.string.main_toolbar_hint_sync_article_content, alreadySyncedArtsNum, readySyncArtsCapacity)));
@@ -221,65 +263,20 @@ public class MainService extends IntentService {
         App.i().isSyncing = false;
     }
 
-
-    private void coverSavedTagFeed(List<Tag> tagList, List<Feed> feedList) {
-        App.isSyncingUnreadCount = true;
-        try {
-            KLog.e("获取未读数目");
-            List<UnreadCounts> unreadCountList = DataApi.i().fetchUnreadCounts();
-            // 更新本地的未读计数
-            for (int i = 0, size = unreadCountList.size(); i < size; i++) {
-                App.unreadCountMap.put(unreadCountList.get(i).getId(), unreadCountList.get(i).getCount());
-//                KLog.e("【】" +  unreadCountList.get(i).getId() + "  " +  unreadCountList.get(i).getCount() );
-            }
-
-            if (null != App.unreadOffsetMap) {
-                for (Map.Entry<String, Integer> entry : App.unreadOffsetMap.entrySet()) {
-                    if (entry.getKey() != null && App.unreadCountMap.containsKey(entry.getKey())) {
-                        App.unreadCountMap.put(entry.getKey(), App.unreadCountMap.get(entry.getKey()) + entry.getValue());
-                    }
-                }
-                App.unreadOffsetMap = null;
-            }
-
-        } catch (Exception e) {
-            KLog.e("保存有错误");
-            KLog.e(e);
-            App.isSyncingUnreadCount = false;
-        }
-
-        WithDB.i().coverSaveTags(tagList);
-        WithDB.i().coverSaveFeeds(feedList);
-        App.i().initFeedsCategoryid();
-        App.isSyncingUnreadCount = false;
-    }
-
     private void saveTagFeedWithUnreadCount(List<Tag> tagList, List<Feed> feedList) {
-
         WithDB.i().coverSaveFeeds(feedList);
-//        long time1 = System.currentTimeMillis();
-//        for( int i = 0, size = feedList.size(); i < size; i++ ){
-//            feedList.get(i).setUnreadCount( WithDB.i().getUnreadArtsCountByFeed(feedList.get(i).getId()));
-//        }
-//        KLog.e("耗时，老式：" + (System.currentTimeMillis() - time1));
 
         long time = System.currentTimeMillis();
         feedList = WithDB.i().getUnreadArtsCountByFeed3();
         WithDB.i().coverSaveFeeds(feedList);
         KLog.e("查询耗时：" + (System.currentTimeMillis() - time));
 
-//        try {
-//
-//        }catch (Exception e){
-//            KLog.e("报错");
-//            e.printStackTrace();
-//        }
-
         for (int i = 0, size = tagList.size(); i < size; i++) {
             tagList.get(i).setUnreadCount(WithDB.i().getUnreadArtsCountByTag(tagList.get(i).getId()));
         }
         WithDB.i().coverSaveTags(tagList);
     }
+
     private void needAuth() {
         ToastUtil.showShort(getString(R.string.toast_login_for_auth));
         Intent loginIntent = new Intent(MainService.this, LoginActivity.class);
@@ -327,31 +324,93 @@ public class MainService extends IntentService {
     }
 
 
-//    /**
-//     * 移动“保存且已读”的文章至一个新的文件夹
-//     * test 这里可能有问题，因为在我手机中有出现，DB中文章已经不存在，但文件与文件夹还存在与Box文件夹内的情况。
-//     */
-//    public void moveArticles() {
-//        List<Article> boxReadArts = WithDB.i().getArtInReadedBox();
-//        List<Article> storeReadArts = WithDB.i().getArtInReadedStore();
-//        KLog.i("移动文章" + boxReadArts.size() + "=" + storeReadArts.size());
+//    private void markReaded(int articlePosition){
+//        if( NetworkUtil.THE_NETWORK == NetworkUtil.NETWORK_NONE){
+//            ToastUtil.showLong("未连接网络，操作失败");
+//            return;
+//        }
+//        if( articlePosition < 0 ){
+//            return;
+//        }
+//        WithDB.i().setReaded(App.articleList.get(articlePosition));
+//        DataApi.i().markArticleReaded(App.articleList.get(articlePosition).getId() ,null);
+//    }
 //
-//        for (Article article : boxReadArts) {
-//            FileUtil.moveFile(App.boxRelativePath + article.getTitle() + ".html", App.boxReadRelativePath + article.getTitle() + ".html");// 移动文件
-//            FileUtil.moveDir(App.boxRelativePath + article.getTitle() + "_files", App.boxReadRelativePath + article.getTitle() + "_files");// 移动目录
-//            article.setCoverSrc(FileUtil.getAbsoluteDir(Api.SAVE_DIR_BOXREAD) + article.getTitle() + "_files" + File.separator + StringUtil.getFileNameExtByUrl(article.getCoverSrc()));
-//            article.setSaveDir(Api.SAVE_DIR_BOXREAD);
-//            KLog.i("移动了A");
+//    private void markUnreading(int articlePosition){
+//        if( NetworkUtil.THE_NETWORK == NetworkUtil.NETWORK_NONE){
+//            ToastUtil.showLong("未连接网络，操作失败");
+//            return;
 //        }
-//        WithDB.i().saveArticles(boxReadArts);
-//        for (Article article : storeReadArts) {
-//            FileUtil.moveFile(App.storeRelativePath + article.getTitle() + ".html", App.storeReadRelativePath + article.getTitle() + ".html");// 移动文件
-//            FileUtil.moveDir(App.storeRelativePath + article.getTitle() + "_files", App.storeReadRelativePath + article.getTitle() + "_files");// 移动目录
-//            article.setCoverSrc(FileUtil.getAbsoluteDir(Api.SAVE_DIR_STOREREAD) + article.getTitle() + "_files" + File.separator + StringUtil.getFileNameExtByUrl(article.getCoverSrc()));
-//            article.setSaveDir(Api.SAVE_DIR_STOREREAD);
-//            KLog.i("移动了B" + App.storeRelativePath + article.getTitle() + "_files |||| " + App.storeReadRelativePath + article.getTitle() + "_files");
+//        if( articlePosition < 0 ){
+//            return;
 //        }
-//        WithDB.i().saveArticles(storeReadArts);
+//        WithDB.i().setUnreading(App.articleList.get(articlePosition));
+//        DataApi.i().markArticleUnread(App.articleList.get(articlePosition).getId() ,null);
+//    }
+//    private void markStared(int articlePosition){
+//        if( NetworkUtil.THE_NETWORK == NetworkUtil.NETWORK_NONE){
+//            ToastUtil.showLong("未连接网络，操作失败");
+//            return;
+//        }
+//        if( articlePosition < 0 ){
+//            return;
+//        }
+//        Article article = App.articleList.get(articlePosition);
+//        article.setStarState(Api.ART_STARED);
+//        article.setStarred(System.currentTimeMillis() / 1000);
+//        if (article.getSaveDir().equals(Api.SAVE_DIR_BOX)) {
+//            article.setSaveDir(Api.SAVE_DIR_STORE);
+//        }
+//        DataApi.i().markArticleStared(article.getId(), null);
+//        WithDB.i().saveArticle(article);
+//    }
+//
+//    private void markUnstar(int articlePosition){
+//        if( NetworkUtil.THE_NETWORK == NetworkUtil.NETWORK_NONE){
+//            ToastUtil.showLong("未连接网络，操作失败");
+//            return;
+//        }
+//        if( articlePosition < 0 ){
+//            return;
+//        }
+//        Article article = App.articleList.get(articlePosition);
+//        article.setStarState(Api.ART_UNSTAR);
+//        article.setStarred(System.currentTimeMillis() / 1000);
+//        if (article.getSaveDir().equals(Api.SAVE_DIR_STORE)) {
+//            article.setSaveDir(Api.SAVE_DIR_BOX);
+//        }
+//        DataApi.i().markArticleUnstar(article.getId(), null);
+//        WithDB.i().saveArticle(article);
+//    }
+//    private void markSaved(int articlePosition){
+//        if( NetworkUtil.THE_NETWORK == NetworkUtil.NETWORK_NONE){
+//            ToastUtil.showLong("未连接网络，操作失败");
+//            return;
+//        }
+//        if( articlePosition < 0 ){
+//            return;
+//        }
+//        Article article = App.articleList.get(articlePosition);
+//        if (article.getStarState().equals(Api.ART_STARED)) {
+//            article.setSaveDir(Api.SAVE_DIR_STORE);
+//        } else {
+//            article.setSaveDir(Api.SAVE_DIR_BOX);
+//        }
+//
+//        WithDB.i().saveArticle(article);
+//    }
+//
+//    private void markUnsave(int articlePosition){
+//        if( NetworkUtil.THE_NETWORK == NetworkUtil.NETWORK_NONE){
+//            ToastUtil.showLong("未连接网络，操作失败");
+//            return;
+//        }
+//        if( articlePosition < 0 ){
+//            return;
+//        }
+//        Article article = App.articleList.get(articlePosition);
+//        article.setSaveDir(Api.SAVE_DIR_CACHE);
+//        WithDB.i().saveArticle(article);
 //    }
 
 }

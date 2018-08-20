@@ -1,5 +1,6 @@
 package me.wizos.loread.view.webview;
 
+import android.app.Activity;
 import android.app.DownloadManager;
 import android.content.ClipData;
 import android.content.ClipboardManager;
@@ -28,11 +29,11 @@ import static android.content.Context.DOWNLOAD_SERVICE;
  */
 
 public class DownloadListenerS implements DownloadListener {
-    private Context context;
+    private Activity context;
     private EditText fileNameEditor;
     private WebView webView;
 
-    public DownloadListenerS(Context context) {
+    public DownloadListenerS(Activity context) {
         this.context = context;
     }
 
@@ -69,6 +70,10 @@ public class DownloadListenerS implements DownloadListener {
                     public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
 //                        KLog.e("输入框内容的是：" + fileNameEditor.getText());
                         downloadBySystem(url, fileNameEditor.getText() + "");
+                        if (!webView.canGoBack()) {
+                            context.finish();
+                            context.overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
+                        }
                     }
                 })
                 .show();

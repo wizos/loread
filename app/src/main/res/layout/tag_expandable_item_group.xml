@@ -4,8 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content">
 
-    <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-        xmlns:tools="http://schemas.android.com/tools"
+    <LinearLayout
         android:id="@+id/group_item"
         android:orientation="horizontal"
         android:layout_width="match_parent"
@@ -23,9 +22,9 @@
             android:paddingStart="20dp"
             android:paddingEnd="15dp"
             android:gravity="center"
+            android:textSize="16sp"
             android:textColor="?attr/tag_slv_item_icon"
-            android:text="@string/font_arrow_right"
-            tools:text="@string/font_tag" />
+            android:text="@string/font_arrow_right" />
 
 
         <TextView
@@ -37,9 +36,9 @@
             android:layout_weight="1"
             android:gravity="center_vertical"
             android:lines="1"
-            android:textColor="?attr/lv_item_title_color"
             android:textSize="16sp"
             android:textStyle="bold"
+            android:textColor="?attr/lv_item_title_color"
             tools:text="这是父item" />
         <!--<TextView-->
         <!--android:id="@+id/group_item_title_superscript"-->
@@ -53,13 +52,13 @@
 
         <TextView
             android:id="@+id/group_item_count"
-            android:layout_width="80dp"
-            android:layout_height="match_parent"
-            android:gravity="center_vertical|end"
-            android:paddingTop="15dp"
-            android:paddingBottom="15dp"
-            android:paddingEnd="20dp"
-            android:textSize="14sp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:padding="5dp"
+            android:layout_marginEnd="20dp"
+            android:background="?attr/bubble_bg"
+            android:textSize="12sp"
             android:textColor="?attr/lv_item_desc_color"
             tools:text="1024" />
 

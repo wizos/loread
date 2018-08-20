@@ -154,7 +154,7 @@ public class WithDB<T> {
     }
 
     public Feed getFeed(String id) {
-        List<Feed> feeds = feedDao.queryBuilder().where(FeedDao.Properties.Id.eq(id)).listLazy();
+        List<Feed> feeds = feedDao.queryBuilder().where(FeedDao.Properties.Id.eq(id)).build().listLazyUncached();
         if (feeds.size() != 0) {
             return feeds.get(0);
         } else {
@@ -242,10 +242,16 @@ public class WithDB<T> {
     }
 
 
-
     public void saveArticle(Article article) {
         if (article.getId() != null) {
             articleDao.insertOrReplace(article);
+//            articleDao.update(article);
+        }
+    }
+
+    public void updateArticle(Article article) {
+        if (article.getId() != null) {
+            articleDao.update(article);
         }
     }
 
@@ -298,42 +304,24 @@ public class WithDB<T> {
      */
     public List<Article> getArtInReadedUnstarLtTime(long time) {
         QueryBuilder<Article> q = articleDao.queryBuilder();
-        q.where(q.and(ArticleDao.Properties.ReadState.eq(Api.ART_READED), ArticleDao.Properties.StarState.eq(Api.ART_UNSTAR), ArticleDao.Properties.CrawlTimeMsec.lt(time)));
+//        q.where(q.and(ArticleDao.Properties.ReadState.eq(Api.ART_READED), ArticleDao.Properties.StarState.eq(Api.ART_UNSTAR), ArticleDao.Properties.CrawlTimeMsec.lt(time)));
+        q.where(q.and(ArticleDao.Properties.ReadStatus.eq(Api.READED), ArticleDao.Properties.StarStatus.eq(Api.UNSTAR), ArticleDao.Properties.CrawlTimeMsec.lt(time)));
         return q.listLazy();
     }
 
-
-
-    /**
-     * 获取状态为已阅读，保存位置为Box的文章，用于移动文章位置
-     * @return 文章列表
-     */
-    public List<Article> getArtInReadedBox() {
-        QueryBuilder<Article> q = articleDao.queryBuilder()
-                .where(ArticleDao.Properties.ReadState.eq(Api.ART_READED), ArticleDao.Properties.SaveDir.eq(Api.SAVE_DIR_BOX));
-        return q.listLazy();
-    }
 
     public List<Article> getArtInReadedBox(long time) {
         QueryBuilder<Article> q = articleDao.queryBuilder()
-                .where(ArticleDao.Properties.ReadState.eq(Api.ART_READED), ArticleDao.Properties.SaveDir.eq(Api.SAVE_DIR_BOX), ArticleDao.Properties.CrawlTimeMsec.lt(time));
+//                .where(ArticleDao.Properties.ReadState.eq(Api.ART_READED), ArticleDao.Properties.SaveDir.eq(Api.SAVE_DIR_BOX), ArticleDao.Properties.CrawlTimeMsec.lt(time));
+                .where(ArticleDao.Properties.ReadStatus.eq(Api.READED), ArticleDao.Properties.SaveDir.eq(Api.SAVE_DIR_BOX), ArticleDao.Properties.CrawlTimeMsec.lt(time));
         return q.listLazy();
     }
 
-    /**
-     * 获取状态为已阅读，保存位置为 Store 的文章，用于移动文章位置
-     *
-     * @return 文章列表
-     */
-    public List<Article> getArtInReadedStore() {
-        QueryBuilder<Article> q = articleDao.queryBuilder()
-                .where(ArticleDao.Properties.ReadState.eq(Api.ART_READED), ArticleDao.Properties.SaveDir.eq(Api.SAVE_DIR_STORE));
-        return q.listLazy();
-    }
 
     public List<Article> getArtInReadedStore(long time) {
         QueryBuilder<Article> q = articleDao.queryBuilder()
-                .where(ArticleDao.Properties.ReadState.eq(Api.ART_READED), ArticleDao.Properties.SaveDir.eq(Api.SAVE_DIR_STORE), ArticleDao.Properties.CrawlTimeMsec.lt(time));
+//                .where(ArticleDao.Properties.ReadState.eq(Api.ART_READED), ArticleDao.Properties.SaveDir.eq(Api.SAVE_DIR_STORE), ArticleDao.Properties.CrawlTimeMsec.lt(time));
+                .where(ArticleDao.Properties.ReadStatus.eq(Api.READED), ArticleDao.Properties.SaveDir.eq(Api.SAVE_DIR_STORE), ArticleDao.Properties.CrawlTimeMsec.lt(time));
         return q.listLazy();
     }
 
@@ -344,33 +332,32 @@ public class WithDB<T> {
     public List<Article> getSearchedArts(String keyword) {
         QueryBuilder<Article> q = articleDao.queryBuilder()
                 .where(ArticleDao.Properties.Title.like("%" + keyword + "%")) // , ArticleDao.Properties.Summary.like("%" + keyword + "%")
-                .orderDesc(ArticleDao.Properties.TimestampUsec);
+                .orderDesc(ArticleDao.Properties.Updated, ArticleDao.Properties.Published);
         return q.listLazy();
     }
 
     /**
      * 获取所有文章
      */
-    public List<Article> loadAllArts() { // 速度比要排序的全文更快
+    public List<Article> getArtsAllNoOrder() { // 速度比要排序的全文更快
         return articleDao.loadAll();
     }
 
-    public List<Article> getArtsAll() {
-        QueryBuilder<Article> q = articleDao.queryBuilder();
-        return q.listLazy();
-    }
 
-    public List<Article> getArtsAll(long time) {
+    public List<Article> getArtsAll() {
+        long time = System.currentTimeMillis() - WithPref.i().getClearBeforeDay() * 24 * 3600 * 1000L - 300 * 1000L;
         QueryBuilder<Article> q = articleDao.queryBuilder();
 //        q.whereOr(ArticleDao.Properties.ReadState.like(Api.ART_UNREAD + "%"), ArticleDao.Properties.StarState.eq(Api.ART_STARED), q.and(ArticleDao.Properties.ReadState.eq(Api.ART_READED), ArticleDao.Properties.CrawlTimeMsec.gt(time)));
-        q.whereOr(ArticleDao.Properties.ReadState.notEq(Api.ART_READED), ArticleDao.Properties.StarState.eq(Api.ART_STARED), q.and(ArticleDao.Properties.ReadState.eq(Api.ART_READED), ArticleDao.Properties.CrawlTimeMsec.gt(time)));
-        q.orderDesc(ArticleDao.Properties.TimestampUsec);
+//        q.whereOr(ArticleDao.Properties.ReadState.notEq(Api.ART_READED), ArticleDao.Properties.StarState.eq(Api.ART_STARED), q.and(ArticleDao.Properties.ReadState.eq(Api.ART_READED), ArticleDao.Properties.CrawlTimeMsec.gt(time)));
+        q.whereOr(ArticleDao.Properties.ReadStatus.notEq(Api.READED), ArticleDao.Properties.StarStatus.eq(Api.STARED), q.and(ArticleDao.Properties.ReadStatus.eq(Api.READED), ArticleDao.Properties.CrawlTimeMsec.gt(time)));
+        q.orderDesc(ArticleDao.Properties.Updated, ArticleDao.Properties.Published);
         return q.listLazy();
     }
 
     public List<Article> getArtsUnreading() {
         QueryBuilder<Article> q = articleDao.queryBuilder()
-                .where(ArticleDao.Properties.ReadState.eq(Api.ART_UNREADING));
+//                .where(ArticleDao.Properties.ReadState.eq(Api.ART_UNREADING));
+                .where(ArticleDao.Properties.ReadStatus.eq(Api.UNREADING));
         return q.listLazy();
     }
 
@@ -379,96 +366,112 @@ public class WithDB<T> {
      */
     public List<Article> getArtsStared() {
         QueryBuilder<Article> q = articleDao.queryBuilder()
-                .where(ArticleDao.Properties.StarState.eq(Api.ART_STARED))
-                .orderDesc(ArticleDao.Properties.TimestampUsec);
+//                .where(ArticleDao.Properties.StarState.eq(Api.ART_STARED))
+                .where(ArticleDao.Properties.StarStatus.eq(Api.STARED))
+                .orderDesc(ArticleDao.Properties.Updated);
         return q.listLazy();
     }
 
     public List<Article> getArtsUnread() {
         QueryBuilder<Article> q = articleDao.queryBuilder()
 //                .where(ArticleDao.Properties.ReadState.like(Api.ART_UNREAD + "%"))
-                .where(ArticleDao.Properties.ReadState.notEq(Api.ART_READED))
-                .orderDesc(ArticleDao.Properties.TimestampUsec);
+//                .where(ArticleDao.Properties.ReadState.notEq(Api.ART_READED))
+                .where(ArticleDao.Properties.ReadStatus.notEq(Api.READED))
+                .orderDesc(ArticleDao.Properties.Updated, ArticleDao.Properties.Published);
         return q.listLazy();
     }
 
     public List<Article> getArtsUnreadNoOrder() {
         QueryBuilder<Article> q = articleDao.queryBuilder()
 //                .where(ArticleDao.Properties.ReadState.like(Api.ART_UNREAD + "%"));
-                .where(ArticleDao.Properties.ReadState.notEq(Api.ART_READED));
+//                .where(ArticleDao.Properties.ReadState.notEq(Api.ART_READED));
+                .where(ArticleDao.Properties.ReadStatus.notEq(Api.READED));
         return q.listLazy();
     }
 
 
     public List<Article> getArtsUnreadInTag(Tag tag) {
         QueryBuilder<Article> q = articleDao.queryBuilder();
-        q.join(ArticleDao.Properties.OriginStreamId, Feed.class).where(FeedDao.Properties.Categoryid.eq(tag.getId()));
+        q.join(ArticleDao.Properties.OriginStreamId, Feed.class);
+        q.where(FeedDao.Properties.Categoryid.eq(tag.getId()));
+        q.where(ArticleDao.Properties.ReadStatus.notEq(Api.READED));
+        q.orderDesc(ArticleDao.Properties.Updated, ArticleDao.Properties.Published);
 //        q.where(ArticleDao.Properties.ReadState.like(Api.ART_UNREAD + "%"));
-        q.where(ArticleDao.Properties.ReadState.notEq(Api.ART_READED));
-        q.orderDesc(ArticleDao.Properties.TimestampUsec);
+//        q.where(ArticleDao.Properties.ReadState.notEq(Api.ART_READED));
         return q.listLazy();
     }
 
     public List<Article> getArtsStaredInTag(Tag tag) {
-        KLog.e("getArtsStaredInTag2", Api.ART_STARED + tag.getId());
+        KLog.e("getArtsStaredInTag2", Api.STARED + tag.getId());
         QueryBuilder<Article> q = articleDao.queryBuilder();
         q.join(ArticleDao.Properties.OriginStreamId, Feed.class).where(FeedDao.Properties.Categoryid.eq(tag.getId()));
-        q.where(ArticleDao.Properties.StarState.eq(Api.ART_STARED));
-        q.orderDesc(ArticleDao.Properties.TimestampUsec);
+//        q.where(ArticleDao.Properties.StarState.eq(Api.ART_STARED));
+        q.where(ArticleDao.Properties.StarStatus.eq(Api.STARED));
+        q.orderDesc(ArticleDao.Properties.Updated, ArticleDao.Properties.Published);
         return q.listLazy();
     }
+
+//    public List<Article> getArtsAllInTag(Tag tag) {
+//        QueryBuilder<Article> q = articleDao.queryBuilder();
+//        q.join(ArticleDao.Properties.OriginStreamId, Feed.class).where(FeedDao.Properties.Categoryid.eq(tag.getId()));
+//        q.orderDesc(ArticleDao.Properties.Updated,ArticleDao.Properties.Published);
+//        return q.listLazy();
+//    }
 
     public List<Article> getArtsAllInTag(Tag tag) {
-        QueryBuilder<Article> q = articleDao.queryBuilder();
-        q.join(ArticleDao.Properties.OriginStreamId, Feed.class).where(FeedDao.Properties.Categoryid.eq(tag.getId()));
-        q.orderDesc(ArticleDao.Properties.TimestampUsec);
-        return q.listLazy();
-    }
-
-    public List<Article> getArtsAllInTag(Tag tag, long time) {
+        // 最后的 300 * 1000L 是留前5分钟时间的不删除 WithPref.i().getClearBeforeDay()
+        long time = System.currentTimeMillis() - WithPref.i().getClearBeforeDay() * 24 * 3600 * 1000L - 300 * 1000L;
         QueryBuilder<Article> q = articleDao.queryBuilder();
         q.join(ArticleDao.Properties.OriginStreamId, Feed.class).where(FeedDao.Properties.Categoryid.eq(tag.getId()));
 //        q.whereOr(ArticleDao.Properties.ReadState.like(Api.ART_UNREAD + "%"), ArticleDao.Properties.StarState.eq(Api.ART_STARED), q.and(ArticleDao.Properties.ReadState.eq(Api.ART_READED), ArticleDao.Properties.CrawlTimeMsec.gt(time)));
-        q.whereOr(ArticleDao.Properties.ReadState.notEq(Api.ART_READED), ArticleDao.Properties.StarState.eq(Api.ART_STARED), q.and(ArticleDao.Properties.ReadState.eq(Api.ART_READED), ArticleDao.Properties.CrawlTimeMsec.gt(time)));
-        q.orderDesc(ArticleDao.Properties.TimestampUsec);
+//        q.whereOr(ArticleDao.Properties.ReadState.notEq(Api.ART_READED), ArticleDao.Properties.StarState.eq(Api.ART_STARED), q.and(ArticleDao.Properties.ReadState.eq(Api.ART_READED), ArticleDao.Properties.CrawlTimeMsec.gt(time)));
+        q.whereOr(ArticleDao.Properties.ReadStatus.notEq(Api.READED), ArticleDao.Properties.StarStatus.eq(Api.STARED), q.and(ArticleDao.Properties.ReadStatus.eq(Api.READED), ArticleDao.Properties.CrawlTimeMsec.gt(time)));
+        q.orderDesc(ArticleDao.Properties.Updated, ArticleDao.Properties.Published);
 
         return q.listLazy();
     }
+
+//    public List<Article> getArtsAllInFeed(String streamId) {
+//        QueryBuilder<Article> q = articleDao.queryBuilder()
+//                .where(ArticleDao.Properties.OriginStreamId.eq(streamId))
+//                .orderDesc(ArticleDao.Properties.Updated,ArticleDao.Properties.Published);
+//        return q.listLazy();
+//    }
 
     public List<Article> getArtsAllInFeed(String streamId) {
-        QueryBuilder<Article> q = articleDao.queryBuilder()
-                .where(ArticleDao.Properties.OriginStreamId.eq(streamId))
-                .orderDesc(ArticleDao.Properties.TimestampUsec);
-        return q.listLazy();
-    }
-
-    public List<Article> getArtsAllInFeed(String streamId, long time) {
+        // 最后的 300 * 1000L 是留前5分钟时间的不删除 WithPref.i().getClearBeforeDay()
+        long time = System.currentTimeMillis() - WithPref.i().getClearBeforeDay() * 24 * 3600 * 1000L - 300 * 1000L;
         QueryBuilder<Article> q = articleDao.queryBuilder();
         q.where(ArticleDao.Properties.OriginStreamId.eq(streamId));
 //        q.whereOr(ArticleDao.Properties.ReadState.like(Api.ART_UNREAD + "%"), ArticleDao.Properties.StarState.eq(Api.ART_STARED), q.and(ArticleDao.Properties.ReadState.eq(Api.ART_READED), ArticleDao.Properties.CrawlTimeMsec.gt(time)));
-        q.whereOr(ArticleDao.Properties.ReadState.notEq(Api.ART_READED), ArticleDao.Properties.StarState.eq(Api.ART_STARED), q.and(ArticleDao.Properties.ReadState.eq(Api.ART_READED), ArticleDao.Properties.CrawlTimeMsec.gt(time)));
-        q.orderDesc(ArticleDao.Properties.TimestampUsec);
+//        q.whereOr(ArticleDao.Properties.ReadState.notEq(Api.ART_READED), ArticleDao.Properties.StarState.eq(Api.ART_STARED), q.and(ArticleDao.Properties.ReadState.eq(Api.ART_READED), ArticleDao.Properties.CrawlTimeMsec.gt(time)));
+        q.whereOr(ArticleDao.Properties.ReadStatus.notEq(Api.READED), ArticleDao.Properties.StarStatus.eq(Api.STARED), q.and(ArticleDao.Properties.ReadStatus.eq(Api.READED), ArticleDao.Properties.CrawlTimeMsec.gt(time)));
+        q.orderDesc(ArticleDao.Properties.Updated, ArticleDao.Properties.Published);
         return q.listLazy();
     }
 
     public List<Article> getArtsInFeedToDel(String streamId) {
         QueryBuilder<Article> q = articleDao.queryBuilder()
-                .where(ArticleDao.Properties.StarState.eq(Api.ART_UNSTAR), ArticleDao.Properties.OriginStreamId.eq(streamId));
+//                .where(ArticleDao.Properties.StarState.eq(Api.ART_UNSTAR), ArticleDao.Properties.OriginStreamId.eq(streamId));
+                .where(ArticleDao.Properties.StarStatus.eq(Api.UNSTAR), ArticleDao.Properties.OriginStreamId.eq(streamId));
         return q.listLazy();
     }
 
     public List<Article> getArtsUnreadInFeed(String streamId) {
         QueryBuilder<Article> q = articleDao.queryBuilder()
 //                .where(ArticleDao.Properties.ReadState.like(Api.ART_UNREAD + "%"), ArticleDao.Properties.OriginStreamId.eq(streamId))
-                .where(ArticleDao.Properties.ReadState.notEq(Api.ART_READED), ArticleDao.Properties.OriginStreamId.eq(streamId))
-                .orderDesc(ArticleDao.Properties.TimestampUsec);
+//                .where(ArticleDao.Properties.ReadState.notEq(Api.ART_READED), ArticleDao.Properties.OriginStreamId.eq(streamId))
+                .where(ArticleDao.Properties.ReadStatus.notEq(Api.READED), ArticleDao.Properties.OriginStreamId.eq(streamId))
+                .orderDesc(ArticleDao.Properties.Updated, ArticleDao.Properties.Published);
         return q.listLazy();
     }
 
     public List<Article> getArtsStaredInFeed(String streamId) {
         QueryBuilder<Article> q = articleDao.queryBuilder()
-                .where(ArticleDao.Properties.StarState.eq(Api.ART_STARED), ArticleDao.Properties.OriginStreamId.eq(streamId))
-                .orderDesc(ArticleDao.Properties.TimestampUsec);
+//                .where(ArticleDao.Properties.StarState.eq(Api.ART_STARED), ArticleDao.Properties.OriginStreamId.eq(streamId))
+                .where(ArticleDao.Properties.StarStatus.eq(Api.STARED), ArticleDao.Properties.OriginStreamId.eq(streamId))
+//                .orderDesc(ArticleDao.Properties.TimestampUsec);
+                .orderDesc(ArticleDao.Properties.Updated, ArticleDao.Properties.Published);
         return q.listLazy();
     }
 
@@ -490,14 +493,16 @@ public class WithDB<T> {
         QueryBuilder<Article> q = articleDao.queryBuilder();
 //        q.where(ArticleDao.Properties.ReadState.like(Api.ART_UNREAD + "%"));
         q.join(ArticleDao.Properties.OriginStreamId, Feed.class).where(FeedDao.Properties.Categoryid.eq(tagId));
-        q.where(ArticleDao.Properties.ReadState.notEq(Api.ART_READED));
+//        q.where(ArticleDao.Properties.ReadState.notEq(Api.ART_READED));
+        q.where(ArticleDao.Properties.ReadStatus.notEq(Api.READED));
         return (int) q.buildCount().count();
     }
     public int getUnreadArtsCountByFeed(String streamId) {
         return (int)
                 articleDao.queryBuilder()
                         .where(
-                                ArticleDao.Properties.ReadState.notEq(Api.ART_READED),
+//                                ArticleDao.Properties.ReadState.notEq(Api.ART_READED),
+                                ArticleDao.Properties.ReadStatus.notEq(Api.READED),
                                 ArticleDao.Properties.OriginStreamId.eq(streamId))
                         .buildCount()
                         .count();
@@ -553,19 +558,36 @@ public class WithDB<T> {
         return feeds;
     }
 
+    public int getCount(String feedID) {
+        String queryString = "SELECT UNREAD_COUNT FROM FEED WHERE ID = '" + feedID + "'";
+//        KLog.e("测getUnreadArtsCountNoTag：" + queryString);
+        Cursor cursor = articleDao.getDatabase().rawQuery(queryString, new String[]{});
+        if (cursor == null) {
+            return 0;
+        }
+        cursor.moveToFirst();
+        int count = cursor.getInt(0);
+        cursor.close();
+        return count;
+    }
+
+
 
     public void setReaded(Article article) {
         if (article == null) {
             return;
         }
-        article.setReadState(Api.ART_READED);
-        saveArticle(article);
-
+////        article.setReadState(Api.ART_READED);
+        KLog.e("未读数A：" + getFeed(article.getOriginStreamId()).getUnreadCount() + "   " + article.getReadStatus());
+        article.setReadStatus(Api.READED);
+        updateArticle(article);
+//        saveArticle(article);
+        KLog.e("未读数B：" + getFeed(article.getOriginStreamId()).getUnreadCount());
+        KLog.e("未读数C：" + getCount(article.getOriginStreamId()));
         Feed feed = getFeed(article.getOriginStreamId());
         if (feed == null) {
             return;
         }
-
         feed.setUnreadCount(feed.getUnreadCount() - 1);
         saveFeed(feed);
 
@@ -583,8 +605,10 @@ public class WithDB<T> {
             return;
         }
 
-        article.setReadState(Api.ART_UNREAD);
-        saveArticle(article);
+//        article.setReadState(Api.ART_UNREAD);
+        article.setReadStatus(Api.UNREAD);
+        updateArticle(article);
+//        saveArticle(article);
 
         Feed feed = getFeed(article.getOriginStreamId());
         if (feed == null) {
@@ -608,20 +632,22 @@ public class WithDB<T> {
             return;
         }
         int offest = 1;
-        if (article.getReadState().equals(Api.ART_UNREAD)) {
+//        if (article.getReadState().equals(Api.ART_UNREAD)) {
+        if (article.getReadStatus() == Api.UNREAD) {
             offest = 0;
         }
 
-        article.setReadState(Api.ART_UNREADING);
-        saveArticle(article);
+//        article.setReadState(Api.ART_UNREADING);
+        article.setReadStatus(Api.UNREADING);
+        updateArticle(article);
+//        saveArticle(article);
 
         Feed feed = getFeed(article.getOriginStreamId());
         if (feed == null) {
             return;
         }
-        KLog.e("数值为：" + feed.getUnreadCount());
-        offest = feed.getUnreadCount() + offest;
-        feed.setUnreadCount(offest);
+
+        feed.setUnreadCount(feed.getUnreadCount() + offest);
         saveFeed(feed);
 
 
@@ -629,6 +655,7 @@ public class WithDB<T> {
         if (tag == null) {
             return;
         }
+        KLog.e("未读数的数值为：" + tag.getUnreadCount() + "   " + offest);
         tag.setUnreadCount(tag.getUnreadCount() + offest);
         saveTag(tag);
     }
@@ -651,7 +678,8 @@ public class WithDB<T> {
     public int getUnreadArtsCount() {
         QueryBuilder<Article> q = articleDao.queryBuilder();
 //        q.where(ArticleDao.Properties.ReadState.like(Api.ART_UNREAD + "%"));
-        q.where(ArticleDao.Properties.ReadState.notEq(Api.ART_READED));
+//        q.where(ArticleDao.Properties.ReadState.notEq(Api.ART_READED));
+        q.where(ArticleDao.Properties.ReadStatus.notEq(Api.READED));
         return (int) q.buildCount().count();
     }
 
@@ -672,8 +700,8 @@ public class WithDB<T> {
                 + ArticleDao.TABLENAME + " LEFT JOIN " + FeedDao.TABLENAME + " ON " + ArticleDao.TABLENAME + "." + ArticleDao.Properties.OriginStreamId.columnName + " = " + FeedDao.TABLENAME + "." + FeedDao.Properties.Id.columnName
                 + " WHERE "
 //                + ArticleDao.TABLENAME + "." + ArticleDao.Properties.ReadState.columnName + " like \"" + Api.ART_UNREAD + "%\""
-                + ArticleDao.TABLENAME + "." + ArticleDao.Properties.ReadState.columnName + " != \"" + Api.ART_READED + "\""
-//                + " AND " + FeedDao.TABLENAME + "." + FeedDao.Properties.Categoryid.columnName + " IS \"user/" + WithPref.i().getUseId() + Api.U_NO_LABEL + "\"";
+//                + ArticleDao.TABLENAME + "." + ArticleDao.Properties.ReadState.columnName + " != \"" + Api.ART_READED + "\""
+                + ArticleDao.TABLENAME + "." + ArticleDao.Properties.ReadStatus.columnName + " != " + Api.READED
                 + " AND " + FeedDao.TABLENAME + "." + FeedDao.Properties.Categoryid.columnName + " = \"user/" + WithPref.i().getUseId() + Api.U_NO_LABEL + "\"";
 //        KLog.e("测getUnreadArtsCountNoTag：" + queryString);
         Cursor cursor = articleDao.getDatabase().rawQuery(queryString, new String[]{});
@@ -733,10 +761,11 @@ public class WithDB<T> {
                 + ArticleDao.TABLENAME + " LEFT JOIN " + FeedDao.TABLENAME + " ON " + ArticleDao.TABLENAME + "." + ArticleDao.Properties.OriginStreamId.columnName + " = " + FeedDao.TABLENAME + "." + FeedDao.Properties.Id.columnName
                 + " WHERE "
 //                + ArticleDao.TABLENAME + "." + ArticleDao.Properties.ReadState.columnName + " like \"" + Api.ART_UNREAD + "%\" AND "
-                + ArticleDao.TABLENAME + "." + ArticleDao.Properties.ReadState.columnName + " != \"" + Api.ART_READED + "\" AND "
+//                + ArticleDao.TABLENAME + "." + ArticleDao.Properties.ReadState.columnName + " != \"" + Api.ART_READED + "\" AND "
+                + ArticleDao.TABLENAME + "." + ArticleDao.Properties.ReadStatus.columnName + " != " + Api.READED + " AND "
 //                + FeedDao.TABLENAME + "." + FeedDao.Properties.Categoryid.columnName + " IS \"user/" + WithPref.i().getUseId() + Api.U_NO_LABEL + "\""
                 + FeedDao.TABLENAME + "." + FeedDao.Properties.Categoryid.columnName + " = \"user/" + WithPref.i().getUseId() + Api.U_NO_LABEL + "\""
-                + " ORDER BY " + ArticleDao.Properties.TimestampUsec.columnName + " DESC";
+                + " ORDER BY " + ArticleDao.Properties.Updated.columnName + "," + ArticleDao.Properties.Published + " DESC";
 //        KLog.e("getArtsUnreadNoTag：" + queryString);
         Cursor cursor = articleDao.getDatabase().rawQuery(queryString, new String[]{});
         if (cursor == null) {
@@ -757,10 +786,11 @@ public class WithDB<T> {
         String queryString = "SELECT " + ArticleDao.TABLENAME + ".* FROM "
                 + ArticleDao.TABLENAME + " LEFT JOIN " + FeedDao.TABLENAME + " ON " + ArticleDao.TABLENAME + "." + ArticleDao.Properties.OriginStreamId.columnName + " = " + FeedDao.TABLENAME + "." + FeedDao.Properties.Id.columnName
                 + " WHERE "
-                + ArticleDao.TABLENAME + "." + ArticleDao.Properties.StarState.columnName + " = \"" + Api.ART_STARED + "\" AND "
+//                + ArticleDao.TABLENAME + "." + ArticleDao.Properties.StarState.columnName + " = \"" + Api.ART_STARED + "\" AND "
+                + ArticleDao.TABLENAME + "." + ArticleDao.Properties.StarStatus.columnName + " = " + Api.STARED + " AND "
 //                + "(" + FeedDao.TABLENAME + "." + FeedDao.Properties.Id.columnName + " IS NULL OR " + FeedDao.Properties.Categoryid.columnName + " IS \"user/" + WithPref.i().getUseId() + Api.U_NO_LABEL + "\" )"
                 + "(" + FeedDao.TABLENAME + "." + FeedDao.Properties.Id.columnName + " IS NULL OR " + FeedDao.Properties.Categoryid.columnName + " = \"user/" + WithPref.i().getUseId() + Api.U_NO_LABEL + "\" )"
-                + "ORDER BY " + ArticleDao.Properties.TimestampUsec.columnName + " DESC";
+                + "ORDER BY " + ArticleDao.Properties.Updated.columnName + "," + ArticleDao.Properties.Published + " DESC";
 //        KLog.e("测getArtsStaredNoTag2：" + queryString);
         Cursor cursor = articleDao.getDatabase().rawQuery(queryString, new String[]{});
         if (cursor == null) {
@@ -781,7 +811,7 @@ public class WithDB<T> {
                 + " WHERE "
 //                + FeedDao.TABLENAME + "." + FeedDao.Properties.Id.columnName + " IS NULL OR " + FeedDao.TABLENAME + "." + FeedDao.Properties.Categoryid.columnName + " IS \"user/" + WithPref.i().getUseId() + Api.U_NO_LABEL + "\""
                 + FeedDao.TABLENAME + "." + FeedDao.Properties.Id.columnName + " IS NULL OR " + FeedDao.TABLENAME + "." + FeedDao.Properties.Categoryid.columnName + " = \"user/" + WithPref.i().getUseId() + Api.U_NO_LABEL + "\""
-                + " ORDER BY " + ArticleDao.Properties.TimestampUsec.columnName + " DESC";
+                + " ORDER BY " + ArticleDao.Properties.Updated.columnName + "," + ArticleDao.Properties.Published + " DESC";
 //        KLog.e("测getArtsAllNoTag2：" + queryString);
         Cursor cursor = articleDao.getDatabase().rawQuery(queryString, new String[]{});
         if (cursor == null) {

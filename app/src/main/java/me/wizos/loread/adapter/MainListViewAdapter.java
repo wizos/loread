@@ -128,23 +128,27 @@ public class MainListViewAdapter extends ArrayAdapter<Article> {
             cvh.articleFeed.setText(Html.fromHtml(article.getOriginTitle()));
         }
         cvh.articlePublished.setText(TimeUtil.stampToTime(article.getPublished() * 1000, "yyyy-MM-dd HH:mm"));
-        if (article.getReadState().equals(Api.ART_READED)) {
+        if (article.getReadStatus() == Api.READED) {
+//        if (article.getReadState().equals(Api.ART_READED)) {
             cvh.articleTitle.setAlpha(0.40f);
         } else {
             cvh.articleTitle.setAlpha(1f);
         }
 
-        if (article.getReadState().equals(Api.ART_UNREADING)) {
+//        if (article.getReadState().equals(Api.ART_UNREADING)) {
+        if (article.getReadStatus() == Api.UNREADING) {
             cvh.articleReading.setVisibility(View.VISIBLE);
             cvh.markRight.setText(context.getResources().getString(R.string.font_readed));
-        } else if (article.getReadState().equals(Api.ART_UNREAD)) {
+//        } else if (article.getReadState().equals(Api.ART_UNREAD)) {
+        } else if (article.getReadStatus() == Api.UNREAD) {
             cvh.articleReading.setVisibility(View.GONE);
             cvh.markRight.setText(context.getResources().getString(R.string.font_readed));
         } else {
             cvh.articleReading.setVisibility(View.GONE);
             cvh.markRight.setText(context.getResources().getString(R.string.font_unread));
         }
-        if (article.getStarState().equals(Api.ART_STARED)) {
+        if (article.getStarStatus() == Api.STARED) {
+//        if (article.getStarState().equals(Api.ART_STARED)) {
             cvh.articleStar.setVisibility(View.VISIBLE);
             cvh.markLeft.setText(context.getResources().getString(R.string.font_unstar));
         } else {

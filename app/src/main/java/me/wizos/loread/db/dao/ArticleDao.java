@@ -43,14 +43,16 @@ public class ArticleDao extends AbstractDao<Article, String> {
         public final static Property Summary = new Property(11, String.class, "summary", false, "SUMMARY");
         public final static Property Content = new Property(12, String.class, "content", false, "CONTENT");
         public final static Property Author = new Property(13, String.class, "author", false, "AUTHOR");
-        public final static Property ReadState = new Property(14, String.class, "readState", false, "READ_STATE");
-        public final static Property StarState = new Property(15, String.class, "starState", false, "STAR_STATE");
-        public final static Property SaveDir = new Property(16, String.class, "saveDir", false, "SAVE_DIR");
-        public final static Property ImgState = new Property(17, String.class, "imgState", false, "IMG_STATE");
-        public final static Property CoverSrc = new Property(18, String.class, "coverSrc", false, "COVER_SRC");
-        public final static Property OriginStreamId = new Property(19, String.class, "originStreamId", false, "ORIGIN_STREAM_ID");
-        public final static Property OriginTitle = new Property(20, String.class, "originTitle", false, "ORIGIN_TITLE");
-        public final static Property OriginHtmlUrl = new Property(21, String.class, "originHtmlUrl", false, "ORIGIN_HTML_URL");
+        public final static Property ReadStatus = new Property(14, Integer.class, "readStatus", false, "READ_STATUS");
+        public final static Property StarStatus = new Property(15, Integer.class, "starStatus", false, "STAR_STATUS");
+        public final static Property ReadState = new Property(16, String.class, "readState", false, "READ_STATE");
+        public final static Property StarState = new Property(17, String.class, "starState", false, "STAR_STATE");
+        public final static Property SaveDir = new Property(18, String.class, "saveDir", false, "SAVE_DIR");
+        public final static Property ImgState = new Property(19, String.class, "imgState", false, "IMG_STATE");
+        public final static Property CoverSrc = new Property(20, String.class, "coverSrc", false, "COVER_SRC");
+        public final static Property OriginStreamId = new Property(21, String.class, "originStreamId", false, "ORIGIN_STREAM_ID");
+        public final static Property OriginTitle = new Property(22, String.class, "originTitle", false, "ORIGIN_TITLE");
+        public final static Property OriginHtmlUrl = new Property(23, String.class, "originHtmlUrl", false, "ORIGIN_HTML_URL");
     }
 
     private Query<Article> feed_ItemsQuery;
@@ -83,14 +85,16 @@ public class ArticleDao extends AbstractDao<Article, String> {
                 "\"SUMMARY\" TEXT," + // 11: summary
                 "\"CONTENT\" TEXT," + // 12: content
                 "\"AUTHOR\" TEXT," + // 13: author
-                "\"READ_STATE\" TEXT," + // 14: readState
-                "\"STAR_STATE\" TEXT," + // 15: starState
-                "\"SAVE_DIR\" TEXT," + // 16: saveDir
-                "\"IMG_STATE\" TEXT," + // 17: imgState
-                "\"COVER_SRC\" TEXT," + // 18: coverSrc
-                "\"ORIGIN_STREAM_ID\" TEXT," + // 19: originStreamId
-                "\"ORIGIN_TITLE\" TEXT," + // 20: originTitle
-                "\"ORIGIN_HTML_URL\" TEXT);"); // 21: originHtmlUrl
+                "\"READ_STATUS\" INTEGER," + // 14: readStatus
+                "\"STAR_STATUS\" INTEGER," + // 15: starStatus
+                "\"READ_STATE\" TEXT," + // 16: readState
+                "\"STAR_STATE\" TEXT," + // 17: starState
+                "\"SAVE_DIR\" TEXT," + // 18: saveDir
+                "\"IMG_STATE\" TEXT," + // 19: imgState
+                "\"COVER_SRC\" TEXT," + // 20: coverSrc
+                "\"ORIGIN_STREAM_ID\" TEXT," + // 21: originStreamId
+                "\"ORIGIN_TITLE\" TEXT," + // 22: originTitle
+                "\"ORIGIN_HTML_URL\" TEXT);"); // 23: originHtmlUrl
     }
 
     /** Drops the underlying database table. */
@@ -168,45 +172,55 @@ public class ArticleDao extends AbstractDao<Article, String> {
         if (author != null) {
             stmt.bindString(14, author);
         }
+
+        Integer readStatus = entity.getReadStatus();
+        if (readStatus != null) {
+            stmt.bindLong(15, readStatus);
+        }
+
+        Integer starStatus = entity.getStarStatus();
+        if (starStatus != null) {
+            stmt.bindLong(16, starStatus);
+        }
  
         String readState = entity.getReadState();
         if (readState != null) {
-            stmt.bindString(15, readState);
+            stmt.bindString(17, readState);
         }
  
         String starState = entity.getStarState();
         if (starState != null) {
-            stmt.bindString(16, starState);
+            stmt.bindString(18, starState);
         }
  
         String saveDir = entity.getSaveDir();
         if (saveDir != null) {
-            stmt.bindString(17, saveDir);
+            stmt.bindString(19, saveDir);
         }
  
         String imgState = entity.getImgState();
         if (imgState != null) {
-            stmt.bindString(18, imgState);
+            stmt.bindString(20, imgState);
         }
  
         String coverSrc = entity.getCoverSrc();
         if (coverSrc != null) {
-            stmt.bindString(19, coverSrc);
+            stmt.bindString(21, coverSrc);
         }
  
         String originStreamId = entity.getOriginStreamId();
         if (originStreamId != null) {
-            stmt.bindString(20, originStreamId);
+            stmt.bindString(22, originStreamId);
         }
  
         String originTitle = entity.getOriginTitle();
         if (originTitle != null) {
-            stmt.bindString(21, originTitle);
+            stmt.bindString(23, originTitle);
         }
  
         String originHtmlUrl = entity.getOriginHtmlUrl();
         if (originHtmlUrl != null) {
-            stmt.bindString(22, originHtmlUrl);
+            stmt.bindString(24, originHtmlUrl);
         }
     }
 
@@ -279,45 +293,55 @@ public class ArticleDao extends AbstractDao<Article, String> {
         if (author != null) {
             stmt.bindString(14, author);
         }
+
+        Integer readStatus = entity.getReadStatus();
+        if (readStatus != null) {
+            stmt.bindLong(15, readStatus);
+        }
+
+        Integer starStatus = entity.getStarStatus();
+        if (starStatus != null) {
+            stmt.bindLong(16, starStatus);
+        }
  
         String readState = entity.getReadState();
         if (readState != null) {
-            stmt.bindString(15, readState);
+            stmt.bindString(17, readState);
         }
  
         String starState = entity.getStarState();
         if (starState != null) {
-            stmt.bindString(16, starState);
+            stmt.bindString(18, starState);
         }
  
         String saveDir = entity.getSaveDir();
         if (saveDir != null) {
-            stmt.bindString(17, saveDir);
+            stmt.bindString(19, saveDir);
         }
  
         String imgState = entity.getImgState();
         if (imgState != null) {
-            stmt.bindString(18, imgState);
+            stmt.bindString(20, imgState);
         }
  
         String coverSrc = entity.getCoverSrc();
         if (coverSrc != null) {
-            stmt.bindString(19, coverSrc);
+            stmt.bindString(21, coverSrc);
         }
  
         String originStreamId = entity.getOriginStreamId();
         if (originStreamId != null) {
-            stmt.bindString(20, originStreamId);
+            stmt.bindString(22, originStreamId);
         }
  
         String originTitle = entity.getOriginTitle();
         if (originTitle != null) {
-            stmt.bindString(21, originTitle);
+            stmt.bindString(23, originTitle);
         }
  
         String originHtmlUrl = entity.getOriginHtmlUrl();
         if (originHtmlUrl != null) {
-            stmt.bindString(22, originHtmlUrl);
+            stmt.bindString(24, originHtmlUrl);
         }
     }
 
@@ -343,14 +367,16 @@ public class ArticleDao extends AbstractDao<Article, String> {
                 cursor.isNull(offset + 11) ? null : cursor.getString(offset + 11), // summary
                 cursor.isNull(offset + 12) ? null : cursor.getString(offset + 12), // content
                 cursor.isNull(offset + 13) ? null : cursor.getString(offset + 13), // author
-                cursor.isNull(offset + 14) ? null : cursor.getString(offset + 14), // readState
-                cursor.isNull(offset + 15) ? null : cursor.getString(offset + 15), // starState
-                cursor.isNull(offset + 16) ? null : cursor.getString(offset + 16), // saveDir
-                cursor.isNull(offset + 17) ? null : cursor.getString(offset + 17), // imgState
-                cursor.isNull(offset + 18) ? null : cursor.getString(offset + 18), // coverSrc
-                cursor.isNull(offset + 19) ? null : cursor.getString(offset + 19), // originStreamId
-                cursor.isNull(offset + 20) ? null : cursor.getString(offset + 20), // originTitle
-                cursor.isNull(offset + 21) ? null : cursor.getString(offset + 21) // originHtmlUrl
+                cursor.isNull(offset + 14) ? null : cursor.getInt(offset + 14), // readStatus
+                cursor.isNull(offset + 15) ? null : cursor.getInt(offset + 15), // starStatus
+                cursor.isNull(offset + 16) ? null : cursor.getString(offset + 16), // readState
+                cursor.isNull(offset + 17) ? null : cursor.getString(offset + 17), // starState
+                cursor.isNull(offset + 18) ? null : cursor.getString(offset + 18), // saveDir
+                cursor.isNull(offset + 19) ? null : cursor.getString(offset + 19), // imgState
+                cursor.isNull(offset + 20) ? null : cursor.getString(offset + 20), // coverSrc
+                cursor.isNull(offset + 21) ? null : cursor.getString(offset + 21), // originStreamId
+                cursor.isNull(offset + 22) ? null : cursor.getString(offset + 22), // originTitle
+                cursor.isNull(offset + 23) ? null : cursor.getString(offset + 23) // originHtmlUrl
         );
         return entity;
     }
@@ -371,14 +397,16 @@ public class ArticleDao extends AbstractDao<Article, String> {
         entity.setSummary(cursor.isNull(offset + 11) ? null : cursor.getString(offset + 11));
         entity.setContent(cursor.isNull(offset + 12) ? null : cursor.getString(offset + 12));
         entity.setAuthor(cursor.isNull(offset + 13) ? null : cursor.getString(offset + 13));
-        entity.setReadState(cursor.isNull(offset + 14) ? null : cursor.getString(offset + 14));
-        entity.setStarState(cursor.isNull(offset + 15) ? null : cursor.getString(offset + 15));
-        entity.setSaveDir(cursor.isNull(offset + 16) ? null : cursor.getString(offset + 16));
-        entity.setImgState(cursor.isNull(offset + 17) ? null : cursor.getString(offset + 17));
-        entity.setCoverSrc(cursor.isNull(offset + 18) ? null : cursor.getString(offset + 18));
-        entity.setOriginStreamId(cursor.isNull(offset + 19) ? null : cursor.getString(offset + 19));
-        entity.setOriginTitle(cursor.isNull(offset + 20) ? null : cursor.getString(offset + 20));
-        entity.setOriginHtmlUrl(cursor.isNull(offset + 21) ? null : cursor.getString(offset + 21));
+        entity.setReadStatus(cursor.isNull(offset + 14) ? null : cursor.getInt(offset + 14));
+        entity.setStarStatus(cursor.isNull(offset + 15) ? null : cursor.getInt(offset + 15));
+        entity.setReadState(cursor.isNull(offset + 16) ? null : cursor.getString(offset + 16));
+        entity.setStarState(cursor.isNull(offset + 17) ? null : cursor.getString(offset + 17));
+        entity.setSaveDir(cursor.isNull(offset + 18) ? null : cursor.getString(offset + 18));
+        entity.setImgState(cursor.isNull(offset + 19) ? null : cursor.getString(offset + 19));
+        entity.setCoverSrc(cursor.isNull(offset + 20) ? null : cursor.getString(offset + 20));
+        entity.setOriginStreamId(cursor.isNull(offset + 21) ? null : cursor.getString(offset + 21));
+        entity.setOriginTitle(cursor.isNull(offset + 22) ? null : cursor.getString(offset + 22));
+        entity.setOriginHtmlUrl(cursor.isNull(offset + 23) ? null : cursor.getString(offset + 23));
      }
     
     @Override

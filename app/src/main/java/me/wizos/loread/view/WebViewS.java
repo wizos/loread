@@ -12,6 +12,7 @@ import android.webkit.WebView;
 import com.socks.library.KLog;
 
 import me.wizos.loread.App;
+import me.wizos.loread.utils.Tool;
 import me.wizos.loread.view.webview.NestedScrollWebView;
 
 /**
@@ -21,6 +22,8 @@ import me.wizos.loread.view.webview.NestedScrollWebView;
 
 
 public class WebViewS extends NestedScrollWebView {
+    private boolean isReadability = false;
+    private boolean isLoadJS = false;
 
     @SuppressLint("NewApi")
     public WebViewS(Context context) {
@@ -48,23 +51,24 @@ public class WebViewS extends NestedScrollWebView {
                 // 这里可以拦截很多类型，我们只处理图片类型就可以了
                 switch (type) {
                     case WebView.HitTestResult.PHONE_TYPE: // 处理拨号
-                        KLog.e("长按手机号");
+                        Tool.show("长按手机号");
                         break;
                     case WebView.HitTestResult.EMAIL_TYPE: // 处理Email
-                        KLog.e("长按邮件");
+                        Tool.show("长按邮件");
                         break;
                     case WebView.HitTestResult.GEO_TYPE: // 地图类型
-                        KLog.e("长按地图");
+                        Tool.show("长按地图");
                         break;
                     case WebView.HitTestResult.SRC_ANCHOR_TYPE: // 超链接
-                        KLog.e("长按超链接");
+                        Tool.show("长按超链接");
                         break;
                     case WebView.HitTestResult.SRC_IMAGE_ANCHOR_TYPE:
+                        Tool.show("长按 SRC_IMAGE_ANCHOR_TYPE ");
                         break;
                     case WebView.HitTestResult.IMAGE_TYPE: // 处理长按图片的菜单项
                         // 获取图片的路径
                         String saveImgUrl = result.getExtra();
-                        KLog.e("长按图片：" + saveImgUrl);
+                        Tool.show("长按图片：" + saveImgUrl);
                         // 跳转到图片详情页，显示图片
                         break;
                     default:
@@ -76,7 +80,21 @@ public class WebViewS extends NestedScrollWebView {
 
     }
 
+    public boolean isLoadJS() {
+        return isLoadJS;
+    }
 
+    public void setLoadJS(boolean loadJS) {
+        isLoadJS = loadJS;
+    }
+
+    public boolean isReadability() {
+        return isReadability;
+    }
+
+    public void setReadability(boolean readability) {
+        isReadability = readability;
+    }
 
     // 忽略 SetJavaScriptEnabled 的报错
     @SuppressLint("SetJavaScriptEnabled")
@@ -157,11 +175,13 @@ public class WebViewS extends NestedScrollWebView {
         instance.setAcceptCookie(true);
         instance.setAcceptThirdPartyCookies(this, true);
 
+//        setLayerType(View.LAYER_TYPE_SOFTWARE,null);//开启软件加速
+        setLayerType(View.LAYER_TYPE_HARDWARE, null);//开启硬件加速
 
-
-//        webSettings.setBlockNetworkImage(true);
-        // 设置在页面装载完成之后再去加载图片
-//        webSettings.setLoadsImagesAutomatically(false);
+        // 将图片下载阻塞，然后在浏览器的OnPageFinished事件中设置webView.getSettings().setBlockNetworkImage(false); 通过图片的延迟载入，让网页能更快地显示。
+        webSettings.setBlockNetworkImage(true);
+        // 设置在页面装载完成之后自动去加载图片
+        webSettings.setLoadsImagesAutomatically(true);
 //        webSettings.setSupportMultipleWindows(true);
 //        webSettings.setGeolocationEnabled(true);
 //        webSettings.setAppCacheMaxSize(Long.MAX_VALUE);
@@ -203,10 +223,20 @@ public class WebViewS extends NestedScrollWebView {
 
 
 //    public void clear() {
-//        removeJavascriptInterface("ImageBridge");
-//        loadData("", "text/html", "UTF-8");
-//        removeAllViews();
+//        ViewParent parent = this.getParent();
+//        if (parent != null) {
+//            ((ViewGroup) parent).removeView(this);
+//        }
+//        stopLoading();
+//        clearCache(true);
 //        clearHistory();
+//        removeJavascriptInterface("ImageBridge");
+//        post(new Runnable() {
+//            @Override
+//            public void run() {
+//                loadData("", "text/html", "UTF-8");
+//            }
+//        });
 //    }
 
 
@@ -217,4 +247,24 @@ public class WebViewS extends NestedScrollWebView {
     public void loadData(String htmlContent) {
         loadDataWithBaseURL(App.webViewBaseUrl, htmlContent, "text/html", "UTF-8", null);
     }
+
+
+//    private int displayMode = Api.RSS;
+//    private String displayContent;
+//    public void loadReadability(String htmlContent) {
+//        displayMode = Api.READABILITY;
+//        displayContent = htmlContent;
+//        loadData(htmlContent);
+//    }
+//    public void loadRSS(String htmlContent) {
+//        displayMode = Api.RSS;
+//        displayContent = htmlContent;
+//        loadData(htmlContent);
+//    }
+//    public void loadLink(String url) {
+//        displayMode = Api.LINK;
+//        displayContent = url;
+//        loadUrl(url);
+//    }
+
 }

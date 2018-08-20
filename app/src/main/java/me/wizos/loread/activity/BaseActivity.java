@@ -39,7 +39,6 @@ public abstract class BaseActivity extends AppCompatActivity {
 
     protected void goTo(String toActivity) {
         Intent intent;
-//        intent.putExtra("goToCode",notifyChange); // 这个似乎基本没有地方用到
         if (TAG.equals(toActivity)) {
             KLog.i(this.toString() + "【跳转无效，为当前页】");
             return;
@@ -67,6 +66,7 @@ public abstract class BaseActivity extends AppCompatActivity {
     protected void showCurrentTheme() {
         Colorful.Builder mColorfulBuilder = new Colorful.Builder(this);
         mColorful = buildColorful(mColorfulBuilder).create();
+        KLog.e("当前主题为：" + WithPref.i().getThemeMode());
         if (WithPref.i().getThemeMode() == App.Theme_Day) {
             mColorful.setTheme(R.style.AppTheme_Day);
         } else {

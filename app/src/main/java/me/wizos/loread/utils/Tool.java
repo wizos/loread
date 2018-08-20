@@ -1,11 +1,13 @@
 package me.wizos.loread.utils;
 
+import android.app.ActivityManager;
 import android.content.Context;
 import android.view.View;
 
 import com.socks.library.KLog;
 
 import java.text.DecimalFormat;
+import java.util.List;
 
 import me.wizos.loread.App;
 import me.wizos.loread.BuildConfig;
@@ -19,10 +21,10 @@ import me.wizos.loread.data.WithPref;
 
 public class Tool {
 
-    public static void showShort(String msg) {
+    public static void show(String msg) {
         if (BuildConfig.DEBUG) {
             KLog.e(msg);
-            ToastUtil.showShort(msg);
+            ToastUtil.showLong(msg);
         }
     }
 
@@ -87,6 +89,38 @@ public class Tool {
         return bytes.toString();
     }
 
+
+    /**
+     * 包名判断是否为主进程
+     *
+     * @param context
+     * @return
+     */
+    public static boolean isMainProcess(Context context) {
+        return context.getPackageName().equals(getProcessName(context));
+    }
+
+    /**
+     * 获取进程名称
+     *
+     * @param context
+     * @return
+     */
+    public static String getProcessName(Context context) {
+        ActivityManager am = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
+        List<ActivityManager.RunningAppProcessInfo> runningApps = am.getRunningAppProcesses();
+        if (runningApps == null) {
+            return null;
+        }
+        for (ActivityManager.RunningAppProcessInfo proInfo : runningApps) {
+            if (proInfo.pid == android.os.Process.myPid()) {
+                if (proInfo.processName != null) {
+                    return proInfo.processName;
+                }
+            }
+        }
+        return null;
+    }
 
 //    public boolean isDebug() {
 //        try {

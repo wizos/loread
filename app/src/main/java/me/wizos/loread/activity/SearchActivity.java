@@ -157,7 +157,7 @@ public class SearchActivity extends BaseActivity {
                     if (searchResult != null && searchResult.getResults() != null && searchResult.getResults().size() != 0) {
                         feedlyFeeds = searchResult.getResults();
 //                        KLog.e("点击搜索" + searchView.getText().toString() + feedlyFeeds.size());
-//                        ToastUtil.showShort("已获取到" + feedlyFeeds.size() + "个订阅源");
+//                        ToastUtil.show("已获取到" + feedlyFeeds.size() + "个订阅源");
                     } else {
                         feedlyFeeds = new ArrayList<FeedlyFeed>();
                     }

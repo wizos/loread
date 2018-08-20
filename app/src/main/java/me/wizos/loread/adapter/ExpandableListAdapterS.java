@@ -1,8 +1,6 @@
 package me.wizos.loread.adapter;
 
 import android.content.Context;
-import android.os.AsyncTask;
-import android.util.ArrayMap;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -12,7 +10,6 @@ import android.widget.TextView;
 
 import com.socks.library.KLog;
 
-import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -188,6 +185,7 @@ public class ExpandableListAdapterS extends BaseExpandableListAdapter implements
                 count = WithDB.i().getUnreadArtsCountNoTag();
             } else {
                 count = tag.getUnreadCount();
+//                count = WithDB.i().getUnreadArtsCountByTag(tag.getId());
             }
             groupViewHolder.count.setText(String.valueOf(count));
 
@@ -210,8 +208,6 @@ public class ExpandableListAdapterS extends BaseExpandableListAdapter implements
     }
 
 
-    private ArrayMap<ItemViewHolder, QueryTask> map = new ArrayMap<>();
-    private QueryTask queryTask = null;
     //  获得子项显示的view
     @Override
     public View getChildView(int groupPos, int childPos, boolean isExpanded, View convertView, final ViewGroup parent) {
@@ -233,6 +229,7 @@ public class ExpandableListAdapterS extends BaseExpandableListAdapter implements
 
         try {
             final Feed feed = tags.get(groupPos).getFeeds().get(childPos);
+//            final Feed feed =  WithDB.i().getFeed();
             childViewHolder.id = feed.getId();
             childViewHolder.type = ItemViewHolder.TYPE_CHILD;
             childViewHolder.groupPos = groupPos;
@@ -287,71 +284,50 @@ public class ExpandableListAdapterS extends BaseExpandableListAdapter implements
     }
 
 
-    //
+//    private ArrayMap<ItemViewHolder, QueryTask> map = new ArrayMap<>();
+//    private QueryTask queryTask = null;
     // Params, Progress, Result
-    private static class QueryTask extends AsyncTask<String, String, Integer> {
-        private WeakReference<ExpandableListAdapterS> mAdapter;
-        private ItemViewHolder childViewHolder;
-        private String feedId;
-
-        QueryTask(ExpandableListAdapterS adapter, ItemViewHolder childViewHolder) {
-            mAdapter = new WeakReference<>(adapter);
-            this.childViewHolder = childViewHolder;
-        }
-
-        @Override
-        protected Integer doInBackground(String... params) {
-            if (isCancelled()) {
-                return 0;
-            }
-            feedId = params[0];
-//            int count = WithDB.i().getUnreadArtsCountByFeed2(feedId);
-//            publishProgress(feedId,count+"");
-            //返回结果
-            return WithDB.i().getUnreadArtsCountByFeed2(feedId);
-        }
-
-        /**
-         * 在doInbackground之后执行
-         */
-        @Override
-        protected void onPostExecute(Integer count) {
-            try {
-                if (!childViewHolder.id.equals(feedId)) {
-                    KLog.e(feedId + "获取错乱了");
-                    return;
-                }
-                KLog.e(feedId + "获取正常的：" + count);
-                childViewHolder.count.setText(count + "");
-                childViewHolder.count.setVisibility(count > 0 ? View.VISIBLE : View.INVISIBLE);
-            } catch (Exception e) {
-                KLog.e("出错了");
-                e.printStackTrace();
-            }
-        }
-//        @Override
-//        protected void onProgressUpdate(String... progress) {
-//            if(isCancelled()){
-//                return;
-//            }
-//            String feedId = progress[0];
-//            String count = progress[1];
+//    private static class QueryTask extends AsyncTask<String, String, Integer> {
+//        private WeakReference<ExpandableListAdapterS> mAdapter;
+//        private ItemViewHolder childViewHolder;
+//        private String feedId;
 //
+//        QueryTask(ExpandableListAdapterS adapter, ItemViewHolder childViewHolder) {
+//            mAdapter = new WeakReference<>(adapter);
+//            this.childViewHolder = childViewHolder;
+//        }
+//
+//        @Override
+//        protected Integer doInBackground(String... params) {
+//            if (isCancelled()) {
+//                return 0;
+//            }
+//            feedId = params[0];
+////            int count = WithDB.i().getUnreadArtsCountByFeed(feedId);
+////            publishProgress(feedId,count+"");
+//            //返回结果
+//            return WithDB.i().getUnreadArtsCountByFeed(feedId);
+//        }
+//
+//        /**
+//         * 在doInbackground之后执行
+//         */
+//        @Override
+//        protected void onPostExecute(Integer count) {
 //            try {
-//                if( !childViewHolder.id.equals(feedId) ){
+//                if (!childViewHolder.id.equals(feedId)) {
 //                    KLog.e(feedId + "获取错乱了");
 //                    return;
 //                }
-//
 //                KLog.e(feedId + "获取正常的：" + count);
-//                childViewHolder.count.setText( count );
-//                childViewHolder.count.setVisibility( Integer.valueOf(count) > 0 ? View.VISIBLE : View.INVISIBLE );
-//            }catch (Exception e){
+//                childViewHolder.count.setText(count + "");
+//                childViewHolder.count.setVisibility(count > 0 ? View.VISIBLE : View.INVISIBLE);
+//            } catch (Exception e) {
 //                KLog.e("出错了");
 //                e.printStackTrace();
 //            }
 //        }
-    }
+//    }
 
 
     //  子项是否可选中，如果需要设置子项的点击事件，需要返回true
@@ -379,8 +355,10 @@ public class ExpandableListAdapterS extends BaseExpandableListAdapter implements
 
     @Override
     public void configureHeader(View header, int groupPosition, int childPosition, int alpha) {
-        String groupTitle = tags.get(groupPosition).getTitle();
-        ((TextView) header.findViewById(R.id.header_item_title)).setText(groupTitle);
+//        String groupTitle = tags.get(groupPosition).getTitle();
+        ((TextView) header.findViewById(R.id.header_item_title)).setText(tags.get(groupPosition).getTitle());
+//        ((TextView) header.findViewById(R.id.header_item_count)).setText(tags.get(groupPosition).getUnreadCount()+"");
+//        KLog.e("数字：" + tags.get(groupPosition).getUnreadCount() );
     }
 
 }

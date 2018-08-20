@@ -18,6 +18,7 @@
 package me.wizos.loread.contentextractor;
 
 import android.text.TextUtils;
+import android.util.ArrayMap;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -35,7 +36,6 @@ import java.io.File;
 import java.lang.reflect.Type;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -57,7 +57,8 @@ public class Extractor {
         this.doc = doc;
     }
 
-    protected HashMap<Element, CountInfo> infoMap = new HashMap<Element, CountInfo>();
+    //    protected HashMap<Element, CountInfo> infoMap = new HashMap<Element, CountInfo>();
+    protected ArrayMap<Element, CountInfo> infoMap = new ArrayMap<Element, CountInfo>();
 
     class CountInfo {
 
@@ -488,7 +489,7 @@ public class Extractor {
     }
 
     public static void saveSiteRule(String url, String cssSelector) {
-        Map<String, List<Object>> ruleDict = new HashMap<>();
+        Map<String, List<Object>> ruleDict = new ArrayMap<>();
         ArrayList<Object> body = new ArrayList<>();
         body.add(cssSelector);
         ruleDict.put("body", body);
@@ -502,7 +503,7 @@ public class Extractor {
             if (file.exists()) {
                 return;
             }
-            FileUtil.save(App.externalFilesDir + "/config/sites_generate/" + uri.getHost() + ".json", gson.toJson(ruleDict, HashMap.class));
+            FileUtil.save(App.externalFilesDir + "/config/sites_generate/" + uri.getHost() + ".json", gson.toJson(ruleDict, ArrayMap.class));
         } catch (Exception e) {
             e.printStackTrace();
         }
