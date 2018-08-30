@@ -11,7 +11,7 @@
 
 Inoreader 是当下体验最好的国外 RSS 服务。利用其开放的 api ，完成了该第三方客户端。
 
-下载地址：![http://www.coolapk.com/apk/168423](http://www.coolapk.com/apk/168423)
+下载地址：[http://www.coolapk.com/apk/168423](http://www.coolapk.com/apk/168423)
 
 
 # 布局&功能
