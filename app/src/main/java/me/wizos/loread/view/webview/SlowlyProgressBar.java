@@ -8,8 +8,6 @@ import android.view.View;
 import android.view.animation.DecelerateInterpolator;
 import android.widget.ProgressBar;
 
-import com.socks.library.KLog;
-
 /**
  * @author 林冠宏 on 2016/7/11. Wizos on 2018/3/18
  *         https://github.com/af913337456/SlowlyProgressBar
@@ -37,7 +35,7 @@ public class SlowlyProgressBar {
     public void onProgressChange(int newProgress) {
         int currentProgress = progressBar.getProgress();
         newProgress = newProgress > currentProgress ? newProgress : currentProgress;
-        KLog.e("进度" + newProgress);
+//        KLog.e("进度" + newProgress);
         if (newProgress >= 100 && !isStart) {
             /** 防止调用多次动画 */
             isStart = true;

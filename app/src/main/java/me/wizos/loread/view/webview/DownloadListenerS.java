@@ -77,7 +77,7 @@ public class DownloadListenerS implements DownloadListener {
                     }
                 })
                 .show();
-        String fileName = FileUtil.guessFileName(url, contentDisposition, mimeType);
+        String fileName = FileUtil.guessDownloadFileName(url, contentDisposition, mimeType);
         String fileSize = Tool.getNetFileSizeDescription(context, contentLength);
 
         KLog.e("下载", url);

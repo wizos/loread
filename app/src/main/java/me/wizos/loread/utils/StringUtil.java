@@ -9,25 +9,21 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
-import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
-import java.net.MalformedURLException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import me.wizos.loread.App;
+import me.wizos.loread.bean.config.GlobalConfig;
+import me.wizos.loread.data.WithDB;
 import me.wizos.loread.data.WithPref;
 import me.wizos.loread.db.Article;
+import me.wizos.loread.db.Feed;
+import me.wizos.loread.net.Api;
 
 /**
  * 字符处理工具类
@@ -86,11 +82,6 @@ public class StringUtil {
     }
 
 
-//    /**
-//     */
-//    private static String getFormatContentForDisplay(Article article) {
-//        return getFormatContentForDisplay(article.getId(),article.getContent());
-//    }
 
     /**
      * 格式化给定的文本，用于展示
@@ -101,7 +92,7 @@ public class StringUtil {
      * @param content
      * @return
      */
-    private static String getFormatContentForDisplay(String articleID, String content) {
+    private static String getFormatContentForDisplay(String articleID, String articleUrl, String content) {
         if (TextUtils.isEmpty(content)) {
             return "";
         }
@@ -116,18 +107,37 @@ public class StringUtil {
             imageHolder = "file:///android_asset/image/image_holder_loading.png";
         }
 
-        Document document = Jsoup.parseBodyFragment(content);
+        Element img;
+        Document document = Jsoup.parseBodyFragment(content, articleUrl);
         document = ColorUtil.mod(document);
 //        KLog.e("优化后的文本A：" + document.outerHtml() );
         // 去掉src为空的标签
         document.select("[src='']").remove();
+//        KLog.e("内容链接为：" + document.outerHtml() );
+
+        // 将data-src转为src的路径
+        Elements imgs_datasrc = document.select("img[data-src]");
+        for (int i = 0, size = imgs_datasrc.size(); i < size; i++) {
+            img = imgs_datasrc.get(i);
+            originalUrl = img.attr("data-src");
+            img.attr("src", originalUrl);
+        }
+
+
+        // 将相对连接转为绝对链接
+        Elements links = document.select("a[href]");
+        Element link;
+        for (int i = 0, size = links.size(); i < size; i++) {
+            link = links.get(i);
+            link.attr("href", link.attr("abs:href"));
+//            links.get(i).attr("abs:href");
+        }
 
         Elements imgs = document.getElementsByTag("img");
-        Element img;
         String idInMD5 = StringUtil.str2MD5(articleID);
         for (int i = 0, size = imgs.size(); i < size; i++) {
             img = imgs.get(i);
-            originalUrl = img.attr("src");
+            originalUrl = img.attr("abs:src"); // 抽取图片的绝对连接
             img.attr("original-src", originalUrl);
             cacheUrl = FileUtil.readCacheFilePath(idInMD5, i, originalUrl);
             if (cacheUrl != null) {
@@ -139,14 +149,14 @@ public class StringUtil {
             img.attr("height", "auto");
         }
 
-        Elements videos = document.getElementsByTag("video");
-        for (int i = 0, size = videos.size(); i < size; i++) {
-            videos.get(i).attr("class", "video-js vjs-default-skin vjs-fluid vjs-big-play-centered");
-            videos.get(i).attr("data-setup", "{}");
-            videos.get(i).attr("preload", "metadata");
-            videos.get(i).attr("style", "width:100%;height:100%");
-            videos.get(i).attr("controls", "controls");
-        }
+//        Elements videos = document.getElementsByTag("video");
+//        for (int i = 0, size = videos.size(); i < size; i++) {
+//            videos.get(i).attr("class", "video-js vjs-default-skin vjs-fluid vjs-big-play-centered");
+//            videos.get(i).attr("data-setup", "{}");
+//            videos.get(i).attr("preload", "metadata");
+//            videos.get(i).attr("style", "width:100%;height:100%");
+//            videos.get(i).attr("controls", "controls");
+//        }
 
         Elements audios = document.getElementsByTag("audio");
         for (int i = 0, size = audios.size(); i < size; i++) {
@@ -163,6 +173,8 @@ public class StringUtil {
             } else {
                 iframe.wrap("<div style=\"position:relative;\"></div>");
             }
+            // 阻止iframe里引用的网页自动跳转，会导致视频的缩略图无法显示
+//            iframe.attr("sandbox","");
         }
 
         Elements embeds = document.getElementsByTag("embed");
@@ -176,7 +188,7 @@ public class StringUtil {
             }
         }
 
-        content = document.body().html();
+        content = document.body().html().trim();
 //        KLog.e("优化后的文本B：" + content );
         return content;
     }
@@ -226,9 +238,7 @@ public class StringUtil {
         String content = getFormatContentForSave(title, article.getContent());
         String author = getOptimizedAuthor(article.getOriginTitle(), article.getAuthor());
 
-        return "<!DOCTYPE html>" +
-                "<html>" +
-                "<head>" +
+        return "<!DOCTYPE html><html><head>" +
                 "<meta charset=\"UTF-8\">" +
                 "<link rel=\"stylesheet\" type=\"text/css\" href=\"./normalize.css\" />" +
                 "<title>" + title + "</title>" +
@@ -246,10 +256,10 @@ public class StringUtil {
 
 
     public static String getPageForDisplay(Article article) {
-        return getPageForDisplay(article, article.getContent());
+        return getPageForDisplay(article, article.getContent(), Api.DISPLAY_RSS);
     }
 
-    public static String getPageForDisplay(Article article, String content) {
+    public static String getPageForDisplay(Article article, String content, String referer) {
         if (null == article) {
             return "";
         }
@@ -269,14 +279,23 @@ public class StringUtil {
 
         String author = getOptimizedAuthor(article.getOriginTitle(), article.getAuthor());
 
-        content = getFormatContentForDisplay(article.getId(), content);
+        content = getFormatContentForDisplay(article.getId(), article.getCanonical(), content);
 
-        String videoJS = "", videoCSS = "";
-        if (!TextUtils.isEmpty(content) && content.indexOf("<video") != -1) {
-            videoCSS = "<link rel=\"stylesheet\" type=\"text/css\" href=\"file:///android_asset/video-js/video-js.css\"/>";
-            videoJS = "<script src=\"file:///android_asset/video-js/video.js\"></script>";
+//        String videoJS = "", videoCSS = "";
+//        if (!TextUtils.isEmpty(content) && content.indexOf("<video") != -1) {
+//            videoCSS = "<link rel=\"stylesheet\" type=\"text/css\" href=\"file:///android_asset/video-js/video-js.css\"/>";
+//            videoJS = "<script src=\"file:///android_asset/video-js/video.js\"></script>";
+//        }
+        Feed feed = WithDB.i().getFeed(article.getOriginStreamId());
+        String readabilityButton = "";
+        String displayMode = GlobalConfig.i().getDisplayMode(feed.getId());
+        if (feed != null && (Api.DISPLAY_RSS.equals(displayMode) || TextUtils.isEmpty(displayMode))) {
+            if (!Api.DISPLAY_READABILITY.equals(referer)) {
+                readabilityButton = "<br><br><a id=\"readabilityButton\" onclick=\"ImageBridge.readability()\">获取全文</a>";
+            } else {
+                readabilityButton = "<br><br><a id=\"readabilityButton\" onclick=\"ImageBridge.readability()\">恢复RSS内容</a>";
+            }
         }
-
 
         return "<!DOCTYPE html><html><head>" +
                 "<meta charset=\"UTF-8\">" +
@@ -284,7 +303,7 @@ public class StringUtil {
                 "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0, user-scalable=no\">" +
                 "<link rel=\"stylesheet\" type=\"text/css\" href=\"" + typesettingCssPath + "\"/>" +
                 "<link rel=\"stylesheet\" type=\"text/css\" href=\"" + themeCssPath + "\"/>" +
-                videoCSS +
+//                videoCSS +
                 "<title>" + article.getTitle() + "</title>" +
                 "</head><body>" +
                 "<article id=\"" + article.getId() + "\" >" +
@@ -295,42 +314,14 @@ public class StringUtil {
                 "</header>" +
                 "<hr id=\"hr\">" +
                 "<section id=\"content\">" + content +
+                readabilityButton +
                 "</section>" +
                 "</article>" +
                 "<script src=\"file:///android_asset/js/zepto.min.js\"></script>" + // defer
                 "<script src=\"file:///android_asset/js/lazyload.js\"></script>" +
                 "<script src=\"file:///android_asset/js/media.js\"></script>" +
-                videoJS +
+//                videoJS +
                 "</body></html>";
-    }
-
-
-    private static Set<String> formats = new HashSet<>();
-    private static final String JPG = ".jpg";
-    private static final String JPEG = ".jpeg";
-    private static final String PNG = ".png";
-    private static final String WEBP = ".webp";
-    private static final String GIF = ".gif";
-    static {
-        formats.add(JPG);
-        formats.add(JPEG);
-        formats.add(PNG);
-        formats.add(WEBP);
-        formats.add(GIF);
-    }
-
-    /**
-     * 根据url获取图片文件的后缀
-     *
-     * @param url 网址
-     * @return 后缀名
-     */
-    public static String getImageSuffix(String url) {
-        String suffix = url.substring(url.lastIndexOf("."), url.length());
-        if (!formats.contains(suffix.toLowerCase())) {
-            return JPG;
-        }
-        return suffix;
     }
 
 
@@ -461,25 +452,25 @@ public class StringUtil {
     private static final String REGEX_SPACE = "\\s+";
     private static final String REGEX_ENTER = "\t|\r|\n";
 
-    public static String delHtmlTag(String htmlStr) {
-        // 过滤script标签
-        Pattern p_script = Pattern.compile(REGEX_SCRIPT, Pattern.CASE_INSENSITIVE);
-        Matcher m_script = p_script.matcher(htmlStr);
-        htmlStr = m_script.replaceAll("");
-        // 过滤style标签
-        Pattern p_style = Pattern.compile(REGEX_STYLE, Pattern.CASE_INSENSITIVE);
-        Matcher m_style = p_style.matcher(htmlStr);
-        htmlStr = m_style.replaceAll("");
-        // 过滤html标签
-        Pattern p_html = Pattern.compile(REGEX_HTML, Pattern.CASE_INSENSITIVE);
-        Matcher m_html = p_html.matcher(htmlStr);
-        htmlStr = m_html.replaceAll("");
-//        // 过滤空格回车标签
-//        Pattern p_space = Pattern.compile(REGEX_SPACE, Pattern.CASE_INSENSITIVE);
-//        Matcher m_space = p_space.matcher(htmlStr);
-//        htmlStr = m_space.replaceAll("");
-        return htmlStr.trim(); // 返回文本字符串
-    }
+//    public static String delHtmlTag(String htmlStr) {
+//        // 过滤script标签
+//        Pattern p_script = Pattern.compile(REGEX_SCRIPT, Pattern.CASE_INSENSITIVE);
+//        Matcher m_script = p_script.matcher(htmlStr);
+//        htmlStr = m_script.replaceAll("");
+//        // 过滤style标签
+//        Pattern p_style = Pattern.compile(REGEX_STYLE, Pattern.CASE_INSENSITIVE);
+//        Matcher m_style = p_style.matcher(htmlStr);
+//        htmlStr = m_style.replaceAll("");
+//        // 过滤html标签
+//        Pattern p_html = Pattern.compile(REGEX_HTML, Pattern.CASE_INSENSITIVE);
+//        Matcher m_html = p_html.matcher(htmlStr);
+//        htmlStr = m_html.replaceAll("");
+////        // 过滤空格回车标签
+////        Pattern p_space = Pattern.compile(REGEX_SPACE, Pattern.CASE_INSENSITIVE);
+////        Matcher m_space = p_space.matcher(htmlStr);
+////        htmlStr = m_space.replaceAll("");
+//        return htmlStr.trim(); // 返回文本字符串
+//    }
 
     public static String delScriptTag(String htmlStr) {
         // 过滤script标签
@@ -514,6 +505,111 @@ public class StringUtil {
     }
 
 
+//    /**
+//     * 从meta中获取页面编码
+//     *
+//     * @param html
+//     * @return
+//     */
+//    public static String getEncodingByMeta(String html) {
+//        String charset = null, temp = "";
+//        List<String> lines = new ArrayList<>();
+//        try {
+//            BufferedReader in = new BufferedReader(new InputStreamReader(new ByteArrayInputStream(html.getBytes())));
+//            while ((temp = in.readLine()) != null) {
+//                lines.add(temp);
+//            }
+//
+//            for (String line : lines) {
+//                if (line.contains("http-equiv") && line.contains("charset")) {
+////                    KLog.e(line);
+//                    String tmp = line.split(";")[1];
+//                    charset = tmp.substring(tmp.indexOf("=") + 1, tmp.indexOf("\""));
+//                    break;
+//                }
+//            }
+//            return charset;
+//        } catch (MalformedURLException e) {
+//            e.printStackTrace();
+//            return charset;
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//            return charset;
+//        }
+//    }
+
+//    /**
+//     * 获取字符串编码格式
+//     *
+//     * @param str
+//     * @return
+//     */
+//    public static String getEncode(String str) {
+//        final String[] encodes = new String[]{"UTF-8", "GBK", "GB2312", "ISO-8859-1", "ISO-8859-2"};
+//        byte[] data = str.getBytes();
+//        byte[] b = null;
+//        a:
+//        for (int i = 0; i < encodes.length; i++) {
+//            try {
+//                b = str.getBytes(encodes[i]);
+//                if (b.length != data.length) {
+//                    continue;}
+//                for (int j = 0; j < b.length; j++) {
+//                    if (b[j] != data[j]) {
+//                        continue a;
+//                    }
+//                }
+//                return encodes[i];
+//            } catch (UnsupportedEncodingException e) {
+//                continue;
+//            }
+//        }
+//        return null;
+//    }
+
+//    /**
+//     * 将字符串转换成指定编码格式
+//     *
+//     * @param str
+//     * @param encode
+//     * @return
+//     */
+//    public static String transcoding(String str, String encode) {
+//        String df = "ISO-8859-1";
+//        try {
+//            String en = getEncode(str);
+//            if (en == null) {
+//                en = df;}
+//            return new String(str.getBytes(en), encode);
+//        } catch (UnsupportedEncodingException e) {
+//            return null;
+//        }
+//    }
+
+
+//    private static Set<String> formats = new HashSet<>();
+//    static {
+//        formats.add(".jpg");
+//        formats.add(".jpeg");
+//        formats.add(".png");
+//        formats.add(".webp");
+//        formats.add(".gif");
+//    }
+//    /**
+//     * 根据url获取图片文件的后缀
+//     *
+//     * @param url 网址
+//     * @return 后缀名
+//     */
+//    public static String getImageSuffix(String url) {
+//        String suffix = url.substring(url.lastIndexOf("."), url.length());
+//        if (!formats.contains(suffix.toLowerCase())) {
+//            return ".jpg";
+//        }
+//        return suffix;
+//    }
+
+
 //    private static String getRandomString(int length) {
 //        String str = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 //        Random random = new Random();
@@ -524,88 +620,5 @@ public class StringUtil {
 //        }
 //        return sb.toString();
 //    }
-
-
-    /**
-     * 从meta中获取页面编码
-     *
-     * @param html
-     * @return
-     */
-    public static String getEncodingByMeta(String html) {
-        String charset = null, temp = "";
-        List<String> lines = new ArrayList<>();
-        try {
-            BufferedReader in = new BufferedReader(new InputStreamReader(new ByteArrayInputStream(html.getBytes())));
-            while ((temp = in.readLine()) != null) {
-                lines.add(temp);
-            }
-
-            for (String line : lines) {
-                if (line.contains("http-equiv") && line.contains("charset")) {
-//                    KLog.e(line);
-                    String tmp = line.split(";")[1];
-                    charset = tmp.substring(tmp.indexOf("=") + 1, tmp.indexOf("\""));
-                    break;
-                }
-            }
-            return charset;
-        } catch (MalformedURLException e) {
-            e.printStackTrace();
-            return charset;
-        } catch (IOException e) {
-            e.printStackTrace();
-            return charset;
-        }
-    }
-
-    /**
-     * 获取字符串编码格式
-     *
-     * @param str
-     * @return
-     */
-    public static String getEncode(String str) {
-        final String[] encodes = new String[]{"UTF-8", "GBK", "GB2312", "ISO-8859-1", "ISO-8859-2"};
-        byte[] data = str.getBytes();
-        byte[] b = null;
-        a:
-        for (int i = 0; i < encodes.length; i++) {
-            try {
-                b = str.getBytes(encodes[i]);
-                if (b.length != data.length) {
-                    continue;}
-                for (int j = 0; j < b.length; j++) {
-                    if (b[j] != data[j]) {
-                        continue a;
-                    }
-                }
-                return encodes[i];
-            } catch (UnsupportedEncodingException e) {
-                continue;
-            }
-        }
-        return null;
-    }
-
-    /**
-     * 将字符串转换成指定编码格式
-     *
-     * @param str
-     * @param encode
-     * @return
-     */
-    public static String transcoding(String str, String encode) {
-        String df = "ISO-8859-1";
-        try {
-            String en = getEncode(str);
-            if (en == null) {
-                en = df;}
-            return new String(str.getBytes(en), encode);
-        } catch (UnsupportedEncodingException e) {
-            return null;
-        }
-    }
-
 
 }

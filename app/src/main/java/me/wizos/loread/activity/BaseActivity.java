@@ -13,7 +13,7 @@ import me.wizos.loread.data.WithPref;
 import me.wizos.loread.view.colorful.Colorful;
 
 /**
- * Created by Wizos on 2016/3/12.
+ * @author Wizos on 2016/3/12.
  */
 public abstract class BaseActivity extends AppCompatActivity {
     private static String TAG = "";
@@ -48,8 +48,8 @@ public abstract class BaseActivity extends AppCompatActivity {
             intent = new Intent(this, LoginActivity.class);
 //        }else if(toActivity.equals(TagActivity.TAG)){
 //            intent = new Intent(this, TagActivity.class);
-        }else if(toActivity.equals(ArticleActivity.TAG)){
-            intent = new Intent(this, ArticleActivity.class);
+        } else if (toActivity.equals(ArticleActivity3.TAG)) {
+            intent = new Intent(this, ArticleActivity3.class);
         }else {
             return;
         }
@@ -66,7 +66,6 @@ public abstract class BaseActivity extends AppCompatActivity {
     protected void showCurrentTheme() {
         Colorful.Builder mColorfulBuilder = new Colorful.Builder(this);
         mColorful = buildColorful(mColorfulBuilder).create();
-        KLog.e("当前主题为：" + WithPref.i().getThemeMode());
         if (WithPref.i().getThemeMode() == App.Theme_Day) {
             mColorful.setTheme(R.style.AppTheme_Day);
         } else {

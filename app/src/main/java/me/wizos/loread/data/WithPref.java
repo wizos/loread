@@ -274,7 +274,6 @@ public class WithPref {
     public int getStreamStatus() {
         return read("StreamStatus", 0);
     }
-
     public void setStreamStatus(int streamStatus) {
         save("StreamStatus", streamStatus);
     }
@@ -285,6 +284,7 @@ public class WithPref {
     public void setStreamState(String listState) {
         save("ListState", listState);
     }
+
 
     public String getStreamId() {
         return read("listTagId", "");

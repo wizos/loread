@@ -154,7 +154,9 @@ public class MainService extends IntentService {
             // 如果在获取到数据的时候就保存，那么到这里同步断了的话，可能系统内的文章就找不到响应的分组，所有放到这里保存。（比如在云端将文章移到的新的分组）
 //            coverSavedTagFeed(tagList, feedList);
 
-            saveTagFeedWithUnreadCount(tagList, feedList);
+            WithDB.i().coverSaveTags(tagList);
+            WithDB.i().coverSaveFeeds(feedList);
+//            saveTagFeedWithUnreadCount(tagList, feedList);
 
             KLog.e("3 - 同步未读信息");
             EventBus.getDefault().post(new Sync(Sync.DOING, App.i().getString(R.string.main_toolbar_hint_sync_unread_refs)));
@@ -247,9 +249,18 @@ public class MainService extends IntentService {
             // 如果没有同步过所有加薪文章就同步
             if (!WithPref.i().isHadSyncAllStarred()) {
                 ToastUtil.showLong("同步耗时较长，请耐心等待");
-                DataApi.i().fetchAllStaredStreamContent2();
+                DataApi.i().fetchAllStaredStreamContent(new DataApi.ArticleChanger() {
+                    @Override
+                    public Article change(Article article) {
+                        article.setReadStatus(Api.READED);
+                        article.setStarStatus(Api.STARED);
+                        article.setUpdated(syncTimeMillis);
+                        return article;
+                    }
+                });
                 WithPref.i().setHadSyncAllStarred(true);
             }
+            updateFeedUnreadCount();
 
             EventBus.getDefault().post(new Sync(Sync.END));
         } catch (IOException e) {
@@ -263,19 +274,11 @@ public class MainService extends IntentService {
         App.i().isSyncing = false;
     }
 
-    private void saveTagFeedWithUnreadCount(List<Tag> tagList, List<Feed> feedList) {
+    private void updateFeedUnreadCount() {
+        ArrayList<Feed> feedList = WithDB.i().getUnreadArtsCountByFeed3();
         WithDB.i().coverSaveFeeds(feedList);
-
-        long time = System.currentTimeMillis();
-        feedList = WithDB.i().getUnreadArtsCountByFeed3();
-        WithDB.i().coverSaveFeeds(feedList);
-        KLog.e("查询耗时：" + (System.currentTimeMillis() - time));
-
-        for (int i = 0, size = tagList.size(); i < size; i++) {
-            tagList.get(i).setUnreadCount(WithDB.i().getUnreadArtsCountByTag(tagList.get(i).getId()));
-        }
-        WithDB.i().coverSaveTags(tagList);
     }
+
 
     private void needAuth() {
         ToastUtil.showShort(getString(R.string.toast_login_for_auth));
@@ -322,95 +325,5 @@ public class MainService extends IntentService {
         WithDB.i().delArt(allArtsBeforeTime);
         System.gc();
     }
-
-
-//    private void markReaded(int articlePosition){
-//        if( NetworkUtil.THE_NETWORK == NetworkUtil.NETWORK_NONE){
-//            ToastUtil.showLong("未连接网络，操作失败");
-//            return;
-//        }
-//        if( articlePosition < 0 ){
-//            return;
-//        }
-//        WithDB.i().setReaded(App.articleList.get(articlePosition));
-//        DataApi.i().markArticleReaded(App.articleList.get(articlePosition).getId() ,null);
-//    }
-//
-//    private void markUnreading(int articlePosition){
-//        if( NetworkUtil.THE_NETWORK == NetworkUtil.NETWORK_NONE){
-//            ToastUtil.showLong("未连接网络，操作失败");
-//            return;
-//        }
-//        if( articlePosition < 0 ){
-//            return;
-//        }
-//        WithDB.i().setUnreading(App.articleList.get(articlePosition));
-//        DataApi.i().markArticleUnread(App.articleList.get(articlePosition).getId() ,null);
-//    }
-//    private void markStared(int articlePosition){
-//        if( NetworkUtil.THE_NETWORK == NetworkUtil.NETWORK_NONE){
-//            ToastUtil.showLong("未连接网络，操作失败");
-//            return;
-//        }
-//        if( articlePosition < 0 ){
-//            return;
-//        }
-//        Article article = App.articleList.get(articlePosition);
-//        article.setStarState(Api.ART_STARED);
-//        article.setStarred(System.currentTimeMillis() / 1000);
-//        if (article.getSaveDir().equals(Api.SAVE_DIR_BOX)) {
-//            article.setSaveDir(Api.SAVE_DIR_STORE);
-//        }
-//        DataApi.i().markArticleStared(article.getId(), null);
-//        WithDB.i().saveArticle(article);
-//    }
-//
-//    private void markUnstar(int articlePosition){
-//        if( NetworkUtil.THE_NETWORK == NetworkUtil.NETWORK_NONE){
-//            ToastUtil.showLong("未连接网络，操作失败");
-//            return;
-//        }
-//        if( articlePosition < 0 ){
-//            return;
-//        }
-//        Article article = App.articleList.get(articlePosition);
-//        article.setStarState(Api.ART_UNSTAR);
-//        article.setStarred(System.currentTimeMillis() / 1000);
-//        if (article.getSaveDir().equals(Api.SAVE_DIR_STORE)) {
-//            article.setSaveDir(Api.SAVE_DIR_BOX);
-//        }
-//        DataApi.i().markArticleUnstar(article.getId(), null);
-//        WithDB.i().saveArticle(article);
-//    }
-//    private void markSaved(int articlePosition){
-//        if( NetworkUtil.THE_NETWORK == NetworkUtil.NETWORK_NONE){
-//            ToastUtil.showLong("未连接网络，操作失败");
-//            return;
-//        }
-//        if( articlePosition < 0 ){
-//            return;
-//        }
-//        Article article = App.articleList.get(articlePosition);
-//        if (article.getStarState().equals(Api.ART_STARED)) {
-//            article.setSaveDir(Api.SAVE_DIR_STORE);
-//        } else {
-//            article.setSaveDir(Api.SAVE_DIR_BOX);
-//        }
-//
-//        WithDB.i().saveArticle(article);
-//    }
-//
-//    private void markUnsave(int articlePosition){
-//        if( NetworkUtil.THE_NETWORK == NetworkUtil.NETWORK_NONE){
-//            ToastUtil.showLong("未连接网络，操作失败");
-//            return;
-//        }
-//        if( articlePosition < 0 ){
-//            return;
-//        }
-//        Article article = App.articleList.get(articlePosition);
-//        article.setSaveDir(Api.SAVE_DIR_CACHE);
-//        WithDB.i().saveArticle(article);
-//    }
 
 }

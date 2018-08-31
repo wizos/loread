@@ -71,6 +71,7 @@ public class SearchActivity extends BaseActivity {
                 .centerCrop();
     }
 
+
     private void initView() {
         swipeRefreshLayoutS = findViewById(R.id.search_swipe_refresh);
         searchView = findViewById(R.id.search_toolbar_edittext);

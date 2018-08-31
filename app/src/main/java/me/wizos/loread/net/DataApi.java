@@ -565,43 +565,19 @@ public class DataApi {
         return refsList;
     }
 
-    public ArrayList<Article> fetchContentsUnreadUnstar2(List<String> ids) throws HttpException, IOException {
-        return parseItemContents2(InoApi.i().syncItemContents(ids), new ArticleChanger() {
-            @Override
-            public Article change(Article article) {
-//                article.setReadState(Api.ART_UNREAD);
-//                article.setStarState(Api.ART_UNSTAR);
-                article.setReadStatus(Api.UNREAD);
-                article.setStarStatus(Api.UNSTAR);
-                return article;
-            }
-        });
-    }
 
-    public ArrayList<Article> fetchContentsUnreadStarred2(List<String> ids) throws HttpException, IOException {
-        return parseItemContents2(InoApi.i().syncItemContents(ids), new ArticleChanger() {
-            @Override
-            public Article change(Article article) {
-//                article.setReadState(Api.ART_UNREAD);
-//                article.setStarState(Api.ART_STARED);
-                article.setReadStatus(Api.UNREAD);
-                article.setStarStatus(Api.STARED);
-                return article;
-            }
-        });
-    }
-
-    public ArrayList<Article> fetchContentsReadStarred2(List<String> ids) throws HttpException, IOException {
-        return parseItemContents2(InoApi.i().syncItemContents(ids), new ArticleChanger() {
-            @Override
-            public Article change(Article article) {
-//                article.setReadState(Api.ART_READED);
-//                article.setStarState(Api.ART_STARED);
-                article.setReadStatus(Api.READED);
-                article.setStarStatus(Api.STARED);
-                return article;
-            }
-        });
+    public void fetchAllStaredStreamContent(ArticleChanger articleChanger) throws HttpException, IOException {
+        String continuation = null;
+        StreamContents streamContents;
+        int count = 0;
+        do {
+            EventBus.getDefault().post(new Sync(Sync.DOING, App.i().getString(R.string.main_toolbar_hint_sync_all_stared_content, count)));
+            String res = InoApi.i().syncStaredStreamContents(continuation);
+            streamContents = new Gson().fromJson(res, StreamContents.class);
+            WithDB.i().saveArticles(parseItemContents3(streamContents.getItems(), articleChanger));
+            count = count + streamContents.getItems().size();
+            continuation = streamContents.getContinuation();
+        } while (streamContents.getContinuation() != null);
     }
 
     public void fetchAllStaredStreamContent2() throws HttpException, IOException {
@@ -681,17 +657,22 @@ public class DataApi {
             html = items.getSummary().getContent();
             html = StringUtil.getOptimizedContent(html);
 
-            if (items.getEnclosure() != null && items.getEnclosure().size() > 0 && (items.getEnclosure().get(0).getType().startsWith("audio"))) {
-                html = html + "<br><audio src=\"" + items.getEnclosure().get(0).getHref() + "\" preload=\"auto\" type=\"" + items.getEnclosure().get(0).getType() + "\" controls></audio>";
+            if (items.getEnclosure() != null && items.getEnclosure().size() > 0) {
+                if (items.getEnclosure().get(0).getType().startsWith("audio")) {
+                    html = html + "<br><audio src=\"" + items.getEnclosure().get(0).getHref() + "\" preload=\"auto\" type=\"" + items.getEnclosure().get(0).getType() + "\" controls></audio>";
+                } else if (items.getEnclosure().get(0).getType().startsWith("video")) {
+                    html = html + "<br><video src=\"" + items.getEnclosure().get(0).getHref() + "\" preload=\"auto\" type=\"" + items.getEnclosure().get(0).getType() + "\" controls></video>";
+                }
+
+//            if (items.getEnclosure().get(0).getType().startsWith("image") || items.getEnclosure().get(0).getType().startsWith("parsedImg")) {
+//                article.setCoverSrc(items.getEnclosure().get(0).getHref());
+//            }
             }
 
             summary = StringUtil.getOptimizedSummary(html);
             article.setSummary(summary);
             article.setContent(html);
 
-//            if (items.getEnclosure() != null && items.getEnclosure().size() > 0 && (items.getEnclosure().get(0).getType().startsWith("image") || items.getEnclosure().get(0).getType().startsWith("parsedImg"))) {
-//                article.setCoverSrc(items.getEnclosure().get(0).getHref());
-//            }
             // 获取第1个图片作为封面
             elements = Jsoup.parseBodyFragment(article.getContent() == null ? "" : article.getContent()).getElementsByTag("img");
             if (elements.size() > 0) {

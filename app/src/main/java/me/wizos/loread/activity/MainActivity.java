@@ -11,6 +11,7 @@ import android.support.design.widget.BottomSheetBehavior;
 import android.support.design.widget.BottomSheetDialog;
 import android.support.v7.widget.Toolbar;
 import android.text.InputType;
+import android.util.ArrayMap;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.ViewConfiguration;
@@ -67,9 +68,13 @@ import me.wizos.loread.view.SwipeRefreshLayoutS;
 import me.wizos.loread.view.colorful.Colorful;
 import me.wizos.loread.view.colorful.setter.ViewGroupSetter;
 
+//import com.zhangyue.we.x2c.X2C;
+//import com.zhangyue.we.x2c.ano.Xml;
+
 /**
  * @author Wizos on 2016
  */
+//@Xml(layouts = {R.layout.activity_main})
 public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.OnRefreshListener {
     protected static final String TAG = "MainActivity";
     private IconFontView vPlaceHolder;
@@ -82,10 +87,9 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
     private ExpandableListViewS tagListView;
     private ExpandableListAdapterS tagListAdapter;
     private View headerPinnedView;
-//    private View headerHomeView;
-
     private int tagCount;
 
+//    private View headerHomeView;
 //    private ImageLoader imageLoader;
 //    private boolean isFirstIn = true;
 //    private int firstVisibleItemPosition;
@@ -94,6 +98,7 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         setContentView(R.layout.activity_main);
+//        X2C.setContentView(this, R.layout.activity_main);
         ButterKnife.bind(this);
         EventBus.getDefault().register(this);
         initToolbar();
@@ -104,11 +109,7 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
         initData();  // 获取文章列表数据为 App.articleList
 //        KLog.i("列表数目：" + App.articleList.size() + "  当前状态：" + App.StreamState);
         autoMarkReaded = WithPref.i().isScrollMark();
-
-//        initHeartbeat();
-//        if (WithPref.i().isAutoSync()) {
         maHandler.postDelayed(heartbeatTask, WithPref.i().getAutoSyncFrequency() * 60000);
-//        }
 
 //        if (savedInstanceState != null) {
 //            final int position = savedInstanceState.getInt("listItemFirstVisiblePosition");
@@ -118,6 +119,7 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
         if ("firstSetupStart".equals(intent.getAction())) {
             startSyncService(Api.SYNC_ALL);
         }
+        showAutoSwitchThemeSnackBar();
         super.onCreate(savedInstanceState);
     }
 
@@ -136,9 +138,8 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
             articleListAdapter.notifyDataSetChanged();
             KLog.e("通知articleList数据有变化");
         }
-        showAutoSwitchThemeSnackBar();
 //        tagCount = UnreadCountUtil.getUnreadCount(App.StreamId);
-        tagCount = App.articleList.size();
+//        tagCount = App.articleList.size();
 //        KLog.i("【onResume】" + App.StreamState + "---" + toolbar.getTitle() + "===" + App.StreamId);
     }
 
@@ -172,8 +173,8 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
             case Sync.ERROR:
                 swipeRefreshLayoutS.setRefreshing(false);
                 swipeRefreshLayoutS.setEnabled(true);
-                vToolbarHint.setText(String.valueOf(tagCount));
                 toolbar.setSubtitle(null);
+//                vToolbarHint.setText(String.valueOf(tagCount));
                 break;
             case Sync.DOING:
 //                KLog.e("接受的文字：" + sync.notice);
@@ -239,8 +240,6 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
         refreshIcon = findViewById(R.id.main_bottombar_refresh_articles);
     }
 
-
-    //    @OnClick(R.id.main_bottombar_search)
     public void clickSearchIcon(View view) {
         Intent intent = new Intent(MainActivity.this, SearchActivity.class);
         startActivityForResult(intent, 0);
@@ -298,7 +297,7 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
      * App.StreamId 至少包含 1 个状态： Reading-list
      * */
     protected void refreshData() { // 获取 App.articleList , 并且根据 App.articleList 的到未读数目
-        KLog.e("refreshData：" + App.StreamId + "  " + App.StreamState + " - " + App.StreamStatus + "   " + App.UserID);
+        KLog.e("refreshData：" + App.StreamId + "  " + " - " + App.StreamStatus + "   " + App.UserID);
         // 取消所有下载图片的任务，防止下载后去加载到imageview中
 //        imageLoader.cancelAllLoadTask();
 //        isFirstIn = true;
@@ -326,20 +325,16 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
     private void getArtData() {
         if (App.StreamId.startsWith("user/")) {
             if (App.StreamId.contains(Api.U_READING_LIST)) {
-//                if (App.StreamState.contains(Api.ART_STARED)) {
                 if (App.StreamStatus == Api.STARED) {
                     App.articleList = WithDB.i().getArtsStared();
-//                } else if (App.StreamState.contains(Api.ART_UNREAD)) {
                 } else if (App.StreamStatus == Api.UNREAD) {
                     App.articleList = WithDB.i().getArtsUnread();
                 } else {
                     App.articleList = WithDB.i().getArtsAll();
                 }
             } else if (App.StreamId.contains(Api.U_NO_LABEL)) {
-//                if (App.StreamState.contains(Api.ART_STARED)) {
                 if (App.StreamStatus == Api.STARED) {
                     App.articleList = WithDB.i().getArtsStaredNoTag();
-//                } else if (App.StreamState.contains(Api.ART_UNREAD)) {
                 } else if (App.StreamStatus == Api.UNREAD) {
                     App.articleList = WithDB.i().getArtsUnreadNoTag();
                 } else {
@@ -348,10 +343,8 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
             } else {
                 // TEST:  测试
                 Tag theTag = WithDB.i().getTag(App.StreamId);
-//                if (App.StreamState.contains(Api.ART_STARED)) {
                 if (App.StreamStatus == Api.STARED) {
                     App.articleList = WithDB.i().getArtsStaredInTag(theTag);
-//                } else if (App.StreamState.contains(Api.ART_UNREAD)) {
                 } else if (App.StreamStatus == Api.UNREAD) {
                     App.articleList = WithDB.i().getArtsUnreadInTag(theTag);
                 } else {
@@ -359,10 +352,8 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
                 }
             }
         } else if (App.StreamId.startsWith("feed/")) {
-//            if (App.StreamState.equals(Api.ART_STARED)) {
             if (App.StreamStatus == Api.STARED) {
                 App.articleList = WithDB.i().getArtsStaredInFeed(App.StreamId);
-//            } else if (App.StreamState.contains(Api.ART_UNREAD)) {
             } else if (App.StreamStatus == Api.UNREAD) {
                 App.articleList = WithDB.i().getArtsUnreadInFeed(App.StreamId);
             } else {
@@ -374,6 +365,7 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
     }
 
     private void getTagData() {
+        long time = System.currentTimeMillis();
         Tag rootTag = new Tag();
         Tag noLabelTag = new Tag();
         long userID = WithPref.i().getUseId();
@@ -391,8 +383,10 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
         List<Tag> tagListTemp = new ArrayList<>();
         tagListTemp.add(rootTag);
         tagListTemp.add(noLabelTag);
-        tagListTemp.addAll(WithDB.i().getTags());
+        tagListTemp.addAll(WithDB.i().getAllTag());
+
         App.i().updateTagList(tagListTemp);
+        KLog.e("加载tag耗时：" + (System.currentTimeMillis() - time));
     }
 
 
@@ -415,19 +409,12 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
         // 在setSupportActionBar(toolbar)之后调用toolbar.setTitle()的话。 在onCreate()中调用无效。在onStart()中调用无效。 在onResume()中调用有效。
         // toolbar.setTitle(App.StreamTitle);
         getSupportActionBar().setTitle(App.StreamTitle);
-        toolbar.setSubtitle(null);
+//        toolbar.setSubtitle(null);
 //        KLog.e("loadViewByData","此时StreamId为：" + App.StreamId +  "   此时 Title 为：" +  App.StreamTitle );
 
 //        tagCount = UnreadCountUtil.getUnreadCount(App.StreamId);
         tagCount = App.articleList.size();
         vToolbarHint.setText(String.valueOf(tagCount));
-    }
-
-
-
-    private void changeItemNum(int offset){
-//        tagCount = tagCount + offset;
-//        vToolbarHint.setText(String.valueOf( tagCount ));
     }
 
     public void showTagDialog(final Tag tag) {
@@ -599,8 +586,8 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
 
     public void onTagIconClicked1(View view) {
         getTagData();
-        tagListAdapter = new ExpandableListAdapterS(this, App.tagList, tagListView);
-        tagListView.setAdapter(tagListAdapter);
+//        tagListAdapter = new ExpandableListAdapterS(this, App.tagList, tagListView);
+//        tagListView.setAdapter(tagListAdapter);
         tagListAdapter.notifyDataSetChanged();
         tagBottomSheetDialog.show();
         KLog.e("tag按钮被点击");
@@ -702,7 +689,7 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
     private boolean autoMarkReaded = false;
     private int lastAutoMarkPos = -1;
 
-    private void showConfirmDialog(final int start, final int end, final MaterialDialog materialDialog) {
+    private void showConfirmDialog(final int start, final int end) {
         new AlertDialog.Builder(MainActivity.this)
                 .setMessage(R.string.main_dialog_confirm_mark_article_list)
                 .setPositiveButton("确认", new DialogInterface.OnClickListener() {
@@ -718,7 +705,6 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         dialog.dismiss();
-//                        materialDialog.dismiss();
                     }
                 })
                 .show();
@@ -756,27 +742,22 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
                         .adapter(adapter, new MaterialDialog.ListCallback() {
                             @Override
                             public void onSelection(MaterialDialog dialog, View itemView, int which, CharSequence text) {
-                                MarkListReadedAsyncTask changeReadedList = new MarkListReadedAsyncTask();
                                 Integer[] index = new Integer[2];
                                 switch (which) {
                                     case 0:
                                         index[0] = 0;
                                         index[1] = position + 1;
+                                        MarkListReadedAsyncTask changeReadedList = new MarkListReadedAsyncTask();
                                         changeReadedList.execute(index);
                                         break;
                                     case 1:
-                                        showConfirmDialog(position, App.articleList.size(), dialog);
+                                        showConfirmDialog(position, App.articleList.size());
                                         break;
                                     case 2:
                                         Article article = App.articleList.get(position);
-//                                        if (article.getReadState().equals(Api.ART_READED)) {
                                         if (article.getReadStatus() == Api.READED) {
                                             DataApi.i().markArticleUnread(article.getId(), null);
-//                                            DataApi.i().changeUnreadCount(article.getOriginStreamId(), 1);
-                                            changeItemNum(1);
                                         }
-//                                        article.setReadState(Api.ART_UNREADING);
-//                                        WithDB.i().saveArticle(article);
                                         // 方法2
                                         WithDB.i().setUnreading(article);
 
@@ -873,13 +854,11 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
             // 由于父 listview 被重载，onClick 事件也被重写了。无法直接使用 setOnItemClickListener
             @Override
             public void onClick(View view, int position) {
-                KLog.e("onClick" + position);
                 if (position == -1) {
                     return;
                 }
 
-                Intent intent = new Intent(MainActivity.this, ArticleActivity.class);
-
+                Intent intent = new Intent(MainActivity.this, ArticleActivity3.class);
 
 //                String[] articleIDs = new String[App.articleList.size()];
 //                for (int i=0, size = App.articleList.size(); i<size; i++){
@@ -895,7 +874,7 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
                 intent.putExtra("articleCount", App.articleList.size());
                 startActivityForResult(intent, 0);
                 overridePendingTransition(R.anim.in_from_bottom, R.anim.fade_out);
-                KLog.i("点击了" + articleID + "   " + position + "   " + articleID + "    " + App.articleList.size());
+                KLog.i("点击了" + articleID + "，位置：" + position + "，文章ID：" + articleID + "    " + App.articleList.size());
             }
 
             @Override
@@ -914,29 +893,17 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
 
             if (autoMarkReaded
                     && lastAutoMarkPos != firstVisibleItemPos
-//                    && App.articleList.get(firstVisibleItemPos).getReadState().equals(Api.ART_UNREAD)) {
                     && App.articleList.get(firstVisibleItemPos).getReadStatus() == Api.UNREAD) {
 
                 DataApi.i().markArticleReaded(App.articleList.get(firstVisibleItemPos).getId(), null);
                 // 方法2
                 WithDB.i().setReaded(App.articleList.get(firstVisibleItemPos));
                 lastAutoMarkPos = firstVisibleItemPos;
-                publishProgress(-1);
 //              KLog.e("标记已读：" + lastAutoMarkPos);
             }
 
             //返回结果
             return 0;
-        }
-
-        /**
-         * 特别赞一下这个多次参数的方法，特别方便
-         *
-         * @param progress
-         */
-        @Override
-        protected void onProgressUpdate(Integer... progress) {
-            changeItemNum(progress[0]);
         }
     }
 
@@ -950,21 +917,25 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
             endIndex = params[1];
             List<Article> articleList = new ArrayList<>(endIndex - startIndex);
             List<String> articleIDs = new ArrayList<>(endIndex - startIndex);
+            List<String> feedIDs = new ArrayList<>(endIndex - startIndex);
+            ArrayMap<String, Integer> feedIDMap = new ArrayMap<>(endIndex - startIndex);
 
-//            for (int i = startIndex; i < endIndex; i++) {
-//                if (App.articleList.get(i).getReadState().equals(Api.ART_UNREAD)) {
-//                    App.articleList.get(i).setReadState(Api.ART_READED);
-//                    articleList.add(App.articleList.get(i));
-//                    articleIDs.add(App.articleList.get(i).getId());
-////                    DataApi.i().changeUnreadCount(App.articleList.get(i).getOriginStreamId(), -1);
-//                }
-//            }
-
+//            for (int i = endIndex - 1; i >= startIndex; i--) {
+            Article article;
             for (int i = startIndex; i < endIndex; i++) {
-                if (App.articleList.get(i).getReadStatus() == Api.UNREAD) {
-                    App.articleList.get(i).setReadStatus(Api.READED);
-                    articleList.add(App.articleList.get(i));
-                    articleIDs.add(App.articleList.get(i).getId());
+                article = App.articleList.get(i);
+                if (article.getReadStatus() == Api.UNREAD) {
+                    article.setReadStatus(Api.READED);
+                    articleList.add(article);
+                    articleIDs.add(article.getId());
+                    feedIDs.add(article.getOriginStreamId());
+
+                    if (feedIDMap.containsKey(article.getOriginStreamId())) {
+                        feedIDMap.put(article.getOriginStreamId(), feedIDMap.get(article.getOriginStreamId()) + 1);
+                    } else {
+                        feedIDMap.put(article.getOriginStreamId(), 1);
+                    }
+//                    WithDB.i().setReaded(App.articleList.get(i));
 //                    DataApi.i().changeUnreadCount(App.articleList.get(i).getOriginStreamId(), -1);
                 }
             }
@@ -975,6 +946,13 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
             }
             DataApi.i().markArticleListReaded(articleIDs, null);
             WithDB.i().saveArticles(articleList);
+
+
+            List<Feed> feeds = WithDB.i().getFeeds(feedIDs);
+            for (Feed feed : feeds) {
+                feed.setUnreadCount(feed.getUnreadCount() - feedIDMap.get(feed.getId()));
+            }
+            WithDB.i().saveFeeds(feeds);
 
             //提交之后，会执行onProcessUpdate方法
             publishProgress(-articleIDs.size());
@@ -1010,7 +988,6 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
          */
         @Override
         protected void onProgressUpdate(Integer... progress) {
-            changeItemNum(progress[0]);
             articleListAdapter.notifyDataSetChanged();
             // 应该是去通知对应的那个 item 改变。
         }
@@ -1030,32 +1007,24 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
 
 
     private void toggleReadState(final Article article) {
-//        if (autoMarkReaded && article.getReadState().equals(Api.ART_UNREAD)) {
-//            WithDB.i().setUnreading(article);
-//        } else if (article.getReadState().equals(Api.ART_READED)) {
         if (autoMarkReaded && article.getReadStatus() == Api.UNREAD) {
             WithDB.i().setUnreading(article);
         } else if (article.getReadStatus() == Api.READED) {
             DataApi.i().markArticleUnread(article.getId(), null);
             WithDB.i().setUnreading(article);
-            changeItemNum( 1 );
         }else {
             DataApi.i().markArticleReaded(article.getId(), null);
             WithDB.i().setReaded(article);
-            changeItemNum( -1 );
         }
         articleListAdapter.notifyDataSetChanged();
     }
 
 
     private void toggleStarState(final Article article) {
-//        if (article.getStarState().equals(Api.ART_STARED)) {
-//            article.setStarState(Api.ART_UNSTAR);
         if (article.getStarStatus() == Api.STARED) {
             article.setStarStatus(Api.UNSTAR);
             DataApi.i().markArticleUnstar(article.getId(), null);
         }else {
-//            article.setStarState(Api.ART_STARED);
             article.setStarStatus(Api.STARED);
             DataApi.i().markArticleStared(article.getId(), null);
             article.setStarred(System.currentTimeMillis() / 1000);
@@ -1199,7 +1168,7 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
                     App.StreamStatus = Api.ALL;
                     toolbar.setNavigationIcon(R.drawable.state_all);
                 }
-                WithPref.i().setStreamState(App.StreamState);
+                WithPref.i().setStreamStatus(App.StreamStatus);
                 refreshData();
                 quickSettingDialog.dismiss();
             }
@@ -1209,6 +1178,11 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
 
     @OnClick(R.id.main_toolbar)
     public void clickToolbar(View view) {
+//        if(BuildConfig.DEBUG){
+//            Intent intent = new Intent(this,TestActivity.class);
+//            startActivity(intent);
+//            return;
+//        }
         if (maHandler.hasMessages(Api.MSG_DOUBLE_TAP)) {
             maHandler.removeMessages(Api.MSG_DOUBLE_TAP);
             articleListView.smoothScrollToPosition(0);

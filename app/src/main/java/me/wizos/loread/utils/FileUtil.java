@@ -10,8 +10,6 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.socks.library.KLog;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -196,9 +194,10 @@ public class FileUtil {
         String filePathTitle = dir + title;
         String html = StringUtil.getPageForSave(article, title);
 
-        String idInMD5 = StringUtil.str2MD5(article.getId());
+        String articleIdInMD5 = StringUtil.str2MD5(article.getId());
         save(filePathTitle + ".html", html);
-        moveDir(App.externalFilesDir + "/cache/" + idInMD5 + "/" + idInMD5 + "_files", filePathTitle + "_files");
+        moveDir(App.externalFilesDir + "/cache/" + articleIdInMD5 + "/" + articleIdInMD5 + "_files", filePathTitle + "_files");
+        moveDir(App.externalFilesDir + "/cache/" + articleIdInMD5 + "/original", filePathTitle + "_files");
     }
 
     public static String readFile(String filePath) {
@@ -227,8 +226,18 @@ public class FileUtil {
 
     public static String readCacheFilePath(String articleIdInMD5, int index, String originalUrl) {
         // 为了避免我自己来获取 FileNameExt 时，由于得到的结果是重复的而导致图片也获取到一致的。所以采用 base64 的方式加密 originalUrl，来保证唯一
-        String fileNameExt, filePath;
+        String fileNameExt, filePath, compressedFilePath, originalFilePath;
         fileNameExt = index + "-" + StringUtil.getFileNameExtByUrl(originalUrl);
+        compressedFilePath = App.externalFilesDir + "/cache/" + articleIdInMD5 + "/compressed/" + fileNameExt;
+        if (new File(compressedFilePath).exists()) {
+            return compressedFilePath;
+        }
+
+        originalFilePath = App.externalFilesDir + "/cache/" + articleIdInMD5 + "/original/" + fileNameExt;
+        if (new File(originalFilePath).exists()) {
+            return originalFilePath;
+        }
+
         filePath = App.externalFilesDir + "/cache/" + articleIdInMD5 + "/" + articleIdInMD5 + "_files/" + fileNameExt;
         if (new File(filePath).exists()) {
             return filePath;
@@ -261,52 +270,18 @@ public class FileUtil {
     }
 
 
-    /**
-     * 根据文件路径拷贝文件
-     *
-     * @param srcFile  源文件
-     * @param destPath 目标文件路径
-     * @return boolean 成功true、失败false
-     */
-    public static boolean copyFile(File srcFile, String destPath) {
-        return copyFile(srcFile, new File(destPath));
-    }
+//    /**
+//     * 根据文件路径拷贝文件
+//     *
+//     * @param srcFile  源文件
+//     * @param destPath 目标文件路径
+//     * @return boolean 成功true、失败false
+//     */
+//    public static boolean copyFile(File srcFile, String destPath) {
+//        return copyFile(srcFile, new File(destPath));
+//    }
 
-
-    /**
-     * 使用 FileChannels 来复制文件，效率最好，但是 Channel 经常会中途关闭，导致复制吃的图片文件不完整
-     *
-     * @throws IOException
-     */
-    public static void copy(File source, File dest) throws IOException {
-        if (!isExternalStorageWritable()) {
-            return;
-        }
-        if (!source.exists()) {
-            return;
-        }
-        if (!dest.getParentFile().exists()) {
-            dest.getParentFile().mkdirs();
-        }
-        FileChannel inputChannel = null;
-        FileChannel outputChannel = null;
-        try {
-            inputChannel = new FileInputStream(source).getChannel();
-            outputChannel = new FileOutputStream(dest).getChannel();
-            outputChannel.transferFrom(inputChannel, 0, inputChannel.size());
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            if (inputChannel != null) {
-                inputChannel.close();
-            }
-            if (outputChannel != null) {
-                outputChannel.close();
-            }
-        }
-    }
-
-    public static boolean copyFile(File srcFile, File destFile) {
+    private static boolean copyFile(File srcFile, File destFile) {
         boolean result = false;
         if (!isExternalStorageWritable()) {
             return false;
@@ -358,7 +333,8 @@ public class FileUtil {
         String suffix = "";
         if (fileName.contains(".")) {
             suffix = fileName.substring(fileName.lastIndexOf("."));
-        } else {
+        }
+        if (suffix.length() > 5) {
             suffix = getImageSuffix(srcFile);
         }
         File destFile = new File(loreadDir.getAbsolutePath() + File.separator + TimeUtil.getCurrentDate("yyyyMMdd_HHmmss") + suffix);
@@ -387,85 +363,6 @@ public class FileUtil {
         }
     }
 
-
-    // 保存图片到手机指定目录
-    public static void saveBitmap(String filePath, String fileName, byte[] bytes) {
-        // 判断SD卡是否存在，并且是否具有读写权限
-//        if (Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
-//        }
-        FileOutputStream fos = null;
-        try {
-            File imgDir = new File(filePath);
-            if (!imgDir.exists()) {
-                imgDir.mkdirs();
-            }
-            fileName = filePath + "/" + fileName;
-            fos = new FileOutputStream(fileName);
-            fos.write(bytes);
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            try {
-                if (fos != null) {
-                    fos.close();
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
-
-    /**
-     * 此方法在使用完InputStream后会关闭它。
-     *
-     * @param is 输入流
-     * @param filePath 文件路径
-     * @throws IOException
-     */
-    public static boolean saveFromStream( InputStream is, String filePath) throws IOException {
-        KLog.e("saveFromStream", "当前线程为：" + Thread.currentThread().getId() + "--" + Thread.currentThread().getName() + "==" + filePath);
-        File file = new File(filePath);
-        BufferedInputStream bis = new BufferedInputStream(is);
-        FileOutputStream os = null;
-        BufferedOutputStream bos = null;  // BufferedReader buffered = null.，故此时之关闭了in
-        // TODO 保存文件，会遇到存储空间满的问题，如果批量保存文件，会一直尝试保存
-        try {
-            File dir = file.getParentFile();
-            dir.mkdirs();
-            byte[] buff = new byte[8192];
-            /*
-             * 这个取决于硬盘的扇区大小是512byte/sec，8192/512 = 16，表明写入了16扇区。write 在底层是调用scsi write （10)来写入数据的。
-             这个可能协议有关，系统做了优化。所以你在写入数据的时候最好是512字节的倍数。
-             */
-            int size = 0;
-            os = new FileOutputStream( file );
-            bos = new BufferedOutputStream(os);
-            while ((size = bis.read(buff)) != -1) {  // NullPointerException: Attempt to invoke virtual method 'okio.Segment okio.Segment.push(okio.Segment)' on a null object reference
-                bos.write(buff, 0, size);
-            }
-            bos.flush();
-            return true;
-        } finally {
-            // 关闭通道使用close()方法，调用close()方法根据操作系统的网络实现不同可能会出现阻塞，可以在任何时候多次调用close()；若出现阻塞，第一次调用close()后会一直等待；
-            // 若第一次调用close()成功关闭后，之后再调用close()会立即返回，不会执行任何操作。
-            if (is != null) {
-                is.close();
-            }
-            if (bis != null) {
-                bis.close();
-            }
-            if (bos != null) {
-                bos.close();
-            }
-            if (os != null) {
-                os.close();
-            }
-//            return false;
-        }
-    }
-
-
     /**
      * @param dir 目录名称
      * @return 带有完整的相对路径的 path
@@ -480,41 +377,47 @@ public class FileUtil {
     }
 
 
-    public static String getImageSuffix(File imageFile) {
-        try {
-            FileInputStream in = new FileInputStream(imageFile);
-//            byte[] b = getBytes(in, 10);
-            byte[] b = new byte[10];
-            in.read(b, 0, 10); //读取文件中的内容到b[]数组,//读取 nums 个字节赋值给 b
-            byte b0 = b[0];
-            byte b1 = b[1];
-            byte b2 = b[2];
-            byte b3 = b[3];
-            byte b6 = b[6];
-            byte b7 = b[7];
-            byte b8 = b[8];
-            byte b9 = b[9];
-            in.close();
-            if (b0 == (byte) 'G' && b1 == (byte) 'I' && b2 == (byte) 'F') {
-                return ".gif";
-            } else if (b1 == (byte) 'P' && b2 == (byte) 'N' && b3 == (byte) 'G') {
-                return ".png";
-            } else if (b6 == (byte) 'J' && b7 == (byte) 'F' && b8 == (byte) 'I' && b9 == (byte) 'F') {
-                return ".jpg";
-            } else if (b6 == (byte) 'E' && b7 == (byte) 'x' && b8 == (byte) 'i' && b9 == (byte) 'f') {
-                return ".jpg";
+    public static String guessDownloadFileName(String url, String contentDisposition, String mimeType) {
+        // 处理会把 epub 文件，识别为 bin 文件的 bug：https://blog.csdn.net/imesong/article/details/45568697
+        String fileNameByGuess = URLUtil.guessFileName(url, contentDisposition, mimeType);
+        if ("application/octet-stream".equals(mimeType)) {
+            if (TextUtils.isEmpty(contentDisposition)) {
+                // 从路径中获取
+                fileNameByGuess = url.substring(url.lastIndexOf("/") + 1);
             } else {
-                return ".jpg";
+                fileNameByGuess = contentDisposition.substring(contentDisposition.indexOf("filename=") + 9);
             }
-        } catch (Exception e) {
+//            int index = contentDisposition.indexOf("filename=");
+//            if( index != -1 ){
+//                fileNameByGuess = contentDisposition.substring( index + 9 );
+//            }
+        }
+        // 处理 url 中包含乱码中文的问题
+        try {
+            fileNameByGuess = URLDecoder.decode(fileNameByGuess, "UTF-8");
+        } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
-            return "";
+        }
+
+        return fileNameByGuess;
+    }
+
+
+    private static String getImageSuffix(File imageFile) {
+        try {
+            return getImageSuffix(new FileInputStream(imageFile));
+        } catch (FileNotFoundException e) {
+            return ".jpg";
         }
     }
 
-    public static String getImageSuffix(InputStream in) {
+    private static String getImageSuffix(InputStream in) {
         try {
-            byte[] b = getBytes(in, 10);
+//            in.skip(9);//跳过前9个字节
+//            byte[] b = getBytes(in, 10);
+            byte[] b = new byte[10];
+            in.read(b, 0, 10); //读取文件中的内容到b[]数组,//读取 nums 个字节赋值给 b
+            in.close();
             byte b0 = b[0];
             byte b1 = b[1];
             byte b2 = b[2];
@@ -539,23 +442,8 @@ public class FileUtil {
         }
     }
 
-    private static byte[] getBytes(InputStream in, int nums) {
-        byte b[] = new byte[nums];     //创建合适文件大小的数组
-        try {
-//            in.skip(9);//跳过前9个字节
-            int read = in.read(b, 0, nums); //读取文件中的内容到b[]数组,//读取 nums 个字节赋值给 b
-//            in.close();
-            KLog.e("read =" + read);
-            KLog.e("b =" + b[0]);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return b;
-    }
 
-
-
-    public static String reviseSrc(String url){
+    public static String guessImageSuffix(String url) {
         int typeIndex = url.lastIndexOf(".");
         String fileExt = url.substring(typeIndex, url.length());
         if(fileExt.contains(".jpg")){
@@ -572,36 +460,9 @@ public class FileUtil {
     }
 
 
-    public static String guessFileName(String url, String contentDisposition, String mimeType) {
-        // 处理会把 epub 文件，识别为 bin 文件的 bug：https://blog.csdn.net/imesong/article/details/45568697
-        String fileNameByGuess = URLUtil.guessFileName(url, contentDisposition, mimeType);
-        if ("application/octet-stream".equals(mimeType)) {
-            if (TextUtils.isEmpty(contentDisposition)) {
-                // 从路径中获取
-                fileNameByGuess = url.substring(url.lastIndexOf("/") + 1);
-            } else {
-                fileNameByGuess = contentDisposition.substring(contentDisposition.indexOf("filename=") + 9);
-            }
-
-//            int index = contentDisposition.indexOf("filename=");
-//            if( index != -1 ){
-//                fileNameByGuess = contentDisposition.substring( index + 9 );
-//            }
-        }
-        // 处理 url 中包含乱码中文的问题
-        try {
-            fileNameByGuess = URLDecoder.decode(fileNameByGuess, "UTF-8");
-        } catch (UnsupportedEncodingException e){
-            e.printStackTrace();
-        }
-
-        return fileNameByGuess;
-    }
-
-
     public static void clear(Context context) {
         List<Article> articles = WithDB.i().getArtsAllNoOrder();
-        Article article = new Article();
+        Article article;
         ArrayMap<String, Integer> idsMap = new ArrayMap<>(articles.size());
         for (int i = 0, size = articles.size(); i < size; i++) {
             article = articles.get(i);
@@ -611,8 +472,7 @@ public class FileUtil {
         File dir = new File(context.getExternalFilesDir(null) + "/cache/");
         KLog.e("数量：" + dir.listFiles().length);
         File[] files = dir.listFiles();
-        File file = null;
-        String idInMD5 = "";
+        File file;
         for (int i = 0, size = files.length; i < size; i++) {
             file = files[i];
             if (idsMap.get(file.getName()) != null) {
@@ -628,5 +488,84 @@ public class FileUtil {
             }
         }
     }
+
+
+//    // 保存图片到手机指定目录
+//    public static void saveBitmap(String filePath, String fileName, byte[] bytes) {
+//        // 判断SD卡是否存在，并且是否具有读写权限
+////        if (Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
+////        }
+//        FileOutputStream fos = null;
+//        try {
+//            File imgDir = new File(filePath);
+//            if (!imgDir.exists()) {
+//                imgDir.mkdirs();
+//            }
+//            fileName = filePath + "/" + fileName;
+//            fos = new FileOutputStream(fileName);
+//            fos.write(bytes);
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        } finally {
+//            try {
+//                if (fos != null) {
+//                    fos.close();
+//                }
+//            } catch (IOException e) {
+//                e.printStackTrace();
+//            }
+//        }
+//    }
+//
+//
+//    /**
+//     * 此方法在使用完InputStream后会关闭它。
+//     *
+//     * @param is 输入流
+//     * @param filePath 文件路径
+//     * @throws IOException
+//     */
+//    public static boolean saveFromStream( InputStream is, String filePath) throws IOException {
+//        KLog.e("saveFromStream", "当前线程为：" + Thread.currentThread().getId() + "--" + Thread.currentThread().getName() + "==" + filePath);
+//        File file = new File(filePath);
+//        BufferedInputStream bis = new BufferedInputStream(is);
+//        FileOutputStream os = null;
+//        BufferedOutputStream bos = null;  // BufferedReader buffered = null.，故此时之关闭了in
+//        // TODO 保存文件，会遇到存储空间满的问题，如果批量保存文件，会一直尝试保存
+//        try {
+//            File dir = file.getParentFile();
+//            dir.mkdirs();
+//            byte[] buff = new byte[8192];
+//            /*
+//             * 这个取决于硬盘的扇区大小是512byte/sec，8192/512 = 16，表明写入了16扇区。write 在底层是调用scsi write （10)来写入数据的。
+//             这个可能协议有关，系统做了优化。所以你在写入数据的时候最好是512字节的倍数。
+//             */
+//            int size = 0;
+//            os = new FileOutputStream( file );
+//            bos = new BufferedOutputStream(os);
+//            while ((size = bis.read(buff)) != -1) {  // NullPointerException: Attempt to invoke virtual method 'okio.Segment okio.Segment.push(okio.Segment)' on a null object reference
+//                bos.write(buff, 0, size);
+//            }
+//            bos.flush();
+//            return true;
+//        } finally {
+//            // 关闭通道使用close()方法，调用close()方法根据操作系统的网络实现不同可能会出现阻塞，可以在任何时候多次调用close()；若出现阻塞，第一次调用close()后会一直等待；
+//            // 若第一次调用close()成功关闭后，之后再调用close()会立即返回，不会执行任何操作。
+//            if (is != null) {
+//                is.close();
+//            }
+//            if (bis != null) {
+//                bis.close();
+//            }
+//            if (bos != null) {
+//                bos.close();
+//            }
+//            if (os != null) {
+//                os.close();
+//            }
+////            return false;
+//        }
+//    }
+
 
 }

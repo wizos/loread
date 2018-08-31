@@ -203,6 +203,8 @@ public class ExpandableListAdapterS extends BaseExpandableListAdapter implements
             groupViewHolder.groupPos = groupPos;
             groupViewHolder.title.setText(App.i().getString(R.string.item_error));
 //            KLog.e("父分类：" + theTag.getTitle() + "--" + theTag.getUnreadcount());
+            KLog.e("出错了");
+            KLog.e(e);
         }
         return convertView;
     }
@@ -221,15 +223,10 @@ public class ExpandableListAdapterS extends BaseExpandableListAdapter implements
             convertView.setTag(childViewHolder);
         } else {
             childViewHolder = (ItemViewHolder) convertView.getTag();
-//            queryTask = map.get(childViewHolder);
-//            if( queryTask!=null  ){
-//                queryTask.cancel(true);
-//            }
         }
 
         try {
             final Feed feed = tags.get(groupPos).getFeeds().get(childPos);
-//            final Feed feed =  WithDB.i().getFeed();
             childViewHolder.id = feed.getId();
             childViewHolder.type = ItemViewHolder.TYPE_CHILD;
             childViewHolder.groupPos = groupPos;
@@ -239,45 +236,14 @@ public class ExpandableListAdapterS extends BaseExpandableListAdapter implements
             Integer count;
             count = feed.getUnreadCount();
             childViewHolder.count.setText(String.valueOf(count));
-
-
-//            if (App.unreadCountMap.containsKey(feed.getId())) {
-//                count = App.unreadCountMap.get(feed.getId());
-////                KLog.e("【getChildView】复用" + feed.getId() + " -- " + feed.getTitle());
-//            } else {
-//                count = WithDB.i().getUnreadArtsCountByFeed(feed.getId());
-////                App.unreadCountMap.put(feed.getId(), count);
-//                KLog.e("数据库，【getChildView】初始" + feed.getId() + " -- " + feed.getTitle() + "  数量：" + count);
-//            }
-//            childViewHolder.count.setText(String.valueOf(count));
-
             childViewHolder.count.setVisibility(count > 0 ? View.VISIBLE : View.INVISIBLE);
-
-            // 方法2
-//            childViewHolder.count.setVisibility(View.INVISIBLE);
-//            queryTask = new QueryTask(this,childViewHolder);
-//            queryTask.execute(feed.getId());
-//            map.put(childViewHolder,queryTask );
-
-            // 方法3
-//            WithDB.i().query2(feed.getId(), new DBInterface.Query() {
-//                @Override
-//                public void onQuerySuccess(String id, int entries) {
-//                    if( !childViewHolder.id.equals(id) ){
-//                        KLog.e(id + "获取到的错乱了");
-//                        return;
-//                    }
-//                    KLog.e(id + "获取正常的：" + entries);
-//                    childViewHolder.count.setText(String.valueOf(entries));
-//                    childViewHolder.count.setVisibility( entries > 0 ? View.VISIBLE : View.INVISIBLE );
-//                }
-//            });
         } catch (RuntimeException e) {
             childViewHolder.id = "";
             childViewHolder.type = ItemViewHolder.TYPE_CHILD;
             childViewHolder.groupPos = groupPos;
             childViewHolder.childPos = childPos;
             childViewHolder.title.setText(App.i().getString(R.string.item_error));
+            KLog.e("出错了");
             KLog.e(e);
         }
         return convertView;

@@ -478,8 +478,7 @@ public class Extractor {
 
     /*输入Jsoup的Document，获取正文文本*/
     public static String getContentByDoc(String url, Document doc) { // throws Exception
-        Extractor ce = new Extractor(doc);
-        Element newDoc = ce.getContentElement();
+        Element newDoc = new Extractor(doc).getContentElement();
         if (newDoc == null) {
             return "";
         }
@@ -488,7 +487,7 @@ public class Extractor {
         return newDoc.html();
     }
 
-    public static void saveSiteRule(String url, String cssSelector) {
+    private static void saveSiteRule(String url, String cssSelector) {
         Map<String, List<Object>> ruleDict = new ArrayMap<>();
         ArrayList<Object> body = new ArrayList<>();
         body.add(cssSelector);
@@ -509,7 +508,7 @@ public class Extractor {
         }
     }
 
-    public static String getContentByRule(Document document, Map<String, List<Object>> ruleDict) { // throws Exception
+    private static String getContentByRule(Document document, Map<String, List<Object>> ruleDict) { // throws Exception
         Elements elements = document.getAllElements();
         Elements temp = new Elements();
         List<Object> commandValues;

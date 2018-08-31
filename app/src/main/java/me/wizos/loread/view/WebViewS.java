@@ -4,7 +4,6 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.ViewParent;
 import android.webkit.CookieManager;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
@@ -27,7 +26,7 @@ public class WebViewS extends NestedScrollWebView {
 
     @SuppressLint("NewApi")
     public WebViewS(Context context) {
-        // 传入 application context 来防止 activity 引用被滥用。
+        // 传入 application activity 来防止 activity 引用被滥用。
         // 创建 WebView 传的是 Application ， Application 本身是无法弹 Dialog 的 。 所以只能无反应 ！
         // 这个问题解决方案只要你创建 WebView 时候传入 Activity ， 或者 自己实现 onJsAlert 方法即可。
 
@@ -60,10 +59,10 @@ public class WebViewS extends NestedScrollWebView {
                         Tool.show("长按地图");
                         break;
                     case WebView.HitTestResult.SRC_ANCHOR_TYPE: // 超链接
-                        Tool.show("长按超链接");
+                        Tool.show("长按超链接：" + result.getExtra());
                         break;
-                    case WebView.HitTestResult.SRC_IMAGE_ANCHOR_TYPE:
-                        Tool.show("长按 SRC_IMAGE_ANCHOR_TYPE ");
+                    case WebView.HitTestResult.SRC_IMAGE_ANCHOR_TYPE: // 一个SRC_IMAGE_ANCHOR_TYPE类型表明了一个拥有图片为子对象的超链接。
+                        Tool.show("长按图片：" + result.getExtra());
                         break;
                     case WebView.HitTestResult.IMAGE_TYPE: // 处理长按图片的菜单项
                         // 获取图片的路径
@@ -110,26 +109,27 @@ public class WebViewS extends NestedScrollWebView {
         WebSettings webSettings = this.getSettings();
         webSettings.setJavaScriptEnabled(true);
 
-
+        // 设置自适应屏幕，两者合用
         // 设置使用 宽 的 Viewpoint,默认是false
         // Android browser以及chrome for Android的设置是`true`，而WebView的默认设置是`false`
         // 如果设置为`true`,那么网页的可用宽度为`980px`,并且可以通过 meta data来设置，如果设置为`false`,那么可用区域和WebView的显示区域有关.
         // 设置此属性，可任意比例缩放
         webSettings.setUseWideViewPort(true);
-        // 缩放至屏幕的大小，如果webview内容宽度大于显示区域的宽度,那么将内容缩小,以适应显示区域的宽度, 默认是false
+        // 缩放至屏幕的大小：如果webview内容宽度大于显示区域的宽度,那么将内容缩小,以适应显示区域的宽度, 默认是false
         webSettings.setLoadWithOverviewMode(true);
+
         webSettings.setTextZoom(100);
         // 设置最小的字号，默认为8
         webSettings.setMinimumFontSize(10);
         // 设置最小的本地字号，默认为8
         webSettings.setMinimumLogicalFontSize(10);
 
-        // 设置可以支持缩放
-        webSettings.setSupportZoom(true);
-        // 默认的缩放控制器
-        webSettings.setBuiltInZoomControls(true);
-        // 默认的+/-缩放控制
-        webSettings.setDisplayZoomControls(false);
+        //缩放操作
+        webSettings.setSupportZoom(true); //支持缩放，默认为true。是下面那个的前提。
+        webSettings.setBuiltInZoomControls(true); //设置内置的缩放控件。若为false，则该WebView不可缩放
+        webSettings.setDisplayZoomControls(false); //隐藏原生的缩放控件
+
+
         webSettings.setDefaultTextEncodingName("UTF-8");
         // NARROW_COLUMNS 适应内容大小 ， SINGLE_COLUMN 自适应屏幕
         webSettings.setLayoutAlgorithm(WebSettings.LayoutAlgorithm.NORMAL);
@@ -161,13 +161,6 @@ public class WebViewS extends NestedScrollWebView {
 
         //根据cache-control获取数据。
         webSettings.setCacheMode(WebSettings.LOAD_DEFAULT);
-//        if (NetworkUtil.THE_NETWORK == NetworkUtil.NETWORK_NONE) {
-//            //没网，则从本地获取，即离线加载
-//            webSettings.setCacheMode(WebSettings.LOAD_CACHE_ELSE_NETWORK);
-//        } else {
-//            //根据cache-control获取数据。
-//            webSettings.setCacheMode(WebSettings.LOAD_DEFAULT);
-//        }
 
         webSettings.setMediaPlaybackRequiresUserGesture(true);
 
@@ -175,8 +168,9 @@ public class WebViewS extends NestedScrollWebView {
         instance.setAcceptCookie(true);
         instance.setAcceptThirdPartyCookies(this, true);
 
-//        setLayerType(View.LAYER_TYPE_SOFTWARE,null);//开启软件加速
-        setLayerType(View.LAYER_TYPE_HARDWARE, null);//开启硬件加速
+
+//        setLayerType(View.LAYER_TYPE_SOFTWARE, null);//开启软件加速（在我的MX5上，滑动时会卡顿）
+//        setLayerType(View.LAYER_TYPE_HARDWARE, null);//开启硬件加速
 
         // 将图片下载阻塞，然后在浏览器的OnPageFinished事件中设置webView.getSettings().setBlockNetworkImage(false); 通过图片的延迟载入，让网页能更快地显示。
         webSettings.setBlockNetworkImage(true);
@@ -185,10 +179,8 @@ public class WebViewS extends NestedScrollWebView {
 //        webSettings.setSupportMultipleWindows(true);
 //        webSettings.setGeolocationEnabled(true);
 //        webSettings.setAppCacheMaxSize(Long.MAX_VALUE);
-//        webView.setLayerType(View.LAYER_TYPE_HARDWARE, null); // 硬件加速
 //        webSettings.setDatabaseEnabled(true); // 支持javascript读写db
 //        webSettings.setPageCacheCapacity(IX5WebSettings.DEFAULT_CACHE_CAPACITY);
-//        webSettings.setCacheMode(WebSettings.LOAD_DEFAULT);
 //        webSettings.setPluginState(WebSettings.PluginState.ON_DEMAND);
         // this.getSettingsExtension().setPageCacheCapacity(IX5WebSettings.DEFAULT_CACHE_CAPACITY);//extension
 //        this.evaluateJavascript();//  Android 4.4之后使用evaluateJavascript调用有返回值的JS方法
@@ -202,22 +194,31 @@ public class WebViewS extends NestedScrollWebView {
         // 在关闭了Activity时，如果Webview的音乐或视频，还在播放。就必须销毁Webview。
         // 但注意：webview调用destory时，仍绑定在Activity上，这是由于webview构建时传入了Activity对象。
         // 因此需要先从父容器中移除webview，然后再销毁webview。
+
+//        作者：听话哥
+//        链接：https://www.jianshu.com/p/9293505c7f71
+//        如果你在调用webview.destory();的时候，如果webview里面还有别的线程在操作，就会导致当前这个webview为空。这时候我们需要结束相应线程。例如我们项目中有一个广告拦截是通过在
+//        public void onPageFinished(final WebView view, String url)
+//        里面启用一个runnable去执行一串的js脚本，如果用户在你脚本没执行完成的时候就关闭了当前界面，系统就会抛出空指针异常。这时候就需要通过去onPageFinished获取webview对象
+
         try {
-            ViewParent parent = this.getParent();
-            if (parent != null) {
-                ((ViewGroup) parent).removeView(this);
-            }
-            stopLoading();
             // 退出时调用此方法，移除绑定的服务，否则某些特定系统会报错
             getSettings().setJavaScriptEnabled(false);
+            stopLoading();
+            onPause();
             clearCache(true);
             clearHistory();
+//            WebStorage.getInstance().deleteAllData();
+            destroyDrawingCache();
+            ViewGroup parent = (ViewGroup) this.getParent();
+            if (parent != null) {
+                parent.removeView(this);
+            }
             removeAllViews();
         } catch (Exception e) {
             KLog.e("报错");
             e.printStackTrace();
         }
-
         super.destroy();
     }
 

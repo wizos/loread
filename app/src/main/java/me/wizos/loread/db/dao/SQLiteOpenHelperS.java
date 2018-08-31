@@ -41,16 +41,19 @@ public class SQLiteOpenHelperS extends DaoMaster.OpenHelper {
     private void createViewsAndTriggers(SQLiteDatabase db) {
         String CREATE_COUNT_VIEW =
                 "CREATE TEMP VIEW IF NOT EXISTS FEED_UNREAD_COUNT" +
-//                        "  AS SELECT " + FeedDao.Properties.Id.columnName + "," + FeedDao.Properties.Title.columnName + "," + FeedDao.Properties.Url.columnName + "," + FeedDao.Properties.Categoryid.columnName + ",UNREADCOUNT" +
                         "  AS SELECT ID,TITLE,CATEGORYID,CATEGORYLABEL,SORTID,FIRSTITEMMSEC,URL,HTMLURL,ICONURL,OPEN_MODE,NEWEST_ITEM_TIMESTAMP_USEC,UNREADCOUNT" +
-                        "  FROM " + FeedDao.TABLENAME +
-                        "  LEFT JOIN (SELECT COUNT(1) AS UNREADCOUNT, " + ArticleDao.Properties.OriginStreamId.columnName +
-                        "  FROM " + ArticleDao.TABLENAME +
-//                        "  WHERE " + ArticleDao.Properties.ReadState.columnName + " != '" + Api.ART_READED + "'" +
-                        "  WHERE " + ArticleDao.Properties.ReadStatus.columnName + " != " + Api.READED +
-                        "  GROUP BY " + ArticleDao.Properties.OriginStreamId.columnName + " )" +
-                        "  ON " + FeedDao.Properties.Id.columnName + " = " + ArticleDao.Properties.OriginStreamId.columnName;
+                        "  FROM FEED" +
+                        "  LEFT JOIN (SELECT COUNT(1) AS UNREADCOUNT, ORIGIN_STREAM_ID" +
+                        "  FROM ARTICLE WHERE READ_STATUS != " + Api.READED + " GROUP BY ORIGIN_STREAM_ID)" +
+                        "  ON ID = ORIGIN_STREAM_ID";
         db.execSQL(CREATE_COUNT_VIEW);
+
+
+        String createTagUnreadCountView =
+                "CREATE TEMP VIEW IF NOT EXISTS TAG_UNREAD_COUNT" +
+                        "  AS SELECT ID,TITLE,SORTID,NEWEST_ITEM_TIMESTAMP_USEC,UNREADCOUNT FROM TAG LEFT JOIN (SELECT CATEGORYID,SUM(UNREAD_COUNT) AS UNREADCOUNT FROM FEED GROUP BY CATEGORYID )  ON ID = CATEGORYID";
+        KLog.e("创建零食视图：" + createTagUnreadCountView);
+        db.execSQL(createTagUnreadCountView);
 
         String MARK_READ_FEED =
                 "    CREATE TEMP TRIGGER IF NOT EXISTS MARK_READ_FEED" +

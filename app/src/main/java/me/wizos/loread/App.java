@@ -2,7 +2,8 @@ package me.wizos.loread;
 
 import android.app.Application;
 import android.content.Intent;
-import android.content.MutableContextWrapper;
+import android.os.AsyncTask;
+import android.webkit.WebView;
 
 import com.bumptech.glide.Glide;
 import com.lzy.okgo.OkGo;
@@ -16,7 +17,9 @@ import org.greenrobot.eventbus.EventBus;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import me.wizos.loread.activity.SplashActivity;
 import me.wizos.loread.data.WithDB;
@@ -33,7 +36,6 @@ import me.wizos.loread.utils.FileUtil;
 import me.wizos.loread.utils.NetworkUtil;
 import me.wizos.loread.utils.TimeUtil;
 import me.wizos.loread.utils.Tool;
-import me.wizos.loread.view.WebViewS;
 
 
 /**
@@ -55,7 +57,7 @@ public class App extends Application implements Thread.UncaughtExceptionHandler 
     public static long UserID;
     public static String StreamId;
     public static String StreamTitle;
-    public static String StreamState;
+    //    public static String StreamState;
     public static int StreamStatus;
     // 这个只是从 Read 属性的4个类型(Readed, UnRead, UnReading, All), Star 属性的3个类型(Stared, UnStar, All)中，生硬的抽出 UnRead(含UnReading), Stared, All 3个快捷状态，供用户在主页面切换时使用
     // 由于根据 StreamId 来获取文章，可从2个属性( Categories[针对Tag], OriginStreamId[针对Feed] )上，共4个变化上（All, Tag, NoTag, Feed）来获取文章。
@@ -63,7 +65,7 @@ public class App extends Application implements Thread.UncaughtExceptionHandler 
     // 所以文章列表页会有6种组合：某个 Categories 内的 UnRead[含UnReading], Stared, All。某个 OriginStreamId 内的 UnRead[含UnReading], Stared, All。
     // 所有定下来去获取文章的函数也有6个：getArtsUnreadInTag(), getArtsStaredInTag(), getArtsAllInTag(),getUnreadArtsInFeed(), getStaredArtsInFeed(), getAllArtsInFeed()
 
-    public static List<Article> articleList; // = new ArrayList<>()
+    public static List<Article> articleList;
     public static List<Tag> tagList = new ArrayList<>();
 
     public boolean isSyncing = false;
@@ -71,61 +73,61 @@ public class App extends Application implements Thread.UncaughtExceptionHandler 
     public static String cacheRelativePath, boxRelativePath, storeRelativePath;
     public static String externalFilesDir;
     public static String webViewBaseUrl;
+    public LinkedHashMap<String, Integer> articleProgress = new LinkedHashMap<String, Integer>() {
+        @Override
+        protected boolean removeEldestEntry(Map.Entry<String, Integer> eldest) {
+            return size() > 50;
+        }
+    };
 
     private static DaoSession daoSession;
 
     public static App i() {
         return instance;
     }
-
-
-    /**
-     * 首次打开 ArticleActivity 时，将生成的 WebView 缓存在这里，从而再次打开 ArticleActivity 时，加快文章的渲染速度，效果明显。
-     */
-//    public List<WebViewS> mWebViewCaches = new ArrayList<>();
+//    public WebViewS articleWebView;
 
     @Override
     public void onCreate() {
         super.onCreate();
         instance = this;
         getDaoSession();
-
-        // 初始化网络框架
-        OkGo.getInstance().init(this);
-        // 初始化网络状态
-        NetworkUtil.THE_NETWORK = NetworkUtil.getNetWorkState();
-
         initVar();
         initAutoToggleTheme();
-        initLogAndCrash();
 
-        initLeakCanary();
+        // 【基础统计API】由于其内部会调用 Looper.prepare() ，不能放在子线程中
+        StatService.registerActivityLifecycleCallbacks(this);
+        // 【提前初始化 WebView 内核】由于其内部会调用 Looper ，不能放在子线程中
+        // 链接：https://www.jianshu.com/p/fc7909e24178
+        // 经过实际测试，在反复New和销毁WebView时，采用Application要比采用Activity的context要稳定地少用20~30M左右的内存。
+        // 虽然他们的内存都维持在一个稳定的消耗水平，但总体看来，Application要比Activity少那么一点。
+        // 但是采用Application会影响，在 webview 中打开对话框
+        new WebView(this).destroy();
+//        articleWebView = new WebViewS(new MutableContextWrapper(this));
 
-        Thread.setDefaultUncaughtExceptionHandler(this);
+        AsyncTask.SERIAL_EXECUTOR.execute(new Runnable() {
+            @Override
+            public void run() {
+                // 初始化网络框架
+                OkGo.getInstance().init(instance);
+                OkGo.getInstance().getOkHttpClient().dispatcher().setMaxRequestsPerHost(3);
+                OkGo.getInstance().getOkHttpClient().dispatcher().setMaxRequests(3);
+                // 初始化网络状态
+                NetworkUtil.THE_NETWORK = NetworkUtil.getNetWorkState();
+                // 监听子线程的报错
+                Thread.setDefaultUncaughtExceptionHandler(instance);
+                // 初始化统计&监控服务
+                initLogAndCrash();
+//                initLeakCanary();
 
-
-        if (Tool.isMainProcess(this)) {
-            // 提前初始化
-            WithDB.i();
-            initApiConfig();
-            initWebView();
-            InoApi.i().initAuthHeaders();
-//            WithDB.i().coverSaveFeeds(WithDB.i().getUnreadArtsCountByFeed3());
-        }
-
-
-
-//        FileUtil.clear(this);
-        // 使用handler不断的发送延时消息可以实现循环监听，内存占用也不大，https://www.cnblogs.com/benhero/p/4521727.html
-//        JobManager.create(this).addJobCreator(new JobCreateRouter());
-//        JobManager.instance().cancelAllForTag("job_sync");
-        /*
-         * 当我们在 debug 的时候，往往会把间隔时间调短从而可以马上看到效果。
-         * 但是在 Android N 中，规定了定时任务间隔最少为 15 分钟，如果小于 15 分钟会得到一个错误：intervalMs is out of range
-         * 这时，可以调用 JobConfig 的 setAllowSmallerIntervalsForMarshmallow(true) 方法在 debug 模式下避免这个问题。
-         * 但在正式环境下一定要注意间隔时间设置为 15 分钟以上。
-         */
-//        JobConfig.setAllowSmallerIntervalsForMarshmallow(true);
+                if (Tool.isMainProcess(instance)) {
+                    // 提前初始化
+                    WithDB.i();
+                    initApiConfig();
+                    InoApi.i().initAuthHeaders();
+                }
+            }
+        });
     }
 
     @Override
@@ -139,23 +141,6 @@ public class App extends Application implements Thread.UncaughtExceptionHandler 
     }
 
 
-    private void initWebView() {
-        // 链接：https://www.jianshu.com/p/fc7909e24178
-        // 第一次打开 Web 页面 ， 使用 WebView 加载页面的时候特别慢 ，第二次打开就能明显的感觉到速度有提升 ，为什么 ？
-        // 是因为在你第一次加载页面的时候 WebView 内核并没有初始化 ， 所以在第一次加载页面的时候需要耗时去初始化 WebView 内核 。
-        // 提前初始化 WebView 内核 ，例如如下把它放到了 Application 里面去初始化 , 在页面里可以直接使用该 WebView
-        // 但是这里会影响，从 webview 中打开对话框
-//        new WebViewS(new MutableContextWrapper(this)).destroy();
-        //
-        // 经过我的实际测试，在反复New和销毁WebView时，采用Application要比采用Activity的context要稳定地少用20~30M左右的内存。
-        // 虽然他们的内存都维持在一个稳定的消耗水平，但总体看来，Application要比Activity少那么一点。
-
-        new WebViewS(new MutableContextWrapper(this)).destroy();
-//        mWebViewCaches.add(new WebViewS(new MutableContextWrapper(this)));
-    }
-
-
-
 
     /**
      * 程序在内存清理的时候执行
@@ -163,10 +148,12 @@ public class App extends Application implements Thread.UncaughtExceptionHandler 
     @Override
     public void onTrimMemory(int level) {
         super.onTrimMemory(level);
+        KLog.e("内存清理");
         if (level == TRIM_MEMORY_UI_HIDDEN) {
             Glide.get(this).clearMemory();
         }
         Glide.get(this).trimMemory(level);
+        System.gc();
     }
 
     /**
@@ -175,6 +162,7 @@ public class App extends Application implements Thread.UncaughtExceptionHandler 
     @Override
     public void onLowMemory() {
         super.onLowMemory();
+        KLog.e("内存低");
         // 清理 Glide 的缓存
         Glide.get(this).clearMemory();
     }
@@ -185,7 +173,6 @@ public class App extends Application implements Thread.UncaughtExceptionHandler 
     @Override
     public void onTerminate() {
         KLog.i("程序终止的时候执行");
-//        JobManager.instance().cancelAll();
         super.onTerminate();
     }
 
@@ -200,26 +187,23 @@ public class App extends Application implements Thread.UncaughtExceptionHandler 
     }
 
     private void initLogAndCrash() {
-        CrashReport.setIsDevelopmentDevice(this, BuildConfig.DEBUG);
 //        CrashReport.initCrashReport(App.i(), "900044326",  BuildConfig.DEBUG);
+        CrashReport.setIsDevelopmentDevice(instance, BuildConfig.DEBUG);
         Bugly.init(getApplicationContext(), "900044326", BuildConfig.DEBUG);
         KLog.init(BuildConfig.DEBUG);
 
-        // [可选]设置是否打开debug输出，上线时请关闭，Logcat标签为"MtaSDK"
+        // 腾讯统计，[可选]设置是否打开debug输出，上线时请关闭，Logcat标签为"MtaSDK"
         StatConfig.setDebugEnable(BuildConfig.DEBUG);
-        // 基础统计API
-        StatService.registerActivityLifecycleCallbacks(this);
-
     }
 
 
-//  内存泄漏检测工具
-private void initLeakCanary() {
+    //  内存泄漏检测工具
+//    private void initLeakCanary() {
 //        if (LeakCanary.isInAnalyzerProcess(this)) {
 //            return;
 //        }
 //        LeakCanary.install(this);
-}
+//    }
 
 
 
@@ -271,14 +255,6 @@ private void initLeakCanary() {
 //        KLog.e("此时StreamId为：" + StreamId + "   此时 Title 为：" + StreamTitle);
     }
 
-//    public void saveFeedsConfig() {
-//        AsyncTask.SERIAL_EXECUTOR.execute(new Runnable() {
-//            @Override public void run() {
-//                FileUtil.save(getExternalFilesDir(null) + "/config/feeds-config.json", new GsonBuilder().setPrettyPrinting().create().toJson(feedsConfigMap));
-//            }
-//        });
-//    }
-
 
 
     public void clearApiData() {
@@ -293,7 +269,7 @@ private void initLeakCanary() {
     public static boolean hadAutoToggleTheme = false;
 
     protected void initAutoToggleTheme() {
-        KLog.e(" 初始化主题" + WithPref.i().isAutoToggleTheme() + TimeUtil.getCurrentHour());
+//        KLog.e(" 初始化主题" + WithPref.i().isAutoToggleTheme() + TimeUtil.getCurrentHour());
         if (!WithPref.i().isAutoToggleTheme()) {
             return;
         }
@@ -310,7 +286,6 @@ private void initLeakCanary() {
     }
 
 
-
     // 官方推荐将获取 DaoMaster 对象的方法放到 Application 层，这样将避免多次创建生成 Session 对象
     public DaoSession getDaoSession() {
         if (daoSession == null) {
@@ -318,19 +293,17 @@ private void initLeakCanary() {
             // 此处是为了方便升级
             SQLiteOpenHelperS helper = new SQLiteOpenHelperS(i(), DB_NAME, null);
             daoSession = new DaoMaster(helper.getWritableDb()).newSession();
-
         }
         return daoSession;
     }
 
-
-    private String getUnclassifiedTagId() {
-        return "user/" + WithPref.i().getUseId() + Api.U_NO_LABEL;
-    }
-
-    private String getRootTagId() {
-        return "user/" + WithPref.i().getUseId() + Api.U_READING_LIST;
-    }
+//    private String getUnclassifiedTagId() {
+//        return "user/" + WithPref.i().getUseId() + Api.U_NO_LABEL;
+//    }
+//
+//    private String getRootTagId() {
+//        return "user/" + WithPref.i().getUseId() + Api.U_READING_LIST;
+//    }
 
 
 //    OkHttpClient httpClient;
