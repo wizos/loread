@@ -128,6 +128,7 @@ public class MainListViewAdapter extends ArrayAdapter<Article> {
             cvh.articleFeed.setText(Html.fromHtml(article.getOriginTitle()));
         }
         cvh.articlePublished.setText(TimeUtil.stampToTime(article.getPublished() * 1000, "yyyy-MM-dd HH:mm"));
+
         if (article.getReadStatus() == Api.READED) {
             cvh.articleTitle.setAlpha(0.40f);
         } else {

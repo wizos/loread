@@ -152,11 +152,19 @@ public class MainService extends IntentService {
             }
 
             // 如果在获取到数据的时候就保存，那么到这里同步断了的话，可能系统内的文章就找不到响应的分组，所有放到这里保存。（比如在云端将文章移到的新的分组）
-//            coverSavedTagFeed(tagList, feedList);
+
+//            List<Tag> localTags = WithDB.i().getTagsWithCount();
+//            localTags.removeAll(tagList);
+//            WithDB.i().delTags(localTags);
+//            WithDB.i().tagDao.updateInTx(tagList);
+//
+//            List<Feed> localFeeds = WithDB.i().getFeeds();
+//            localFeeds.remove(feedList);
+//            WithDB.i().delFeeds(localFeeds);
+//            WithDB.i().feedDao.updateInTx(feedList);
 
             WithDB.i().coverSaveTags(tagList);
             WithDB.i().coverSaveFeeds(feedList);
-//            saveTagFeedWithUnreadCount(tagList, feedList);
 
             KLog.e("3 - 同步未读信息");
             EventBus.getDefault().post(new Sync(Sync.DOING, App.i().getString(R.string.main_toolbar_hint_sync_unread_refs)));
@@ -262,7 +270,29 @@ public class MainService extends IntentService {
             }
             updateFeedUnreadCount();
 
+
+            List<Article> articles = WithDB.i().getDuplicateArticle();
+            List<Article> articleList;
+            ArrayList<String> articleIds = new ArrayList<>();
+            for (Article item : articles) {
+                articleList = WithDB.i().getDuplicateArticle(item.getTitle(), item.getCanonical());
+                if (articleList == null || articleList.size() == 0) {
+                    continue;
+                }
+                articleList.remove(0);
+                for (Article article : articleList) {
+                    article.setReadStatus(Api.READED);
+                    articleIds.add(article.getId());
+                }
+            }
+            if (articleIds.size() > 0) {
+                DataApi.i().markArticleListReaded(articleIds, null);
+            }
+
+
             EventBus.getDefault().post(new Sync(Sync.END));
+
+
         } catch (IOException e) {
             e.printStackTrace();
             if (e.getMessage().equals("401")) {

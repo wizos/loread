@@ -26,9 +26,9 @@ import me.wizos.loread.net.Api;
  */
 public class WithDB<T> {
     private static WithDB withDB;
-    private TagDao tagDao;
-    private FeedDao feedDao;
-    private ArticleDao articleDao;
+    public TagDao tagDao;
+    public FeedDao feedDao;
+    public ArticleDao articleDao;
 
     private WithDB() {}
 
@@ -156,6 +156,19 @@ public class WithDB<T> {
         return feedDao.queryBuilder().where(FeedDao.Properties.Id.in(ids)).build().listLazy();
     }
 
+    public void delTags(List<Tag> tags) {
+        if (tags == null) {
+            return;
+        }
+        tagDao.deleteInTx(tags);
+    }
+
+    public void delFeeds(List<Feed> feeds) {
+        if (feeds == null) {
+            return;
+        }
+        feedDao.deleteInTx(feeds);
+    }
     public void delFeed(String feedId) {
         if (feedId == null) {
             return;
@@ -261,16 +274,6 @@ public class WithDB<T> {
     }
 
 
-    /**
-     * 获取文章是否有重复
-     *
-     * @param title
-     * @param href
-     * @return
-     */
-    public long getArticleEchoes(String title, String href) {
-        return articleDao.queryBuilder().where(ArticleDao.Properties.Title.eq(title), ArticleDao.Properties.Canonical.eq(href)).buildCount().count();
-    }
 
 
    /**
@@ -349,7 +352,7 @@ public class WithDB<T> {
     public List<Article> getArtsStared() {
         QueryBuilder<Article> q = articleDao.queryBuilder()
                 .where(ArticleDao.Properties.StarStatus.eq(Api.STARED))
-                .orderDesc(ArticleDao.Properties.Updated);
+                .orderDesc(ArticleDao.Properties.Updated, ArticleDao.Properties.Published);
         return q.listLazy();
     }
 
@@ -631,6 +634,38 @@ public class WithDB<T> {
 //    }
 
 
+    public List<Article> getDuplicateArticle() {
+        String queryString = "select * from ARTICLE group by CANONICAL,TITLE having count(*) > 1";
+        Cursor cursor = articleDao.getDatabase().rawQuery(queryString, new String[]{});
+        if (cursor == null) {
+            return new ArrayList<>();
+        }
+        List<Article> articles = new ArrayList<>(cursor.getCount());
+        while (cursor.moveToNext()) {
+            articles.add(genArticle(new Article(), cursor));
+        }
+        cursor.close();
+        return articles;
+    }
+
+    public List<Article> getDuplicateArticle(String title, String href) {
+        return articleDao.queryBuilder().
+                where(ArticleDao.Properties.Title.eq(title), ArticleDao.Properties.Canonical.eq(href))
+                .orderAsc(ArticleDao.Properties.Updated).list();
+
+    }
+
+    /**
+     * 获取文章是否有重复
+     *
+     * @param title
+     * @param href
+     * @return
+     */
+    public long getArticleEchoes(String title, String href) {
+        return articleDao.queryBuilder().where(ArticleDao.Properties.Title.eq(title), ArticleDao.Properties.Canonical.eq(href)).buildCount().count();
+    }
+
     public List<Article> getArtsUnreadNoTag() {
         String queryString = "SELECT ARTICLE.* FROM "
                 + "ARTICLE LEFT JOIN FEED ON ARTICLE.ORIGIN_STREAM_ID = FEED.ID"
@@ -733,7 +768,7 @@ public class WithDB<T> {
 //    }
 
 
-    public ArrayList<Tag> getAllTag() {
+    public ArrayList<Tag> getTagsWithCount() {
         String queryString = "SELECT ID,TITLE,SORTID,NEWEST_ITEM_TIMESTAMP_USEC,UNREADCOUNT FROM TAG_UNREAD_COUNT";
 //        KLog.e("测getArtsAllNoTag2：" + queryString);
         Cursor cursor = getDaoSession().getDatabase().rawQuery(queryString, new String[]{});
@@ -757,28 +792,29 @@ public class WithDB<T> {
         return tags;
     }
 
-    public ArrayList<Tag> getCount() {
-        String queryString = "SELECT ID,TITLE,SORTID,NEWEST_ITEM_TIMESTAMP_USEC,UNREADCOUNT FROM TAG LEFT JOIN (SELECT CATEGORYID,SUM(UNREAD_COUNT) AS UNREADCOUNT FROM FEED GROUP BY CATEGORYID )  ON ID = CATEGORYID";
-        KLog.e("测getArtsAllNoTag2：" + queryString);
-        Cursor cursor = getDaoSession().getDatabase().rawQuery(queryString, new String[]{});
-        if (cursor == null) {
-            return null;
-        }
-        ArrayList<Tag> tags = new ArrayList<>(cursor.getCount());
-        Tag tag;
-        while (cursor.moveToNext()) {
-            tag = new Tag();
-            tag.setId(cursor.getString(0));
-            tag.setTitle(cursor.getString(1));
-            tag.setSortid(cursor.getString(2));
-            tag.setNewestItemTimestampUsec(cursor.getLong(3));
-            tag.setUnreadCount(cursor.getInt(4));
-            tag.__setDaoSession(App.i().getDaoSession());
-            tags.add(tag);
-        }
-        cursor.close();
-        return tags;
-    }
+
+//    public ArrayList<Tag> getCount() {
+//        String queryString = "SELECT ID,TITLE,SORTID,NEWEST_ITEM_TIMESTAMP_USEC,UNREADCOUNT FROM TAG LEFT JOIN (SELECT CATEGORYID,SUM(UNREAD_COUNT) AS UNREADCOUNT FROM FEED GROUP BY CATEGORYID )  ON ID = CATEGORYID";
+//        KLog.e("测getArtsAllNoTag2：" + queryString);
+//        Cursor cursor = getDaoSession().getDatabase().rawQuery(queryString, new String[]{});
+//        if (cursor == null) {
+//            return null;
+//        }
+//        ArrayList<Tag> tags = new ArrayList<>(cursor.getCount());
+//        Tag tag;
+//        while (cursor.moveToNext()) {
+//            tag = new Tag();
+//            tag.setId(cursor.getString(0));
+//            tag.setTitle(cursor.getString(1));
+//            tag.setSortid(cursor.getString(2));
+//            tag.setNewestItemTimestampUsec(cursor.getLong(3));
+//            tag.setUnreadCount(cursor.getInt(4));
+//            tag.__setDaoSession(App.i().getDaoSession());
+//            tags.add(tag);
+//        }
+//        cursor.close();
+//        return tags;
+//    }
 
     private Article genArticle(Article article, Cursor cursor) {
         article.setId(cursor.getString(cursor.getColumnIndex(ArticleDao.Properties.Id.columnName)));
@@ -797,6 +833,8 @@ public class WithDB<T> {
         article.setAuthor(cursor.getString(cursor.getColumnIndex(ArticleDao.Properties.Author.columnName)));
         article.setReadState(cursor.getString(cursor.getColumnIndex(ArticleDao.Properties.ReadState.columnName)));
         article.setStarState(cursor.getString(cursor.getColumnIndex(ArticleDao.Properties.StarState.columnName)));
+        article.setReadStatus(cursor.getInt(cursor.getColumnIndex(ArticleDao.Properties.ReadStatus.columnName)));
+        article.setStarStatus(cursor.getInt(cursor.getColumnIndex(ArticleDao.Properties.StarStatus.columnName)));
         article.setSaveDir(cursor.getString(cursor.getColumnIndex(ArticleDao.Properties.SaveDir.columnName)));
         article.setImgState(cursor.getString(cursor.getColumnIndex(ArticleDao.Properties.ImgState.columnName)));
         article.setCoverSrc(cursor.getString(cursor.getColumnIndex(ArticleDao.Properties.CoverSrc.columnName)));

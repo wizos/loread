@@ -315,21 +315,21 @@ public class ExpandableListViewS extends ExpandableListView implements AbsListVi
 //        getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
 //            @Override
 //            public void onGlobalLayout() {
-//                ViewGroup.LayoutParams layoutParams = getLayoutParams();
+//                ViewGroup.LayoutParams leftLayoutParams = getLayoutParams();
 //                ViewParent parent = getParent();
 //                while (parent != null) {
 //                    if (parent instanceof ScrollLayout) {
 //                        int height = ((ScrollLayout) parent).getMeasuredHeight() - ((ScrollLayout) parent).minOffset;
-//                        if (layoutParams.height == height) {
+//                        if (leftLayoutParams.height == height) {
 //                            return;
 //                        } else {
-//                            layoutParams.height = height;
+//                            leftLayoutParams.height = height;
 //                            break;
 //                        }
 //                    }
 //                    parent = parent.getParent();
 //                }
-//                setLayoutParams(layoutParams);
+//                setLayoutParams(leftLayoutParams);
 //            }
 //        });
     }

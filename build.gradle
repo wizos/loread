@@ -12,18 +12,16 @@ buildscript {
         classpath 'org.greenrobot:greendao-gradle-plugin:3.2.2' // add plugin
         //butterknife的新版插件必须在此处作配置
         classpath 'com.jakewharton:butterknife-gradle-plugin:8.8.1'
-        // 为了 AgentWeb 安装的插件
-//        classpath 'com.novoda:bintray-release:0.5.0'
         classpath fileTree(dir: 'plugin', include: ['*.jar'])
     }
 }
 
 allprojects {
     repositories {
+//        maven { url 'http://maven.aliyun.com/nexus/content/groups/public/'}
         google()
         maven { url "https://jitpack.io" }
         jcenter()
-//        maven { url 'http://maven.aliyun.com/nexus/content/groups/public/'}
     }
 }
 

@@ -22,7 +22,6 @@ import me.wizos.loread.view.webview.NestedScrollWebView;
 
 public class WebViewS extends NestedScrollWebView {
     private boolean isReadability = false;
-    private boolean isLoadJS = false;
 
     @SuppressLint("NewApi")
     public WebViewS(Context context) {
@@ -79,13 +78,6 @@ public class WebViewS extends NestedScrollWebView {
 
     }
 
-    public boolean isLoadJS() {
-        return isLoadJS;
-    }
-
-    public void setLoadJS(boolean loadJS) {
-        isLoadJS = loadJS;
-    }
 
     public boolean isReadability() {
         return isReadability;
@@ -102,8 +94,6 @@ public class WebViewS extends NestedScrollWebView {
         setVerticalScrollBarEnabled(false);
         setScrollbarFadingEnabled(false);
 
-        // 实现 webview 的背景颜色与当前主题色一致
-//        Tool.setBackgroundColor(this);
         // 先设置背景色为tranaparent 透明色
         this.setBackgroundColor(0);
         WebSettings webSettings = this.getSettings();
@@ -172,8 +162,9 @@ public class WebViewS extends NestedScrollWebView {
 //        setLayerType(View.LAYER_TYPE_SOFTWARE, null);//开启软件加速（在我的MX5上，滑动时会卡顿）
 //        setLayerType(View.LAYER_TYPE_HARDWARE, null);//开启硬件加速
 
-        // 将图片下载阻塞，然后在浏览器的OnPageFinished事件中设置webView.getSettings().setBlockNetworkImage(false); 通过图片的延迟载入，让网页能更快地显示。
-        webSettings.setBlockNetworkImage(true);
+        // 将图片下载阻塞，然后在浏览器的OnPageFinished事件中设置webView.getSettings().setBlockNetworkImage(false);
+        // 通过图片的延迟载入，让网页能更快地显示。但是会造成懒加载失效，因为懒加载的脚本执行更早，所以认为所有未显示的图片都在同一屏幕内，要开始加载。
+//        webSettings.setBlockNetworkImage(true);
         // 设置在页面装载完成之后自动去加载图片
         webSettings.setLoadsImagesAutomatically(true);
 //        webSettings.setSupportMultipleWindows(true);
@@ -223,30 +214,12 @@ public class WebViewS extends NestedScrollWebView {
     }
 
 
-//    public void clear() {
-//        ViewParent parent = this.getParent();
-//        if (parent != null) {
-//            ((ViewGroup) parent).removeView(this);
-//        }
-//        stopLoading();
-//        clearCache(true);
-//        clearHistory();
-//        removeJavascriptInterface("ImageBridge");
-//        post(new Runnable() {
-//            @Override
-//            public void run() {
-//                loadData("", "text/html", "UTF-8");
-//            }
-//        });
-//    }
-
-
-
     /**
      * 不要将 base url 设为 null
      */
     public void loadData(String htmlContent) {
         loadDataWithBaseURL(App.webViewBaseUrl, htmlContent, "text/html", "UTF-8", null);
+        isReadability = false;
     }
 
 
@@ -267,5 +240,25 @@ public class WebViewS extends NestedScrollWebView {
 //        displayContent = url;
 //        loadUrl(url);
 //    }
+
+
+//    public void clear() {
+//        ViewParent parent = this.getParent();
+//        if (parent != null) {
+//            ((ViewGroup) parent).removeView(this);
+//        }
+//        stopLoading();
+//        clearCache(true);
+//        clearHistory();
+//        removeJavascriptInterface("ImageBridge");
+//        post(new Runnable() {
+//            @Override
+//            public void run() {
+//                loadData("", "text/html", "UTF-8");
+//            }
+//        });
+//    }
+
+
 
 }

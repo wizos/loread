@@ -30,12 +30,13 @@
             app:subtitleTextAppearance="@style/MyToolbar.SubTitle"
             app:layout_scrollFlags="scroll|enterAlways|snap">
 
+            <!--app:contentInsetStart="0dp"-->
             <!--<me.wizos.loread.view.IconFontView-->
-            <!--android:id="@+id/article_feed_config"-->
-            <!--style="@style/bottom_bar_iconfont"-->
-            <!--android:text="@string/font_feed_config"-->
-            <!--android:textColor="?attr/topbar_fg"-->
-            <!--android:layout_gravity="end|center"/>-->
+            <!--android:id="@+id/art_bottombar_save"-->
+            <!--style="@style/top_bar_iconfont"-->
+            <!--android:layout_gravity="center"-->
+            <!--android:gravity="center"-->
+            <!--android:text="@string/font_unsave" />-->
 
             <TextView
                 android:id="@+id/art_toolbar_num"
@@ -61,35 +62,18 @@
             android:visibility="gone" />
     </android.support.design.widget.AppBarLayout>
 
-    <!--<com.scwang.smartrefresh.layout.SmartRefreshLayout-->
-    <!--android:id="@+id/art_swipe_refresh"-->
-    <!--android:layout_width="match_parent"-->
-    <!--android:layout_height="wrap_content"-->
-    <!--app:layout_behavior="@string/appbar_scrolling_view_behavior">-->
-    <!--<com.scwang.smartrefresh.layout.header.ClassicsHeader-->
-    <!--android:layout_width="match_parent"-->
-    <!--android:layout_height="wrap_content" />-->
-    <!--<me.wizos.loread.view.SlideArrow.SlideArrowLayout-->
-    <!--android:id="@+id/test_framelayout"-->
-    <!--android:layout_width="match_parent"-->
-    <!--android:layout_height="wrap_content"-->
-    <!--android:persistentDrawingCache="animation"-->
-    <!--android:background="?attr/root_view_bg"/>-->
-    <!--</com.scwang.smartrefresh.layout.SmartRefreshLayout>-->
-
     <me.wizos.loread.view.SwipeRefreshLayoutS
         android:id="@+id/art_swipe_refresh"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
-
-        <!--<FrameLayout-->
-        <!--android:id="@+id/test_framelayout"-->
-        <!--android:layout_width="match_parent"-->
-        <!--android:layout_height="wrap_content"-->
-        <!--android:persistentDrawingCache="animation"-->
-        <!--android:background="?attr/root_view_bg"/>-->
+        <android.support.v4.view.ViewPager
+            android:id="@+id/art_viewpager"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:persistentDrawingCache="animation"
+            android:background="?attr/root_view_bg" />
         <!--<me.wizos.loread.view.EntryView-->
         <!--android:id="@+id/art_entry_view"-->
         <!--android:layout_width="match_parent"-->
@@ -97,12 +81,6 @@
         <!--android:persistentDrawingCache="animation"-->
         <!--android:background="?attr/root_view_bg"/>-->
 
-        <me.wizos.loread.view.SlideArrow.SlideArrowLayout
-            android:id="@+id/test_framelayout"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:persistentDrawingCache="animation"
-            android:background="?attr/root_view_bg" />
     </me.wizos.loread.view.SwipeRefreshLayoutS>
 
     <RelativeLayout
@@ -113,6 +91,7 @@
         android:layout_alignParentBottom="true"
         android:background="?attr/bottombar_bg"
         app:layout_behavior="me.wizos.loread.behavior.BottomNavigationViewBehavior">
+
         <View
             android:id="@+id/article_bottombar_divider"
             android:layout_width="match_parent"
@@ -122,11 +101,6 @@
             android:layout_alignParentTop="true"
             android:background="?attr/bottombar_divider" />
 
-        <me.wizos.loread.view.IconFontView
-            android:id="@+id/article_bottombar_save"
-            style="@style/bottom_bar_iconfont"
-            android:text="@string/font_unsave"
-            android:visibility="visible" />
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
@@ -139,18 +113,23 @@
             <!--style="@style/bottom_bar_iconfont"-->
             <!--android:text="@string/font_label"-->
             <!--android:onClick="onTagClick"/>-->
+            <me.wizos.loread.view.IconFontView
+                android:id="@+id/article_bottombar_save"
+                style="@style/bottom_bar_iconfont"
+                android:text="@string/font_unsave"
+                android:visibility="gone" />
+
+            <me.wizos.loread.view.IconFontView
+                android:id="@+id/article_bottombar_feed_config"
+                style="@style/bottom_bar_iconfont"
+                android:text="@string/font_feed_config"
+                android:visibility="gone" />
 
             <!--<me.wizos.loread.view.IconFontView-->
             <!--android:id="@+id/article_bottombar_open_original_article"-->
             <!--style="@style/bottom_bar_iconfont"-->
             <!--android:text="@string/font_chrome"-->
             <!--android:onClick="clickOpenOriginalArticle" />-->
-
-            <me.wizos.loread.view.IconFontView
-                android:id="@+id/article_feed_config"
-                style="@style/bottom_bar_iconfont"
-                android:text="@string/font_feed_config"
-                android:visibility="gone" />
 
             <me.wizos.loread.view.IconFontView
                 android:id="@+id/article_bottombar_star"
@@ -164,17 +143,30 @@
                 android:text="@string/font_readed"
                 android:onClick="onReadClick" />
 
-            <!--<me.wizos.loread.view.IconFontView-->
-            <!--android:id="@+id/article_bottombar_readability"-->
-            <!--style="@style/bottom_bar_iconfont"-->
-            <!--android:text="@string/font_readability"-->
-            <!--android:onClick="clickReadability" />-->
+            <me.wizos.loread.view.IconFontView
+                android:id="@+id/article_bottombar_readability"
+                style="@style/bottom_bar_iconfont"
+                android:text="@string/font_readability"
+                android:onClick="clickReadability" />
 
             <!--<me.wizos.loread.view.IconFontView-->
             <!--android:id="@+id/article_bottombar_more"-->
             <!--style="@style/bottom_bar_iconfont"-->
             <!--android:text="@string/font_more"-->
             <!--android:onClick="onClickMore" />-->
+
+
+            <!--<CheckBox-->
+            <!--android:checked="false"-->
+            <!--android:id="@+id/radio_all"-->
+            <!--android:layout_width="@dimen/bottom_bar_height"-->
+            <!--android:layout_height="@dimen/bottom_bar_height"-->
+            <!--android:gravity="center"-->
+            <!--android:padding="10dp"-->
+            <!--android:layout_marginStart="8dp"-->
+            <!--android:layout_marginEnd="8dp"-->
+            <!--android:button="@null"-->
+            <!--android:background="@drawable/selector_star" />-->
 
         </LinearLayout>
     </RelativeLayout>

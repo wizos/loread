@@ -67,6 +67,7 @@ import me.wizos.loread.view.ListView.ListViewS;
 import me.wizos.loread.view.SwipeRefreshLayoutS;
 import me.wizos.loread.view.colorful.Colorful;
 import me.wizos.loread.view.colorful.setter.ViewGroupSetter;
+import okhttp3.FormBody;
 
 //import com.zhangyue.we.x2c.X2C;
 //import com.zhangyue.we.x2c.ano.Xml;
@@ -74,7 +75,6 @@ import me.wizos.loread.view.colorful.setter.ViewGroupSetter;
 /**
  * @author Wizos on 2016
  */
-//@Xml(layouts = {R.layout.activity_main})
 public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.OnRefreshListener {
     protected static final String TAG = "MainActivity";
     private IconFontView vPlaceHolder;
@@ -87,7 +87,7 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
     private ExpandableListViewS tagListView;
     private ExpandableListAdapterS tagListAdapter;
     private View headerPinnedView;
-    private int tagCount;
+//    private int tagCount;
 
 //    private View headerHomeView;
 //    private ImageLoader imageLoader;
@@ -98,7 +98,6 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         setContentView(R.layout.activity_main);
-//        X2C.setContentView(this, R.layout.activity_main);
         ButterKnife.bind(this);
         EventBus.getDefault().register(this);
         initToolbar();
@@ -215,23 +214,6 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
             maHandler.postDelayed(this, WithPref.i().getAutoSyncFrequency() * 60000);
         }
     };
-
-    private void initHeartbeat() {
-//        KLog.e("时间间隔" + WithPref.i().getAutoSyncFrequency());
-        maHandler.postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                if (!WithPref.i().isAutoSync()) {
-                    return;
-                }
-                if (WithPref.i().isAutoSyncOnWifi() && !NetworkUtil.isWiFiUsed()) {
-                    return;
-                }
-                startSyncService(Api.SYNC_HEARTBEAT);
-                initHeartbeat();
-            }
-        }, WithPref.i().getAutoSyncFrequency() * 60000);
-    }
 
 
     protected void initIconView() {
@@ -383,7 +365,7 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
         List<Tag> tagListTemp = new ArrayList<>();
         tagListTemp.add(rootTag);
         tagListTemp.add(noLabelTag);
-        tagListTemp.addAll(WithDB.i().getAllTag());
+        tagListTemp.addAll(WithDB.i().getTagsWithCount());
 
         App.i().updateTagList(tagListTemp);
         KLog.e("加载tag耗时：" + (System.currentTimeMillis() - time));
@@ -413,8 +395,8 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
 //        KLog.e("loadViewByData","此时StreamId为：" + App.StreamId +  "   此时 Title 为：" +  App.StreamTitle );
 
 //        tagCount = UnreadCountUtil.getUnreadCount(App.StreamId);
-        tagCount = App.articleList.size();
-        vToolbarHint.setText(String.valueOf(tagCount));
+//        tagCount = App.articleList.size();
+//        vToolbarHint.setText(String.valueOf(tagCount));
     }
 
     public void showTagDialog(final Tag tag) {
@@ -484,6 +466,7 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
         });
     }
 
+
     public void showFeedDialog(final ExpandableListAdapterS.ItemViewHolder itemView, final Feed feed) {
         if (feed == null) {
             return;
@@ -492,15 +475,42 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
         MaterialSimpleListAdapter adapter = new MaterialSimpleListAdapter(MainActivity.this);
         adapter.add(new MaterialSimpleListItem.Builder(MainActivity.this)
                 .content(R.string.main_tag_dialog_rename)
-                .icon(R.drawable.dialog_ic_rename)
+//                .icon(R.drawable.dialog_ic_rename)
+                .backgroundColor(Color.TRANSPARENT)
+                .build());
+        adapter.add(new MaterialSimpleListItem.Builder(MainActivity.this)
+                .content("修改分组")
+//                .icon(R.drawable.dialog_ic_unsubscribe)
                 .backgroundColor(Color.TRANSPARENT)
                 .build());
         adapter.add(new MaterialSimpleListItem.Builder(MainActivity.this)
                 .content(R.string.main_tag_dialog_unsubscribe)
-                .icon(R.drawable.dialog_ic_unsubscribe)
+//                .icon(R.drawable.dialog_ic_unsubscribe)
                 .backgroundColor(Color.TRANSPARENT)
                 .build());
+        final ArrayList<Tag> tags = WithDB.i().getTagsWithCount();
+        final ArrayList<String> titles = new ArrayList<>(tags.size());
+        int selectedIndex = -1;
+
+
+        for (int i = 0, size = tags.size(); i < size; i++) {
+            titles.add(tags.get(i).getTitle());
+            if (tags.get(i).getId().equals(feed.getCategoryid())) {
+                selectedIndex = i;
+            }
+        }
+
+        final Integer[] preSelectedIndices;
+        if (selectedIndex != -1) {
+            preSelectedIndices = new Integer[]{selectedIndex};
+        } else {
+            preSelectedIndices = null;
+        }
+
+
         new MaterialDialog.Builder(MainActivity.this)
+                .title("配置该源")
+                .content(feed.getUrl())
                 .adapter(adapter, new MaterialDialog.ListCallback() {
                     @Override
                     public void onSelection(MaterialDialog dialog, View view, int which, CharSequence text) {
@@ -521,6 +531,53 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
                                         .show();
                                 break;
                             case 1:
+                                new MaterialDialog.Builder(MainActivity.this)
+                                        .title("修改分组")
+                                        .items(titles)
+                                        .itemsCallbackMultiChoice(preSelectedIndices, new MaterialDialog.ListCallbackMultiChoice() {
+                                            @Override
+                                            public boolean onSelection(MaterialDialog dialog, final Integer[] which, CharSequence[] text) {
+                                                FormBody.Builder builder = new FormBody.Builder();
+                                                builder.add("ac", "edit");
+                                                builder.add("s", feed.getId());
+                                                if (which.length == 0) {
+                                                    builder.add("r", feed.getCategoryid());
+                                                } else {
+                                                    builder.add("a", tags.get(which[0]).getId());
+                                                }
+                                                DataApi.i().editFeed(builder, new StringCallback() {
+                                                    @Override
+                                                    public void onSuccess(Response<String> response) {
+                                                        if (!response.body().equals("OK")) {
+                                                            this.onError(response);
+                                                            return;
+                                                        }
+
+                                                        if (which != null && which.length == 0) {
+                                                            feed.setCategoryid("");
+                                                            feed.setCategorylabel("");
+                                                        } else {
+                                                            feed.setCategoryid(tags.get(which[0]).getId());
+                                                            feed.setCategorylabel(tags.get(which[0]).getTitle());
+                                                        }
+                                                        feed.update();
+                                                        tagListAdapter.removeChild(itemView.groupPos, feed);
+                                                        tagListAdapter.notifyDataSetChanged();
+                                                        ToastUtil.showLong("修改分组成功！");
+                                                    }
+
+                                                    @Override
+                                                    public void onError(Response<String> response) {
+                                                        ToastUtil.showLong(App.i().getString(R.string.toast_rename_fail));
+                                                    }
+                                                });
+                                                return which.length <= 1;
+                                            }
+                                        })
+                                        .alwaysCallMultiChoiceCallback() // the callback will always be called, to check if selection is still allowed
+                                        .show();
+                                break;
+                            case 2:
                                 DataApi.i().unsubscribeFeed(feed.getId(), new StringCallback() {
                                     @Override
                                     public void onSuccess(Response<String> response) {
@@ -550,7 +607,7 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
                 .show();
     }
 
-    public void renameFeed(final String renamedTitle, Feed feed) {
+    public void renameFeed(final String renamedTitle, final Feed feed) {
         final String feedId = feed.getId();
         KLog.e("=====" + renamedTitle + feedId);
         if (renamedTitle.equals("") || feed.getTitle().equals(renamedTitle)) {
@@ -563,13 +620,14 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
                     this.onError(response);
                     return;
                 }
-                Feed feed = WithDB.i().getFeed(feedId);
-                if (feed == null) {
-                    this.onError(response);
-                    return;
-                }
+//                Feed feed = WithDB.i().getFeed(feedId);
+//                if (feed == null) {
+//                    this.onError(response);
+//                    return;
+//                }
                 feed.setTitle(renamedTitle);
-                WithDB.i().updateFeed(feed);
+                feed.update();
+//                WithDB.i().updateFeed(feed);
                 // 由于改了 feed 的名字，而每个 article 自带的 feed 名字也得改过来。
                 WithDB.i().updateArtsFeedTitle(feed);
                 tagListAdapter.notifyDataSetChanged();
@@ -581,7 +639,6 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
             }
         });
     }
-
 
 
     public void onTagIconClicked1(View view) {
@@ -858,7 +915,7 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
                     return;
                 }
 
-                Intent intent = new Intent(MainActivity.this, ArticleActivity3.class);
+                Intent intent = new Intent(MainActivity.this, ArticleActivity.class);
 
 //                String[] articleIDs = new String[App.articleList.size()];
 //                for (int i=0, size = App.articleList.size(); i<size; i++){

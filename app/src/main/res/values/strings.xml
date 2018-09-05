@@ -273,6 +273,7 @@
     <string name="toast_login_for_auth">过太久了，请重新登录吧</string>
 
     <string name="toast_subscribe_success">订阅成功</string>
+    <!--<string name="toast_edit_fail">修改失败</string>-->
     <string name="toast_subscribe_fail">取消订阅失败，请重试</string>
     <string name="toast_unsubscribe_fail">取消订阅失败，请重试</string>
     <string name="toast_rename_fail">重命名失败，请重试</string>

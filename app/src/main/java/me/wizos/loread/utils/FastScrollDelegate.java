@@ -207,6 +207,7 @@ public class FastScrollDelegate {
     }
 
     private boolean onTouchEventInternal(MotionEvent event) {
+//        KLog.e("执行父onTouchEventInternal："  );
         final int action = event.getActionMasked();
         final float y = event.getY();
         switch (action) {
@@ -265,6 +266,8 @@ public class FastScrollDelegate {
                 }
                 break;
             }
+            default:
+                break;
         }// End switch
         if (mIsHanlingTouchEvent) {
             mView.invalidate();

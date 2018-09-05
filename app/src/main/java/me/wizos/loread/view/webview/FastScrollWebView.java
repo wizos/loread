@@ -61,9 +61,12 @@ public class FastScrollWebView extends WebView implements FastScrollable {
 
     @Override
     public boolean onInterceptTouchEvent(MotionEvent ev) {
+//        KLog.e("拦截手势操作："  );
         if (mFastScrollDelegate.onInterceptTouchEvent(ev)) {
+//            KLog.e("拦截手势操作结果为 true"  );
             return true;
         }
+//        KLog.e("拦截手势操作结果为 false"  );
         return super.onInterceptTouchEvent(ev);
     }
 
@@ -71,8 +74,10 @@ public class FastScrollWebView extends WebView implements FastScrollable {
     @Override
     public boolean onTouchEvent(MotionEvent event) {
         if (mFastScrollDelegate.onTouchEvent(event)) {
+//            KLog.e("执行父onTouchEventInternal为   true"  );
             return true;
         }
+//        KLog.e("执行父onTouchEventInternal为    false"  );
         return super.onTouchEvent(event);
     }
 

@@ -22,15 +22,8 @@ public class ColorUtil {
     /**
      * 计算2个颜色的距离（相似度）
      */
-    public static double distance(RGB e1, RGB e2) {
-        long rmean = ((long) e1.r + (long) e2.r) / 2;
-        long r = (long) e1.r - (long) e2.r;
-        long g = (long) e1.g - (long) e2.g;
-        long b = (long) e1.b - (long) e2.b;
-        return Math.sqrt((((512 + rmean) * r * r) >> 8) + 4 * g * g + (((767 - rmean) * b * b) >> 8));
-    }
 
-    public static double distance(RGB e1) {
+    private static double distance(RGB e1) {
         RGB e2 = null;
         if (WithPref.i().getThemeMode() == App.Theme_Day) {
             e2 = new RGB(255, 255, 255);
@@ -38,6 +31,14 @@ public class ColorUtil {
             e2 = new RGB(32, 43, 47);
         }
         return distance(e1, e2);
+    }
+
+    private static double distance(RGB e1, RGB e2) {
+        long rmean = ((long) e1.r + (long) e2.r) / 2;
+        long r = (long) e1.r - (long) e2.r;
+        long g = (long) e1.g - (long) e2.g;
+        long b = (long) e1.b - (long) e2.b;
+        return Math.sqrt((((512 + rmean) * r * r) >> 8) + 4 * g * g + (((767 - rmean) * b * b) >> 8));
     }
 
     private final static String P_BACKGROUND_COLOR = "background(\\s|:|-color).*?(;|$)";
@@ -49,13 +50,10 @@ public class ColorUtil {
     private final static int Color_Distance = 200;
 
     public static Document mod(Document doc) {
-
         Elements elements = doc.select("[style*=color]");
 //        KLog.e("颜色，获取到数量：" + elements.size());
         String style = null;
-        int r = 0;
-        int g = 0;
-        int b = 0;
+        int r = 0, g = 0, b = 0;
         double distance = 0;
         Pattern pattern;
         Matcher m;

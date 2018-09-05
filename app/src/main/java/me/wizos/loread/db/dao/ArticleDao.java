@@ -85,8 +85,8 @@ public class ArticleDao extends AbstractDao<Article, String> {
                 "\"SUMMARY\" TEXT," + // 11: summary
                 "\"CONTENT\" TEXT," + // 12: content
                 "\"AUTHOR\" TEXT," + // 13: author
-                "\"READ_STATUS\" INTEGER," + // 14: readStatus
-                "\"STAR_STATUS\" INTEGER," + // 15: starStatus
+                "\"READ_STATUS\" INTEGER NOT NULL ," + // 14: readStatus
+                "\"STAR_STATUS\" INTEGER NOT NULL ," + // 15: starStatus
                 "\"READ_STATE\" TEXT," + // 16: readState
                 "\"STAR_STATE\" TEXT," + // 17: starState
                 "\"SAVE_DIR\" TEXT," + // 18: saveDir
@@ -95,6 +95,25 @@ public class ArticleDao extends AbstractDao<Article, String> {
                 "\"ORIGIN_STREAM_ID\" TEXT," + // 21: originStreamId
                 "\"ORIGIN_TITLE\" TEXT," + // 22: originTitle
                 "\"ORIGIN_HTML_URL\" TEXT);"); // 23: originHtmlUrl
+        // Add Indexes
+        db.execSQL("CREATE INDEX " + constraint + "IDX_ARTICLE_ID ON \"ARTICLE\"" +
+                " (\"ID\" ASC);");
+        db.execSQL("CREATE INDEX " + constraint + "IDX_ARTICLE_CRAWL_TIME_MSEC ON \"ARTICLE\"" +
+                " (\"CRAWL_TIME_MSEC\" ASC);");
+        db.execSQL("CREATE INDEX " + constraint + "IDX_ARTICLE_TIMESTAMP_USEC ON \"ARTICLE\"" +
+                " (\"TIMESTAMP_USEC\" ASC);");
+        db.execSQL("CREATE INDEX " + constraint + "IDX_ARTICLE_TITLE ON \"ARTICLE\"" +
+                " (\"TITLE\" ASC);");
+        db.execSQL("CREATE INDEX " + constraint + "IDX_ARTICLE_PUBLISHED ON \"ARTICLE\"" +
+                " (\"PUBLISHED\" ASC);");
+        db.execSQL("CREATE INDEX " + constraint + "IDX_ARTICLE_UPDATED ON \"ARTICLE\"" +
+                " (\"UPDATED\" ASC);");
+        db.execSQL("CREATE INDEX " + constraint + "IDX_ARTICLE_READ_STATUS ON \"ARTICLE\"" +
+                " (\"READ_STATUS\" ASC);");
+        db.execSQL("CREATE INDEX " + constraint + "IDX_ARTICLE_STAR_STATUS ON \"ARTICLE\"" +
+                " (\"STAR_STATUS\" ASC);");
+        db.execSQL("CREATE INDEX " + constraint + "IDX_ARTICLE_ORIGIN_STREAM_ID ON \"ARTICLE\"" +
+                " (\"ORIGIN_STREAM_ID\" ASC);");
     }
 
     /** Drops the underlying database table. */
@@ -172,16 +191,8 @@ public class ArticleDao extends AbstractDao<Article, String> {
         if (author != null) {
             stmt.bindString(14, author);
         }
-
-        Integer readStatus = entity.getReadStatus();
-        if (readStatus != null) {
-            stmt.bindLong(15, readStatus);
-        }
-
-        Integer starStatus = entity.getStarStatus();
-        if (starStatus != null) {
-            stmt.bindLong(16, starStatus);
-        }
+        stmt.bindLong(15, entity.getReadStatus());
+        stmt.bindLong(16, entity.getStarStatus());
  
         String readState = entity.getReadState();
         if (readState != null) {
@@ -293,16 +304,8 @@ public class ArticleDao extends AbstractDao<Article, String> {
         if (author != null) {
             stmt.bindString(14, author);
         }
-
-        Integer readStatus = entity.getReadStatus();
-        if (readStatus != null) {
-            stmt.bindLong(15, readStatus);
-        }
-
-        Integer starStatus = entity.getStarStatus();
-        if (starStatus != null) {
-            stmt.bindLong(16, starStatus);
-        }
+        stmt.bindLong(15, entity.getReadStatus());
+        stmt.bindLong(16, entity.getStarStatus());
  
         String readState = entity.getReadState();
         if (readState != null) {
@@ -367,8 +370,8 @@ public class ArticleDao extends AbstractDao<Article, String> {
                 cursor.isNull(offset + 11) ? null : cursor.getString(offset + 11), // summary
                 cursor.isNull(offset + 12) ? null : cursor.getString(offset + 12), // content
                 cursor.isNull(offset + 13) ? null : cursor.getString(offset + 13), // author
-                cursor.isNull(offset + 14) ? null : cursor.getInt(offset + 14), // readStatus
-                cursor.isNull(offset + 15) ? null : cursor.getInt(offset + 15), // starStatus
+                cursor.getInt(offset + 14), // readStatus
+                cursor.getInt(offset + 15), // starStatus
                 cursor.isNull(offset + 16) ? null : cursor.getString(offset + 16), // readState
                 cursor.isNull(offset + 17) ? null : cursor.getString(offset + 17), // starState
                 cursor.isNull(offset + 18) ? null : cursor.getString(offset + 18), // saveDir
@@ -397,8 +400,8 @@ public class ArticleDao extends AbstractDao<Article, String> {
         entity.setSummary(cursor.isNull(offset + 11) ? null : cursor.getString(offset + 11));
         entity.setContent(cursor.isNull(offset + 12) ? null : cursor.getString(offset + 12));
         entity.setAuthor(cursor.isNull(offset + 13) ? null : cursor.getString(offset + 13));
-        entity.setReadStatus(cursor.isNull(offset + 14) ? null : cursor.getInt(offset + 14));
-        entity.setStarStatus(cursor.isNull(offset + 15) ? null : cursor.getInt(offset + 15));
+        entity.setReadStatus(cursor.getInt(offset + 14));
+        entity.setStarStatus(cursor.getInt(offset + 15));
         entity.setReadState(cursor.isNull(offset + 16) ? null : cursor.getString(offset + 16));
         entity.setStarState(cursor.isNull(offset + 17) ? null : cursor.getString(offset + 17));
         entity.setSaveDir(cursor.isNull(offset + 18) ? null : cursor.getString(offset + 18));

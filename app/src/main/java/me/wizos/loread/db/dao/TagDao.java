@@ -55,6 +55,9 @@ public class TagDao extends AbstractDao<Tag, String> {
                 "\"TITLE\" TEXT," + // 2: title
                 "\"UNREAD_COUNT\" INTEGER," + // 3: unreadCount
                 "\"NEWEST_ITEM_TIMESTAMP_USEC\" INTEGER);"); // 4: newestItemTimestampUsec
+        // Add Indexes
+        db.execSQL("CREATE INDEX " + constraint + "IDX_TAG_ID ON \"TAG\"" +
+                " (\"ID\" ASC);");
     }
 
     /** Drops the underlying database table. */

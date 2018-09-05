@@ -20,7 +20,6 @@ import android.support.v4.view.NestedScrollingChild;
 import android.support.v4.view.NestedScrollingChildHelper;
 import android.support.v4.view.ViewCompat;
 import android.view.MotionEvent;
-import android.view.ViewConfiguration;
 
 //import com.tencent.smtt.sdk.WebView;
 
@@ -40,7 +39,8 @@ public class NestedScrollWebView extends FastScrollWebView implements NestedScro
         super(context);
         initView();
         // 判断用户在进行滑动操作的最小距离
-        mTouchSlop = ViewConfiguration.get(context).getScaledTouchSlop() + 100;
+//        mTouchSlop = ViewConfiguration.get(context).getScaledTouchSlop() + 100;
+//        KLog.e("最小滑动距离：" + mTouchSlop );
     }
 
     private static final int INVALID_POINTER = -1;
@@ -70,6 +70,28 @@ public class NestedScrollWebView extends FastScrollWebView implements NestedScro
     private NestedScrollingChildHelper mChildHelper;
     boolean mIsBeingDragged;
 
+
+//            case MotionEvent.ACTION_DOWN:
+//                mPrevX = MotionEvent.obtain(ev).getX();
+//                break;
+//            case MotionEvent.ACTION_MOVE:
+//                final float eventX = ev.getX();
+//                //获取水平移动距离
+//                float xDiff = Math.abs(eventX - mPrevX);
+//                KLog.e("是否拦截事件：" + (xDiff>mTouchSlop));
+//                //当水平移动距离大于滑动操作的最小距离的时候就认为进行了横向滑动，不进行事件拦截,并将这个事件交给子View处理
+//                if (xDiff > mTouchSlop) {
+//                    return false;
+//                }
+
+//    private int downY;
+//    private boolean onlyHorizontalMove(MotionEvent ev) {
+//        return (Math.abs(ev.getX() - mLastMotionY) > mTouchSlop && Math.abs(ev.getY() - downY) < mTouchSlop);
+//    }
+//    private boolean onlyVerticalMove(MotionEvent ev) {
+//        return (Math.abs(ev.getX() - mLastMotionY) < mTouchSlop && Math.abs(ev.getY() - downY) > mTouchSlop);
+//    }
+
     @Override
     public boolean onTouchEvent(MotionEvent ev) {
         final int actionMasked = ev.getActionMasked();
@@ -80,15 +102,21 @@ public class NestedScrollWebView extends FastScrollWebView implements NestedScro
 
                 // Remember where the motion event started
                 mLastMotionY = (int) ev.getY();
+//                downY = (int) ev.getY();
+
                 mActivePointerId = ev.getPointerId(0);
                 startNestedScroll(ViewCompat.SCROLL_AXIS_VERTICAL);
                 break;
 
             case MotionEvent.ACTION_MOVE:
+//                KLog.e("移动开始：");
                 final int activePointerIndex = ev.findPointerIndex(mActivePointerId);
                 if (activePointerIndex == -1) {
                     break;
                 }
+//                if( !onlyVerticalMove(ev) ){
+//                    break;
+//                }
 
                 final int y = (int) ev.getY(activePointerIndex);
                 int deltaY = mLastMotionY - y;
@@ -104,6 +132,7 @@ public class NestedScrollWebView extends FastScrollWebView implements NestedScro
                 if (dispatchNestedScroll(0, scrolledDeltaY, 0, unconsumedY, mScrollOffset)) {
                     mLastMotionY -= mScrollOffset[1];
                 }
+//                KLog.e("移动结束：");
                 break;
             case MotionEvent.ACTION_UP:
                 mActivePointerId = INVALID_POINTER;
@@ -130,34 +159,34 @@ public class NestedScrollWebView extends FastScrollWebView implements NestedScro
     }
 
 
-    /**
-     * 作者：秋天的雨滴
-     * 链接：https://www.jianshu.com/p/04d799608c2e
-     * 解决该view上下滑动事件与子view左右滑动事件的冲突问题
-     */
-    private int mTouchSlop;
-    private float mPrevX;
+//    private int mTouchSlop;
+//    private float mPrevX;
 
-    @Override
-    public boolean onInterceptTouchEvent(MotionEvent ev) {
-        switch (ev.getAction()) {
-            case MotionEvent.ACTION_DOWN:
-                mPrevX = MotionEvent.obtain(ev).getX();
-                break;
-            case MotionEvent.ACTION_MOVE:
-                final float eventX = ev.getX();
-                //获取水平移动距离
-                float xDiff = Math.abs(eventX - mPrevX);
-                //当水平移动距离大于滑动操作的最小距离的时候就认为进行了横向滑动
-                //不进行事件拦截,并将这个事件交给子View处理
-                if (xDiff > mTouchSlop) {
-                    return false;
-                }
-            default:
-                break;
-        }
-        return super.onInterceptTouchEvent(ev);
-    }
+//    /**
+//     * 作者：秋天的雨滴
+//     * 链接：https://www.jianshu.com/p/04d799608c2e
+//     * 解决该view上下滑动事件与子view左右滑动事件的冲突问题
+//     */
+//    @Override
+//    public boolean onInterceptTouchEvent(MotionEvent ev) {
+//        switch (ev.getAction()) {
+//            case MotionEvent.ACTION_DOWN:
+//                mPrevX = MotionEvent.obtain(ev).getX();
+//                break;
+//            case MotionEvent.ACTION_MOVE:
+//                final float eventX = ev.getX();
+//                //获取水平移动距离
+//                float xDiff = Math.abs(eventX - mPrevX);
+//                KLog.e("是否拦截事件：" + (xDiff>mTouchSlop));
+//                //当水平移动距离大于滑动操作的最小距离的时候就认为进行了横向滑动，不进行事件拦截,并将这个事件交给子View处理
+//                if (xDiff > mTouchSlop) {
+//                    return false;
+//                }
+//            default:
+//                break;
+//        }
+//        return super.onInterceptTouchEvent(ev);
+//    }
 
     private void endDrag() {
         mIsBeingDragged = false;
@@ -205,6 +234,7 @@ public class NestedScrollWebView extends FastScrollWebView implements NestedScro
 
     @Override
     public boolean dispatchNestedScroll(int dxConsumed, int dyConsumed, int dxUnconsumed, int dyUnconsumed, int[] offsetInWindow) {
+//        KLog.e("分配滚动事件：" + dxConsumed + "  " + dyConsumed );
         return mChildHelper.dispatchNestedScroll(dxConsumed, dyConsumed, dxUnconsumed, dyUnconsumed, offsetInWindow);
     }
 

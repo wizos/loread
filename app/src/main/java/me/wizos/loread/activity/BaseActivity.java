@@ -48,8 +48,8 @@ public abstract class BaseActivity extends AppCompatActivity {
             intent = new Intent(this, LoginActivity.class);
 //        }else if(toActivity.equals(TagActivity.TAG)){
 //            intent = new Intent(this, TagActivity.class);
-        } else if (toActivity.equals(ArticleActivity3.TAG)) {
-            intent = new Intent(this, ArticleActivity3.class);
+        } else if (toActivity.equals(ArticleActivity.TAG)) {
+            intent = new Intent(this, ArticleActivity.class);
         }else {
             return;
         }

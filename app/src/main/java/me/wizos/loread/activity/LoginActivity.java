@@ -1,12 +1,8 @@
 package me.wizos.loread.activity;
 
-import android.content.BroadcastReceiver;
-import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.net.Uri;
 import android.os.Bundle;
-import android.support.v4.content.LocalBroadcastManager;
 import android.text.TextUtils;
 import android.view.View;
 import android.widget.Button;
@@ -43,7 +39,7 @@ public class LoginActivity extends BaseActivity implements View.OnLayoutChangeLi
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
-        KLog.e("【未登录】");
+//        KLog.e("【未登录】");
         forInput();
         initView();
         recoverData();
@@ -61,7 +57,7 @@ public class LoginActivity extends BaseActivity implements View.OnLayoutChangeLi
 
     @Override
     public void onDestroy() {
-        manager.unregisterReceiver(localReceiver);
+//        manager.unregisterReceiver(localReceiver);
         EventBus.getDefault().unregister(this);
         super.onDestroy();
     }
@@ -187,69 +183,24 @@ public class LoginActivity extends BaseActivity implements View.OnLayoutChangeLi
         intent.setData(Uri.parse("https://www.inoreader.com/?lang=" + Locale.getDefault()));
         startActivity(intent);
         overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
-
-//        new MaterialDialog.Builder(this)
-////                .title(R.string.article_about_dialog_title)
-//                .content("请前往")
-//                .show();
     }
 
-    private LocalBroadcastManager manager;
-    private BroadcastReceiver localReceiver;
-
-    private void initBroadcast() {
-        manager = LocalBroadcastManager.getInstance(this);
-        // 先创建一个 BroadcastReceiver 实例
-        localReceiver = new BroadcastReceiver() {
-            @Override
-            public void onReceive(Context context, Intent intent) {
-                String data = intent.getStringExtra(Api.NOTICE);
-//                String data = intent.getAction();
-                KLog.e("接收到的数据为：", data);
-                switch (data) {
-                    case Api.N_COMPLETED:
-                        Intent intentToActivity = new Intent(LoginActivity.this, MainActivity.class);
-                        startActivity(intentToActivity);
-                        LoginActivity.this.finish();
-                        overridePendingTransition(R.anim.in_from_bottom, R.anim.out_from_bottom);
-                        break;
-                    // 文章获取失败
-                    case Api.N_ERROR:
-                        ToastUtil.showLong(getString(R.string.tips_login_failure));
-                        loginButton.setEnabled(true);
-                        idEditText.setEnabled(true);
-                        pdEditText.setEnabled(true);
-                        break;
-                    default:
-                        break;
-                }
-            }
-        };
-
-        // 动态注册这个 receiver 实例，记得在不需要时注销   // Api.SYNC_ALL
-        manager.registerReceiver(localReceiver, new IntentFilter(Api.SYNC_ALL));
-    }
-
-//    public void clickRegister(View view){
-//        long time = System.currentTimeMillis();
-//        WebViewS webViewS = new WebViewS(this);
-//        KLog.e("耗时a：" + (System.currentTimeMillis() - time));
+//    private LocalBroadcastManager manager;
+//    private BroadcastReceiver localReceiver;
+//    private void initBroadcast() {
+//        manager = LocalBroadcastManager.getInstance(this);
+//        // 先创建一个 BroadcastReceiver 实例
+//        localReceiver = new BroadcastReceiver() {
+//            @Override
+//            public void onReceive(Context context, Intent intent) {
+//                String data = intent.getStringExtra(Api.NOTICE);
+//            }
+//        };
 //
-//        webViewS.destroy();
-//
-//        time = System.currentTimeMillis();
-//        WebViewS webView2 = new WebViewS(this);
-//        KLog.e("耗时b：" + (System.currentTimeMillis() - time));
-//
-//
-//        webView2.destroy();
-//
-//        time = System.currentTimeMillis();
-//        WebViewS webView3 = new WebViewS(this);
-//        KLog.e("耗时c：" + (System.currentTimeMillis() - time));
-//
-//        webView3.destroy();
+//        // 动态注册这个 receiver 实例，记得在不需要时注销   // Api.SYNC_ALL
+//        manager.registerReceiver(localReceiver, new IntentFilter(Api.SYNC_ALL));
 //    }
+
 
     public void onSBClick(View view){
         SwitchButton v = (SwitchButton)view;

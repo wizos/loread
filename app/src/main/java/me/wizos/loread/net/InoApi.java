@@ -239,6 +239,9 @@ Code 	Description
         WithHttp.i().asyncPost(httpClient, HOST + EDIT_FEED, builder, authHeaders, cb);
     }
 
+    public void editFeed(FormBody.Builder builder, StringCallback cb) {
+        WithHttp.i().asyncPost(HOST + EDIT_FEED, builder, authHeaders, cb);
+    }
     public void unsubscribeFeed(String feedId, StringCallback cb) {
         FormBody.Builder builder = new FormBody.Builder();
         builder.add("ac", "unsubscribe");

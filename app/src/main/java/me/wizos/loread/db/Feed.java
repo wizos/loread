@@ -4,6 +4,7 @@ import org.greenrobot.greendao.DaoException;
 import org.greenrobot.greendao.annotation.Entity;
 import org.greenrobot.greendao.annotation.Generated;
 import org.greenrobot.greendao.annotation.Id;
+import org.greenrobot.greendao.annotation.Index;
 import org.greenrobot.greendao.annotation.JoinProperty;
 import org.greenrobot.greendao.annotation.NotNull;
 import org.greenrobot.greendao.annotation.OrderBy;
@@ -21,10 +22,12 @@ public class Feed {
 
     @Id
     @NotNull
+    @Index
     private String id;
 
     @NotNull
     private String title;
+    @Index
     private String categoryid;
     private String categorylabel;
     private String sortid;

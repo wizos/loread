@@ -81,11 +81,9 @@ public class App extends Application implements Thread.UncaughtExceptionHandler 
     };
 
     private static DaoSession daoSession;
-
     public static App i() {
         return instance;
     }
-//    public WebViewS articleWebView;
 
     @Override
     public void onCreate() {
@@ -174,11 +172,6 @@ public class App extends Application implements Thread.UncaughtExceptionHandler 
     public void onTerminate() {
         KLog.i("程序终止的时候执行");
         super.onTerminate();
-    }
-
-    public void updateArtList(List<Article> temps) {
-        articleList.clear();
-        articleList.addAll(temps);
     }
 
     public void updateTagList(List<Tag> temps) {

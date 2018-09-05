@@ -99,9 +99,12 @@ public class StringUtil {
         String cacheUrl;
         String originalUrl;
         String imageHolder;
-        if (!NetworkUtil.isNetworkAvailable()) { // 没有网络
+        // 没有网络
+        if (!NetworkUtil.isNetworkAvailable()) {
             imageHolder = "file:///android_asset/image/image_holder_load_failed.png";
-        } else if (WithPref.i().isDownImgOnlyWifi() && !NetworkUtil.isWiFiUsed()) { // 开启省流量，蜂窝模式
+        }
+        // 开启省流量，蜂窝模式
+        else if (WithPref.i().isDownImgOnlyWifi() && !NetworkUtil.isWiFiUsed()) {
             imageHolder = "file:///android_asset/image/image_holder_click_to_load.png";
         } else {
             imageHolder = "file:///android_asset/image/image_holder_loading.png";
@@ -130,14 +133,14 @@ public class StringUtil {
         for (int i = 0, size = links.size(); i < size; i++) {
             link = links.get(i);
             link.attr("href", link.attr("abs:href"));
-//            links.get(i).attr("abs:href");
         }
 
         Elements imgs = document.getElementsByTag("img");
         String idInMD5 = StringUtil.str2MD5(articleID);
         for (int i = 0, size = imgs.size(); i < size; i++) {
             img = imgs.get(i);
-            originalUrl = img.attr("abs:src"); // 抽取图片的绝对连接
+            // 抽取图片的绝对连接
+            originalUrl = img.attr("abs:src");
             img.attr("original-src", originalUrl);
             cacheUrl = FileUtil.readCacheFilePath(idInMD5, i, originalUrl);
             if (cacheUrl != null) {
@@ -288,15 +291,20 @@ public class StringUtil {
 //        }
         Feed feed = WithDB.i().getFeed(article.getOriginStreamId());
         String readabilityButton = "";
-        String displayMode = GlobalConfig.i().getDisplayMode(feed.getId());
-        if (feed != null && (Api.DISPLAY_RSS.equals(displayMode) || TextUtils.isEmpty(displayMode))) {
+        String displayMode;
+        if (feed != null) {
+            displayMode = GlobalConfig.i().getDisplayMode(feed.getId());
+        } else {
+            displayMode = Api.DISPLAY_RSS;
+        }
+
+        if (Api.DISPLAY_RSS.equals(displayMode) || TextUtils.isEmpty(displayMode)) {
             if (!Api.DISPLAY_READABILITY.equals(referer)) {
                 readabilityButton = "<br><br><a id=\"readabilityButton\" onclick=\"ImageBridge.readability()\">获取全文</a>";
             } else {
                 readabilityButton = "<br><br><a id=\"readabilityButton\" onclick=\"ImageBridge.readability()\">恢复RSS内容</a>";
             }
         }
-
         return "<!DOCTYPE html><html><head>" +
                 "<meta charset=\"UTF-8\">" +
                 "<meta name=\"referrer\" content=\"origin\">" +

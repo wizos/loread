@@ -24,8 +24,8 @@ var articleId = $('article').attr('id');
 // 在这里调用是因为在第一次打开ArticleActivity时，渲染WebView的内容比较慢，此时在ArticleActivity中调用setupImage不会执行。
 // 所以等WebView加载到这个文件时，尝试再去执行tryInitJs，当此页面等于当前展示的文章时，就执行setupImage。
 // 之所以不能直接就执行setupImage，因为在viewpager中预加载而生成webview的时候，这里的懒加载就被触发了，3个webview首屏的图片就都被触发下载了
-setTimeout( ImageBridge.tryInitJs(articleId),100 );
-
+//setTimeout( ImageBridge.tryInitJs(articleId),100 );
+setTimeout( setupImage(),10 );
 
 function setupImage() {
 //    ImageBridge.log("============================================== 准备执行 setupImage" );
@@ -51,33 +51,23 @@ function setupImage() {
 
 	$('img').click(function(event) {
 		var image = $(this);
-		var url = image.attr('src');
+		var displayUrl = image.attr('src');
 		var originalUrl = image.attr('original-src');
 		// 此时去下载图片
-		if (url == IMAGE_HOLDER_CLICK_TO_LOAD_URL || url == IMAGE_HOLDER_LOAD_FAILED_URL) {
+		if (displayUrl == IMAGE_HOLDER_CLICK_TO_LOAD_URL || displayUrl == IMAGE_HOLDER_LOAD_FAILED_URL) {
 			image.attr('src', IMAGE_HOLDER_LOADING_URL);
-			var i = parseInt($(this).attr('index'));
-			ImageBridge.downImage(articleId,i, originalUrl);
-			event.preventDefault();
-			event.stopPropagation();
-			return;
-		}
-		// 由于此时正在加载中所以不处理
-		if (url == IMAGE_HOLDER_LOADING_URL) {
-			event.preventDefault();
-			event.stopPropagation();
-			return;
+			var index = parseInt($(this).attr('index'));
+			ImageBridge.downImage(articleId,index, originalUrl);
+		}else if (displayUrl != IMAGE_HOLDER_LOADING_URL){ // 由于此时正在加载中所以不处理
+		    var index = 0;
+	    	$('img').each(function() {
+	    		if (event.target === this) {
+		    		index = parseInt($(this).attr('index'));
+		    	}
+	    	});
+		    ImageBridge.openImage(articleId, displayUrl , index);
 		}
 
-		var index = 0;
-		$('img').each(function() {
-			if (event.target === this) {
-				index = parseInt($(this).attr('index'));
-			}
-		});
-//		ImageBridge.log("点击了图片" + url + "  序号：" + index );
-		// 中间原本是 JSON.stringify(urls) 这里只会把已经保存了的图片文件传递过去
-		ImageBridge.openImage(articleId, url , index);
 		// 阻止元素发生默认的行为（例如，当点击提交按钮时阻止对表单的提交）。
 		event.preventDefault();
 		 // 该方法将停止事件的传播，阻止它被分派到其他 Document 节点。在事件传播的任何阶段都可以调用它。注意，虽然该方法不能阻止同一个 Document 节点上的其他事件句柄被调用，但是它可以阻止把事件分派到其他节点。
@@ -135,7 +125,6 @@ function wrapFrame( frame ){
 	    d.style.textAlign = 'center';
 	    a.appendChild(d);
 	    frame.offsetParent.appendChild(a);
-
 }
 /*
 	    d.style.width = frame.offsetWidth + 'px';
@@ -171,10 +160,10 @@ function onImageLoadFailed(url) {
 	}
 }
 
-function onImageLoadSuccess(url, localUrl) {
+function onImageLoadSuccess(url, displayUrl) {
 	var image = findImageByUrl(url);
 	if (image) {
 		image.removeClass('image-holder');
-		image.attr('src', localUrl);
+		image.attr('src', displayUrl);
 	}
 }

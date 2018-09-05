@@ -14,7 +14,6 @@ import android.widget.AbsListView;
  */
 public class SwipeRefreshLayoutS extends SwipeRefreshLayout {
     private View view;
-//    private int scaleTouchSlop;
 
     // 方案2：解决下来刷新与左右滑动的冲突
     private int mTouchSlop;
@@ -27,7 +26,6 @@ public class SwipeRefreshLayoutS extends SwipeRefreshLayout {
     public SwipeRefreshLayoutS(Context context, AttributeSet attrs) {
         super(context, attrs);
         // 触发移动事件的最短距离，如果小于这个距离就不触发移动控件
-//        scaleTouchSlop = ViewConfiguration.get(context).getScaledTouchSlop();
         // 判断用户在进行滑动操作的最小距离
         mTouchSlop = ViewConfiguration.get(context).getScaledTouchSlop();
     }
@@ -77,32 +75,15 @@ public class SwipeRefreshLayoutS extends SwipeRefreshLayout {
 
 
     /**
-     * 解决使用SwipeRefreshLayout下拉刷新和左右滑动事件冲突的问题
-     * 使用 SwipeRefreshLayout， 左右滑动 listView item 会出现卡顿，停滞现象，究其原因，是左右滑动和下拉刷新（垂直）冲突导致，就是SwipeRefreshLayout对于Y轴的处理容差值很小，如果不是水平滑动，很轻易就会触发下拉刷新。
+     * 作者：秋天的雨滴
+     * 链接：https://www.jianshu.com/p/04d799608c2e
+     * 解决使用该view（SwipeRefreshLayout）下拉刷新和子view（ViewPager）左右滑动事件冲突的问题
+     * 使用 SwipeRefreshLayout， 左右滑动 listView item 会出现卡顿，停滞现象，究其原因，是左右滑动和下拉刷新（垂直）冲突导致。
+     * 就是SwipeRefreshLayout对于Y 轴的处理容差值很小，如果不是水平滑动，很轻易就会触发下拉刷新。
      * 为了解决该问题，需要重写SwipeRefreshLayout的onInterceptTouchEvent(MotionEvent ev)事件，在这里面进行处理，当X距离滑动大于某个值时，就认为是左右滑动，不执行下拉刷新操作。
      */
     @Override
     public boolean onInterceptTouchEvent(MotionEvent ev) {
-//        switch (ev.getAction()) {
-//            case MotionEvent.ACTION_DOWN:
-//                mXDown = ev.getX();
-//                mYDown = ev.getY();
-//                break;
-//            case MotionEvent.ACTION_MOVE:
-////                float moveX = ev.getX();
-////                float instanceX = Math.abs(moveX - preX);
-////                KLog.i("refresh...","move: instanceX:" + instanceX + "=(moveX:" + moveX + " - preX:" + preX + ") , scaleTouchSlop:" + scaleTouchSlop);
-//                // 容差值大概是24，再加上60
-//                if (fingerLeftAndRightMove(ev)) {
-//                    return false;
-//                }
-//                break;
-//        }
-//        return super.onInterceptTouchEvent(ev);
-
-
-//        作者：秋天的雨滴
-//        链接：https://www.jianshu.com/p/04d799608c2e
         switch (ev.getAction()) {
             case MotionEvent.ACTION_DOWN:
                 mPrevX = MotionEvent.obtain(ev).getX();
@@ -139,4 +120,10 @@ public class SwipeRefreshLayoutS extends SwipeRefreshLayout {
 //        return ((ev.getX() - mXDown > mShortestDistance || ev.getX() - mXDown < -mShortestDistance) &&
 //                ev.getY() - mYDown < mShortestDistance && ev.getY() - mYDown > -mShortestDistance);
 //    }
+
+    @Override
+    public boolean onTouchEvent(MotionEvent ev) {
+//        KLog.e("事件传递到了 下拉控件的 onTouchEvent");
+        return super.onTouchEvent(ev);
+    }
 }

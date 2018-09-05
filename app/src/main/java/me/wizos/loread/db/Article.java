@@ -3,20 +3,29 @@ package me.wizos.loread.db;
 import org.greenrobot.greendao.annotation.Entity;
 import org.greenrobot.greendao.annotation.Generated;
 import org.greenrobot.greendao.annotation.Id;
+import org.greenrobot.greendao.annotation.Index;
 import org.greenrobot.greendao.annotation.NotNull;
+
+import me.wizos.loread.net.Api;
 
 @Entity
 public class Article {
 
     @Id
     @NotNull
+    @Index
     private String id;
     // crawlTimeMsec和timetampusec是相同的日期，第一个是毫秒，第二个是微秒
+    @Index
     private Long crawlTimeMsec;
+    @Index
     private Long timestampUsec;
     private String categories;
+    @Index
     private String title;
+    @Index
     private Long published;
+    @Index
     private Long updated;
     private Long starred;
     private String enclosure;
@@ -25,26 +34,30 @@ public class Article {
     private String summary;
     private String content;
     private String author;
-    private Integer readStatus;
-    private Integer starStatus;
+    @Index
+    @NotNull
+    private Integer readStatus = Api.UNREAD;
+    @Index
+    @NotNull
+    private Integer starStatus = Api.UNSTAR;
     private String readState;
     private String starState;
     private String saveDir;
     private String imgState;
     private String coverSrc;
+    @Index
     private String originStreamId;
     private String originTitle;
     private String originHtmlUrl;
 
 
-    @Generated(hash = 159082649)
-    public Article(@NotNull String id, Long crawlTimeMsec, Long timestampUsec,
-                   String categories, String title, Long published, Long updated, Long starred,
-                   String enclosure, String canonical, String alternate, String summary,
-                   String content, String author, Integer readStatus, Integer starStatus,
-                   String readState, String starState, String saveDir, String imgState,
-                   String coverSrc, String originStreamId, String originTitle,
-                   String originHtmlUrl) {
+    @Generated(hash = 260683293)
+    public Article(@NotNull String id, Long crawlTimeMsec, Long timestampUsec, String categories,
+                   String title, Long published, Long updated, Long starred, String enclosure,
+                   String canonical, String alternate, String summary, String content, String author,
+                   @NotNull Integer readStatus, @NotNull Integer starStatus, String readState,
+                   String starState, String saveDir, String imgState, String coverSrc, String originStreamId,
+                   String originTitle, String originHtmlUrl) {
         this.id = id;
         this.crawlTimeMsec = crawlTimeMsec;
         this.timestampUsec = timestampUsec;

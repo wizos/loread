@@ -274,19 +274,19 @@
             </LinearLayout>
 
             <LinearLayout
-                android:id="@+id/setting_about"
+                android:id="@+id/setting_join_qqgroup"
                 style="@style/SettingItem"
-                android:onClick="showAbout"
+                android:onClick="joinQQGroup"
                 android:orientation="horizontal">
                 <TextView
-                    android:id="@+id/setting_about_title"
+                    android:id="@+id/setting_join_qqgroup_title"
                     style="@style/SettingItemTitleHorizontal"
-                    android:text="@string/setting_about_title" />
+                    android:text="@string/setting_qq_group_title" />
                 <TextView
-                    android:id="@+id/setting_about_summary"
-                    style="@style/SettingItemSummary" />
+                    android:id="@+id/setting_join_qqgroup_summary"
+                    style="@style/SettingItemSummary"
+                    android:text="@string/setting_qq_group_summary" />
             </LinearLayout>
-
             <LinearLayout
                 android:id="@+id/setting_feedback"
                 style="@style/SettingItem"
@@ -300,6 +300,22 @@
 
                 <TextView
                     android:id="@+id/setting_feedback_summary"
+                    style="@style/SettingItemSummary" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/setting_about"
+                style="@style/SettingItem"
+                android:onClick="showAbout"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/setting_about_title"
+                    style="@style/SettingItemTitleHorizontal"
+                    android:text="@string/setting_about_title" />
+
+                <TextView
+                    android:id="@+id/setting_about_summary"
                     style="@style/SettingItemSummary" />
             </LinearLayout>
 
@@ -359,21 +375,6 @@
             <!--android:onClick="onSBClick"/>-->
             <!--</LinearLayout>-->
 
-            <!--<LinearLayout-->
-            <!--android:id="@+id/setting_join_qqgroup"-->
-            <!--style="@style/SettingItem"-->
-            <!--android:onClick="joinQQGroup"-->
-            <!--android:orientation="horizontal">-->
-            <!--<TextView-->
-            <!--android:id="@+id/setting_join_qqgroup_title"-->
-            <!--style="@style/SettingItemTitleHorizontal"-->
-            <!--android:text="@string/setting_qq_group_title" />-->
-
-            <!--<TextView-->
-            <!--android:id="@+id/setting_join_qqgroup_summary"-->
-            <!--style="@style/SettingItemSummary"-->
-            <!--android:text="@string/setting_qq_group_summary" />-->
-            <!--</LinearLayout>-->
 
             <!--<TextView-->
             <!--android:visibility="gone"-->

@@ -78,7 +78,7 @@
         <!-- 硬件加速 -->
         <!-- android:hardwareAccelerated="true" -->
         <activity
-            android:name=".activity.ArticleActivity3"
+            android:name=".activity.ArticleActivity"
             android:configChanges="orientation|screenSize|keyboardHidden"
             android:label="@string/app_name"
             android:launchMode="singleTop"

@@ -46,57 +46,77 @@ public class SQLiteOpenHelperS extends DaoMaster.OpenHelper {
                         "  LEFT JOIN (SELECT COUNT(1) AS UNREADCOUNT, ORIGIN_STREAM_ID" +
                         "  FROM ARTICLE WHERE READ_STATUS != " + Api.READED + " GROUP BY ORIGIN_STREAM_ID)" +
                         "  ON ID = ORIGIN_STREAM_ID";
+
+//        String CREATE_COUNT_VIEW =
+//                "CREATE TEMP VIEW IF NOT EXISTS FEED_COUNT" +
+//                        "  AS SELECT ID,TITLE,CATEGORYID,CATEGORYLABEL,SORTID,FIRSTITEMMSEC,URL,HTMLURL,ICONURL,OPEN_MODE,NEWEST_ITEM_TIMESTAMP_USEC,UNREADCOUNT,STAREDCOUNT,ALLCOUNT" +
+//                        "  FROM FEED" +
+//                        "  LEFT JOIN (SELECT COUNT(1) AS UNREADCOUNT,ORIGIN_STREAM_ID FROM ARTICLE WHERE READ_STATUS != " + Api.READED + " GROUP BY ORIGIN_STREAM_ID) A" +
+//                        "  ON ID = A.ORIGIN_STREAM_ID" +
+//                        "  LEFT JOIN (SELECT COUNT(1) AS STAREDCOUNT,ORIGIN_STREAM_ID FROM ARTICLE WHERE STAR_STATUS == " + Api.STARED + " GROUP BY ORIGIN_STREAM_ID) B" +
+//                        "  ON ID = B.ORIGIN_STREAM_ID" +
+//                        "  LEFT JOIN (SELECT COUNT(1) AS ALLCOUNT,ORIGIN_STREAM_ID FROM ARTICLE GROUP BY ORIGIN_STREAM_ID) C" +
+//                        "  ON ID = C.ORIGIN_STREAM_ID";
         db.execSQL(CREATE_COUNT_VIEW);
 
 
         String createTagUnreadCountView =
                 "CREATE TEMP VIEW IF NOT EXISTS TAG_UNREAD_COUNT" +
-                        "  AS SELECT ID,TITLE,SORTID,NEWEST_ITEM_TIMESTAMP_USEC,UNREADCOUNT FROM TAG LEFT JOIN (SELECT CATEGORYID,SUM(UNREAD_COUNT) AS UNREADCOUNT FROM FEED GROUP BY CATEGORYID )  ON ID = CATEGORYID";
-        KLog.e("创建零食视图：" + createTagUnreadCountView);
+                        "  AS SELECT ID,TITLE,SORTID,NEWEST_ITEM_TIMESTAMP_USEC,UNREADCOUNT" +
+                        "  FROM TAG" +
+                        "  LEFT JOIN (SELECT CATEGORYID,SUM(UNREAD_COUNT) AS UNREADCOUNT FROM FEED GROUP BY CATEGORYID )  ON ID = CATEGORYID";
+
+        KLog.e("创建临时视图：" + createTagUnreadCountView);
         db.execSQL(createTagUnreadCountView);
 
-        String MARK_READ_FEED =
-                "    CREATE TEMP TRIGGER IF NOT EXISTS MARK_READ_FEED" +
-                        "      AFTER UPDATE OF READ_STATUS" +
-                        "      ON ARTICLE" +
-                        "      WHEN (old.READ_STATUS = 1 AND new.READ_STATUS = 2)" +
-                        "      BEGIN" +
-                        "        UPDATE FEED" +
-                        "          SET UNREAD_COUNT = UNREAD_COUNT - 1" +
-                        "          WHERE ID IS old.ORIGIN_STREAM_ID;" +
-                        "      END";
-        String MARK_READ_TAG =
-                "    CREATE TEMP TRIGGER IF NOT EXISTS MARK_READ_TAG" +
-                        "      AFTER UPDATE OF UNREAD_COUNT" +
-                        "      ON FEED" +
-                        "      WHEN (new.UNREAD_COUNT = old.UNREAD_COUNT - 1)" +
-                        "      BEGIN" +
-                        "        UPDATE TAG" +
-                        "          SET UNREAD_COUNT = UNREAD_COUNT - 1" +
-                        "          WHERE ID IS old.CATEGORYID;" +
-                        "      END";
+//        String MARK_READ_FEED =
+//                "    CREATE TEMP TRIGGER IF NOT EXISTS MARK_READ_FEED" +
+//                        "      AFTER UPDATE OF READ_STATUS" +
+//                        "      ON ARTICLE" +
+//                        "      WHEN (old.READ_STATUS = 1 AND new.READ_STATUS = 2)" +
+//                        "      BEGIN" +
+//                        "        UPDATE FEED" +
+//                        "          SET UNREAD_COUNT = UNREAD_COUNT - 1" +
+//                        "          WHERE ID IS old.ORIGIN_STREAM_ID;" +
+//                        "      END";
+//        String MARK_READ_TAG =
+//                "    CREATE TEMP TRIGGER IF NOT EXISTS MARK_READ_TAG" +
+//                        "      AFTER UPDATE OF UNREAD_COUNT" +
+//                        "      ON FEED" +
+//                        "      WHEN (new.UNREAD_COUNT = old.UNREAD_COUNT - 1)" +
+//                        "      BEGIN" +
+//                        "        UPDATE TAG" +
+//                        "          SET UNREAD_COUNT = UNREAD_COUNT - 1" +
+//                        "          WHERE ID IS old.CATEGORYID;" +
+//                        "      END";
+//
+//        String MARK_UNREAD_FEED =
+//                "    CREATE TEMP TRIGGER IF NOT EXISTS MARK_UNREAD_FEED" +
+//                        "      AFTER UPDATE OF READ_STATUS" +
+//                        "      ON ARTICLE" +
+//                        "      WHEN (old.READ_STATUS = 2 OR old.READ_STATUS = 1) AND new.READ_STATUS = 3" +
+//                        "      BEGIN" +
+//                        "        UPDATE FEED" +
+//                        "          SET UNREAD_COUNT = UNREAD_COUNT + 1" +
+//                        "          WHERE ID IS old.ORIGIN_STREAM_ID;" +
+//                        "      END";
+//
+//        String MARK_UNREAD_TAG =
+//                "    CREATE TEMP TRIGGER IF NOT EXISTS MARK_UNREAD_TAG" +
+//                        "      AFTER UPDATE OF UNREAD_COUNT" +
+//                        "      ON FEED" +
+//                        "      WHEN (new.UNREAD_COUNT = old.UNREAD_COUNT + 1)" +
+//                        "      BEGIN" +
+//                        "        UPDATE TAG" +
+//                        "          SET UNREAD_COUNT = UNREAD_COUNT + 1" +
+//                        "          WHERE ID IS old.CATEGORYID;" +
+//                        "      END";
 
-        String MARK_UNREAD_FEED =
-                "    CREATE TEMP TRIGGER IF NOT EXISTS MARK_UNREAD_FEED" +
-                        "      AFTER UPDATE OF READ_STATUS" +
-                        "      ON ARTICLE" +
-                        "      WHEN (old.READ_STATUS = 2 OR old.READ_STATUS = 1) AND new.READ_STATUS = 3" +
-                        "      BEGIN" +
-                        "        UPDATE FEED" +
-                        "          SET UNREAD_COUNT = UNREAD_COUNT + 1" +
-                        "          WHERE ID IS old.ORIGIN_STREAM_ID;" +
-                        "      END";
-
-        String MARK_UNREAD_TAG =
-                "    CREATE TEMP TRIGGER IF NOT EXISTS MARK_UNREAD_TAG" +
-                        "      AFTER UPDATE OF UNREAD_COUNT" +
-                        "      ON FEED" +
-                        "      WHEN (new.UNREAD_COUNT = old.UNREAD_COUNT + 1)" +
-                        "      BEGIN" +
-                        "        UPDATE TAG" +
-                        "          SET UNREAD_COUNT = UNREAD_COUNT + 1" +
-                        "          WHERE ID IS old.CATEGORYID;" +
-                        "      END";
+//        db.execSQL( MARK_READ_FEED );
+//        db.execSQL( MARK_READ_TAG );
+//        db.execSQL( MARK_UNREAD_FEED );
+//        db.execSQL( MARK_UNREAD_TAG );
+//        KLog.e("数据库，创建触发器：" );
 
 //        String Test  =
 //                "    CREATE TEMP TRIGGER IF NOT EXISTS MARK_READ" +
@@ -108,12 +128,6 @@ public class SQLiteOpenHelperS extends DaoMaster.OpenHelper {
 //                        "          SET UNREAD_COUNT = UNREAD_COUNT + 1" +
 //                        "          WHERE ID IS old.ORIGIN_STREAM_ID;" +
 //                        "      END";
-
-//        db.execSQL( MARK_READ_FEED );
-//        db.execSQL( MARK_READ_TAG );
-//        db.execSQL( MARK_UNREAD_FEED );
-//        db.execSQL( MARK_UNREAD_TAG );
-//        KLog.e("数据库，创建触发器：" );
 
         // 当前值不等于旧值，如果新值为read，旧值可能为unread，unreading ， 减一
         // 如果旧值为read，加一

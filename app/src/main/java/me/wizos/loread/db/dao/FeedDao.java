@@ -74,6 +74,11 @@ public class FeedDao extends AbstractDao<Feed, String> {
                 "\"OPEN_MODE\" TEXT," + // 9: openMode
                 "\"UNREAD_COUNT\" INTEGER," + // 10: unreadCount
                 "\"NEWEST_ITEM_TIMESTAMP_USEC\" INTEGER);"); // 11: newestItemTimestampUsec
+        // Add Indexes
+        db.execSQL("CREATE INDEX " + constraint + "IDX_FEED_ID ON \"FEED\"" +
+                " (\"ID\" ASC);");
+        db.execSQL("CREATE INDEX " + constraint + "IDX_FEED_CATEGORYID ON \"FEED\"" +
+                " (\"CATEGORYID\" ASC);");
     }
 
     /** Drops the underlying database table. */
