@@ -125,6 +125,7 @@
         <me.wizos.loread.view.IconFontView
             android:id="@+id/article_bottombar_save"
             style="@style/bottom_bar_iconfont"
+            android:layout_alignParentEnd="true"
             android:text="@string/font_unsave"
             android:visibility="visible" />
         <LinearLayout

@@ -41,6 +41,7 @@ import java.util.ArrayList;
 import me.wizos.loread.R;
 import me.wizos.loread.bean.config.GlobalConfig;
 import me.wizos.loread.bean.config.UserAgent;
+import me.wizos.loread.data.WithPref;
 import me.wizos.loread.utils.InjectUtil;
 import me.wizos.loread.utils.ToastUtil;
 import me.wizos.loread.utils.Tool;
@@ -61,12 +62,15 @@ public class WebActivity extends BaseActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        // 获取默认主题
+        WithPref.i().setThemeMode(getIntent().getIntExtra("theme", 0));
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_web);
         containerLayout = this.findViewById(R.id.web_root);
-
         mToolbar = this.findViewById(R.id.web_toolbar);
-        mToolbar.setTitle("加载中");
+
+
+        mToolbar.setTitle(getIntent().getStringExtra("title") + "");
         setSupportActionBar(mToolbar);
         // 这个小于4.0版本是默认为true，在4.0及其以上是false。该方法的作用：决定左上角的图标是否可以点击(没有向左的小图标)，true 可点
         getSupportActionBar().setHomeButtonEnabled(true);
@@ -80,10 +84,10 @@ public class WebActivity extends BaseActivity {
         if (TextUtils.isEmpty(link)) {
             link = getIntent().getStringExtra(Intent.EXTRA_TEXT);
         }
+        mToolbar.setSubtitle(link);
         KLog.e("获取到链接，准备跳转" + link);
         initWebView(link);
     }
-
 
     private void initWebView(String link) {
         CoordinatorLayout.LayoutParams lp = new CoordinatorLayout.LayoutParams(-1, -1);
@@ -376,8 +380,7 @@ public class WebActivity extends BaseActivity {
                 break;
             //监听左上角的返回箭头
             case android.R.id.home:
-                finish();
-                overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
+                exit();
                 break;
             case R.id.web_menu_open_by_sys:
                 Intent intent = new Intent();
@@ -436,14 +439,18 @@ public class WebActivity extends BaseActivity {
 //            if( webViewS.canGoBack()){
 //                webViewS.goBack();
             } else {
-                this.finish();
-                overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
+                exit();
             }
             return true;
         }
         return super.onKeyDown(keyCode, event);
     }
 
+    private void exit() {
+        this.finish();
+        overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
+//        System.exit(0);
+    }
 
     @Override
     protected void onPause() {

@@ -16,7 +16,6 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
 import android.support.annotation.NonNull;
-import android.support.v4.content.ContextCompat;
 import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
 import android.view.KeyEvent;
@@ -135,6 +134,7 @@ public class ArticleActivity extends BaseActivity implements ImageBridge, SlideA
         Bundle bundle;
         if (savedInstanceState != null) {
             bundle = savedInstanceState;
+            App.i().articleProgress.put(articleId, bundle.getInt("articleProgress"));
         } else {
             bundle = getIntent().getExtras();
         }
@@ -143,7 +143,7 @@ public class ArticleActivity extends BaseActivity implements ImageBridge, SlideA
         articleNo = bundle.getInt("articleNo");
         // 列表中所有的文章数目
         articleCount = bundle.getInt("articleCount");
-        articleId = bundle.getString("articleID");
+        articleId = bundle.getString("articleId");
 //        articleIDs = bundle.getStringArrayList("articleIDs");
 
 //        KLog.e("开始初始化数据2" + articleNo + "==" + articleCount + "==" + articleId + " == " + articleIDs );
@@ -174,7 +174,7 @@ public class ArticleActivity extends BaseActivity implements ImageBridge, SlideA
     protected void onDestroy() {
         // 如果参数为null的话，会将所有的Callbacks和Messages全部清除掉。
         // 这样做的好处是在 Acticity 退出的时候，可以避免内存泄露。因为 handler 内可能引用 Activity ，导致 Activity 退出后，内存泄漏
-        KLog.e("onDestroy：" + selectedWebView);
+//        KLog.e("onDestroy：" + selectedWebView);
         OkGo.cancelAll(articleHttpClient);
         articleHandler.removeCallbacksAndMessages(null);
         entryView.removeAllViews();
@@ -184,12 +184,13 @@ public class ArticleActivity extends BaseActivity implements ImageBridge, SlideA
         super.onDestroy();
     }
 
-    public void saveArticleProgress() {
+    public int saveArticleProgress() {
         if (selectedWebView == null) {
-            return;
+            return 0;
         }
         int scrollY = selectedWebView.getScrollY();
         App.i().articleProgress.put(articleId, scrollY);
+        return scrollY;
     }
 
     @Override
@@ -197,6 +198,7 @@ public class ArticleActivity extends BaseActivity implements ImageBridge, SlideA
         outState.putInt("articleNo", 0);
         outState.putInt("articleCount", 1);
         outState.putString("articleId", articleId);
+        outState.putInt("articleProgress", saveArticleProgress());
         KLog.e("自动保存：" + articleNo + "==" + "==" + articleId);
         super.onSaveInstanceState(outState);
     }
@@ -252,13 +254,6 @@ public class ArticleActivity extends BaseActivity implements ImageBridge, SlideA
                 imageFilePath = m.replaceFirst("me.wizos.loread/files/cache/" + id + "/original");
             }
         }
-
-//        try {
-//        }catch (IllegalStateException e){
-//            KLog.e("ImageBridge", "打开图片报错"  );
-//        }
-
-//        KLog.e("ImageBridge", "打开图片：" + m.group(1) );
 
         // 直接打开内置图片浏览器
         Intent intent = new Intent(ArticleActivity.this, ImageActivity.class);
@@ -320,6 +315,8 @@ public class ArticleActivity extends BaseActivity implements ImageBridge, SlideA
         } else {
             Intent intent = new Intent(ArticleActivity.this, WebActivity.class);
             intent.setData(Uri.parse(link));
+            intent.putExtra("theme", WithPref.i().getThemeMode());
+            intent.putExtra("title", selectedArticle.getTitle());
             startActivity(intent);
             overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
         }
@@ -470,20 +467,20 @@ public class ArticleActivity extends BaseActivity implements ImageBridge, SlideA
             video = new VideoImpl(ArticleActivity.this, selectedWebView);
             selectedWebView.setWebChromeClient(new WebChromeClientX(video));
             selectedWebView.setWebViewClient(new WebViewClientX());
+            // 原本想放在选择 webview 页面的时候去加载，但可能由于那时页面内容已经加载所以无法设置下面这个JSInterface？
             selectedWebView.addJavascriptInterface(ArticleActivity.this, "ImageBridge");
 
-            // 原本想放在选择 webview 页面的时候去加载，但可能由于那时页面内容已经加载所以无法设置下面这个JSInterface？
-            if (WithPref.i().getThemeMode() == App.Theme_Day) {
-                selectedWebView.getFastScrollDelegate().setThumbDrawable(ContextCompat.getDrawable(App.i(), R.drawable.scrollbar_light));
-            } else {
-                selectedWebView.getFastScrollDelegate().setThumbDrawable(ContextCompat.getDrawable(App.i(), R.drawable.scrollbar_dark));
-            }
-            selectedWebView.getFastScrollDelegate().setThumbDynamicHeight(false);
-            selectedWebView.getFastScrollDelegate().setThumbSize(10, 32);
+//            if (WithPref.i().getThemeMode() == App.Theme_Day) {
+//                selectedWebView.getFastScrollDelegate().setThumbDrawable(ContextCompat.getDrawable(App.i(), R.drawable.scrollbar_light));
+//            } else {
+//                selectedWebView.getFastScrollDelegate().setThumbDrawable(ContextCompat.getDrawable(App.i(), R.drawable.scrollbar_dark));
+//            }
+//            selectedWebView.getFastScrollDelegate().setThumbDynamicHeight(false);
+//            selectedWebView.getFastScrollDelegate().setThumbSize(10, 32);
         }
 
         // 检查该订阅源默认显示什么。【RSS，已读，保存的网页，原始网页】
-        KLog.e("要加载的位置为：" + position + "  " + selectedArticle.getTitle());
+//        KLog.e("要加载的位置为：" + position + "  " + selectedArticle.getTitle());
 
         Feed feed = WithDB.i().getFeed(selectedArticle.getOriginStreamId());
 
@@ -494,7 +491,7 @@ public class ArticleActivity extends BaseActivity implements ImageBridge, SlideA
             } else if (Api.DISPLAY_READABILITY.equals(GlobalConfig.i().getDisplayMode(feed.getId()))) {
                 onReadabilityClick();
             } else {
-                KLog.e("加载文章：" + selectedArticle.getTitle());
+//                KLog.e("加载文章：" + selectedArticle.getTitle());
                 selectedWebView.loadData(StringUtil.getPageForDisplay(selectedArticle));
             }
         } else {
@@ -559,9 +556,13 @@ public class ArticleActivity extends BaseActivity implements ImageBridge, SlideA
             @Override
             public void onSuccess(Response<File> response) {
                 new File(originalFileDir + fileNameExt + Api.EXT_TMP).renameTo(new File(originalFileDir + fileNameExt));
+
+//                AsyncTask.SERIAL_EXECUTOR.execute(new Runnable() {
+//                    @Override
+//                    public void run() {
                 Luban.with(App.i())
                         .load(originalFileDir + fileNameExt)
-                        .ignoreBy(512) // 忽略512kb以下的文件
+                        .ignoreBy(256) // 忽略512kb以下的文件
                         // 缓存压缩图片路径
 //                        .setTargetPath(compressedFileDir + fileNameExt)
                         .setTargetDir(compressedFileDir)
@@ -587,16 +588,33 @@ public class ArticleActivity extends BaseActivity implements ImageBridge, SlideA
 
                             @Override
                             public void onSuccess(final File file) {
+                                if (selectedWebView == null) {
+                                    return;
+                                }
+//                                        WindowManager manager = ArticleActivity.this.getWindowManager();
+//                                        DisplayMetrics outMetrics = new DisplayMetrics();
+//                                        manager.getDefaultDisplay().getMetrics(outMetrics);
+//                                        KLog.e("【宽度】2：",outMetrics.widthPixels + " " + outMetrics.heightPixels);
                                 KLog.e("加载压缩图片成功1：" + Thread.currentThread() + "   " + file.getPath() + "   " + compressedFileDir);
                                 selectedWebView.loadUrl("javascript:onImageLoadSuccess('" + originalUrl + "','" + file.getPath() + "')");
                             }
 
                             @Override
                             public void onError(Throwable e) {
+                                if (selectedWebView == null) {
+                                    return;
+                                }
                                 KLog.e("压缩图片报错");
                                 selectedWebView.loadUrl("javascript:onImageLoadSuccess('" + originalUrl + "','" + originalFileDir + fileNameExt + "')");
+//                                        selectedWebView.post(new Runnable() {
+//                                            @Override
+//                                            public void run() {
+//                                             }
+//                                        });
                             }
                         }).launch();
+//                    }
+//                });
 
 //                selectedWebView.loadUrl("javascript:onImageLoadSuccess('" + originalUrl + "','" + filePath + fileNameExt + "')");
                 KLog.e("下载图片成功，准备加载" + originalUrl + "','" + originalFileDir + fileNameExt);
@@ -615,12 +633,14 @@ public class ArticleActivity extends BaseActivity implements ImageBridge, SlideA
                 .tag(articleId)
                 .client(articleHttpClient);
 
-        String referer = GlobalConfig.i().guessRefererByUrl(originalUrl);
-//        KLog.e("图片链接是：" + originalUrl + "， 来源是：" + referer);
-        if (!TextUtils.isEmpty(referer)) {
-            request.headers(Api.Referer, referer);
-        }
-
+//        String referer = GlobalConfig.i().guessRefererByUrl(originalUrl);
+////        KLog.e("图片链接是：" + originalUrl + "， 来源是：" + referer);
+//        if (!TextUtils.isEmpty(referer)) {
+//            request.headers(Api.Referer, referer);
+//        }else {
+//            request.headers(Api.Referer, selectedArticle.getCanonical());
+//        }
+        request.headers(Api.Referer, selectedArticle.getCanonical());
         request.execute(fileCallback);
 //        KLog.e("下载：" + originalUrl + " 来源 " + selectedArticle.getCanonical() );
     }
@@ -655,10 +675,6 @@ public class ArticleActivity extends BaseActivity implements ImageBridge, SlideA
             } else if (hitTestResult.getType() == WebView.HitTestResult.UNKNOWN_TYPE) {
                 return false;
             }
-//            KLog.e("打开的链接为：" + url );
-//            if (url.startsWith("//")) {
-//                url = "http:" + url;
-//            }
             //http和https协议开头的执行正常的流程
             if (url.startsWith("http") || url.startsWith("https")) {
                 openLink(url);
@@ -711,7 +727,7 @@ public class ArticleActivity extends BaseActivity implements ImageBridge, SlideA
             // 超时
             m.what = 0;
             // 5秒后如果没有加载完毕，则停止加载
-            articleHandler.sendMessageDelayed(m, 5000);
+            articleHandler.sendMessageDelayed(m, 10000);
         }
 
 
@@ -722,9 +738,8 @@ public class ArticleActivity extends BaseActivity implements ImageBridge, SlideA
         @Override
         public void onPageFinished(WebView webView, String url) {
             super.onPageFinished(webView, url);
-//            webView.getSettings().setBlockNetworkImage(false);
             Integer process = App.i().articleProgress.get(articleId);
-            KLog.e("页面加载完成：" + selectedArticle.getTitle() + "  " + articleId + "  " + process);
+//            KLog.e("页面加载完成：" + selectedArticle.getTitle() + "  " + articleId + "  " + process);
             if (process != null) {
                 selectedWebView.scrollTo(0, process);
             }
@@ -756,7 +771,7 @@ public class ArticleActivity extends BaseActivity implements ImageBridge, SlideA
             saveView.setText(getString(R.string.font_saved));
         }
 
-        articleNumView.setText((position + 1) + " / " + articleCount);
+//        articleNumView.setText((position + 1) + " / " + articleCount);
 //        KLog.i("=====position" + position);
     }
 
@@ -818,6 +833,7 @@ public class ArticleActivity extends BaseActivity implements ImageBridge, SlideA
     }
 
     public void onReadabilityClick() {
+        saveArticleProgress();
         if (selectedWebView.isReadability()) {
             ToastUtil.showLong(getString(R.string.toast_cancel_readability));
             selectedWebView.loadData(StringUtil.getPageForDisplay(selectedArticle));
@@ -1001,7 +1017,7 @@ public class ArticleActivity extends BaseActivity implements ImageBridge, SlideA
             @Override
             public void onClick(View view) {
                 feedConfigDialog.dismiss();
-                final ArrayList<Tag> tags = WithDB.i().getTagsWithCount();
+                final ArrayList<Tag> tags = WithDB.i().getTagsWithUnreadCount();
                 final ArrayList<String> titles = new ArrayList<>(tags.size());
                 int selectedIndex = -1;
 

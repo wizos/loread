@@ -51,9 +51,9 @@ public class ListViewS extends FastScrollListView implements Handler.Callback, S
     private static final int STATE_NOTHING = -1;//抬起状态
     private static final int STATE_DOWN = 0;//按下状态
     private static final int STATE_LONG_CLICK = 1;//长点击状态
-    private static final int STATE_SCROLL = 2;//SCROLL状态
+    //    private static final int STATE_SCROLL = 2;//SCROLL状态
     private static final int STATE_LONG_CLICK_FINISH = 3;//长点击已经触发完成
-    private static final int STATE_MORE_FINGERS = 4;//多个手指
+    //    private static final int STATE_MORE_FINGERS = 4;//多个手指
     private int mState = STATE_NOTHING;
     private OnListItemLongClickListener mOnListItemLongClickListener;
     public void setOnListItemLongClickListener(OnListItemLongClickListener listener) {

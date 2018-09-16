@@ -8,6 +8,7 @@ import android.content.Context;
 import android.net.Uri;
 import android.os.Environment;
 import android.support.annotation.NonNull;
+import android.text.TextUtils;
 import android.webkit.DownloadListener;
 import android.webkit.WebView;
 import android.widget.EditText;
@@ -45,9 +46,20 @@ public class DownloadListenerS implements DownloadListener {
     @Override
     public void onDownloadStart(final String url, final String userAgent, final String contentDisposition, final String mimeType, final long contentLength) {
         String neutralText = "复制下载地址";
-        if ("video/mp4".equals(mimeType)) {
-            neutralText = "播放该视频";
+        if (!TextUtils.isEmpty(mimeType)) {
+            if (mimeType.toLowerCase().startsWith("video")) {
+                neutralText = "播放该视频";
+            } else if (mimeType.toLowerCase().startsWith("audio")) {
+                neutralText = "播放该音频";
+            }
         }
+
+
+        KLog.e("下载" + url);
+        KLog.e("下载", userAgent);
+        KLog.e("下载", contentDisposition); // attachment; filename=com.android36kr.app_7.4.2_18060821.apk
+        KLog.e("下载" + mimeType); //  application/vnd.android.package-archive
+        KLog.e("下载5", contentLength);
 
         MaterialDialog downloadDialog = new MaterialDialog.Builder(context)
                 .title("是否下载文件？")
@@ -56,11 +68,22 @@ public class DownloadListenerS implements DownloadListener {
                 .onNeutral(new MaterialDialog.SingleButtonCallback() {
                     @Override
                     public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
-                        if ("video/mp4".equals(mimeType)) {
-                            playUrl(url);
-                        } else {
-                            copyUrl(url);
+                        if (!TextUtils.isEmpty(mimeType)) {
+                            if (mimeType.toLowerCase().startsWith("video")) {
+                                playVideo(url);
+                            } else if (mimeType.toLowerCase().startsWith("audio")) {
+                                playAudio(url);
+                            } else {
+                                copyUrl(url);
+                            }
                         }
+//                        if ("video/mp4".equals(mimeType)) {
+//                            playVideo(url);
+//                        } else if("audio/mp3".equals(mimeType)){
+//                            playAudio(url);
+//                        }else {
+//                            copyUrl(url);
+//                        }
                     }
                 })
                 .negativeText(android.R.string.cancel)
@@ -79,12 +102,6 @@ public class DownloadListenerS implements DownloadListener {
                 .show();
         String fileName = FileUtil.guessDownloadFileName(url, contentDisposition, mimeType);
         String fileSize = Tool.getNetFileSizeDescription(context, contentLength);
-
-        KLog.e("下载", url);
-        KLog.e("下载", userAgent);
-        KLog.e("下载", contentDisposition); // attachment; filename=com.android36kr.app_7.4.2_18060821.apk
-        KLog.e("下载", mimeType); //  application/vnd.android.package-archive
-        KLog.e("下载5", contentLength);
 
         fileNameEditor = (EditText) downloadDialog.findViewById(R.id.file_name_edit);
         fileNameEditor.setText(fileName);
@@ -136,7 +153,7 @@ public class DownloadListenerS implements DownloadListener {
 //        KLog.e("下载", "下载id为：" + downloadId);
     }
 
-    private void playUrl(String url) {
+    private void playVideo(String url) {
         webView.loadDataWithBaseURL(
                 "",
                 "<!DOCTYPE html><html><head><meta charset='UTF-8'><meta name='viewport' content='width=device-width,initial-scale=1.0,user-scalable=no'><title>视频</title></head><body><video src='" + url + "' preload='metadata' width='100%' height='auto' controls>你的浏览器不支持HTMl5，无法播放该视频</video></body></html>",
@@ -145,6 +162,15 @@ public class DownloadListenerS implements DownloadListener {
                 null);
     }
 
+    private void playAudio(String url) {
+        webView.loadDataWithBaseURL(
+                "",
+                "<!DOCTYPE html><html><head><meta charset='UTF-8'><meta name='viewport' content='width=device-width,initial-scale=1.0,user-scalable=no'><title>音频</title></head>" +
+                        "<body><audio src='" + url + "' preload='metadata' width='100%' height='auto' controls>你的浏览器不支持HTMl5，无法播放该音频</audio></body></html>",
+                "text/html",
+                "UTF-8",
+                null);
+    }
     private void copyUrl(String url) {
         // 获取剪贴板管理器
         ClipboardManager cm = (ClipboardManager) context.getSystemService(Context.CLIPBOARD_SERVICE);

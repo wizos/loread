@@ -8,6 +8,7 @@ import android.webkit.WebView;
 import com.bumptech.glide.Glide;
 import com.lzy.okgo.OkGo;
 import com.socks.library.KLog;
+import com.squareup.leakcanary.LeakCanary;
 import com.tencent.bugly.Bugly;
 import com.tencent.bugly.crashreport.CrashReport;
 import com.tencent.stat.StatConfig;
@@ -48,8 +49,6 @@ public class App extends Application implements Thread.UncaughtExceptionHandler 
      * 此处的单例不会造成内存泄露，因为 App 本身就是全局的单例
      */
     public static App instance;
-    public final static String APP_NAME_EN = "loread";
-    public final static String DB_NAME = "loread_DB";
     public final static int Theme_Day = 0;
     public final static int Theme_Night = 1;
 
@@ -57,7 +56,6 @@ public class App extends Application implements Thread.UncaughtExceptionHandler 
     public static long UserID;
     public static String StreamId;
     public static String StreamTitle;
-    //    public static String StreamState;
     public static int StreamStatus;
     // 这个只是从 Read 属性的4个类型(Readed, UnRead, UnReading, All), Star 属性的3个类型(Stared, UnStar, All)中，生硬的抽出 UnRead(含UnReading), Stared, All 3个快捷状态，供用户在主页面切换时使用
     // 由于根据 StreamId 来获取文章，可从2个属性( Categories[针对Tag], OriginStreamId[针对Feed] )上，共4个变化上（All, Tag, NoTag, Feed）来获取文章。
@@ -76,7 +74,7 @@ public class App extends Application implements Thread.UncaughtExceptionHandler 
     public LinkedHashMap<String, Integer> articleProgress = new LinkedHashMap<String, Integer>() {
         @Override
         protected boolean removeEldestEntry(Map.Entry<String, Integer> eldest) {
-            return size() > 50;
+            return size() > 5;
         }
     };
 
@@ -101,14 +99,13 @@ public class App extends Application implements Thread.UncaughtExceptionHandler 
         // 虽然他们的内存都维持在一个稳定的消耗水平，但总体看来，Application要比Activity少那么一点。
         // 但是采用Application会影响，在 webview 中打开对话框
         new WebView(this).destroy();
-//        articleWebView = new WebViewS(new MutableContextWrapper(this));
 
         AsyncTask.SERIAL_EXECUTOR.execute(new Runnable() {
             @Override
             public void run() {
                 // 初始化网络框架
                 OkGo.getInstance().init(instance);
-                OkGo.getInstance().getOkHttpClient().dispatcher().setMaxRequestsPerHost(3);
+//                OkGo.getInstance().getOkHttpClient().dispatcher().setMaxRequestsPerHost(3);
                 OkGo.getInstance().getOkHttpClient().dispatcher().setMaxRequests(3);
                 // 初始化网络状态
                 NetworkUtil.THE_NETWORK = NetworkUtil.getNetWorkState();
@@ -146,12 +143,11 @@ public class App extends Application implements Thread.UncaughtExceptionHandler 
     @Override
     public void onTrimMemory(int level) {
         super.onTrimMemory(level);
-        KLog.e("内存清理");
+        KLog.e("内存onTrimMemory：" + level);
         if (level == TRIM_MEMORY_UI_HIDDEN) {
             Glide.get(this).clearMemory();
         }
         Glide.get(this).trimMemory(level);
-        System.gc();
     }
 
     /**
@@ -191,12 +187,12 @@ public class App extends Application implements Thread.UncaughtExceptionHandler 
 
 
     //  内存泄漏检测工具
-//    private void initLeakCanary() {
-//        if (LeakCanary.isInAnalyzerProcess(this)) {
-//            return;
-//        }
-//        LeakCanary.install(this);
-//    }
+    private void initLeakCanary() {
+        if (LeakCanary.isInAnalyzerProcess(this)) {
+            return;
+        }
+        LeakCanary.install(this);
+    }
 
 
 
@@ -284,7 +280,7 @@ public class App extends Application implements Thread.UncaughtExceptionHandler 
         if (daoSession == null) {
 //            DaoMaster.OpenHelper helper = new DaoMaster.DevOpenHelper(i(), DB_NAME, null);
             // 此处是为了方便升级
-            SQLiteOpenHelperS helper = new SQLiteOpenHelperS(i(), DB_NAME, null);
+            SQLiteOpenHelperS helper = new SQLiteOpenHelperS(i(), "loread_DB", null);
             daoSession = new DaoMaster(helper.getWritableDb()).newSession();
         }
         return daoSession;

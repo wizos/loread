@@ -11,6 +11,7 @@ import android.webkit.WebView;
 import com.socks.library.KLog;
 
 import me.wizos.loread.App;
+import me.wizos.loread.BuildConfig;
 import me.wizos.loread.utils.Tool;
 import me.wizos.loread.view.webview.NestedScrollWebView;
 
@@ -37,6 +38,9 @@ public class WebViewS extends NestedScrollWebView {
         setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View v) {
+                if (!BuildConfig.DEBUG) {
+                    return false;
+                }
                 HitTestResult result = ((WebViewS) v).getHitTestResult();
                 if (null == result) {
                     return false;
@@ -197,10 +201,10 @@ public class WebViewS extends NestedScrollWebView {
             getSettings().setJavaScriptEnabled(false);
             stopLoading();
             onPause();
-            clearCache(true);
             clearHistory();
+            clearCache(true);
 //            WebStorage.getInstance().deleteAllData();
-            destroyDrawingCache();
+//            destroyDrawingCache();
             ViewGroup parent = (ViewGroup) this.getParent();
             if (parent != null) {
                 parent.removeView(this);

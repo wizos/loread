@@ -135,7 +135,7 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
         super.onResume();
         if (articleListAdapter != null) {
             articleListAdapter.notifyDataSetChanged();
-            KLog.e("通知articleList数据有变化");
+//            KLog.e("通知articleList数据有变化");
         }
 //        tagCount = UnreadCountUtil.getUnreadCount(App.StreamId);
 //        tagCount = App.articleList.size();
@@ -365,7 +365,7 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
         List<Tag> tagListTemp = new ArrayList<>();
         tagListTemp.add(rootTag);
         tagListTemp.add(noLabelTag);
-        tagListTemp.addAll(WithDB.i().getTagsWithCount());
+        tagListTemp.addAll(WithDB.i().getTagsWithUnreadCount());
 
         App.i().updateTagList(tagListTemp);
         KLog.e("加载tag耗时：" + (System.currentTimeMillis() - time));
@@ -488,7 +488,7 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
 //                .icon(R.drawable.dialog_ic_unsubscribe)
                 .backgroundColor(Color.TRANSPARENT)
                 .build());
-        final ArrayList<Tag> tags = WithDB.i().getTagsWithCount();
+        final ArrayList<Tag> tags = WithDB.i().getTagsWithUnreadCount();
         final ArrayList<String> titles = new ArrayList<>(tags.size());
         int selectedIndex = -1;
 
@@ -897,15 +897,20 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
             @Override
             public void onCloseLeft(View view, int position, int direction) {
                 KLog.e("onCloseLeft：" + position + "  ");
-                Article article = App.articleList.get(position);
-                toggleStarState(article);
+                if (position > -1) {
+                    Article article = App.articleList.get(position);
+                    toggleStarState(article);
+                }
             }
 
             @Override
             public void onCloseRight(View view, int position, int direction) {
                 KLog.e("onCloseRight：" + position + "  ");
-                Article article = App.articleList.get(position);
-                toggleReadState(article);
+                if (position > -1) {
+                    Article article = App.articleList.get(position);
+                    toggleReadState(article);
+                }
+
             }
 
             // 由于父 listview 被重载，onClick 事件也被重写了。无法直接使用 setOnItemClickListener
@@ -925,13 +930,13 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
 //                intent.putStringArrayListExtra("articleIDs",new ArrayList<String>(Arrays.asList(articleIDs)) );
 
                 String articleID = App.articleList.get(position).getId();
-                intent.putExtra("articleID", articleID);
+                intent.putExtra("articleId", articleID);
                 // 下标从 0 开始
                 intent.putExtra("articleNo", position);
                 intent.putExtra("articleCount", App.articleList.size());
                 startActivityForResult(intent, 0);
                 overridePendingTransition(R.anim.in_from_bottom, R.anim.fade_out);
-                KLog.i("点击了" + articleID + "，位置：" + position + "，文章ID：" + articleID + "    " + App.articleList.size());
+//                KLog.i("点击了" + articleID + "，位置：" + position + "，文章ID：" + articleID + "    " + App.articleList.size());
             }
 
             @Override

@@ -14,7 +14,7 @@ import me.wizos.loread.net.Api;
 import me.wizos.loread.utils.FileUtil;
 
 /**
- * @author Wizos on 2018/3/13.
+ * @author Wizos on 2016/3/15.
  */
 
 public class SQLiteOpenHelperS extends DaoMaster.OpenHelper {

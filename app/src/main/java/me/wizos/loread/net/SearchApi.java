@@ -7,7 +7,7 @@ import com.lzy.okgo.callback.StringCallback;
  */
 
 public class SearchApi {
-    private static final String Loreead_Feeds_Host = "http://api.wizos.me/search.php";
+    //    private static final String Loreead_Feeds_Host = "http://api.wizos.me/search.php";
     private static final String Feedly_Feeds_Host = "http://cloud.feedly.com/v3/search/feeds";
 //    private static final String Inoreader_Feeds_Host = "https://www.inoreader.com";
     private static final int page_unit = 10000;

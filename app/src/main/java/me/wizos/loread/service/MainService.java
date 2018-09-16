@@ -153,7 +153,7 @@ public class MainService extends IntentService {
 
             // 如果在获取到数据的时候就保存，那么到这里同步断了的话，可能系统内的文章就找不到响应的分组，所有放到这里保存。（比如在云端将文章移到的新的分组）
 
-//            List<Tag> localTags = WithDB.i().getTagsWithCount();
+//            List<Tag> localTags = WithDB.i().getTagsWithUnreadCount();
 //            localTags.removeAll(tagList);
 //            WithDB.i().delTags(localTags);
 //            WithDB.i().tagDao.updateInTx(tagList);
@@ -164,7 +164,6 @@ public class MainService extends IntentService {
 //            WithDB.i().feedDao.updateInTx(feedList);
 
             WithDB.i().coverSaveTags(tagList);
-            WithDB.i().coverSaveFeeds(feedList);
 
             KLog.e("3 - 同步未读信息");
             EventBus.getDefault().post(new Sync(Sync.DOING, App.i().getString(R.string.main_toolbar_hint_sync_unread_refs)));
@@ -268,6 +267,7 @@ public class MainService extends IntentService {
                 });
                 WithPref.i().setHadSyncAllStarred(true);
             }
+            WithDB.i().coverSaveFeeds(feedList);
             updateFeedUnreadCount();
 
 
@@ -289,10 +289,7 @@ public class MainService extends IntentService {
                 DataApi.i().markArticleListReaded(articleIds, null);
             }
 
-
             EventBus.getDefault().post(new Sync(Sync.END));
-
-
         } catch (IOException e) {
             e.printStackTrace();
             if (e.getMessage().equals("401")) {
@@ -305,7 +302,7 @@ public class MainService extends IntentService {
     }
 
     private void updateFeedUnreadCount() {
-        ArrayList<Feed> feedList = WithDB.i().getUnreadArtsCountByFeed3();
+        ArrayList<Feed> feedList = WithDB.i().getFeedsWithUnreadCount();
         WithDB.i().coverSaveFeeds(feedList);
     }
 

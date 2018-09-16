@@ -42,10 +42,10 @@ public class ColorUtil {
     }
 
     private final static String P_BACKGROUND_COLOR = "background(\\s|:|-color).*?(;|$)";
-    private final static String P_RGB = "rgb\\s*\\(\\s*(\\d+)\\s*,\\s*(\\d+)\\s*,\\s*(\\d+)\\s*\\)";
-    private final static String P_HEX3 = ":\\s*#\\s*(\\d{3})\\s*(;|$)";
-    private final static String P_HEX6 = ":\\s*#\\s*([0-9a-zA-Z]{6})\\s*(;|$)";
+    private final static String P_RGB = "(^|[^-])color:rgb\\s*\\(\\s*(\\d+)\\s*,\\s*(\\d+)\\s*,\\s*(\\d+)\\s*\\)";
     private final static String P_HEX8 = ":\\s*#\\s*[0-9a-zA-Z]{2}([0-9a-zA-Z]{6})\\s*(;|$)";
+    private final static String P_HEX6 = ":\\s*#\\s*([0-9a-zA-Z]{6})\\s*(;|$)";
+    private final static String P_HEX3 = ":\\s*#\\s*(\\d{3})\\s*(;|$)";
 
     private final static int Color_Distance = 200;
 
@@ -69,15 +69,15 @@ public class ColorUtil {
             pattern = Pattern.compile(P_RGB, Pattern.CASE_INSENSITIVE);
             m = pattern.matcher(style);
             if (m.find()) {
-                r = Integer.valueOf(m.group(1));
-                g = Integer.valueOf(m.group(2));
-                b = Integer.valueOf(m.group(3));
+                r = Integer.valueOf(m.group(2));
+                g = Integer.valueOf(m.group(3));
+                b = Integer.valueOf(m.group(4));
                 distance = ColorUtil.distance(new RGB(r, g, b));
                 if (distance < Color_Distance) {
                     style = m.replaceFirst("rgb(" + (255 - r) + ", " + (255 - g) + ", " + (255 - b) + ")");
                 }
             } else {
-                pattern = Pattern.compile(P_HEX6, Pattern.CASE_INSENSITIVE);
+                pattern = Pattern.compile(P_HEX8, Pattern.CASE_INSENSITIVE);
                 m = pattern.matcher(style);
                 if (m.find()) {
                     r = Integer.parseInt(m.group(1).substring(0, 2), 16);
@@ -88,7 +88,7 @@ public class ColorUtil {
                         style = m.replaceFirst(":rgb(" + (255 - r) + ", " + (255 - g) + ", " + (255 - b) + ");");
                     }
                 } else {
-                    pattern = Pattern.compile(P_HEX8, Pattern.CASE_INSENSITIVE);
+                    pattern = Pattern.compile(P_HEX6, Pattern.CASE_INSENSITIVE);
                     m = pattern.matcher(style);
                     if (m.find()) {
                         r = Integer.parseInt(m.group(1).substring(0, 2), 16);

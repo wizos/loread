@@ -13,6 +13,8 @@ import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.Priority;
+import com.bumptech.glide.load.model.GlideUrl;
+import com.bumptech.glide.load.model.LazyHeaders;
 import com.bumptech.glide.request.RequestOptions;
 import com.ditclear.swipelayout.SwipeDragLayout;
 
@@ -36,6 +38,8 @@ public class MainListViewAdapter extends ArrayAdapter<Article> {
     private ListViewS slv;
     private RequestOptions canDownloadOptions;
     private RequestOptions cannotDownloadOptions;
+    private GlideUrl gliderUrl;
+//    private Headers headers;
 
     public MainListViewAdapter(Context context, List<Article> articleList, ListViewS slv) {
         super(context, 0, articleList);
@@ -116,7 +120,16 @@ public class MainListViewAdapter extends ArrayAdapter<Article> {
 
 //            KLog.e("网络", Tool.canDownImg() );
             if (NetworkUtil.canDownImg()) {
-                Glide.with(context).load(article.getCoverSrc()).apply(canDownloadOptions).into(cvh.articleImg); // diskCacheStrategy(DiskCacheStrategy.NONE).
+//                headers = new Headers(){
+//                    @Override
+//                    public Map<String, String> getHeaders() {
+//                        ArrayMap<String, String> header = new ArrayMap<>();
+//                        header.put("Referer", article.getCanonical());
+//                        return header;
+//                    }
+//                };
+                gliderUrl = new GlideUrl(article.getCoverSrc(), new LazyHeaders.Builder().addHeader(Api.Referer, article.getCanonical()).build());
+                Glide.with(context).load(gliderUrl).apply(canDownloadOptions).into(cvh.articleImg); // diskCacheStrategy(DiskCacheStrategy.NONE).
             } else {
                 Glide.with(context).load(article.getCoverSrc()).apply(cannotDownloadOptions).into(cvh.articleImg);
             }

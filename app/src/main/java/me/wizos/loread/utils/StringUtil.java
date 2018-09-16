@@ -128,12 +128,20 @@ public class StringUtil {
 
 
         // 将相对连接转为绝对链接
-        Elements links = document.select("a[href]");
+        Elements hrefs = document.select("[href]");
         Element link;
-        for (int i = 0, size = links.size(); i < size; i++) {
-            link = links.get(i);
+        for (int i = 0, size = hrefs.size(); i < size; i++) {
+            link = hrefs.get(i);
             link.attr("href", link.attr("abs:href"));
         }
+
+        Elements srcs = document.select("[src]");
+        Element src;
+        for (int i = 0, size = srcs.size(); i < size; i++) {
+            src = srcs.get(i);
+            src.attr("src", src.attr("abs:src"));
+        }
+
 
         Elements imgs = document.getElementsByTag("img");
         String idInMD5 = StringUtil.str2MD5(articleID);
@@ -152,18 +160,21 @@ public class StringUtil {
             img.attr("height", "auto");
         }
 
-//        Elements videos = document.getElementsByTag("video");
-//        for (int i = 0, size = videos.size(); i < size; i++) {
+        Elements videos = document.getElementsByTag("video");
+        for (int i = 0, size = videos.size(); i < size; i++) {
 //            videos.get(i).attr("class", "video-js vjs-default-skin vjs-fluid vjs-big-play-centered");
 //            videos.get(i).attr("data-setup", "{}");
-//            videos.get(i).attr("preload", "metadata");
 //            videos.get(i).attr("style", "width:100%;height:100%");
-//            videos.get(i).attr("controls", "controls");
-//        }
+            videos.get(i).attr("preload", "metadata");
+            videos.get(i).attr("controls", "true");
+            videos.get(i).attr("width", "100%");
+            videos.get(i).attr("height", "auto");
+        }
 
         Elements audios = document.getElementsByTag("audio");
         for (int i = 0, size = audios.size(); i < size; i++) {
-            audios.get(i).attr("controls", "controls");
+            audios.get(i).attr("controls", "true");
+            audios.get(i).attr("width", "100%");
         }
 
         // 在 iframe 的外层加一个相对路径的 div，便于在js中给 iframe 加一个绝对位置的蒙层
@@ -300,9 +311,9 @@ public class StringUtil {
 
         if (Api.DISPLAY_RSS.equals(displayMode) || TextUtils.isEmpty(displayMode)) {
             if (!Api.DISPLAY_READABILITY.equals(referer)) {
-                readabilityButton = "<br><br><a id=\"readabilityButton\" onclick=\"ImageBridge.readability()\">获取全文</a>";
+                readabilityButton = "<br><br><a id=\"readability-button\" onclick=\"ImageBridge.readability()\">获取全文</a>";
             } else {
-                readabilityButton = "<br><br><a id=\"readabilityButton\" onclick=\"ImageBridge.readability()\">恢复RSS内容</a>";
+                readabilityButton = "<br><br><a id=\"readability-button\" onclick=\"ImageBridge.readability()\">恢复RSS内容</a>";
             }
         }
         return "<!DOCTYPE html><html><head>" +

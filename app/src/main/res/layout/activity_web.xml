@@ -24,6 +24,7 @@
             app:contentInsetStartWithNavigation="0dp"
             app:subtitleTextAppearance="@style/MyToolbar.SubTitle"
             app:layout_scrollFlags="scroll|enterAlways"
+            app:popupTheme="@style/OverflowMenuStyle"
             tools:title="网页标题" />
     </android.support.design.widget.AppBarLayout>
 

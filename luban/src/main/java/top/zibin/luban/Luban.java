@@ -70,7 +70,7 @@ public class Luban implements Handler.Callback {
                 (int) (Math.random() * 1000) +
                 (TextUtils.isEmpty(suffix) ? ".jpg" : suffix);
 
-        System.out.print("当前的0：" + mTargetDir + "   " + cacheBuilder);
+//        System.out.print("当前的0：" + mTargetDir + "   " + cacheBuilder);
         return new File(cacheBuilder);
     }
 
@@ -84,7 +84,7 @@ public class Luban implements Handler.Callback {
                 md5(input.getPath()) +
                 (TextUtils.isEmpty(suffix) ? ".jpg" : suffix);
 
-        System.out.print("当前的1：" + mTargetDir + "   " + cacheBuilder + "   " + input.getPath());
+//        System.out.print("当前的1：" + mTargetDir + "   " + cacheBuilder + "   " + input.getPath());
         return new File(cacheBuilder);
     }
 
@@ -92,7 +92,7 @@ public class Luban implements Handler.Callback {
         if (TextUtils.isEmpty(mTargetPath)) {
             return getImageCacheFile(context, input, suffix);
         }
-        System.out.print("当前的2：" + mTargetDir + "   " + "   " + mTargetPath);
+//        System.out.print("当前的2：" + mTargetDir + "   " + "   " + mTargetPath);
         return new File(mTargetPath);
     }
 

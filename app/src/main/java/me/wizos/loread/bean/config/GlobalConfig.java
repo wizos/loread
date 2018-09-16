@@ -125,6 +125,16 @@ public class GlobalConfig {
         return "";
     }
 
+    /**
+     * 用于手动下载图片
+     * 有3中方法获取referer：
+     * 1.根据feedid，推断出referer。。优点是简单，但是可能由于rss是第三方烧制的，可能会失效。
+     * 2.根据文章url，推断出referer。
+     * 2.根据图片url，猜测出referer，配置繁琐、低效，但是适应性较强。（可解决图片用的是第三方服务）
+     *
+     * @param url
+     * @return
+     */
     public String guessRefererByUrl(String url) {
         if (TextUtils.isEmpty(url)) {
             return "";

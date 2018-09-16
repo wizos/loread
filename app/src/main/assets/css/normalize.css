@@ -10,12 +10,10 @@ html {
 	word-break: break-all;
 }
 
-body {
-        font-family:Noto Sans,Helvetica Neue,PingFang SC,Microsoft YaHei,Source Han Sans SC,Noto Sans CJK SC,WenQuanYi Micro Hei,sans-serif !important;
+body,div,p {
+	font-family:Noto Sans,Helvetica Neue,PingFang SC,Microsoft YaHei,Source Han Sans SC,Noto Sans CJK SC,WenQuanYi Micro Hei,sans-serif !important;
 	font-size: 16px !important;
 	line-height: 1.6 !important;
-	margin: 0 auto !important;
-	-webkit-text-size-adjust: 100%;/* 如果不想让iPhone横坚屏切换的时候调节文字这个 */
 }
 
 body > *:first-child {
@@ -31,9 +29,9 @@ strong,b {
 }
 /* 图片，视频
 =============================================================================*/
-/* 隐藏src为空的图片，视频，iframe等 */
-*[src=''] {
-	display: none;
+/* 隐藏空图片 */
+img[src=''],iframe[src=''] {
+	display: none !important;
 }
 
 img {
@@ -41,46 +39,52 @@ img {
 	width: auto !important;
 	height: auto !important;
 	margin: 5px 0 !important;
-	display: flex !important;
-	text-align: center !important;
-	align-items: center !important;
-	justify-content: center !important;
 }
 
-/* HTML5 媒体文件跟 img 保持一致 */
-audio,video,iframe,embed,pre, canvas{
+audio,video,iframe,embed,pre,canvas{
 	max-width: 100% !important;
 	width: 100% !important;
 	height: auto !important;
-	display: inline-block;
+	display: inline-block !important;
+	margin: 5px 0 !important;
 }
 
 video,iframe,embed {
-	background: #E8E8E8;
-	background-image: repeating-linear-gradient(-30deg, hsla(0,0%,10%,.1),hsla(0,0%,10%,.1) 15px, transparent 0,transparent 30px);
+	background:repeating-linear-gradient(-50deg,#E8E8E8,#E8E8E8 1em,#d2d2d2 1em,#d2d2d2 2em) !important;
 }
-/* 如果在div中直接有文字，然后有audio，位置会错位。指定audio的高度可以解决 */
+
+/* HTML5 媒体文件跟 img 保持一致 */
 audio {
-    height: 32px;
+	height: 32px;
 }
+
+input{
+	width:auto !important;
+	max-width: 100% !important;
+}
+/* 取消点击后的橙色框。此处只设置了input、a、div，也可继续添加其他标签。*/
+input:focus,a:focus,div:focus{
+	outline:none;
+}
+
 
 /* BLOCKS
 =============================================================================*/
-
 p,section,code,pre,article {
-	word-wrap: break-word; /* 自动折行 */
+	word-wrap: break-word !important; /* 自动折行 */
+	background: transparent !important;
 }
 
 p, blockquote, ul, ol, dl, table, pre {
 	margin: 15px 0;
 }
 
-div {
+div,p {
 	max-width: 100% !important;
 }
+
 /* HEADERS
 =============================================================================*/
-
 h1, h2, h3, h4, h5, h6 {
 	margin: 10px 0 10px;
 	padding: 0;
@@ -117,7 +121,7 @@ h5, h6 {
 =============================================================================*/
 a {
 	color: #4183C4;
-	text-decoration:  underline;
+	text-decoration:  underline !important;
 }
 
 a:hover {
@@ -241,8 +245,14 @@ table {
 	border-spacing: 0;
 	padding: 5px 0;
 	max-width: 100% !important;
-	width: 100% !important;
 	height: auto !important;
+}
+td,object{
+	max-width: 100% !important;
+	height: auto !important;
+}
+td > pre, td > code {
+	border: 0 !important;
 }
 
 table th {
@@ -254,29 +264,23 @@ table th, table td {
 	font-size: 14px !important;
 }
 
-/* 对齐是排版最重要的因素, 别让什么都居中 */
+/* 对齐是排版最重要的因素, 别让什么都居中 */ 
 caption, th {
 	text-align: left;
-}
-
+} 
 
 
 /* 文章的排版
 ================================*/
 hr {
-	clear: both;
-	margin: 8px 0;
-	height: 0px;
-	overflow: hidden;
-	border: none;
-	background: transparent;
-	border-bottom: 1px dashed #ddd;
-	padding: 0;
+	margin: 8px 0 !important;
+	border: none !important;
+	border-bottom: 1px dashed #ddd !important;
 }
 
 #hr {
 	margin: 10px 0px;
-	border-bottom: 1px solid #ddd;
+	border-bottom: 1px solid #ddd !important;
 }
 
 article {
@@ -306,18 +310,22 @@ article {
 	opacity: 0.4;
 }
 #video-button {
-    background-color:#4183C4;
-    border: none;
-    color: white;
-    padding: 8px 0px;
-    font-size: 12px;
-
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    text-align: center;
-    height: 32px;
-    width: 100%;
-    cursor: pointer;
-    z-index: 6;
+	background-color:#4183c4;
+	border: none;
+	color: white;
+	padding: 8px 0px;
+	font-size: 12px;
+	
+	position: absolute;
+	bottom: 0;
+	left: 0;
+	text-align: center;
+	height: 32px;
+	width: 100%;
+	cursor: pointer;
+	z-index: 6;
+}
+#readability-button{
+	font-size:12px;
+	margin-top: 10px
 }

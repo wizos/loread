@@ -31,6 +31,7 @@ class Engine {
         BitmapFactory.decodeStream(srcImg.open(), null, options);
         this.srcWidth = options.outWidth;
         this.srcHeight = options.outHeight;
+//        Log.e("【宽度】1：",srcWidth + " " + srcHeight);
     }
 
     private int computeSize() {
@@ -84,6 +85,10 @@ class Engine {
         }
         tagBitmap.compress(focusAlpha ? Bitmap.CompressFormat.PNG : Bitmap.CompressFormat.JPEG, 60, stream);
         tagBitmap.recycle();
+        tagBitmap = null;
+        srcImg = null;
+        // Bitmap.recycle();释放了图片的资源，但是Bitmap本身并没有释放，它依然在占用资源。
+        // 所以还要在调用一次Bitmap=null;将Bitmap赋空，让有向图断掉，好让GC回收。
 
         FileOutputStream fos = new FileOutputStream(tagImg);
         fos.write(stream.toByteArray());

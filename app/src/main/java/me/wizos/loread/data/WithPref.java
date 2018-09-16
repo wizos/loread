@@ -17,10 +17,7 @@ public class WithPref {
     private static SharedPreferences.Editor editor;
 
     // TODO: 2018/7/14 修整代码，将setXXX，getXXX，统一改为setOOO(XXX，defValue) 的形式
-    public static final String PREF_NAME = App.APP_NAME_EN;
-    public static final String AUTH = "Auth";
 //    public static final String REFRESH_INTERVAL = "refresh.interval";
-
 //    public static final String SIXTY_MINUTES = "3600000";
 
 
@@ -34,7 +31,7 @@ public class WithPref {
             synchronized (WithPref.class) {
                 if (withPref == null) {
                     withPref = new WithPref();
-                    mySharedPreferences = App.i().getSharedPreferences(PREF_NAME, Activity.MODE_PRIVATE);
+                    mySharedPreferences = App.i().getSharedPreferences("loread", Activity.MODE_PRIVATE);
                     editor = mySharedPreferences.edit();
                 }
             }
