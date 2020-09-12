@@ -1,17 +1,17 @@
 apply plugin: 'com.android.library'
-//apply plugin: 'maven'
-//apply plugin: 'com.novoda.bintray-release'
 
 android {
-    compileSdkVersion 27
-    buildToolsVersion '27.0.3'
+    compileSdkVersion 29
+    buildToolsVersion '29.0.3'
 
     defaultConfig {
         minSdkVersion 22
-        targetSdkVersion 26
+        targetSdkVersion 29
         versionCode 1
         versionName "1.0"
-//        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+
     }
     buildTypes {
         release {
@@ -30,22 +30,15 @@ android {
 //   defaultPublishConfig "debug"
 
 }
-
-task javadoc(type: Javadoc) {
-    options.encoding = "utf-8"
-}
 dependencies {
     implementation fileTree(include: ['*.jar'], dir: 'libs')
-    testImplementation 'junit:junit:4.12'
-    implementation 'com.android.support:support-v4:27.1.1'
-    implementation 'com.android.support:design:27.1.1'
-    compileOnly fileTree(include: ['*.jar'], dir: 'providedLibs')
+    androidTestImplementation('androidx.test.espresso:espresso-core:3.2.0', {
+        exclude group: 'com.android.support', module: 'support-annotations'
+    })
+    testImplementation 'junit:junit:4.13'
+    implementation 'com.download.library:Downloader:4.1.2'
+    implementation 'com.google.android.material:material:1.1.0'
+    implementation 'androidx.legacy:legacy-support-v4:1.0.0'
+    implementation fileTree(include: ['*.jar'], dir: 'providedLibs')
 }
-//publish {
-//    userOrg = 'just'
-//    groupId = 'com.just.agentweb'
-//    artifactId = 'agentweb'
-//    version = '4.0.2'
-//    description = 'very easy to build you web page'
-//    website = "https://github.com/Justson/AgentWeb"
-//}
+

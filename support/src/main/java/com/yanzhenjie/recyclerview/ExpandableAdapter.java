@@ -1,0 +1,477 @@
+/*
+ * Copyright 2019 Zhenjie Yan
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.yanzhenjie.recyclerview;
+
+import android.util.SparseBooleanArray;
+import android.view.View;
+import android.view.ViewGroup;
+
+import androidx.annotation.NonNull;
+import androidx.recyclerview.widget.GridLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+import androidx.recyclerview.widget.StaggeredGridLayoutManager;
+
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * Created by Zhenjie Yan on 1/28/19.
+ */
+public abstract class ExpandableAdapter<VH extends RecyclerView.ViewHolder> extends RecyclerView.Adapter<VH> {
+    private static final int TYPE_PARENT = 10000000;
+    private static final int TYPE_CHILD = 20000000;
+
+    private final SparseBooleanArray mExpandItemArray = new SparseBooleanArray();
+    private final List<Integer> mParentViewType = new ArrayList<>();
+
+    /**
+     * Parent item is expanded.
+     *
+     * @param parentPosition position of parent item.
+     *
+     * @return true, otherwise is false.
+     */
+    public final boolean isExpanded(int parentPosition) {
+        return mExpandItemArray.get(parentPosition, false);
+    }
+
+    /**
+     * Expand parent.
+     * 展开一个组
+     *
+     * @param parentPosition position of parent item.
+     */
+    public final void expandParent(int parentPosition) {
+        expandParent( parentPosition,false);
+    }
+    /**
+     * 展开一个组。
+     * 使用动画可能会造成闪屏或卡顿
+     *
+     * @param parentPosition
+     * @param animate
+     */
+    public void expandParent(int parentPosition, boolean animate) {
+        if (isExpanded(parentPosition)) {
+            return;
+        }
+        mExpandItemArray.append(parentPosition, true);
+        if (animate) {
+            int position = positionFromParentPosition(parentPosition);
+            int childCount = childItemCount(parentPosition);
+            notifyItemRangeInserted(position + 1, childCount);
+            notifyItemRangeChanged(position + 1 + childCount, getItemCount() - position - 1);
+        } else {
+            notifyDataSetChanged();
+        }
+    }
+
+    /**
+     * Collapse parent.
+     *
+     * @param parentPosition position of parent item.
+     */
+    public final void collapseParent(int parentPosition, boolean animate) {
+        if (!isExpanded(parentPosition)) {
+            return;
+        }
+        mExpandItemArray.append(parentPosition, false);
+        if (animate) {
+            int position = positionFromParentPosition(parentPosition);
+            int childCount = childItemCount(parentPosition);
+            notifyItemRangeRemoved(position + 1, childCount);
+            notifyItemRangeChanged(position + 1 + childCount, getItemCount() - position - 1);
+        }else {
+            notifyDataSetChanged();
+        }
+    }
+
+    public void collapseParent(int parentPosition) {
+        collapseParent(parentPosition,false);
+    }
+
+    /**
+     * Notify any registered observers that the item at <code>parentPosition</code> has changed.
+     *
+     * @param parentPosition position of parent item.
+     */
+    public final void notifyParentChanged(int parentPosition) {
+        int position = positionFromParentPosition(parentPosition);
+        notifyItemChanged(position);
+    }
+
+    /**
+     * Notify any registered observers that the item reflected at <code>parentPosition</code> has been newly inserted.
+     *
+     * @param parentPosition position of parent item.
+     */
+    public final void notifyParentInserted(int parentPosition) {
+        int position = positionFromParentPosition(parentPosition);
+        notifyItemInserted(position);
+    }
+
+    /**
+     * Notify any registered observers that the item previously located at <code>parentPosition</code> has been removed
+     * from the data set.
+     *
+     * @param parentPosition position of parent item.
+     */
+    public final void notifyParentRemoved(int parentPosition) {
+        int position = positionFromParentPosition(parentPosition);
+        notifyItemRemoved(position);
+    }
+
+    /**
+     * Notify any registered observers that the item at <code>parentPosition, childPosition</code> has changed.
+     *
+     * @param parentPosition position of parent item.
+     * @param childPosition positoin of child item.
+     */
+    public final void notifyChildChanged(int parentPosition, int childPosition) {
+        int position = positionFromChildPosition(parentPosition, childPosition);
+        notifyItemChanged(position);
+    }
+
+    /**
+     * Notify any registered observers that the item reflected at <code>parentPosition, childPosition</code> has been
+     * newly inserted.
+     *
+     * @param parentPosition position of parent item.
+     * @param childPosition positoin of child item.
+     */
+    public final void notifyChildInserted(int parentPosition, int childPosition) {
+        int position = positionFromChildPosition(parentPosition, childPosition);
+        notifyItemInserted(position);
+    }
+
+    /**
+     * Notify any registered observers that the item previously located at <code>parentPosition, childPosition</code>
+     * has been removed from the data set.
+     *
+     * @param parentPosition position of parent item.
+     * @param childPosition positoin of child item.
+     */
+    public final void notifyChildRemoved(int parentPosition, int childPosition) {
+        int position = positionFromChildPosition(parentPosition, childPosition);
+        notifyItemRemoved(position);
+    }
+
+    public int positionFromParentPosition(int parentPosition) {
+        int itemCount = 0;
+
+        int parentCount = parentItemCount();
+        for (int i = 0; i < parentCount; i++) {
+            itemCount += 1;
+
+            if (parentPosition == i) {
+                return itemCount - 1;
+            } else {
+                if (isExpanded(i)) {
+                    itemCount += childItemCount(i);
+                }
+            }
+        }
+
+        throw new IllegalStateException("The parent position is invalid: " + parentPosition);
+    }
+
+    public int positionFromChildPosition(int parentPosition, int childPosition) {
+        int itemCount = 0;
+
+        int parentCount = parentItemCount();
+        for (int i = 0; i < parentCount; i++) {
+            itemCount += 1;
+
+            if (parentPosition == i) {
+                int childCount = childItemCount(parentPosition);
+                if (childPosition < childCount) {
+                    itemCount += (childPosition + 1);
+                    return itemCount - 1;
+                }
+
+                throw new IllegalStateException("The child position is invalid: " + childPosition);
+            } else {
+                if (isExpanded(i)) {
+                    itemCount += childItemCount(i);
+                } else {
+                    // itemCount += 1;
+                }
+            }
+        }
+
+        throw new IllegalStateException("The parent position is invalid: " + parentPosition);
+    }
+
+    @Override
+    public final int getItemCount() {
+        int parentCount = parentItemCount();
+        for (int i = 0; i < parentCount; i++) {
+            if (isExpanded(i)) {
+                int childCount = childItemCount(i);
+                parentCount += childCount;
+            }
+        }
+        return parentCount;
+    }
+
+    /**
+     * Get the total number of items in the parent.
+     */
+    public abstract int parentItemCount();
+
+    /**
+     * Get the total number of child items under parent.
+     *
+     * @param parentPosition position of parent item.
+     */
+    public abstract int childItemCount(int parentPosition);
+
+    @Override
+    public final int getItemViewType(int position) {
+        if (isParentItem(position)) {
+            if (!mParentViewType.contains(TYPE_PARENT)) mParentViewType.add(TYPE_PARENT);
+            return TYPE_PARENT;
+        } else {
+            return TYPE_CHILD;
+        }
+    }
+
+    /**
+     * Item is a parent item.
+     *
+     * @param adapterPosition adapter position.
+     *
+     * @return true, otherwise is false.
+     */
+    public final boolean isParentItem(int adapterPosition) {
+        int itemCount = 0;
+
+        int parentCount = parentItemCount();
+        for (int i = 0; i < parentCount; i++) {
+            if (itemCount == adapterPosition) {
+                return true;
+            }
+
+            itemCount += 1;
+
+            if (isExpanded(i)) {
+                itemCount += childItemCount(i);
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Get the position of the parent item from the adapter position.
+     *
+     * @param adapterPosition adapter position of item.
+     */
+    public final int parentItemPosition(int adapterPosition) {
+        int itemCount = 0;
+        for (int i = 0; i < parentItemCount(); i++) {
+            itemCount += 1;
+
+            if (isExpanded(i)) {
+                int childCount = childItemCount(i);
+                itemCount += childCount;
+            }
+            if (adapterPosition < itemCount) {
+                return i;
+            }
+        }
+        return -1;
+
+//        throw new IllegalStateException("The adapter position is not a parent type: " + adapterPosition);
+    }
+
+    /**
+     * Get the position of the child item from the adapter position.
+     *
+     * @param childAdapterPosition adapter position of child item.
+     */
+    public final int childItemPosition(int childAdapterPosition) {
+        int itemCount = 0;
+
+        int parentCount = parentItemCount();
+        for (int i = 0; i < parentCount; i++) {
+            itemCount += 1;
+
+            if (isExpanded(i)) {
+                int childCount = childItemCount(i);
+                itemCount += childCount;
+
+                if (childAdapterPosition < itemCount) {
+                    return childCount - (itemCount - childAdapterPosition);
+                }
+            } else {
+                // itemCount += 1;
+            }
+        }
+        return -1;
+        //throw new IllegalStateException("The adapter position is invalid: " + childAdapterPosition);
+    }
+
+    @NonNull
+    @Override
+    public final VH onCreateViewHolder(@NonNull ViewGroup root, int viewType) {
+        if (mParentViewType.contains(viewType)) return createParentHolder(root, viewType);
+        return createChildHolder(root, viewType);
+    }
+
+    /**
+     * Called when RecyclerView needs a new {@link ViewHolder} of the given type to represent an parent item.
+     *
+     * @param root the ViewGroup into which the new View will be added after it is bound to an adapter position.
+     * @param viewType The view type of the new View.
+     *
+     * @return a new {@link ViewHolder} that holds a View of the given view type.
+     */
+    public abstract VH createParentHolder(@NonNull ViewGroup root, int viewType);
+
+    /**
+     * Called when RecyclerView needs a new {@link ViewHolder} of the given type to represent an child item.
+     *
+     * @param root the ViewGroup into which the new View will be added after it is bound to an adapter position.
+     * @param viewType The view type of the new View.
+     *
+     * @return a new {@link ViewHolder} that holds a View of the given view type.
+     */
+    public abstract VH createChildHolder(@NonNull ViewGroup root, int viewType);
+
+    @Override
+    public final void onBindViewHolder(@NonNull VH holder, int position, @NonNull List<Object> payloads) {
+        int parentPosition = parentItemPosition(position);
+        if (isParentItem(position)) {
+            bindParentHolder(holder, parentPosition, payloads);
+        } else {
+            int childPosition = childItemPosition(position);
+            bindChildHolder(holder, parentPosition, childPosition, payloads);
+        }
+    }
+
+    public void bindParentHolder(@NonNull VH holder, int position, @NonNull List<Object> payloads) {
+        bindParentHolder(holder, position);
+    }
+
+    public void bindChildHolder(@NonNull VH holder, int parentPosition, int position, @NonNull List<Object> payloads) {
+        bindChildHolder(holder, parentPosition, position);
+    }
+
+    /**
+     * Called by {@link RecyclerView} to display the data at the specified position. This method should update the
+     * contents of the {@link ViewHolder#itemView} to reflect the item at the given position.
+     *
+     * @param holder parent holder.
+     * @param position position of parent item.
+     */
+    public abstract void bindParentHolder(@NonNull VH holder, int position);
+
+    /**
+     * Called by {@link RecyclerView} to display the data at the specified position. This method should update the *
+     * contents of the {@link ViewHolder#itemView} to reflect the item at the given position.
+     *
+     * @param holder child holder.
+     * @param parentPosition position of parent item.
+     * @param position position of child position.
+     */
+    public abstract void bindChildHolder(@NonNull VH holder, int parentPosition, int position);
+
+//    @Deprecated
+    @Override
+    public final void onBindViewHolder(@NonNull VH holder, int position) {
+        int parentPosition = parentItemPosition(position);
+        if (isParentItem(position)) {
+            bindParentHolder(holder, parentPosition);
+        } else {
+            int childPosition = childItemPosition(position);
+            bindChildHolder(holder, parentPosition, childPosition);
+        }
+    }
+
+    public static abstract class ViewHolder extends RecyclerView.ViewHolder {
+
+        private ExpandableAdapter mAdapter;
+
+        public ViewHolder(@NonNull View itemView, ExpandableAdapter adapter) {
+            super(itemView);
+            this.mAdapter = adapter;
+        }
+
+//        /**
+//         * Determine if the current viewholder is a parent item.
+//         *
+//         * @return true, otherwise is false.
+//         */
+//        public final boolean isParentItem() {
+//            return mAdapter.isParentItem(getAdapterPosition());
+//        }
+//
+//        /**
+//         * Get the position of parent item.
+//         */
+//        public final int parentItemPosition() {
+//            return mAdapter.parentItemPosition(getAdapterPosition());
+//        }
+
+//        /**
+//         * Get the position of child item.
+//         */
+//        public final int childItemPosition() {
+//            if (isParentItem()) throw new IllegalStateException("This item is not a child item.");
+//            return mAdapter.childItemPosition(getAdapterPosition());
+//        }
+
+//        /**
+//         * Parent item is expanded.
+//         *
+//         * @return true, otherwise is false.
+//         */
+//        public final boolean isParentExpanded() {
+//            return mAdapter.isExpanded(parentItemPosition());
+//        }
+    }
+
+    @Override
+    public void onAttachedToRecyclerView(@NonNull RecyclerView recyclerView) {
+        RecyclerView.LayoutManager lm = recyclerView.getLayoutManager();
+        if (lm instanceof GridLayoutManager) {
+            final GridLayoutManager glm = (GridLayoutManager)lm;
+            final GridLayoutManager.SpanSizeLookup originLookup = glm.getSpanSizeLookup();
+
+            glm.setSpanSizeLookup(new GridLayoutManager.SpanSizeLookup() {
+                @Override
+                public int getSpanSize(int position) {
+                    if (isParentItem(position)) return glm.getSpanCount();
+                    if (originLookup != null) return originLookup.getSpanSize(position);
+                    return 1;
+                }
+            });
+        }
+    }
+
+    @Override
+    public void onViewAttachedToWindow(@NonNull VH holder) {
+        if (isParentItem(holder.getAdapterPosition())) {
+            ViewGroup.LayoutParams lp = holder.itemView.getLayoutParams();
+            if (lp instanceof StaggeredGridLayoutManager.LayoutParams) {
+                StaggeredGridLayoutManager.LayoutParams p = (StaggeredGridLayoutManager.LayoutParams)lp;
+                p.setFullSpan(true);
+            }
+        }
+    }
+
+}

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--android:accountType表示的是您的Account的类型，它必须是唯一的-->
+<account-authenticator
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:accountType="me.wizos.loreadx"
+    android:icon="@mipmap/ic_launcher"
+    android:label="@string/app_name"
+    android:smallIcon="@mipmap/ic_launcher"
+    />
+
+<!--如果您希望在已添加的帐户列表中点击我们的APP后出现一个自定义的页面，那么就加入accountPreferences属性-->

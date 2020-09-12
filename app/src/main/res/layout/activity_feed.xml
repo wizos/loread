@@ -1,0 +1,199 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fitsSystemWindows="true"
+    android:background="?attr/root_view_bg"
+    tools:context=".activity.FeedActivity">
+
+    <!--android:fitsSystemWindows="true"-->
+    <com.google.android.material.appbar.AppBarLayout
+        android:id="@+id/feed_app_bar"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/app_bar_height"
+        android:theme="@style/AppTheme.Day.AppBarOverlay">
+
+        <!--app:collapsedTitleTextAppearance="@style/MyToolbar.CollapsedToolbarTitle"-->
+        <com.google.android.material.appbar.CollapsingToolbarLayout
+            android:id="@+id/feed_toolbar_layout"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="?attr/topbar_bg"
+            app:contentScrim="?attr/topbar_bg"
+            app:statusBarScrim="?attr/topbar_bg"
+            app:layout_scrollFlags="scroll|exitUntilCollapsed"
+            app:expandedTitleTextAppearance="@style/MyToolbar.ExpandedToolbarTitle"
+            app:toolbarId="@+id/feed_toolbar">
+
+            <androidx.appcompat.widget.Toolbar
+                android:id="@+id/feed_toolbar"
+                android:layout_width="match_parent"
+                android:layout_height="?attr/actionBarSize"
+                app:layout_collapseMode="pin"
+                app:layout_scrollFlags="scroll|enterAlways|snap"
+                app:subtitleTextAppearance="@style/MyToolbar.SubTitle"
+                app:popupTheme="@style/AppTheme.Day.PopupOverlay" />
+
+        </com.google.android.material.appbar.CollapsingToolbarLayout>
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <!--<include layout="@layout/content_scrolling" />-->
+    <androidx.core.widget.NestedScrollView
+        app:layout_behavior="@string/appbar_scrolling_view_behavior"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        <LinearLayout
+            android:id="@+id/feed_summary"
+            android:padding="10dp"
+            android:orientation="vertical"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <LinearLayout
+                android:id="@+id/feed_number"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:visibility="gone"
+                    tools:visibility="visible"
+                    android:id="@+id/feed_subscribers"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:lines="1"
+                    android:textSize="14sp"
+                    android:textColor="?attr/lv_item_title_color"
+                    tools:text="99" />
+
+                <TextView
+                    android:visibility="gone"
+                    tools:visibility="visible"
+                    android:id="@+id/feed_updated"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="20dp"
+                    android:lines="1"
+                    android:textSize="14sp"
+                    android:textColor="?attr/lv_item_title_color"
+                    tools:text="2019/05/01" />
+            </LinearLayout>
+
+
+            <LinearLayout
+                android:id="@+id/feed_desc_layout"
+                android:layout_marginTop="15dp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+                <TextView
+                    android:id="@+id/feed_desc_label"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:lines="1"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:textColor="?attr/lv_item_title_color"
+                    android:text="@string/feed_desc" />
+
+                <TextView
+                    android:visibility="gone"
+                    tools:visibility="visible"
+                    android:id="@+id/feed_description"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="14sp"
+                    android:textColor="?attr/lv_item_title_color"
+                    tools:text="这里是一大片简介" />
+            </LinearLayout>
+
+
+            <LinearLayout
+                android:id="@+id/feed_site_link_layout"
+                android:layout_marginTop="15dp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+                <TextView
+                    android:id="@+id/feed_site_link_label"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:lines="1"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:textColor="?attr/lv_item_title_color"
+                    android:text="@string/site_url" />
+                <TextView
+                    android:id="@+id/feed_site_link"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:onClick="copyHtmlUrl"
+                    android:textSize="14sp"
+                    android:textColor="?attr/lv_item_title_color"
+                    tools:text="http://blog.wizos.me" />
+            </LinearLayout>
+
+
+            <LinearLayout
+                android:id="@+id/feed_rss_link_layout"
+                android:layout_marginTop="15dp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+                <TextView
+                    android:id="@+id/feed_rss_link_label"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:lines="1"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:textColor="?attr/lv_item_title_color"
+                    android:text="@string/feed_url" />
+                <TextView
+                    android:id="@+id/feed_rss_link"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:onClick="copyFeedUrl"
+                    android:textSize="14sp"
+                    android:textColor="?attr/lv_item_title_color"
+                    tools:text="http://blog.wizos.me/feed" />
+            </LinearLayout>
+
+            <androidx.appcompat.widget.AppCompatButton
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:layout_marginBottom="10dp"
+                android:paddingTop="10dp"
+                android:paddingBottom="10dp"
+                android:paddingStart="20dp"
+                android:paddingEnd="20dp"
+                android:layout_gravity="center_horizontal"
+                android:textColor="@color/white"
+                android:onClick="clickUnsubscribe"
+                app:bl_corners_radius="30dp"
+                app:bl_solid_color="#ff4343"
+                app:bl_ripple_enable="true"
+                android:text="@string/unsubscribe"/>
+        </LinearLayout>
+
+    </androidx.core.widget.NestedScrollView>
+
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/fab"
+        android:onClick="copyIconUrl"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="@dimen/fab_margin"
+        android:padding="0dp"
+        app:layout_anchor="@id/feed_app_bar"
+        app:layout_anchorGravity="bottom|end"
+        app:srcCompat="@drawable/logo" />
+
+
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

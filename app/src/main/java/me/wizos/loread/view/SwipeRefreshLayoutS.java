@@ -1,12 +1,13 @@
 package me.wizos.loread.view;
 
 import android.content.Context;
-import android.support.v4.widget.SwipeRefreshLayout;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewConfiguration;
 import android.widget.AbsListView;
+
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 /**
  * 下拉刷新控件的包装。解决下拉和左右滑动冲突的问题
@@ -35,31 +36,29 @@ public class SwipeRefreshLayoutS extends SwipeRefreshLayout {
     }
 
     /**
-     *
      * 当SwipeRefreshLayout 不只有 listView一个子view时，向下滑动的时候就会出现还没有滑倒listview顶部就触发下拉刷新的动作。
      * 看SwipeRefreshLayout源码可以看到在onInterceptTouchEvent里面有这样的一段代码
-     if (!isEnabled() || mReturningToStart || canChildScrollUp() || mRefreshing) {
-     // Fail fast if we're not in a state where a swipe is possible
-     return false;
-     }
-
-     其中有个canChildScrollUp方法，在往下看
-     public boolean canChildScrollUp() {
-     if (android.os.Build.VERSION.SDK_INT < 14) {
-     if (mTarget instanceof AbsListView) {
-     final AbsListView absListView = (AbsListView) mTarget;
-     return absListView.getChildCount() > 0
-     && (absListView.getFirstVisiblePosition() > 0 || absListView.getChildAt(0)
-     .getTop() < absListView.getPaddingTop());
-     } else {
-     return ViewCompat.canScrollVertically(mTarget, -1) || mTarget.getScrollY() > 0;
-     }
-     } else {
-     return ViewCompat.canScrollVertically(mTarget, -1);
-     }
-     }
-     决定子view 能否滑动就是在这里了，所以我们只有写一个类继承SwipeRefreshLayout，然后重写该方法即可
-     *
+     * if (!isEnabled() || mReturningToStart || canChildScrollUp() || mRefreshing) {
+     * // Fail fast if we're not in a state where a swipe is possible
+     * return false;
+     * }
+     * <p>
+     * 其中有个canChildScrollUp方法，在往下看
+     * public boolean canChildScrollUp() {
+     * if (android.os.Build.VERSION.SDK_INT < 14) {
+     * if (mTarget instanceof AbsListView) {
+     * final AbsListView absListView = (AbsListView) mTarget;
+     * return absListView.getChildCount() > 0
+     * && (absListView.getFirstVisiblePosition() > 0 || absListView.getChildAt(0)
+     * .getTop() < absListView.getPaddingTop());
+     * } else {
+     * return ViewCompat.canScrollVertically(mTarget, -1) || mTarget.getScrollY() > 0;
+     * }
+     * } else {
+     * return ViewCompat.canScrollVertically(mTarget, -1);
+     * }
+     * }
+     * 决定子view 能否滑动就是在这里了，所以我们只有写一个类继承SwipeRefreshLayout，然后重写该方法即可
      */
     @Override
     public boolean canChildScrollUp() {
@@ -71,7 +70,6 @@ public class SwipeRefreshLayoutS extends SwipeRefreshLayout {
         }
         return super.canChildScrollUp();
     }
-
 
 
     /**
@@ -102,24 +100,6 @@ public class SwipeRefreshLayoutS extends SwipeRefreshLayout {
         }
         return super.onInterceptTouchEvent(ev);
     }
-
-
-//    /* 手指放下的坐标 */
-//    private float mXDown;
-//    private float mYDown;
-//    /* 手指滑动的最短距离 */
-//    private float mShortestDistance = 25f;
-//
-//    /**
-//     * 手指左右移动：左右得超出50，上下不能超出50
-//     *
-//     * @param ev
-//     * @return
-//     */
-//    private boolean fingerLeftAndRightMove(MotionEvent ev) {
-//        return ((ev.getX() - mXDown > mShortestDistance || ev.getX() - mXDown < -mShortestDistance) &&
-//                ev.getY() - mYDown < mShortestDistance && ev.getY() - mYDown > -mShortestDistance);
-//    }
 
     @Override
     public boolean onTouchEvent(MotionEvent ev) {

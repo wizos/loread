@@ -16,10 +16,11 @@
 package me.wizos.loread.view.webview;
 
 import android.content.Context;
-import android.support.v4.view.NestedScrollingChild;
-import android.support.v4.view.NestedScrollingChildHelper;
-import android.support.v4.view.ViewCompat;
 import android.view.MotionEvent;
+
+import androidx.core.view.NestedScrollingChild;
+import androidx.core.view.NestedScrollingChildHelper;
+import androidx.core.view.ViewCompat;
 
 //import com.tencent.smtt.sdk.WebView;
 
@@ -70,27 +71,6 @@ public class NestedScrollWebView extends FastScrollWebView implements NestedScro
     private NestedScrollingChildHelper mChildHelper;
     boolean mIsBeingDragged;
 
-
-//            case MotionEvent.ACTION_DOWN:
-//                mPrevX = MotionEvent.obtain(ev).getX();
-//                break;
-//            case MotionEvent.ACTION_MOVE:
-//                final float eventX = ev.getX();
-//                //获取水平移动距离
-//                float xDiff = Math.abs(eventX - mPrevX);
-//                KLog.e("是否拦截事件：" + (xDiff>mTouchSlop));
-//                //当水平移动距离大于滑动操作的最小距离的时候就认为进行了横向滑动，不进行事件拦截,并将这个事件交给子View处理
-//                if (xDiff > mTouchSlop) {
-//                    return false;
-//                }
-
-//    private int downY;
-//    private boolean onlyHorizontalMove(MotionEvent ev) {
-//        return (Math.abs(ev.getX() - mLastMotionY) > mTouchSlop && Math.abs(ev.getY() - downY) < mTouchSlop);
-//    }
-//    private boolean onlyVerticalMove(MotionEvent ev) {
-//        return (Math.abs(ev.getX() - mLastMotionY) < mTouchSlop && Math.abs(ev.getY() - downY) > mTouchSlop);
-//    }
 
     @Override
     public boolean onTouchEvent(MotionEvent ev) {
@@ -157,36 +137,6 @@ public class NestedScrollWebView extends FastScrollWebView implements NestedScro
         }
         return super.onTouchEvent(ev);
     }
-
-
-//    private int mTouchSlop;
-//    private float mPrevX;
-
-//    /**
-//     * 作者：秋天的雨滴
-//     * 链接：https://www.jianshu.com/p/04d799608c2e
-//     * 解决该view上下滑动事件与子view左右滑动事件的冲突问题
-//     */
-//    @Override
-//    public boolean onInterceptTouchEvent(MotionEvent ev) {
-//        switch (ev.getAction()) {
-//            case MotionEvent.ACTION_DOWN:
-//                mPrevX = MotionEvent.obtain(ev).getX();
-//                break;
-//            case MotionEvent.ACTION_MOVE:
-//                final float eventX = ev.getX();
-//                //获取水平移动距离
-//                float xDiff = Math.abs(eventX - mPrevX);
-//                KLog.e("是否拦截事件：" + (xDiff>mTouchSlop));
-//                //当水平移动距离大于滑动操作的最小距离的时候就认为进行了横向滑动，不进行事件拦截,并将这个事件交给子View处理
-//                if (xDiff > mTouchSlop) {
-//                    return false;
-//                }
-//            default:
-//                break;
-//        }
-//        return super.onInterceptTouchEvent(ev);
-//    }
 
     private void endDrag() {
         mIsBeingDragged = false;

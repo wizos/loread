@@ -25,7 +25,7 @@ import android.webkit.WebViewClient;
  */
 public class MiddlewareWebClientBase extends WebViewClientDelegate {
     private MiddlewareWebClientBase mMiddleWrareWebClientBase;
-    private String TAG = this.getClass().getSimpleName();
+    private static String TAG = MiddlewareWebClientBase.class.getSimpleName();
 
     MiddlewareWebClientBase(MiddlewareWebClientBase client) {
         super(client);
@@ -44,7 +44,6 @@ public class MiddlewareWebClientBase extends WebViewClientDelegate {
         return this.mMiddleWrareWebClientBase;
     }
 
-
     @Override
     final void setDelegate(WebViewClient delegate) {
         super.setDelegate(delegate);
@@ -56,6 +55,5 @@ public class MiddlewareWebClientBase extends WebViewClientDelegate {
         this.mMiddleWrareWebClientBase = middleWrareWebClientBase;
         return middleWrareWebClientBase;
     }
-
 
 }

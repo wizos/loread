@@ -3,7 +3,6 @@ package me.wizos.loread.activity;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
-import android.support.v7.widget.Toolbar;
 import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
@@ -18,30 +17,30 @@ import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 
+import androidx.annotation.NonNull;
+import androidx.appcompat.widget.Toolbar;
+
+import com.afollestad.materialdialogs.DialogAction;
+import com.afollestad.materialdialogs.MaterialDialog;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.RequestOptions;
-import com.google.gson.Gson;
-import com.lzy.okgo.callback.StringCallback;
-import com.lzy.okgo.model.Response;
+import com.hjq.toast.ToastUtils;
 import com.socks.library.KLog;
 
-import org.greenrobot.greendao.annotation.NotNull;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import me.wizos.loread.App;
 import me.wizos.loread.R;
-import me.wizos.loread.bean.search.FeedlyFeed;
-import me.wizos.loread.bean.search.FeedlyFeedsSearchResult;
-import me.wizos.loread.bean.search.QuickAdd;
-import me.wizos.loread.data.WithDB;
-import me.wizos.loread.db.Feed;
-import me.wizos.loread.net.Api;
-import me.wizos.loread.net.DataApi;
-import me.wizos.loread.net.SearchApi;
+import me.wizos.loread.bean.feedly.CategoryItem;
+import me.wizos.loread.bean.feedly.input.EditFeed;
+import me.wizos.loread.bean.search.SearchFeedItem;
+import me.wizos.loread.db.Category;
+import me.wizos.loread.db.CoreDB;
+import me.wizos.loread.network.callback.CallbackX;
 import me.wizos.loread.utils.TimeUtil;
-import me.wizos.loread.utils.ToastUtil;
 import me.wizos.loread.view.IconFontView;
 import me.wizos.loread.view.SwipeRefreshLayoutS;
 import me.wizos.loread.view.colorful.Colorful;
@@ -54,7 +53,7 @@ public class SearchActivity extends BaseActivity {
     private ListView listView;
     private SwipeRefreshLayoutS swipeRefreshLayoutS;
 
-    private ArrayList<FeedlyFeed> feedlyFeeds = new ArrayList<>();
+    private ArrayList<SearchFeedItem> searchFeedItems = new ArrayList<>();
     private SearchListViewAdapter listViewAdapter;
     private View wordHeaderView, resultCountHeaderView;
     private RequestOptions options;
@@ -67,7 +66,7 @@ public class SearchActivity extends BaseActivity {
         initView();
         options = new RequestOptions()
                 .placeholder(R.mipmap.ic_launcher)
-                .circleCrop()
+                //.circleCrop()
                 .centerCrop();
     }
 
@@ -88,14 +87,14 @@ public class SearchActivity extends BaseActivity {
         wordHeaderView = getLayoutInflater().inflate(R.layout.activity_search_list_header_word, listView, false);
         resultCountHeaderView = getLayoutInflater().inflate(R.layout.activity_search_list_header_result_count, listView, false);
 
-        listViewAdapter = new SearchListViewAdapter(SearchActivity.this, feedlyFeeds);
+        listViewAdapter = new SearchListViewAdapter(SearchActivity.this, searchFeedItems);
         listView.setAdapter(listViewAdapter);
 
         searchView.requestFocus();
         searchView.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-//                KLog.e("输入前确认执行该方法", "开始输入：" + s .toString() + start + "  " + after + "  " + count);
+//                KLog.e("输入前确认执行该方法", "开始输入：" + s .toString() + startAnimation + "  " + after + "  " + count);
             }
 
             @Override
@@ -104,7 +103,7 @@ public class SearchActivity extends BaseActivity {
                     listView.removeHeaderView(wordHeaderView);
                     listView.removeHeaderView(resultCountHeaderView);
                     swipeRefreshLayoutS.setRefreshing(false);
-                    feedlyFeeds.clear();
+                    searchFeedItems.clear();
                 } else if (listView.getHeaderViewsCount() == 0) {
                     KLog.e("直接变成搜索该关键词");
                     listView.addHeaderView(wordHeaderView);
@@ -142,101 +141,138 @@ public class SearchActivity extends BaseActivity {
     }
 
     private void searchAndLoadFeedsData() {
-//        if( searchView.getText().toString().startsWith("http://")){
-//            searchView.setText( searchView.getText().toString().replaceFirst("^http:\\/\\/",""));
-//        }
         swipeRefreshLayoutS.setRefreshing(true);
         listView.setEnabled(false);
         listView.removeHeaderView(wordHeaderView);
         listView.removeHeaderView(resultCountHeaderView);
-//        OkGo.cancelTag();
-        SearchApi.i().asyncFetchSearchResult(searchView.getText().toString(), new StringCallback() {
-            @Override
-            public void onSuccess(Response<String> response) {
-                try {
-                    FeedlyFeedsSearchResult searchResult = new Gson().fromJson(response.body(), FeedlyFeedsSearchResult.class);
-                    if (searchResult != null && searchResult.getResults() != null && searchResult.getResults().size() != 0) {
-                        feedlyFeeds = searchResult.getResults();
-//                        KLog.e("点击搜索" + searchView.getText().toString() + feedlyFeeds.size());
-//                        ToastUtil.show("已获取到" + feedlyFeeds.size() + "个订阅源");
-                    } else {
-                        feedlyFeeds = new ArrayList<FeedlyFeed>();
-                    }
-                    listViewAdapter = new SearchListViewAdapter(SearchActivity.this, feedlyFeeds);
-                    TextView textView = resultCountHeaderView.findViewById(R.id.search_feeds_result_count);
-                    textView.setText(getString(R.string.search_cloudy_feeds_result_count, feedlyFeeds.size()));
-                    listView.addHeaderView(resultCountHeaderView);
-                    listView.setAdapter(listViewAdapter);
-                    swipeRefreshLayoutS.setRefreshing(false);
-                    listView.setEnabled(true);
-                } catch (Exception e) {
-                    e.printStackTrace();
-//                    KLog.e("报错","失败了");
-                    onError(response);
-                }
-            }
 
-            @Override
-            public void onError(Response<String> response) {
-                ToastUtil.showLong(App.i().getString(R.string.fail_try));
-                swipeRefreshLayoutS.setRefreshing(false);
-                listView.setEnabled(true);
-                listView.addHeaderView(wordHeaderView);
-            }
-        });
+//        Retrofit retrofit = new Retrofit.Builder()
+//                .baseUrl(FeedlyApi.HOST + "/") // 设置网络请求的Url地址, 必须以/结尾
+//                .addConverterFactory(GsonConverterFactory.create())  // 设置数据解析器
+//                .client(HttpClientManager.i().simpleClient())
+//                .build();
+//        FeedlyService feedlyService = retrofit.create(FeedlyService.class);
+//
+//        //对 发送请求 进行封装
+//        Call<SearchFeeds> callSearchFeeds = feedlyService.getSearchFeeds(searchView.getText().toString(), 100);
+//        callSearchFeeds.enqueue(new Callback<SearchFeeds>() {
+//            @Override
+//            public void onResponse(Call<SearchFeeds> call, retrofit2.Response<SearchFeeds> response) {
+//                SearchFeeds searchResult = response.body();
+//                KLog.e("成功：" + searchResult);
+//                if (searchResult != null && searchResult.getResults() != null && searchResult.getResults().size() != 0) {
+//                    searchFeedItems = searchResult.getResults();
+//                    //  KLog.e("点击搜索" + searchView.getText().toString() + searchFeedItems.size());
+//                    //  ToastUtil.show("已获取到" + searchFeedItems.size() + "个订阅源");
+//                } else {
+//                    searchFeedItems = new ArrayList<SearchFeedItem>();
+//                }
+//                listViewAdapter = new SearchListViewAdapter(SearchActivity.this, searchFeedItems);
+//                TextView textView = resultCountHeaderView.findViewById(R.id.search_feeds_result_count);
+//                textView.setText(getString(R.string.search_cloudy_feeds_result_count, searchFeedItems.size()));
+//                listView.addHeaderView(resultCountHeaderView);
+//                listView.setAdapter(listViewAdapter);
+//                swipeRefreshLayoutS.setRefreshing(false);
+//                listView.setEnabled(true);
+//            }
+//
+//            @Override
+//            public void onFailure(Call<SearchFeeds> call, Throwable t) {
+//                KLog.e("失败：" + t);
+//                ToastUtils.show(App.i().getString(R.string.fail_try));
+//                swipeRefreshLayoutS.setRefreshing(false);
+//                listView.setEnabled(true);
+//                listView.addHeaderView(wordHeaderView);
+//            }
+//        });
     }
 
+    private Integer[] selectIndices;
 
-    private void addFeed(final View view, final String feedId) {
-        view.setClickable(false);
-        DataApi.i().addFeed(feedId, new StringCallback() {
-            @Override
-            public void onSuccess(Response<String> response) {
-                KLog.e(response.body());
-                try {
-                    QuickAdd quickAdd = new Gson().fromJson(response.body().trim(), QuickAdd.class);
-                    if (quickAdd == null || quickAdd.getNumResults() == 0) {
-                        this.onError(response);
-                        return;
+    public void showSelectFolder(final View view, final String feedId) {
+        final List<Category> categoryList = CoreDB.i().categoryDao().getAll(App.i().getUser().getId());
+        String[] categoryTitleArray = new String[categoryList.size()];
+        for (int i = 0, size = categoryList.size(); i < size; i++) {
+            categoryTitleArray[i] = categoryList.get(i).getTitle();
+        }
+        final EditFeed editFeed = new EditFeed();
+        editFeed.setId(feedId);
+        new MaterialDialog.Builder(this)
+                .title(getString(R.string.select_category))
+                .items(categoryTitleArray)
+                .alwaysCallMultiChoiceCallback()
+                .itemsCallbackMultiChoice(null, new MaterialDialog.ListCallbackMultiChoice() {
+                    @Override
+                    public boolean onSelection(MaterialDialog dialog, Integer[] which, CharSequence[] text) {
+                        SearchActivity.this.selectIndices = which;
+                        for (int i : which) {
+                            KLog.e("点选了：" + i);
+                        }
+                        return true;
                     }
-                    Feed feed = new Feed();
-                    feed.setId(quickAdd.getStreamId());
-                    feed.setTitle(quickAdd.getStreamName());
-                    feed.setHtmlurl(quickAdd.getStreamId().replaceFirst("^feed\\/", ""));
-                    WithDB.i().addFeed(feed);
-                    ((IconFontView) view).setText(R.string.font_tick);
-                    view.setClickable(true);
-                } catch (Exception e) {
-                    KLog.e(e);
-                    this.onError(response);
-                    return;
-                }
-            }
+                })
+                .positiveText(R.string.confirm)
+                .onPositive(new MaterialDialog.SingleButtonCallback() {
+                    @Override
+                    public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
+                        ArrayList<CategoryItem> categoryItemList = new ArrayList<>();
+                        for (int i = 0; i < selectIndices.length; i++) {
+                            CategoryItem categoryItem = new CategoryItem();
+                            categoryItem.setId(categoryList.get(selectIndices[i]).getId());
+                            categoryItemList.add(categoryItem);
+                        }
+                        editFeed.setCategoryItems(categoryItemList);
+                        view.setClickable(false);
+                        App.i().getApi().addFeed(editFeed, new CallbackX() {
+                            @Override
+                            public void onSuccess(Object result) {
+                                KLog.e("添加成功");
+                                ((IconFontView) view).setText(R.string.font_tick);
+                                ToastUtils.show(R.string.subscribe_success);
+                                view.setClickable(true);
+                            }
 
-            @Override
-            public void onError(Response<String> response) {
-                ToastUtil.showLong(getString(R.string.toast_subscribe_fail));
-                view.setClickable(true);
-            }
-        });
+                            @Override
+                            public void onFailure(Object error) {
+                                ToastUtils.show(getString(R.string.subscribe_fail));
+                                view.setClickable(true);
+                            }
+                        });
+//                        App.i().getApi().addFeed(editFeed).enqueue(new Callback() {
+//                            @Override
+//                            public void onResponse(Call call, retrofit2.Response response) {
+//                                KLog.e("添加成功");
+//                                ((IconFontView) view).setText(R.string.font_tick);
+//                                ToastUtils.show(R.string.subscribe_success);
+//                                view.setClickable(true);
+//                            }
+//
+//                            @Override
+//                            public void onFailure(Call call, Throwable t) {
+//                                ToastUtils.show(getString(R.string.subscribe_fail));
+//                                view.setClickable(true);
+//                            }
+//                        });
+                    }
+                }).show();
     }
 
-    class SearchListViewAdapter extends ArrayAdapter<FeedlyFeed> {
-        private List<FeedlyFeed> feedlyFeeds;
+    class SearchListViewAdapter extends ArrayAdapter<SearchFeedItem> {
+        private List<SearchFeedItem> searchFeedItems;
 
-        public SearchListViewAdapter(Context context, List<FeedlyFeed> feedList) {
+        public SearchListViewAdapter(Context context, List<SearchFeedItem> feedList) {
             super(context, 0, feedList);
-            this.feedlyFeeds = feedList;
+            this.searchFeedItems = feedList;
         }
 
         @Override
         public int getCount() {
-            return feedlyFeeds.size();
+            return searchFeedItems.size();
         }
 
         @Override
-        public FeedlyFeed getItem(int position) {
-            return feedlyFeeds.get(position);
+        public SearchFeedItem getItem(int position) {
+            return searchFeedItems.get(position);
         }
 
         @Override
@@ -246,7 +282,7 @@ public class SearchActivity extends BaseActivity {
 
         @Override
         public View getView(final int position, View convertView, @NotNull final ViewGroup parent) {
-            final FeedlyFeed feedlyFeed = this.getItem(position);
+            final SearchFeedItem searchFeedItem = this.getItem(position);
             if (convertView == null) {
                 cvh = new CustomViewHolder();
                 convertView = LayoutInflater.from(SearchActivity.this).inflate(R.layout.activity_search_list_item_feed, null);
@@ -261,26 +297,27 @@ public class SearchActivity extends BaseActivity {
             } else {
                 cvh = (CustomViewHolder) convertView.getTag();
             }
-            cvh.feedTitle.setText(feedlyFeed.getTitle());
-            if (!TextUtils.isEmpty(feedlyFeed.getDescription())) {
+            cvh.feedTitle.setText(searchFeedItem.getTitle());
+            if (!TextUtils.isEmpty(searchFeedItem.getDescription())) {
                 cvh.feedSummary.setVisibility(View.VISIBLE);
-                cvh.feedSummary.setText(feedlyFeed.getDescription());
+                cvh.feedSummary.setText(searchFeedItem.getDescription());
             } else {
                 cvh.feedSummary.setVisibility(View.GONE);
                 cvh.feedSummary.setText("");
             }
 //            KLog.e("当前view是：" + position +"  " + convertView.getId() + "");
-//            Glide.with(SearchActivity.this).load(feedlyFeed.getVisualUrl()).centerCrop().into(cvh.feedIcon);
-            Glide.with(SearchActivity.this).load(feedlyFeed.getVisualUrl()).apply(options).into(cvh.feedIcon);
+//            Glide.with(SearchActivity.this).load(searchFeedItem.getVisualUrl()).centerCrop().into(cvh.feedIcon);
+            Glide.with(SearchActivity.this).load(searchFeedItem.getVisualUrl()).apply(options).into(cvh.feedIcon);
 
-            cvh.feedUrl.setText(feedlyFeed.getFeedId().replaceFirst("feed/", ""));
-            cvh.feedSubsVelocity.setText(getString(R.string.search_result_subs, feedlyFeed.getSubscribers(), feedlyFeed.getVelocity() + ""));
-            if (feedlyFeed.getLastUpdated() != 0) {
-                cvh.feedLastUpdated.setText(getString(R.string.search_result_last_update_time, TimeUtil.stampToTime(feedlyFeed.getLastUpdated(), "yyyy-MM-dd")));
+            cvh.feedUrl.setText(searchFeedItem.getFeedId().replaceFirst("feed/", ""));
+
+            cvh.feedSubsVelocity.setText( getResources().getQuantityString(R.plurals.search_result_followers, searchFeedItem.getSubscribers(), searchFeedItem.getSubscribers() ) + getString(R.string.search_result_articles, searchFeedItem.getVelocity()) );
+            if (searchFeedItem.getLastUpdated() != 0) {
+                cvh.feedLastUpdated.setText(getString(R.string.search_result_last_update_time, TimeUtil.format(searchFeedItem.getLastUpdated(), "yyyy-MM-dd")));
             } else {
                 cvh.feedLastUpdated.setText("");
             }
-            if (WithDB.i().getFeed(feedlyFeed.getFeedId()) != null) {
+            if (CoreDB.i().feedDao().getById(App.i().getUser().getId(), searchFeedItem.getFeedId()) != null) {
                 cvh.feedSubState.setText(R.string.font_tick);
             } else {
                 cvh.feedSubState.setText(R.string.font_add);
@@ -288,30 +325,26 @@ public class SearchActivity extends BaseActivity {
             cvh.feedSubState.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(final View view) {
-                    if (WithDB.i().getFeed(feedlyFeed.getFeedId()) != null) {
+                    if (CoreDB.i().feedDao().getById(App.i().getUser().getId(), searchFeedItem.getFeedId()) != null) {
                         view.setClickable(false); // 防止重复点击
                         cvh.feedSubState.setText(R.string.font_tick);
-                        DataApi.i().unsubscribeFeed(feedlyFeed.getFeedId(), new StringCallback() {
+                        App.i().getApi().unsubscribeFeed(searchFeedItem.getFeedId(), new CallbackX() {
                             @Override
-                            public void onSuccess(Response<String> response) {
-                                if (!response.body().equals("OK")) {
-                                    this.onError(response);
-                                    return;
-                                }
-                                WithDB.i().delFeed(feedlyFeed.getFeedId());
+                            public void onSuccess(Object result) {
+                                CoreDB.i().feedDao().deleteById(App.i().getUser().getId(), searchFeedItem.getFeedId());
                                 ((IconFontView) view).setText(R.string.font_add);
                                 view.setClickable(true);
                             }
 
                             @Override
-                            public void onError(Response<String> response) {
-                                ToastUtil.showLong(getString(R.string.toast_unsubscribe_fail));
+                            public void onFailure(Object error) {
+                                ToastUtils.show(getString(R.string.unsubscribe_failed,error));
                                 view.setClickable(true);
                             }
                         });
                     } else {
                         cvh.feedSubState.setText(R.string.font_add);
-                        addFeed(view, feedlyFeed.getFeedId());
+                        showSelectFolder(view, searchFeedItem.getFeedId());
                     }
                 }
             });
@@ -322,7 +355,7 @@ public class SearchActivity extends BaseActivity {
 
     private CustomViewHolder cvh;
 
-    public class CustomViewHolder {
+    public static class CustomViewHolder {
         TextView feedTitle;
         TextView feedSummary;
         TextView feedUrl;
@@ -344,7 +377,7 @@ public class SearchActivity extends BaseActivity {
 
     public void onSearchFeedsClicked(View view) {
         if (TextUtils.isEmpty(searchView.getText().toString())) {
-            ToastUtil.showShort("请输入要搜索的词");
+            ToastUtils.show(R.string.please_input_keyword);
             return;
         }
         searchView.clearFocus();
@@ -357,20 +390,10 @@ public class SearchActivity extends BaseActivity {
         Intent intent = new Intent(SearchActivity.this, MainActivity.class);
         KLog.e("要搜索的词是" + searchView.getText().toString());
         intent.putExtra("searchWord", searchView.getText().toString());
-        this.setResult(Api.ActivityResult_SearchLocalArtsToMain, intent);
+        this.setResult(App.ActivityResult_SearchLocalArtsToMain, intent);
         this.finish();
         overridePendingTransition(R.anim.in_from_bottom, R.anim.out_from_bottom);
     }
-//    public void OnSubFeedClicked(View view){
-//        Tool.showLong("此处要订阅源");
-//        addFeed( "feed/" + searchView.getText().toString() );
-////        Intent intent = new Intent(SearchActivity.this, MainActivity.class);
-////        KLog.e("要搜索的词是" +  searchWord );
-////        intent.putExtra("searchWord", searchWord);
-////        this.setResult(Api.ActivityResult_SearchLocalArtsToMain, intent);
-////        this.finish();
-//    }
-
 
     @Override
     protected Colorful.Builder buildColorful(Colorful.Builder mColorfulBuilder) {

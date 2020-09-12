@@ -10,37 +10,33 @@
     android:addStatesFromChildren="true"
     android:windowDrawsSystemBarBackgrounds="true">
 
-    <android.support.design.widget.AppBarLayout
+    <com.google.android.material.appbar.AppBarLayout
         android:id="@+id/main_appBarLayout"
         android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
-        <android.support.v7.widget.Toolbar
+        <androidx.appcompat.widget.Toolbar
             android:id="@+id/main_toolbar"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
             android:background="?attr/topbar_bg"
             tools:title="博谈"
-            tools:navigationIcon="@drawable/state_star"
+            tools:navigationIcon="@drawable/ic_state_star"
             app:contentInsetStartWithNavigation="0dp"
             app:subtitleTextAppearance="@style/MyToolbar.SubTitle"
             app:layout_scrollFlags="scroll|enterAlways">
-            <TextView
-                android:id="@+id/main_toolbar_hint"
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:layout_gravity="end|center"
-                android:minWidth="40dp"
-                android:paddingEnd="12dp"
-                android:background="?android:attr/selectableItemBackgroundBorderless"
-                android:clickable="true"
-                android:gravity="center|end"
-                android:textSize="12sp"
-                tools:text="12" />
-        </android.support.v7.widget.Toolbar>
 
-    </android.support.design.widget.AppBarLayout>
+            <androidx.appcompat.widget.AppCompatImageView
+                android:id="@+id/main_toolbar_auto_mark"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:visibility="gone"
+                tools:visibility="visible"
+                android:src="@drawable/ic_arrow_auto_mark_readed" />
+        </androidx.appcompat.widget.Toolbar>
+
+    </com.google.android.material.appbar.AppBarLayout>
 
     <me.wizos.loread.view.SwipeRefreshLayoutS
         android:id="@+id/main_swipe_refresh"
@@ -52,26 +48,7 @@
         tools:context=".activity.MainActivity">
         <RelativeLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:orientation="vertical">
-
-
-            <!--android:scrollbars="vertical"-->
-
-            <me.wizos.loread.view.ListView.ListViewS
-                android:id="@+id/main_slv"
-                app:layout_behavior="@string/appbar_scrolling_view_behavior"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:choiceMode="singleChoice"
-                android:animateLayoutChanges="true"
-                android:headerDividersEnabled="false"
-                android:background="?attr/root_view_bg"
-                android:layout_above="@+id/main_bottombar" />
-
-            <!--android:fastScrollEnabled="true"-->
-            <!--android:background="?attr/root_view_bg"-->
-            <!--android:background="?android:selectableItemBackground"-->
+            android:layout_height="match_parent">
 
             <me.wizos.loread.view.IconFontView
                 android:id="@+id/main_placeholder"
@@ -79,9 +56,17 @@
                 android:layout_height="wrap_content"
                 android:layout_centerInParent="true"
                 android:layout_marginBottom="@dimen/bottom_bar_height"
-                android:textSize="50sp"
-                android:text="@string/font_no_data" />
+                android:text="@string/font_no_data"
+                android:textSize="50sp" />
 
+            <com.yanzhenjie.recyclerview.SwipeRecyclerView
+                android:id="@+id/main_slv"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_above="@+id/main_bottombar"
+                android:choiceMode="singleChoice"
+                android:headerDividersEnabled="false"
+                app:layout_behavior="@string/appbar_scrolling_view_behavior" />
 
             <RelativeLayout
                 android:id="@+id/main_bottombar"
@@ -89,7 +74,6 @@
                 android:layout_height="@dimen/bottom_bar_height"
                 android:layout_gravity="center_vertical|bottom"
                 android:layout_alignParentBottom="true"
-                android:background="?attr/bottombar_bg"
                 tools:background="@color/white_toolbar_bg">
 
                 <View
@@ -105,9 +89,8 @@
                     style="@style/bottom_bar_iconfont"
                     android:layout_centerInParent="true"
                     android:text="@string/font_group"
-                    android:onClick="onTagIconClicked1" />
+                    android:onClick="onClickCategoryIcon" />
 
-                <!--android:onClick="onTagIconClicked1"-->
                 <me.wizos.loread.view.IconFontView
                     android:id="@+id/main_bottombar_search"
                     style="@style/bottom_bar_iconfont"
@@ -132,60 +115,5 @@
             </RelativeLayout>
         </RelativeLayout>
     </me.wizos.loread.view.SwipeRefreshLayoutS>
-
-    <!--android:background="?attr/bottombar_bg"-->
-    <!--<include layout="@laymain_bottom_sheet_quick_settingheet"/>-->
-    <!--android:visibility="gone"-->
-
-    <!--<com.yinglan.scrolllayout.ScrollLayout-->
-    <!--tools:visibility="gone"-->
-    <!--android:visibility="gone"-->
-    <!--android:id="@+id/scroll_down_layout"-->
-    <!--android:tag="scroll_down_layout"-->
-    <!--android:layout_width="match_parent"-->
-    <!--android:layout_height="match_parent"-->
-    <!--android:background="@color/shade"-->
-    <!--android:elevation="4dp">-->
-
-    <!--<LinearLayout-->
-    <!--android:id="@+id/main_scroll_layout_bg"-->
-    <!--android:background="?attr/bottombar_bg"-->
-    <!--android:layout_width="match_parent"-->
-    <!--android:layout_height="match_parent"-->
-    <!--android:orientation="vertical">-->
-    <!--<TextView-->
-    <!--android:id="@+id/main_scroll_layout_title"-->
-    <!--android:layout_width="match_parent"-->
-    <!--android:layout_height="?attr/actionBarSize"-->
-    <!--android:textSize="14sp"-->
-    <!--android:textStyle="bold"-->
-    <!--android:textColor="?attr/bottombar_fg"-->
-    <!--android:gravity="center_vertical"-->
-    <!--android:paddingTop="10dp"-->
-    <!--android:paddingBottom="10dp"-->
-    <!--android:paddingStart="12dp"-->
-    <!--android:paddingEnd="12dp"-->
-    <!--android:text="@string/tag_choose_tips" />-->
-    <!--<View-->
-    <!--android:id="@+id/main_scrolllayout_divider"-->
-    <!--android:layout_width="match_parent"-->
-    <!--android:layout_height="0.5dp"-->
-    <!--android:layout_marginStart="10dp"-->
-    <!--android:layout_marginEnd="10dp"-->
-    <!--android:background="?attr/bottombar_divider" />-->
-
-    <!--<me.wizos.loread.view.ExpandableListViewS-->
-    <!--android:id="@+id/list_view"-->
-    <!--android:tag="list_view"-->
-    <!--android:layout_width="match_parent"-->
-    <!--android:layout_height="match_parent"-->
-    <!--android:divider="?attr/lv_item_divider"-->
-    <!--android:groupIndicator="@null"-->
-    <!--android:fadingEdgeLength="4dp"-->
-    <!--android:background="?attr/bottombar_bg" />-->
-
-    <!--</LinearLayout>-->
-    <!--</com.yinglan.scrolllayout.ScrollLayout>-->
-
 </RelativeLayout>
 

@@ -17,11 +17,13 @@
 package me.wizos.loread.behavior;
 
 import android.content.Context;
-import android.support.design.widget.AppBarLayout;
-import android.support.design.widget.CoordinatorLayout;
-import android.support.v4.view.ViewCompat;
 import android.util.AttributeSet;
 import android.view.View;
+
+import androidx.coordinatorlayout.widget.CoordinatorLayout;
+import androidx.core.view.ViewCompat;
+
+import com.google.android.material.appbar.AppBarLayout;
 
 /**
  * 与toolbar联动隐藏底部菜单
@@ -32,6 +34,7 @@ import android.view.View;
  */
 public class BottomNavigationViewBehavior extends CoordinatorLayout.Behavior<View> {
     public BottomNavigationViewBehavior() {
+        super();
     }
 
     public BottomNavigationViewBehavior(Context context, AttributeSet attrs) {

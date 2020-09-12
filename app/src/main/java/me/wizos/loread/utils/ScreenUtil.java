@@ -6,8 +6,6 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Rect;
 import android.os.Build;
-import android.support.annotation.DimenRes;
-import android.support.v7.app.AppCompatActivity;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.TypedValue;
@@ -16,11 +14,16 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 
+import androidx.annotation.DimenRes;
+import androidx.appcompat.app.AppCompatActivity;
+
 import me.wizos.loread.App;
+import me.wizos.loread.R;
 
 
 /**
  * 屏幕工具
+ *
  * @author Wizos on 2016/2/13.
  */
 public class ScreenUtil {
@@ -28,13 +31,14 @@ public class ScreenUtil {
     /**
      * 从 R.dimen 文件中获取到数值，再根据手机的分辨率转成为 px(像素)
      */
-    public static int get2Px(Context context,@DimenRes int id) {
+    public static int get2Px(Context context, @DimenRes int id) {
         final float scale = context.getResources().getDisplayMetrics().density;
-        final float dpValue = (int)context.getResources().getDimension(id);
+        final float dpValue = (int) context.getResources().getDimension(id);
         return (int) (dpValue * scale + 0.5f);
     }
-    public static int getDimen(Context context,@DimenRes int id) {
-        return (int)context.getResources().getDimension(id);
+
+    public static int getDimen(Context context, @DimenRes int id) {
+        return (int) context.getResources().getDimension(id);
     }
 
     /**
@@ -105,6 +109,7 @@ public class ScreenUtil {
 
     /**
      * 获取屏幕内容高度
+     *
      * @param activity
      * @return
      */
@@ -121,6 +126,7 @@ public class ScreenUtil {
 
     /**
      * 获得状态栏的高度
+     *
      * @param context
      * @return mStatusHeight
      */
@@ -144,6 +150,7 @@ public class ScreenUtil {
 
     /**
      * 获取当前屏幕截图，不包含状态栏
+     *
      * @param activity
      * @return bp
      */
@@ -189,16 +196,16 @@ public class ScreenUtil {
             return actionBarHeight;
         }
         final TypedValue tv = new TypedValue();
-        if (context.getTheme().resolveAttribute(android.support.v7.appcompat.R.attr.actionBarSize, tv, true)) {
-            if (context.getTheme().resolveAttribute(android.support.v7.appcompat.R.attr.actionBarSize, tv, true)) {
+        if (context.getTheme().resolveAttribute(R.attr.actionBarSize, tv, true)) {
+            if (context.getTheme().resolveAttribute(R.attr.actionBarSize, tv, true)) {
                 actionBarHeight = TypedValue.complexToDimensionPixelSize(tv.data, context.getResources().getDisplayMetrics());
             }
         } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-            if (context.getTheme().resolveAttribute(android.R.attr.actionBarSize, tv, true)) {
+            if (context.getTheme().resolveAttribute(R.attr.actionBarSize, tv, true)) {
                 actionBarHeight = TypedValue.complexToDimensionPixelSize(tv.data, context.getResources().getDisplayMetrics());
             }
         } else {
-            if (context.getTheme().resolveAttribute(android.support.v7.appcompat.R.attr.actionBarSize, tv, true)) {
+            if (context.getTheme().resolveAttribute(R.attr.actionBarSize, tv, true)) {
                 actionBarHeight = TypedValue.complexToDimensionPixelSize(tv.data, context.getResources().getDisplayMetrics());
             }
         }

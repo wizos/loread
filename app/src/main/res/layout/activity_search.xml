@@ -11,13 +11,13 @@
     android:focusableInTouchMode="true"
     android:windowDrawsSystemBarBackgrounds="true">
 
-    <android.support.design.widget.AppBarLayout
+    <com.google.android.material.appbar.AppBarLayout
         android:id="@+id/search_appBarLayout"
         android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
-        <android.support.v7.widget.Toolbar
+        <androidx.appcompat.widget.Toolbar
             android:id="@+id/search_toolbar"
             app:layout_scrollFlags="scroll|enterAlways"
             android:layout_width="match_parent"
@@ -41,10 +41,10 @@
                 android:imeOptions="actionSearch"
                 android:singleLine="true" />
 
-        </android.support.v7.widget.Toolbar>
+        </androidx.appcompat.widget.Toolbar>
 
 
-    </android.support.design.widget.AppBarLayout>
+    </com.google.android.material.appbar.AppBarLayout>
 
     <me.wizos.loread.view.SwipeRefreshLayoutS
         android:id="@+id/search_swipe_refresh"

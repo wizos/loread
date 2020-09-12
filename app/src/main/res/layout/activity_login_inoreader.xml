@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/container"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".activity.login.LoginInoReaderActivity">
+
+    <com.google.android.material.appbar.AppBarLayout
+        android:id="@+id/inoreader_appBarLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <androidx.appcompat.widget.Toolbar
+            android:id="@+id/inoreader_toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            android:background="?attr/topbar_bg"
+            app:contentInsetStartWithNavigation="0dp"
+            app:layout_scrollFlags="scroll|enterAlways|snap"
+            app:subtitleTextAppearance="@style/MyToolbar.SubTitle"
+            app:navigationIcon="@drawable/ic_close"
+            app:title="@string/login">
+        </androidx.appcompat.widget.Toolbar>
+    </com.google.android.material.appbar.AppBarLayout>
+    
+        <me.wizos.loread.view.FriendlyCardView
+            android:id="@+id/inoreader_login_form"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/inoreader_appBarLayout"
+            android:layout_marginStart="30dp"
+            android:layout_marginEnd="30dp"
+            app:cardMaxElevation="10dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="10dp"
+                android:orientation="vertical">
+
+                <me.zhanghai.android.materialedittext.MaterialTextInputLayout
+                    android:id="@+id/inoreader_host_layout"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    app:errorEnabled="true">
+                    <me.zhanghai.android.materialedittext.MaterialEditText
+                        android:id="@+id/inoreader_host_edittext"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:hint="@string/server_host"
+                        android:text="@string/inoreader_url"
+                        android:inputType="textUri"
+                        android:maxLines="1" />
+                </me.zhanghai.android.materialedittext.MaterialTextInputLayout>
+
+                <me.zhanghai.android.materialedittext.MaterialTextInputLayout
+                    android:id="@+id/inoreader_username_layout"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    app:errorEnabled="true">
+
+                    <me.zhanghai.android.materialedittext.MaterialEditText
+                        android:id="@+id/inoreader_username_edittext"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:hint="@string/account"
+                        android:inputType="textEmailAddress"
+                        android:maxLines="1" />
+                </me.zhanghai.android.materialedittext.MaterialTextInputLayout>
+
+                <me.zhanghai.android.materialedittext.MaterialTextInputLayout
+                    android:id="@+id/inoreader_password_layout"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    app:errorEnabled="true">
+
+                    <me.zhanghai.android.materialedittext.MaterialEditText
+                        android:id="@+id/inoreader_password_edittext"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:hint="@string/auth_password"
+                        android:imeActionId="@+id/ime_login"
+                        android:imeActionLabel="@string/login"
+                        android:imeOptions="actionDone"
+                        android:inputType="textPassword"
+                        android:maxLines="1"
+                        tools:ignore="InvalidImeActionId" />
+                </me.zhanghai.android.materialedittext.MaterialTextInputLayout>
+
+                <Button
+                    android:id="@+id/inoreader_login_button"
+                    style="@style/Widget.AppCompat.Button.Colored"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="end"
+                    android:enabled="false"
+                    android:text="@string/login" />
+            </LinearLayout>
+
+        </me.wizos.loread.view.FriendlyCardView>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:alpha="0.8"
+        android:ellipsize="end"
+        android:gravity="center"
+        android:maxLines="1"
+        android:text="@string/the_server_host_like"
+        android:textColor="@color/dark_background"
+        android:textSize="12dp"
+        android:visibility="gone"
+        app:layout_constraintEnd_toEndOf="@+id/inoreader_login_form"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="@+id/inoreader_login_form"
+        app:layout_constraintTop_toBottomOf="@+id/inoreader_login_form"
+        tools:ignore="MissingConstraints,SpUsage" />
+
+    <ProgressBar
+        android:id="@+id/inoreader_loading"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_marginStart="32dp"
+        android:layout_marginTop="64dp"
+        android:layout_marginEnd="32dp"
+        android:layout_marginBottom="64dp"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="@+id/inoreader_login_form"
+        app:layout_constraintStart_toStartOf="@+id/inoreader_login_form"
+        app:layout_constraintTop_toTopOf="parent" />
+</androidx.constraintlayout.widget.ConstraintLayout>

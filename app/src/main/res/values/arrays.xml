@@ -5,19 +5,19 @@
         <!--<item>#E91E63</item>-->
         <!--<item>#9C27B0</item>-->
         <item>@color/white</item>
-        <item>@color/article_dark_background</item>
+        <item>@color/dark_background</item>
     </array>
     <integer-array name="setting_clear_day_dialog_item_array">
         <item>0</item>
         <item>1</item>
+        <item>3</item>
         <item>7</item>
         <item>15</item>
         <item>30</item>
-        <item>60</item>
     </integer-array>
 
     <integer-array name="setting_sync_frequency_minute">
-        <item>10</item>
+        <item>15</item>
         <item>30</item>
         <item>60</item>
         <item>180</item>
@@ -25,5 +25,10 @@
         <item>720</item>
     </integer-array>
 
+    <integer-array name="display_mode">
+        <item>0</item>
+        <item>1</item>
+        <item>2</item>
+    </integer-array>
 
 </resources>

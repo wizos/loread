@@ -10,8 +10,8 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.webkit.WebView;
 
-import me.wizos.loread.utils.FastScrollDelegate;
-import me.wizos.loread.utils.FastScrollDelegate.FastScrollable;
+import me.wizos.loread.view.fastscroll.FastScrollDelegate;
+import me.wizos.loread.view.fastscroll.FastScrollDelegate.FastScrollable;
 
 /**
  * https://github.com/Mixiaoxiao/FastScroll-Everywhere FastScrollWebView

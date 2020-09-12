@@ -1,136 +1,179 @@
 apply plugin: 'com.android.application'
-apply plugin: 'org.greenrobot.greendao'
 
 android {
-    compileSdkVersion 27
-    buildToolsVersion '27.0.3'
+    compileSdkVersion 29
+    buildToolsVersion '29.0.3'
 
     defaultConfig {
-        applicationId "me.wizos.loread"
         minSdkVersion 22
-        targetSdkVersion 27
-        versionCode 6
-        versionName "1.2.1"
+        targetSdkVersion 29
+        applicationId "me.wizos.loread"
+        versionCode 1
+        versionName "1.0.0"
         ndk {
             abiFilters 'armeabi-v7a', 'arm64-v8a'
         }
+        // 解决 Error:Execution failed for task ‘:app:javaPreCompileDebug 问题
+        javaCompileOptions { annotationProcessorOptions { includeCompileClasspath = true } }
     }
     buildTypes {
         release {
             minifyEnabled false //启动混淆
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
             // proguardFile是混淆使用的配置文件，这里是module根目录下的proguard-rules.pro文件
-            manifestPlaceholders = [
-                    //AAI4F2S2LM1U 属于应用"知微"独有的 Android AppKey, 用于配置SDK
-                    MTA_APPKEY : "AAI4F2S2LM1U",
-                    //标注应用推广渠道用以区分新用户来源，可填写如应用宝，豌豆荚等
-                    MTA_CHANNEL: "酷安"
-            ]
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            // AAI4F2S2LM1U 属于应用"知微"独有的 Android AppKey, 用于配置SDK；标注应用推广渠道用以区分新用户来源，可填写如应用宝，豌豆荚等
+            manifestPlaceholders = [MTA_APPKEY : "AAI4F2S2LM1U", MTA_CHANNEL: "酷安"]
         }
         debug {
-            minifyEnabled false //不启动混淆
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
-            // proguardFile是混淆使用的配置文件，这里是module根目录下的proguard-rules.pro文件
-            manifestPlaceholders = [
-                    //AAI4F2S2LM1U 属于应用"知微"独有的 Android AppKey, 用于配置SDK
-                    MTA_APPKEY : "AAI4F2S2LM1U",
-                    //标注应用推广渠道用以区分新用户来源，可填写如应用宝，豌豆荚等
-                    MTA_CHANNEL: "酷安"
-            ]
+            //applicationIdSuffix '.baimu' //增加包名后缀
+            minifyEnabled false
+            debuggable true
+            manifestPlaceholders = [MTA_APPKEY : "AAI4F2S2LM1U", MTA_CHANNEL: "酷安"]
         }
     }
-    sourceSets {
-        main {
-            java.srcDirs = ['src/main/java', 'src/main/java-gen']
-        }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
     }
 }
 
-// --offline --refresh-dependencies
 dependencies {
     implementation fileTree(include: ['*.jar'], dir: 'libs')
-    implementation 'com.android.support.constraint:constraint-layout:1.1.2'
-    implementation 'com.android.support:appcompat-v7:27.1.1'
-    implementation 'com.android.support:support-v4:27.1.1'
-    implementation 'com.android.support:design:27.1.1'
-    implementation 'com.android.support:cardview-v7:27.1.1'
-//    implementation 'com.scwang.smartrefresh:SmartRefreshLayout:1.1.0-alpha-14'
+    // 开发工具
+    testImplementation 'junit:junit:4.13'
+    implementation 'androidx.annotation:annotation:1.1.0'
+    implementation 'androidx.lifecycle:lifecycle-extensions:2.2.0'
+    implementation 'androidx.appcompat:appcompat:1.1.0'
+    implementation 'androidx.legacy:legacy-support-v4:1.0.0'
+    implementation 'androidx.cardview:cardview:1.0.0'
+    implementation 'androidx.recyclerview:recyclerview:1.1.0'
+    implementation 'androidx.constraintlayout:constraintlayout:1.1.3'
+    implementation 'com.google.android.material:material:1.1.0'
+    implementation "androidx.paging:paging-runtime:2.1.2"
+    implementation "androidx.work:work-runtime:2.3.4"
 
+    // 通用的背景设置库，通过标签直接生成shape，无需再写shape.xml [https://github.com/JavaNoober/BackgroundLibrary]
+    implementation 'com.noober.background:core:1.6.3'
     // 列表项左右滑动布局
     implementation project(path: ':swipelayout')
-    // 基于 Android WebView 一个功能完善小型浏览器库（由于目前只有loadUrl方法，无法直接加载内容数据，不好用）
+    implementation project(path: ':support')
+    // 加载 view [https://github.com/ybq/Android-SpinKit]
+    // implementation 'com.github.ybq:Android-SpinKit:1.4.0'
+    // 浏览器
     implementation project(path: ':agentweb-core')
-    //    compile 'com.ashokvarma.android:bottom-navigation-bar:2.0.4'
-    //    在后面加上@aar，意指你只是下载该aar包，而并不下载该aar包所依赖的其他库，那如果想在使用@aar的前提下还能下载其依赖库，则需要添加transitive=true的条件。
-    implementation('com.github.afollestad.material-dialogs:core:0.8.5.8@aar') {
-        transitive = true
-    }
+
+    // https://github.com/drakeet/MultiType, 'com.github.kelinZhou:MultiTypeAdapter:1.0.2'
+    implementation 'com.drakeet.multitype:multitype:4.2.0'
+
+    // 对话框
+    // implementation 'com.kongzue.dialog_v3x:dialog:3.1.6'
+    // implementation 'com.orhanobut:dialogplus:1.11@aar'
+    // implementation 'com.afollestad.material-dialogs:core:3.1.1'
+    implementation 'com.afollestad.material-dialogs:core:0.9.6.0'
+    implementation 'com.afollestad.material-dialogs:commons:0.9.6.0'
+
     // 透明通知栏
-    implementation 'com.readystatesoftware.systembartint:systembartint:1.0.3'
-    implementation 'org.greenrobot:eventbus:3.1.1'
+    // implementation 'com.readystatesoftware.systembartint:systembartint:1.0.3'
+
+    // popup [https://github.com/li-xiaojun/XPopup]
+    implementation 'com.lxj:xpopup:1.8.13'
+    // toast [https://github.com/getActivity/ToastUtils]
+    implementation 'com.hjq:toast:8.0'
+
     // 开关按钮
-    implementation 'com.kyleduo.switchbutton:library:1.4.0'
-    implementation 'com.xw.repo:xedittext:2.0.5@aar'
-    implementation 'me.zhanghai.android.materialedittext:library:1.0.2'
+    implementation 'com.kyleduo.switchbutton:library:2.0.0'
 
-    // ORM框架数据库，升级指南：http://www.cnblogs.com/dsxniubility/p/5699629.html
-    greendao {
-        schemaVersion 9
-        targetGenDir 'src/main/java'  //生成代码放的路径
-        daoPackage 'me.wizos.loread.db.dao'
-    }
-    implementation 'org.greenrobot:greendao:3.2.2'
-    implementation 'com.github.yuweiguocn:GreenDaoUpgradeHelper:v2.0.2'
+    // 让播放、暂停按钮优雅的过渡 [https://github.com/Lauzy/PlayPauseView]
+    implementation 'com.github.Lauzy:PlayPauseView:1.0.7'
 
-    // 【开发工具】
-    testImplementation 'junit:junit:4.12'
+    // 带删除功能的EditText；显示或者隐藏密码；可设置自动添加分隔符分割电话号码、银行卡号等；支持禁止Emoji表情符号输入 [https://github.com/woxingxiao/XEditText]
+    // 用在了 activity_search.xml 中
+    implementation 'com.xw.repo:xedittext-androidx:2.2.6@aar'
+    // [https://github.com/zhanghai/materialedittext]
+    // 用在了 activity_login_tiny_tiny_rss_rss.xml 中
+    implementation 'me.zhanghai.android.materialedittext:library:1.0.5'
+
+    // 时间总线
+    // implementation 'org.greenrobot:eventbus:3.1.1'
+    implementation 'com.jeremyliao:live-event-bus-x:1.6.1'
+
+    implementation "androidx.room:room-runtime:2.2.5"
+    annotationProcessor "androidx.room:room-compiler:2.2.5"
+    // implementation 'com.tencent.wcdb:room:1.0.8'  // 代替 room-runtime，同时也不需要再引用 wcdb-android
+    // annotationProcessor 'android.arch.persistence.room:compiler:1.1.1' // compiler 需要用 room 的
+
+    // 基于 mmap 的高性能通用 key-value 组件
+    // implementation 'com.tencent:mmkv:1.1.0'
+
     // 内存泄漏检测工具
-    debugImplementation 'com.squareup.leakcanary:leakcanary-android:1.6.1'
+    // debugImplementation 'com.squareup.leakcanary:leakcanary-android:1.6.1'
+    // releaseImplementation 'com.squareup.leakcanary:leakcanary-android-no-op:1.6.1'
+
     // 日志工具
-//    implementation files('libs/klog.jar')
+    implementation 'com.orhanobut:logger:2.2.0'
     implementation 'com.github.zhaokaiqiang.klog:library:1.6.0'
-    //其中latest.release指代最新Bugly SDK版本号，也可以指定明确的版本号，例如:2.3.1
-//    implementation 'com.tencent.bugly:crashreport:2.6.6.1'
-    implementation files('libs/bugly_crashreport_upgrade-1.3.5.aar')
-    //腾讯统计MTA主包
-    implementation 'com.qq.mta:mta:3.4.2'
-    //腾讯统计MID基础包
-    implementation 'com.tencent.mid:mid:3.73-release'
+
+    // 权限申请 [https://github.com/getActivity/XXPermissions]
+    implementation 'com.hjq:xxpermissions:6.2'
+
+    // 其中latest.release指代最新Bugly SDK版本号，也可以指定明确的版本号，例如:2.6.6.1
+    implementation 'com.tencent.bugly:crashreport:3.1.0'
+    // 腾讯统计MTA主包
+    implementation 'com.qq.mta:mta:3.4.7-release'
+    // 腾讯统计MID基础包
+    implementation 'com.tencent.mid:mid:4.06-Release'
 
     // 依赖注入
-    annotationProcessor 'com.jakewharton:butterknife-compiler:8.8.1'
-    implementation 'com.jakewharton:butterknife:8.8.1'
+    implementation 'com.jakewharton:butterknife:10.2.1'
+    annotationProcessor 'com.jakewharton:butterknife-compiler:10.2.1'
 
-    // 序列化数据
-    implementation 'com.google.code.gson:gson:2.8.2'
-    implementation 'org.parceler:parceler-api:1.1.5'
+    // 序列化数据 [https://github.com/google/gson]
+    implementation 'com.google.code.gson:gson:2.8.6'
+    implementation 'org.parceler:parceler-api:1.1.13'
+    annotationProcessor 'org.parceler:parceler:1.1.13'
+
+    // 抽取的正文没有html标签
+    // implementation 'com.chimbori.crux:crux:2.2.0'
+    // 正文抽取器
+    // implementation project(path: ':extractor')
+
+    // HTML 解析 [https://github.com/jhy/jsoup]
+    implementation 'org.jsoup:jsoup:1.13.1'
     // HTML 解析
-    implementation 'org.jsoup:jsoup:1.11.3'
-    // 图片加载
-    implementation 'com.github.bumptech.glide:glide:4.6.1'
-    annotationProcessor 'com.github.bumptech.glide:compiler:4.6.1'
-    implementation 'com.github.chrisbanes:PhotoView:2.1.3'
+    // implementation ('com.virjar:sipsoup:1.6'){ transitive = false }
+    // 使用xpath解析提取html数据 [https://github.com/zhegexiaohuozi/JsoupXpath]
+    // implementation 'cn.wanghaomiao:JsoupXpath:2.3.2'
+    // JSON 选择库 [https://github.com/json-path/JsonPath]
+    // implementation 'com.jayway.jsonpath:json-path:2.4.0'
+    // JS 库 [https://github.com/APISENSE/rhino-android]
+    implementation 'io.apisense:rhino-android:1.1.1'
+
+    // [https://github.com/bumptech/glide]
+    implementation 'com.github.bumptech.glide:glide:4.11.0'
+    annotationProcessor 'com.github.bumptech.glide:compiler:4.11.0'
+    // Glide 底层使用okhttp3
+    implementation('com.github.bumptech.glide:okhttp3-integration:4.11.0') { transitive = false }
+    // 查看大图 [https://github.com/SherlockGougou/BigImageViewPager]
+    implementation 'com.github.SherlockGougou:BigImageViewPager:androidx-6.0.1'
+
+    // 音频部件 [https://github.com/yhaolpz/FloatWindow]
+    implementation project(path: ':floatwindow')
+    // https://github.com/SDKers/FloatWindow, https://github.com/fenggit/FloatWindow
+
+    // retrofit2
+    implementation('com.squareup.retrofit2:retrofit:2.8.1') { transitive = false }
+    implementation('com.squareup.retrofit2:converter-gson:2.8.1') { transitive = false }
     // okHttp
-    implementation files('libs/okhttp-3.9.0.jar')
-    implementation files('libs/okio-1.13.0.jar')
+    implementation 'com.squareup.okhttp3:okhttp:4.4.1'
+    implementation 'com.squareup.okio:okio:2.5.0'
     implementation files('libs/okgo-3.0.4.jar')
 
+    // 网络状态监听 [https://github.com/allenlzhang/NetworkState]
+    implementation 'com.github.allenlzhang:NetworkState:v1.0.0'
+    // 图片压缩 [https://github.com/Curzibn/Luban]
     implementation project(path: ':luban')
 
-    // 基于readability的改进版，https://github.com/chimbori/crux
-//    implementation project(path: ':crux')
-//    implementation 'net.dankito.readability4j:readability4j:1.0'
-
-    // Android-Job 在运行判断使用哪种API，它提供 AlarmManager, JobScheduler和 GcmNetworkManager功能的超集，比如说，我们可以定义计划任务在网络连通且在充电时候执行。
-//    implementation 'com.evernote:android-job:1.2.6'
-
-
-    // 掌阅的xml布局文件转代码，提升布局加载速度
-//    annotationProcessor project(':apt')
-//    implementation project(':x2c')
-    // 搜索栏
-//    compile 'com.miguelcatalan:materialsearchview:1.4.0'
-    // 在该项目中引用其他本地项目：http://blog.csdn.net/YellowStar5/article/details/53678044。注意，其他项目中有同名的资源id，将优先使用该项目的
-//    compile 'org.sufficientlysecure:html-textview:1.4'
+    // 防止三方 SDK 中常见的损害用户体验的行为 [https://github.com/oasisfeng/condom]
+    implementation 'com.oasisfeng.condom:library:2.5.0'
 
 }

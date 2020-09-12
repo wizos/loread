@@ -17,6 +17,8 @@
 package com.just.agentweb;
 
 import android.app.Activity;
+import android.content.Context;
+import android.content.ContextWrapper;
 import android.webkit.DownloadListener;
 import android.webkit.WebView;
 
@@ -33,26 +35,33 @@ public class AgentWebSettingsImpl extends AbsAgentWebSettings {
         this.mAgentWeb = agentWeb;
     }
 
-
     @Override
     public WebListenerManager setDownloader(WebView webView, DownloadListener downloadListener) {
-        Class<?> clazz = null;
-        Object mDefaultDownloadImpl$Extra = null;
-        try {
-            clazz = Class.forName("com.just.agentweb.download.DefaultDownloadImpl");
-            mDefaultDownloadImpl$Extra =
-                    clazz.getDeclaredMethod("create", Activity.class, WebView.class,
-                            Class.forName("com.just.agentweb.download.DownloadListener"),
-                            Class.forName("com.just.agentweb.download.DownloadingListener"),
-                            PermissionInterceptor.class)
-                            .invoke(mDefaultDownloadImpl$Extra, webView.getContext()
-                                    , webView, null, null, mAgentWeb.getPermissionInterceptor());
-
-        } catch (Throwable ignore) {
-            if (LogUtils.isDebug()) {
-                ignore.printStackTrace();
-            }
+        // Fix Android 5.1 crashing:
+        // ClassCastException: android.app.ContextImpl cannot be cast to android.app.Activity
+        if (downloadListener == null) {
+            Activity activity = getActivityByContext(webView.getContext());
+            downloadListener = DefaultDownloadImpl.create(activity, webView, mAgentWeb.getPermissionInterceptor());
         }
-        return super.setDownloader(webView, mDefaultDownloadImpl$Extra == null ? downloadListener : (DownloadListener) mDefaultDownloadImpl$Extra);
+        return super.setDownloader(webView, downloadListener);
     }
+
+    /**
+     * Copy from com.blankj.utilcode.util.ActivityUtils#getActivityByView
+     */
+    private Activity getActivityByContext(Context context) {
+        if (context instanceof Activity) return (Activity) context;
+        while (context instanceof ContextWrapper) {
+            if (context instanceof Activity) {
+                return (Activity) context;
+            }
+            context = ((ContextWrapper) context).getBaseContext();
+        }
+
+
+        LogUtils.e( "获取 B :", context + "" );
+        System.out.println("输出：" + context + "");
+        return null;
+    }
+
 }

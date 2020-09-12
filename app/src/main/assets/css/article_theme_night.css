@@ -1,56 +1,60 @@
-/* #203238 浅绿
-  #141e21;  深绿
-    background-color:rgba(0,0,0,0);
-***/
- 
-body {
-    color: #97A0A5;
-    background-color: #202B2F;
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+    background: #2c3e50;
 }
 
-/* 标题
-=============================================================================*/
-h1,h2 {
-    color: #E3E8E7;
+::-webkit-scrollbar-thumb {
+    background: #888;
 }
-h2 {
-    border-bottom: 1px solid #ccc;
+
+a {
+    color: #c6cddb;
 }
-hr {
-    background-color: #141e21;
+
+body{
+    color: #c6cddb;
+    //background: #494f5c;
+    background-color: #454952;
 }
 
 
 /* 表格
 =============================================================================*/
+    /*background-color: #141e21;
+    border: 1px solid #203238;*/
+pre {
+    color: #eee;
+    background: #2c3e50; 
+}
+
+code {
+	color: #eee;
+	background: #7d828a;
+}
 table{
-    background-color: #203238;
+    color: #eee;
+	border: 1px solid rgba(0, 0, 0, 0.1) !important;
+	background: rgba(0, 0, 0, 0.08) !important;
+    /*background-color: #203238;*/
 }
-table th, table td {
-    border: 1px solid #212121;
-}
-/*单数行*/
-/*table tr {
-    background-color: #203238;
-}*/
-
-/*双数行*/
-/*table tr:nth-child(2n) {
-    background-color: #203238;
-}*/
-
-
-/* 代码
-=============================================================================*/
-code, tt , pre {
+tt {
     background-color: #141e21;
     border: 1px solid #203238;
 }
 
+table th, table td {
+    //border: 1px solid #212121;
+	border: 1px solid rgba(0, 0, 0, 0.1);
+}
 
-/* 图片
-=============================================================================*/
-/* 降低图片亮度 */
+/* 降低亮度 */
 img,video,iframe,embed {
     -webkit-filter:brightness(0.75);
 }
+blockquote{
+	background: rgba(0, 0, 0, 0.08) !important;
+	border-left: 5px solid rgba(0, 0, 0, 0.3) !important;
+	color: rgba(255, 255, 255, 0.6) !important;
+}
+

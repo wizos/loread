@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/setting_item"
+    android:layout_width="match_parent"
+    android:layout_height="60dp"
+    android:gravity="center_vertical"
+    android:background="?android:selectableItemBackground"
+    android:padding="10dp"
+    android:baselineAligned="false">
+
+    <!--android:layout_marginTop="6dp"-->
+    <!--android:layout_marginBottom="6dp"-->
+    <!--<LinearLayout-->
+        <!--android:id="@+id/setting_item_title_desc"-->
+        <!--android:orientation="vertical"-->
+        <!--android:layout_width="0dp"-->
+        <!--android:layout_weight="1"-->
+        <!--android:layout_height="match_parent">-->
+        <!--<TextView-->
+            <!--android:id="@+id/setting_item_title"-->
+            <!--android:layout_width="60dp"-->
+            <!--android:layout_height="40dp"-->
+            <!--android:gravity="center_vertical"-->
+            <!--android:textSize="14sp"-->
+            <!--android:textColor="@color/blackDomain"-->
+            <!--tools:text="标题" />-->
+        <!--<TextView-->
+            <!--android:visibility="gone"-->
+            <!--android:id="@+id/setting_item_desc"-->
+            <!--android:layout_width="wrap_content"-->
+            <!--android:layout_height="wrap_content"-->
+            <!--tools:text="哈哈哈，这里是详情"-->
+            <!--android:textSize="12sp" />-->
+    <!--</LinearLayout>-->
+
+    <TextView
+        android:id="@+id/setting_item_title"
+        android:layout_width="0dp"
+        android:layout_weight="1"
+        android:layout_height="match_parent"
+        android:gravity="center_vertical"
+        android:textSize="14sp"
+        android:textColor="?attr/lv_item_title_color"
+        tools:text="标题" />
+
+    <TextView
+        android:id="@+id/setting_item_value"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:paddingStart="5dp"
+        android:paddingEnd="5dp"
+        android:gravity="center_vertical|end"
+        android:layout_gravity="center_vertical|end"
+        tools:text="值"
+        android:textSize="14sp"
+        android:textColor="?attr/lv_item_title_color"
+        android:drawableEnd="@drawable/ic_arrow_right" />
+
+</LinearLayout>

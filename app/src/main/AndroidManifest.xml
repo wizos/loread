@@ -1,169 +1,247 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+<manifest
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     package="me.wizos.loread">
-
     <!-- 允许访问振动设备 -->
     <uses-permission android:name="android.permission.VIBRATE" />
     <!-- 网络相关权限 -->
-    <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
-    <!-- 访问电话状态 -->
-    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
-    <!-- 允许读写系统设置项 -->
-    <uses-permission android:name="android.permission.WRITE_SETTINGS" />
-    <!-- 挂载、反挂载外部文件系统 -->
-    <uses-permission android:name="android.permission.MOUNT_UNMOUNT_FILESYSTEMS" />
-    <!-- 读取系统底层日志 -->
-    <uses-permission android:name="android.permission.READ_LOGS" />
-    <!-- 允许程序在手机屏幕关闭后后台进程仍然运行 -->
-    <!-- <uses-permission android:name="android.permission.WAKE_LOCK" /> -->
-    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
-    <uses-permission android:name="android.permission.SYSTEM_OVERLAY_WINDOW" />
+    <uses-permission android:name="android.permission.INTERNET" /> <!-- MTA统计必选权限 -->
 
-    <!-- 通过WiFi或移动基站的方式获取用户错略的经纬度信息，定位精度大概误差在30~1500米 -->
-    <!-- <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" /> -->
+    <!-- 查看帐户需要权限 -->
+    <uses-permission android:name="android.permission.GET_ACCOUNTS"/>
+    <!-- 添加帐户需要权限 -->
+    <uses-permission android:name="android.permission.AUTHENTICATE_ACCOUNTS"/>
+    <uses-permission
+        android:name="android.permission.MANAGE_ACCOUNTS"
+        android:maxSdkVersion="22" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+
+    <uses-permission android:name="android.permission.WRITE_SYNC_SETTINGS" />
+
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+    <uses-permission android:name="android.permission.CHANGE_NETWORK_STATE"/>
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>
+    <uses-permission android:name="android.permission.CHANGE_WIFI_STATE"/>
+    <uses-permission android:name="android.permission.READ_PHONE_STATE" /> <!-- 访问电话状态 -->
+    <!-- <uses-permission android:name="android.permission.WRITE_SETTINGS" /> --><!-- 允许读写系统设置项 -->
+    <!-- 挂载、反挂载外部文件系统 -->
+    <!-- <uses-permission android:name="android.permission.MOUNT_UNMOUNT_FILESYSTEMS" /> -->
+    <!-- 读取系统底层日志 -->
+    <!-- <uses-permission android:name="android.permission.READ_LOGS" /> -->
+    <!-- 允许程序在手机屏幕关闭后后台进程仍然运行 -->
+    <!-- <uses-permission andruserNamename="android.permission.WAKE_LOCK" /> -->
+    <uses-permission android:name="android.permission.SYSTEM_OVERLAY_WINDOW" /> <!-- <uses-permission android:name="android.permission.GET_TASKS"/> -->
+    <!-- [尝试] 防止左右滑动时的报错 -->
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" /> <!-- 通过WiFi或移动基站的方式获取用户错略的经纬度信息，定位精度大概误差在30~1500米 -->
+    <!-- <uses-permission andruserNamename="android.permission.ACCESS_COARSE_LOCATION" /> -->
     <!-- 读取，写出外置SD卡内容的权限该目录 -->
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
 
-    <!-- 应用可以监听该广播，成为自启动权限，但是这样会有很多缺点，最大的缺点就是拖慢开机进度，影响用户体验 -->
-    <!-- <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/> -->
-    <!-- 在SDCard中创建与删除文件权限 -->
+
     <application
         android:name=".App"
         android:allowBackup="true"
+        android:appComponentFactory="me.wizos.loread"
+        android:requestLegacyExternalStorage="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:largeHeap="true"
+        android:networkSecurityConfig="@xml/network_security_config"
         android:supportsRtl="true"
         android:theme="@style/AppTheme.Day"
-        tools:replace="android:label">
+        tools:replace="android:networkSecurityConfig,android:appComponentFactory"
+        tools:targetApi="q">
+        <meta-data
+            android:name="me.wizos.loread.network.glide.OkHttpAppGlideModule"
+            android:value="AppGlideModule" />
+
+
+        <activity
+            android:label="@string/app_name"
+            android:name=".activity.login.LoginTinyRSSActivity"
+            android:parentActivityName=".activity.ProviderActivity"
+            android:configChanges="orientation|screenSize|keyboardHidden"
+            android:launchMode="singleTask"
+            android:screenOrientation="user"
+            android:theme="@style/AppTheme.Day.NoActionBar"/>
+
+        <activity
+            android:label="@string/app_name"
+            android:name=".activity.login.LoginInoReaderActivity"
+            android:parentActivityName=".activity.ProviderActivity"
+            android:configChanges="orientation|screenSize|keyboardHidden"
+            android:launchMode="singleTask"
+            android:screenOrientation="user"
+            android:theme="@style/AppTheme.Day.NoActionBar"/>
+
         <activity
             android:name=".activity.SplashActivity"
             android:label="@string/app_name"
             android:launchMode="singleTask"
-            android:screenOrientation="portrait"
+            android:screenOrientation="user"
             android:theme="@style/AppBaseTheme.SplashTheme">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <activity
+            android:name=".activity.ProviderActivity"
+            android:configChanges="orientation|screenSize"
+            android:label="@string/app_name"
+            android:launchMode="singleTask"
+            android:screenOrientation="user"
+            android:theme="@style/AppTheme.Day.NoActionBar">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data
+                    android:host="oauth"
+                    android:scheme="loread" />
+                <data
+                    android:host="oauth_inoreader"
+                    android:scheme="loread" />
+                <data
+                    android:host="feedlyauth"
+                    android:scheme="palabre" />
+                <data
+                    android:host="auth"
+                    android:scheme="pby" />
+                <data
+                    android:host="oauth"
+                    android:scheme="feedme" />
+            </intent-filter>
+        </activity>
+
         <activity
             android:name=".activity.MainActivity"
             android:configChanges="orientation|screenSize|keyboardHidden"
             android:label="@string/app_name"
             android:launchMode="singleTask"
-            android:screenOrientation="portrait"
+            android:screenOrientation="user"
             android:theme="@style/AppTheme.Day.NoActionBar" />
 
-        <!-- android:parentActivityName="me.wizos.loread.activity.MainActivity" -->
-        <!-- <activity -->
-        <!-- android:name="me.wizos.loread.activity.TagActivity" -->
-        <!-- android:label="@string/setting_activity_title" -->
-        <!-- android:screenOrientation="portrait" -->
-        <!-- android:theme="@style/AppTheme.Day.NoActionBar" /> -->
-
-        <activity
-            android:name=".activity.LoginActivity"
-            android:configChanges="orientation|screenSize|keyboardHidden"
-            android:label="@string/title_activity_login"
-            android:launchMode="singleTask"
-            android:screenOrientation="portrait"
-            android:theme="@style/AppTheme.Day.NoActionBar"
-            android:windowSoftInputMode="adjustResize|stateHidden" />
-        <!-- 硬件加速 -->
-        <!-- android:hardwareAccelerated="true" -->
         <activity
             android:name=".activity.ArticleActivity"
             android:configChanges="orientation|screenSize|keyboardHidden"
             android:label="@string/app_name"
-            android:launchMode="singleTop"
-            android:screenOrientation="portrait"
+            android:launchMode="singleTask"
+            android:parentActivityName=".activity.MainActivity"
+            android:screenOrientation="user"
             android:theme="@style/AppTheme.Day.NoActionBar"
             android:windowSoftInputMode="adjustResize|stateHidden" />
+        <activity
+            android:name=".activity.MusicActivity"
+            android:configChanges="orientation|screenSize|keyboardHidden"
+            android:label="@string/music"
+            android:launchMode="singleTask"
+            android:screenOrientation="user"
+            android:theme="@style/AppTheme.Day.NoActionBar"
+            android:windowSoftInputMode="adjustResize|stateHidden" />
+
+        <activity
+            android:name=".activity.TTSActivity"
+            android:configChanges="orientation|screenSize|keyboardHidden"
+            android:label="@string/speak"
+            android:launchMode="singleTask"
+            android:screenOrientation="user"
+            android:theme="@style/AppTheme.Day.NoActionBar"
+            android:windowSoftInputMode="adjustResize|stateHidden" />
+
+        <!-- 最好不要注册为系统浏览器组件，不然当被设为系统默认的浏览器时，因为我没有处理添加下载监听，和默认打开系统浏览器的事件，会导致循环在这个页面 -->
         <activity
             android:name=".activity.WebActivity"
             android:configChanges="orientation|screenSize|keyboardHidden"
             android:hardwareAccelerated="true"
             android:launchMode="singleTop"
-            android:process=":sub">
-
-            <!-- 最好不要注册为系统浏览器组件，不然当被设为系统默认的浏览器时，因为我没有处理添加下载监听，和默认打开系统浏览器的事件，会导致循环在这个页面 -->
-            <!-- <intent-filter> -->
-            <!-- <action android:name="android.intent.action.VIEW"/> -->
-            <!-- <category android:name="android.intent.category.DEFAULT"/> -->
-            <!-- <category android:name="android.intent.category.BROWSABLE"/> -->
-            <!-- <data android:scheme="http"/> -->
-            <!-- <data android:scheme="https"/> -->
-            <!-- </intent-filter> -->
-        </activity>
-        <activity
-            android:name=".activity.ImageActivity"
-            android:configChanges="orientation|keyboardHidden|screenSize"
-            android:label="@string/title_activity_image"
-            android:launchMode="singleTask"
-            android:process=":sub"
-            android:theme="@style/FullscreenTheme">
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
-
-                <category android:name="android.intent.category.DEFAULT" />
-
-                <data
-                    android:mimeType="image/*"
-                    android:scheme="file" />
-            </intent-filter>
-        </activity>
-
-        <service
-            android:name=".service.SubService"
-            android:process=":sub" />
+            android:theme="@style/AppBaseTheme.SplashTranslucentTheme" />
 
         <activity
             android:name=".activity.SearchActivity"
             android:launchMode="singleTop"
             android:parentActivityName=".activity.MainActivity"
-            android:screenOrientation="portrait"
+            android:screenOrientation="user"
             android:theme="@style/AppTheme.Day.NoActionBar" />
         <activity
             android:name=".activity.SettingActivity"
-            android:label="@string/setting_activity_title"
+            android:label="@string/settings"
             android:launchMode="singleTask"
             android:parentActivityName=".activity.MainActivity"
-            android:screenOrientation="portrait"
+            android:screenOrientation="user"
             android:theme="@style/AppTheme.Day.NoActionBar" />
+
+<!--        <receiver android:name=".service.NetworkStateReceiver">-->
+<!--            <intent-filter>-->
+<!--                <action android:name="android.net.conn.CONNECTIVITY_CHANGE" />-->
+
+<!--                <category android:name="android.intent.category.DEFAULT" />-->
+<!--            </intent-filter>-->
+<!--        </receiver>-->
+
         <activity
-            android:name="com.tencent.bugly.beta.ui.BetaActivity"
-            android:configChanges="keyboardHidden|orientation|screenSize|locale"
-            android:theme="@android:style/Theme.Translucent" />
-        <!-- 如果您想兼容Android N或者以上的设备，必须要在AndroidManifest.xml文件中配置FileProvider来访问共享路径的文件。 -->
-        <!-- 这里配置的两个外部存储路径是升级SDK下载的文件可能存在的路径，一定要按照上面格式配置，不然可能会出现错误。 -->
-        <!-- <provider -->
-        <!-- android:name="android.support.v4.content.FileProvider" -->
-        <!-- android:authorities="${applicationId}.fileProvider" -->
-        <!-- android:exported="false" -->
-        <!-- android:grantUriPermissions="true"> -->
-        <!-- <meta-data -->
-        <!-- android:name="android.support.FILE_PROVIDER_PATHS" -->
-        <!-- android:resource="@xml/provider_paths"/> -->
-        <!-- </provider> -->
+            android:name=".activity.LabActivity"
+            android:configChanges="orientation|screenSize|keyboardHidden"
+            android:hardwareAccelerated="true"
+            android:launchMode="singleTop" />
+        <activity android:name=".activity.RuleGenerateActivity" />
+        <activity
+            android:name=".activity.FeedActivity"
+            android:label="@string/title_activity_scrolling"
+            android:theme="@style/AppTheme.Day.NoActionBar" />
 
-        <receiver android:name=".service.NetworkStateReceiver">
-            <intent-filter>
-                <action android:name="android.net.conn.CONNECTIVITY_CHANGE" />
 
-                <category android:name="android.intent.category.DEFAULT" />
-            </intent-filter>
-        </receiver>
+        <service
+            android:name=".service.MusicService"
+            android:exported="false"
+            android:permission="android.permission.BIND_SERVICE" />
+        <service
+            android:name=".service.AudioService"
+            android:exported="false"
+            android:permission="android.permission.BIND_SERVICE" />
 
-        <service android:name=".service.MainService" />
+<!--        <service-->
+<!--            android:name=".service.MainService"-->
+<!--            android:exported="false"-->
+<!--            android:permission="android.permission.BIND_JOB_SERVICE" />-->
+<!--        <service-->
+<!--            android:name=".account.AccountAuthenticatorService"-->
+<!--            android:exported="false" >-->
+<!--            <intent-filter>-->
+<!--                <action android:name="android.accounts.AccountAuthenticator" />-->
+<!--            </intent-filter>-->
+<!--            <meta-data-->
+<!--                android:name="android.accounts.AccountAuthenticator"-->
+<!--                android:resource="@xml/account_authenticator" />-->
+<!--        </service>-->
 
-        <!--<activity android:name=".test.TestActivity" />-->
-        <!--<activity android:name=".activity.TestActivity"></activity>-->
+<!--        <service-->
+<!--            android:name=".account.SyncService"-->
+<!--            android:exported="true">-->
+<!--            <intent-filter>-->
+<!--                <action android:name="android.content.SyncAdapter" />-->
+<!--            </intent-filter>-->
+<!--            <meta-data-->
+<!--                android:name="android.content.SyncAdapter"-->
+<!--                android:resource="@xml/account_sync_adapter" />-->
+<!--            &lt;!&ndash; resource属性指定一定说明该同步基本显示信息的xml文件 &ndash;&gt;-->
+<!--        </service>-->
+<!--        <provider-->
+<!--            android:name=".account.AccountProvider"-->
+<!--            android:authorities="me.wizos.loreadx.account.provide"-->
+<!--            android:exported="false"-->
+<!--            android:syncable="true"/>-->
+
+<!--        <service-->
+<!--            android:name=".account.CrazyJobService"-->
+<!--            android:permission="android.permission.BIND_JOB_SERVICE"/>-->
+
     </application>
 
 </manifest>

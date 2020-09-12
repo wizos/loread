@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="10dp"
+    android:orientation="vertical"
+    tools:context="me.wizos.loread.activity.LabActivity">
+
+    <!--    <LinearLayout style="@style/SettingItem">-->
+    <!--        <TextView-->
+    <!--            android:id="@+id/lab_use_httpdns"-->
+    <!--            style="@style/SettingItemTitle2"-->
+    <!--            android:text="使用HttpDns访问网站" />-->
+
+    <!--        <com.kyleduo.switchbutton.SwitchButton-->
+    <!--            android:id="@+id/lab_use_httpdns_sb"-->
+    <!--            style="@style/SwitchButtonStyle"-->
+    <!--            android:checked="true" />-->
+    <!--    </LinearLayout>-->
+
+    <TextView
+        android:id="@+id/setting_backup"
+        android:textSize="18sp"
+        android:textColor="@color/material_red_400"
+        style="@style/SettingItem"
+        android:layout_gravity="center"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingTop="5dp"
+        android:paddingBottom="5dp"
+        android:gravity="center"
+        android:onClick="onClickBackup"
+        android:text="备份未读数据"
+        android:background="?android:attr/selectableItemBackground"
+        android:clickable="true"
+        android:focusable="true" />
+
+    <TextView
+        android:id="@+id/setting_restore"
+        android:textSize="18sp"
+        android:textColor="@color/material_red_400"
+        style="@style/SettingItem"
+        android:layout_gravity="center"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingTop="5dp"
+        android:paddingBottom="5dp"
+        android:gravity="center"
+        android:onClick="onClickRestore"
+        android:text="恢复已备份的数据"
+        android:background="?android:attr/selectableItemBackground"
+        android:clickable="true"
+        android:focusable="true" />
+
+    <TextView
+        android:id="@+id/setting_read_config"
+        android:textSize="18sp"
+        android:textColor="@color/material_red_400"
+        style="@style/SettingItem"
+        android:layout_gravity="center"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingTop="5dp"
+        android:paddingBottom="5dp"
+        android:gravity="center"
+        android:onClick="onClickReadConfig"
+        android:text="读取配置"
+        android:background="?android:attr/selectableItemBackground"
+        android:clickable="true"
+        android:focusable="true" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:padding="10dp"
+        android:onClick="onClickClearHtmlDir"
+        android:gravity="center_vertical"
+        android:layout_gravity="center_vertical"
+        style="@style/SettingItem"
+        android:text="清理因故障未被删除的缓存文件"/>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:padding="10dp"
+        android:onClick="onClickArrangeCrawlDateArticle"
+        android:gravity="center_vertical"
+        android:layout_gravity="center_vertical"
+        style="@style/SettingItem"
+        android:text="整理文章的爬取时间为发布时间"/>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:padding="10dp"
+        android:onClick="onClickGenTags"
+        android:gravity="center_vertical"
+        android:layout_gravity="center_vertical"
+        style="@style/SettingItem"
+        android:text="生成 Tag"/>
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:padding="10dp"
+        android:onClick="onClickClearTags"
+        android:gravity="center_vertical"
+        android:layout_gravity="center_vertical"
+        style="@style/SettingItem"
+        android:text="删除所有 Tag"/>
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:padding="10dp"
+        android:onClick="startSyncWorkManager"
+        android:gravity="center_vertical"
+        android:layout_gravity="center_vertical"
+        style="@style/SettingItem"
+        android:text="开启 同步任务"/>
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:padding="10dp"
+        android:onClick="stopWorkManager"
+        android:gravity="center_vertical"
+        android:layout_gravity="center_vertical"
+        style="@style/SettingItem"
+        android:text="关闭 同步任务"/>
+
+    <EditText
+        android:id="@+id/lab_enter_edittext"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_vertical"
+        android:hint="输入"
+        style="@style/SettingItem"
+        android:padding="15dp"/>
+
+    <TextView
+        android:text="打开相应 Activity"
+        android:textAllCaps="false"
+        android:onClick="openActivity"
+        android:layout_height="50dp"
+        android:padding="10dp"
+        android:gravity="center_vertical"
+        android:layout_gravity="center_vertical"
+        style="@style/SettingItem"/>
+    <TextView
+        android:text="修改 Host"
+        android:onClick="onClickEditHost"
+        android:layout_height="50dp"
+        android:padding="10dp"
+        android:gravity="center_vertical"
+        android:layout_gravity="center_vertical"
+        style="@style/SettingItem"/>
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        <LinearLayout
+            android:orientation="vertical"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <TextView
+                android:text="根据action处理文章"
+                android:textAllCaps="false"
+                android:onClick="actionArticle"
+                android:layout_height="50dp"
+                android:padding="10dp"
+                android:gravity="center_vertical"
+                android:layout_gravity="center_vertical"
+                style="@style/SettingItem"/>
+        </LinearLayout>
+    </ScrollView>
+</LinearLayout>

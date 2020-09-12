@@ -25,10 +25,13 @@ public class Luban implements Handler.Callback {
     private static final String TAG = "Luban";
     private static final String DEFAULT_DISK_CACHE_DIR = "luban_disk_cache";
 
+    private static final int MSG_COMPRESS_UNCHANGE = 3;
     private static final int MSG_COMPRESS_SUCCESS = 0;
     private static final int MSG_COMPRESS_START = 1;
     private static final int MSG_COMPRESS_ERROR = 2;
 
+    private int maxWidth;
+    private int maxHeight;
     private String mTargetDir;
     private String mTargetPath; // 自加
     private boolean focusAlpha;
@@ -41,8 +44,12 @@ public class Luban implements Handler.Callback {
     private Handler mHandler;
 
     private Luban(Builder builder) {
-        this.mTargetDir = builder.mTargetDir;
+        // 自加
+        this.maxWidth = builder.maxWidth;
+        this.maxHeight = builder.maxHeight;
         this.mTargetPath = builder.mTargetPath;
+
+        this.mTargetDir = builder.mTargetDir;
         this.mRenameListener = builder.mRenameListener;
         this.mStreamProviders = builder.mStreamProviders;
         this.mCompressListener = builder.mCompressListener;
@@ -84,7 +91,7 @@ public class Luban implements Handler.Callback {
                 md5(input.getPath()) +
                 (TextUtils.isEmpty(suffix) ? ".jpg" : suffix);
 
-//        System.out.print("当前的1：" + mTargetDir + "   " + cacheBuilder + "   " + input.getPath());
+        //System.out.print("当前的1：" + mTargetDir + "   " + cacheBuilder + "   " + input.getPath() + "   "  + suffix );
         return new File(cacheBuilder);
     }
 
@@ -92,7 +99,7 @@ public class Luban implements Handler.Callback {
         if (TextUtils.isEmpty(mTargetPath)) {
             return getImageCacheFile(context, input, suffix);
         }
-//        System.out.print("当前的2：" + mTargetDir + "   " + "   " + mTargetPath);
+        //System.out.print("当前的2：" + mTargetDir + "  --  " + suffix + "  == " + mTargetPath);
         return new File(mTargetPath);
     }
 
@@ -191,10 +198,13 @@ public class Luban implements Handler.Callback {
                 public void run() {
                     try {
                         mHandler.sendMessage(mHandler.obtainMessage(MSG_COMPRESS_START));
-
-                        File result = compress(context, path);
-
-                        mHandler.sendMessage(mHandler.obtainMessage(MSG_COMPRESS_SUCCESS, result));
+                        FileProvider result = compress(context, path);
+                        //Log.e("返回结果" , result.hasCompressed + "" );
+                        if( result.hasCompressed ){
+                            mHandler.sendMessage(mHandler.obtainMessage(MSG_COMPRESS_SUCCESS, result.file));
+                        }else {
+                            mHandler.sendMessage(mHandler.obtainMessage(MSG_COMPRESS_UNCHANGE, result.file));
+                        }
                     } catch (IOException e) {
                         mHandler.sendMessage(mHandler.obtainMessage(MSG_COMPRESS_ERROR, e));
                     }
@@ -209,7 +219,7 @@ public class Luban implements Handler.Callback {
      * start compress and return the file
      */
     private File get(InputStreamProvider input, Context context) throws IOException {
-        return new Engine(input, getImageCacheFile(context, input, Checker.SINGLE.extSuffix(input)), focusAlpha).compress();
+        return new Engine(input, getImageCacheFile(context, input, Checker.SINGLE.extSuffix(input)),maxWidth,maxHeight, focusAlpha).compress();
 //    return new Engine(input, getImageCacheFile(context,input, Checker.SINGLE.extSuffix(input),mTargetPath), focusAlpha).compress();
     }
 
@@ -218,39 +228,78 @@ public class Luban implements Handler.Callback {
         Iterator<InputStreamProvider> iterator = mStreamProviders.iterator();
 
         while (iterator.hasNext()) {
-            results.add(compress(context, iterator.next()));
+            results.add(compress(context, iterator.next()).file);
             iterator.remove();
         }
 
         return results;
     }
 
-    private File compress(Context context, InputStreamProvider path) throws IOException {
-        File result;
+    /**
+     * 自己新增加的函数
+     * @param context
+     * @param path
+     * @return
+     * @throws IOException
+     */
+    private FileProvider compress(Context context, InputStreamProvider path) throws IOException {
+        FileProvider fileProvider = new FileProvider();
 
         File outFile = getImageCacheFile(context, path, Checker.SINGLE.extSuffix(path));
-//    File outFile = getImageCacheFile(context,path, Checker.SINGLE.extSuffix(path),mTargetPath);
-
         if (mRenameListener != null) {
             String filename = mRenameListener.rename(path.getPath());
             outFile = getImageCustomFile(context, filename);
         }
 
         if (mCompressionPredicate != null) {
-            if (mCompressionPredicate.apply(path.getPath())
-                    && Checker.SINGLE.needCompress(mLeastCompressSize, path.getPath())) {
-                result = new Engine(path, outFile, focusAlpha).compress();
+            if ( mCompressionPredicate.apply(path.getPath(),path) && Checker.SINGLE.needCompress(mLeastCompressSize, path.getPath())  ) {
+                fileProvider.file = new Engine(path, outFile,maxWidth,maxHeight, focusAlpha).compress();
+                fileProvider.hasCompressed = true;
+                //Log.e("检测：","要压缩，" + mCompressionPredicate.apply(path.getPath(),path)  + Checker.SINGLE.needCompress(mLeastCompressSize, path.getPath()));
             } else {
-                result = new File(path.getPath());
+                fileProvider.file = new File(path.getPath());
+                fileProvider.hasCompressed = false;
+                //Log.e("检测：","不要压缩，" + mCompressionPredicate.apply(path.getPath(),path)  + Checker.SINGLE.needCompress(mLeastCompressSize, path.getPath()) );
             }
         } else {
-            result = Checker.SINGLE.needCompress(mLeastCompressSize, path.getPath()) ?
-                    new Engine(path, outFile, focusAlpha).compress() :
-                    new File(path.getPath());
+            if( Checker.SINGLE.needCompress(mLeastCompressSize, path.getPath()) ){
+                fileProvider.file = new Engine(path, outFile,maxWidth,maxHeight, focusAlpha).compress();
+                fileProvider.hasCompressed = true;
+            }else {
+                fileProvider.file = new File(path.getPath());
+                fileProvider.hasCompressed = false;
+            }
         }
 
-        return result;
+        return fileProvider;
     }
+
+//    private File compress(Context context, InputStreamProvider path) throws IOException {
+//        File result;
+//
+//        File outFile = getImageCacheFile(context, path, Checker.SINGLE.extSuffix(path));
+////    File outFile = getImageCacheFile(context,path, Checker.SINGLE.extSuffix(path),mTargetPath);
+//
+//        if (mRenameListener != null) {
+//            String filename = mRenameListener.rename(path.getPath());
+//            outFile = getImageCustomFile(context, filename);
+//        }
+//
+//
+//        if (mCompressionPredicate != null) {
+//            if ( mCompressionPredicate.apply(path.getPath()) && Checker.SINGLE.needCompress(mLeastCompressSize, path.getPath()) ) {
+//                result = new Engine(path, outFile, focusAlpha).compress();
+//            } else {
+//                result = new File(path.getPath());
+//            }
+//        } else {
+//            result = Checker.SINGLE.needCompress(mLeastCompressSize, path.getPath()) ?
+//                    new Engine(path, outFile, focusAlpha).compress() :
+//                    new File(path.getPath());
+//        }
+//
+//        return result;
+//    }
 
     @Override
     public boolean handleMessage(Message msg) {
@@ -263,6 +312,9 @@ public class Luban implements Handler.Callback {
             case MSG_COMPRESS_SUCCESS:
                 mCompressListener.onSuccess((File) msg.obj);
                 break;
+            case MSG_COMPRESS_UNCHANGE:
+                mCompressListener.onUnChange((File) msg.obj);
+                break;
             case MSG_COMPRESS_ERROR:
                 mCompressListener.onError((Throwable) msg.obj);
                 break;
@@ -273,6 +325,8 @@ public class Luban implements Handler.Callback {
     public static class Builder {
         private Context context;
         private String mTargetDir;
+        private int maxWidth;
+        private int maxHeight;
         private boolean focusAlpha;
         private int mLeastCompressSize = 100;
         private OnRenameListener mRenameListener;
@@ -378,6 +432,17 @@ public class Luban implements Handler.Callback {
 
         public Builder setTargetDir(String targetDir) {
             this.mTargetDir = targetDir;
+            return this;
+        }
+
+        /**
+         * 自己添加的，用于控制压缩出来的图片的尺寸大小
+         * @param maxWidth
+         * @return
+         */
+        public Builder setMaxSiz(int maxWidth, int maxHeight) {
+            this.maxWidth = maxWidth;
+            this.maxHeight = maxHeight;
             return this;
         }
 

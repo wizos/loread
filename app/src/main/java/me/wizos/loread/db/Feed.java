@@ -1,252 +1,149 @@
 package me.wizos.loread.db;
 
-import org.greenrobot.greendao.DaoException;
-import org.greenrobot.greendao.annotation.Entity;
-import org.greenrobot.greendao.annotation.Generated;
-import org.greenrobot.greendao.annotation.Id;
-import org.greenrobot.greendao.annotation.Index;
-import org.greenrobot.greendao.annotation.JoinProperty;
-import org.greenrobot.greendao.annotation.NotNull;
-import org.greenrobot.greendao.annotation.OrderBy;
-import org.greenrobot.greendao.annotation.ToMany;
+import androidx.annotation.NonNull;
+import androidx.room.Entity;
+import androidx.room.ForeignKey;
+import androidx.room.Index;
 
-import java.util.List;
+import static androidx.room.ForeignKey.CASCADE;
 
-import me.wizos.loread.db.dao.ArticleDao;
-import me.wizos.loread.db.dao.DaoSession;
-import me.wizos.loread.db.dao.FeedDao;
-
-
-@Entity
+/**
+ * Feed 与 Category 是 多对多关系，即一个 Feed 可以存在与多个 Category 中，Category 也可以包含多个 Feed
+ * Created by Wizos on 2020/3/17.
+ // @Index({"id", "uid", "title", "feedUrl"})
+ @Index({"id"}),@Index({"uid"}),
+ */
+@Entity(
+        primaryKeys = {"id","uid"},
+        indices = {@Index({"id"}),@Index({"uid"}),@Index({"title"}),@Index({"feedUrl"})},
+        foreignKeys = @ForeignKey(entity = User.class, parentColumns = "id", childColumns = "uid", onDelete = CASCADE) )
 public class Feed {
-
-    @Id
-    @NotNull
-    @Index
+    @NonNull
     private String id;
+    @NonNull
+    private String uid;
 
-    @NotNull
     private String title;
-    @Index
-    private String categoryid;
-    private String categorylabel;
-    private String sortid;
-    private Long firstitemmsec;
-    private String url;
-    private String htmlurl;
-    private String iconurl;
-    private String openMode;
-    private Integer unreadCount = 0;
-    private Long newestItemTimestampUsec;
 
-    @ToMany(joinProperties = {
-            @JoinProperty(name = "id", referencedName = "categories")
-    })
-    @OrderBy("timestampUsec DESC")
-    private List<Article> items;
+    private String feedUrl;
+    private String htmlUrl;
+    private String iconUrl;
 
-    /**
-     * Used to resolve relations
-     */
-    @Generated(hash = 2040040024)
-    private transient DaoSession daoSession;
+    // 0->rss, 1->readability, 2->link
+    private int displayMode;
 
-    /**
-     * Used for active entity operations.
-     */
-    @Generated(hash = 2085497664)
-    private transient FeedDao myDao;
+    private int unreadCount;
+    private int starCount;
+    private int allCount;
 
-    @Generated(hash = 1043569664)
-    public Feed(@NotNull String id, @NotNull String title, String categoryid, String categorylabel,
-                String sortid, Long firstitemmsec, String url, String htmlurl, String iconurl,
-                String openMode, Integer unreadCount, Long newestItemTimestampUsec) {
-        this.id = id;
-        this.title = title;
-        this.categoryid = categoryid;
-        this.categorylabel = categorylabel;
-        this.sortid = sortid;
-        this.firstitemmsec = firstitemmsec;
-        this.url = url;
-        this.htmlurl = htmlurl;
-        this.iconurl = iconurl;
-        this.openMode = openMode;
-        this.unreadCount = unreadCount;
-        this.newestItemTimestampUsec = newestItemTimestampUsec;
+    // 记录该文feed什么时候被取消订阅。0为已订阅
+    private long state = 0;
+
+    public String getUid() {
+        return uid;
     }
 
-    @Generated(hash = 1810414124)
-    public Feed() {
+    public void setUid(String uid) {
+        this.uid = uid;
     }
 
     public String getId() {
         return this.id;
     }
 
+
     public void setId(String id) {
         this.id = id;
     }
+
 
     public String getTitle() {
         return this.title;
     }
 
+
     public void setTitle(String title) {
         this.title = title;
     }
 
-    public String getCategoryid() {
-        return this.categoryid;
+
+    public String getFeedUrl() {
+        return this.feedUrl;
     }
 
-    public void setCategoryid(String categoryid) {
-        this.categoryid = categoryid;
+
+    public void setFeedUrl(String feedUrl) {
+        this.feedUrl = feedUrl;
     }
 
-    public String getCategorylabel() {
-        return this.categorylabel;
+
+    public String getHtmlUrl() {
+        return this.htmlUrl;
     }
 
-    public void setCategorylabel(String categorylabel) {
-        this.categorylabel = categorylabel;
+
+    public void setHtmlUrl(String htmlUrl) {
+        this.htmlUrl = htmlUrl;
     }
 
-    public String getSortid() {
-        return this.sortid;
+
+    public String getIconUrl() {
+        return this.iconUrl;
     }
 
-    public void setSortid(String sortid) {
-        this.sortid = sortid;
+
+    public void setIconUrl(String iconUrl) {
+        this.iconUrl = iconUrl;
     }
 
-    public Long getFirstitemmsec() {
-        return this.firstitemmsec;
+    // 0->rss, 1->readability, 2->link
+    public int getDisplayMode() {
+        return this.displayMode;
     }
 
-    public void setFirstitemmsec(Long firstitemmsec) {
-        this.firstitemmsec = firstitemmsec;
+
+    public void setDisplayMode(int displayMode) {
+        this.displayMode = displayMode;
     }
 
-    public String getUrl() {
-        return this.url;
-    }
 
-    public void setUrl(String url) {
-        this.url = url;
-    }
-
-    public String getHtmlurl() {
-        return this.htmlurl;
-    }
-
-    public void setHtmlurl(String htmlurl) {
-        this.htmlurl = htmlurl;
-    }
-
-    public String getIconurl() {
-        return this.iconurl;
-    }
-
-    public void setIconurl(String iconurl) {
-        this.iconurl = iconurl;
-    }
-
-    public String getOpenMode() {
-        return this.openMode;
-    }
-
-    public void setOpenMode(String openMode) {
-        this.openMode = openMode;
-    }
-
-    /**
-     * To-many relationship, resolved on first access (and after reset).
-     * Changes to to-many relations are not persisted, make changes to the target entity.
-     */
-    @Generated(hash = 1173003445)
-    public List<Article> getItems() {
-        if (items == null) {
-            final DaoSession daoSession = this.daoSession;
-            if (daoSession == null) {
-                throw new DaoException("Entity is detached from DAO context");
-            }
-            ArticleDao targetDao = daoSession.getArticleDao();
-            List<Article> itemsNew = targetDao._queryFeed_Items(id);
-            synchronized (this) {
-                if (items == null) {
-                    items = itemsNew;
-                }
-            }
-        }
-        return items;
-    }
-
-    /**
-     * Resets a to-many relationship, making the next get call to query for a fresh result.
-     */
-    @Generated(hash = 1727286264)
-    public synchronized void resetItems() {
-        items = null;
-    }
-
-    /**
-     * Convenient call for {@link org.greenrobot.greendao.AbstractDao#delete(Object)}.
-     * Entity must attached to an entity context.
-     */
-    @Generated(hash = 128553479)
-    public void delete() {
-        if (myDao == null) {
-            throw new DaoException("Entity is detached from DAO context");
-        }
-        myDao.delete(this);
-    }
-
-    /**
-     * Convenient call for {@link org.greenrobot.greendao.AbstractDao#refresh(Object)}.
-     * Entity must attached to an entity context.
-     */
-    @Generated(hash = 1942392019)
-    public void refresh() {
-        if (myDao == null) {
-            throw new DaoException("Entity is detached from DAO context");
-        }
-        myDao.refresh(this);
-    }
-
-    /**
-     * Convenient call for {@link org.greenrobot.greendao.AbstractDao#update(Object)}.
-     * Entity must attached to an entity context.
-     */
-    @Generated(hash = 713229351)
-    public void update() {
-        if (myDao == null) {
-            throw new DaoException("Entity is detached from DAO context");
-        }
-        myDao.update(this);
-    }
-
-    /**
-     * called by internal mechanisms, do not call yourself.
-     */
-    @Generated(hash = 364457678)
-    public void __setDaoSession(DaoSession daoSession) {
-        this.daoSession = daoSession;
-        myDao = daoSession != null ? daoSession.getFeedDao() : null;
-    }
-
-    public Integer getUnreadCount() {
+    public int getUnreadCount() {
         return this.unreadCount;
     }
 
-    public void setUnreadCount(Integer unreadCount) {
+
+    public void setUnreadCount(int unreadCount) {
         this.unreadCount = unreadCount;
     }
 
-    public Long getNewestItemTimestampUsec() {
-        return this.newestItemTimestampUsec;
+
+    public int getStarCount() {
+        return this.starCount;
     }
 
-    public void setNewestItemTimestampUsec(Long newestItemTimestampUsec) {
-        this.newestItemTimestampUsec = newestItemTimestampUsec;
+
+    public void setStarCount(int starCount) {
+        this.starCount = starCount;
     }
+
+
+    public int getAllCount() {
+        return this.allCount;
+    }
+
+
+    public void setAllCount(int allCount) {
+        this.allCount = allCount;
+    }
+
+
+    public long getState() {
+        return this.state;
+    }
+
+
+    public void setState(long state) {
+        this.state = state;
+    }
+
 }

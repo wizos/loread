@@ -7,8 +7,6 @@
     android:minHeight="62dp"
     android:orientation="horizontal"
     android:paddingEnd="@dimen/md_dialog_frame_margin"
-    android:paddingLeft="@dimen/md_dialog_frame_margin"
-    android:paddingRight="@dimen/md_dialog_frame_margin"
     android:paddingStart="@dimen/md_dialog_frame_margin">
 
     <ImageView
@@ -17,12 +15,12 @@
         android:layout_height="28dp"
         android:layout_gravity="start|center_vertical"
         android:layout_marginEnd="16dp"
-        android:layout_marginRight="16dp"
         android:background="@color/white"
         android:scaleType="fitXY"
         tools:background="#f5f5f5"
-        tools:src="@drawable/flyme_style_switch_button_round"
+        tools:src="@drawable/logo_inoreader"
         tools:ignore="ContentDescription" />
+<!--    tools:src="@drawable/flyme_style_switch_button_round"-->
 
     <TextView
         android:id="@android:id/title"

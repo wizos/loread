@@ -19,7 +19,7 @@
         android:padding="10dp"
         android:gravity="center"
         android:text="@string/search_header_search_cloudy_feeds"
-        android:background="?android:attr/selectableItemBackgroundBorderless"
+        android:background="?android:attr/selectableItemBackground"
         android:clickable="true"
         android:textColor="?attr/lv_item_desc_color"
         android:onClick="onSearchFeedsClicked" />
@@ -34,7 +34,7 @@
         android:padding="10dp"
         android:gravity="center"
         android:text="@string/search_header_search_local_articles"
-        android:background="?android:attr/selectableItemBackgroundBorderless"
+        android:background="?android:attr/selectableItemBackground"
         android:clickable="true"
         android:textColor="?attr/lv_item_desc_color"
         android:onClick="onSearchLocalArtsClicked" />

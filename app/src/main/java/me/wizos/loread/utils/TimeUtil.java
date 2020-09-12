@@ -1,7 +1,6 @@
 package me.wizos.loread.utils;
 
-import com.socks.library.KLog;
-
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
@@ -13,6 +12,167 @@ import java.util.Locale;
  * Created by xdsjs on 2015/10/14.
  */
 public class TimeUtil {
+//    public static String formatReadability(long timestamp)  {
+//        // 如果给定的时间小于昨天凌晨，则直接用标准的 yyyy-MM-dd HH:mm 格式
+//    }
+
+    /**
+     * 时间差
+     *
+     * @param date
+     * @return
+     */
+    public static String getTimeFormatText(Date date) {
+        long minute = 60 * 1000;// 1分钟
+        long hour = 60 * minute;// 1小时
+        long day = 24 * hour;// 1天
+        long month = 31 * day;// 月
+        long year = 12 * month;// 年
+
+        if (date == null) {
+            return null;
+        }
+        long diff = new Date().getTime() - date.getTime();
+        long r = 0;
+        if (diff > year) {
+            r = (diff / year);
+            return r + "年前";
+        }
+        if (diff > month) {
+            r = (diff / month);
+            return r + "个月前";
+        }
+        if (diff > day) {
+            r = (diff / day);
+            return r + "天前";
+        }
+        if (diff > hour) {
+            r = (diff / hour);
+            return r + "小时前";
+        }
+        if (diff > minute) {
+            r = (diff / minute);
+            return r + "分钟前";
+        }
+        return "刚刚";
+    }
+
+
+    /** * 用于显示时间 */
+    public static final String TODAY = "今天";
+    public static final String YESTERDAY = "昨天";
+
+    public static String getToday(String time)  {
+        Calendar pre = Calendar.getInstance();
+        Date predate = new Date(System.currentTimeMillis());
+        pre.setTime(predate);
+
+        Calendar cal = Calendar.getInstance();
+        Date date = new Date(Long.parseLong(time) * 1000);
+        cal.setTime(date);
+
+        if (cal.get(Calendar.YEAR) == (pre.get(Calendar.YEAR))) {
+            int diffDay = cal.get(Calendar.DAY_OF_YEAR) - pre.get(Calendar.DAY_OF_YEAR);
+            return showDateDetail(diffDay, time);
+        }
+        return time;
+    }
+
+    /** * 将日期差显示为今天、明天或者星期 * @param diffDay * @param time * @return */
+    private static String showDateDetail(int diffDay, String time){
+        switch(diffDay){
+            case -1:
+                return YESTERDAY;
+            case 0:
+                return TODAY;
+            default:
+                return  getWeek(time);
+        }
+    }
+    /** * 计算周几 */
+    public static String getWeek(String data) {
+        SimpleDateFormat sdr = new SimpleDateFormat("yyyy年MM月dd日HH时mm分ss秒");
+        long lcc = Long.valueOf(data);
+        int i = Integer.parseInt(data);
+        String times = sdr.format(new Date(i * 1000L));
+        Date date = null;
+        int mydate = 0;
+        String week = "";
+        try {
+            date = sdr.parse(times);
+            Calendar cd = Calendar.getInstance();
+            cd.setTime(date);
+            mydate = cd.get(Calendar.DAY_OF_WEEK);
+            // 获取指定日期转换成星期几
+        } catch (ParseException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        if (mydate == 1) {
+            week = "星期日";
+        } else if (mydate == 2) {
+            week = "星期一";
+        } else if (mydate == 3) {
+            week = "星期二";
+        } else if (mydate == 4) {
+            week = "星期三";
+        } else if (mydate == 5) {
+            week = "星期四";
+        } else if (mydate == 6) {
+            week = "星期五";
+        } else if (mydate == 7) {
+            week = "星期六";
+        }
+        return week;
+    }
+
+
+
+
+
+    /**
+     * 将 时间戳 转为指定的 格式
+     * @param timestamp 时间戳（毫秒）
+     * @param pattern 要转为的格式（例如 yyyy-MM-dd HH:mm:ss）
+     * @return 格式化的时间
+     */
+    public static String format(long timestamp, String pattern) {
+        SimpleDateFormat dateFormat = new SimpleDateFormat(pattern, Locale.getDefault());
+        Date date = new Date(timestamp);
+        return dateFormat.format(date);
+    }
+
+    public static int getCurrentHour() {
+        Calendar currentDate = new GregorianCalendar(Locale.CHINA);
+        return currentDate.get(Calendar.HOUR_OF_DAY);
+    }
+
+    public static StringBuilder getTime(int time) {
+        if (time < 0) {
+            time = 0;
+        }
+        int cache = time / 1000;
+        int second = cache % 60;
+        cache = cache / 60;
+        int minute = cache % 60;
+        int hour = cache / 60;
+        StringBuilder timeStamp = new StringBuilder();
+        if (hour > 0) {
+            timeStamp.append(hour);
+            timeStamp.append(":");
+        }
+        if (minute < 10) {
+            timeStamp.append("0");
+        }
+        timeStamp.append(minute);
+        timeStamp.append(":");
+
+        if (second < 10) {
+            timeStamp.append("0");
+        }
+        timeStamp.append(second);
+        return timeStamp;
+    }
 
     /**
      * 获取当天的开始时间
@@ -63,92 +223,4 @@ public class TimeUtil {
         currentDate.set(Calendar.DAY_OF_YEAR, 0);
         return currentDate.getTime().getTime();
     }
-
-    /**
-     * 获取当前时间，并转换为数据库次数表中需要的时间
-     */
-    public static int getCurrentTime() {
-        Calendar currentDate = new GregorianCalendar();
-        int hour = currentDate.get(Calendar.HOUR_OF_DAY);
-        if (hour >= 2 && hour < 6)
-            return 0;
-        if (hour >= 6 && hour < 7)
-            return 1;
-        if (hour >= 7 && hour < 8)
-            return 2;
-        if (hour >= 8 && hour < 9)
-            return 3;
-        if (hour >= 9 && hour < 11)
-            return 4;
-        if (hour >= 11 && hour < 13)
-            return 5;
-        if (hour >= 13 && hour < 14)
-            return 6;
-        if (hour >= 14 && hour < 16)
-            return 7;
-        if (hour >= 16 && hour < 17)
-            return 8;
-        if (hour >= 17 && hour < 19)
-            return 9;
-        if (hour >= 19 && hour < 21)
-            return 10;
-        if (hour >= 21 && hour < 23)
-            return 11;
-        if (hour >= 23 && hour < 2)
-            return 12;
-        return 0;
-    }
-
-    public static int getCurrentHour() {
-        Calendar currentDate = new GregorianCalendar(Locale.CHINA);
-        int hour = currentDate.get(Calendar.HOUR_OF_DAY);
-        return hour;
-    }
-
-    /**
-     * 获取给定格式的当前时间
-     *
-     * @param format 时间的格式
-     * @return
-     */
-    public static String getCurrentDate(String format) {
-        Date date = new Date(System.currentTimeMillis());
-        SimpleDateFormat dateFormat = new SimpleDateFormat(format, Locale.getDefault());
-        return dateFormat.format(date);
-    }
-
-    public static String getCurrentDateID(int position) {
-        Date dateID = new Date(System.currentTimeMillis() + position*24*3600*1000L); // 因为后面算的数目太大，超出其格式 int 的范围，所以加 L 使用 Long 类型
-//        SimpleDateFormat dateYMD = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
-//        SimpleDateFormat dateHMS = new SimpleDateFormat("HH:mm:ss", Locale.getDefault());
-        SimpleDateFormat dateYMDHMS = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault());
-        return dateYMDHMS.format(dateID);
-    }
-
-
-    /**
-     * 将时间戳（毫秒）转换为时间（yyyy-MM-dd HH:mm:ss）
-     */
-    public static String stampToTime(long stamp, String pattern) {
-        SimpleDateFormat dateFormat = new SimpleDateFormat(pattern, Locale.getDefault());
-        Date date = new Date(stamp);
-//        Timestamp date = new Timestamp( stamp );
-        return dateFormat.format(date);
-    }
-
-    public static boolean compare(String HM1, String HM2) {
-        SimpleDateFormat timeHM = new SimpleDateFormat("HH:mm", Locale.getDefault());
-        try {
-            Date date1 = timeHM.parse(HM1);
-            Date date2 = timeHM.parse(HM2);
-            KLog.e("时间为：" + HM1 + "  " + HM2 + "  " + (date1.getTime() > date2.getTime()));
-            return date1.getTime() > date2.getTime();
-        } catch (Exception e) {
-            KLog.e("报错" + HM1 + "  " + HM2);
-            KLog.e(e);
-            return false;
-        }
-    }
-
-
 }

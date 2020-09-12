@@ -15,23 +15,31 @@
     <color name="main_grey_dark">#E3E8E7</color>
 
     <color name="main_day_light">#515151</color>
-    <!--<color name="main_day_dark">#313131</color>-->
+    <!--<couserNamename="main_day_dark">#313131</color>-->
     <color name="main_day_dark">#343432</color>
-    <!--<color name="main_day_info">#7c7c7c</color>-->
+    <!--<couserNamename="main_day_info">#7c7c7c</color>-->
     <color name="main_day_info">#a9a9a9</color>
 
-    <color name="main_night_light">#E3E8E7</color>
-    <color name="main_night_dark">#A3AAB0</color>
-    <color name="main_night_info">#7B9196</color>
+    <!--<couserNamename="main_night_dark">#A3AAB0</color>-->
     // 7B9196
-
     <color name="light_lv_divider">#f2f2f2</color>
 
-    <color name="article_dark_background">#202B2F</color>
-    <color name="dark_foreground">#203238</color>
-    <color name="black_lv_divider">#141e21</color>
-
-    <color name="article_dark_text">#97A0A5</color>
+    <!--Reeder的配色，不过在我手机上显示效果不好-->
+    <color name="main_night_title">#E8E6E8</color>
+    <!--<couserNamename="main_night_info">#959492</color>-->
+    <!--<couserNamename="dark_background">#4B4A47</color>-->
+    <!--<couserNamename="dark_foreground">#525252</color>-->
+    <!--<couserNamename="black_lv_divider">#3E3D3B</color>-->
+    <!--NewsFlow的配色 #b5b5b5-->
+    <color name="main_night_info">#b5b5b5</color>
+    <color name="dark_background">#454952</color>
+    <color name="dark_foreground">#545863</color>
+    <color name="black_lv_divider">#3d3d3d</color>
+    <!--我的原始配色-->
+    <!--<couserNamename="main_night_info">#7B9196</color>-->
+    <!--<couserNamename="dark_background">#202B2F</color>-->
+    <!--<couserNamename="dark_foreground">#203238</color>-->
+    <!--<couserNamename="black_lv_divider">#141e21</color>-->
 
 
     <color name="material_red_400">#EF5350</color>
@@ -40,7 +48,7 @@
     // 测试一个主题色 EFF3F2
     <color name="white_toolbar_bg">#FCFBF7</color>
     <color name="white_screen_bg">#F6F5F1</color>
-    <color name="white_bottombar_divider">#D7D6D1</color>
+    <color name="white_bottombar_divider">#e7e7e7</color>
 
     <color name="shade">#404040</color>
 

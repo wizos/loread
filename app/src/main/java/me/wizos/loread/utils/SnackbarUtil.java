@@ -5,13 +5,6 @@ import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Build;
-import android.support.annotation.ColorInt;
-import android.support.annotation.DrawableRes;
-import android.support.annotation.Nullable;
-import android.support.annotation.StringRes;
-import android.support.design.widget.CoordinatorLayout;
-import android.support.design.widget.Snackbar;
-import android.support.v4.widget.Space;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -21,6 +14,15 @@ import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+
+import androidx.annotation.ColorInt;
+import androidx.annotation.DrawableRes;
+import androidx.annotation.Nullable;
+import androidx.annotation.StringRes;
+import androidx.coordinatorlayout.widget.CoordinatorLayout;
+import androidx.legacy.widget.Space;
+
+import com.google.android.material.snackbar.Snackbar;
 
 import java.lang.ref.WeakReference;
 
@@ -193,6 +195,9 @@ public class SnackbarUtil {
      */
     public static SnackbarUtil Long(View view, String message) {
         return new SnackbarUtil(new WeakReference<Snackbar>(Snackbar.make(view, message, Snackbar.LENGTH_LONG))).backColor(0XFF323232);
+    }
+    public static SnackbarUtil Long(View view,View anchorView, String message) {
+        return new SnackbarUtil(new WeakReference<Snackbar>(Snackbar.make(view, message, Snackbar.LENGTH_LONG).setAnchorView(anchorView))).backColor(0XFF323232);
     }
 
     /**

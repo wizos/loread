@@ -1,0 +1,18 @@
+apply plugin: "com.android.library"
+
+android {
+    compileSdkVersion 29
+    buildToolsVersion "29.0.3"
+
+    defaultConfig {
+        minSdkVersion 22
+        targetSdkVersion 29
+        consumerProguardFiles 'proguard-rules.txt'
+    }
+
+    resourcePrefix 'support_recycler'
+}
+
+dependencies {
+    api 'androidx.recyclerview:recyclerview:1.1.0'
+}

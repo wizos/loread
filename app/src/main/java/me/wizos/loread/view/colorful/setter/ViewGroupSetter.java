@@ -1,10 +1,11 @@
 package me.wizos.loread.view.colorful.setter;
 
 import android.content.res.Resources.Theme;
-import android.support.v7.widget.RecyclerView;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AbsListView;
+
+import androidx.recyclerview.widget.RecyclerView;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -61,8 +62,7 @@ public class ViewGroupSetter extends ViewSetter {
      * @return
      */
     public ViewGroupSetter childViewBgDrawable(int viewId, int drawableId) {
-        mItemViewSetters.add(new ViewBackgroundDrawableSetter(viewId,
-                drawableId));
+        mItemViewSetters.add(new ViewBackgroundDrawableSetter(viewId, drawableId));
         return this;
     }
 
@@ -102,9 +102,8 @@ public class ViewGroupSetter extends ViewSetter {
      * @return
      */
     private View findViewById(View rootView, int viewId) {
-        View targetView = rootView.findViewById(viewId);
 //		Log.d("", "### viewgroup find view : " + targetView);
-        return targetView;
+        return rootView.findViewById(viewId);
     }
 
     /**
@@ -114,8 +113,7 @@ public class ViewGroupSetter extends ViewSetter {
      * @param newTheme
      * @param themeId
      */
-    private void changeChildenAttrs(ViewGroup viewGroup, Theme newTheme,
-                                    int themeId) {
+    private void changeChildenAttrs(ViewGroup viewGroup, Theme newTheme, int themeId) {
         int childCount = viewGroup.getChildCount();
         for (int i = 0; i < childCount; i++) {
             View childView = viewGroup.getChildAt(i);
@@ -168,18 +166,21 @@ public class ViewGroupSetter extends ViewSetter {
     }
 
     private void clearRecyclerViewRecyclerBin(View rootView) {
+//        KLog.e("", "### 准备 清空RecyclerView的Recycer ");
         if (rootView instanceof RecyclerView) {
             try {
-                Field localField = RecyclerView.class
-                        .getDeclaredField("mRecycler");
+                Field localField = RecyclerView.class.getDeclaredField("mRecycler");
                 localField.setAccessible(true);
                 Method localMethod = Class.forName(
-                        "android.support.v7.widget.RecyclerView$Recycler")
-                        .getDeclaredMethod("clear");
+                        "androidx.recyclerview.widget.RecyclerView$Recycler")
+                        .getDeclaredMethod("clear", new Class[0]);
                 localMethod.setAccessible(true);
-                localMethod.invoke(localField.get(rootView));
-//				Log.e("", "### 清空RecyclerView的Recycer ");
+                localMethod.invoke(localField.get(rootView), new Object[0]);
+                ((RecyclerView) rootView).getRecycledViewPool().clear();
+
                 rootView.invalidate();
+
+                // KLog.e("", "### 清空RecyclerView的Recycer ");
             } catch (NoSuchFieldException e1) {
                 e1.printStackTrace();
             } catch (ClassNotFoundException e2) {

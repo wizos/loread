@@ -11,7 +11,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center_vertical"
-        android:background="?attr/bottombar_bg"
+        android:background="?attr/root_view_bg"
         tools:ShowIn="@layout/activity_main">
 
         <TextView
@@ -28,17 +28,16 @@
             android:textSize="16sp"
             tools:text="这是父item" />
 
+        <!--android:textColor="#5a8fca"-->
 
         <TextView
             android:id="@+id/child_item_count"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:gravity="center"
-            android:padding="5dp"
             android:layout_marginEnd="20dp"
-            android:background="?attr/bubble_bg"
-            android:textSize="12sp"
             android:textColor="?attr/lv_item_desc_color"
+            android:textSize="12sp"
             tools:text="-9.9" />
     </LinearLayout>
 

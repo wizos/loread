@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="me.wizos.loread.activity.TTSActivity">
+
+
+    <com.google.android.material.appbar.AppBarLayout
+        android:id="@+id/music_appbar_layout"
+        android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+    <androidx.appcompat.widget.Toolbar
+        android:id="@+id/music_toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        android:background="?attr/topbar_bg"
+        tools:title="博谈"
+        tools:navigationIcon="@drawable/ic_music"
+        app:contentInsetStartWithNavigation="0dp"
+        app:subtitleTextAppearance="@style/MyToolbar.SubTitle"
+        app:layout_scrollFlags="scroll|enterAlways">
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/main_toolbar_auto_mark"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:visibility="gone"
+            tools:visibility="visible"
+            android:src="@drawable/ic_arrow_auto_mark_readed" />
+    </androidx.appcompat.widget.Toolbar>
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <LinearLayout
+        android:id="@+id/music_toggle_container"
+        android:layout_above="@id/music_seekbar_container"
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/bottom_bar_height"
+        android:gravity="center_vertical"
+        android:background="?attr/root_view_bg"
+        android:paddingStart="17dp"
+        android:paddingEnd="17dp"
+        android:paddingTop="4dp"
+        android:paddingBottom="4dp">
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/music_close"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:src="@drawable/ic_close"/>
+        <TextView
+            android:id="@+id/music_title"
+            android:layout_weight="1"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="10dp"
+            android:layout_marginEnd="10dp"
+            android:gravity="center_vertical"
+            android:lines="1"
+            android:textSize="12sp"
+            android:textColor="?attr/lv_item_title_color"
+            tools:text="天地骨任我行" />
+
+        <TextView
+            android:id="@+id/music_speed"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:gravity="center"
+            android:layout_marginStart="10dp"
+            android:layout_marginEnd="20dp"
+            android:text="@string/music_speed"
+            android:textColor="?attr/lv_item_desc_color"/>
+
+        <com.freedom.lauzy.playpauseviewlib.PlayPauseView
+            android:id="@+id/music_play_pause_view"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            app:anim_direction="positive"
+            app:anim_duration="300"
+            app:bg_color="#E0E0E0"
+            app:btn_color="#282828"
+            app:gap_width="3dp"/>
+    </LinearLayout>
+
+    <RelativeLayout
+        android:id="@+id/music_seekbar_container"
+        android:layout_alignParentBottom="true"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/bottom_bar_height"
+        android:background="?attr/root_view_bg"
+        android:layout_marginBottom="10dp"
+        android:padding="7dp">
+
+        <TextView
+            android:id="@+id/currTime"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentStart="true"
+            android:layout_centerVertical="true"
+            android:layout_marginStart="10dp"
+            android:text="@string/music_time"
+            android:textColor="?attr/lv_item_desc_color"/>
+
+        <SeekBar
+            android:id="@+id/progressBar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:layout_marginLeft="3dp"
+            android:layout_marginRight="3dp"
+            android:layout_toEndOf="@+id/currTime"
+            android:layout_toStartOf="@+id/totalTime"
+            android:padding="10dp"
+            android:progressDrawable="@drawable/seekbar_audio"
+            android:thumb="@drawable/custom_progress_bar_thumb" />
+
+        <TextView
+            android:id="@+id/totalTime"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentEnd="true"
+            android:layout_centerVertical="true"
+            android:layout_marginEnd="10dp"
+            android:text="@string/music_time"
+            android:textColor="?attr/lv_item_desc_color" />
+    </RelativeLayout>
+
+</RelativeLayout>

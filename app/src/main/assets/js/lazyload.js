@@ -10,7 +10,6 @@
  * Copyright 2013 Luís Almeida
  * https://github.com/luis-almeida
  */
-
 ;(function($) {
 	$.fn.unveil = function(threshold, callback) {
 		var $w = $(window),

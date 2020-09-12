@@ -1,31 +1,41 @@
 package me.wizos.loread.activity;
 
+import android.content.ClipData;
+import android.content.ClipboardManager;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.v7.widget.Toolbar;
-import android.text.InputType;
 import android.view.View;
 import android.widget.CompoundButton;
 import android.widget.TextView;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.appcompat.widget.Toolbar;
+import androidx.recyclerview.widget.LinearLayoutManager;
+
 import com.afollestad.materialdialogs.DialogAction;
 import com.afollestad.materialdialogs.MaterialDialog;
+import com.afollestad.materialdialogs.simplelist.MaterialSimpleListAdapter;
+import com.afollestad.materialdialogs.simplelist.MaterialSimpleListItem;
+import com.hjq.toast.ToastUtils;
 import com.kyleduo.switchbutton.SwitchButton;
 import com.socks.library.KLog;
+
+import java.util.List;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import me.wizos.loread.App;
 import me.wizos.loread.BuildConfig;
+import me.wizos.loread.Contract;
 import me.wizos.loread.R;
-import me.wizos.loread.bean.config.GlobalConfig;
-import me.wizos.loread.data.WithPref;
-import me.wizos.loread.utils.FileUtil;
+import me.wizos.loread.db.CoreDB;
+import me.wizos.loread.db.User;
 import me.wizos.loread.view.colorful.Colorful;
 
 /**
@@ -34,6 +44,27 @@ import me.wizos.loread.view.colorful.Colorful;
 
 public class SettingActivity extends BaseActivity {
     protected static final String TAG = "SettingActivity";
+
+    private TextView clearBeforeDaySummary;
+
+    @Nullable
+    @BindView(R.id.setting_auto_sync_sb)
+    SwitchButton autoSyncSB;
+    @Nullable
+    @BindView(R.id.setting_auto_sync_on_wifi_sb)
+    SwitchButton autoSyncOnWifiSB;
+    @BindView(R.id.setting_auto_sync_on_wifi)
+    View autoSyncOnWifi;
+    @Nullable
+    @BindView(R.id.setting_auto_sync_frequency)
+    View autoSyncFrequency;
+
+    @BindView(R.id.setting_sync_frequency_summary)
+    TextView autoSyncFrequencySummary;
+
+    @BindView(R.id.setting_lab)
+    TextView lab;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -45,120 +76,12 @@ public class SettingActivity extends BaseActivity {
     }
 
 
-    @Override
-    protected Colorful.Builder buildColorful(Colorful.Builder mColorfulBuilder) {
-        mColorfulBuilder
-//                .backgroundDrawable(R.id.swipe_layout, R.attr.root_view_bg)
-                // 设置view的背景图片
-                .backgroundColor(R.id.setting_coordinator, R.attr.root_view_bg)
-                // 设置 toolbar
-                .backgroundColor(R.id.setting_toolbar, R.attr.topbar_bg)
-//                .textColor(R.id.setting_toolbar_count, R.attr.topbar_fg)
-                // 设置文章信息
-//                .textColor(R.id.setting_sync_first_open_title, R.attr.setting_title)
-//                .textColor(R.id.setting_sync_all_starred_title, R.attr.setting_title)
-//                .textColor(R.id.setting_sync_frequency_title, R.attr.setting_title)
-//                .textColor(R.id.setting_sync_frequency_summary, R.attr.setting_tips)
-                .textColor(R.id.setting_clear_day_title, R.attr.setting_title)
-                .textColor(R.id.setting_clear_day_summary, R.attr.setting_tips)
-                .textColor(R.id.setting_down_img_title, R.attr.setting_title)
-
-                .textColor(R.id.setting_proxy_title, R.attr.setting_title)
-
-//                .textColor(R.id.setting_scroll_mark_title, R.attr.setting_title)
-//                .textColor(R.id.setting_scroll_mark_tips, R.attr.setting_tips)
-//                .textColor(R.id.setting_order_tagfeed_title, R.attr.setting_title)
-//                .textColor(R.id.setting_order_tagfeed_tips, R.attr.setting_tips)
-//                .textColor(R.id.setting_link_open_mode_tips, R.attr.setting_tips)
-//                .textColor(R.id.setting_cache_path_starred_title, R.attr.setting_title)
-//                .textColor(R.id.setting_cache_path_starred_summary, R.attr.setting_tips)
-                .textColor(R.id.setting_link_open_mode_title, R.attr.setting_title)
-                .textColor(R.id.setting_license_title, R.attr.setting_title)
-                .textColor(R.id.setting_license_summary, R.attr.setting_tips)
-                .textColor(R.id.setting_about_title, R.attr.setting_title)
-                .textColor(R.id.setting_about_summary, R.attr.setting_tips);
-        return mColorfulBuilder;
-    }
-
-
-    private TextView clearBeforeDaySummary;
-
-    @Nullable
-    @BindView(R.id.setting_auto_sync_sb)
-    SwitchButton autoSyncSB;
-    @Nullable
-    @BindView(R.id.setting_auto_sync_on_wifi_sb)
-    SwitchButton autoSyncOnWifiSB;
-
-
-    @BindView(R.id.setting_auto_sync_on_wifi)
-    View autoSyncOnWifi;
-
-    @Nullable
-    @BindView(R.id.setting_auto_sync_frequency)
-    View autoSyncFrequency;
-
-    @BindView(R.id.setting_sync_frequency_summary)
-    TextView autoSyncFrequencySummary;
-
-//    TextView startTimeTextView;
-//    TextView endTimeTextView;
-
-    @BindView(R.id.setting_backup)
-    TextView backup;
-
-    @BindView(R.id.setting_restore)
-    TextView restore;
-
-    @BindView(R.id.setting_read_config)
-    TextView readConfig;
-
-
-//    @OnClick(R.id.setting_night_time_interval)
-//    public void onClickNightTimeInterval(View view){
-//        MaterialDialog dialog = new MaterialDialog.Builder(this)
-//                .title("夜间时间段")
-//                .customView(R.layout.select_night_time_interval_view, true)
-//                .positiveText("确认")
-//                .negativeText("取消")
-//                .onPositive(new MaterialDialog.SingleButtonCallback() {
-//                    @Override
-//                    public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
-//                        WithPref.i().setNightThemeThemeStartTime(startTime);
-//                        WithPref.i().setNightThemeEndTime(endTime);
-//                    }
-//                }).build();
-//        dialog.show();
-//
-//        startTimeTextView = (TextView) dialog.findViewById(R.id.start);
-//        endTimeTextView = (TextView) dialog.findViewById(R.id.end);
-//
-//        CircleAlarmTimerView circleAlarmTimerView = (CircleAlarmTimerView) dialog.findViewById(R.id.circletimerview);
-//        circleAlarmTimerView.setOnTimeChangedListener(new CircleAlarmTimerView.OnTimeChangedListener() {
-//            @Override
-//            public void start(String starting) {
-//                startTimeTextView.setText(starting);
-//                startTime = starting;
-//            }
-//            @Override
-//            public void end(String ending) {
-//                endTimeTextView.setText(ending);
-//                endTime = ending;
-//            }
-//        });
-//
-//        circleAlarmTimerView.getPaddingStart();
-//    }
-//    private String startTime;
-//    private String endTime;
-
-
     private void toggleAutoSyncItem() {
-        if (WithPref.i().isAutoSync()) {
+        if (App.i().getUser().isAutoSync()) {
             autoSyncSB.setChecked(true);
             autoSyncOnWifi.setVisibility(View.VISIBLE);
             autoSyncFrequency.setVisibility(View.VISIBLE);
-            autoSyncOnWifiSB.setChecked(WithPref.i().isAutoSyncOnWifi());
+            autoSyncOnWifiSB.setChecked(App.i().getUser().isAutoSyncOnlyWifi());
         } else {
             autoSyncSB.setChecked(false);
             autoSyncOnWifi.setVisibility(View.GONE);
@@ -166,25 +89,30 @@ public class SettingActivity extends BaseActivity {
         }
     }
 
-    private void initView(){
+    private void initView() {
         SwitchButton downImgWifi, sysBrowserOpenLink, autoToggleTheme;
+//        autoSyncSB = findViewById(R.id.setting_auto_sync_sb);
+//        autoSyncOnWifi.findViewById(R.id.setting_auto_sync_on_wifi_sb);
+//        autoSyncFrequency.findViewById(R.id.setting_auto_sync_on_wifi_sb);
         toggleAutoSyncItem();
         autoSyncSB.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
-                WithPref.i().setAutoSync(b);
+                User user = App.i().getUser();
+                user.setAutoSync(b);
+                CoreDB.i().userDao().update(user);
                 toggleAutoSyncItem();
             }
         });
 
 
         downImgWifi = findViewById(R.id.setting_down_img_sb);
-        downImgWifi.setChecked(WithPref.i().isDownImgOnlyWifi());
+        downImgWifi.setChecked(App.i().getUser().isDownloadImgOnlyWifi());
 
         clearBeforeDaySummary = findViewById(R.id.setting_clear_day_summary);
-        clearBeforeDaySummary.setText(getResources().getString(R.string.clear_day_summary, String.valueOf(WithPref.i().getClearBeforeDay())));
+        clearBeforeDaySummary.setText(getResources().getString(R.string.clear_day_summary, String.valueOf(App.i().getUser().getCachePeriod())));
 
-        int autoSyncFrequency = WithPref.i().getAutoSyncFrequency();
+        int autoSyncFrequency = App.i().getUser().getAutoSyncFrequency();
         if (autoSyncFrequency >= 60) {
             autoSyncFrequencySummary.setText(getResources().getString(R.string.xx_hour, autoSyncFrequency / 60 + ""));
 
@@ -192,16 +120,10 @@ public class SettingActivity extends BaseActivity {
             autoSyncFrequencySummary.setText(getResources().getString(R.string.xx_minute, autoSyncFrequency + ""));
         }
         sysBrowserOpenLink = findViewById(R.id.setting_link_open_mode_sb);
-        sysBrowserOpenLink.setChecked(WithPref.i().isSysBrowserOpenLink());
-//        View openLinkMode = findViewById(R.id.setting_link_open_mode);
-//        if (!BuildConfig.DEBUG) {
-//            openLinkMode.setVisibility(View.GONE);
-//        }
+        sysBrowserOpenLink.setChecked(App.i().getUser().isOpenLinkBySysBrowser());
 
         autoToggleTheme = findViewById(R.id.setting_auto_toggle_theme_sb);
-        autoToggleTheme.setChecked(WithPref.i().isAutoToggleTheme());
-
-//        clearLog = (Button)findViewById(R.id.setting_clear_log_button);
+        autoToggleTheme.setChecked(App.i().getUser().isAutoToggleTheme());
 
         TextView versionSummary = findViewById(R.id.setting_about_summary);
         PackageManager manager = this.getPackageManager();
@@ -216,91 +138,44 @@ public class SettingActivity extends BaseActivity {
 
 
         if (BuildConfig.DEBUG) {
-//            TextView handleSavedPages = findViewById(R.id.setting_handle_saved_pages);
-//            handleSavedPages.setVisibility(View.VISIBLE);
-
-            backup.setVisibility(View.VISIBLE);
-            restore.setVisibility(View.VISIBLE);
-            readConfig.setVisibility(View.VISIBLE);
+            lab.setVisibility(View.VISIBLE);
+            lab.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    Intent intent = new Intent(SettingActivity.this, LabActivity.class);
+                    startActivity(intent);
+                    overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
+                }
+            });
         }
     }
 
 
-//    private void getClearBeforeDayIndex(){
-////        CharSequence[] items = this.getResources().getTextArray(R.array.setting_clear_day_dialog_item_array);
-//        final int[] dayValueItems = this.getResources().getIntArray(R.array.setting_clear_day_dialog_item_array);
-//        int num = dayValueItems.length;
-//        for(int i=0; i< num; i++){
-//            if ( clearBeforeDay == dayValueItems[i] ){
-//                clearBeforeDayIndex = i;
-//            }
-//        }
-//        KLog.i( "读取默认的选项"+  clearBeforeDayIndex );
-//    }
-
-
-    public void onSBClick(View view){
-        SwitchButton v = (SwitchButton)view;
+    public void onSBClick(View view) {
+        SwitchButton v = (SwitchButton) view;
         KLog.i("点击");
+
+        User user = App.i().getUser();
         switch (v.getId()) {
             case R.id.setting_link_open_mode_sb:
-                WithPref.i().setSysBrowserOpenLink(v.isChecked());
+                user.setOpenLinkBySysBrowser(v.isChecked());
                 break;
             case R.id.setting_auto_toggle_theme_sb:
-                WithPref.i().setAutoToggleTheme(v.isChecked());
+                user.setAutoToggleTheme(v.isChecked());
                 break;
             case R.id.setting_down_img_sb:
-                WithPref.i().setDownImgWifi(v.isChecked());
+                user.setDownloadImgOnlyWifi(v.isChecked());
                 break;
-            case R.id.setting_proxy_sb:
-                WithPref.i().setInoreaderProxy(v.isChecked());
-                if (v.isChecked()) {
-                    showInoreaderProxyHostDialog();
-                } else {
-//                    App.i().readHost();
-                }
-                break;
-//            case R.id.setting_sync_all_starred_sb_flyme:
-//                WithPref.i().setSyncAllStarred(v.isChecked());
-//                syncAllStarred();
-//                break;
-//            case R.id.setting_order_tagfeed_sb_flyme:
-//                WithPref.i().setOrderTagFeed(v.isChecked());
-//                break;
-//            case R.id.setting_scroll_mark_sb_flyme:
-//                WithPref.i().setScrollMark(v.isChecked());
-//                break;
-//            case R.id.setting_left_right_slide_sb_flyme:
-//                WithPref.i().setLeftRightSlideArticle(v.isChecked());
-//                break;
             default:
                 break;
         }
-//        KLog.i("Switch: " , v.isChecked() );
-    }
-
-
-    private void showInoreaderProxyHostDialog() {
-        new MaterialDialog.Builder(this)
-                .title(R.string.setting_proxy_title)
-//                .content(R.string.setting_inoreader_proxy_dialog_title)
-                .inputType(InputType.TYPE_CLASS_TEXT)
-                .inputRange(8, 34)
-                .input(null, WithPref.i().getInoreaderProxyHost(), new MaterialDialog.InputCallback() {
-                    @Override
-                    public void onInput(MaterialDialog dialog, CharSequence input) {
-                        WithPref.i().setInoreaderProxyHost(input.toString());
-//                        App.i().readHost();
-                    }
-                })
-                .positiveText("保存")
-                .show();
+        CoreDB.i().userDao().update(user);
     }
 
 
     public void onClickAutoSyncFrequencySelect(View view) {
         final int[] minuteArray = this.getResources().getIntArray(R.array.setting_sync_frequency_minute);
-        int preSelectTimeFrequency = WithPref.i().getAutoSyncFrequency();
+        int preSelectTimeFrequency = App.i().getUser().getAutoSyncFrequency();
         int preSelectTimeFrequencyIndex = -1;
 
         int num = minuteArray.length;
@@ -308,7 +183,7 @@ public class SettingActivity extends BaseActivity {
         for (int i = 0; i < num; i++) {
             if (minuteArray[i] >= 60) {
                 timeDescItems[i] = getResources().getString(R.string.xx_hour, minuteArray[i] / 60 + "");
-            }else {
+            } else {
                 timeDescItems[i] = getResources().getString(R.string.xx_minute, minuteArray[i] + "");
             }
             if (preSelectTimeFrequency == minuteArray[i]) {
@@ -324,7 +199,11 @@ public class SettingActivity extends BaseActivity {
                 .itemsCallbackSingleChoice(preSelectTimeFrequencyIndex, new MaterialDialog.ListCallbackSingleChoice() {
                     @Override
                     public boolean onSelection(MaterialDialog dialog, View view, int which, CharSequence text) {
-                        WithPref.i().setAutoSyncFrequency(minuteArray[which]);
+                        User user = App.i().getUser();
+                        user.setAutoSyncFrequency(minuteArray[which]);
+                        //App.i().getUserBox().put(user);
+                        CoreDB.i().userDao().update(user);
+
                         KLog.i("选择了" + which);
                         autoSyncFrequencySummary.setText(timeDescArray[which]);
                         dialog.dismiss();
@@ -336,7 +215,7 @@ public class SettingActivity extends BaseActivity {
 
     public void showClearBeforeDay(View view) {
         final int[] dayValueArray = this.getResources().getIntArray(R.array.setting_clear_day_dialog_item_array);
-        int preSelectClearBeforeDay = WithPref.i().getClearBeforeDay();
+        int preSelectClearBeforeDay = App.i().getUser().getCachePeriod();
         int preSelectClearBeforeDayIndex = -1;
 
         int num = dayValueArray.length;
@@ -356,7 +235,11 @@ public class SettingActivity extends BaseActivity {
                 .itemsCallbackSingleChoice(preSelectClearBeforeDayIndex, new MaterialDialog.ListCallbackSingleChoice() {
                     @Override
                     public boolean onSelection(MaterialDialog dialog, View view, int which, CharSequence text) {
-                        WithPref.i().setClearBeforeDay(dayValueArray[which]);
+                        User user = App.i().getUser();
+                        user.setCachePeriod(dayValueArray[which]);
+//                        App.i().getUserBox().put(user);
+                        CoreDB.i().userDao().update(user);
+
                         clearBeforeDaySummary.setText(dayDescArray[which]);
                         KLog.i("选择了" + which);
                         dialog.dismiss();
@@ -396,86 +279,125 @@ public class SettingActivity extends BaseActivity {
      * @param view 对应的控件
      * @return 返回true表示呼起手Q成功，返回fals表示呼起失败
      ******************/
-    public boolean joinQQGroup(View view) {
+    public void joinQQGroup(View view) {
         Intent intent = new Intent();
         intent.setData(Uri.parse("mqqopensdkapi://bizAgent/qm/qr?url=http%3A%2F%2Fqm.qq.com%2Fcgi-bin%2Fqm%2Fqr%3Ffrom%3Dapp%26p%3Dandroid%26k%3D" + "XPc8IGwXCDTPXItxM33eog5QLpLFdDrf"));
-        // 此Flag可根据具体产品需要自定义，如设置，则在加群界面按返回，返回手Q主界面，不设置，按返回会返回到呼起产品界面    //intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        // 此Flag可根据具体产品需要自定义，如设置，则在加群界面按返回，返回手Q主界面，不设置，按返回会返回到呼起产品界面
+        // intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         try {
             startActivity(intent);
-            return true;
         } catch (Exception e) {
             // 未安装手Q或安装的版本不支持
-            return false;
+            ClipboardManager cm = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+            ClipData mClipData = ClipData.newPlainText("QQ", "106211435");
+            // 将ClipData内容放到系统剪贴板里。
+            assert cm != null;
+            cm.setPrimaryClip(mClipData);
+            ToastUtils.show(getString(R.string.copy_success));
         }
     }
 
+    public void addAccount() {
+        Intent intent = new Intent(this, ProviderActivity.class);
+        startActivity(intent);
+        finish();
+        overridePendingTransition(R.anim.fade_in, R.anim.out_from_bottom);
+    }
 
-    private MaterialDialog materialDialog;
-
-    public void onClickEsc(View view) {
+    public void escAccount() {
         new MaterialDialog.Builder(SettingActivity.this)
-                .content("确定要退出账号吗？\n退出后所有数据将被删除！")
-                .negativeText("取消")
+                .content(R.string.do_you_want_to_delete_data_of_this_account_after_logout)
+                .neutralText(R.string.cancel)
+                .negativeText(R.string.disagree)
                 .positiveText(R.string.agree)
                 .onPositive(new MaterialDialog.SingleButtonCallback() {
                     @Override
                     public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
+                        dialog.dismiss();
+                        App.i().getKeyValue().remove(Contract.UID);
                         App.i().clearApiData();
-                        Intent intent = new Intent(SettingActivity.this, LoginActivity.class).setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
+                        Intent intent = new Intent(SettingActivity.this, ProviderActivity.class)
+                                .setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
                         startActivity(intent);
                         SettingActivity.this.finish();
                         overridePendingTransition(R.anim.fade_in, R.anim.out_from_bottom);
                     }
                 })
+                .onNegative(new MaterialDialog.SingleButtonCallback() {
+                    @Override
+                    public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
+                        dialog.dismiss();
+                        App.i().getKeyValue().remove(Contract.UID);
+                        Intent intent = new Intent(SettingActivity.this, ProviderActivity.class)
+                                .setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
+                        startActivity(intent);
+                        SettingActivity.this.finish();
+                        overridePendingTransition(R.anim.fade_in, R.anim.out_from_bottom);
+                    }
+                })
+                .onNeutral(new MaterialDialog.SingleButtonCallback() {
+                    @Override
+                    public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
+                        dialog.dismiss();
+                    }
+                })
                 .show();
     }
 
-
-    public void onClickBackup(View view) {
-        materialDialog = new MaterialDialog.Builder(this)
-                .title("正在处理")
-                .content("请耐心等待下")
-                .progress(true, 0)
-                .canceledOnTouchOutside(false)
-                .progressIndeterminateStyle(false)
-                .show();
-        new Thread(new Runnable() {
+    public void onClickSwitchUser(View view) {
+        final List<User> users = CoreDB.i().userDao().loadAll();
+        KLog.i("点击切换账号：" + users );
+        // 弹窗的适配器
+        MaterialSimpleListAdapter adapter = new MaterialSimpleListAdapter(new MaterialSimpleListAdapter.Callback() {
             @Override
-            public void run() {
-                FileUtil.backup();
-                materialDialog.dismiss();
+            public void onMaterialListItemSelected(MaterialDialog dialog, int index, MaterialSimpleListItem item) {
+                dialog.dismiss();
+                int count = users.size();
+                if (index < count) {
+                    App.i().getKeyValue().putString(Contract.UID, users.get(index).getId());
+                    App.i().restartApp();
+                } else if (index == count) {
+                    addAccount();
+                } else if (index == count + 1) {
+                    escAccount();
+                }
             }
-        }).start();
-
-    }
-
-    public void onClickRestore(View view) {
-        materialDialog = new MaterialDialog.Builder(this)
-                .title("正在处理")
-                .content("请耐心等待下")
-                .progress(true, 0)
-                .canceledOnTouchOutside(false)
-                .progressIndeterminateStyle(false)
-                .show();
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                FileUtil.restore();
-                materialDialog.dismiss();
+        });
+        int iconRefs = R.drawable.ic_rename;
+        for (User user : users) {
+            switch (user.getSource()) {
+                case Contract.PROVIDER_FEEDLY:
+                    iconRefs = R.drawable.logo_feedly;
+                    break;
+                case Contract.PROVIDER_INOREADER:
+                    iconRefs = R.drawable.logo_inoreader;
+                    break;
+                case Contract.PROVIDER_TINYRSS:
+                    iconRefs = R.drawable.logo_tinytinyrss;
+                    break;
             }
-        }).start();
-    }
 
-    public void onClickReadConfig(View view) {
-        materialDialog = new MaterialDialog.Builder(this)
-                .content("正在读取")
-                .progress(true, 0)
-                .canceledOnTouchOutside(false)
-                .progressIndeterminateStyle(false)
+            adapter.add(new MaterialSimpleListItem.Builder(SettingActivity.this)
+                    .content( user.getUserName())
+                    .icon(iconRefs)
+                    .backgroundColor(Color.TRANSPARENT)
+                    .build());
+        }
+
+        adapter.add(new MaterialSimpleListItem.Builder(SettingActivity.this)
+                .content(R.string.add_account)
+                // .icon(R.drawable.ic_rename)
+                .backgroundColor(Color.TRANSPARENT)
+                .build());
+        adapter.add(new MaterialSimpleListItem.Builder(SettingActivity.this)
+                .content(R.string.esc_account)
+                //                .icon(R.drawable.ic_rename)
+                .backgroundColor(Color.TRANSPARENT)
+                .build());
+        new MaterialDialog.Builder(this)
+                .title(R.string.switch_account)
+                .adapter(adapter, new LinearLayoutManager(this))
                 .show();
-//        App.i().initFeedsConfig();
-        GlobalConfig.i().reInit();
-        materialDialog.dismiss();
     }
 
     private void initToolbar() {
@@ -493,5 +415,40 @@ public class SettingActivity extends BaseActivity {
         intent.setData(Uri.parse("https://support.qq.com/products/15424"));
         startActivity(intent);
         overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
+    }
+
+
+
+    @Override
+    protected Colorful.Builder buildColorful(Colorful.Builder mColorfulBuilder) {
+        mColorfulBuilder
+//                .backgroundDrawable(R.id.swipe_layout, R.attr.root_view_bg)
+                // 设置view的背景图片
+                .backgroundColor(R.id.setting_coordinator, R.attr.root_view_bg)
+                // 设置 toolbar
+                .backgroundColor(R.id.setting_toolbar, R.attr.topbar_bg)
+//                .textColor(R.id.setting_toolbar_count, R.attr.topbar_fg)
+                // 设置文章信息
+//                .textColor(R.id.setting_sync_first_open_title, R.attr.setting_title)
+//                .textColor(R.id.setting_sync_all_starred_title, R.attr.setting_title)
+//                .textColor(R.id.setting_sync_frequency_title, R.attr.setting_title)
+//                .textColor(R.id.setting_sync_frequency_summary, R.attr.setting_tips)
+                .textColor(R.id.setting_clear_day_title, R.attr.setting_title)
+                .textColor(R.id.setting_clear_day_summary, R.attr.setting_tips)
+                .textColor(R.id.setting_down_img_title, R.attr.setting_title)
+
+//                .textColor(R.id.setting_scroll_mark_title, R.attr.setting_title)
+//                .textColor(R.id.setting_scroll_mark_tips, R.attr.setting_tips)
+//                .textColor(R.id.setting_order_tagfeed_title, R.attr.setting_title)
+//                .textColor(R.id.setting_order_tagfeed_tips, R.attr.setting_tips)
+//                .textColor(R.id.setting_link_open_mode_tips, R.attr.setting_tips)
+//                .textColor(R.id.setting_cache_path_starred_title, R.attr.setting_title)
+//                .textColor(R.id.setting_cache_path_starred_summary, R.attr.setting_tips)
+                .textColor(R.id.setting_link_open_mode_title, R.attr.setting_title)
+                .textColor(R.id.setting_license_title, R.attr.setting_title)
+                .textColor(R.id.setting_license_summary, R.attr.setting_tips)
+                .textColor(R.id.setting_about_title, R.attr.setting_title)
+                .textColor(R.id.setting_about_summary, R.attr.setting_tips);
+        return mColorfulBuilder;
     }
 }

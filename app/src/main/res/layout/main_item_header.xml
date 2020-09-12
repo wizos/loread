@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main_header"
+    android:orientation="horizontal"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:gravity="center_vertical"
+    android:background="?attr/root_view_bg"
+    android:paddingStart="12dp"
+    android:paddingEnd="12dp"
+    tools:ShowIn="@layout/activity_main">
+
+    <TextView
+        android:id="@+id/main_header_title"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:paddingTop="10dp"
+        android:paddingBottom="10dp"
+        android:layout_weight="1"
+        android:gravity="center_vertical"
+        android:lines="1"
+        android:textSize="12sp"
+        android:textStyle="bold"
+        android:textColor="?attr/lv_item_desc_color"
+        tools:text="收藏220" />
+    <androidx.appcompat.widget.AppCompatImageView
+        android:id="@+id/main_header_eye"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:paddingTop="7dp"
+        android:paddingBottom="7dp"
+        android:paddingStart="10dp"
+        android:paddingEnd="10dp"
+        android:src="@drawable/ic_eye"/>
+</LinearLayout>

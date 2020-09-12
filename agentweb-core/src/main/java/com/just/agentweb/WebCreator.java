@@ -18,7 +18,6 @@ package com.just.agentweb;
 
 import android.webkit.WebView;
 import android.widget.FrameLayout;
-
 /**
  * @author cenxiaozhong
  * @since 1.0.0

@@ -28,6 +28,7 @@ enum Checker {
     }
 
     /**
+     * 以顺时针方向返回度数。值为0、90、180或270。
      * Returns the degrees in clockwise. Values are 0, 90, 180, or 270.
      */
     int getOrientation(InputStream is) {

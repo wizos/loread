@@ -16,5 +16,6 @@ public interface CompressionPredicate {
      * @param path input path
      * @return the boolean result
      */
-    boolean apply(String path);
+//    boolean apply(String path);
+    boolean apply(String path,InputStreamProvider inputStreamProvider);
 }

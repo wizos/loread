@@ -25,7 +25,7 @@ import android.util.Log;
  */
 public class LogUtils {
 
-    private static final String PREFIX = " agentweb - "; //
+    private static final String PREFIX = " agentweb - ";
 
     public static boolean isDebug() {
         return AgentWebConfig.DEBUG;
@@ -33,14 +33,14 @@ public class LogUtils {
 
     public static void i(String tag, String message) {
 
-        if (isDebug()) {
+        if (isDebug()){
             Log.i(PREFIX.concat(tag), message);
         }
     }
 
     public static void v(String tag, String message) {
 
-        if (isDebug()) {
+        if (isDebug()){
             Log.v(PREFIX.concat(tag), message);
         }
 
@@ -60,7 +60,7 @@ public class LogUtils {
 
     public static void e(String tag, String message) {
 
-        if (isDebug()) {
+        if (isDebug()){
             Log.e(PREFIX.concat(tag), message);
         }
     }

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<sync-adapter
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:accountType="me.wizos.loreadx"
+    android:allowParallelSyncs="false"
+    android:contentAuthority="project.test.com.myapplication.account.provide"
+    android:isAlwaysSyncable="true"
+    android:supportsUploading="false"
+    android:userVisible="true"/>
+
+<!--android:accountType表示的是您的Account的类型，一定要跟前面保持一致-->
+<!--android:allowParallelSyncs 是否支持多账号同时同步-->
+<!--android:contentAuthority 指定要同步的ContentProvider-->
+<!--android:isAlwaysSyncable 设置所有账号的isSyncable为1-->
+<!--android:supportsUploading 设置是否必须notifyChange通知才能同步-->
+<!--android:userVisible 设置是否在“设置”中显示-->

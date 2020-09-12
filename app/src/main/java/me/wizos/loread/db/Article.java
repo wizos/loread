@@ -1,123 +1,64 @@
 package me.wizos.loread.db;
 
-import org.greenrobot.greendao.annotation.Entity;
-import org.greenrobot.greendao.annotation.Generated;
-import org.greenrobot.greendao.annotation.Id;
-import org.greenrobot.greendao.annotation.Index;
-import org.greenrobot.greendao.annotation.NotNull;
 
-import me.wizos.loread.net.Api;
+import androidx.annotation.NonNull;
+import androidx.room.Entity;
+import androidx.room.ForeignKey;
+import androidx.room.Index;
 
-@Entity
-public class Article {
+import org.jetbrains.annotations.NotNull;
 
-    @Id
-    @NotNull
-    @Index
+import me.wizos.loread.App;
+
+/**
+ * //    private Integer preference = 0; // 偏好（点击）：0是初始状态，1是不喜欢，2是喜欢
+ * //    private Integer predict = 0; //推断结果： 0是初始状态，1是不喜欢，2是喜欢
+ * Created by Wizos on 2020/3/17.
+ */
+@Entity(primaryKeys = {"id","uid"},
+        indices = { @Index({"id"}),@Index({"uid"}),@Index({"title"}),@Index({"feedId","uid"}),@Index({"readStatus"}),@Index({"starStatus"}),@Index({"saveStatus"})},
+        foreignKeys = @ForeignKey(entity = User.class, parentColumns = "id", childColumns = "uid")
+        )
+public class Article implements Cloneable{
+    @NonNull
     private String id;
-    // crawlTimeMsec和timetampusec是相同的日期，第一个是毫秒，第二个是微秒
-    @Index
-    private Long crawlTimeMsec;
-    @Index
-    private Long timestampUsec;
-    private String categories;
-    @Index
+    @NonNull
+    private String uid;
     private String title;
-    @Index
-    private Long published;
-    @Index
-    private Long updated;
-    private Long starred;
-    private String enclosure;
-    private String canonical;
-    private String alternate;
-    private String summary;
     private String content;
+    private String summary;
+    private String image;
+    private String enclosure; // 包含图片，视频等多媒体信息
+
+    private String feedId;
+    private String feedTitle;
     private String author;
-    @Index
-    @NotNull
-    private Integer readStatus = Api.UNREAD;
-    @Index
-    @NotNull
-    private Integer starStatus = Api.UNSTAR;
-    private String readState;
-    private String starState;
-    private String saveDir;
-    private String imgState;
-    private String coverSrc;
-    @Index
-    private String originStreamId;
-    private String originTitle;
-    private String originHtmlUrl;
+    private String link = "";
+    private long pubDate;
+    private long crawlDate;
+    private int readStatus = App.STATUS_UNREAD;
+    private int starStatus = App.STATUS_UNSTAR;
+    private int saveStatus = App.STATUS_NOT_FILED;
+    private long readUpdated;
+    private long starUpdated;
 
 
-    @Generated(hash = 260683293)
-    public Article(@NotNull String id, Long crawlTimeMsec, Long timestampUsec, String categories,
-                   String title, Long published, Long updated, Long starred, String enclosure,
-                   String canonical, String alternate, String summary, String content, String author,
-                   @NotNull Integer readStatus, @NotNull Integer starStatus, String readState,
-                   String starState, String saveDir, String imgState, String coverSrc, String originStreamId,
-                   String originTitle, String originHtmlUrl) {
-        this.id = id;
-        this.crawlTimeMsec = crawlTimeMsec;
-        this.timestampUsec = timestampUsec;
-        this.categories = categories;
-        this.title = title;
-        this.published = published;
-        this.updated = updated;
-        this.starred = starred;
-        this.enclosure = enclosure;
-        this.canonical = canonical;
-        this.alternate = alternate;
-        this.summary = summary;
-        this.content = content;
-        this.author = author;
-        this.readStatus = readStatus;
-        this.starStatus = starStatus;
-        this.readState = readState;
-        this.starState = starState;
-        this.saveDir = saveDir;
-        this.imgState = imgState;
-        this.coverSrc = coverSrc;
-        this.originStreamId = originStreamId;
-        this.originTitle = originTitle;
-        this.originHtmlUrl = originHtmlUrl;
+    @NotNull
+    public String getUid() {
+        return uid;
     }
 
-    @Generated(hash = 742516792)
-    public Article() {
+    public void setUid(String uid) {
+        this.uid = uid;
     }
 
+    @NotNull
     public String getId() {
         return this.id;
     }
 
     public void setId(String id) {
         this.id = id;
-    }
-
-    public Long getCrawlTimeMsec() {
-        return this.crawlTimeMsec;
-    }
-
-    public void setCrawlTimeMsec(Long crawlTimeMsec) {
-        this.crawlTimeMsec = crawlTimeMsec;
-    }
-
-    public Long getTimestampUsec() {
-        return this.timestampUsec;
-    }
-
-    public void setTimestampUsec(Long timestampUsec) {
-        this.timestampUsec = timestampUsec;
-    }
-
-    public String getCategories() {
-        return this.categories;
-    }
-
-    public void setCategories(String categories) {
-        this.categories = categories;
     }
 
     public String getTitle() {
@@ -128,52 +69,12 @@ public class Article {
         this.title = title;
     }
 
-    public Long getPublished() {
-        return this.published;
+    public String getContent() {
+        return this.content;
     }
 
-    public void setPublished(Long published) {
-        this.published = published;
-    }
-
-    public Long getUpdated() {
-        return this.updated;
-    }
-
-    public void setUpdated(Long updated) {
-        this.updated = updated;
-    }
-
-    public Long getStarred() {
-        return this.starred;
-    }
-
-    public void setStarred(Long starred) {
-        this.starred = starred;
-    }
-
-    public String getEnclosure() {
-        return this.enclosure;
-    }
-
-    public void setEnclosure(String enclosure) {
-        this.enclosure = enclosure;
-    }
-
-    public String getCanonical() {
-        return this.canonical;
-    }
-
-    public void setCanonical(String canonical) {
-        this.canonical = canonical;
-    }
-
-    public String getAlternate() {
-        return this.alternate;
-    }
-
-    public void setAlternate(String alternate) {
-        this.alternate = alternate;
+    public void setContent(String content) {
+        this.content = content;
     }
 
     public String getSummary() {
@@ -184,12 +85,36 @@ public class Article {
         this.summary = summary;
     }
 
-    public String getContent() {
-        return this.content;
+    public String getImage() {
+        return this.image;
     }
 
-    public void setContent(String content) {
-        this.content = content;
+    public void setImage(String image) {
+        this.image = image;
+    }
+
+    public String getEnclosure() {
+        return this.enclosure;
+    }
+
+    public void setEnclosure(String enclosure) {
+        this.enclosure = enclosure;
+    }
+
+    public String getFeedId() {
+        return this.feedId;
+    }
+
+    public void setFeedId(String feedId) {
+        this.feedId = feedId;
+    }
+
+    public String getFeedTitle() {
+        return this.feedTitle;
+    }
+
+    public void setFeedTitle(String feedTitle) {
+        this.feedTitle = feedTitle;
     }
 
     public String getAuthor() {
@@ -200,83 +125,100 @@ public class Article {
         this.author = author;
     }
 
-    public String getReadState() {
-        return this.readState;
+    public String getLink() {
+        return this.link;
     }
 
-    public void setReadState(String readState) {
-        this.readState = readState;
+    public void setLink(String link) {
+        this.link = link;
     }
 
-    public String getStarState() {
-        return this.starState;
+    public long getPubDate() {
+        return this.pubDate;
     }
 
-    public void setStarState(String starState) {
-        this.starState = starState;
+    public void setPubDate(long pubDate) {
+        this.pubDate = pubDate;
     }
 
-    public String getSaveDir() {
-        return this.saveDir;
+    public long getCrawlDate() {
+        return this.crawlDate;
     }
 
-    public void setSaveDir(String saveDir) {
-        this.saveDir = saveDir;
+    public void setCrawlDate(long crawlDate) {
+        this.crawlDate = crawlDate;
     }
 
-    public String getImgState() {
-        return this.imgState;
-    }
-
-    public void setImgState(String imgState) {
-        this.imgState = imgState;
-    }
-
-    public String getCoverSrc() {
-        return this.coverSrc;
-    }
-
-    public void setCoverSrc(String coverSrc) {
-        this.coverSrc = coverSrc;
-    }
-
-    public String getOriginStreamId() {
-        return this.originStreamId;
-    }
-
-    public void setOriginStreamId(String originStreamId) {
-        this.originStreamId = originStreamId;
-    }
-
-    public String getOriginTitle() {
-        return this.originTitle;
-    }
-
-    public void setOriginTitle(String originTitle) {
-        this.originTitle = originTitle;
-    }
-
-    public String getOriginHtmlUrl() {
-        return this.originHtmlUrl;
-    }
-
-    public void setOriginHtmlUrl(String originHtmlUrl) {
-        this.originHtmlUrl = originHtmlUrl;
-    }
-
-    public Integer getReadStatus() {
+    public int getReadStatus() {
         return this.readStatus;
     }
 
-    public Integer getStarStatus() {
-        return this.starStatus;
-    }
-
-    public void setReadStatus(Integer readStatus) {
+    public void setReadStatus(int readStatus) {
         this.readStatus = readStatus;
     }
 
-    public void setStarStatus(Integer starStatus) {
+    public int getStarStatus() {
+        return this.starStatus;
+    }
+
+    public void setStarStatus(int starStatus) {
         this.starStatus = starStatus;
+    }
+
+    public int getSaveStatus() {
+        return this.saveStatus;
+    }
+
+    public void setSaveStatus(int saveStatus) {
+        this.saveStatus = saveStatus;
+    }
+
+    public long getReadUpdated() {
+        return readUpdated;
+    }
+
+    public void setReadUpdated(long readUpdated) {
+        this.readUpdated = readUpdated;
+    }
+
+    public long getStarUpdated() {
+        return starUpdated;
+    }
+
+    public void setStarUpdated(long starUpdated) {
+        this.starUpdated = starUpdated;
+    }
+
+    @Override
+    public Object clone(){
+        try{
+            return super.clone();   //浅复制
+        }catch(CloneNotSupportedException e) {
+            e.printStackTrace();
+        }
+        return this;
+    }
+    @Override
+    public String toString() {
+        return "Article{" +
+                "id='" + id + '\'' +
+                ", uid='" + uid + '\'' +
+                ", title='" + title + '\'' +
+                ", summary='" + summary + '\'' +
+                ", image='" + image + '\'' +
+                ", enclosure='" + enclosure + '\'' +
+                ", feedId='" + feedId + '\'' +
+                ", feedTitle='" + feedTitle + '\'' +
+                ", author='" + author + '\'' +
+                ", link='" + link + '\'' +
+                ", pubDate=" + pubDate +
+                ", crawlDate=" + crawlDate +
+                ", readStatus=" + readStatus +
+                ", starStatus=" + starStatus +
+                ", saveStatus=" + saveStatus +
+                ", readUpdated=" + readUpdated +
+                ", starUpdated=" + starUpdated +
+                ", content='" + content +
+                '}';
     }
 }

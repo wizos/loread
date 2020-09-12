@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/provider_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:fitsSystemWindows="true"
+    android:addStatesFromChildren="true"
+    android:windowDrawsSystemBarBackgrounds="true"
+    tools:context=".activity.ProviderActivity">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:orientation="vertical"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <TextView
+            android:id="@+id/provider_rss_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="30dp"
+            android:gravity="center"
+            android:text="@string/everything_is_rssible"
+            android:textStyle="bold"
+            android:textSize="20sp" />
+
+        <TextView
+            android:id="@+id/provider_rss_summary"
+            android:layout_width="match_parent"
+            android:layout_height="242dp"
+            android:layout_margin="20dp"
+            android:textSize="16sp"
+            android:text="@string/rss_summary" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="230dp"
+        android:layout_height="wrap_content"
+        android:padding="10dp"
+        android:layout_gravity="center"
+        android:orientation="vertical">
+        <LinearLayout
+            android:onClick="oauthInoReader"
+            android:layout_margin="10dp"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+            <ImageView
+                android:id="@+id/provider_inoreader_logo"
+                android:src="@drawable/logo_inoreader"
+                android:layout_marginEnd="5dp"
+                android:layout_width="40dp"
+                android:layout_height="40dp" />
+            <Button
+                android:id="@+id/provider_inoreader_title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:clickable="false"
+                android:textAllCaps="false"
+                android:text="@string/inoreader_oauth"/>
+        </LinearLayout>
+
+        <LinearLayout
+            android:onClick="oauthInoReader"
+            android:layout_margin="10dp"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+            <ImageView
+                android:id="@+id/provider_inoreader_login_logo"
+                android:src="@drawable/logo_inoreader"
+                android:layout_marginEnd="5dp"
+                android:layout_width="40dp"
+                android:layout_height="40dp" />
+            <Button
+                android:id="@+id/provider_inoreader_login_title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:clickable="false"
+                android:textAllCaps="false"
+                android:text="@string/inoreader_login"/>
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/provider_feedly"
+            android:onClick="oauthFeedly"
+            android:layout_margin="10dp"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+            <ImageView
+                android:id="@+id/provider_feedly_logo"
+                android:src="@drawable/logo_feedly"
+                android:layout_marginEnd="5dp"
+                android:layout_width="40dp"
+                android:layout_height="40dp" />
+            <Button
+                android:id="@+id/provider_feedly_title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:clickable="false"
+                android:textAllCaps="false"
+                android:text="@string/feedly"/>
+        </LinearLayout>
+
+        <LinearLayout
+            android:onClick="loginTinyRSS"
+            android:layout_margin="10dp"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+            <ImageView
+                android:id="@+id/provider_ttrss_logo"
+                android:src="@drawable/logo_tinytinyrss"
+                android:layout_marginEnd="5dp"
+                android:layout_width="40dp"
+                android:layout_height="40dp" />
+            <Button
+                android:id="@+id/provider_ttrss_title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:clickable="false"
+                android:textAllCaps="false"
+                android:text="@string/tinytinyrss"/>
+        </LinearLayout>
+
+<!--        <RelativeLayout-->
+<!--            android:layout_margin="10dp"-->
+<!--            android:layout_width="match_parent"-->
+<!--            android:layout_height="wrap_content">-->
+<!--            <ImageView-->
+<!--                android:layout_alignParentStart="true"-->
+<!--                android:id="@+id/provider_localrss_logo"-->
+<!--                android:layout_width="40dp"-->
+<!--                android:layout_height="40dp" />-->
+<!--            <TextView-->
+<!--                android:layout_toEndOf="@id/provider_localrss_logo"-->
+<!--                android:id="@+id/provider_localrss_title"-->
+<!--                android:layout_width="match_parent"-->
+<!--                android:layout_height="wrap_content"-->
+<!--                android:maxLines="2"-->
+<!--                android:ellipsize="end"-->
+<!--                android:fontFamily="sans-serif"-->
+<!--                android:textSize="15sp"-->
+<!--                android:text="本地RSS"/>-->
+<!--            <TextView-->
+<!--                android:layout_below="@id/provider_localrss_title"-->
+<!--                android:id="@+id/provider_local-rss_summary"-->
+<!--                android:layout_toEndOf="@id/provider_localrss_logo"-->
+<!--                android:layout_marginTop="4dp"-->
+<!--                android:layout_width="wrap_content"-->
+<!--                android:layout_height="wrap_content"-->
+<!--                android:maxLines="2"-->
+<!--                android:ellipsize="end"-->
+<!--                android:fontFamily="sans-serif"-->
+<!--                android:textSize="13sp"-->
+<!--                android:text="在本地搭建RSS服务器，耗费流量较多"/>-->
+<!--        </RelativeLayout>-->
+
+    </LinearLayout>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_marginTop="20dp"
+        android:layout_marginBottom="20dp"
+        android:alpha="0.6"
+        android:text="@string/developed_by_wizos" />
+
+</LinearLayout>

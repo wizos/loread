@@ -14,4 +14,13 @@ public class RGB {
         this.g = g;
         this.b = b;
     }
+
+    @Override
+    public String toString() {
+        return "RGB{" +
+                "r=" + r +
+                ", g=" + g +
+                ", b=" + b +
+                '}';
+    }
 }

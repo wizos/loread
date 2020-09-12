@@ -5,12 +5,15 @@ import android.animation.AnimatorListenerAdapter;
 import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.animation.DecelerateInterpolator;
 import android.widget.ProgressBar;
 
+import com.socks.library.KLog;
+
 /**
  * @author 林冠宏 on 2016/7/11. Wizos on 2018/3/18
- *         https://github.com/af913337456/SlowlyProgressBar
+ * https://github.com/af913337456/SlowlyProgressBar
  */
 
 public class SlowlyProgressBar {
@@ -19,6 +22,20 @@ public class SlowlyProgressBar {
 
     public SlowlyProgressBar(ProgressBar progressBar) {
         this.progressBar = progressBar;
+    }
+
+    public void destroy() {
+        try {
+            // removeAllViewsInLayout(); 相比而言, removeAllViews() 也调用了removeAllViewsInLayout(), 但是后面还调用了requestLayout(),这个方法是当View的布局发生改变会调用它来更新当前视图, 移除子View会更加彻底. 所以除非必要, 还是推荐使用removeAllViews()这个方法.
+            ViewGroup parent = (ViewGroup) progressBar.getParent();
+            if (parent != null) {
+                parent.removeView(progressBar);
+            }
+            progressBar = null;
+        } catch (Exception e) {
+            KLog.e("报错");
+            e.printStackTrace();
+        }
     }
 
     /**

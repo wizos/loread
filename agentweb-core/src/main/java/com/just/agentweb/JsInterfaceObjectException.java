@@ -23,7 +23,7 @@ package com.just.agentweb;
  * @since 1.0.0
  */
 public class JsInterfaceObjectException extends RuntimeException {
-    JsInterfaceObjectException(String msg) {
+    JsInterfaceObjectException(String msg){
         super(msg);
     }
 }

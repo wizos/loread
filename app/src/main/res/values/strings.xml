@@ -1,163 +1,275 @@
 <resources>
-    <string name="app_name">知微</string>
-    <string name="action_settings">设置</string>
-    <string name="main_activity_title_all">所有</string>
-    <string name="main_activity_title_untag">未分类</string>
-    <!--<string name="main_activity_title_unread">未读文章</string>-->
-    <!--<string name="main_activity_title_star">已收藏文章</string>-->
-    <!--<string name="title_activity_article">文章</string>-->
-    <string name="splash_activity_slogen">走近世界</string>
-    <string name="title_activity_login">登录</string>
-    <string name="title_activity_tag">分组</string>
-    <string name="setting_activity_title">设置</string>
-    <string-array name="markArticleListItem">
-        <item>向上标记为已读</item>
-        <item>向下标记为已读</item>
-        <item>保持未读</item>
-    </string-array>
+    <string name="app_id">loread</string>
+    <string name="app_name">Loread</string>
+    <string name="settings">Settings</string>
+    <string name="category">Category</string>
+    <string name="un_category">UnCategory</string>
+    <string name="tag">Tag</string>
+    <string name="edit_category">Edit Category</string>
+    <string name="select_category">Select Category</string>
+    <string name="approaching_the_world">Approaching the World</string>
+
+    <string name="select_tag">Select tag</string>
+
+    <string name="custom">Custom</string>
+
+    <string name="select_user_agent">Select UserAgent</string>
+    <string name="custom_user_agent">Custom UserAgent</string>
+    <string name="enter_user_agent">Enter UserAgent</string>
+    <string name="remove_custom_user_agent">Remove custom UserAgent</string>
+    <string name="select_display_mode">Select the default display mode for articles</string>
+
+    <string name="theme_switched_automatically">Themes have been switched automatically</string>
+    <string name="feed_url_display">Feed URL: %s</string>
+    <string name="site_url_display">Site URL: %s</string>
+    <string name="site_remark">Site Remark</string>
+    <string name="remark">Remark</string>
+    <string name="save_directory">Directory of articles saved</string>
+    <string name="default_directory">Default directory</string>
+    <string name="root_directory">Root_directory</string>
+    <string name="edit_directory">Edit directory</string>
+    <string name="new_directory">New directory</string>
+    <string name="feed_title_as_directory">Title of the feed as directory</string>
+    <string name="category_title_as_directory">Title of the categories as directory</string>
+    <string name="custom_save_directory">Custom save directory</string>
+    <string name="saved_to_root_directory">Saved to root directory</string>
+    <string name="saved_to_directory">Saved to "%1$s" directory</string>
+
+    <string name="star_marked">Star marked</string>
+    <string name="star_marked_to_favorites">Star marked to "%1$s" favorites</string>
+
+    <string name="new_favorites">New favorites</string>
+    <string name="add_to_favorites">Add to favorites</string>
+    <string name="edit_favorites">Edit favorites</string>
+
+    <string name="etc">, etc</string>
+
+
+    <string name="default_x">Default</string>
+    <string name="music">Music</string>
+    <string name="speak">Speak</string>
+    <string name="auth_username">Username</string>
+    <string name="auth_password">Password</string>
+    <string name="login">Login</string>
+    <string name="please_input_account_id">Please enter account id</string>
+    <string name="please_input_account_pw">Please enter account password</string>
+    <string name="no_account_register_now">No account?  Register now!</string>
+    <string name="do_you_want_to_download_files">Do you want to download the file?</string>
+
+    <string name="plz_grant_permission_tips">Please grant permission, otherwise the APP may not work properly!</string>
+    <string name="authing">Authorizing</string>
+    <string name="fetch_user_info">Getting Basic Information</string>
+    <string name="auth_failure_please_try_again">Authorization failed, please try again.</string>
+    <string name="login_please_wait">Signing in</string>
+    <string name="login_failed_reason">Login failed, reason: %1$s</string>
+    <string name="login_failure_please_try_again">Login failed, please try again</string>
+    <string name="login_failure_please_check_account">Login failed, please check account and password</string>
+    <string name="temporarily_not_supported">Temporarily not supported</string>
 
     <!-- Strings related to Settings -->
-    <string name="main_toolbar_hint_sync">同步%1$s</string>
-    <string name="main_toolbar_title_search">搜索：</string>
+    <string name="main_toolbar_title_search">Search: </string>
 
-    <string name="search_result_summary">简介：%1$s | 订阅网址：%2$s</string>
-    <string name="search_result_subs">%1$d 人订阅 | 周更新 %2$s 篇</string>
-    <string name="search_result_last_update_time">上次更新 %1$s</string>
+
+    <plurals name="search_result_followers">
+        <item quantity="one">%1$d follower</item>
+        <item quantity="other">%1$d followers</item>
+    </plurals>
+
+    <string name="search_result_articles"> | Update %1$f articles per week</string>
+
+    <string name="search_result_summary">Intro: %1$s | Feed URL: %2$s</string>
+    <string name="search_result_subs">%1$d followers | Update %2$s articles per week</string>
+    <string name="search_result_last_update_time">Last update %1$s</string>
+
+    <string name="do_you_want_to_jump_the_application">Do you want to jump to "%1$s" application?</string>
+    <string name="corresponding">Corresponding</string>
+    <string name="unable_to_find_app">No corresponding application found</string>
+
 
     <!--下面这个还没有用到-->
-    <string name="main_toolbar_hint_clear_article">1 - 清除 %1$s 天之前的文章</string>
-    <string name="main_toolbar_hint_sync_article_content">1 - 同步文章内容[%1$d / %2$d]</string>
-    <string name="main_toolbar_hint_sync_stared_refs">2 - 同步收藏信息</string>
-    <string name="main_toolbar_hint_sync_unread_refs">3 - 同步未读信息</string>
-    <string name="main_toolbar_hint_sync_unread_count">4 - 获取未读数目</string>
-    <string name="main_toolbar_hint_sync_tag_order">5 - 同步排序信息</string>
-    <string name="main_toolbar_hint_sync_tag">6 - 同步订阅源信息</string>
-    <string name="main_toolbar_hint_sync_log">7 - 同步离线操作信息</string>
-    <string name="main_toolbar_hint_sync_all_stared_content">同步所有加星文章[%1$d]</string>
+    <string name="sync_article_content">1. Sync article content [%1$d / %2$d]</string>
+    <string name="sync_article_refs">2. Sync Article Info</string>
+    <string name="sync_feed_info">3. Sync feed info</string>
 
-    <string name="de_fault">默认</string>
-    <string name="custom">自定义</string>
-    <string name="agree">同意</string>
-    <string name="confirm">确认</string>
-    <string name="disagree">取消</string>
-    <string name="main_dialog_esc_positive">好滴 ^_^</string>
-    <string name="main_dialog_esc_negative">不！</string>
-    <string name="more_info">更多</string>
+    <string name="fetch_article_full_content">Fetch article full content</string>
 
-    <string name="main_dialog_confirm_mark_article_list">确定要将以下文章标记为已读？</string>
-    <string name="main_dialog_esc_confirm">确定退出app？</string>
-    <string name="setting_about_dialog_title">感慨</string>
+    <plurals name="articles_count">
+        <item quantity="one">%1$s article</item>
+        <item quantity="other">%1$s articles</item>
+    </plurals>
+
+    <plurals name="has_new_articles">
+        <item quantity="one">Has %1$s new article</item>
+        <item quantity="other">Has %1$s new articles</item>
+    </plurals>
+
+    <string name="share">Share</string>
+    <string name="share_to">Share to</string>
+    <string name="warning">Warning</string>
+    <string name="agree">Agree</string>
+    <string name="disagree">Disagree</string>
+    <string name="confirm">Confirm</string>
+    <string name="cancel">Cancel</string>
+    <string name="ua_sign">UA</string>
+
+    <string name="edit_success">Edit successful</string>
+    <string name="edit_fail">Edit fail</string>
+    <string name="editing">Editing</string>
+
+    <string name="mask_success">Mask successful</string>
+    <string name="mask_fail">Mask fail</string>
+
+    <string name="main_dialog_esc_positive">YES ^_^</string>
+    <string name="main_dialog_esc_negative">NO ！</string>
+
+    <string name="are_you_sure_that_unsubscribe_this_feed_link">Are you sure you want to unsubscribe from this site?</string>
+    <string name="main_dialog_confirm_mark_article_list">Are you sure you want to mark the following articles as read?</string>
+    <string name="main_dialog_esc_confirm">Are you sure you want to exit the app?</string>
+    <string name="setting_about_dialog_title">Sigh with emotion</string>
     <string name="setting_about_dialog_content">路很长，纵然远望，却不知方向。\n抽支烟，思绪无常，奔跑着彷徨。\n逃不脱的苟且，到不了的远方…\n作于2016.10.07</string>
 
 
-    <string name="auth_username">用户名</string>
-    <string name="auth_password">密码</string>
-    <string name="auth_log_in">登录</string>
-    <string name="auth_register">没有账户？现在注册</string>
-
-
-    <string name="article_choose_tag_dialog_title">选择标签</string>
+    <string name="article_choose_tag_dialog_title">Select label</string>
 
 
     <!--数据同步-->
-    <string name="setting_auto_sync_title">自动同步</string>
-    <string name="setting_auto_sync_on_wifi_title">仅在Wifi模式下自动同步</string>
-    <string name="setting_sync_frequency_title">同步的时间间隔</string>
+    <string name="sync">Sync</string>
+    <string name="setting_auto_sync_title">Auto sync</string>
+    <string name="setting_auto_sync_on_wifi_title">Auto sync in Wifi mode</string>
+    <string name="setting_sync_frequency_title">Time interval for sync</string>
 
-    <string name="setting_sync_first_open_title">首次开启同步</string>
-    <string name="setting_sync_first_open_tips">打开应用就开始同步</string>
-    <string name="setting_sync_all_starred_title">同步所有加星文章</string>
-    <string name="setting_sync_all_starred_tips">开启后可同步所有加星的文章</string>
-    <string name="setting_order_tagfeed_title">是否同步分组与源的排序？</string>
-    <string name="setting_order_tagfeed_tips">开启后费流量，费时间，还没多大用</string>
-    <string name="setting_down_img_title">省流量下载图片</string>
-    <string name="setting_down_img_tips">只在 WiFi 时下载图片</string>
-    <string name="setting_proxy_title">代理</string>
-
-    <!--<string name="setting_inoreader_proxy_dialog_title">设置代理地址</string>-->
-
+    <string name="setting_down_img_title">Save traffic to download pictures</string>
+    <string name="proxy">Proxy</string>
+    <!--<struserNamename="setting_inoreader_proxy_dialog_title">设置代理地址</string>-->
 
     <!--界面显示-->
-    <string name="setting_day_theme_title">白天主题</string>
-    <string name="setting_night_theme_title">夜间主题</string>
-    <string name="setting_auto_toggle_theme_title">自动切换夜间主题</string>
-    <string name="setting_night_time_interval_title">夜间时间区间</string>
-    <string name="setting_type_title">排版</string>
-    <string name="setting_language_title">语言</string>
+    <string name="setting_auto_toggle_theme_title">Auto switch night theme</string>
 
-    <!--<string name="setting_auto_toggle_theme_tips">早上7点至晚20点开启白天主题</string>-->
-
-
+    <string name="other">Other</string>
     <!--操作-->
-    <string name="setting_link_open_mode_title">使用系统浏览器打开链接</string>
-    <!--<string name="setting_link_open_mode_tips">测试功能</string>-->
-    <!--<string name="setting_scroll_mark_tips">开启后，滚出屏幕的文章自动被标记为未读</string>-->
-    <!--<string name="setting_left_right_slide_title">文章页左右切换</string>-->
-    <!--<string name="setting_left_right_slide_tips">开启后，在文章页左右滑动可直接切换文章</string>-->
-    <!--<string name="setting_scroll_mark_title">滚动时自动标记为已读</string>-->
-
+    <string name="open_link_by_system_browser">Open link by system browser</string>
     <!--缓存-->
-    <string name="setting_clear_day_title">已读文章保留期限</string>
-    <!--<string name="setting_clear_day_dialog_title">选择保留最近多少天的文章呢？</string>-->
-    <string name="setting_clear_cache_title">清理缓存</string>
+    <string name="setting_clear_day_title">Retention period of read articles</string>
+    <!--<struserNamename="setting_clear_day_dialog_title">选择保留最近多少天的文章呢？</string>-->
+    <string name="clear_article">Clean up articles</string>
+    <string name="handle_crawldate">Handle crawldate</string>
 
     <!--备份-->
-    <string name="setting_backup_now_title">立即备份</string>
-    <string name="setting_restore_backup_title">恢复备份</string>
-    <string name="setting_handle_saved_pages_title">整理已保存的文章</string>
+    <string name="backup_now">Back up now</string>
+    <string name="restore_backup">Restore backup</string>
+    <string name="handle_saved_articles">Organize saved articles</string>
 
-    <string name="is_update_title">正在升级</string>
-
+    <string name="loading">Loading</string>
+    <string name="upgrading">Upgrading</string>
+    <string name="upgrading_please_wait_a_moment">Upgrading, please wait a moment</string>
+    <string name="https_scheme">https://</string>
+    <string name="inoreader_url">https://inoreader.com</string>
     <!--关于-->
-    <string name="setting_about_title">关于</string>
-    <string name="setting_license_title">许可</string>
-    <string name="setting_feedback_title">反馈问题</string>
-    <string name="setting_qq_group_title">Q群</string>
-    <string name="setting_qq_group_summary">106211435</string>
-    <string name="setting_esc_title">退出</string>
+    <string name="about">About</string>
+    <string name="license">License</string>
+    <string name="feedback">Feedback</string>
+    <string name="qq_group">QQ group</string>
+    <string name="qq_group_number">106211435</string>
+    <string name="esc">Quit</string>
+
+    <string name="add_account">Add account</string>
+    <string name="esc_account">Logout</string>
+    <string name="switch_account">Switch account</string>
+
+    <string name="article_info">Information of the article</string>
+
+    <string name="config_the_feed">Config this feed</string>
+    <string name="theme_setting">Theme settings</string>
+
+    <string name="tips_no_net">Network is\'t connected, please check it</string>
+    <string name="bag_network">Network is not good, please try again</string>
+    <string name="fail_try">Failed, please try again</string>
+
+    <!--<string name="tag_choose_tips">想看哪个分类？</string>-->
+
+    <string name="xx_minute">%1$s minutes</string>
+    <string name="xx_hour">%1$s hours</string>
+    <string name="clear_day_summary">%1$s days</string>
+
+    <string name="save_img">Save picture</string>
+    <string name="share_img">Share picture</string>
+    <string name="rename">Rename</string>
+
+    <string name="mark_up">Mark Read Up</string>
+    <string name="mark_down">Mark Read Down</string>
+    <string name="mark_unread">Mark unread</string>
+    <string name="speak_article">Speak article</string>
 
 
-    <!--<string name="setting_clear_log_title">清除错误记录</string>-->
-    <!--<string name="setting_clear_error_cache">删除错误遗留的文章</string>-->
-    <!--<string name="setting_update_article_tag_title">更新离线文章的分组信息</string>-->
-    <!--<string name="setting_sync_all_starred_article_button">加载</string>-->
-    <!--<string name="setting_cache_path_starred_title">加星文章保存位置</string>-->
+    <string name="save_readability_content">Save Readability content?</string>
+    <string name="get_readability_ing">Getting</string>
+    <string name="get_readability_success">Get Successful</string>
+    <string name="get_readability_failure">Get failed</string>
+    <string name="cancel_readability">The full text obtained has been cancelled</string>
+
+    <string name="music_time">0:00</string>
+    <string name="music_speed">1.0</string>
+
+    <string name="edit_name">Edit name</string>
+    <string name="search">Search</string>
+    <string name="search_key">Input key words</string>
+
+    <string name="search_cloudy_feeds_result_count">%1$d feeds found</string>
+    <string name="search_header_search_cloudy_feeds">Search feeds</string>
+    <string name="search_header_search_local_articles">Search articles on my phone</string>
+
+    <string name="share_link">Copy link</string>
+    <string name="copy_link">Share link</string>
+    <string name="open_mode">Open mode</string>
+    <string name="copy_success">Copy succeeded</string>
+
+    <string name="please_input_keyword">please enter keyword</string>
+
+    <string name="subscribe">Subscribe</string>
+    <string name="subscribe_success">Subscription succeeded, please sync manually</string>
+    <string name="subscribe_fail">Subscription failed, please try again</string>
+    <string name="unsubscribe_succeeded">Unsubscribe succeeded</string>
+    <string name="unsubscribe_failed">Unsubscribe failed: %1$s</string>
+    <string name="rename_failed">Rename failed, please try again</string>
+
+    <string name="no_title">Untitled</string>
+    <string name="no_thing">No</string>
+
+    <string name="more_setting">More settings</string>
+    <string name="auto_mark_when_scrolling">Mark as read when scrolling</string>
+    <string name="down_img_on_wifi">Download images only when connecting Wifi</string>
+    <string name="article_list_state">Filter articles</string>
+    <string name="include_valueless">Include Valueless</string>
+    <string name="night_theme">Night theme</string>
+
+    <string name="article_list_order_asc">Older first</string>
+    <string name="article_list_order_desc">Newest first</string>
 
 
-    <!--<string-array name="setting_clear_day_dialog_item_array">-->
-    <!--<item>0</item>-->
-    <!--<item>1</item>-->
-    <!--<item>7</item>-->
-    <!--<item>15</item>-->
-    <!--<item>30</item>-->
-    <!--<item>60</item>-->
-    <!--</string-array>-->
-    <!--<integer-array name="setting_clear_day_dialog_item_array">-->
-    <!--<item>0</item>-->
-    <!--<item>1</item>-->
-    <!--<item>7</item>-->
-    <!--<item>15</item>-->
-    <!--<item>30</item>-->
-    <!--<item>60</item>-->
-    <!--</integer-array>-->
+    <string name="all">All</string>
+    <string name="unread">Unread</string>
+    <string name="starred">Star</string>
 
-    <!--<string name="box_html_format">&lt;!DOCTYPE html&gt;\n&lt;html&gt;\n&lt;head&gt;\n&lt;meta charset=&quot;%1$s&quot;&gt;\n&lt;title&gt;%2$s&lt;/title&gt;\n    &lt;link rel=&quot;stylesheet&quot;  type=&quot;text/css&quot;  href=&quot;./normalize.css&quot; /&gt;\n    &lt;link rel=&quot;stylesheet&quot;  type=&quot;text/css&quot;  href=&quot;./markdown.css&quot; /&gt;\n    &lt;link rel=&quot;stylesheet&quot;  type=&quot;text/css&quot;  href=&quot;./customer.css&quot; /&gt;\n&lt;/head&gt;\n&lt;body&gt;\n&lt;div class=&quot;info&quot;&gt;\n&lt;div class=&quot;info-title&quot;&gt;&lt;h1&gt;&lt;a href=&quot;%3$s&quot; target=&quot;_blank&quot;&gt;%2$s&lt;/a&gt;&lt;/h1&gt;&lt;/div&gt;\n&lt;div class=&quot;info-author&quot;&gt;%4$s&lt;/div&gt;\n&lt;div class=&quot;info-pubDate&quot;&gt;%5$s&lt;/div&gt;\n&lt;/div&gt;\n&lt;div class=&quot;content&quot;&gt;%6$s&lt;/div&gt;\n&lt;/body&gt;\n&lt;/html&gt;</string>-->
-    <string name="box_html_format">&lt;!DOCTYPE html&gt;\n&lt;html&gt;\n&lt;head&gt;\n&lt;meta charset=\&quot;%1$s\&quot;&gt;\n&lt;title&gt;%2$s&lt;/title&gt;\n    &lt;link rel=\&quot;stylesheet\&quot;  type=\&quot;text/css\&quot;  href=\&quot;./normalize.css\&quot; /&gt;\n    &lt;link rel=\&quot;stylesheet\&quot;  type=\&quot;text/css\&quot;  href=\&quot;./markdown.css\&quot; /&gt;\n    &lt;link rel=\&quot;stylesheet\&quot;  type=\&quot;text/css\&quot;  href=\&quot;./customer.css\&quot; /&gt;\n&lt;/head&gt;\n&lt;body&gt;\n&lt;div class=\&quot;info\&quot;&gt;\n&lt;div class=\&quot;info-title\&quot;&gt;&lt;h1&gt;&lt;a href=\&quot;%3$s\&quot; target=\&quot;_blank\&quot;&gt;%2$s&lt;/a&gt;&lt;/h1&gt;&lt;/div&gt;\n&lt;div class=\&quot;info-author\&quot;&gt;%4$s&lt;/div&gt;\n&lt;div class=\&quot;info-pubDate\&quot;&gt;%5$s&lt;/div&gt;\n&lt;/div&gt;\n&lt;div class=\&quot;content\&quot;&gt;%6$s&lt;/div&gt;\n&lt;/body&gt;\n&lt;/html&gt;</string>
-    <!--<string name="box_html">&lt;charset=\&quot;&quot;%1$s</string>-->
+    <string name="rss">RSS</string>
+    <string name="readability">Readability</string>
+    <string name="original">Original</string>
 
-    <string name="article_about_dialog_title">本文相关信息</string>
+    <string name="view">View</string>
+    <string name="open_original_article">Open original article</string>
+
+    <string name="refresh">Refresh</string>
+    <string name="stop">Stop</string>
+    <string name="open_by_browser">Open by browser</string>
+    <string name="download_file_position">Download to directory: download</string>
+    <string name="file_size">File size: %1$s</string>
+    <string name="unknown">Unknown</string>
 
 
-    <string name="readability_dialog_title">主题设置</string>
+    <string name="wrong_username_or_password">Incorrect username or password</string>
 
-    <string name="md_back_label">返回</string>
-    <string name="md_done_label">完成</string>
-    <string name="md_cancel_label">取消</string>
-    <string name="md_choose_label">选择</string>
-    <string name="md_custom_label">自定义</string>
-    <string name="md_error_label">Error</string>
-    <string name="md_storage_perm_error">Your app has not been granted the READ_EXTERNAL_STORAGE permission.</string>
-    <string name="md_presets_label">Presets</string>
+    <string name="wrong_unknown">Unknown error</string>
+
+    <string name="is_filed_cannot_edit">The article has been exported and cannot be modified</string>
 
     <string name="font_unstar">&#xe64c;</string>
     <string name="font_stared">&#xe64b;</string>
@@ -201,6 +313,8 @@
     <string name="font_translation">&#xe6ba;</string>
     <string name="font_chrome">&#xe678;</string>
     <string name="font_book">&#xe65b;</string>
+    <string name="font_article_original" translatable="false">&#xe61b;</string>
+    <string name="font_article_readability" translatable="false">&#xe743;</string>
     <string name="font_readability">&#xe611;</string>
     <string name="font_feed_config">&#xe72b;</string>
     <string name="font_update">&#xe645;</string>
@@ -215,128 +329,70 @@
 
     <!--气泡-->
     <string name="font_untag_article">&#xe84d;</string>
-    <!--<string name="font_open_in_window">&#xe610;</string>-->
 
 
-    <!--<string name="article_activity_author_format">作者 | %1$s</string>-->
-    <!--<string name="article_activity_time_format">发布 | %1$s</string>-->
+    <string name="title_activity_scrolling">ScrollingActivity</string>
+
+    <string name="action_settings">Settings</string>
+    <string name="server_host">Server Host</string>
+    <string name="account">Account</string>
+    <string name="password">Password</string>
+    <string name="welcome">"Welcome!"</string>
+    <string name="invalid_username">Invalid username</string>
+    <string name="invalid_host">Invalid Server Host, like https://example.com</string>
+    <string name="empty_host">Empty Server Host, please reset it</string>
+
+    <string name="invalid_password">Password must be >5 characters</string>
+
+    <string name="article_title_is">article title is: </string>
+
+    <string name="summary_pre">[Here is a pre]</string>
+    <string name="summary_table">[Here is a table]</string>
+    <string name="summary_link">[Here is a link]</string>
+    <string name="summary_frame">[Here is a frame]</string>
+    <string name="summary_audio">[Here is a audio]</string>
+    <string name="summary_video">[Here is a video]</string>
+    <string name="summary_image">[Here is a image]</string>
 
 
-    <string name="tips_login_id_is_empty">账号为空</string>
-    <string name="tips_login_id_is_error">账号输入错误</string>
-    <string name="tips_login_pd_is_empty">密码为空</string>
-    <string name="tips_login_pd_is_error">密码输入错误</string>
-    <string name="tips_login_failure">登录失败，请检查账户与密码是否正确</string>
-    <string name="tips_is_in_syncing">当前正在同步中，请稍候再操作</string>
-    <string name="tips_no_net">网络没有连接上，请检查一下</string>
-    <string name="auth_required">账号太久没有用了，请重新登录</string>
-    <string name="tag_choose_tips">想看哪个分类？</string>
+    <string name="frame">[frame]</string>
+    <string name="audio">[audio]</string>
+    <string name="video">[video]</string>
+    <string name="image">[image]</string>
 
-    <string name="xx_minute">%1$s 分钟</string>
-    <string name="xx_hour">%1$s 小时</string>
-    <string name="clear_day_summary">%1$s 天</string>
+    <string name="inoreader_oauth">InoReader (OAuth)</string>
+    <string name="inoreader_login">InoReader (Login)</string>
+    <string name="feedly">Feedly</string>
+    <string name="tinytinyrss">TinyTinyRSS</string>
+    <string name="intro">Intro</string>
 
-    <string name="image_dialog_save_img">保存图片</string>
-    <string name="image_dialog_share_img">分享图片</string>
+    <string name="everything_is_rssible">Everything is RSSible</string>
 
+    <string name="developed_by_wizos">Developed by Wizos</string>
 
-    <string name="main_tag_dialog_rename">重命名</string>
-    <string name="main_tag_dialog_unsubscribe">取消订阅</string>
+    <string name="do_you_want_to_delete_data_of_this_account_after_logout">Do you want to delete all data of this account after logout?</string>
+    <string name="loread_plugin_must_be_installed">Note: Loread plugin must be installed in \'plugins.local\' directory</string>
+    <string name="the_server_host_like">The server host like "https://example.com"</string>
+    <string name="rss_summary">
+        In layman\'s terms, RSS is a way to subscribe to information.\n\n
+        Just like following John Doe on Twitter and Jane Doe on TikTok, you can follow them by subscribe for a FEED URL in the "RSS Reader".\n\n
+        This allows you to subscribe to Youtube, Instagram, Quora, Blog, Forum …</string>
+    <string name="authorizing">Authorizing…</string>
 
-    <string name="main_slv_dialog_mark_up">向上标记已读</string>
-    <string name="main_slv_dialog_mark_down">向下标记已读</string>
-    <string name="main_slv_dialog_mark_unread">标记为未读</string>
-
-    <string name="art_img_dialog_download_again">重新下载</string>
-    <string name="art_img_dialog_open_in_new_window">打开大图</string>
-    <string name="art_img_dialog_copy_link">复制链接</string>
+    <string name="open_with">Open with</string>
 
 
-    <string name="toast_get_readability_ing">正在获取全文</string>
-    <string name="toast_get_readability_success">获取全文成功</string>
-    <string name="toast_get_readability_failure">获取全文失败</string>
-    <string name="toast_cancel_readability">已取消展示获取的全文</string>
+    <string name="feed_desc">Description: </string>
+    <string name="site_url">Site url: </string>
+    <string name="feed_url">Feed url: </string>
+    <string name="unsubscribe">Unsubscribe</string>
 
+    <string name="display_filter_in_development">\"Display Filter\", in development</string>
 
-    <string name="rename">编辑名称</string>
-    <string name="search">搜索</string>
-    <string name="search_key">输入关键词</string>
-    <string name="cancel">取消</string>
-
-    <string name="bag_network">网络不好，请重试一下</string>
-    <string name="fail_try">失败，请重试一下</string>
-
-    <string name="search_cloudy_feeds_result_count">已搜到 %1$d 个订阅源</string>
-    <string name="search_header_search_cloudy_feeds">搜索订阅源</string>
-    <string name="search_header_search_local_articles">搜索手机上的文章</string>
-
-    <string name="toast_login_for_auth">过太久了，请重新登录吧</string>
-
-    <string name="toast_subscribe_success">订阅成功</string>
-    <!--<string name="toast_edit_fail">修改失败</string>-->
-    <string name="toast_subscribe_fail">取消订阅失败，请重试</string>
-    <string name="toast_unsubscribe_fail">取消订阅失败，请重试</string>
-    <string name="toast_rename_fail">重命名失败，请重试</string>
-    <string name="toast_copy_img_src_success">图片链接复制成功</string>
-    <string name="toast_cant_find_img">没有找到图片</string>
-    <string name="toast_file_saved">文件已保存</string>
-    <string name="toast_not_wifi_mode">你开启了省流量模式，非 Wifi 不能下图片啦</string>
-
-    <string name="toast_not_network">小伙子，你的网络无法使用啊</string>
-
-    <string name="item_error">出错，请手动同步下</string>
-
-    <!--<string name="menu_readed">已读</string>-->
-    <!--<string name="menu_unread">未读</string>-->
-
-    <!--<string name="menu_stared">已加星</string>-->
-    <!--<string name="menu_unstar">未加星</string>-->
-
-
-    <string name="bottom_type_setting">排版</string>
-    <string name="bottom_mark_scrolling">自动标记已读</string>
-    <string name="bottom_download_img_on_wifi">智能无图</string>
-    <string name="bottom_setting">设置</string>
-    <string name="bottom_search">搜索</string>
-    <string name="bottom_refresh">刷新</string>
-    <string name="bottom_esc">退出</string>
-
-    <string name="more_setting">更多设置</string>
-    <string name="auto_mark_when_scrolling">滚动时自动标记为已读</string>
-    <string name="down_img_on_wifi">仅在连接Wifi时下载图片</string>
-    <string name="article_list_state">文章筛选</string>
-    <string name="night_theme">夜间主题</string>
-
-    <string name="article_list_order">文章排序（按抓取到的时间排序）</string>
-    <string name="article_list_order_asc">上旧下新</string>
-    <string name="article_list_order_desc">上新下旧</string>
-
-    <string name="show_all">显示「所有」文章</string>
-    <string name="show_unread">显示「未读」文章</string>
-    <string name="show_starred">显示「收藏」文章</string>
-
-
-    <string name="all">所有</string>
-    <string name="unread">未读</string>
-    <string name="starred">收藏</string>
-
-    <string name="rss">RSS</string>
-    <string name="readability">易读</string>
-    <string name="web_page">网页</string>
-
-    <string name="article_display_mode">显示模式</string>
-    <string name="dialog_please_wait">正在处理，请等待…</string>
-
-
-    <string name="feed_config">配置该源</string>
-    <string name="get_readability">获取正文</string>
-    <string name="translation">翻译</string>
-    <string name="open_original_article">查看原文</string>
-
-    <string name="title_activity_image">查看图片</string>
-    <string name="download_file_position">下载到目录：Download</string>
-    <string name="file_size">文件大小：%1$s</string>
-    <string name="unknow">未知</string>
-
-
+    <string name="click_to_load_this_picture">Click to load this picture</string>
+    <string name="loading_failed_click_here_to_retry">Loading failed! Click here to retry</string>
+    <string name="picture_error_click_here_to_retry">Picture error! Click here to retry</string>
+    <string name="copied">Copied</string>
+    
+    <string name="the_rule_of_full_text_extraction_has_expired">The rule of full-text extraction has expired: %1$s</string>
 </resources>

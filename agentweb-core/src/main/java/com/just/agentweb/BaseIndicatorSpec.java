@@ -17,14 +17,13 @@
 package com.just.agentweb;
 
 
+
 /**
  * @author cenxiaozhong
  * @since 1.0.0
  */
 public interface BaseIndicatorSpec {
-    /**
-     * indicator
-     */
+
     void show();
 
     void hide();

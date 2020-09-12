@@ -7,21 +7,23 @@ import android.content.ClipboardManager;
 import android.content.Context;
 import android.net.Uri;
 import android.os.Environment;
-import android.support.annotation.NonNull;
 import android.text.TextUtils;
 import android.webkit.DownloadListener;
 import android.webkit.WebView;
 import android.widget.EditText;
 import android.widget.TextView;
 
+import androidx.annotation.NonNull;
+
 import com.afollestad.materialdialogs.DialogAction;
 import com.afollestad.materialdialogs.MaterialDialog;
+import com.hjq.toast.ToastUtils;
 import com.socks.library.KLog;
 
 import me.wizos.loread.R;
 import me.wizos.loread.utils.FileUtil;
-import me.wizos.loread.utils.ToastUtil;
 import me.wizos.loread.utils.Tool;
+import me.wizos.loread.utils.UriUtil;
 
 import static android.content.Context.DOWNLOAD_SERVICE;
 
@@ -46,44 +48,36 @@ public class DownloadListenerS implements DownloadListener {
     @Override
     public void onDownloadStart(final String url, final String userAgent, final String contentDisposition, final String mimeType, final long contentLength) {
         String neutralText = "复制下载地址";
-        if (!TextUtils.isEmpty(mimeType)) {
+        if (!TextUtils.isEmpty(mimeType) && webView != null) {
             if (mimeType.toLowerCase().startsWith("video")) {
                 neutralText = "播放该视频";
-            } else if (mimeType.toLowerCase().startsWith("audio")) {
+            } else if (mimeType.toLowerCase().startsWith("audio")&& webView != null) {
                 neutralText = "播放该音频";
             }
         }
 
 
-        KLog.e("下载" + url);
-        KLog.e("下载", userAgent);
-        KLog.e("下载", contentDisposition); // attachment; filename=com.android36kr.app_7.4.2_18060821.apk
+        KLog.e("下载" + url + " , " + userAgent + " , "  + contentDisposition);
+//        KLog.e("下载", contentDisposition); // attachment; filename=com.android36kr.app_7.4.2_18060821.apk
         KLog.e("下载" + mimeType); //  application/vnd.android.package-archive
         KLog.e("下载5", contentLength);
 
         MaterialDialog downloadDialog = new MaterialDialog.Builder(context)
-                .title("是否下载文件？")
+                .title(R.string.do_you_want_to_download_files)
                 .customView(R.layout.config_download_view, true)
                 .neutralText(neutralText)
                 .onNeutral(new MaterialDialog.SingleButtonCallback() {
                     @Override
                     public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
                         if (!TextUtils.isEmpty(mimeType)) {
-                            if (mimeType.toLowerCase().startsWith("video")) {
+                            if (mimeType.toLowerCase().startsWith("video")&& webView != null) {
                                 playVideo(url);
-                            } else if (mimeType.toLowerCase().startsWith("audio")) {
+                            } else if (mimeType.toLowerCase().startsWith("audio")&& webView != null) {
                                 playAudio(url);
                             } else {
                                 copyUrl(url);
                             }
                         }
-//                        if ("video/mp4".equals(mimeType)) {
-//                            playVideo(url);
-//                        } else if("audio/mp3".equals(mimeType)){
-//                            playAudio(url);
-//                        }else {
-//                            copyUrl(url);
-//                        }
                     }
                 })
                 .negativeText(android.R.string.cancel)
@@ -92,15 +86,12 @@ public class DownloadListenerS implements DownloadListener {
                     @Override
                     public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
 //                        KLog.e("输入框内容的是：" + fileNameEditor.getText());
-                        downloadBySystem(url, fileNameEditor.getText() + "");
-                        if (!webView.canGoBack()) {
-                            context.finish();
-                            context.overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
-                        }
+                        downloadBySystem(url, fileNameEditor.getText().toString());
                     }
                 })
                 .show();
-        String fileName = FileUtil.guessDownloadFileName(url, contentDisposition, mimeType);
+
+        String fileName = UriUtil.guessFileName(url, contentDisposition, mimeType);
         String fileSize = Tool.getNetFileSizeDescription(context, contentLength);
 
         fileNameEditor = (EditText) downloadDialog.findViewById(R.id.file_name_edit);
@@ -131,19 +122,19 @@ public class DownloadListenerS implements DownloadListener {
 //        request.setTitle("This is title");
         // 设置通知栏的描述
 //        request.setDescription("This is description");
+        // 允许该记录在下载管理界面可见
+        request.setVisibleInDownloadsUi(true);
         // 允许在计费流量下下载
         request.setAllowedOverMetered(true);
-        // 允许该记录在下载管理界面可见
-        request.setVisibleInDownloadsUi(false);
         // 允许漫游时下载
         request.setAllowedOverRoaming(true);
         // 允许下载的网路类型
         request.setAllowedNetworkTypes(DownloadManager.Request.NETWORK_WIFI | DownloadManager.Request.NETWORK_MOBILE);
+
         // 设置下载文件保存的路径和文件名。
         // Content-disposition 是 MIME 协议的扩展，MIME 协议指示 MIME 用户代理如何显示附加的文件。当 Internet Explorer 接收到头时，它会激活文件下载对话框，它的文件名框自动填充了头中指定的文件名。（请注意，这是设计导致的；无法使用此功能将文档保存到用户的计算机上，而不向用户询问保存位置。）
-
 //        KLog.e("下载", "文件名：" + fileName);
-        request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, fileName);
+        request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, FileUtil.getSaveableName(fileName));
 //        另外可选一下方法，自定义下载路径
 //        request.setDestinationUri()
 //        request.setDestinationInExternalFilesDir()
@@ -171,6 +162,7 @@ public class DownloadListenerS implements DownloadListener {
                 "UTF-8",
                 null);
     }
+
     private void copyUrl(String url) {
         // 获取剪贴板管理器
         ClipboardManager cm = (ClipboardManager) context.getSystemService(Context.CLIPBOARD_SERVICE);
@@ -178,6 +170,6 @@ public class DownloadListenerS implements DownloadListener {
         ClipData mClipData = ClipData.newPlainText("url", url);
         // 将ClipData内容放到系统剪贴板里。
         cm.setPrimaryClip(mClipData);
-        ToastUtil.showLong("复制成功");
+        ToastUtils.show("复制成功");
     }
 }

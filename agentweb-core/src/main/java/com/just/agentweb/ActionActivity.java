@@ -21,8 +21,9 @@ import android.app.Activity;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import java.io.File;
 import java.util.List;
@@ -30,9 +31,10 @@ import java.util.List;
 import static android.provider.MediaStore.EXTRA_OUTPUT;
 
 
+
 /**
- * @author cenxiaozhong
  * @since 2.0.0
+ * @author cenxiaozhong
  */
 public final class ActionActivity extends Activity {
 
@@ -47,9 +49,7 @@ public final class ActionActivity extends Activity {
     private Action mAction;
     public static final int REQUEST_CODE = 0x254;
 
-
     public static void start(Activity activity, Action action) {
-
         Intent mIntent = new Intent(activity, ActionActivity.class);
         mIntent.putExtra(KEY_ACTION, action);
 //        mIntent.setExtrasClassLoader(Action.class.getClassLoader());
@@ -89,29 +89,26 @@ public final class ActionActivity extends Activity {
             permission(mAction);
         } else if (mAction.getAction() == Action.ACTION_CAMERA) {
             realOpenCamera();
+        } else if (mAction.getAction() == Action.ACTION_VIDEO){
+            realOpenVideo();
         } else {
             fetchFile(mAction);
         }
-
     }
 
     private void fetchFile(Action action) {
-
         if (mChooserListener == null) {
             finish();
         }
-
         realOpenFileChooser();
     }
 
     private void realOpenFileChooser() {
-
         try {
             if (mChooserListener == null) {
                 finish();
                 return;
             }
-
             Intent mIntent = getIntent().getParcelableExtra(KEY_FILE_CHOOSER_INTENT);
             if (mIntent == null) {
                 cancelAction();
@@ -125,7 +122,6 @@ public final class ActionActivity extends Activity {
                 throwable.printStackTrace();
             }
         }
-
     }
 
     private void chooserActionCallback(int resultCode, Intent data) {
@@ -138,16 +134,12 @@ public final class ActionActivity extends Activity {
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-
-
         if (requestCode == REQUEST_CODE) {
             chooserActionCallback(resultCode, mUri != null ? new Intent().putExtra(KEY_URI, mUri) : data);
         }
     }
 
     private void permission(Action action) {
-
-
         List<String> permissions = action.getPermissions();
         if (AgentWebUtils.isEmptyCollection(permissions)) {
             mPermissionListener = null;
@@ -155,7 +147,6 @@ public final class ActionActivity extends Activity {
             finish();
             return;
         }
-
         if (mRationaleListener != null) {
             boolean rationale = false;
             for (String permission : permissions) {
@@ -169,19 +160,16 @@ public final class ActionActivity extends Activity {
             finish();
             return;
         }
-
-        if (mPermissionListener != null) {
+        if (mPermissionListener != null){
             requestPermissions(permissions.toArray(new String[]{}), 1);
         }
-
     }
 
     private Uri mUri;
 
     private void realOpenCamera() {
-
         try {
-            if (mChooserListener == null) {
+            if (mChooserListener == null){
                 finish();
             }
             File mFile = AgentWebUtils.createImageFile(this);
@@ -200,12 +188,37 @@ public final class ActionActivity extends Activity {
                 mChooserListener.onChoiceResult(REQUEST_CODE, Activity.RESULT_CANCELED, null);
             }
             mChooserListener = null;
-            if (LogUtils.isDebug()) {
+            if (LogUtils.isDebug()){
                 ignore.printStackTrace();
             }
         }
+    }
 
-
+    private void realOpenVideo(){
+        try {
+            if (mChooserListener == null){
+                finish();
+            }
+            File mFile = AgentWebUtils.createVideoFile(this);
+            if (mFile == null) {
+                mChooserListener.onChoiceResult(REQUEST_CODE, Activity.RESULT_CANCELED, null);
+                mChooserListener = null;
+                finish();
+            }
+            Intent intent = AgentWebUtils.getIntentVideoCompat(this, mFile);
+            // 指定开启系统相机的Action
+            mUri = intent.getParcelableExtra(EXTRA_OUTPUT);
+            this.startActivityForResult(intent, REQUEST_CODE);
+        } catch (Throwable ignore) {
+            LogUtils.e(TAG, "找不到系统相机");
+            if (mChooserListener != null) {
+                mChooserListener.onChoiceResult(REQUEST_CODE, Activity.RESULT_CANCELED, null);
+            }
+            mChooserListener = null;
+            if (LogUtils.isDebug()){
+                ignore.printStackTrace();
+            }
+        }
     }
 
 

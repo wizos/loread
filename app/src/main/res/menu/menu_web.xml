@@ -4,15 +4,31 @@
     tools:context=".activity.WebActivity">
 
     <item
+        android:id="@+id/web_menu_refresh"
+        android:icon="@drawable/ic_refresh"
+        android:title="@string/refresh"
+        android:enabled="true"
+        android:visible="false"
+        app:showAsAction="ifRoom" />
+
+    <item
+        android:id="@+id/web_menu_stop"
+        android:icon="@drawable/ic_stop_loading"
+        android:title="@string/stop"
+        android:enabled="true"
+        android:visible="true"
+        app:showAsAction="ifRoom" />
+
+    <item
         android:id="@+id/web_menu_user_agent"
-        android:title="UA标识"
+        android:title="@string/ua_sign"
         android:icon="@drawable/ic_user_agent"
         android:enabled="true"
         android:visible="true"
         app:showAsAction="never" />
     <item
         android:id="@+id/web_menu_open_by_sys"
-        android:title="用系统浏览器打开"
+        android:title="@string/open_by_browser"
         android:icon="@drawable/ic_browser"
         android:enabled="true"
         android:visible="true"
@@ -20,22 +36,14 @@
     <item
         android:id="@+id/web_menu_copy_link"
         android:icon="@drawable/ic_copy_link"
-        android:title="复制当前链接"
+        android:title="@string/copy_link"
         android:enabled="true"
         android:visible="true"
         app:showAsAction="never" />
     <item
         android:id="@+id/web_menu_share"
         android:icon="@drawable/ic_share"
-        android:title="分享"
-        android:enabled="true"
-        android:visible="true"
-        app:showAsAction="never" />
-
-    <item
-        android:id="@+id/web_menu_refresh"
-        android:icon="@drawable/ic_refresh"
-        android:title="刷新"
+        android:title="@string/share"
         android:enabled="true"
         android:visible="true"
         app:showAsAction="never" />

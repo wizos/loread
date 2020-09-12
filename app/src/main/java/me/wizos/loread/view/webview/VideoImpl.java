@@ -19,8 +19,6 @@ package me.wizos.loread.view.webview;
 import android.app.Activity;
 import android.content.pm.ActivityInfo;
 import android.graphics.Color;
-import android.os.Build;
-import android.support.v4.util.Pair;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
@@ -29,10 +27,14 @@ import android.webkit.WebChromeClient;
 import android.webkit.WebView;
 import android.widget.FrameLayout;
 
+import androidx.core.util.Pair;
+
 import java.util.HashSet;
 import java.util.Set;
 
 /**
+ * https://www.jianshu.com/p/ed01d00809f4
+ *
  * @author cenxiaozhong
  */
 public class VideoImpl { // implements IVideo, EventInterceptor
@@ -72,7 +74,8 @@ public class VideoImpl { // implements IVideo, EventInterceptor
             mFlags.add(mPair);
         }
 
-        if ((Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) && (mWindow.getAttributes().flags & WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED) == 0) {
+        // 开启Window级别的硬件加速
+        if ((mWindow.getAttributes().flags & WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED) == 0) {
             mPair = new Pair<>(WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED, 0);
             mWindow.setFlags(WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED, WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED);
             mFlags.add(mPair);

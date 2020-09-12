@@ -2,22 +2,22 @@
     background-color:rgba(0,0,0,0);*/
 
 body {
-    color: #333;
+    //color: #333;
+color:#293845;
     background-color: #FFFFFF;
 }
 /* 标题
 =============================================================================*/
+/*
 h1,h2 {
     color: #000;
-}
-h2 {
-    border-bottom: 1px solid #ccc;
+    border-bottom: 1px dashed #ccc;
 }
 
 hr {
-    background-color:#f8f8f8;
+    //background-color:#f8f8f8;
 }
-
+*/
 
 /* 表格
 =============================================================================*/
@@ -28,19 +28,13 @@ table th, table td {
     border: 1px solid #ccc;
 }
 
-/*单数行*/
-/*table tr {
-    background-color: #f8f8f8;
-}*/
-/*双数行*/
-/*table tr:nth-child(2n){
-    background-color: #fff;
-}*/
-
-
 /* 代码
 =============================================================================*/
 code, tt ,pre {
     border: 1px solid #eaeaea;
     background-color: #f8f8f8;
+}
+blockquote{
+	background: rgba(0, 0, 0, 0.04) !important;
+	color: rgba(0, 0, 0, 0.5) !important;
 }

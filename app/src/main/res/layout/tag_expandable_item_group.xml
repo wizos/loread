@@ -2,7 +2,8 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content">
+    android:layout_height="wrap_content"
+    android:tag="sticky">
 
     <LinearLayout
         android:id="@+id/group_item"
@@ -10,7 +11,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center_vertical"
-        android:background="?attr/bottombar_bg"
+        android:background="?attr/root_view_bg"
         tools:ShowIn="@layout/activity_main">
 
         <me.wizos.loread.view.IconFontView
@@ -24,7 +25,7 @@
             android:gravity="center"
             android:textSize="16sp"
             android:textColor="?attr/tag_slv_item_icon"
-            android:text="@string/font_arrow_right" />
+            android:text="@string/font_tag" />
 
 
         <TextView
@@ -40,26 +41,16 @@
             android:textStyle="bold"
             android:textColor="?attr/lv_item_title_color"
             tools:text="这是父item" />
-        <!--<TextView-->
-        <!--android:id="@+id/group_item_title_superscript"-->
-        <!--android:layout_width="15dp"-->
-        <!--android:layout_height="15dp"-->
-        <!--android:textColor="?attr/lv_item_title_color"-->
-        <!--android:textSize="16sp"-->
-        <!--tools:text="1"-->
-        <!--android:background="@drawable/ic_superscript"-->
-        <!--android:gravity="center"/>-->
 
+        <!--android:textColor="#5a8fca"-->
         <TextView
             android:id="@+id/group_item_count"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:gravity="center"
-            android:padding="5dp"
             android:layout_marginEnd="20dp"
-            android:background="?attr/bubble_bg"
-            android:textSize="12sp"
             android:textColor="?attr/lv_item_desc_color"
+            android:textSize="12sp"
             tools:text="1024" />
 
     </LinearLayout>

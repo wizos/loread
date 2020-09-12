@@ -1,0 +1,32 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context=".activity.ArticleActivity">
+
+    <item
+        android:id="@+id/article_menu_feed"
+        android:icon="@drawable/ic_eye"
+        android:title="订阅源"
+        android:enabled="true"
+        android:visible="true"
+        app:showAsAction="ifRoom" />
+
+    <item
+        android:id="@+id/article_menu_speak"
+        android:title="朗读"
+        android:enabled="true"
+        android:visible="true"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/article_menu_article_info"
+        android:title="原始数据"
+        android:enabled="true"
+        android:visible="true"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/article_menu_edit_content"
+        android:title="编辑内容"
+        android:enabled="true"
+        android:visible="true"
+        app:showAsAction="never" />
+</menu>

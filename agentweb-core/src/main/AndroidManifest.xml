@@ -1,5 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.just.agentweb">
+          package="com.just.agentweb"
+    >
 
     <application>
         <provider
@@ -9,7 +10,7 @@
             android:grantUriPermissions="true">
             <meta-data
                 android:name="android.support.FILE_PROVIDER_PATHS"
-                android:resource="@xml/web_files_paths" />
+                android:resource="@xml/web_files_public"/>
         </provider>
         <activity
             android:name="com.just.agentweb.ActionActivity"

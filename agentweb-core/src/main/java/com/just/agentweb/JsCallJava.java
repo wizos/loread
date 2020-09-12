@@ -56,7 +56,7 @@ public class JsCallJava {
             sb.append(mInterfacedName);
             sb.append(" init begin\");var a={queue:[],callback:function(){var d=Array.prototype.slice.call(arguments,0);var c=d.shift();var e=d.shift();this.queue[c].apply(this,d);if(!e){delete this.queue[c]}}};");
             for (Method method : methods) {
-                Log.i("Info", "method:" + method);
+                Log.i("Info","method:"+method);
                 String sign;
                 if ((sign = genJavaMethodSign(method)) == null) {
                     continue;
