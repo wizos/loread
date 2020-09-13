@@ -248,7 +248,6 @@ public interface ArticleDao {
             "AND (article.readStatus = " + App.STATUS_UNREADING  + " OR article.saveStatus !=" + App.STATUS_NOT_FILED + ")")
     List<Article> getBackup(String uid);
 
-    // TODO: 2020/5/1 文章要加上是否已经被 Readability 的标志
     @Query("SELECT article.* FROM article " +
             "LEFT JOIN Feed ON (article.uid = Feed.uid AND article.feedId = Feed.id) " +
             "WHERE article.uid = :uid " +

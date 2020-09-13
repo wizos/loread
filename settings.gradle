@@ -1,1 +1,1 @@
-include ':app', ':swipelayout', ':luban', ":support",':floatwindow',':agentweb-core'
+include ':app', ':swipelayout', ":support",':floatwindow',':agentweb-core', ':luban'

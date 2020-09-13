@@ -973,26 +973,26 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
             return 0;
         }
 
-//        /**
-//         * 在调用cancel方法后会执行到这里
-//         */
-//        @Override
-//        protected void onCancelled() {
-//        }
-//
-//        /**
-//         * 在doInbackground之后执行
-//         */
-//        @Override
-//        protected void onPostExecute(Integer args3) {
-//        }
-//
-//        /**
-//         * 在doInBackground之前执行
-//         */
-//        @Override
-//        protected void onPreExecute() {
-//        }
+        ///**
+        // * 在调用cancel方法后会执行到这里
+        // */
+        //@Override
+        //protected void onCancelled() {
+        //}
+        //
+        ///**
+        // * 在doInbackground之后执行
+        // */
+        //@Override
+        //protected void onPostExecute(Integer args3) {
+        //}
+        //
+        ///**
+        // * 在doInBackground之前执行
+        // */
+        //@Override
+        //protected void onPreExecute() {
+        //}
 
         /**
          * 特别赞一下这个多次参数的方法，特别方便
@@ -1079,8 +1079,8 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
         }
 
         Article article = articlesAdapter.getItem(position);
-//        String articleId = articlesAdapter.getItem(position).getId();
-//        Article article = CoreDB.i().articleDao().getById(App.i().getUser().getId(),articleId);
+        //String articleId = articlesAdapter.getItem(position).getId();
+        //Article article = CoreDB.i().articleDao().getById(App.i().getUser().getId(),articleId);
 
         if (article.getStarStatus() == App.STATUS_STARED) {
             article.setStarStatus(App.STATUS_UNSTAR);
@@ -1130,13 +1130,12 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
         super.onActivityResult(requestCode, resultCode, intent);
-//        KLog.e("------------------------------------------" + resultCode + requestCode);
+        //KLog.e("------------------------------------------" + resultCode + requestCode);
         switch (resultCode) {
             case App.ActivityResult_ArtToMain:
-                // 在文章页的时候读到了第几篇文章，好让列表也自动将该项置顶
+                //在文章页的时候读到了第几篇文章，好让列表也自动将该项置顶
+                //LinearLayoutManager linearLayoutManager = (LinearLayoutManager) articleListView.getLayoutManager();
                 int articleNo = intent.getExtras().getInt("articleNo");
-
-//                LinearLayoutManager linearLayoutManager = (LinearLayoutManager) articleListView.getLayoutManager();
                 assert linearLayoutManager != null;
                 if (articleNo > linearLayoutManager.findLastVisibleItemPosition() - 1) {
                     slvSetSelection(articleNo);
@@ -1144,7 +1143,7 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
                 articlesAdapter.notifyDataSetChanged();
                 break;
             case App.ActivityResult_SearchLocalArtsToMain:
-//                KLog.e("被搜索的词是" + intent.getExtras().getString("searchWord"));
+                //KLog.e("被搜索的词是" + intent.getExtras().getString("searchWord"));
                 showSearchResult(intent.getExtras().getString("searchWord"));
                 articlesAdapter.notifyDataSetChanged();
                 break;
@@ -1173,9 +1172,9 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
     public void onQuickSettingIconClicked(View view) {
         quickSettingDialog = new BottomSheetDialog(MainActivity.this);
         quickSettingDialog.setContentView(R.layout.main_bottom_sheet_more);
-//        quickSettingDialog.dismiss(); //dialog消失
-//        quickSettingDialog.setCanceledOnTouchOutside(false);  //触摸dialog之外的地方，dialog不消失
-//        quickSettingDialog.setCancelable(false); // dialog无法取消，按返回键都取消不了
+        //quickSettingDialog.dismiss(); //dialog消失
+        //quickSettingDialog.setCanceledOnTouchOutside(false);  //触摸dialog之外的地方，dialog不消失
+        //quickSettingDialog.setCancelable(false); // dialog无法取消，按返回键都取消不了
 
         View moreSetting = quickSettingDialog.findViewById(R.id.more_setting);
         moreSetting.setOnClickListener(new View.OnClickListener() {

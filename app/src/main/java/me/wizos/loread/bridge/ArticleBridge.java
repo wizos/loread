@@ -42,7 +42,4 @@ public interface ArticleBridge {
     void openLink(String link);
 
     void openAudio(String link);
-
-    void readability();
-
 }

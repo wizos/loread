@@ -73,8 +73,8 @@ public class App extends Application implements Thread.UncaughtExceptionHandler 
     public static final String Referer = "Referer";
 
     public static final String DISPLAY_RSS = "rss";
-    public static final String DISPLAY_READABILITY = "readability";
     public static final String DISPLAY_LINK = "webpage";
+    public static final String DISPLAY_READABILITY = "readability";
     public static final int OPEN_MODE_RSS = 0;
     public static final int OPEN_MODE_LINK = 1;
     public static final int OPEN_MODE_READABILITY = 2;
@@ -82,10 +82,6 @@ public class App extends Application implements Thread.UncaughtExceptionHandler 
     public static final int STATUS_NOT_FILED = 0;
     public static final int STATUS_TO_BE_FILED = 1;
     public static final int STATUS_IS_FILED = 2;
-
-    public static final String NOT_FILED = "cache";
-    public static final String TO_BE_FILED = "box";
-    public static final String IS_FILED = "store";
 
     public static final int ActivityResult_LoginPageToProvider = 1;
     public static final int ActivityResult_ArtToMain = 2;

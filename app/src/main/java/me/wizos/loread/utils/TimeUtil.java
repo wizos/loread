@@ -92,7 +92,6 @@ public class TimeUtil {
     /** * 计算周几 */
     public static String getWeek(String data) {
         SimpleDateFormat sdr = new SimpleDateFormat("yyyy年MM月dd日HH时mm分ss秒");
-        long lcc = Long.valueOf(data);
         int i = Integer.parseInt(data);
         String times = sdr.format(new Date(i * 1000L));
         Date date = null;
@@ -105,7 +104,6 @@ public class TimeUtil {
             mydate = cd.get(Calendar.DAY_OF_WEEK);
             // 获取指定日期转换成星期几
         } catch (ParseException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         }
         if (mydate == 1) {

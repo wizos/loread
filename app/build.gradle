@@ -25,7 +25,7 @@ android {
             manifestPlaceholders = [MTA_APPKEY : "AAI4F2S2LM1U", MTA_CHANNEL: "酷安"]
         }
         debug {
-            //applicationIdSuffix '.baimu' //增加包名后缀
+            //applicationIdSuffix '.debug' //增加包名后缀
             minifyEnabled false
             debuggable true
             manifestPlaceholders = [MTA_APPKEY : "AAI4F2S2LM1U", MTA_CHANNEL: "酷安"]
@@ -50,15 +50,15 @@ dependencies {
     implementation 'androidx.constraintlayout:constraintlayout:1.1.3'
     implementation 'com.google.android.material:material:1.1.0'
     implementation "androidx.paging:paging-runtime:2.1.2"
-    implementation "androidx.work:work-runtime:2.3.4"
+    implementation "androidx.work:work-runtime:2.4.0"
 
     // 通用的背景设置库，通过标签直接生成shape，无需再写shape.xml [https://github.com/JavaNoober/BackgroundLibrary]
     implementation 'com.noober.background:core:1.6.3'
+
     // 列表项左右滑动布局
     implementation project(path: ':swipelayout')
     implementation project(path: ':support')
-    // 加载 view [https://github.com/ybq/Android-SpinKit]
-    // implementation 'com.github.ybq:Android-SpinKit:1.4.0'
+
     // 浏览器
     implementation project(path: ':agentweb-core')
 
@@ -71,6 +71,9 @@ dependencies {
     // implementation 'com.afollestad.material-dialogs:core:3.1.1'
     implementation 'com.afollestad.material-dialogs:core:0.9.6.0'
     implementation 'com.afollestad.material-dialogs:commons:0.9.6.0'
+
+    // 加载 view [https://github.com/ybq/Android-SpinKit]
+    // implementation 'com.github.ybq:Android-SpinKit:1.4.0'
 
     // 透明通知栏
     // implementation 'com.readystatesoftware.systembartint:systembartint:1.0.3'
@@ -86,15 +89,12 @@ dependencies {
     // 让播放、暂停按钮优雅的过渡 [https://github.com/Lauzy/PlayPauseView]
     implementation 'com.github.Lauzy:PlayPauseView:1.0.7'
 
-    // 带删除功能的EditText；显示或者隐藏密码；可设置自动添加分隔符分割电话号码、银行卡号等；支持禁止Emoji表情符号输入 [https://github.com/woxingxiao/XEditText]
-    // 用在了 activity_search.xml 中
+    // [https://github.com/woxingxiao/XEditText] 带删除功能的EditText；显示或者隐藏密码；可设置自动添加分隔符分割电话号码、银行卡号等；支持禁止Emoji表情符号输入。用在了 activity_search.xml 中
     implementation 'com.xw.repo:xedittext-androidx:2.2.6@aar'
-    // [https://github.com/zhanghai/materialedittext]
-    // 用在了 activity_login_tiny_tiny_rss_rss.xml 中
+    // [https://github.com/zhanghai/materialedittext]， 用在了 activity_login_tiny_tiny_rss_rss.xml 中
     implementation 'me.zhanghai.android.materialedittext:library:1.0.5'
 
     // 时间总线
-    // implementation 'org.greenrobot:eventbus:3.1.1'
     implementation 'com.jeremyliao:live-event-bus-x:1.6.1'
 
     implementation "androidx.room:room-runtime:2.2.5"

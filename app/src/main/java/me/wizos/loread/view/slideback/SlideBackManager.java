@@ -38,7 +38,7 @@ public class SlideBackManager {
     private float maxSlideLength; // 最大拉动距离
 
     // FIXME: 2019/5/1
-    private float sideSlideStartLength; // 侧滑时开始响应的距离
+    // private float sideSlideStartLength; // 侧滑时开始响应的距离
 
     private float sideSlideLength; // 侧滑响应距离
     private float dragRate; // 阻尼系数
@@ -61,7 +61,7 @@ public class SlideBackManager {
         maxSlideLength = screenWidth / 12; // 最大宽度默认 屏宽/12
 
         sideSlideLength = maxSlideLength / 2; // 侧滑响应距离默认 控件最大宽度/2
-        sideSlideStartLength = sideSlideLength / 2;
+        // sideSlideStartLength = sideSlideLength / 2;
         dragRate = 3; // 阻尼系数默认 3
 
         // 侧滑返回模式 默认:左

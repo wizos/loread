@@ -5,8 +5,8 @@
     package="me.wizos.loread">
     <!-- 允许访问振动设备 -->
     <uses-permission android:name="android.permission.VIBRATE" />
-    <!-- 网络相关权限 -->
-    <uses-permission android:name="android.permission.INTERNET" /> <!-- MTA统计必选权限 -->
+    <!-- 网络相关权限；MTA统计必选权限 -->
+    <uses-permission android:name="android.permission.INTERNET" />
 
     <!-- 查看帐户需要权限 -->
     <uses-permission android:name="android.permission.GET_ACCOUNTS"/>
@@ -23,15 +23,18 @@
     <uses-permission android:name="android.permission.CHANGE_NETWORK_STATE"/>
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>
     <uses-permission android:name="android.permission.CHANGE_WIFI_STATE"/>
-    <uses-permission android:name="android.permission.READ_PHONE_STATE" /> <!-- 访问电话状态 -->
-    <!-- <uses-permission android:name="android.permission.WRITE_SETTINGS" /> --><!-- 允许读写系统设置项 -->
+    <!-- 访问电话状态 -->
+    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
+    <!-- 允许读写系统设置项 -->
+    <!-- <uses-permission android:name="android.permission.WRITE_SETTINGS" /> -->
     <!-- 挂载、反挂载外部文件系统 -->
     <!-- <uses-permission android:name="android.permission.MOUNT_UNMOUNT_FILESYSTEMS" /> -->
     <!-- 读取系统底层日志 -->
     <!-- <uses-permission android:name="android.permission.READ_LOGS" /> -->
     <!-- 允许程序在手机屏幕关闭后后台进程仍然运行 -->
     <!-- <uses-permission andruserNamename="android.permission.WAKE_LOCK" /> -->
-    <uses-permission android:name="android.permission.SYSTEM_OVERLAY_WINDOW" /> <!-- <uses-permission android:name="android.permission.GET_TASKS"/> -->
+    <uses-permission android:name="android.permission.SYSTEM_OVERLAY_WINDOW" />
+    <!-- <uses-permission android:name="android.permission.GET_TASKS"/> -->
     <!-- [尝试] 防止左右滑动时的报错 -->
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" /> <!-- 通过WiFi或移动基站的方式获取用户错略的经纬度信息，定位精度大概误差在30~1500米 -->
     <!-- <uses-permission andruserNamename="android.permission.ACCESS_COARSE_LOCATION" /> -->
@@ -177,14 +180,6 @@
             android:screenOrientation="user"
             android:theme="@style/AppTheme.Day.NoActionBar" />
 
-<!--        <receiver android:name=".service.NetworkStateReceiver">-->
-<!--            <intent-filter>-->
-<!--                <action android:name="android.net.conn.CONNECTIVITY_CHANGE" />-->
-
-<!--                <category android:name="android.intent.category.DEFAULT" />-->
-<!--            </intent-filter>-->
-<!--        </receiver>-->
-
         <activity
             android:name=".activity.LabActivity"
             android:configChanges="orientation|screenSize|keyboardHidden"
@@ -196,7 +191,6 @@
             android:label="@string/title_activity_scrolling"
             android:theme="@style/AppTheme.Day.NoActionBar" />
 
-
         <service
             android:name=".service.MusicService"
             android:exported="false"
@@ -206,41 +200,49 @@
             android:exported="false"
             android:permission="android.permission.BIND_SERVICE" />
 
-<!--        <service-->
-<!--            android:name=".service.MainService"-->
-<!--            android:exported="false"-->
-<!--            android:permission="android.permission.BIND_JOB_SERVICE" />-->
-<!--        <service-->
-<!--            android:name=".account.AccountAuthenticatorService"-->
-<!--            android:exported="false" >-->
-<!--            <intent-filter>-->
-<!--                <action android:name="android.accounts.AccountAuthenticator" />-->
-<!--            </intent-filter>-->
-<!--            <meta-data-->
-<!--                android:name="android.accounts.AccountAuthenticator"-->
-<!--                android:resource="@xml/account_authenticator" />-->
-<!--        </service>-->
+        <!--<service-->
+        <!--    android:name=".service.MainService"-->
+        <!--    android:exported="false"-->
+        <!--    android:permission="android.permission.BIND_JOB_SERVICE" />-->
+        <!--<service-->
+        <!--    android:name=".account.AccountAuthenticatorService"-->
+        <!--    android:exported="false" >-->
+        <!--    <intent-filter>-->
+        <!--        <action android:name="android.accounts.AccountAuthenticator" />-->
+        <!--    </intent-filter>-->
+        <!--    <meta-data-->
+        <!--        android:name="android.accounts.AccountAuthenticator"-->
+        <!--        android:resource="@xml/account_authenticator" />-->
+        <!--</service>-->
 
-<!--        <service-->
-<!--            android:name=".account.SyncService"-->
-<!--            android:exported="true">-->
-<!--            <intent-filter>-->
-<!--                <action android:name="android.content.SyncAdapter" />-->
-<!--            </intent-filter>-->
-<!--            <meta-data-->
-<!--                android:name="android.content.SyncAdapter"-->
-<!--                android:resource="@xml/account_sync_adapter" />-->
-<!--            &lt;!&ndash; resource属性指定一定说明该同步基本显示信息的xml文件 &ndash;&gt;-->
-<!--        </service>-->
-<!--        <provider-->
-<!--            android:name=".account.AccountProvider"-->
-<!--            android:authorities="me.wizos.loreadx.account.provide"-->
-<!--            android:exported="false"-->
-<!--            android:syncable="true"/>-->
+        <!--<service-->
+        <!--    android:name=".account.SyncService"-->
+        <!--    android:exported="true">-->
+        <!--    <intent-filter>-->
+        <!--        <action android:name="android.content.SyncAdapter" />-->
+        <!--    </intent-filter>-->
+        <!--    <meta-data-->
+        <!--        android:name="android.content.SyncAdapter"-->
+        <!--        android:resource="@xml/account_sync_adapter" />-->
+        <!--    &lt;!&ndash; resource属性指定一定说明该同步基本显示信息的xml文件 &ndash;&gt;-->
+        <!--</service>-->
+        <!--<provider-->
+        <!--    android:name=".account.AccountProvider"-->
+        <!--    android:authorities="me.wizos.loreadx.account.provide"-->
+        <!--    android:exported="false"-->
+        <!--    android:syncable="true"/>-->
 
-<!--        <service-->
-<!--            android:name=".account.CrazyJobService"-->
-<!--            android:permission="android.permission.BIND_JOB_SERVICE"/>-->
+        <!--<service-->
+        <!--    android:name=".account.CrazyJobService"-->
+        <!--    android:permission="android.permission.BIND_JOB_SERVICE"/>-->
+
+        <!--<receiver android:name=".service.NetworkStateReceiver">-->
+        <!--    <intent-filter>-->
+        <!--        <action android:name="android.net.conn.CONNECTIVITY_CHANGE" />-->
+
+        <!--        <category android:name="android.intent.category.DEFAULT" />-->
+        <!--    </intent-filter>-->
+        <!--</receiver>-->
 
     </application>
 

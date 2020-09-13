@@ -60,23 +60,9 @@ public class ProviderActivity extends BaseActivity {
         overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
     }
 
-//    // TODO: 2019/2/16  跳转到RSS添加的发现页
-//    public void selectLocalRSS(View view) {
-//        String uid = Contract.PROVIDER_LOCALRSS + "_" + getString(R.string.app_id);
-//        User user = CoreDB.i().userDao().getById(uid);
-//        if ( user == null ){
-//            user = new User();
-//            user.setId(uid);
-//            user.setSource(Contract.PROVIDER_LOCALRSS);
-//            user.setUserId(getString(R.string.app_id));
-//            user.setUserName(getString(R.string.app_name));
-//            user.setExpiresTimestamp(0);
-//            CoreDB.i().userDao().insert(user);
-//        }
-//
-//        App.i().getGlobalKV().putString(Contract.UID, uid);
-//        route();
-//    }
+    // TODO: 2019/2/16  跳转到自建RSS页（导入OPML，热门RSS）
+    // public void selectLocalRSS(View view) {
+    // }
 
 
     private void getAccessToken(final String code, OAuthApi api) {

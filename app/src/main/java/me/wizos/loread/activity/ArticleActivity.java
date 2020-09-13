@@ -163,7 +163,7 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
         // KLog.e("开始初始化数据2" + articleNo + "==" + articleCount + "==" + articleId + " == " + articleIDs );
         initToolbar();
         initView(); // 初始化界面上的 View，将变量映射到布局上。
-        initSelectedPage(articleNo);
+        initSelectedArticle(articleNo);
         imgHttpClient = HttpClientManager.i().imageHttpClient();
     }
 
@@ -290,7 +290,7 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
                 .setFolderName(getString(R.string.app_name))
                 .setLoadStrategy(ImagePreview.LoadStrategy.AlwaysOrigin)
                 // 缩放动画时长，单位ms
-//                .setZoomTransitionDuration(300)
+                // .setZoomTransitionDuration(300)
                 // 是否启用上拉/下拉关闭。默认不启用
                 .setEnableDragClose(true)
                 // 长按回调
@@ -402,7 +402,7 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
             if (selectedWebView.get() == null) {
                 return;
             }
-//            KLog.i("下载图片成功，准备压缩：" + originalFileDir + prefix + fileNameExt + svgExt  + "，" + originalUrl );
+            //KLog.i("下载图片成功，准备压缩：" + originalFileDir + prefix + fileNameExt + svgExt  + "，" + originalUrl );
 
             Luban.with(App.i())
                     .load(targetOriginalFile)
@@ -573,17 +573,6 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
         startActivity(intent);
     }
 
-    @JavascriptInterface
-    @Override
-    public void readability() {
-        articleHandler.post(new Runnable() {
-            @Override
-            public void run() {
-                onReadabilityClick();
-            }
-        });
-    }
-
     private void initView() {
         starView = findViewById(R.id.article_bottombar_star);
         starView.setOnLongClickListener(new View.OnLongClickListener() {
@@ -595,6 +584,7 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
         });
         readView = findViewById(R.id.article_bottombar_read);
         saveView = findViewById(R.id.article_bottombar_save);
+        readabilityView = findViewById(R.id.article_bottombar_readability);
         swipeRefreshLayoutS = findViewById(R.id.art_swipe_refresh);
         swipeRefreshLayoutS.setEnabled(false);
         if (BuildConfig.DEBUG) {
@@ -671,7 +661,7 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
         }
         saveArticleProgress();
         articleNo = articleNo - 1;
-        initSelectedPage(articleNo);
+        initSelectedArticle(articleNo);
     }
 
     public void onRightBack() {
@@ -681,36 +671,32 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
         }
         saveArticleProgress();
         articleNo = articleNo + 1;
-        initSelectedPage(articleNo);
+        initSelectedArticle(articleNo);
     }
 
-    public void initSelectedPage(int position) {
+    public void initSelectedArticle(int position) {
         swipeRefreshLayoutS.setRefreshing(false);
-        reInitSelectedArticle(position);
-        initSelectedWebViewContent();
-    }
-
-
-    public void reInitSelectedArticle(int position) {
         // 取消之前那篇文章的图片下载(但是如果回到之前那篇文章，怎么恢复下载呢？)
         OkGo.cancelTag(imgHttpClient, articleId);
         articleNo = position;
+
         if (App.i().articlesAdapter != null && position < App.i().articlesAdapter.getItemCount()) {
             selectedArticle = App.i().articlesAdapter.getItem(position);
-//            selectedArticle = CoreDB.i().articleDao().getById(App.i().getUser().getId(),App.i().articlesAdapter.getArticleId(position));
             articleId = selectedArticle.getId();
         } else {
             selectedArticle = CoreDB.i().articleDao().getById(App.i().getUser().getId(), articleId);
         }
+
         initIconState();
-        initFeedConfig();
+        initWebViewContent();
     }
+
 
     private int downX, downY;
 
-    // （webview在实例化后，可能还在渲染html，不一定能执行js）
+    // WebView在实例化后，可能还在渲染html，不一定能执行js
     @SuppressLint("ClickableViewAccessibility")
-    private void initSelectedWebViewContent() {
+    private void initWebViewContent() {
         if (selectedWebView == null) {
             selectedWebView = new WebViewS(new MutableContextWrapper(App.i()));
             entryView.removeAllViews();
@@ -761,7 +747,7 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
                 selectedWebView.loadUrl(selectedArticle.getLink());
                 // 判断是要在加载的时候获取还是同步的时候获取
             } else {
-//                KLog.e("加载文章：" + selectedArticle.getTitle());
+                //KLog.e("加载文章：" + selectedArticle.getTitle());
                 selectedWebView.loadData(ArticleUtil.getPageForDisplay(selectedArticle));
             }
         } else {
@@ -916,6 +902,18 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
             saveView.setText(getString(R.string.font_unsave));
         } else {
             saveView.setText(getString(R.string.font_saved));
+        }
+        readabilityView.setText(R.string.font_article_original);
+
+
+        final Feed feed = CoreDB.i().feedDao().getById(App.i().getUser().getId(), selectedArticle.getFeedId());
+        //final View feedConfigView = findViewById(R.id.article_feed_config);
+        if( feedMenuItem != null ){
+            if (feed != null) {
+                feedMenuItem.setVisible(true);
+            }else {
+                feedMenuItem.setVisible(false);
+            }
         }
     }
 
@@ -1278,7 +1276,7 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
             ToastUtils.show(getString(R.string.cancel_readability));
             selectedWebView.loadData(ArticleUtil.getPageForDisplay(selectedArticle));
             CoreDB.i().articleDao().update(selectedArticle);
-            ((IconFontView)view).setText(getString(R.string.font_article_original));
+            readabilityView.setText(getString(R.string.font_article_original));
             optimizedArticle = null;
         }else {
             ToastUtils.show(getString(R.string.get_readability_ing));
@@ -1316,94 +1314,12 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
                             }
                             swipeRefreshLayoutS.setRefreshing(false);
                             ToastUtils.show(getString(R.string.get_readability_success));
-                            ((IconFontView)view).setText(getString(R.string.font_article_readability));
+                            readabilityView.setText(getString(R.string.font_article_readability));
                             selectedWebView.loadData(ArticleUtil.getPageForDisplay(optimizedArticle));
                         }
                     });
                 }
             });
-        }
-    }
-
-    public void onReadabilityClick() {
-        saveArticleProgress();
-        if (selectedWebView.isReadability()) {
-            ToastUtils.show(getString(R.string.cancel_readability));
-            selectedWebView.loadData(ArticleUtil.getPageForDisplay(selectedArticle));
-            selectedWebView.setReadability(false);
-            return;
-        }
-
-        swipeRefreshLayoutS.setRefreshing(true);
-
-        ToastUtils.show(getString(R.string.get_readability_ing));
-
-        okhttp3.Request request = new okhttp3.Request.Builder().url(selectedArticle.getLink()).build();
-        Call call = HttpClientManager.i().simpleClient().newCall(request);
-        call.enqueue(new Callback() {
-            @Override
-            public void onFailure(@NotNull Call call, @NotNull IOException e) {
-                articleHandler.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        if (swipeRefreshLayoutS != null) {
-                            swipeRefreshLayoutS.setRefreshing(false);
-                            ToastUtils.show(getString(R.string.get_readability_failure));
-                        }
-                    }
-                });
-            }
-
-
-            // 这是因为OkHttp对于异步的处理仅仅是开启了一个线程，并且在线程中处理响应，所以不能再其中操作UI。
-            // OkHttp是一个面向于Java应用而不是特定平台(Android)的框架，那么它就无法在其中使用Android独有的Handler机制。
-            @Override
-            public void onResponse(@NotNull Call call, @NotNull okhttp3.Response response) throws IOException {
-                if (!response.isSuccessful()) {
-                    if (swipeRefreshLayoutS != null) {
-                        swipeRefreshLayoutS.setRefreshing(false);
-                    }
-                    return;
-                }
-
-                Article optimizedArticle = ArticleUtil.getReadabilityArticle(selectedArticle,response.body());
-
-                articleHandler.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        if (swipeRefreshLayoutS != null) {
-                            swipeRefreshLayoutS.setRefreshing(false);
-                        }
-                        if (selectedWebView == null) {
-                            return;
-                        }
-
-                        selectedWebView.loadData(ArticleUtil.getPageForDisplay(optimizedArticle));
-                        ToastUtils.show(getString(R.string.get_readability_success));
-                        selectedWebView.setReadability(true);
-
-                        SnackbarUtil.Long(swipeRefreshLayoutS, bottomBar, getString(R.string.save_readability_content))
-                                .setAction(getString(R.string.agree), new View.OnClickListener() {
-                                    @Override
-                                    public void onClick(View v) {
-                                        CoreDB.i().articleDao().update(optimizedArticle);
-                                    }
-                                }).show();
-                    }
-                });
-            }
-        });
-    }
-
-    private void initFeedConfig() {
-        final Feed feed = CoreDB.i().feedDao().getById(App.i().getUser().getId(), selectedArticle.getFeedId());
-        //final View feedConfigView = findViewById(R.id.article_feed_config);
-        if( feedMenuItem != null ){
-            if (feed != null) {
-                feedMenuItem.setVisible(true);
-            }else {
-                feedMenuItem.setVisible(false);
-            }
         }
     }
 

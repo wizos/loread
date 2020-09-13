@@ -21,5 +21,5 @@ public class Contract {
 
     public static final String isPortrait = "isPortrait";
     // ACCOUNT_TYPE用于我们当前APP获取系统帐户的唯一标识，这个在account_preferences.xml中有，两处的声明必须是一致
-    // public static final String ACCOUNT_TYPE = "me.wizos.loreadx";
+    // public static final String ACCOUNT_TYPE = "me.wizos.loread";
 }
