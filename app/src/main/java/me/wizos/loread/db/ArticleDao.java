@@ -151,9 +151,21 @@ public interface ArticleDao {
 
     @Query("SELECT * FROM article " +
             "WHERE uid = :uid " +
-            "AND title LIKE :keyword " +
+            "AND title LIKE '%' || :keyword || '%' " +
+            "ORDER BY crawlDate DESC,pubDate DESC")
+    DataSource.Factory<Integer,Article> getAllByKeyword2(String uid, String keyword);
+
+    @Query("SELECT * FROM (SELECT * FROM article WHERE uid = :uid AND title LIKE '%' || :keyword || '%' " +
+            "UNION " +
+            "SELECT article.* FROM article JOIN articlefts ON article.uid == articleFts.uid AND article.id == articleFts.id WHERE article.uid = :uid AND articlefts.content MATCH :keyword) " +
             "ORDER BY crawlDate DESC,pubDate DESC")
     DataSource.Factory<Integer,Article> getAllByKeyword(String uid, String keyword);
+
+    // 由于 FTS4 的分词器对中文并不友好，有些不能正确分词，导致无法匹配出来（例如罗永浩），所以 title 部分采用关键字匹配，content 部分才使用全文搜索
+    // https://stackoverflow.com/questions/31891456/sqlite-fts-using-or-between-match-operators
+    // https://stackoverflow.com/questions/4057254/how-do-you-match-multiple-column-in-a-table-with-sqlite-fts3
+    @Query("SELECT * FROM article WHERE uid = :uid AND title LIKE '%' || :text || '%' UNION SELECT article.* FROM article JOIN articlefts ON article.uid == articleFts.uid AND article.id == articleFts.id WHERE article.uid = :uid AND articlefts.content MATCH :text" )
+    List<Article> search(String uid, String text);
 
 //    @Query("DELETE FROM article WHERE uid = :uid AND pubDate < :timeMillis")
 //    void clearPubDate(String uid,long timeMillis);

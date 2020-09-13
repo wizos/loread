@@ -132,7 +132,7 @@ public class ArticleViewModel extends ViewModel {
 
     public LiveData<PagedList<Article>> getAllByKeyword(String uid, String keyword){
         // setPageSize 指定每次分页加载的条目数量
-        articles = new LivePagedListBuilder<>(CoreDB.i().articleDao().getAllByKeyword(uid,"%" + keyword + "%"), new PagedList.Config.Builder().setPageSize(30).setInitialLoadSizeHint(30).setPrefetchDistance(15).build()).build();
+        articles = new LivePagedListBuilder<>(CoreDB.i().articleDao().getAllByKeyword(uid,keyword), new PagedList.Config.Builder().setPageSize(30).setInitialLoadSizeHint(30).setPrefetchDistance(15).build()).build();
         return articles;
     }
 

@@ -72,59 +72,59 @@
 
     <TextView
         android:layout_width="match_parent"
-        android:layout_height="50dp"
-        android:padding="10dp"
         android:onClick="onClickClearHtmlDir"
         android:gravity="center_vertical"
         android:layout_gravity="center_vertical"
+        android:layout_height="30dp"
         style="@style/SettingItem"
+        android:padding="0dp"
         android:text="清理因故障未被删除的缓存文件"/>
 
     <TextView
         android:layout_width="match_parent"
-        android:layout_height="50dp"
-        android:padding="10dp"
         android:onClick="onClickArrangeCrawlDateArticle"
         android:gravity="center_vertical"
         android:layout_gravity="center_vertical"
+        android:layout_height="30dp"
         style="@style/SettingItem"
+        android:padding="0dp"
         android:text="整理文章的爬取时间为发布时间"/>
 
     <TextView
         android:layout_width="match_parent"
-        android:layout_height="50dp"
-        android:padding="10dp"
+        android:layout_height="30dp"
+        style="@style/SettingItem"
+        android:padding="0dp"
         android:onClick="onClickGenTags"
         android:gravity="center_vertical"
         android:layout_gravity="center_vertical"
-        style="@style/SettingItem"
         android:text="生成 Tag"/>
     <TextView
         android:layout_width="match_parent"
-        android:layout_height="50dp"
-        android:padding="10dp"
+        android:layout_height="30dp"
+        style="@style/SettingItem"
+        android:padding="0dp"
         android:onClick="onClickClearTags"
         android:gravity="center_vertical"
         android:layout_gravity="center_vertical"
-        style="@style/SettingItem"
         android:text="删除所有 Tag"/>
     <TextView
         android:layout_width="match_parent"
-        android:layout_height="50dp"
-        android:padding="10dp"
+        android:layout_height="30dp"
+        style="@style/SettingItem"
+        android:padding="0dp"
         android:onClick="startSyncWorkManager"
         android:gravity="center_vertical"
         android:layout_gravity="center_vertical"
-        style="@style/SettingItem"
         android:text="开启 同步任务"/>
     <TextView
         android:layout_width="match_parent"
-        android:layout_height="50dp"
-        android:padding="10dp"
+        android:layout_height="30dp"
+        style="@style/SettingItem"
+        android:padding="0dp"
         android:onClick="stopWorkManager"
         android:gravity="center_vertical"
         android:layout_gravity="center_vertical"
-        style="@style/SettingItem"
         android:text="关闭 同步任务"/>
 
     <EditText
@@ -140,19 +140,27 @@
         android:text="打开相应 Activity"
         android:textAllCaps="false"
         android:onClick="openActivity"
-        android:layout_height="50dp"
-        android:padding="10dp"
+        android:layout_height="30dp"
+        style="@style/SettingItem"
+        android:padding="0dp"
         android:gravity="center_vertical"
-        android:layout_gravity="center_vertical"
-        style="@style/SettingItem"/>
+        android:layout_gravity="center_vertical"/>
     <TextView
         android:text="修改 Host"
         android:onClick="onClickEditHost"
-        android:layout_height="50dp"
-        android:padding="10dp"
+        android:layout_height="30dp"
+        style="@style/SettingItem"
+        android:padding="0dp"
         android:gravity="center_vertical"
-        android:layout_gravity="center_vertical"
-        style="@style/SettingItem"/>
+        android:layout_gravity="center_vertical"/>
+    <TextView
+        android:text="全文搜索"
+        android:onClick="onClickSearch"
+        android:layout_height="30dp"
+        style="@style/SettingItem"
+        android:padding="0dp"
+        android:gravity="center_vertical"
+        android:layout_gravity="center_vertical"/>
 
     <ScrollView
         android:layout_width="match_parent"
@@ -166,11 +174,11 @@
                 android:text="根据action处理文章"
                 android:textAllCaps="false"
                 android:onClick="actionArticle"
-                android:layout_height="50dp"
-                android:padding="10dp"
+                android:layout_height="30dp"
+                style="@style/SettingItem"
+                android:padding="0dp"
                 android:gravity="center_vertical"
-                android:layout_gravity="center_vertical"
-                style="@style/SettingItem"/>
+                android:layout_gravity="center_vertical"/>
         </LinearLayout>
     </ScrollView>
 </LinearLayout>

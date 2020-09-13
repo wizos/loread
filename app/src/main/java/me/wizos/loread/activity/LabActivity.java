@@ -282,6 +282,22 @@ public class LabActivity extends AppCompatActivity {
         CoreDB.i().userDao().insert(user);
     }
 
+    public void onClickSearch(View view) {
+        EditText editText = findViewById(R.id.lab_enter_edittext);
+        String text = editText.getText().toString();
+        if(StringUtils.isEmpty(text)){
+            ToastUtils.show("请输入关键词");
+            return;
+        }
+
+
+        List<Article> articles = CoreDB.i().articleDao().search(App.i().getUser().getId(), text);
+        if( articles!=null){
+            KLog.e("搜索结果1：" + articles.size());
+            KLog.e("搜索结果1：" + articles);
+        }
+    }
+
     public void actionArticle(View view){
         User user = App.i().getUser();
         if(user==null){

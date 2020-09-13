@@ -13,8 +13,11 @@ android {
         ndk {
             abiFilters 'armeabi-v7a', 'arm64-v8a'
         }
-        // 解决 Error:Execution failed for task ‘:app:javaPreCompileDebug 问题
-        javaCompileOptions { annotationProcessorOptions { includeCompileClasspath = true } }
+        javaCompileOptions {
+            annotationProcessorOptions {
+                includeCompileClasspath = true // 解决 Error:Execution failed for task ‘:app:javaPreCompileDebug 问题
+            }
+        }
     }
     buildTypes {
         release {

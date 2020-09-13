@@ -24,7 +24,7 @@ import me.wizos.loread.bean.feedly.input.EditFeed;
  * 该类需要继承自RoomDatabase，在类中，通过Room.databaseBuilder()结合单例设计模式，完成数据库的创建工作。
  */
 @Database(
-        entities = {User.class,Article.class,Feed.class,Category.class, FeedCategory.class, Tag.class, ArticleTag.class},
+        entities = {User.class,Article.class,Feed.class,Category.class, FeedCategory.class, Tag.class, ArticleTag.class, ArticleFts.class},
         views = {FeedView.class,CategoryView.class},
         version = 1,
         exportSchema = false
@@ -46,7 +46,8 @@ public abstract class CoreDB extends RoomDatabase {
                                     createTriggers(db);
                                 }
                             })
-//                            .addMigrations(MIGRATION_1_2)
+                            //.addMigrations(MIGRATION_1_2)
+                            .addMigrations()
                             .allowMainThreadQueries()
                             .build();
                 }
@@ -60,15 +61,6 @@ public abstract class CoreDB extends RoomDatabase {
         }
         return databaseInstance;
     }
-//
-//    static final Migration MIGRATION_1_2 = new Migration(1, 2) {
-//        @Override
-//        public void migrate(SupportSQLiteDatabase database) {
-//            //因为修改了视图所以先删除老的视图
-////            database.execSQL("drop view FeedView");
-////            database.execSQL("drop view CategoryView;");
-//        }
-//    };
 
     /**
      * 创建触发器
@@ -308,7 +300,6 @@ public abstract class CoreDB extends RoomDatabase {
     public abstract FeedDao feedDao();
     public abstract CategoryDao categoryDao();
     public abstract FeedCategoryDao feedCategoryDao();
-    //public abstract ArticleFtsDao articleFtsDao();
 
     public abstract TagDao tagDao();
     public abstract ArticleTagDao articleTagDao();
