@@ -135,8 +135,8 @@ public class LongClickPopWindow extends PopupWindow {
                                 LongClickPopWindow.this.dismiss();
                                 Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(result.getExtra()));
                                 // 每次都要选择打开方式
-                                context.startActivity(Intent.createChooser(intent, context.getString(R.string.open_mode)));
                                 //context.startActivity(intent);
+                                context.startActivity(Intent.createChooser(intent, context.getString(R.string.open_by_outer)));
                             }
                         });
 

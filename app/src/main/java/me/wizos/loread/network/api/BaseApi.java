@@ -174,7 +174,7 @@ public abstract class BaseApi<T, E> {
             tag.setId(title);
             tag.setTitle(title);
             tags.add(tag);
-            KLog.e("设置 Tag 数据：" + tag);
+            //KLog.e("设置 Tag 数据：" + tag);
         }
         CoreDB.i().tagDao().insert(tags);
         CoreDB.i().articleTagDao().insert(articleTags);

@@ -3,6 +3,7 @@ package me.wizos.loread.adapter;
 import android.content.Context;
 import android.text.Html;
 import android.text.TextUtils;
+import android.util.ArrayMap;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -10,6 +11,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.paging.PagedList;
 import androidx.paging.PagedListAdapter;
 import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.RecyclerView;
@@ -27,6 +29,7 @@ import me.wizos.loread.R;
 import me.wizos.loread.db.Article;
 import me.wizos.loread.db.CoreDB;
 import me.wizos.loread.db.Feed;
+import me.wizos.loread.utils.StringUtils;
 import me.wizos.loread.utils.TimeUtil;
 import me.wizos.loread.view.IconFontView;
 
@@ -58,8 +61,7 @@ public class ArticlePagedListAdapter extends PagedListAdapter<Article, ArticlePa
         Article article = getItem(position);
         if (article != null) {
             holder.bindTo(article);
-        }
-        else {
+        } else {
             // Null defines a placeholder item - PagedListAdapter automatically invalidates this row when the actual object is loaded from the database.
             holder.placeholder();
         }
@@ -188,43 +190,60 @@ public class ArticlePagedListAdapter extends PagedListAdapter<Article, ArticlePa
         }
     }
 
+    public Article get(int position){
+        String articleId = articleMap.get(position);
+        if(StringUtils.isEmpty(articleId)){
+            int lastPosition = 0;
+            if( getCurrentList()!=null ){
+                lastPosition = (int)getCurrentList().getLastKey();
+            }
+            getItem(position);
+            getItem(lastPosition);
+            articleId = articleMap.get(position);
+        }
+        if(StringUtils.isEmpty(articleId)){
+            return null;
+        }
+        return CoreDB.i().articleDao().getById(App.i().getUser().getId(), articleId);
+    }
+    private ArrayMap<Integer,String> articleMap = new ArrayMap<>();
+
+    public void init(){
+        articleMap = new ArrayMap<>();
+    }
     /**
      * 之所以会产生“更新页面最后几项而下一页前几项会跳动”，是因为：
      * 更新页面最后几项时，使用了getItem来获取，而在getItem的默认实现中，会将getItem不为null标识为PagedList的LastKey（需要加载的最后一项）。
      * 但是实际上被修改的项不是视图中的最后一项，所以视图中下一页的前几项会需要重新加载，进而走到onBindViewHolder的getItem。
      * 又因为这几项没有提前被加载到内存中，所以得到的是null，又触发了更新为占位符的逻辑，等到数据加载完了重新渲染时，就产生了跳动的现象。
      */
-    private int lastPos = 0;
+    //private int lastPos = 0;
     @Override
     public Article getItem(int position) {
-//        return super.getItem(position);
+        //return super.getItem(position);
         Article article = super.getItem(position);
-        if(position < lastPos && lastPos < getItemCount() ){
-            super.getItem(lastPos);
-        }else {
-            lastPos = position;
+        if(article!=null){
+            articleMap.put(position,article.getId());
         }
         //KLog.e("加载：" + position + " == " + lastPos  + " , " + getCurrentList().getLastKey()  + " == "+ getCurrentList().getLoadedCount() + " -- " + (article==null));
         return article;
     }
     public void setLastItem(int position){
-        lastPos = position;
-        super.getItem(position);
+        //lastPos = position;
+        //super.getItem(position);
     }
     public void setLastPos(int position){
-        lastPos = position;
+        //lastPos = position;
     }
-//    public void resetLastItem(int position){
-//        if( getItemCount() == 0){
-//            return;
-//        }
-//        if( position < getItemCount() && position >= 0){
-//            super.getItem(position);
-//        }
-//    }
-    public void load(int index){
-        if(getCurrentList() !=null && index < getCurrentList().size()){
-            getCurrentList().loadAround(index);
-        }
+
+    @Override
+    public void submitList(PagedList<Article> pagedList) {
+        //articleMap = new ArrayMap<>();
+        super.submitList(pagedList);
     }
+    //public void load(int index){
+    //    if(getCurrentList() !=null && index < getCurrentList().size()){
+    //        getCurrentList().loadAround(index);
+    //    }
+    //}
 }

@@ -90,7 +90,7 @@ public class SettingActivity extends BaseActivity {
     }
 
     private void initView() {
-        SwitchButton downImgWifi, sysBrowserOpenLink, autoToggleTheme;
+        SwitchButton downImgWifi, openLinkMode, autoToggleTheme;
 //        autoSyncSB = findViewById(R.id.setting_auto_sync_sb);
 //        autoSyncOnWifi.findViewById(R.id.setting_auto_sync_on_wifi_sb);
 //        autoSyncFrequency.findViewById(R.id.setting_auto_sync_on_wifi_sb);
@@ -119,8 +119,8 @@ public class SettingActivity extends BaseActivity {
         } else {
             autoSyncFrequencySummary.setText(getResources().getString(R.string.xx_minute, autoSyncFrequency + ""));
         }
-        sysBrowserOpenLink = findViewById(R.id.setting_link_open_mode_sb);
-        sysBrowserOpenLink.setChecked(App.i().getUser().isOpenLinkBySysBrowser());
+        openLinkMode = findViewById(R.id.setting_link_open_mode_sb);
+        openLinkMode.setChecked(App.i().getUser().isOpenLinkBySysBrowser());
 
         autoToggleTheme = findViewById(R.id.setting_auto_toggle_theme_sb);
         autoToggleTheme.setChecked(App.i().getUser().isAutoToggleTheme());

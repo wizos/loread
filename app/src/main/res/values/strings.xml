@@ -147,7 +147,7 @@
 
     <string name="other">Other</string>
     <!--操作-->
-    <string name="open_link_by_system_browser">Open link by system browser</string>
+    <string name="open_link_by_builtin_browser">Open link by built-in browser</string>
     <!--缓存-->
     <string name="setting_clear_day_title">Retention period of read articles</string>
     <!--<struserNamename="setting_clear_day_dialog_title">选择保留最近多少天的文章呢？</string>-->
@@ -220,7 +220,7 @@
 
     <string name="share_link">Copy link</string>
     <string name="copy_link">Share link</string>
-    <string name="open_mode">Open mode</string>
+    <string name="open_by_outer">Open by outer</string>
     <string name="copy_success">Copy succeeded</string>
 
     <string name="please_input_keyword">please enter keyword</string>

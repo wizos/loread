@@ -112,23 +112,6 @@ public class ArticleUtil {
             title = App.i().getString(R.string.no_title);
         }
 
-//        String readabilityButton = "";
-//        String displayMode;
-//        if (feed != null) {
-//            displayMode = TestConfig.i().getDisplayMode(feed.getId());
-//        } else {
-//            displayMode = App.DISPLAY_RSS;
-//        }
-
-        // 默认展示rss时，提示“获取全文”
-        // 默认展示Readability，提示“本文已自动/手动排版，如有问题点击查看原文、修复规则”
-//        if (StringUtils.isEmpty(displayMode) || !App.DISPLAY_LINK.equals(displayMode)) {
-//            if (!App.DISPLAY_READABILITY.equals(referer)) {
-//                readabilityButton = "<br><br><a id='readability-button' onclick='" + ArticleBridge.TAG + ".readability()'>获取全文</a>";
-//            } else {
-//                readabilityButton = "<br><br><a id='readability-button' onclick='" + ArticleBridge.TAG + ".readability()'>恢复RSS内容</a>";
-//            }
-//        }
         return "<!DOCTYPE html><html><head>" +
                 "<meta charset='UTF-8'>" +
                 "<meta name='referrer' content='origin'>" +
@@ -144,9 +127,8 @@ public class ArticleUtil {
                 "<p id='author'>" + author + "</p>" +
                 "<p id='pubDate'>" + TimeUtil.format(article.getPubDate(), "yyyy-MM-dd HH:mm") + "</p>" +
                 "</header>" +
-//                "<hr id=\"hr\">" +
+                //"<hr id=\"hr\">" +
                 "<section id='content'>" + content +
-//                readabilityButton +
                 "</section>" +
                 "</article>" +
                 "<script src='file:///android_asset/js/zepto.min.js'></script>" + // defer
@@ -167,12 +149,15 @@ public class ArticleUtil {
         html = pattern.matcher(html).replaceAll(". $1");
 
         pattern = Pattern.compile("<img.*?>", Pattern.CASE_INSENSITIVE);
-        html = pattern.matcher(html).replaceAll(App.i().getString(R.string.summary_image));
+        html = pattern.matcher(html).replaceAll(App.i().getString(R.string.image));
         pattern = Pattern.compile("<(audio).*?>.*?</\\1>", Pattern.CASE_INSENSITIVE);
-        html = pattern.matcher(html).replaceAll(App.i().getString(R.string.summary_audio));
+        html = pattern.matcher(html).replaceAll(App.i().getString(R.string.audio));
         pattern = Pattern.compile("<(video).*?>.*?</\\1>", Pattern.CASE_INSENSITIVE);
-        html = pattern.matcher(html).replaceAll(App.i().getString(R.string.summary_video));
-
+        html = pattern.matcher(html).replaceAll(App.i().getString(R.string.video));
+        pattern = Pattern.compile("<(iframe).*?>.*?</\\1>", Pattern.CASE_INSENSITIVE);
+        html = pattern.matcher(html).replaceAll(App.i().getString(R.string.frame));
+        pattern = Pattern.compile("<(embed).*?>.*?</\\1>", Pattern.CASE_INSENSITIVE);
+        html = pattern.matcher(html).replaceAll(App.i().getString(R.string.frame));
         html = Jsoup.parse(html).text();
 
         // 将网址替换为
@@ -323,6 +308,10 @@ public class ArticleUtil {
         documentBody.getElementsByTag("script").remove();
         // 去掉style标签
         documentBody.getElementsByTag("style").remove();
+
+        // 改名
+        //documentBody.getElementsByTag("texteara").tagName();
+
         // tabindex属性，会导致图片有边框
         documentBody.removeAttr("tabindex");
         // video的controlslist属性可能会被配置为禁用下载/全屏，所以去掉
@@ -338,6 +327,7 @@ public class ArticleUtil {
 
         // 将 href 属性为空的 a 标签 unwrap
         documentBody.select("[href=''],a:not([href])").unwrap();
+
 
         // 将 noscript 标签 unwrap
         documentBody.getElementsByTag("noscript").unwrap();
@@ -440,6 +430,9 @@ public class ArticleUtil {
             element.attr("href", element.attr("abs:href"));
         }
 
+
+        // 去掉空元素
+        //documentBody.select("div:empty, p:empty, p:empty").remove();
         return documentBody.html().trim();
     }
 
@@ -615,23 +608,21 @@ public class ArticleUtil {
         String content =  ExtractorUtil.getContent(article.getLink(), doc);
         content = ArticleUtil.getOptimizedContent(article.getLink(), content);
         //KLog.e("内容B：" + content);
-        Article newArticle = (Article)article.clone();
-        newArticle.setContent(content);
+        //Article newArticle = (Article)article.clone();
+        article.setContent(content);
 
         String summary = ArticleUtil.getOptimizedSummary(content);
-        newArticle.setSummary(summary);
+        article.setSummary(summary);
 
         String coverUrl = ArticleUtil.getCoverUrl(article.getLink(), content);
 
         if(!StringUtils.isEmpty(coverUrl)){
-            newArticle.setImage(coverUrl);
+            article.setImage(coverUrl);
         }else if( !StringUtils.isEmpty(article.getImage()) ){
-            newArticle.setImage(null);
+            article.setImage(null);
         }
-        return newArticle;
+        return article;
     }
-
-
 
 
 //    public static void autoSetArticleTags(Article article){

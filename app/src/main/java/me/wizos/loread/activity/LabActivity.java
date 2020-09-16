@@ -6,6 +6,7 @@ import android.content.pm.ResolveInfo;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Parcelable;
 import android.util.ArrayMap;
 import android.view.View;
 import android.widget.EditText;
@@ -178,18 +179,18 @@ public class LabActivity extends AppCompatActivity {
 
     public void stopWorkManager(View view) {
         ToastUtils.show("取消 WorkManager");
-        WorkManager.getInstance(this).cancelAllWork();
+        WorkManager.getInstance(this).cancelAllWorkByTag(SyncWorker.TAG);
     }
 
 
-    public void openActivity(View view){
+    public void openActivity2(View view){
         EditText editText = findViewById(R.id.lab_enter_edittext);
         String url = editText.getText().toString();
         KLog.e( "获取的url：" + url );
         int enterSize = getMatchActivitiesSize(url);
         int wizosSize = getMatchActivitiesSize("https://wizos.me");
         Intent intent;
-        if( !App.i().getUser().isOpenLinkBySysBrowser() && (url.startsWith(SCHEMA_HTTP) || url.startsWith(SCHEMA_HTTPS)) && enterSize == wizosSize){
+        if( App.i().getUser().isOpenLinkBySysBrowser() && (url.startsWith(SCHEMA_HTTP) || url.startsWith(SCHEMA_HTTPS)) && enterSize == wizosSize){
             intent = new Intent(LabActivity.this, WebActivity.class);
             intent.setData(Uri.parse(url));
             intent.putExtra("theme", App.i().getUser().getThemeMode());
@@ -199,6 +200,122 @@ public class LabActivity extends AppCompatActivity {
         startActivity(intent);
         overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
     }
+
+    public void openActivity1(View view) { // openUrl
+        EditText editText = findViewById(R.id.lab_enter_edittext);
+        String url = editText.getText().toString();
+        if(StringUtils.isEmpty(url)){
+            url = "https://blog.wizos.me";
+        }
+        KLog.e( "获取的url：" + url );
+        Intent intent;
+        // 使用内置浏览器
+        if( App.i().getUser().isOpenLinkBySysBrowser() && (url.startsWith(SCHEMA_HTTP) || url.startsWith(SCHEMA_HTTPS))){
+            intent = new Intent(LabActivity.this, WebActivity.class);
+            intent.setData(Uri.parse(url));
+            //指定类打开
+            //intent.setClassName("com.android.browser", "com.android.browser.BrowserActivity");
+            intent.putExtra("theme", App.i().getUser().getThemeMode());
+        }else{
+            intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+            List<ResolveInfo> activities = getPackageManager().queryIntentActivities(intent, PackageManager.MATCH_DEFAULT_ONLY);
+            List<ResolveInfo> activitiesToHide = getPackageManager().queryIntentActivities(new Intent(Intent.ACTION_VIEW, Uri.parse("https://wizos.me")), PackageManager.MATCH_DEFAULT_ONLY);
+            KLog.e("数量：" + activities.size() +" , " + activitiesToHide.size());
+
+            if( activities.size() != activitiesToHide.size()){
+                HashSet<String> hideApp = new HashSet<>();
+                //hideApp.add("com.kingsoft.moffice_pro");
+                for (ResolveInfo currentInfo : activitiesToHide) {
+                    hideApp.add(currentInfo.activityInfo.packageName);
+                    KLog.e("内容1：" + currentInfo.activityInfo.packageName);
+                }
+                ArrayList<Intent> targetIntents = new ArrayList<Intent>();
+                for (ResolveInfo currentInfo : activities) {
+                    String packageName = currentInfo.activityInfo.packageName;
+                    if (!hideApp.contains(packageName)) {
+                        Intent targetIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+                        targetIntent.setPackage(packageName);
+                        targetIntents.add(targetIntent);
+                    }
+                    KLog.e("内容2：" + packageName);
+                }
+                if(targetIntents.size() > 0) {
+                    intent = Intent.createChooser(targetIntents.remove(0),  getString(R.string.open_with));
+                    intent.putExtra(Intent.EXTRA_INITIAL_INTENTS, targetIntents.toArray(new Parcelable[] {}));
+                } else {
+                    ToastUtils.show("No app found");
+                }
+            }else {
+                intent = new Intent(LabActivity.this, WebActivity.class);
+                intent.setData(Uri.parse(url));
+                intent.putExtra("theme", App.i().getUser().getThemeMode());
+            }
+        }
+        startActivity(intent);
+        overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
+    }
+
+    public void openActivity(View view){
+        EditText editText = findViewById(R.id.lab_enter_edittext);
+        String url = editText.getText().toString();
+        if(StringUtils.isEmpty(url)){
+            url = "https://blog.wizos.me";
+        }
+        KLog.e( "获取的url：" + url );
+        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+        List<ResolveInfo> activitiesToHide = getPackageManager().queryIntentActivities(intent, PackageManager.MATCH_DEFAULT_ONLY);
+        for (ResolveInfo currentInfo : activitiesToHide) {
+            KLog.e("【MATCH_DEFAULT_ONLY】" + currentInfo.activityInfo.packageName);
+        }
+
+        activitiesToHide = getPackageManager().queryIntentActivities(intent, PackageManager.GET_DISABLED_UNTIL_USED_COMPONENTS);
+        for (ResolveInfo currentInfo : activitiesToHide) {
+            KLog.e("【GET_DISABLED_UNTIL_USED_COMPONENTS】" + currentInfo.activityInfo.packageName);
+        }
+
+        activitiesToHide = getPackageManager().queryIntentActivities(intent, PackageManager.GET_RESOLVED_FILTER);
+        for (ResolveInfo currentInfo : activitiesToHide) {
+            KLog.e("【GET_RESOLVED_FILTER】" + currentInfo.activityInfo.packageName);
+        }
+
+
+        activitiesToHide = getPackageManager().queryIntentActivities(intent, PackageManager.GET_DISABLED_UNTIL_USED_COMPONENTS);
+        for (ResolveInfo currentInfo : activitiesToHide) {
+            KLog.e("【GET_DISABLED_UNTIL_USED_COMPONENTS】" + currentInfo.activityInfo.packageName);
+        }
+
+        //activitiesToHide = getPackageManager().queryIntentActivities(intent, PackageManager.MATCH_ALL);
+        //for (ResolveInfo currentInfo : activitiesToHide) {
+        //    KLog.e("【MATCH_ALL】" + currentInfo.activityInfo.packageName);
+        //}
+        //
+        //
+        //activitiesToHide = getPackageManager().queryIntentActivities(intent, PackageManager.MATCH_DIRECT_BOOT_UNAWARE);
+        //for (ResolveInfo currentInfo : activitiesToHide) {
+        //    KLog.e("【MATCH_DIRECT_BOOT_UNAWARE】" + currentInfo.activityInfo.packageName);
+        //}
+        //
+        //
+        //activitiesToHide = getPackageManager().queryIntentActivities(intent, PackageManager.MATCH_DIRECT_BOOT_AWARE);
+        //for (ResolveInfo currentInfo : activitiesToHide) {
+        //    KLog.e("【MATCH_DIRECT_BOOT_AWARE】" + currentInfo.activityInfo.packageName);
+        //}
+        //
+        //
+        //activitiesToHide = getPackageManager().queryIntentActivities(intent, PackageManager.MATCH_SYSTEM_ONLY);
+        //for (ResolveInfo currentInfo : activitiesToHide) {
+        //    KLog.e("【MATCH_SYSTEM_ONLY】" + currentInfo.activityInfo.packageName);
+        //}
+        //
+        //
+        //activitiesToHide = getPackageManager().queryIntentActivities(intent, PackageManager.MATCH_DISABLED_UNTIL_USED_COMPONENTS);
+        //for (ResolveInfo currentInfo : activitiesToHide) {
+        //    KLog.e("【MATCH_DISABLED_UNTIL_USED_COMPONENTS】" + currentInfo.activityInfo.packageName);
+        //}
+
+    }
+
+
 
     private int getMatchActivitiesSize(String url){
         Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
@@ -294,7 +411,14 @@ public class LabActivity extends AppCompatActivity {
         List<Article> articles = CoreDB.i().articleDao().search(App.i().getUser().getId(), text);
         if( articles!=null){
             KLog.e("搜索结果1：" + articles.size());
-            KLog.e("搜索结果1：" + articles);
+            //KLog.e("搜索结果1：" + articles);
+        }
+
+
+        List<Article> articles2 = CoreDB.i().articleDao().search2(App.i().getUser().getId(), text);
+        if( articles2!=null){
+            KLog.e("搜索结果2：" + articles2.size());
+            //KLog.e("搜索结果2：" + articles2);
         }
     }
 

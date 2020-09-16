@@ -9,7 +9,6 @@ import androidx.work.WorkerParameters;
 import com.jeremyliao.liveeventbus.LiveEventBus;
 
 import me.wizos.loread.App;
-import me.wizos.loread.utils.NetworkUtil;
 
 public class SyncWorker extends Worker  {
     public final static String TAG = "SyncWorker";
@@ -20,15 +19,22 @@ public class SyncWorker extends Worker  {
         super(context, workerParams);
     }
 
+    private boolean running = false;
+
     @NonNull
     @Override
     public Result doWork() {
-        if(!App.i().getUser().isAutoSync() || (App.i().getUser().isAutoSyncOnlyWifi() && !NetworkUtil.isWiFiUsed()) ){
-            return Result.success();
+        //if(!App.i().getUser().isAutoSync() || (App.i().getUser().isAutoSyncOnlyWifi() && !NetworkUtil.isWiFiUsed()) ){
+        //    return Result.success();
+        //}
+        if(running){
+            return Result.failure();
         }
+        running = true;
         LiveEventBus.get(SyncWorker.SYNC_TASK_STATUS).post(true);
         App.i().getApi().sync();
         LiveEventBus.get(SyncWorker.SYNC_TASK_STATUS).post(false);
+        running = false;
         return Result.success();
     }
 

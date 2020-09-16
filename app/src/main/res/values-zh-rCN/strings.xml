@@ -146,7 +146,7 @@
 
     <string name="other">其他</string>
     <!--操作-->
-    <string name="open_link_by_system_browser">使用系统浏览器打开链接</string>
+    <string name="open_link_by_builtin_browser">仅用内置浏览器打开链接</string>
     <!--缓存-->
     <string name="setting_clear_day_title">已读文章保留期限</string>
     <string name="clear_article">清理文章</string>
@@ -218,7 +218,7 @@
 
     <string name="share_link">分享链接</string>
     <string name="copy_link">复制链接</string>
-    <string name="open_mode">打开方式</string>
+    <string name="open_by_outer">外部打开</string>
 
     <string name="copy_success">复制成功</string>
 
@@ -371,7 +371,7 @@
         通俗得说，RSS 是一种订阅资讯的方式。\n\n就像在微博上关注张三、在B站上关注李四，你可以在『RSS 阅读器』中添加对应的订阅网址来关注他们。\n\n由此可实现订阅微博、知乎、优酷、公众号、博客、论坛……</string>
     <string name="authorizing">授权中……</string>
 
-    <string name="open_with">选择打开方式</string>
+    <string name="open_with">打开方式</string>
 
     <string name="feed_desc">简介：</string>
     <string name="site_url">站点网址：</string>

@@ -8,6 +8,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.MutableContextWrapper;
 import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -16,6 +17,7 @@ import android.net.Uri;
 import android.net.http.SslError;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Parcelable;
 import android.text.InputType;
 import android.text.TextUtils;
 import android.view.KeyEvent;
@@ -61,6 +63,7 @@ import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -138,6 +141,7 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
     private RelativeLayout bottomBar;
     private VideoImpl video;
 
+    private Article oldArticle;
     private Article selectedArticle;
     private int articleNo;
     private String articleId;
@@ -542,17 +546,52 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
     @JavascriptInterface
     @Override
     public void openLink(String url) {
-        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+        Intent intent;
         // 使用内置浏览器
-        if( !App.i().getUser().isOpenLinkBySysBrowser() && (url.startsWith(SCHEMA_HTTP) || url.startsWith(SCHEMA_HTTPS)) && useInnerBrowser(intent) ){
+        if( App.i().getUser().isOpenLinkBySysBrowser() && (url.startsWith(SCHEMA_HTTP) || url.startsWith(SCHEMA_HTTPS))){
             intent = new Intent(ArticleActivity.this, WebActivity.class);
             intent.setData(Uri.parse(url));
             intent.putExtra("theme", App.i().getUser().getThemeMode());
+        }else{
+            intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+            List<ResolveInfo> activities = getPackageManager().queryIntentActivities(intent, PackageManager.MATCH_DEFAULT_ONLY);
+            List<ResolveInfo> activitiesToHide = getPackageManager().queryIntentActivities(new Intent(Intent.ACTION_VIEW, Uri.parse("https://wizos.me")), PackageManager.MATCH_DEFAULT_ONLY);
+            KLog.e("数量：" + activities.size() +" , " + activitiesToHide.size());
+
+            if( activities.size() != activitiesToHide.size()){
+                HashSet<String> hideApp = new HashSet<>();
+                hideApp.add("com.kingsoft.moffice_pro");
+                for (ResolveInfo currentInfo : activitiesToHide) {
+                    hideApp.add(currentInfo.activityInfo.packageName);
+                    KLog.e("内容1：" + currentInfo.activityInfo.packageName);
+                }
+                ArrayList<Intent> targetIntents = new ArrayList<Intent>();
+                for (ResolveInfo currentInfo : activities) {
+                    String packageName = currentInfo.activityInfo.packageName;
+                    if (!hideApp.contains(packageName)) {
+                        Intent targetIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+                        targetIntent.setPackage(packageName);
+                        targetIntents.add(targetIntent);
+                    }
+                    KLog.e("内容2：" + packageName);
+                }
+                if(targetIntents.size() > 0) {
+                    intent = Intent.createChooser(targetIntents.remove(0),  getString(R.string.open_with));
+                    intent.putExtra(Intent.EXTRA_INITIAL_INTENTS, targetIntents.toArray(new Parcelable[] {}));
+                } else {
+                    intent = new Intent(ArticleActivity.this, WebActivity.class);
+                    intent.setData(Uri.parse(url));
+                    intent.putExtra("theme", App.i().getUser().getThemeMode());
+                }
+            }else {
+                intent = new Intent(ArticleActivity.this, WebActivity.class);
+                intent.setData(Uri.parse(url));
+                intent.putExtra("theme", App.i().getUser().getThemeMode());
+            }
         }
-        //intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        //intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED );
         // 添加这一句表示对目标应用临时授权该Uri所代表的文件
         // intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        // intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED );
         startActivity(intent);
         overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
     }
@@ -563,6 +602,7 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
     private int getMatchActivitiesSize(Intent intent){
         return getPackageManager().queryIntentActivities(intent, PackageManager.MATCH_DEFAULT_ONLY).size();
     }
+
 
     @JavascriptInterface
     @Override
@@ -681,12 +721,10 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
         articleNo = position;
 
         if (App.i().articlesAdapter != null && position < App.i().articlesAdapter.getItemCount()) {
-            selectedArticle = App.i().articlesAdapter.getItem(position);
-            articleId = selectedArticle.getId();
-        } else {
-            selectedArticle = CoreDB.i().articleDao().getById(App.i().getUser().getId(), articleId);
+            articleId = App.i().articlesAdapter.get(position).getId();
         }
-
+        selectedArticle = CoreDB.i().articleDao().getById(App.i().getUser().getId(), articleId);
+        oldArticle = null;
         initIconState();
         initWebViewContent();
     }
@@ -918,7 +956,7 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
     }
 
 
-    public void onReadClick(View view) {
+    public void onClickReadIcon(View view) {
 //        KLog.e("loread", "被点击的是：" + selectedArticle.getTitle());
         if (selectedArticle.getReadStatus() == App.STATUS_READED) {
             readView.setText(getString(R.string.font_unread));
@@ -956,7 +994,6 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
 
         }
     }
-
 
     public void onClickStarIcon(View view) {
         String uid = App.i().getUser().getId();
@@ -1127,8 +1164,6 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
                 .show();
     }
 
-
-
 //    // 找出当前用户有的所有tags
 //    List<Tag> tags = CoreDB.i().tagDao().getAll(uid);
 //    // 找出当前用户该文章的tags
@@ -1175,7 +1210,6 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
 //                .show();
 //    }
 
-
     public void onClickSaveIcon(View view) {
         if (selectedArticle.getSaveStatus() == App.STATUS_NOT_FILED) {
             saveView.setText(getString(R.string.font_saved));
@@ -1191,7 +1225,6 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
         }
         CoreDB.i().articleDao().update(selectedArticle);
     }
-
 
     public void clearDirectory(String uid){
         SaveDirectory.i().setArticleDirectory(selectedArticle.getId(),null);
@@ -1233,7 +1266,7 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
 //                })
                 .show();
     }
-//
+
 //    public void newDirectory(String uid,@Nullable MaterialDialog lastDialog){
 //        new MaterialDialog.Builder(this)
 //                .title(R.string.new_directory)
@@ -1256,28 +1289,31 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
 //                .show();
 //    }
 
-    public void clickOpenOriginalArticle(View view) {
-        Intent intent = new Intent(ArticleActivity.this, WebActivity.class);
-        intent.setData(Uri.parse(selectedArticle.getLink()));
-        intent.putExtra("theme", App.i().getUser().getThemeMode());
-        startActivity(intent);
-        overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
+    public void openOriginalArticle(View view) {
+        //Intent intent = new Intent(ArticleActivity.this, WebActivity.class);
+        //intent.setData(Uri.parse(selectedArticle.getLink()));
+        //intent.putExtra("theme", App.i().getUser().getThemeMode());
+        //startActivity(intent);
+        //overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
+        openLink(selectedArticle.getLink());
     }
 
-    private Article optimizedArticle;
-    public void onReadabilityClick(View view) {
+    public void switchReadabilityArticle(View view) {
         if(swipeRefreshLayoutS.isRefreshing()){
             OkGo.cancelTag(HttpClientManager.i().simpleClient(),"Readability");
             swipeRefreshLayoutS.setRefreshing(false);
             return;
         }
         saveArticleProgress();
-        if(optimizedArticle != null){
+        if(oldArticle != null){
+            selectedArticle.setContent(oldArticle.getContent());
+            selectedArticle.setSummary(oldArticle.getSummary());
+            selectedArticle.setImage(oldArticle.getImage());
+            oldArticle = null;
             ToastUtils.show(getString(R.string.cancel_readability));
             selectedWebView.loadData(ArticleUtil.getPageForDisplay(selectedArticle));
             CoreDB.i().articleDao().update(selectedArticle);
             readabilityView.setText(getString(R.string.font_article_original));
-            optimizedArticle = null;
         }else {
             ToastUtils.show(getString(R.string.get_readability_ing));
             swipeRefreshLayoutS.setRefreshing(true);
@@ -1304,8 +1340,9 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
                 // OkHttp是一个面向于Java应用而不是特定平台(Android)的框架，那么它就无法在其中使用Android独有的Handler机制。
                 @Override
                 public void onResponse(@NotNull Call call, @NotNull okhttp3.Response response) throws IOException {
-                    optimizedArticle = ArticleUtil.getReadabilityArticle(selectedArticle,response.body());
-                    CoreDB.i().articleDao().update(optimizedArticle);
+                    oldArticle = (Article)selectedArticle.clone();
+                    selectedArticle = ArticleUtil.getReadabilityArticle(selectedArticle,response.body());
+                    CoreDB.i().articleDao().update(selectedArticle);
                     articleHandler.post(new Runnable() {
                         @Override
                         public void run() {
@@ -1315,7 +1352,7 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
                             swipeRefreshLayoutS.setRefreshing(false);
                             ToastUtils.show(getString(R.string.get_readability_success));
                             readabilityView.setText(getString(R.string.font_article_readability));
-                            selectedWebView.loadData(ArticleUtil.getPageForDisplay(optimizedArticle));
+                            selectedWebView.loadData(ArticleUtil.getPageForDisplay(selectedArticle));
                         }
                     });
                 }

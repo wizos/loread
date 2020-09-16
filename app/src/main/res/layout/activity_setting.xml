@@ -137,7 +137,7 @@
                 <TextView
                     android:id="@+id/setting_link_open_mode_title"
                     style="@style/SettingItemTitle2"
-                    android:text="@string/open_link_by_system_browser" />
+                    android:text="@string/open_link_by_builtin_browser" />
                 <com.kyleduo.switchbutton.SwitchButton
                     android:id="@+id/setting_link_open_mode_sb"
                     style="@style/SwitchButtonStyle"

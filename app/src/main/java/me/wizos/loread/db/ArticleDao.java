@@ -157,7 +157,7 @@ public interface ArticleDao {
 
     @Query("SELECT * FROM (SELECT * FROM article WHERE uid = :uid AND title LIKE '%' || :keyword || '%' " +
             "UNION " +
-            "SELECT article.* FROM article JOIN articlefts ON article.uid == articleFts.uid AND article.id == articleFts.id WHERE article.uid = :uid AND articlefts.content MATCH :keyword) " +
+            "SELECT article.* FROM article JOIN articlefts ON article.uid == articleFts.uid AND article.id == articleFts.id WHERE article.uid = :uid AND articlefts.content MATCH '*' ||:keyword|| '*') " +
             "ORDER BY crawlDate DESC,pubDate DESC")
     DataSource.Factory<Integer,Article> getAllByKeyword(String uid, String keyword);
 
@@ -167,30 +167,34 @@ public interface ArticleDao {
     @Query("SELECT * FROM article WHERE uid = :uid AND title LIKE '%' || :text || '%' UNION SELECT article.* FROM article JOIN articlefts ON article.uid == articleFts.uid AND article.id == articleFts.id WHERE article.uid = :uid AND articlefts.content MATCH :text" )
     List<Article> search(String uid, String text);
 
-//    @Query("DELETE FROM article WHERE uid = :uid AND pubDate < :timeMillis")
-//    void clearPubDate(String uid,long timeMillis);
+    @Query("SELECT * FROM article WHERE uid = :uid AND title LIKE '%' || :text || '%' UNION SELECT article.* FROM article JOIN articlefts ON article.uid == articleFts.uid AND article.id == articleFts.id WHERE article.uid = :uid AND articlefts.content MATCH '*' || :text || '*'" )
+    List<Article> search2(String uid, String text);
 
-//    @Query("SELECT * FROM article " +
-//            "WHERE uid = :uid " +
-//            "AND (article.readStatus = " + App.STATUS_UNREAD  + " OR article.readStatus = " + App.STATUS_UNREADING  + " OR article.starStatus = " + App.STATUS_STARED  + ") " +
-//            "ORDER BY crawlDate DESC,pubDate DESC")
-//    List<Article> getValuable(String uid);
 
-//    @Query("SELECT article.* FROM article " +
-//            "LEFT JOIN FeedCategory ON (article.uid = FeedCategory.uid AND article.feedId = FeedCategory.feedId)" +
-//            "WHERE article.uid = :uid " +
-//            "AND FeedCategory.categoryId is NULL " +
-//            "AND (article.readStatus = " + App.STATUS_UNREAD  + " OR article.readStatus = " + App.STATUS_UNREADING  + " OR article.starStatus = " + App.STATUS_STARED  + ") " +
-//            "ORDER BY crawlDate,pubDate DESC")
-//    Cursor getValuableByUnCategory(String uid);
-
-//    @Query("SELECT article.* FROM article " +
-//            "LEFT JOIN FeedCategory ON (article.uid = FeedCategory.uid AND article.feedId = FeedCategory.feedId)" +
-//            "WHERE article.uid = :uid " +
-//            "AND FeedCategory.categoryId = :categoryId " +
-//            "AND (article.readStatus = " + App.STATUS_UNREAD  + " OR article.readStatus = " + App.STATUS_UNREADING  + " OR article.starStatus = " + App.STATUS_STARED  + ") " +
-//            "ORDER BY crawlDate DESC,pubDate DESC")
-//    Cursor getValuableByCategoryId(String uid, String categoryId);
+    //@Query("DELETE FROM article WHERE uid = :uid AND pubDate < :timeMillis")
+    //void clearPubDate(String uid,long timeMillis);
+    //
+    //@Query("SELECT * FROM article " +
+    //        "WHERE uid = :uid " +
+    //        "AND (article.readStatus = " + App.STATUS_UNREAD  + " OR article.readStatus = " + App.STATUS_UNREADING  + " OR article.starStatus = " + App.STATUS_STARED  + ") " +
+    //        "ORDER BY crawlDate DESC,pubDate DESC")
+    //List<Article> getValuable(String uid);
+    //
+    //@Query("SELECT article.* FROM article " +
+    //        "LEFT JOIN FeedCategory ON (article.uid = FeedCategory.uid AND article.feedId = FeedCategory.feedId)" +
+    //        "WHERE article.uid = :uid " +
+    //        "AND FeedCategory.categoryId is NULL " +
+    //        "AND (article.readStatus = " + App.STATUS_UNREAD  + " OR article.readStatus = " + App.STATUS_UNREADING  + " OR article.starStatus = " + App.STATUS_STARED  + ") " +
+    //        "ORDER BY crawlDate,pubDate DESC")
+    //Cursor getValuableByUnCategory(String uid);
+    //
+    //@Query("SELECT article.* FROM article " +
+    //        "LEFT JOIN FeedCategory ON (article.uid = FeedCategory.uid AND article.feedId = FeedCategory.feedId)" +
+    //        "WHERE article.uid = :uid " +
+    //        "AND FeedCategory.categoryId = :categoryId " +
+    //        "AND (article.readStatus = " + App.STATUS_UNREAD  + " OR article.readStatus = " + App.STATUS_UNREADING  + " OR article.starStatus = " + App.STATUS_STARED  + ") " +
+    //        "ORDER BY crawlDate DESC,pubDate DESC")
+    //Cursor getValuableByCategoryId(String uid, String categoryId);
 
 
     @Query("SELECT * FROM article WHERE uid = :uid")

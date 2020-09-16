@@ -77,8 +77,8 @@ public class AudioService extends Service {
 
 //    @SuppressLint("SdCardPath")
     public void speak(){
-        Article article = App.i().articlesAdapter.getItem(articleNo);
-//        Article article = CoreDB.i().articleDao().getById(App.i().getUser().getId(),App.i().articlesAdapter.getArticleId(articleNo));
+        Article article = App.i().articlesAdapter.get(articleNo);
+
         KLog.e("准备播放" + article.getId() + " , " + utteranceId + " , " + textToSpeech.isSpeaking());
         if ( textToSpeech.isSpeaking() && article.getId().equalsIgnoreCase(utteranceId) ){
             return;

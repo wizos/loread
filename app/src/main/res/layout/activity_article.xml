@@ -127,12 +127,12 @@
                 android:id="@+id/article_bottombar_open_link"
                 style="@style/bottom_bar_iconfont"
                 android:text="@string/font_chrome"
-                android:onClick="clickOpenOriginalArticle" />
+                android:onClick="openOriginalArticle" />
             <me.wizos.loread.view.IconFontView
                 android:id="@+id/article_bottombar_readability"
                 style="@style/bottom_bar_iconfont"
                 android:text="@string/font_article_original"
-                android:onClick="onReadabilityClick" />
+                android:onClick="switchReadabilityArticle" />
             <me.wizos.loread.view.IconFontView
                 android:id="@+id/article_bottombar_star"
                 style="@style/bottom_bar_iconfont"
@@ -143,7 +143,7 @@
                 android:id="@+id/article_bottombar_read"
                 style="@style/bottom_bar_iconfont"
                 android:text="@string/font_readed"
-                android:onClick="onReadClick" />
+                android:onClick="onClickReadIcon" />
         </LinearLayout>
     </RelativeLayout>
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

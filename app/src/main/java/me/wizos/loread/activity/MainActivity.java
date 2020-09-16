@@ -138,31 +138,29 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
     }
 
     private void initWorkRequest(){
-//        Constraints.Builder builder = new Constraints.Builder();
-//        if(App.i().getUser().isAutoSync()){
-//            if( App.i().getUser().isAutoSyncOnlyWifi() ){
-//                builder.setRequiredNetworkType(NetworkType.UNMETERED);
-//            }else {
-//                builder.setRequiredNetworkType(NetworkType.CONNECTED);
-//            }
-//            PeriodicWorkRequest syncRequest = new PeriodicWorkRequest.Builder(SyncWorker.class, App.i().getUser().getAutoSyncFrequency(), TimeUnit.MINUTES)
-//                    .setConstraints(builder.build())
-//                    .addTag(SyncWorker.TAG)
-//                    .build();
-//            WorkManager.getInstance(this).enqueueUniquePeriodicWork(SyncWorker.TAG, ExistingPeriodicWorkPolicy.KEEP,syncRequest);
-//            KLog.i("SyncWorker Id: " + syncRequest.getId());
-//        }
-
-        Constraints.Builder builder = new Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED);
-        PeriodicWorkRequest syncRequest = new PeriodicWorkRequest.Builder(SyncWorker.class, App.i().getUser().getAutoSyncFrequency(), TimeUnit.MINUTES)
-                .setConstraints(builder.build())
-                .addTag(SyncWorker.TAG)
-                .build();
-        WorkManager.getInstance(this).enqueueUniquePeriodicWork(SyncWorker.TAG, ExistingPeriodicWorkPolicy.KEEP,syncRequest);
-        KLog.i("SyncWorker Id: " + syncRequest.getId());
-
+        Constraints.Builder builder = new Constraints.Builder();
         if(App.i().getUser().isAutoSync()){
+            if( App.i().getUser().isAutoSyncOnlyWifi() ){
+                builder.setRequiredNetworkType(NetworkType.UNMETERED);
+            }else {
+                builder.setRequiredNetworkType(NetworkType.CONNECTED);
+            }
+            PeriodicWorkRequest syncRequest = new PeriodicWorkRequest.Builder(SyncWorker.class, App.i().getUser().getAutoSyncFrequency(), TimeUnit.MINUTES)
+                    .setConstraints(builder.build())
+                    .addTag(SyncWorker.TAG)
+                    .build();
+            WorkManager.getInstance(this).enqueueUniquePeriodicWork(SyncWorker.TAG, ExistingPeriodicWorkPolicy.KEEP,syncRequest);
+            KLog.i("SyncWorker Id: " + syncRequest.getId());
         }
+
+        //Constraints.Builder builder = new Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED);
+        //PeriodicWorkRequest syncRequest = new PeriodicWorkRequest.Builder(SyncWorker.class, App.i().getUser().getAutoSyncFrequency(), TimeUnit.MINUTES)
+        //        .setConstraints(builder.build())
+        //        .addTag(SyncWorker.TAG)
+        //        .build();
+        //WorkManager.getInstance(this).enqueueUniquePeriodicWork(SyncWorker.TAG, ExistingPeriodicWorkPolicy.KEEP,syncRequest);
+        //KLog.i("SyncWorker Id: " + syncRequest.getId());
+
 
         LiveEventBus.get(SyncWorker.SYNC_TASK_STATUS,Boolean.class)
                 .observeSticky(this, new Observer<Boolean>() {
@@ -333,16 +331,19 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
             articleViewModel.articles.removeObservers(this);
             articleViewModel.articles = null;
         }
+        articlesAdapter.init();
         articleViewModel.getArticles(uid,streamId,streamType,streamStatus).observe(this, new Observer<PagedList<Article>>() {
             @Override
             public void onChanged(PagedList<Article> articles) {
-//                if( articlesAdapter.getCurrentList() != null ){
-//                    KLog.e("更新列表数据 A : " + articlesAdapter.getCurrentList().getLastKey()  +  " , " + (linearLayoutManager.findLastVisibleItemPosition()-1) );
-//                }
+                articlesAdapter.submitList(articles);
+                KLog.e("----更新列表数据----");
+                if( articlesAdapter.getCurrentList() != null ){
+                    KLog.e("更新列表数据 A : " + articlesAdapter.getCurrentList().getLastKey()  +  " , " + (linearLayoutManager.findLastVisibleItemPosition()-1) );
+                }
 //                if( articlesAdapter.getCurrentList() != null ){
 //                    KLog.e("更新列表数据 B : " + articlesAdapter.getCurrentList().getLastKey()  +  " , " + (linearLayoutManager.findLastVisibleItemPosition()-1) );
 //                }
-                articlesAdapter.submitList(articles);
+
 //                if( articlesAdapter.getCurrentList() != null ){
 //                    KLog.e("更新列表数据 C : " + articlesAdapter.getCurrentList().getLastKey()  +  " , " + (linearLayoutManager.findLastVisibleItemPosition()-1) );
 //                }
@@ -480,8 +481,7 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
                                                 showConfirmDialog(position,articlesAdapter.getItemCount());
                                                 break;
                                             case 3:
-                                                Article article = articlesAdapter.getItem(position);
-//                                                Article article = CoreDB.i().articleDao().getById(App.i().getUser().getId(),articlesAdapter.getItem(position).getId());
+                                                Article article = articlesAdapter.get(position);
                                                 if( article == null ){
                                                     return;
                                                 }
@@ -542,20 +542,17 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
         SwipeMenuCreator mSwipeMenuCreator = new SwipeMenuCreator() {
             @Override
             public void onCreateMenu(SwipeMenu leftMenu, SwipeMenu rightMenu, int position) {
-                Article article = articlesAdapter.getItem(position);
-//                Article article = CoreDB.i().articleDao().getById(App.i().getUser().getId(),articlesAdapter.getArticleId(position));
+                Article article = articlesAdapter.get(position);
                 if(article==null){
                     //KLog.i("文章数据为null: " + position  + " , " +  articlesAdapter.getCurrentList().getLastKey() + " , " + articlesAdapter.getCurrentList().getLoadedCount()  );
                     return;
                 }
-//                else {
-//                    KLog.i("文章数据为: " + position + " , " + articlesAdapter.getCurrentList().getLoadedCount() + " , " +  articlesAdapter.getCurrentList().getLastKey() );
-//                }
+
 
                 int width = getResources().getDimensionPixelSize(R.dimen.dp_80);
                 int margin = getResources().getDimensionPixelSize(R.dimen.dp_30);
 
-//                KLog.e("添加左右菜单" + position );
+                // KLog.e("添加左右菜单" + position );
                 // 1. MATCH_PARENT 自适应高度，保持和Item一样高;  2. 指定具体的高，比如80; 3. WRAP_CONTENT，自身高度，不推荐;
                 int height = ViewGroup.LayoutParams.MATCH_PARENT;
 
@@ -637,8 +634,7 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
                 Intent intent = new Intent(MainActivity.this, ArticleActivity.class);
                 intent.putExtra("theme", App.i().getUser().getThemeMode());
 
-                String articleId = articlesAdapter.getItem(position).getId();
-                //String articleId = articlesAdapter.getArticleId(position);
+                String articleId = articlesAdapter.get(position).getId();
 
                 intent.putExtra("articleId", articleId);
                 // 下标从 0 开始
@@ -886,14 +882,14 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
         private void handleArticle(int i){
             try {
                 int retry = 0;
-                Article article = articlesAdapter.getItem(i);
+                Article article = articlesAdapter.get(i);
                 if( article == null ){
-                    articlesAdapter.load(i);
+                    //articlesAdapter.load(i);
                     do {
                         //KLog.i("文章为空：" + i );
                         Thread.sleep(500);
                         retry ++;
-                        article = articlesAdapter.getItem(i);
+                        article = articlesAdapter.get(i);
                     }while ( article == null && retry < 3 );
                     //KLog.e("文章是否为空：" + (article==null)  + "   ,  " + (articlesAdapter.getItem(i)==null) );
                     if( article == null ){ return; }
@@ -1017,6 +1013,7 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
             articleViewModel.articles.removeObservers(this);
             articleViewModel.articles = null;
         }
+        articlesAdapter.init();
         articleViewModel.getAllByKeyword(App.i().getUser().getId(),keyword).observe(this, new Observer<PagedList<Article>>() {
             @Override
             public void onChanged(PagedList<Article> articles) {
@@ -1034,7 +1031,7 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
         }
         // String articleId = articlesAdapter.getItem(position).getId();
         // Article article = CoreDB.i().articleDao().getById(App.i().getUser().getId(),articleId);
-        Article article = articlesAdapter.getItem(position);
+        Article article = articlesAdapter.get(position);
         if (autoMarkReaded && article.getReadStatus() == App.STATUS_UNREAD) {
             article.setReadStatus(App.STATUS_UNREADING);
             CoreDB.i().articleDao().update(article);
@@ -1078,9 +1075,7 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
             return;
         }
 
-        Article article = articlesAdapter.getItem(position);
-        //String articleId = articlesAdapter.getItem(position).getId();
-        //Article article = CoreDB.i().articleDao().getById(App.i().getUser().getId(),articleId);
+        Article article = articlesAdapter.get(position);
 
         if (article.getStarStatus() == App.STATUS_STARED) {
             article.setStarStatus(App.STATUS_UNSTAR);
