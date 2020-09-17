@@ -1024,24 +1024,24 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
                 msg = getString(R.string.star_marked_to_favorites,categories.get(0).getTitle());
                 action = getString(R.string.edit_favorites);
 
-                Tag tag = new Tag();
-                tag.setUid(uid);
-                tag.setId(categories.get(0).getTitle());
-                tag.setTitle(categories.get(0).getTitle());
-                CoreDB.i().tagDao().insert(tag);
-                ArticleTag articleTag = new ArticleTag(uid,selectedArticle.getId(),tag.getId());
-                CoreDB.i().articleTagDao().insert(articleTag);
+                //Tag tag = new Tag();
+                //tag.setUid(uid);
+                //tag.setId(categories.get(0).getTitle());
+                //tag.setTitle(categories.get(0).getTitle());
+                //CoreDB.i().tagDao().insert(tag);
+                //ArticleTag articleTag = new ArticleTag(uid,selectedArticle.getId(),tag.getId());
+                //CoreDB.i().articleTagDao().insert(articleTag);
             }else {
                 msg = getString(R.string.star_marked_to_favorites,categories.get(0).getTitle() + getString(R.string.etc));
                 action = getString(R.string.edit_favorites);
 
-                Tag tag = new Tag();
-                tag.setUid(uid);
-                tag.setId(categories.get(0).getTitle());
+                //Tag tag = new Tag();
+                //tag.setUid(uid);
+                //tag.setId(categories.get(0).getTitle());
                 //tag.setTitle(categories.get(0).getTitle());
-                CoreDB.i().tagDao().insert(tag);
-                ArticleTag articleTag = new ArticleTag(uid,selectedArticle.getId(),tag.getId());
-                CoreDB.i().articleTagDao().insert(articleTag);
+                //CoreDB.i().tagDao().insert(tag);
+                //ArticleTag articleTag = new ArticleTag(uid,selectedArticle.getId(),tag.getId());
+                //CoreDB.i().articleTagDao().insert(articleTag);
             }
 
             SnackbarUtil.Long(swipeRefreshLayoutS, bottomBar, msg).setAction(action, v -> editFavorites(uid)).show();

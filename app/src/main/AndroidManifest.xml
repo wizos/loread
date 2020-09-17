@@ -48,6 +48,11 @@
     <application
         android:name=".App"
         android:allowBackup="true"
+        android:backupAgent="me.wizos.loread.work.DBBackupHelper"
+        android:extractNativeLibs="true"
+        android:fullBackupContent="@xml/backup_descriptor"
+        android:fullBackupOnly="true"
+
         android:appComponentFactory="me.wizos.loread"
         android:requestLegacyExternalStorage="true"
         android:icon="@mipmap/ic_launcher"

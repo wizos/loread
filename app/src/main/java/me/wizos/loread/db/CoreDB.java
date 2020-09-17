@@ -11,11 +11,14 @@ import androidx.sqlite.db.SupportSQLiteDatabase;
 import com.socks.library.KLog;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import me.wizos.loread.App;
 import me.wizos.loread.bean.feedly.CategoryItem;
 import me.wizos.loread.bean.feedly.input.EditFeed;
+import me.wizos.loread.config.ArticleTags;
 
 /**
  * @Database标签用于告诉系统这是Room数据库对象。
@@ -30,7 +33,7 @@ import me.wizos.loread.bean.feedly.input.EditFeed;
         exportSchema = false
 )
 public abstract class CoreDB extends RoomDatabase {
-    private static final String DATABASE_NAME = "loreadx.db";
+    public static final String DATABASE_NAME = "loread.db";
     private static CoreDB databaseInstance;
 
     public static synchronized void init(Context context) {
@@ -317,4 +320,34 @@ public abstract class CoreDB extends RoomDatabase {
         CoreDB.i().feedCategoryDao().deleteByFeedId(uid, editFeed.getId());
         CoreDB.i().feedCategoryDao().insert(feedCategories);
     }
+
+    public void deleteFeed(Feed feed){
+        List<Article> articles = CoreDB.i().articleDao().getStaredByFeedId(feed.getUid(),feed.getId());
+        List<Category> categories = CoreDB.i().categoryDao().getByFeedId(feed.getUid(),feed.getId());
+
+        List<ArticleTag> articleTags = new ArrayList<>();
+        Set<String> tagTitleSet = new HashSet<>();
+        for (Article article: articles){
+            for (Category category:categories) {
+                articleTags.add( new ArticleTag(feed.getUid(), article.getId(), category.getTitle()) );
+                tagTitleSet.add(category.getTitle());
+            }
+        }
+        List<Tag> tags = new ArrayList<>(tagTitleSet.size());
+        for (String title:tagTitleSet) {
+            Tag tag = new Tag();
+            tag.setUid(feed.getUid());
+            tag.setId(title);
+            tag.setTitle(title);
+            tags.add(tag);
+            //KLog.e("设置 Tag 数据：" + tag);
+        }
+
+        CoreDB.i().tagDao().insert(tags);
+        CoreDB.i().articleTagDao().insert(articleTags);
+        ArticleTags.i().addArticleTags(articleTags);
+        ArticleTags.i().save();
+        feedDao().delete(feed);
+    }
+
 }

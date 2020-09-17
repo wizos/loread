@@ -41,6 +41,9 @@ public interface CategoryDao {
     @Query("SELECT * FROM category WHERE uid = :uid AND id = :id LIMIT 1")
     Category getById(String uid, String id);
 
+    @Query("SELECT title FROM category WHERE uid = :uid AND id = :id LIMIT 1")
+    String getTitleById(String uid, String id);
+
     @Query("SELECT * FROM categoryview WHERE uid = :uid" )
     List<Category> getCategoriesRealTimeCount(String uid);
 

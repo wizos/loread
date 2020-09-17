@@ -42,7 +42,11 @@ public interface ArticleTagDao {
 
     @Update
     @Transaction
-    void update(ArticleTag... feedCategories);
+    void update(ArticleTag... articleTags);
+
+    @Update
+    @Transaction
+    void update(List<ArticleTag> articleTags);
 
     @Query("UPDATE articletag SET tagId = :newTagId where  uid = :uid AND tagId = :oldTagId")
     void updateCategoryId(String uid, String oldTagId, String newTagId);

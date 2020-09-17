@@ -75,6 +75,7 @@ public interface ArticleDao {
             "AND (article.readStatus = " + App.STATUS_UNREAD  + " OR article.readStatus = " + App.STATUS_UNREADING + " OR (article.readStatus = " + App.STATUS_READED +" AND article.readUpdated > :timeMillis) ) " +
             "ORDER BY crawlDate DESC,pubDate DESC")
     DataSource.Factory<Integer,Article> getUnreadByCategoryId(String uid, String categoryId,long timeMillis);
+
     @Query("SELECT article.* FROM article " +
             "LEFT JOIN FeedCategory ON (article.uid = FeedCategory.uid AND article.feedId = FeedCategory.feedId)" +
             "WHERE article.uid = :uid " +
@@ -84,6 +85,15 @@ public interface ArticleDao {
             "ORDER BY crawlDate DESC,pubDate DESC")
     DataSource.Factory<Integer,Article> getStaredByCategoryId(String uid, String categoryId, long timeMillis);
 
+    @Query("SELECT article.* FROM article " +
+            "LEFT JOIN FeedCategory ON (article.uid = FeedCategory.uid AND article.feedId = FeedCategory.feedId)" +
+            "LEFT JOIN ArticleTag ON (article.uid = ArticleTag.uid AND article.id = ArticleTag.articleId)" +
+            "WHERE article.uid = :uid " +
+            "AND article.crawlDate < :timeMillis " +
+            "AND ((ArticleTag.tagId = :categoryTitle AND FeedCategory.categoryId != :categoryId) OR (ArticleTag.tagId is Null AND FeedCategory.categoryId = :categoryId)) " +
+            "AND (article.starStatus = " + App.STATUS_STARED  + " OR (article.starStatus = " + App.STATUS_UNSTAR +" AND article.starUpdated > :timeMillis) )" +
+            "ORDER BY crawlDate DESC,pubDate DESC")
+    DataSource.Factory<Integer,Article> getStaredByCategoryId2(String uid, String categoryId, String categoryTitle, long timeMillis);
 
     @Query("SELECT article.* FROM article " +
             "LEFT JOIN ArticleTag ON (article.uid = ArticleTag.uid AND article.id = ArticleTag.articleId)" +
@@ -118,6 +128,19 @@ public interface ArticleDao {
             "ORDER BY crawlDate DESC,pubDate DESC")
     DataSource.Factory<Integer,Article> getStaredByUncategory(String uid, long timeMillis);
 
+
+    @Query("SELECT article.* FROM article " +
+            "LEFT JOIN FeedCategory ON (article.uid = FeedCategory.uid AND article.feedId = FeedCategory.feedId)" +
+            "LEFT JOIN ArticleTag ON (article.uid = ArticleTag.uid AND article.id = ArticleTag.articleId)" +
+            "WHERE article.uid = :uid " +
+            "AND article.crawlDate < :timeMillis " +
+            "AND ArticleTag.tagId is NULL " +
+            "AND FeedCategory.categoryId is NULL " +
+            "AND (article.starStatus = " + App.STATUS_STARED + " OR (article.starStatus = " + App.STATUS_UNSTAR +" AND article.starUpdated > :timeMillis) ) " +
+            "ORDER BY crawlDate DESC,pubDate DESC")
+    DataSource.Factory<Integer,Article> getStaredByUncategory2(String uid, long timeMillis);
+
+
     @Query("SELECT article.* FROM article " +
             "LEFT JOIN ArticleTag ON (article.uid = articletag.uid AND article.id = articletag.articleId)" +
             "WHERE article.uid = :uid " +
@@ -148,28 +171,23 @@ public interface ArticleDao {
             "AND (starStatus = " + App.STATUS_STARED + " OR (article.starStatus = " + App.STATUS_UNSTAR +" AND article.starUpdated > :timeMillis) ) " +
             "ORDER BY crawlDate DESC,pubDate DESC")
     DataSource.Factory<Integer,Article> getStaredByFeedId(String uid, String feedId, long timeMillis);
-
     @Query("SELECT * FROM article " +
             "WHERE uid = :uid " +
-            "AND title LIKE '%' || :keyword || '%' " +
+            "AND feedId = :feedId " +
+            "AND (starStatus = " + App.STATUS_STARED + " OR (article.starStatus = " + App.STATUS_UNSTAR +") ) " +
             "ORDER BY crawlDate DESC,pubDate DESC")
-    DataSource.Factory<Integer,Article> getAllByKeyword2(String uid, String keyword);
+    List<Article> getStaredByFeedId(String uid, String feedId);
 
-    @Query("SELECT * FROM (SELECT * FROM article WHERE uid = :uid AND title LIKE '%' || :keyword || '%' " +
-            "UNION " +
-            "SELECT article.* FROM article JOIN articlefts ON article.uid == articleFts.uid AND article.id == articleFts.id WHERE article.uid = :uid AND articlefts.content MATCH '*' ||:keyword|| '*') " +
-            "ORDER BY crawlDate DESC,pubDate DESC")
+    @Query("SELECT * FROM (" +
+            "SELECT * FROM article WHERE uid = :uid AND title LIKE '%' || :keyword || '%' UNION SELECT article.* FROM article JOIN articlefts ON article.uid == articleFts.uid AND article.id == articleFts.id WHERE article.uid = :uid AND articlefts.content MATCH :keyword" +
+            ") ORDER BY crawlDate DESC,pubDate DESC")
     DataSource.Factory<Integer,Article> getAllByKeyword(String uid, String keyword);
 
     // 由于 FTS4 的分词器对中文并不友好，有些不能正确分词，导致无法匹配出来（例如罗永浩），所以 title 部分采用关键字匹配，content 部分才使用全文搜索
     // https://stackoverflow.com/questions/31891456/sqlite-fts-using-or-between-match-operators
     // https://stackoverflow.com/questions/4057254/how-do-you-match-multiple-column-in-a-table-with-sqlite-fts3
-    @Query("SELECT * FROM article WHERE uid = :uid AND title LIKE '%' || :text || '%' UNION SELECT article.* FROM article JOIN articlefts ON article.uid == articleFts.uid AND article.id == articleFts.id WHERE article.uid = :uid AND articlefts.content MATCH :text" )
-    List<Article> search(String uid, String text);
-
-    @Query("SELECT * FROM article WHERE uid = :uid AND title LIKE '%' || :text || '%' UNION SELECT article.* FROM article JOIN articlefts ON article.uid == articleFts.uid AND article.id == articleFts.id WHERE article.uid = :uid AND articlefts.content MATCH '*' || :text || '*'" )
-    List<Article> search2(String uid, String text);
-
+    @Query("SELECT * FROM article WHERE uid = :uid AND title LIKE '%' || :keyword || '%' UNION SELECT article.* FROM article JOIN articlefts ON article.uid == articleFts.uid AND article.id == articleFts.id WHERE article.uid = :uid AND articlefts.content MATCH :keyword" )
+    List<Article> search(String uid, String keyword);
 
     //@Query("DELETE FROM article WHERE uid = :uid AND pubDate < :timeMillis")
     //void clearPubDate(String uid,long timeMillis);

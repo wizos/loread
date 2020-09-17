@@ -367,7 +367,7 @@ public class LabActivity extends AppCompatActivity {
             List<Category> categories = CoreDB.i().categoryDao().getByFeedId(uid,article.getFeedId());
             for (Category category:categories) {
                 tagTitleSet.add(category.getTitle());
-                ArticleTag articleTag = new ArticleTag(uid, article.getId(), category.getId());
+                ArticleTag articleTag = new ArticleTag(uid, article.getId(), category.getTitle());
                 articleTags.add(articleTag );
                 KLog.e("设置 articleTag 数据：" + articleTag);
             }
@@ -404,21 +404,6 @@ public class LabActivity extends AppCompatActivity {
         String text = editText.getText().toString();
         if(StringUtils.isEmpty(text)){
             ToastUtils.show("请输入关键词");
-            return;
-        }
-
-
-        List<Article> articles = CoreDB.i().articleDao().search(App.i().getUser().getId(), text);
-        if( articles!=null){
-            KLog.e("搜索结果1：" + articles.size());
-            //KLog.e("搜索结果1：" + articles);
-        }
-
-
-        List<Article> articles2 = CoreDB.i().articleDao().search2(App.i().getUser().getId(), text);
-        if( articles2!=null){
-            KLog.e("搜索结果2：" + articles2.size());
-            //KLog.e("搜索结果2：" + articles2);
         }
     }
 

@@ -34,7 +34,7 @@ public class ArticleViewModel extends ViewModel {
                 }
             } else if (streamId.contains(App.CATEGORY_UNCATEGORIZED)) {
                 if (streamStatus == App.STATUS_STARED) {
-                    articleFactory = articleDao.getStaredByUncategory(uid, timeMillis);
+                    articleFactory = articleDao.getStaredByUncategory2(uid, timeMillis);
                 } else if (streamStatus == App.STATUS_UNREAD) {
                     articleFactory = articleDao.getUnreadByUncategory(uid, timeMillis);
                 } else {
@@ -43,7 +43,9 @@ public class ArticleViewModel extends ViewModel {
             } else {
                 KLog.e("获取到的分类：" + streamId );
                 if (streamStatus == App.STATUS_STARED) {
-                    articleFactory = articleDao.getStaredByCategoryId(uid, streamId, timeMillis);
+                    //String title = CoreDB.i().categoryDao().getTitleById(App.i().getUser().getId(),streamId);
+                    String title = App.i().getUser().getStreamTitle();
+                    articleFactory = articleDao.getStaredByCategoryId2(uid, streamId, title, timeMillis);
                 } else if (streamStatus == App.STATUS_UNREAD) {
                     articleFactory = articleDao.getUnreadByCategoryId(uid, streamId, timeMillis);
                 } else {

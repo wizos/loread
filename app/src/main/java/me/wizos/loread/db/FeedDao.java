@@ -74,9 +74,9 @@ public interface FeedDao {
     @Delete
     @Transaction
     void delete(Feed... feeds);
-    @Delete
-    @Transaction
-    void delete(List<Feed> feeds);
+    //@Delete
+    //@Transaction
+    //void delete(List<Feed> feeds);
 
     @Query("DELETE FROM feed WHERE uid = (:uid) AND id = :id")
     void deleteById(String uid, String id);

@@ -31,7 +31,7 @@
         android:paddingBottom="5dp"
         android:gravity="center"
         android:onClick="onClickBackup"
-        android:text="备份未读数据"
+        android:text="备份数据"
         android:background="?android:attr/selectableItemBackground"
         android:clickable="true"
         android:focusable="true" />
@@ -48,7 +48,7 @@
         android:paddingBottom="5dp"
         android:gravity="center"
         android:onClick="onClickRestore"
-        android:text="恢复已备份的数据"
+        android:text="恢复数据"
         android:background="?android:attr/selectableItemBackground"
         android:clickable="true"
         android:focusable="true" />

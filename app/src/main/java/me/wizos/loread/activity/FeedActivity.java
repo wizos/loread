@@ -533,7 +533,7 @@ public class FeedActivity extends BaseActivity {
                                     Unsubscribe.genBackupFile2(App.i().getUser(), feeds);
                                     CoreDB.i().feedCategoryDao().deleteByFeedId(feed.getUid(), feed.getId());
                                     CoreDB.i().articleDao().deleteUnStarByFeedId(feed.getUid(), feed.getId());
-                                    CoreDB.i().feedDao().delete(feed);
+                                    CoreDB.i().deleteFeed(feed);
                                 }
 
                                 @Override
