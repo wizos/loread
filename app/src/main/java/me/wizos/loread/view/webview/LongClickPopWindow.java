@@ -1,5 +1,6 @@
 package me.wizos.loread.view.webview;
 
+import android.app.Activity;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
@@ -11,11 +12,17 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.webkit.WebView;
 import android.widget.PopupWindow;
+import android.widget.TextView;
 
 import com.hjq.toast.ToastUtils;
 import com.socks.library.KLog;
 
+import me.wizos.loread.App;
 import me.wizos.loread.R;
+import me.wizos.loread.activity.WebActivity;
+
+import static me.wizos.loread.Contract.SCHEMA_HTTP;
+import static me.wizos.loread.Contract.SCHEMA_HTTPS;
 
 /**
  * @author Wizos on 2018/9/16.
@@ -23,7 +30,7 @@ import me.wizos.loread.R;
 
 public class LongClickPopWindow extends PopupWindow {
     private View webViewLongClickedPopWindow;
-    private Context context;
+    private Activity context;
     private WebView.HitTestResult result;
     private WebView webView;
     private int x, y;
@@ -35,7 +42,7 @@ public class LongClickPopWindow extends PopupWindow {
      * @param width   宽度
      * @param height  高度 *
      */
-    public LongClickPopWindow(Context context, WebView webView, int width, int height, int x, int y) {
+    public LongClickPopWindow(Activity context, WebView webView, int width, int height, int x, int y) {
         super(context);
         if (context == null | webView == null) {
             return;
@@ -95,10 +102,11 @@ public class LongClickPopWindow extends PopupWindow {
 
 
             case WebView.HitTestResult.SRC_ANCHOR_TYPE://超链接
-                if(TextUtils.isEmpty(result.getExtra())){
+                String uri = result.getExtra();
+                if(TextUtils.isEmpty(uri)){
                     return;
                 }
-                KLog.d("超链接为：" + result.getExtra() );
+                KLog.d("超链接：" + uri );
                 this.webViewLongClickedPopWindow.findViewById(R.id.webview_copy_link)
                         .setOnClickListener(new View.OnClickListener() {
                             @Override
@@ -107,7 +115,7 @@ public class LongClickPopWindow extends PopupWindow {
                                 //获取剪贴板管理器：
                                 ClipboardManager cm = (ClipboardManager) context.getSystemService(Context.CLIPBOARD_SERVICE);
                                 // 创建普通字符型ClipData
-                                ClipData mClipData = ClipData.newRawUri("url", Uri.parse(result.getExtra()));
+                                ClipData mClipData = ClipData.newRawUri("url", Uri.parse(uri));
                                 // 将ClipData内容放到系统剪贴板里。
                                 cm.setPrimaryClip(mClipData);
                                 ToastUtils.show(context.getString(R.string.copy_success));
@@ -121,25 +129,41 @@ public class LongClickPopWindow extends PopupWindow {
                                 LongClickPopWindow.this.dismiss();
                                 Intent sendIntent = new Intent(Intent.ACTION_SEND);
                                 sendIntent.setType("text/plain");
-                                sendIntent.putExtra(Intent.EXTRA_TEXT, result.getExtra());
-//                                sendIntent.setData(Uri.parse(status.getExtra()));
+                                sendIntent.putExtra(Intent.EXTRA_TEXT, uri);
+                                //sendIntent.setData(Uri.parse(status.getExtra()));
                                 //sendIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                                 context.startActivity(Intent.createChooser(sendIntent, context.getString(R.string.share_to)));
                             }
                         });
 
-                this.webViewLongClickedPopWindow.findViewById(R.id.webview_open_mode)
-                        .setOnClickListener(new View.OnClickListener() {
-                            @Override
-                            public void onClick(View v) {
-                                LongClickPopWindow.this.dismiss();
-                                Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(result.getExtra()));
-                                // 每次都要选择打开方式
-                                //context.startActivity(intent);
-                                context.startActivity(Intent.createChooser(intent, context.getString(R.string.open_by_outer)));
-                            }
-                        });
+                TextView openLinkMode = (TextView)this.webViewLongClickedPopWindow.findViewById(R.id.webview_open_mode);
 
+                if( App.i().getUser().isOpenLinkBySysBrowser() && (uri.startsWith(SCHEMA_HTTP) || uri.startsWith(SCHEMA_HTTPS))){
+                    openLinkMode.setText(R.string.open_by_outer);
+                    openLinkMode.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            LongClickPopWindow.this.dismiss();
+                            Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(result.getExtra()));
+                            // 每次都要选择打开方式
+                            context.startActivity(Intent.createChooser(intent, context.getString(R.string.open_by_outer)));
+                            context.overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
+                        }
+                    });
+                }else {
+                    openLinkMode.setText(R.string.open_by_inner);
+                    openLinkMode.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            LongClickPopWindow.this.dismiss();
+                            Intent intent = new Intent(context, WebActivity.class);
+                            intent.setData(Uri.parse(uri));
+                            intent.putExtra("theme", App.i().getUser().getThemeMode());
+                            context.startActivity(intent);
+                            context.overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
+                        }
+                    });
+                }
                 showAtLocation(webView, Gravity.TOP | Gravity.START, x, y);
                 break;
             case WebView.HitTestResult.IMAGE_TYPE: //图片
@@ -149,5 +173,4 @@ public class LongClickPopWindow extends PopupWindow {
                 break;
         }
     }
-
 }

@@ -65,17 +65,12 @@ public class Extractor {
     // ,iframe ,br
     private void cleanBodyElement(Element body) {
         body.select("script, noscript, style, link").remove();
+        // 以下容易产生误删
         //body.select("*.share, *.contribution, *.copyright, *.copy-right, *.disclaimer, *.recommend, *.related, *.footer, *.comment, *.social, *.submeta").remove();
-        body.select("[id*=share], [id*=contribution], [id*=copyright], [id*=copy-right], [id*=-nav], [id*=-tags], [id*=disclaimer], [id*=recommend], [id*=related], [id*=relates], [id*=archive], [id*=recent_comments], [id*=footer], [id*=social], [id*=submeta], [id*=entry-meta]").remove();
-        body.select("[class*=share], [class*=contribution], [class*=copyright], [class*=copy-right], [class*=-nav], [class*=-tags], [class*=disclaimer], [class*=recommend], [class*=related], [class*=relates], [class*=archive], [class*=recent_comments], [class*=footer], [class*=social], [class*=submeta], [class*=entry-meta]").remove();
+        //body.select("[id*=share], [id*=contribution], [id*=copyright], [id*=copy-right], [id*=-nav], [id*=-tags], [id*=disclaimer], [id*=recommend], [id*=related], [id*=relates], [id*=archive], [id*=recent_comments], [id*=footer], [id*=social], [id*=submeta], [id*=entry-meta]").remove();
+        //body.select("[class*=share], [class*=contribution], [class*=copyright], [class*=copy-right], [class*=-nav], [class*=-tags], [class*=disclaimer], [class*=recommend], [class*=related], [class*=relates], [class*=archive], [class*=recent_comments], [class*=footer], [class*=social], [class*=submeta], [class*=entry-meta]").remove();
 
-//        // 以下为新增，主要是去除文章中的干扰元素
-//        body.select("p:empty, div:empty, blockquote:empty, details:empty, details:empty, figure:empty, figcaption:empty").remove();
-//        body.select("ul:empty, ol:empty, li:empty").remove();
-//        body.select("table:empty, tbody:empty, th:empty, tr:empty, dt:empty, dl:empty").remove();
-//        // 受 readability 启发，移除没有子元素（包括文本）的元素。
-//        body.select("section:empty, h1:empty, h2:empty, h3:empty, h4:empty, h5:empty, h6:empty, ins:empty, a:empty, b:empty, string:empty, span:empty, i:empty").remove();
-
+        // 以下为新增，主要是去除文章中的干扰元素
         Elements elements;
         boolean circulate;
         do {
@@ -130,13 +125,15 @@ public class Extractor {
             }
 
 
-//            increase_tag_weight(tag, countInfo);
-//            countInfo.sbdi = calcSbdi(countInfo);
-//            countInfo.sbdi = (countInfo.textCount - countInfo.linkTextCount + 0.0)/(countInfo.punctuationCount + 1);
-//            // sbdi 不能为0，否则会导致求对数时报错。
-//            if(countInfo.sbdi == 0){
-//                countInfo.sbdi = 1;
-//            }
+            //increase_tag_weight(tag, countInfo);
+            //写法1
+            //countInfo.sbdi = calcSbdi(countInfo);
+            //写法2
+            //countInfo.sbdi = (countInfo.textCount - countInfo.linkTextCount + 0.0)/(countInfo.punctuationCount + 1);
+            //// sbdi 不能为0，否则会导致求对数时报错。
+            //if(countInfo.sbdi == 0){
+            //    countInfo.sbdi = 1;
+            //}
 
 //            if( tag.className().equals("postmessage_5451354")){
 //                System.out.println("节点: "  + tag.nodeName() + "." + tag.className()
@@ -167,7 +164,7 @@ public class Extractor {
         double var = Math.sqrt(computeVar(countInfo.leafList) + 1); // 这一传是干嘛用的？
         //  * Math.log(var) * Math.log(countInfo.textCount - countInfo.linkTextCount + 1)
         return countInfo.densitySum * Math.log10(countInfo.pCount + 2) * Math.log(var) * Math.log(countInfo.textCount - countInfo.linkTextCount + 1);// 最后2个中有一个是论文中计算节点文本的标准差？根据另一个库的建议，不再需要计算文本密度的标准差
-//        return countInfo.densitySum * Math.log10(countInfo.pCount + 2) * Math.log(countInfo.sbdi);
+        //return countInfo.densitySum * Math.log10(countInfo.pCount + 2) * Math.log(countInfo.sbdi);
     }
 
     /**
@@ -190,7 +187,7 @@ public class Extractor {
     }
     private void increase_tag_weight(Element element, CountInfo countInfo){
         if(element.hasClass("content") || element.hasClass("article") || element.hasClass("post") || element.hasClass("news")){
-            countInfo.textCount = countInfo.textCount *2;
+            countInfo.textCount = countInfo.textCount++;
         }
     }
 

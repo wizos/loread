@@ -14,6 +14,7 @@ import androidx.annotation.NonNull;
 import androidx.paging.PagedList;
 import androidx.paging.PagedListAdapter;
 import androidx.recyclerview.widget.DiffUtil;
+import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
@@ -23,6 +24,7 @@ import com.bumptech.glide.load.model.LazyHeaders;
 import com.bumptech.glide.request.RequestOptions;
 import com.carlt.networklibs.NetType;
 import com.carlt.networklibs.utils.NetworkUtils;
+import com.socks.library.KLog;
 
 import me.wizos.loread.App;
 import me.wizos.loread.R;
@@ -58,7 +60,9 @@ public class ArticlePagedListAdapter extends PagedListAdapter<Article, ArticlePa
 
     @Override
     public void onBindViewHolder(@NonNull ArticleViewHolder holder, int position) {
+        KLog.e("创建onBindViewHolder");
         Article article = getItem(position);
+        // 如果article是null，在此处不停循环的获取getItem得到的还是null
         if (article != null) {
             holder.bindTo(article);
         } else {
@@ -110,15 +114,13 @@ public class ArticlePagedListAdapter extends PagedListAdapter<Article, ArticlePa
         void placeholder(){
             articleTitle.setText(App.i().getString(R.string.loading));
             articleTitle.setAlpha(0.40f);
-
-            articleSummary.setText("");
-//            articleSummary.setVisibility(View.GONE);
             articleImg.setVisibility(View.GONE);
 
             articleSummary.setText("");
-//            articleFeed.setVisibility(View.GONE);
-//            articleFeed.setText(App.i().getString(R.string.loading));
-//            articlePublished.setText("");
+            //articleSummary.setVisibility(View.GONE);
+            //articleFeed.setVisibility(View.GONE);
+            //articleFeed.setText(App.i().getString(R.string.loading));
+            //articlePublished.setText("");
             articleSave.setVisibility(View.GONE);
             articleReading.setVisibility(View.GONE);
             articleStar.setVisibility(View.GONE);
@@ -192,6 +194,7 @@ public class ArticlePagedListAdapter extends PagedListAdapter<Article, ArticlePa
 
     public Article get(int position){
         String articleId = articleMap.get(position);
+        KLog.e("Get：" + position + " , " + articleId);
         if(StringUtils.isEmpty(articleId)){
             int lastPosition = 0;
             if( getCurrentList()!=null ){
@@ -201,6 +204,7 @@ public class ArticlePagedListAdapter extends PagedListAdapter<Article, ArticlePa
             getItem(lastPosition);
             articleId = articleMap.get(position);
         }
+        KLog.e("Get：-----------------------");
         if(StringUtils.isEmpty(articleId)){
             return null;
         }
@@ -209,8 +213,38 @@ public class ArticlePagedListAdapter extends PagedListAdapter<Article, ArticlePa
     private ArrayMap<Integer,String> articleMap = new ArrayMap<>();
 
     public void init(){
-        articleMap = new ArrayMap<>();
+        //articleMap = new ArrayMap<>();
     }
+    private LinearLayoutManager linearLayoutManager;
+    public void setLinearLayoutManager(LinearLayoutManager linearLayoutManager){
+        this.linearLayoutManager = linearLayoutManager;
+    }
+    public void fresh(){
+        articleMap = new ArrayMap<>();
+        int firstPosition = linearLayoutManager.findFirstVisibleItemPosition();
+        int lastPosition = linearLayoutManager.findLastVisibleItemPosition();
+        KLog.e("刷新1：" + firstPosition + " , " + lastPosition);
+        if( lastPosition >= firstPosition && firstPosition > 0 ){
+            for (int i = firstPosition; i <= lastPosition; i ++){
+                getItem(i);
+            }
+        }
+    }
+
+    public void fresh2(){
+        articleMap = new ArrayMap<>();
+        //int lastPosition = linearLayoutManager.findLastVisibleItemPosition();
+        //KLog.e("刷新2："  + " , " + lastPosition);
+        //if( lastPosition < 0 || lastPosition >= getItemCount()){
+        //    return;
+        //}
+        //Article article;
+        //do{
+        //    article = getItem(lastPosition);
+        //    KLog.e("获取文章："  + " , " + lastPosition);
+        //}while (article == null);
+    }
+
     /**
      * 之所以会产生“更新页面最后几项而下一页前几项会跳动”，是因为：
      * 更新页面最后几项时，使用了getItem来获取，而在getItem的默认实现中，会将getItem不为null标识为PagedList的LastKey（需要加载的最后一项）。
@@ -220,12 +254,11 @@ public class ArticlePagedListAdapter extends PagedListAdapter<Article, ArticlePa
     //private int lastPos = 0;
     @Override
     public Article getItem(int position) {
-        //return super.getItem(position);
         Article article = super.getItem(position);
         if(article!=null){
             articleMap.put(position,article.getId());
         }
-        //KLog.e("加载：" + position + " == " + lastPos  + " , " + getCurrentList().getLastKey()  + " == "+ getCurrentList().getLoadedCount() + " -- " + (article==null));
+        KLog.e("加载：" + position  + " , " + getCurrentList().getLastKey()  + " == "+ getCurrentList().getLoadedCount() + " -- " + (article==null));
         return article;
     }
     public void setLastItem(int position){
@@ -238,8 +271,9 @@ public class ArticlePagedListAdapter extends PagedListAdapter<Article, ArticlePa
 
     @Override
     public void submitList(PagedList<Article> pagedList) {
-        //articleMap = new ArrayMap<>();
         super.submitList(pagedList);
+        //articleMap = new ArrayMap<>();
+        fresh2();
     }
     //public void load(int index){
     //    if(getCurrentList() !=null && index < getCurrentList().size()){

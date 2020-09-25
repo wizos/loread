@@ -221,6 +221,7 @@
     <string name="share_link">Copy link</string>
     <string name="copy_link">Share link</string>
     <string name="open_by_outer">Open by outer</string>
+    <string name="open_by_inner">Open by inner</string>
     <string name="copy_success">Copy succeeded</string>
 
     <string name="please_input_keyword">please enter keyword</string>

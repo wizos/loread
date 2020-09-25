@@ -28,7 +28,7 @@ import me.wizos.loread.network.HttpClientManager;
 public class OkHttpAppGlideModule extends AppGlideModule {
     @Override
     public void registerComponents(@NonNull Context context, @NonNull Glide glide, @NonNull Registry registry) {
-        registry.replace(GlideUrl.class, InputStream.class, new OkHttpUrlLoader.Factory(HttpClientManager.i().imageHttpClient()));
+        registry.replace(GlideUrl.class, InputStream.class, new OkHttpUrlLoader.Factory(HttpClientManager.i().glideHttpClient()));
     }
 
     @Override

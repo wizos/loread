@@ -1,5 +1,7 @@
 package me.wizos.loread.bridge;
 
+import java.io.IOException;
+
 /**
  * 设置图片的默认加载行为
  * <p>
@@ -21,6 +23,8 @@ public interface ArticleBridge {
 
     void log(String paramString);
 
+    void show(String msg);
+
     /**
      * 当图片快出现在屏幕上是，调用这个方法去加载图片
      * 能否下载图片分以下几种情况：
@@ -30,16 +34,15 @@ public interface ArticleBridge {
      * 3，关闭省流量 & 蜂窝模式 → 返回正在下载占位图，开始下载
      * 3，关闭省流量 & Wifi模式 → 返回正在下载占位图，开始下载
      */
-    void readImage(String articleId,String imgHashCode, String originalUrl);
-    //void loadImage(String articleId,String imgHashCode, String url, String originalUrl);
+    void readImage(String articleId, String imgHashCode, String originalUrl);
 
-    //void downImage(String articleId,String imgHashCode, String originalUrl);
-
-    void downImage(String articleId,String imgHashCode, String originalUrl, boolean guessReferer);
+    void downImage(String articleId, String imgHashCode, String originalUrl, boolean guessReferer);
 
     void openImage(String articleId, String url);
 
     void openLink(String link);
 
     void openAudio(String link);
+
+    String get(String url) throws IOException;
 }

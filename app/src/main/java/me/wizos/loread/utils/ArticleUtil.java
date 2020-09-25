@@ -3,8 +3,6 @@ package me.wizos.loread.utils;
 
 import android.text.Html;
 
-import com.socks.library.KLog;
-
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -132,12 +130,15 @@ public class ArticleUtil {
                 "</section>" +
                 "</article>" +
                 "<script src='file:///android_asset/js/zepto.min.js'></script>" + // defer
-                "<script src='file:///android_asset/js/lazyload.js'></script>" +
+                //"<script src='file:///android_asset/js/lazyload.js'></script>" +
+                //"<script src='file:///android_asset/js/intersection-observer.js'></script>" +
+                //"<script src='file:///android_asset/js/lazyload.min.js'></script>" +
+                "<script src='file:///android_asset/js/lozad.min.js'></script>" +
                 "<script src='file:///android_asset/js/highlight.pack.js'></script>" +
                 "<script src='file:///android_asset/js/placeholder.min.js'></script>" +
                 "<script>" + initImageHolderUrl + "</script>" +
-                "<script src='" + mediaJsPath + "'></script>" +
-                "<script>hljs.initHighlightingOnLoad();</script>" +
+                "<script src='" + mediaJsPath + "' defer></script>" +
+                "<script defer>hljs.initHighlightingOnLoad();</script>" +
                 "</body></html>";
     }
 
@@ -296,7 +297,6 @@ public class ArticleUtil {
         Element element;
         Elements elements;
         Element documentBody = Jsoup.parseBodyFragment(content, articleUrl).body();
-        //KLog.e("内容C：" + documentBody.html());
 
         // 如果文章的开头就是 header 元素，则移除
         elements = documentBody.children();
@@ -309,8 +309,30 @@ public class ArticleUtil {
         // 去掉style标签
         documentBody.getElementsByTag("style").remove();
 
-        // 改名
-        //documentBody.getElementsByTag("texteara").tagName();
+        // picture 元素下会有一个标准的 img 元素，以及多个在不同条件下适配的 source 元素。
+        // 故先将 source 元素去掉，再将 picture unwrap，仅保留 img 元素
+        documentBody.select("picture > source").remove();
+        documentBody.getElementsByTag("picture").unwrap();
+
+        // 将 noscript 标签 unwrap
+        documentBody.getElementsByTag("noscript").unwrap();
+
+        // 去掉src为空的标签
+        documentBody.select("[src=''],[src='about:blank'],iframe:not([src]),embed:not([src]),video:not([src]),audio:not([src]),img:not([src])").remove();
+        // 将 href 属性为空的 a 标签 unwrap
+        documentBody.select("[href=''],[href='about:blank'],a:not([href])").unwrap();
+        // 去掉空标签
+        boolean circulate;
+        do {
+            elements = documentBody.select("p:empty, div:empty, blockquote:empty, details:empty, details:empty, figure:empty, figcaption:empty,  ul:empty, ol:empty, li:empty,  table:empty, tbody:empty, th:empty, tr:empty, dt:empty, dl:empty,  section:empty, h1:empty, h2:empty, h3:empty, h4:empty, h5:empty, h6:empty, ins:empty, a:empty, b:empty, string:empty, span:empty, i:empty,  section:empty, h1:empty, h2:empty, h3:empty, h4:empty, h5:empty, h6:empty, ins:empty, a:empty, b:empty, string:empty, span:empty, i:empty");
+            if( elements != null && elements.size() > 0){
+                //System.out.println("继续移除：" + elements.outerHtml());
+                elements.remove();
+                circulate = true;
+            }else {
+                circulate = false;
+            }
+        }while (circulate);
 
         // tabindex属性，会导致图片有边框
         documentBody.removeAttr("tabindex");
@@ -321,17 +343,7 @@ public class ArticleUtil {
         // img的crossorigin属性导致图片无法正确展示
         documentBody.removeAttr("crossorigin");
         documentBody.removeAttr("class");
-        
-        // 去掉src为空的标签
-        documentBody.select("[src=''],iframe:not([src]),embed:not([src])").remove();
 
-        // 将 href 属性为空的 a 标签 unwrap
-        documentBody.select("[href=''],a:not([href])").unwrap();
-
-
-        // 将 noscript 标签 unwrap
-        documentBody.getElementsByTag("noscript").unwrap();
-        //KLog.e("内容V：" + documentBody.html());
         String tmp;
         // \s匹配的是 制表符\t,换行符\n,回车符\r，换页符\f以及半角空格
         elements = documentBody.getElementsByTag("pre");
@@ -344,7 +356,7 @@ public class ArticleUtil {
                 elements.get(i).html(tmp);
             }
         }
-        //KLog.e("内容D：" + documentBody.html());
+
         elements = documentBody.getElementsByTag("code");
         for (int i = 0, size = elements.size(); i < size; i++) {
             tmp = elements.get(i).html().trim();
@@ -367,11 +379,6 @@ public class ArticleUtil {
             }
         }
 
-        // picture 元素下会有一个标准的 img 元素，以及多个在不同条件下适配的 source 元素。
-        // 故先将 source 元素去掉，再将 picture unwrap，仅保留 img 元素
-        documentBody.select("picture > source").remove();
-        documentBody.getElementsByTag("picture").unwrap();
-
         // 只保留 srcset 属性中尺寸最大的一张图片（该属性会根据屏幕分辨率选择想要显示的src）
         elements = documentBody.select("img[srcset]");
         for (int i = 0, size = elements.size(); i < size; i++) {
@@ -380,15 +387,15 @@ public class ArticleUtil {
             if (StringUtils.isEmpty(srcsetAttr)) {
                 continue;
             }
-            String[] srcset;
+            String[] srcSet;
             if (srcsetAttr.contains(",")) {
-                srcset = srcsetAttr.split(",");
+                srcSet = srcsetAttr.split(",");
             } else {
-                srcset = new String[]{srcsetAttr};
+                srcSet = new String[]{srcsetAttr};
             }
             int greaterDimen = 0;
             String greaterSrc = null;
-            for (String srcDimen : srcset) {
+            for (String srcDimen : srcSet) {
                 pattern = Pattern.compile("(\\S+)\\s+(\\d*)[xXwW]", Pattern.CASE_INSENSITIVE);
                 matcher = pattern.matcher(srcDimen);
                 if (!matcher.find()) {
@@ -430,9 +437,6 @@ public class ArticleUtil {
             element.attr("href", element.attr("abs:href"));
         }
 
-
-        // 去掉空元素
-        //documentBody.select("div:empty, p:empty, p:empty").remove();
         return documentBody.html().trim();
     }
 
@@ -468,7 +472,7 @@ public class ArticleUtil {
 
         Element img;
         Document document = Jsoup.parseBodyFragment(article.getContent(), article.getLink());
-        document = ColorModifier.i().inverseColor(document);
+        document = ColorModifier.i().modifyDocColor(document);
 
         Elements elements;
         String cacheUrl;
@@ -484,7 +488,7 @@ public class ArticleUtil {
             cacheUrl = FileUtil.readCacheFilePath(idInMD5, originalUrl);
             if (cacheUrl != null) {
                 img.attr("src", cacheUrl);
-                img.addClass("image-holder");
+                //img.addClass("image-holder");
             } else {
                 img.attr("src", imgHolder);
             }
@@ -495,26 +499,34 @@ public class ArticleUtil {
             element.attr("disabled", "disabled");
         }
 
-//        elements = document.getElementsByTag("video");
-//        for (Element element : elements) {
-//            element.attr("controls", "true")
-//                    .attr("width", "100%")
-//                    .attr("height", "auto")
-//                    .attr("preload", "metadata");
-//        }
-
-//        elements = document.getElementsByTag("audio");
-//        for (Element element : elements) {
-//            element.attr("controls", "true")
-//                    .attr("width", "100%");
-//        }
-
-//        // 给 table 包装 div 并配合 overflow-x: auto; ，让 table 内的 pre 不会撑出屏幕
-//        elements = document.getElementsByTag("table");
-//        for (int i = 0, size = elements.size(); i < size; i++) {
-//            elements.get(i).wrap("<div class=\"table_wrap\"></div>");
-//        }
-
+        //elements = document.getElementsByTag("embed");
+        //for (Element element : elements) {
+        //    element.attr("autostart","1");
+        //}
+        //elements = document.getElementsByTag("video");
+        //for (Element element : elements) {
+        //    element.attr("controls", "true")
+        //            .attr("width", "100%")
+        //            .attr("height", "auto")
+        //            .attr("preload", "metadata");
+        //    //element.wrap("<div class=\"video_wrap\"></div>");
+        //}
+        //elements = document.getElementsByTag("audio");
+        //for (Element element : elements) {
+        //    element.attr("controls", "true")
+        //            .attr("width", "100%");
+        //}
+        ////// 给 table 包装 div 并配合 overflow-x: auto; ，让 table 内的 pre 不会撑出屏幕
+        //elements = document.getElementsByTag("table");
+        //for (Element element : elements) {
+        //    element.wrap("<div class=\"table_wrap\"></div>");
+        //}
+        //elements = document.getElementsByTag("video,audio");
+        //for (Element element : elements) {
+        //    element.attr("data-src", element.attr("src"));
+        //    element.removeAttr("src");
+        //    element.addClass("lozad");
+        //}
         return document.body().html().trim();
     }
     public static String getCoverUrl(String articleUrl, String content) {
@@ -533,7 +545,6 @@ public class ArticleUtil {
                 }
             }
         }
-
 
         elements = document.select("video[poster]");
         if( elements != null && elements.size()>0 ){
@@ -595,7 +606,7 @@ public class ArticleUtil {
         if( mediaType != null ){
             charset = DataUtil.getCharsetFromContentType(mediaType.toString());
         }
-        KLog.i("解析得到的编码为：" + mediaType + " ， "+  charset );
+        //KLog.i("解析得到的编码为：" + mediaType + " ， "+  charset );
 
         // 换parser吧，jsoup默认使用是htmlParser，它会对返回内容做些改动来符合html规范，所以一般实际使用时都用的是xmlParser，代码如下
         Document doc;

@@ -9,30 +9,24 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import me.wizos.loread.App;
 import me.wizos.loread.bean.feedly.input.EditFeed;
-import me.wizos.loread.config.ArticleTags;
 import me.wizos.loread.config.SaveDirectory;
 import me.wizos.loread.config.Unsubscribe;
 import me.wizos.loread.db.Article;
-import me.wizos.loread.db.ArticleTag;
 import me.wizos.loread.db.Category;
 import me.wizos.loread.db.CoreDB;
 import me.wizos.loread.db.Feed;
 import me.wizos.loread.db.FeedCategory;
-import me.wizos.loread.db.Tag;
 import me.wizos.loread.network.HttpClientManager;
 import me.wizos.loread.network.callback.CallbackX;
 import me.wizos.loread.utils.ArticleUtil;
 import me.wizos.loread.utils.EncryptUtil;
 import me.wizos.loread.utils.FileUtil;
-import me.wizos.loread.utils.StringUtils;
 import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.Request;
@@ -131,61 +125,11 @@ public abstract class BaseApi<T, E> {
                 @Override
                 public void onResponse(@NotNull Call call, @NotNull okhttp3.Response response) throws IOException {
                     if (response.isSuccessful()) {
-//                        Pattern pattern = Pattern.compile("</([a-zA-Z0-9]{1,10})>", Pattern.CASE_INSENSITIVE);
-//                        String content = pattern.matcher(article.getContent()).replaceAll("_|_|_</$1>");
-//                        content = Jsoup.parseBodyFragment(content).text();
-//                        String[] flags = content.split("_\\|_\\|_");
-//                        String flag = "";
-//                        if(flags.length >= 1){
-//                            flag = flags[0];
-//                            if(flag.length() > 8){
-//                                flag = flag.substring(0,8);
-//                            }
-//                        }
                         Article optimizedArticle = ArticleUtil.getReadabilityArticle(article,response.body());
                         CoreDB.i().articleDao().update(optimizedArticle);
                     }
                 }
             });
-        }
-    }
-
-
-    void handleNotTagStarArticles(String uid, long syncTimeMillis){
-        List<Article> articles = CoreDB.i().articleDao().getNotTagStar(uid,syncTimeMillis);
-        List<ArticleTag> articleTags = new ArrayList<>();
-        Set<String> tagTitleSet = new HashSet<>();
-        for (Article article: articles){
-            if(StringUtils.isEmpty(article.getFeedId())){
-                continue;
-            }
-            List<Category> categories = CoreDB.i().categoryDao().getByFeedId(uid,article.getFeedId());
-            for (Category category:categories) {
-                articleTags.add( new ArticleTag(uid, article.getId(), category.getId()) );
-                tagTitleSet.add(category.getTitle());
-            }
-        }
-        CoreDB.i().articleTagDao().insert(articleTags);
-
-        List<Tag> tags = new ArrayList<>(tagTitleSet.size());
-        for (String title:tagTitleSet) {
-            Tag tag = new Tag();
-            tag.setUid(uid);
-            tag.setId(title);
-            tag.setTitle(title);
-            tags.add(tag);
-            //KLog.e("设置 Tag 数据：" + tag);
-        }
-        CoreDB.i().tagDao().insert(tags);
-        CoreDB.i().articleTagDao().insert(articleTags);
-        ArticleTags.i().addArticleTags(articleTags);
-        ArticleTags.i().save();
-    }
-
-    void clearNotArticleTags(String uid){
-        List<ArticleTag> articleTags = CoreDB.i().articleTagDao().getNotArticles(uid);
-        for (ArticleTag articleTag:articleTags) {
-            CoreDB.i().articleTagDao().delete(articleTag);
         }
     }
 

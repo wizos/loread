@@ -95,7 +95,7 @@ import me.wizos.loread.viewmodel.ArticleViewModel;
  */
 public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.OnRefreshListener {
     private static final String TAG = "MainActivity";
-    private IconFontView vPlaceHolder;
+    //private IconFontView vPlaceHolder;
     private ImageView vToolbarAutoMark;
     private Toolbar toolbar;
     private SwipeRefreshLayoutS swipeRefreshLayoutS;
@@ -262,7 +262,7 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
         if (App.i().getUser().isMarkReadOnScroll()) {
             vToolbarAutoMark.setVisibility(View.VISIBLE);
         }
-        vPlaceHolder = findViewById(R.id.main_placeholder);
+        //vPlaceHolder = findViewById(R.id.main_placeholder);
         refreshIcon = findViewById(R.id.main_bottombar_refresh_articles);
     }
 
@@ -338,15 +338,9 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
                 articlesAdapter.submitList(articles);
                 KLog.e("----更新列表数据----");
                 if( articlesAdapter.getCurrentList() != null ){
-                    KLog.e("更新列表数据 A : " + articlesAdapter.getCurrentList().getLastKey()  +  " , " + (linearLayoutManager.findLastVisibleItemPosition()-1) );
+                    KLog.e("更新列表数据 A : " + articlesAdapter.getCurrentList().getLastKey()  + " == "+ articlesAdapter.getCurrentList().getLoadedCount() +  " , " + (linearLayoutManager.findLastVisibleItemPosition()-1) );
                 }
-//                if( articlesAdapter.getCurrentList() != null ){
-//                    KLog.e("更新列表数据 B : " + articlesAdapter.getCurrentList().getLastKey()  +  " , " + (linearLayoutManager.findLastVisibleItemPosition()-1) );
-//                }
 
-//                if( articlesAdapter.getCurrentList() != null ){
-//                    KLog.e("更新列表数据 C : " + articlesAdapter.getCurrentList().getLastKey()  +  " , " + (linearLayoutManager.findLastVisibleItemPosition()-1) );
-//                }
                 loadViewByData( articles.size() );
             }
         });
@@ -361,10 +355,10 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
 
 //        KLog.i("【loadViewByData】" + App.i().getUser().getStreamId()+ "--" + App.i().getUser().getStreamTitle() + "--" + App.i().getUser().getStreamStatus() + "--" + toolbar.getTitle() + articlesAdapter.getItemCount());
         if (articlesAdapter == null || articlesAdapter.getItemCount() == 0) {
-            vPlaceHolder.setVisibility(View.VISIBLE);
+            //vPlaceHolder.setVisibility(View.VISIBLE);
             articleListView.setVisibility(View.GONE);
         } else {
-            vPlaceHolder.setVisibility(View.GONE);
+            //vPlaceHolder.setVisibility(View.GONE);
             articleListView.setVisibility(View.VISIBLE);
         }
     }
@@ -441,6 +435,7 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
         articleListView = findViewById(R.id.main_slv);
         linearLayoutManager = new LinearLayoutManager(this);
         articleListView.setLayoutManager(linearLayoutManager);
+
 
         // HeaderView。
         articlesHeaderView = getLayoutInflater().inflate(R.layout.main_item_header, articleListView, false);
@@ -538,13 +533,12 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
         });
 
         // 创建菜单：
-
         SwipeMenuCreator mSwipeMenuCreator = new SwipeMenuCreator() {
             @Override
             public void onCreateMenu(SwipeMenu leftMenu, SwipeMenu rightMenu, int position) {
                 Article article = articlesAdapter.get(position);
+                KLog.e("创建菜单: " + position + ", " + (article==null) + ", " +  articlesAdapter.getCurrentList().getLastKey() + " , " + articlesAdapter.getCurrentList().getLoadedCount()  );
                 if(article==null){
-                    //KLog.i("文章数据为null: " + position  + " , " +  articlesAdapter.getCurrentList().getLastKey() + " , " + articlesAdapter.getCurrentList().getLoadedCount()  );
                     return;
                 }
 
@@ -636,6 +630,7 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
 
                 String articleId = articlesAdapter.get(position).getId();
 
+                KLog.e("点击文章，进入详情页" + "，位置：" + position + "，文章ID：" + articleId + "    ");
                 intent.putExtra("articleId", articleId);
                 // 下标从 0 开始
                 intent.putExtra("articleNo", position);
@@ -643,11 +638,11 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
                 startActivityForResult(intent, 0);
                 overridePendingTransition(R.anim.in_from_bottom, R.anim.fade_out);
 
-                //KLog.i("点击了" + articleID + "，位置：" + position + "，文章ID：" + articleID + "    " + App.articleList.size());
             }
         });
         articleViewModel = new ViewModelProvider(this).get(ArticleViewModel.class);
         articlesAdapter = new ArticlePagedListAdapter();
+        articlesAdapter.setLinearLayoutManager(linearLayoutManager);
         articleListView.setAdapter(articlesAdapter);
         App.i().articlesAdapter = articlesAdapter;
     }
@@ -882,6 +877,7 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
         private void handleArticle(int i){
             try {
                 int retry = 0;
+                KLog.e("以上/以下处理");
                 Article article = articlesAdapter.get(i);
                 if( article == null ){
                     //articlesAdapter.load(i);
@@ -889,6 +885,7 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
                         //KLog.i("文章为空：" + i );
                         Thread.sleep(500);
                         retry ++;
+                        KLog.e("重新获取文章");
                         article = articlesAdapter.get(i);
                     }while ( article == null && retry < 3 );
                     //KLog.e("文章是否为空：" + (article==null)  + "   ,  " + (articlesAdapter.getItem(i)==null) );
@@ -964,11 +961,19 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
 
                 needCount = articleIDs.size() - hadCount;
             }
-
             //返回结果
             return 0;
         }
 
+        /**
+         * @param progress
+         */
+        @Override
+        protected void onProgressUpdate(Integer... progress) {
+            //KLog.e("更新进度" + progress[0] );
+            // 应该是去通知对应的那个 item 改变。
+            articlesAdapter.notifyItemChanged(progress[0]);
+        }
         ///**
         // * 在调用cancel方法后会执行到这里
         // */
@@ -989,18 +994,6 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
         //@Override
         //protected void onPreExecute() {
         //}
-
-        /**
-         * 特别赞一下这个多次参数的方法，特别方便
-         *
-         * @param progress
-         */
-        @Override
-        protected void onProgressUpdate(Integer... progress) {
-            KLog.e("更新进度" + progress[0] );
-            // 应该是去通知对应的那个 item 改变。
-            articlesAdapter.notifyItemChanged(progress[0]);
-        }
     }
 
     private void showSearchResult(String keyword) {
@@ -1031,6 +1024,7 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
         }
         // String articleId = articlesAdapter.getItem(position).getId();
         // Article article = CoreDB.i().articleDao().getById(App.i().getUser().getId(),articleId);
+        KLog.e("切换已读状态" );
         Article article = articlesAdapter.get(position);
         if (autoMarkReaded && article.getReadStatus() == App.STATUS_UNREAD) {
             article.setReadStatus(App.STATUS_UNREADING);
@@ -1075,6 +1069,7 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
             return;
         }
 
+        KLog.e("切换加星状态" );
         Article article = articlesAdapter.get(position);
 
         if (article.getStarStatus() == App.STATUS_STARED) {

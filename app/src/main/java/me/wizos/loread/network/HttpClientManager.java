@@ -7,7 +7,7 @@ import java.util.concurrent.TimeUnit;
 import me.wizos.loread.network.interceptor.InoreaderHeaderInterceptor;
 import me.wizos.loread.network.interceptor.LoggerInterceptor;
 import me.wizos.loread.network.interceptor.LoreadTokenInterceptor;
-import me.wizos.loread.network.interceptor.RedirectInterceptor;
+import me.wizos.loread.network.interceptor.RefererInterceptor;
 import me.wizos.loread.network.interceptor.RelyInterceptor;
 import me.wizos.loread.network.interceptor.TTRSSTokenInterceptor;
 import me.wizos.loread.network.interceptor.TokenAuthenticator;
@@ -27,7 +27,9 @@ public class HttpClientManager {
     private static OkHttpClient ttrssHttpClient;
     private static OkHttpClient inoreaderHttpClient;
     private static OkHttpClient feedlyHttpClient;
+
     private static OkHttpClient imageHttpClient;
+    private static OkHttpClient glideHttpClient;
 
     public static HttpClientManager i() {
         if (instance == null) {
@@ -56,7 +58,6 @@ public class HttpClientManager {
 //                            .authenticator(new TTRSSAuthenticator())
                             .addInterceptor(new TTRSSTokenInterceptor())
                             .build();
-
                     inoreaderHttpClient = new OkHttpClient.Builder()
                             .readTimeout(30, TimeUnit.SECONDS)
                             .writeTimeout(30, TimeUnit.SECONDS)
@@ -71,8 +72,6 @@ public class HttpClientManager {
                             .authenticator(new TokenAuthenticator())
 //                            .dns(new HttpDNS())
                             .build();
-
-
                     feedlyHttpClient = new OkHttpClient.Builder()
                             .readTimeout(30, TimeUnit.SECONDS)
                             .writeTimeout(30, TimeUnit.SECONDS)
@@ -85,7 +84,6 @@ public class HttpClientManager {
                             .addInterceptor(new LoggerInterceptor())
                             .authenticator(new TokenAuthenticator())
                             .build();
-
                     simpleOkHttpClient = new OkHttpClient.Builder()
                             .readTimeout(30, TimeUnit.SECONDS)
                             .writeTimeout(30, TimeUnit.SECONDS)
@@ -95,6 +93,7 @@ public class HttpClientManager {
                             .followRedirects(true)
                             .followSslRedirects(true)
                             .addInterceptor(new RelyInterceptor())
+                            .addInterceptor(new RefererInterceptor())
                             .build();
                     imageHttpClient = new OkHttpClient.Builder()
                             .readTimeout(60, TimeUnit.SECONDS)
@@ -104,10 +103,22 @@ public class HttpClientManager {
                             .hostnameVerifier(HttpsUtils.UnSafeHostnameVerifier)
                             .followRedirects(true)
                             .followSslRedirects(true)
-                            .addInterceptor(new RedirectInterceptor())
-//                            .addInterceptor(new RefererInterceptor())
+                            .addInterceptor(new RelyInterceptor())
                             .build();
                     imageHttpClient.dispatcher().setMaxRequests(4);
+
+                    glideHttpClient = new OkHttpClient.Builder()
+                            .readTimeout(60, TimeUnit.SECONDS)
+                            .writeTimeout(60, TimeUnit.SECONDS)
+                            .connectTimeout(15, TimeUnit.SECONDS)
+                            .sslSocketFactory(HttpsUtils.getSslSocketFactory().sSLSocketFactory, HttpsUtils.getSslSocketFactory().trustManager)
+                            .hostnameVerifier(HttpsUtils.UnSafeHostnameVerifier)
+                            .followRedirects(true)
+                            .followSslRedirects(true)
+                            .addInterceptor(new RelyInterceptor())
+                            .addInterceptor(new RefererInterceptor())
+                            .build();
+                    glideHttpClient.dispatcher().setMaxRequests(4);
                 }
             }
         }
@@ -137,4 +148,7 @@ public class HttpClientManager {
         return imageHttpClient;
     }
 
+    public OkHttpClient glideHttpClient() {
+        return glideHttpClient;
+    }
 }

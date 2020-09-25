@@ -34,6 +34,7 @@ import java.util.Map;
 
 import me.wizos.loread.activity.SplashActivity;
 import me.wizos.loread.adapter.ArticlePagedListAdapter;
+import me.wizos.loread.db.Article;
 import me.wizos.loread.db.CoreDB;
 import me.wizos.loread.db.CorePref;
 import me.wizos.loread.db.User;
@@ -119,10 +120,15 @@ public class App extends Application implements Thread.UncaughtExceptionHandler 
     public LinkedHashMap<String, Integer> articleProgress = new LinkedHashMap<String, Integer>() {
         @Override
         protected boolean removeEldestEntry(Map.Entry<String, Integer> eldest) {
-            return size() > 16;
+            return size() > 8;
         }
     };
-
+    public LinkedHashMap<String, Article> oldArticles = new LinkedHashMap<String, Article>() {
+        @Override
+        protected boolean removeEldestEntry(Map.Entry<String, Article> eldest) {
+            return size() > 8;
+        }
+    };
 
     public static App i() {
         if (instance == null) { // 双重锁定，只有在 withDB 还没被初始化的时候才会进入到下一行，然后加上同步锁

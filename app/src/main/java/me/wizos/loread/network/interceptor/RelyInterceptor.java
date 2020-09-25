@@ -5,12 +5,9 @@ import android.webkit.CookieManager;
 
 import androidx.annotation.NonNull;
 
-import com.socks.library.KLog;
-
 import java.io.IOException;
 
 import me.wizos.loread.config.LinkRewriteConfig;
-import me.wizos.loread.config.NetworkRefererConfig;
 import me.wizos.loread.config.NetworkUserAgentConfig;
 import okhttp3.Interceptor;
 import okhttp3.Request;
@@ -48,19 +45,18 @@ public class RelyInterceptor implements Interceptor {
             hasNew = true;
         }
 
-        String referer = NetworkRefererConfig.i().guessRefererByUrl(url);
-        if (!TextUtils.isEmpty(referer)) {
-            builder.header("Referer", referer );
-            hasNew = true;
-        }
+        //String referer = NetworkRefererConfig.i().guessRefererByUrl(url);
+        //if (!TextUtils.isEmpty(referer)) {
+        //    builder.header("Referer", referer );
+        //    hasNew = true;
+        //}
 
         String ua = NetworkUserAgentConfig.i().guessUserAgentByUrl(url);
         if (!TextUtils.isEmpty(ua)) {
             builder.header("User-Agent", ua );
             hasNew = true;
         }
-        KLog.i("拦截到依赖：" + url + " , " + newUrl + " , " + referer + " =  " + cookie  + " =  "  + ua );
-
+        //KLog.i("拦截到依赖：" + url + " , " + newUrl + " , "  + " =  " + cookie  + " =  "  + ua );
         if(hasNew){
             return chain.proceed(builder.build());
         }

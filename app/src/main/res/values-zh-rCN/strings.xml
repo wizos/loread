@@ -219,6 +219,7 @@
     <string name="share_link">分享链接</string>
     <string name="copy_link">复制链接</string>
     <string name="open_by_outer">外部打开</string>
+    <string name="open_by_inner">内部打开</string>
 
     <string name="copy_success">复制成功</string>
 

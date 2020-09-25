@@ -43,6 +43,7 @@ import me.wizos.loread.db.CoreDB;
 import me.wizos.loread.db.Tag;
 import me.wizos.loread.db.User;
 import me.wizos.loread.network.SyncWorker;
+import me.wizos.loread.utils.BackupUtil;
 import me.wizos.loread.utils.EncryptUtil;
 import me.wizos.loread.utils.FileUtil;
 import me.wizos.loread.utils.StringUtils;
@@ -73,7 +74,8 @@ public class LabActivity extends AppCompatActivity {
         new Thread(new Runnable() {
             @Override
             public void run() {
-                FileUtil.backup();
+                //BackupUtil.backupFile();
+                BackupUtil.doInBackground(LabActivity.this,BackupUtil.COMMAND_BACKUP);
                 materialDialog.dismiss();
             }
         }).start();
@@ -91,7 +93,8 @@ public class LabActivity extends AppCompatActivity {
         new Thread(new Runnable() {
             @Override
             public void run() {
-                FileUtil.restore();
+                //BackupUtil.restoreFile();
+                BackupUtil.doInBackground(LabActivity.this,BackupUtil.COMMAND_RESTORE);
                 materialDialog.dismiss();
             }
         }).start();

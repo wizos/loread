@@ -100,6 +100,9 @@ dependencies {
     // 时间总线
     implementation 'com.jeremyliao:live-event-bus-x:1.6.1'
 
+    // JS Bridge
+    // implementation 'com.github.wendux:DSBridge-Android:3.0-SNAPSHOT'
+
     implementation "androidx.room:room-runtime:2.2.5"
     annotationProcessor "androidx.room:room-compiler:2.2.5"
     // implementation 'com.tencent.wcdb:room:1.0.8'  // 代替 room-runtime，同时也不需要再引用 wcdb-android

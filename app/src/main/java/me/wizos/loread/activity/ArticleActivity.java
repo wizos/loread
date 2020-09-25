@@ -65,6 +65,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -141,7 +142,6 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
     private RelativeLayout bottomBar;
     private VideoImpl video;
 
-    private Article oldArticle;
     private Article selectedArticle;
     private int articleNo;
     private String articleId;
@@ -225,6 +225,12 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
     @Override
     public void log(String paramString) {
         KLog.e(ArticleBridge.TAG, "【log】" + paramString);
+    }
+
+    @JavascriptInterface
+    @Override
+    public void show(String msg){
+        ToastUtils.show(msg);
     }
 
     @JavascriptInterface
@@ -530,17 +536,15 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
 
         if( guessReferer ){
             request.headers("referer", selectedArticle.getLink());
-            KLog.i("来源策略", "图片策略：" + true);
         }else {
             String referer = NetworkRefererConfig.i().guessRefererByUrl(originalUrl);
             if (!StringUtils.isEmpty(referer)) {
                 request.headers("referer", referer);
-                KLog.i("来源策略", "来源：" + referer);
             }
         }
 
         request.execute(fileCallback);
-        KLog.e("下载图片：" + originalUrl);
+        //KLog.e("下载图片：" + originalUrl);
     }
 
     @JavascriptInterface
@@ -612,6 +616,52 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
         intent.setData(Uri.parse(url));
         startActivity(intent);
     }
+    //
+    //@JavascriptInterface
+    //@Override
+    //public String get(String url) {
+    //    okhttp3.Request request = new okhttp3.Request.Builder().url(url).build();
+    //    Call call = HttpClientManager.i().simpleClient().newCall(request);
+    //    call.enqueue(new Callback() {
+    //        @Override
+    //        public void onFailure(@NotNull Call call, @NotNull IOException e) {
+    //
+    //        }
+    //
+    //        @Override
+    //        public void onResponse(@NotNull Call call, @NotNull okhttp3.Response response) throws IOException {
+    //            if(!response.isSuccessful()){
+    //                return;
+    //            }
+    //            String text = response.body().string();
+    //
+    //            articleHandler.post(new Runnable() {
+    //                @Override
+    //                public void run() {
+    //                    if (selectedWebView == null) {
+    //                        return;
+    //                    }
+    //
+    //                    selectedWebView.loadUrl("javascript:setTimeout( onGetSuccess('" + text + "'),1 )");
+    //                }
+    //            });
+    //        }
+    //    });
+    //}
+
+    @JavascriptInterface
+    @Override
+    public String get(String url) throws IOException {
+        okhttp3.Request request = new okhttp3.Request.Builder().url(url).build();
+        Call call = HttpClientManager.i().simpleClient().newCall(request);
+        okhttp3.Response response = call.execute();
+        if(response.isSuccessful()){
+            return Objects.requireNonNull(response.body()).string();
+        }else {
+            return null;
+        }
+    }
+
 
     private void initView() {
         starView = findViewById(R.id.article_bottombar_star);
@@ -721,10 +771,10 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
         articleNo = position;
 
         if (App.i().articlesAdapter != null && position < App.i().articlesAdapter.getItemCount()) {
+            KLog.e("重置文章状态");
             articleId = App.i().articlesAdapter.get(position).getId();
         }
         selectedArticle = CoreDB.i().articleDao().getById(App.i().getUser().getId(), articleId);
-        oldArticle = null;
         initIconState();
         initWebViewContent();
     }
@@ -745,6 +795,7 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
             selectedWebView.setWebViewClient(new WebViewClientX());
             // 原本想放在选择 webview 页面的时候去加载，但可能由于那时页面内容已经加载所以无法设置下面这个JSInterface？
             selectedWebView.addJavascriptInterface(ArticleActivity.this, ArticleBridge.TAG);
+            //selectedWebView.addJavascriptObject(new JsApi(), null);
             selectedWebView.setDownloadListener(new DownloadListenerS(this));
             selectedWebView.setOnTouchListener(new View.OnTouchListener() {
                 @Override
@@ -941,8 +992,12 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
         } else {
             saveView.setText(getString(R.string.font_saved));
         }
-        readabilityView.setText(R.string.font_article_original);
 
+        if(App.i().oldArticles.containsKey(selectedArticle.getId())){
+            readabilityView.setText(R.string.font_article_readability);
+        }else {
+            readabilityView.setText(R.string.font_article_original);
+        }
 
         final Feed feed = CoreDB.i().feedDao().getById(App.i().getUser().getId(), selectedArticle.getFeedId());
         //final View feedConfigView = findViewById(R.id.article_feed_config);
@@ -957,7 +1012,7 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
 
 
     public void onClickReadIcon(View view) {
-//        KLog.e("loread", "被点击的是：" + selectedArticle.getTitle());
+        //KLog.e("loread", "被点击的是：" + selectedArticle.getTitle());
         if (selectedArticle.getReadStatus() == App.STATUS_READED) {
             readView.setText(getString(R.string.font_unread));
             selectedArticle.setReadStatus(App.STATUS_UNREADING);
@@ -1023,25 +1078,9 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
             }else if(categories.size() == 1){
                 msg = getString(R.string.star_marked_to_favorites,categories.get(0).getTitle());
                 action = getString(R.string.edit_favorites);
-
-                //Tag tag = new Tag();
-                //tag.setUid(uid);
-                //tag.setId(categories.get(0).getTitle());
-                //tag.setTitle(categories.get(0).getTitle());
-                //CoreDB.i().tagDao().insert(tag);
-                //ArticleTag articleTag = new ArticleTag(uid,selectedArticle.getId(),tag.getId());
-                //CoreDB.i().articleTagDao().insert(articleTag);
             }else {
                 msg = getString(R.string.star_marked_to_favorites,categories.get(0).getTitle() + getString(R.string.etc));
                 action = getString(R.string.edit_favorites);
-
-                //Tag tag = new Tag();
-                //tag.setUid(uid);
-                //tag.setId(categories.get(0).getTitle());
-                //tag.setTitle(categories.get(0).getTitle());
-                //CoreDB.i().tagDao().insert(tag);
-                //ArticleTag articleTag = new ArticleTag(uid,selectedArticle.getId(),tag.getId());
-                //CoreDB.i().articleTagDao().insert(articleTag);
             }
 
             SnackbarUtil.Long(swipeRefreshLayoutS, bottomBar, msg).setAction(action, v -> editFavorites(uid)).show();
@@ -1164,52 +1203,6 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
                 .show();
     }
 
-//    // 找出当前用户有的所有tags
-//    List<Tag> tags = CoreDB.i().tagDao().getAll(uid);
-//    // 找出当前用户该文章的tags
-//    List<ArticleTag> originalArticleTags = CoreDB.i().articleTagDao().getByArticleId(uid, articleId);
-//
-//    String[] tagTitles = new String[0];
-//    Integer[] preSelectedIndices = new Integer[]{0};
-//        if( tags != null ){
-//        tagTitles = new String[tags.size()];
-//
-//        HashSet<String> tagIdSet = new HashSet();
-//        if(originalArticleTags!=null){
-//            preSelectedIndices = new Integer[]{originalArticleTags.size()};
-//            for (int i = 0, size = originalArticleTags.size(); i < size; i++) {
-//                tagIdSet.add(originalArticleTags.get(i).getTagId());
-//            }
-//        }
-//
-//        int index = 0;
-//        for (int i = 0, size = tags.size(); i < size; i++) {
-//            String title = tags.get(i).getTitle();
-//            tagTitles[i] = title;
-//            if(tagIdSet.contains(title)){
-//                preSelectedIndices[index] = i;
-//                index++;
-//            }
-//        }
-//
-//        new MaterialDialog.Builder(ArticleActivity.this)
-//                .title(getString(R.string.select_tag))
-//                .items(tagTitles)
-//                .itemsCallbackMultiChoice(preSelectedIndices, (dialog, which, text) -> {
-//                    final ArrayList<ArticleTag> selectedArticleTags = new ArrayList<>();
-//                    ArticleTag articleTag;
-//                    for (int i : which) {
-//                        articleTag = new ArticleTag(uid, articleId, tags.get(i).getId() );
-//                        selectedArticleTags.add(articleTag);
-//                    }
-//                    CoreDB.i().articleTagDao().delete(originalArticleTags);
-//                    CoreDB.i().articleTagDao().insert(selectedArticleTags);
-//                    return true;
-//                })
-//                .alwaysCallMultiChoiceCallback() // the callback will always be called, to check if selection is still allowed
-//                .show();
-//    }
-
     public void onClickSaveIcon(View view) {
         if (selectedArticle.getSaveStatus() == App.STATUS_NOT_FILED) {
             saveView.setText(getString(R.string.font_saved));
@@ -1305,11 +1298,17 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
             return;
         }
         saveArticleProgress();
+
+        Article oldArticle = null;
+        if(App.i().oldArticles != null){
+            oldArticle = App.i().oldArticles.get(selectedArticle.getId());
+        }
+
         if(oldArticle != null){
             selectedArticle.setContent(oldArticle.getContent());
             selectedArticle.setSummary(oldArticle.getSummary());
             selectedArticle.setImage(oldArticle.getImage());
-            oldArticle = null;
+            App.i().oldArticles.remove(selectedArticle.getId());
             ToastUtils.show(getString(R.string.cancel_readability));
             selectedWebView.loadData(ArticleUtil.getPageForDisplay(selectedArticle));
             CoreDB.i().articleDao().update(selectedArticle);
@@ -1340,8 +1339,8 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
                 // OkHttp是一个面向于Java应用而不是特定平台(Android)的框架，那么它就无法在其中使用Android独有的Handler机制。
                 @Override
                 public void onResponse(@NotNull Call call, @NotNull okhttp3.Response response) throws IOException {
-                    oldArticle = (Article)selectedArticle.clone();
-                    selectedArticle = ArticleUtil.getReadabilityArticle(selectedArticle,response.body());
+                    App.i().oldArticles.put(selectedArticle.getId(),(Article)selectedArticle.clone());
+                    ArticleUtil.getReadabilityArticle(selectedArticle, response.body());
                     CoreDB.i().articleDao().update(selectedArticle);
                     articleHandler.post(new Runnable() {
                         @Override

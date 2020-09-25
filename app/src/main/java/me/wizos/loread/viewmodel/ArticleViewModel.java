@@ -64,8 +64,8 @@ public class ArticleViewModel extends ViewModel {
         // setPageSize 指定每次分页加载的条目数量
         assert articleFactory != null;
         articles = new LivePagedListBuilder<>(articleFactory, new PagedList.Config.Builder()
-                .setInitialLoadSizeHint(30)
-                .setPageSize(30)
+                .setInitialLoadSizeHint(20)
+                .setPageSize(20)
                 .setPrefetchDistance(15)
                 .build()
         ).build();

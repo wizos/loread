@@ -59,6 +59,7 @@ import me.wizos.loread.config.AdBlock;
 import me.wizos.loread.config.LinkRewriteConfig;
 import me.wizos.loread.config.NetworkUserAgentConfig;
 import me.wizos.loread.utils.ScreenUtil;
+import me.wizos.loread.utils.StringUtils;
 import me.wizos.loread.utils.VideoInjectUtil;
 import me.wizos.loread.view.colorful.Colorful;
 import me.wizos.loread.view.webview.DownloadListenerS;
@@ -111,9 +112,11 @@ public class WebActivity extends BaseActivity implements WebBridge {
             originalUrl = getIntent().getStringExtra(Intent.EXTRA_TEXT);
         }
 
-
+        if(StringUtils.isEmpty(originalUrl)){
+            finish();
+        }
         String newUrl = LinkRewriteConfig.i().getRedirectUrl(originalUrl);
-        KLog.i("获取到链接，准备跳转B：" + originalUrl + ", newUrl = " + newUrl);
+        //KLog.i("获取到链接，准备跳转B：" + originalUrl + ", newUrl = " + newUrl);
         if (!TextUtils.isEmpty(newUrl)) {
             originalUrl =  newUrl;
         }

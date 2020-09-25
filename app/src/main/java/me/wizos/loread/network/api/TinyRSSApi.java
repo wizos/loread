@@ -278,8 +278,6 @@ public class TinyRSSApi extends AuthApi<Feed, me.wizos.loread.bean.feedly.Catego
             LiveEventBus.get(SyncWorker.SYNC_PROCESS_FOR_SUBTITLE).post(getString(R.string.fetch_article_full_content));
             fetchReadability(uid, startSyncTimeMillis);
 
-            // 为所有新增的加星文章自动生成tag
-            handleNotTagStarArticles(uid, startSyncTimeMillis);
             // 执行文章自动处理脚本
             ArticleActionConfig.i().exeRules(uid,startSyncTimeMillis);
             // 清理无文章的tag
@@ -305,6 +303,7 @@ public class TinyRSSApi extends AuthApi<Feed, me.wizos.loread.bean.feedly.Catego
 
     private void handleException(Exception e, String msg) {
         KLog.e(msg);
+        e.printStackTrace();
         ToastUtils.show(msg);
         LiveEventBus.get(SyncWorker.SYNC_PROCESS_FOR_SUBTITLE).post( null );
     }
