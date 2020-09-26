@@ -488,9 +488,9 @@ public class ArticleUtil {
             cacheUrl = FileUtil.readCacheFilePath(idInMD5, originalUrl);
             if (cacheUrl != null) {
                 img.attr("src", cacheUrl);
-                //img.addClass("image-holder");
             } else {
                 img.attr("src", imgHolder);
+                img.addClass("img-lozad");
             }
         }
 

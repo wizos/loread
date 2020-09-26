@@ -33,7 +33,7 @@ function handleImage() {
 		// 2、window.btoa(url) 中 url 的字符不能超出 0x00~0xFF 范围（不能有中文或特殊字符），否则报异常。
 		image.attr('id', hashCode(originalUrl) );
 	});
-	const imgObserver = lozad('img', {
+	const imgObserver = lozad('.img-lozad', {
 		load: function(el) {
 			el.src = ArticleBridge.readImage(articleId, el.getAttribute('id'), el.getAttribute('original-src'));
 		}
