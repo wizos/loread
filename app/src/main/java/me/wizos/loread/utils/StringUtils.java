@@ -91,11 +91,11 @@ public class StringUtils {
      * @return
      */
     public static String urlEncode(String url){
-        if( TextUtils.isEmpty(url)){
-            return null;
+        if(isEmpty(url)){
+            return "";
         }
         try {
-            StringBuffer sb = new StringBuffer();
+            StringBuilder sb = new StringBuilder();
             for (int i = 0, length = url.length(); i < length; i++) {
                 char c = url.charAt(i);
                 if (c <= '\u001f' || c >= '\u007f') {

@@ -35,6 +35,7 @@ import me.wizos.loread.BuildConfig;
 import me.wizos.loread.Contract;
 import me.wizos.loread.R;
 import me.wizos.loread.db.CoreDB;
+import me.wizos.loread.db.CorePref;
 import me.wizos.loread.db.User;
 import me.wizos.loread.view.colorful.Colorful;
 
@@ -91,9 +92,9 @@ public class SettingActivity extends BaseActivity {
 
     private void initView() {
         SwitchButton downImgWifi, openLinkMode, autoToggleTheme;
-//        autoSyncSB = findViewById(R.id.setting_auto_sync_sb);
-//        autoSyncOnWifi.findViewById(R.id.setting_auto_sync_on_wifi_sb);
-//        autoSyncFrequency.findViewById(R.id.setting_auto_sync_on_wifi_sb);
+        // autoSyncSB = findViewById(R.id.setting_auto_sync_sb);
+        // autoSyncOnWifi.findViewById(R.id.setting_auto_sync_on_wifi_sb);
+        // autoSyncFrequency.findViewById(R.id.setting_auto_sync_on_wifi_sb);
         toggleAutoSyncItem();
         autoSyncSB.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
@@ -237,7 +238,7 @@ public class SettingActivity extends BaseActivity {
                     public boolean onSelection(MaterialDialog dialog, View view, int which, CharSequence text) {
                         User user = App.i().getUser();
                         user.setCachePeriod(dayValueArray[which]);
-//                        App.i().getUserBox().put(user);
+                       // App.i().getUserBox().put(user);
                         CoreDB.i().userDao().update(user);
 
                         clearBeforeDaySummary.setText(dayDescArray[which]);
@@ -254,19 +255,19 @@ public class SettingActivity extends BaseActivity {
         new MaterialDialog.Builder(this)
                 .title(R.string.setting_about_dialog_title)
                 .content(R.string.setting_about_dialog_content)
-//                    .positiveText(R.string.agree)
-//                    .negativeText(R.string.disagree)
-//                    .positiveColorRes(R.color.material_red_400)
-//                    .negativeColorRes(R.color.material_red_400)
-//                    .positiveColor(Color.WHITE)
-//                    .negativeColorAttr(android.R.attr.textColorSecondaryInverse)
-//                    .titleGravity(GravityEnum.CENTER)
-//                    .titleColorRes(R.color.material_red_400)
-//                    .contentColorRes(android.R.color.white)
-//                    .backgroundColorRes(R.color.material_blue_grey_800)
-//                    .dividerColorRes(R.color.material_teal_a400)
-//                    .btnSelector(R.drawable.md_btn_selector_custom, DialogAction.POSITIVE)
-//                    .theme(Theme.DARK)
+                // .positiveText(R.string.agree)
+                // .negativeText(R.string.disagree)
+                // .positiveColorRes(R.color.material_red_400)
+                // .negativeColorRes(R.color.material_red_400)
+                // .positiveColor(Color.WHITE)
+                // .negativeColorAttr(android.R.attr.textColorSecondaryInverse)
+                // .titleGravity(GravityEnum.CENTER)
+                // .titleColorRes(R.color.material_red_400)
+                // .contentColorRes(android.R.color.white)
+                // .backgroundColorRes(R.color.material_blue_grey_800)
+                // .dividerColorRes(R.color.material_teal_a400)
+                // .btnSelector(R.drawable.md_btn_selector_custom, DialogAction.POSITIVE)
+                // .theme(Theme.DARK)
                 .show();
     }
 
@@ -314,7 +315,7 @@ public class SettingActivity extends BaseActivity {
                     @Override
                     public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
                         dialog.dismiss();
-                        App.i().getKeyValue().remove(Contract.UID);
+                        CorePref.i().globalPref().remove(Contract.UID);
                         App.i().clearApiData();
                         Intent intent = new Intent(SettingActivity.this, ProviderActivity.class)
                                 .setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -327,7 +328,7 @@ public class SettingActivity extends BaseActivity {
                     @Override
                     public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
                         dialog.dismiss();
-                        App.i().getKeyValue().remove(Contract.UID);
+                        CorePref.i().globalPref().remove(Contract.UID);
                         Intent intent = new Intent(SettingActivity.this, ProviderActivity.class)
                                 .setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
                         startActivity(intent);
@@ -354,7 +355,7 @@ public class SettingActivity extends BaseActivity {
                 dialog.dismiss();
                 int count = users.size();
                 if (index < count) {
-                    App.i().getKeyValue().putString(Contract.UID, users.get(index).getId());
+                    CorePref.i().globalPref().putString(Contract.UID, users.get(index).getId());
                     App.i().restartApp();
                 } else if (index == count) {
                     addAccount();

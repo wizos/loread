@@ -26,10 +26,13 @@ import com.carlt.networklibs.utils.NetworkUtils;
 import com.socks.library.KLog;
 
 import me.wizos.loread.App;
+import me.wizos.loread.Contract;
 import me.wizos.loread.R;
+import me.wizos.loread.config.NetworkRefererConfig;
 import me.wizos.loread.db.Article;
 import me.wizos.loread.db.CoreDB;
 import me.wizos.loread.db.Feed;
+import me.wizos.loread.utils.StringUtils;
 import me.wizos.loread.utils.TimeUtil;
 import me.wizos.loread.view.IconFontView;
 
@@ -58,7 +61,7 @@ public class ArticlePagedListAdapter extends PagedListAdapter<Article, ArticlePa
 
     @Override
     public void onBindViewHolder(@NonNull ArticleViewHolder holder, int position) {
-        KLog.e("创建onBindViewHolder");
+        //KLog.e("创建onBindViewHolder");
         Article article = getItem(position);
         // 如果article是null，在此处不停循环的获取getItem得到的还是null
         if (article != null) {
@@ -146,11 +149,15 @@ public class ArticlePagedListAdapter extends PagedListAdapter<Article, ArticlePa
 
             if (!TextUtils.isEmpty(article.getImage())) {
                 articleImg.setVisibility(View.VISIBLE);
-
                 if ( NetworkUtils.isAvailable() && (!App.i().getUser().isDownloadImgOnlyWifi() || NetworkUtils.getNetType().equals(NetType.WIFI)) ) {
                     // KLog.e( "数据：" + article.getTitle() + "   "  +  App.Referer+ "   "  +  article.getLink() );
-                    if (!TextUtils.isEmpty(article.getLink())) {
-                        GlideUrl gliderUrl = new GlideUrl(article.getImage(), new LazyHeaders.Builder().addHeader(App.Referer, article.getLink()).build());
+                    String referer = NetworkRefererConfig.i().guessRefererByUrl(article.getImage());
+                    if (StringUtils.isEmpty(referer) && !TextUtils.isEmpty(article.getLink())){
+                        referer = StringUtils.urlEncode(article.getLink());
+                    }
+
+                    if (!TextUtils.isEmpty(referer)) {
+                        GlideUrl gliderUrl = new GlideUrl(article.getImage(), new LazyHeaders.Builder().addHeader(Contract.REFERER, referer).build());
                         Glide.with(context).load(gliderUrl).apply(canDownloadOptions).into(articleImg);
                     } else {
                         Glide.with(context).load(article.getImage()).apply(canDownloadOptions).into(articleImg);
@@ -260,7 +267,7 @@ public class ArticlePagedListAdapter extends PagedListAdapter<Article, ArticlePa
         }else {
             lastPos = position;
         }
-        KLog.e("加载：" + position  + " , " + getCurrentList().getLastKey()  + " == "+ getCurrentList().getLoadedCount() + " -- " + (article==null));
+        //KLog.e("加载：" + position  + " , " + getCurrentList().getLastKey()  + " == "+ getCurrentList().getLoadedCount() + " -- " + (article==null));
         return article;
     }
     public void setLastItem(int position){

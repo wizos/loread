@@ -60,7 +60,7 @@ public class FeedlyApi extends OAuthApi<Feed, CategoryItem> {
     private static final String APP_ID = "palabre";
     private static final String APP_KEY = "FE01H48LRK62325VQVGYOZ24YFZL";
     private static final String OFFICIAL_BASE_URL = "https://feedly.com/v3";
-    private static final String REDIRECT_URI = "palabre://feedlyauth";
+    public static final String REDIRECT_URI = "palabre://feedlyauth";
 
     // 系统默认的分类
     // user/12cc057f-9891-4ab3-99da-86f2dee7f2f5/category/global.must
@@ -196,7 +196,7 @@ public class FeedlyApi extends OAuthApi<Feed, CategoryItem> {
     @Override
     public void sync() {
         try {
-            long startSyncTimeMillis = System.currentTimeMillis();
+            long syncTimeMillis = System.currentTimeMillis();
             String uid = App.i().getUser().getId();
 
             KLog.e("3 - 同步订阅源信息");
@@ -308,22 +308,22 @@ public class FeedlyApi extends OAuthApi<Feed, CategoryItem> {
 
             LiveEventBus.get(SyncWorker.SYNC_PROCESS_FOR_SUBTITLE).post(getString(R.string.clear_article));
             deleteExpiredArticles();
-            handleDuplicateArticle();
+            handleDuplicateArticles();
             handleCrawlDate();
             updateCollectionCount();
 
             // 获取文章全文
             LiveEventBus.get(SyncWorker.SYNC_PROCESS_FOR_SUBTITLE).post(getString(R.string.fetch_article_full_content));
-            fetchReadability(uid, startSyncTimeMillis);
+            fetchReadability(uid, syncTimeMillis);
 
             // 执行文章自动处理脚本
-            ArticleActionConfig.i().exeRules(uid,startSyncTimeMillis);
+            ArticleActionConfig.i().exeRules(uid, syncTimeMillis);
             // 清理无文章的tag
             //clearNotArticleTags(uid);
 
+            LiveEventBus.get(SyncWorker.SYNC_PROCESS_FOR_SUBTITLE).post( null );
             // 提示更新完成
             LiveEventBus.get(SyncWorker.NEW_ARTICLE_NUMBER).post(allSize);
-            LiveEventBus.get(SyncWorker.SYNC_PROCESS_FOR_SUBTITLE).post( null );
         } catch (HttpException e) {
             KLog.e("同步时产生HttpException：" + e.message());
             e.printStackTrace();

@@ -70,7 +70,7 @@ public abstract class BaseApi<T, E> {
 
     void deleteExpiredArticles() {
         // 最后的 300 * 1000L 是留前5分钟时间的不删除 WithPref.i().getClearBeforeDay()
-        long time = System.currentTimeMillis() - App.i().getUser().getCachePeriod() * 24 * 3600 * 1000L - 300 * 1000L;
+        long time = System.currentTimeMillis() - App.i().getUser().getCachePeriod() * 24 * 3600 * 1000L - 60 * 1000L;
         String uid = App.i().getUser().getId();
 
         List<Article> boxReadArts = CoreDB.i().articleDao().getReadedUnstarBeFiledLtTime(uid, time);
@@ -79,7 +79,8 @@ public abstract class BaseApi<T, E> {
             article.setSaveStatus(App.STATUS_IS_FILED);
             String dir = "/" + SaveDirectory.i().getSaveDir(article.getFeedId(),article.getId()) + "/";
             //KLog.e("保存目录：" + dir);
-            FileUtil.saveArticle(App.i().getUserBoxPath() + dir, article);
+            //FileUtil.saveArticle(App.i().getUserBoxPath() + dir, article);
+            ArticleUtil.saveArticle(App.i().getUserBoxPath() + dir, article);
         }
         CoreDB.i().articleDao().update(boxReadArts);
 
@@ -89,7 +90,8 @@ public abstract class BaseApi<T, E> {
             article.setSaveStatus(App.STATUS_IS_FILED);
             String dir = "/" + SaveDirectory.i().getSaveDir(article.getFeedId(),article.getId()) + "/";
             //KLog.e("保存目录：" + dir);
-            FileUtil.saveArticle(App.i().getUserStorePath() + dir, article);
+            //FileUtil.saveArticle(App.i().getUserStorePath() + dir, article);
+            ArticleUtil.saveArticle(App.i().getUserStorePath() + dir, article);
         }
         CoreDB.i().articleDao().update(storeReadArts);
 
@@ -104,9 +106,10 @@ public abstract class BaseApi<T, E> {
     }
 
     void fetchReadability(String uid, long syncTimeMillis){
-        List<Article> articles = CoreDB.i().articleDao().getNeedReadability(uid,syncTimeMillis);
+        List<Article> articles = CoreDB.i().articleDao().getNeedReadability(uid, syncTimeMillis);
+        KLog.e("====获取易读文章：" + " , " + uid + " , " + syncTimeMillis );
         for (Article article : articles) {
-            //KLog.e("====获取：" + entry.getKey() + " , " + article.getTitle() + " , " + article.getLink());
+            KLog.e("====获取：" + " , " + article.getTitle() + " , " + article.getLink());
             if (TextUtils.isEmpty(article.getLink())) {
                 continue;
             }
@@ -224,7 +227,7 @@ public abstract class BaseApi<T, E> {
 
 
 
-    void handleDuplicateArticle() {
+    void handleDuplicateArticles() {
         // 清理重复的文章
         Article articleSample;
         List<String> links = CoreDB.i().articleDao().getDuplicatesLink(App.i().getUser().getId());

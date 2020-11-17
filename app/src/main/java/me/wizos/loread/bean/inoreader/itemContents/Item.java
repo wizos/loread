@@ -155,7 +155,15 @@ public class Item {
         // 返回的字段
         article.setId(id);
 
-        title = ArticleUtil.getOptimizedTitle(title);
+
+        String tmpContent = ArticleUtil.getOptimizedContent(article.getLink(), summary.getContent());
+        tmpContent = ArticleUtil.getOptimizedContentWithEnclosures(tmpContent,enclosure);
+        article.setContent(tmpContent);
+
+        String tmpSummary = ArticleUtil.getOptimizedSummary(tmpContent);
+        article.setSummary(tmpSummary);
+
+        title = ArticleUtil.getOptimizedTitle(title,tmpSummary);
         article.setTitle(title);
 
         article.setAuthor(author);
@@ -168,13 +176,6 @@ public class Item {
             article.setFeedId(origin.getStreamId());
             article.setFeedTitle(origin.getTitle());
         }
-
-        String tmpContent = ArticleUtil.getOptimizedContent(article.getLink(), summary.getContent());
-        tmpContent = ArticleUtil.getOptimizedContentWithEnclosures(tmpContent,enclosure);
-        article.setContent(tmpContent);
-
-        String tmpSummary = ArticleUtil.getOptimizedSummary(tmpContent);
-        article.setSummary(tmpSummary);
 
         String coverUrl = ArticleUtil.getCoverUrl(article.getLink(),tmpContent);
         article.setImage(coverUrl);

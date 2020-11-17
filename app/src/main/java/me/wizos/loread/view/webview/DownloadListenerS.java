@@ -57,10 +57,10 @@ public class DownloadListenerS implements DownloadListener {
         }
 
 
-        KLog.e("下载" + url + " , " + userAgent + " , "  + contentDisposition);
+        KLog.e("下载1：" + url + " , " + userAgent + " , "  + contentDisposition);
 //        KLog.e("下载", contentDisposition); // attachment; filename=com.android36kr.app_7.4.2_18060821.apk
-        KLog.e("下载" + mimeType); //  application/vnd.android.package-archive
-        KLog.e("下载5", contentLength);
+        KLog.e("下载2：" + mimeType); //  application/vnd.android.package-archive
+        KLog.e("下载3：" + contentLength);
 
         MaterialDialog downloadDialog = new MaterialDialog.Builder(context)
                 .title(R.string.do_you_want_to_download_files)

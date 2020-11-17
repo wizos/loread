@@ -15,6 +15,9 @@ public interface UserDao {
     @Query("SELECT * FROM user")
     List<User> loadAll();
 
+    @Query("SELECT count(*) FROM user")
+    int size();
+
     @Query("SELECT * FROM user WHERE id = :uid  LIMIT 1")
     User getById(String uid);
 

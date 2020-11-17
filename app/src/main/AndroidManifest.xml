@@ -111,9 +111,6 @@
                 <category android:name="android.intent.category.BROWSABLE" />
 
                 <data
-                    android:host="oauth"
-                    android:scheme="loread" />
-                <data
                     android:host="oauth_inoreader"
                     android:scheme="loread" />
                 <data

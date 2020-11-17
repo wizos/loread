@@ -67,24 +67,31 @@ import static me.wizos.loread.utils.StringUtils.getString;
 
 public class LoreadApi extends AuthApi<Feed, me.wizos.loread.bean.feedly.CategoryItem> implements LoginInterface{
     private LoreadService service;
-    private static String HOST = "";
+    private static final String EXAMPLE_BASE_URL = "https://example.com";
+    private String tempBaseUrl;
 
     public LoreadApi() {
-        if (TextUtils.isEmpty(HOST)) {
-            LoreadApi.HOST = App.i().getUser().getHost();
-            KLog.e("HOST 地址：" + HOST );
-        }
-        Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl(LoreadApi.HOST) // 设置网络请求的Url地址, 必须以/结尾
-                .addConverterFactory(GsonConverterFactory.create(new GsonBuilder().setLenient().create()))  // 设置数据解析器
-                .client(HttpClientManager.i().loreadHttpClient())
-                .build();
-        service = retrofit.create(LoreadService.class);
+        this(App.i().getUser().getHost());
     }
 
-    public static void setHost(String host) {
-        LoreadApi.HOST = host;
-        KLog.e("HOST 地址：" + host );
+    public LoreadApi(String baseUrl) {
+        if (!TextUtils.isEmpty(baseUrl)) {
+            tempBaseUrl = baseUrl;
+        }else {
+            tempBaseUrl = EXAMPLE_BASE_URL;
+            ToastUtils.show(R.string.empty_site_url_hint);
+        }
+
+        if (!tempBaseUrl.endsWith("/")) {
+            tempBaseUrl = tempBaseUrl + "/";
+        }
+
+        Retrofit retrofit = new Retrofit.Builder()
+                .baseUrl(tempBaseUrl) // 设置网络请求的Url地址, 必须以/结尾
+                .addConverterFactory(GsonConverterFactory.create(new GsonBuilder().setLenient().create()))  // 设置数据解析器
+                .client(HttpClientManager.i().ttrssHttpClient())
+                .build();
+        service = retrofit.create(LoreadService.class);
     }
 
     public LoginResult login(String accountId, String accountPd) throws IOException {
@@ -260,7 +267,7 @@ public class LoreadApi extends AuthApi<Feed, me.wizos.loread.bean.feedly.Categor
 
             LiveEventBus.get(SyncWorker.SYNC_PROCESS_FOR_SUBTITLE).post(getString(R.string.clear_article));
             deleteExpiredArticles();
-            handleDuplicateArticle();
+            handleDuplicateArticles();
             handleCrawlDate();
             updateCollectionCount();
 
@@ -273,9 +280,9 @@ public class LoreadApi extends AuthApi<Feed, me.wizos.loread.bean.feedly.Categor
             // 清理无文章的tag
             //clearNotArticleTags(uid);
 
+            LiveEventBus.get(SyncWorker.SYNC_PROCESS_FOR_SUBTITLE).post( null );
             // 提示更新完成
             LiveEventBus.get(SyncWorker.NEW_ARTICLE_NUMBER).post(ids.size());
-            LiveEventBus.get(SyncWorker.SYNC_PROCESS_FOR_SUBTITLE).post( null );
         }catch (IllegalStateException e){
             KLog.e("同步时产生IllegalStateException：" + e.getMessage());
             e.printStackTrace();

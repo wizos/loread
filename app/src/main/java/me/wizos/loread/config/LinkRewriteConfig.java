@@ -20,6 +20,7 @@ import me.wizos.loread.utils.ScriptUtil;
  * @author Wizos on 2020/4/14.
  */
 public class LinkRewriteConfig {
+    private static final String CONFIG_FILENAME = "link_rewrite.json";
     private LinkRewriteConfig() { }
     public static LinkRewriteConfig i() {
         if (instance == null) {
@@ -27,7 +28,7 @@ public class LinkRewriteConfig {
                 if (instance == null) {
                     Gson gson = new Gson();
 
-                    String config = FileUtil.readFile(App.i().getUserConfigPath() + "link_rewrite.json");
+                    String config = FileUtil.readFile(App.i().getUserConfigPath() + CONFIG_FILENAME);
                     if (TextUtils.isEmpty(config)) {
                         instance = new LinkRewriteConfig();
                         instance.domainRewrite = new ArrayMap<>();
@@ -44,7 +45,7 @@ public class LinkRewriteConfig {
         instance = null;
     }
     public void save() {
-        FileUtil.save(App.i().getUserConfigPath() + "link_rewrite.json", new GsonBuilder().setPrettyPrinting().create().toJson(instance));
+        FileUtil.save(App.i().getUserConfigPath() + CONFIG_FILENAME, new GsonBuilder().setPrettyPrinting().create().toJson(instance));
     }
 
     @SerializedName("url_match_domain_rewrite_domain")

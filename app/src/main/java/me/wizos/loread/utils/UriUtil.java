@@ -30,10 +30,10 @@ public class UriUtil {
                 fileNameByGuess = guessFileNameExt(url);
             } else {
                 fileNameByGuess = contentDisposition.substring(contentDisposition.indexOf("filename=") + 9);
-                if(fileNameByGuess.startsWith("\'") && fileNameByGuess.length()> 1){
+                if(fileNameByGuess.startsWith("'") && fileNameByGuess.length()> 1){
                     fileNameByGuess = fileNameByGuess.substring(1);
                 }
-                if(fileNameByGuess.endsWith("\'") && fileNameByGuess.length()> 1){
+                if(fileNameByGuess.endsWith("'") && fileNameByGuess.length()> 1){
                     fileNameByGuess = fileNameByGuess.substring(0,fileNameByGuess.length()-1);
                 }
                 if(fileNameByGuess.startsWith("\"") && fileNameByGuess.length()> 1){

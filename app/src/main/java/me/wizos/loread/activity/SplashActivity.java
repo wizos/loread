@@ -6,9 +6,9 @@ import android.text.TextUtils;
 
 import com.socks.library.KLog;
 
-import me.wizos.loread.App;
 import me.wizos.loread.Contract;
 import me.wizos.loread.R;
+import me.wizos.loread.db.CorePref;
 import me.wizos.loread.view.colorful.Colorful;
 
 public class SplashActivity extends BaseActivity {
@@ -37,7 +37,7 @@ public class SplashActivity extends BaseActivity {
 //        // 2.3 加载一些相关参数、配置到内存？还是在用到的时候再去加载？
 //        // 3.跳转至文章列表页
         Intent intent;
-        String uid = App.i().getKeyValue().getString(Contract.UID, null);
+        String uid = CorePref.i().globalPref().getString(Contract.UID, null);
         KLog.e("获取UID：" + uid );
         if ( TextUtils.isEmpty(uid) ) {
             intent = new Intent(this, ProviderActivity.class);

@@ -53,7 +53,7 @@ public class SaveDirectory {
             synchronized (SaveDirectory.class) {
                 if (instance == null) {
                     Gson gson = new Gson();
-                    String config = FileUtil.readFile(App.i().getUserConfigPath() + "/article_save_directory.json");
+                    String config = FileUtil.readFile(App.i().getUserConfigPath() + "article_save_directory.json");
                     if (TextUtils.isEmpty(config)) {
                         instance = new SaveDirectory();
                         instance.settingByFeed = new ArrayMap<>();
@@ -72,7 +72,7 @@ public class SaveDirectory {
         instance = null;
     }
     public void save() {
-        FileUtil.save(App.i().getUserConfigPath() + "/article_save_directory.json", new GsonBuilder().setPrettyPrinting().create().toJson(instance));
+        FileUtil.save(App.i().getUserConfigPath() + "article_save_directory.json", new GsonBuilder().setPrettyPrinting().create().toJson(instance));
     }
 
 

@@ -78,7 +78,7 @@
                         android:id="@+id/tiny_rss_host_edittext"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:hint="@string/server_host"
+                        android:hint="@string/server_site_url"
                         android:text="@string/https_scheme"
                         android:inputType="textUri"
                         android:maxLines="1" />
@@ -159,7 +159,7 @@
         android:ellipsize="end"
         android:gravity="center"
         android:maxLines="1"
-        android:text="@string/the_server_host_like"
+        android:text="@string/the_server_site_url_like"
         android:textColor="@color/dark_background"
         android:textSize="12dp"
         android:visibility="gone"

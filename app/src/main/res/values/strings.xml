@@ -162,8 +162,6 @@
     <string name="loading">Loading</string>
     <string name="upgrading">Upgrading</string>
     <string name="upgrading_please_wait_a_moment">Upgrading, please wait a moment</string>
-    <string name="https_scheme">https://</string>
-    <string name="inoreader_url">https://inoreader.com</string>
     <!--关于-->
     <string name="about">About</string>
     <string name="license">License</string>
@@ -335,37 +333,46 @@
     <string name="title_activity_scrolling">ScrollingActivity</string>
 
     <string name="action_settings">Settings</string>
-    <string name="server_host">Server Host</string>
+    <string name="server_site_url">Server Host</string>
     <string name="account">Account</string>
     <string name="password">Password</string>
     <string name="welcome">"Welcome!"</string>
     <string name="invalid_username">Invalid username</string>
-    <string name="invalid_host">Invalid Server Host, like https://example.com</string>
-    <string name="empty_host">Empty Server Host, please reset it</string>
+    <string name="invalid_site_url_hint">"Invalid Server'url, like https://example.com"</string>
+    <string name="empty_site_url_hint">Empty Server Host, please reset it</string>
 
     <string name="invalid_password">Password must be >5 characters</string>
 
     <string name="article_title_is">article title is: </string>
 
-    <string name="summary_pre">[Here is a pre]</string>
-    <string name="summary_table">[Here is a table]</string>
-    <string name="summary_link">[Here is a link]</string>
-    <string name="summary_frame">[Here is a frame]</string>
-    <string name="summary_audio">[Here is a audio]</string>
-    <string name="summary_video">[Here is a video]</string>
-    <string name="summary_image">[Here is a image]</string>
+    <string name="pre_for_spreak">[Here is a pre]</string>
+    <string name="table_for_spreak">[Here is a table]</string>
+    <string name="frame_for_spreak">[Here is a frame]</string>
+    <string name="audio_for_spreak">[Here is a audio]</string>
+    <string name="video_for_spreak">[Here is a video]</string>
+    <string name="image_for_spreak">[Here is a image]</string>
+    <string name="link_for_spreak">[Here is a link]</string>
 
 
-    <string name="frame">[frame]</string>
-    <string name="audio">[audio]</string>
-    <string name="video">[video]</string>
-    <string name="image">[image]</string>
+    <string name="pre_for_summary">" [pre] "</string>
+    <string name="table_for_summary">" [table] "</string>
+    <string name="frame_for_summary">" [frame] "</string>
+    <string name="audio_for_summary">" [audio] "</string>
+    <string name="video_for_summary">" [video] "</string>
+    <string name="image_for_summary">" [image] "</string>
 
+    <string name="select_login_account">Select the logged-in account</string>
+
+    <string name="https_scheme">https://</string>
     <string name="inoreader_oauth">InoReader (OAuth)</string>
     <string name="inoreader_login">InoReader (Login)</string>
+    <string name="inoreader_site_url">"Inoreader's url"</string>
+    <string name="inoreader_url">https://inoreader.com</string>
     <string name="feedly">Feedly</string>
     <string name="tinytinyrss">TinyTinyRSS</string>
     <string name="intro">Intro</string>
+
+    <string name="need_to_access_inoreader_url_normally_hint">"This service requires you to have normal access to the Inoreader'url (see below)"</string>
 
     <string name="everything_is_rssible">Everything is RSSible</string>
 
@@ -373,7 +380,7 @@
 
     <string name="do_you_want_to_delete_data_of_this_account_after_logout">Do you want to delete all data of this account after logout?</string>
     <string name="loread_plugin_must_be_installed">Note: Loread plugin must be installed in \'plugins.local\' directory</string>
-    <string name="the_server_host_like">The server host like "https://example.com"</string>
+    <string name="the_server_site_url_like">The server host like "https://example.com"</string>
     <string name="rss_summary">
         In layman\'s terms, RSS is a way to subscribe to information.\n\n
         Just like following John Doe on Twitter and Jane Doe on TikTok, you can follow them by subscribe for a FEED URL in the "RSS Reader".\n\n
@@ -394,6 +401,8 @@
     <string name="loading_failed_click_here_to_retry">Loading failed! Click here to retry</string>
     <string name="picture_error_click_here_to_retry">Picture error! Click here to retry</string>
     <string name="copied">Copied</string>
+    <string name="speed">Speed</string>
+    <string name="normal">Normal</string>
     
     <string name="the_rule_of_full_text_extraction_has_expired">The rule of full-text extraction has expired: %1$s</string>
 </resources>

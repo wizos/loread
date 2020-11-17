@@ -10,6 +10,7 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
 import com.socks.library.KLog;
+import com.tencent.mmkv.MMKV;
 
 import me.wizos.loread.App;
 import me.wizos.loread.Contract;
@@ -17,6 +18,7 @@ import me.wizos.loread.R;
 import me.wizos.loread.activity.login.LoginFormState;
 import me.wizos.loread.activity.login.LoginResult;
 import me.wizos.loread.db.CoreDB;
+import me.wizos.loread.db.CorePref;
 import me.wizos.loread.db.User;
 import me.wizos.loread.db.UserDao;
 import me.wizos.loread.network.api.TinyRSSApi;
@@ -58,9 +60,10 @@ public class TinyRSSUserViewModel extends AndroidViewModel {
                 user.setUserPassword(password);
                 user.setAuth(auth);
                 user.setExpiresTimestamp(0);
-                user.setHost(host);
+                // user.setHost(host);
+                MMKV.defaultMMKV().putString(Contract.INOREADER_URL, host).commit();
                 tinyRSSApi.setAuthorization(auth);
-                App.i().getKeyValue().putString(Contract.UID, user.getId());
+                CorePref.i().globalPref().putString(Contract.UID, user.getId());
                 KLog.i("登录成功：" + user.getId());
                 User userTmp = userDao.getById(user.getId());
                 if (userTmp != null) {
@@ -85,7 +88,7 @@ public class TinyRSSUserViewModel extends AndroidViewModel {
         LoginFormState loginFormState = new LoginFormState();
 
         if (!isHostValid(host)) {
-            loginFormState.setHostHint(R.string.invalid_host);
+            loginFormState.setHostHint(R.string.invalid_site_url_hint);
         } else if (!isUserNameValid(username)) {
             loginFormState.setUsernameHint(R.string.invalid_username);
         } else if (!isPasswordValid(password)) {

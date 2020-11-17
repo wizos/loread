@@ -74,7 +74,7 @@ public class Extractor {
         Elements elements;
         boolean circulate;
         do {
-            elements = body.select("p:empty, div:empty, blockquote:empty, details:empty, details:empty, figure:empty, figcaption:empty,  ul:empty, ol:empty, li:empty,  table:empty, tbody:empty, th:empty, tr:empty, dt:empty, dl:empty,  section:empty, h1:empty, h2:empty, h3:empty, h4:empty, h5:empty, h6:empty, ins:empty, a:empty, b:empty, string:empty, span:empty, i:empty,  section:empty, h1:empty, h2:empty, h3:empty, h4:empty, h5:empty, h6:empty, ins:empty, a:empty, b:empty, string:empty, span:empty, i:empty");
+            elements = body.select("a:empty, b:empty, blockquote:empty, details:empty, div:empty, dl:empty, dt:empty, figcaption:empty, figure:empty, font:empty, footer:empty, h1:empty, h2:empty, h3:empty, h4:empty, h5:empty, h6:empty, i:empty, ins:empty, li:empty, ol:empty, p:empty, section:empty, span:empty, string:empty, table:empty, tbody:empty, th:empty, tr:empty, ul:empty");
             if( elements != null && elements.size() > 0){
                 //System.out.println("继续移除：" + elements.outerHtml());
                 elements.remove();
@@ -103,15 +103,25 @@ public class Extractor {
             }
 
             String tagName = tag.tagName();
-            if (tagName.equals("a")) {
-                countInfo.linkTextCount = countInfo.textCount;
-                countInfo.linkTagCount++;
-            } else if (tagName.equals("p") || tagName.equals("article")) { // || tagName.equals("img") || tagName.equals("video") || tagName.equals("audio")
-                countInfo.pCount++;
-            }
-            // 一些有样式意义的空元素不要计入打分规则，不然会有很严重的干扰，比如91论坛的文章
-            else if(tagName.equals("br") || tagName.equals("hr")){ //  || tagName.equals("strong") || tagName.equals("span")
-                return countInfo;
+            // if (tagName.equals("a")) {
+            //     countInfo.linkTextCount = countInfo.textCount;
+            //     countInfo.linkTagCount++;
+            // } else if (tagName.equals("p") || tagName.equals("article")) { // || tagName.equals("img") || tagName.equals("video") || tagName.equals("audio")
+            //     countInfo.pCount++;
+            // }
+            switch (tagName) {
+                case "a":
+                    countInfo.linkTextCount = countInfo.textCount;
+                    countInfo.linkTagCount++;
+                    break;
+                case "p":
+                case "article":  // || tagName.equals("img") || tagName.equals("video") || tagName.equals("audio")
+                    countInfo.pCount++;
+                    break;
+                // 一些有样式意义的空元素不要计入打分规则，不然会有很严重的干扰，比如91论坛的文章
+                case "br":
+                case "hr":  //  || tagName.equals("strong") || tagName.equals("span")
+                    return countInfo;
             }
 
             countInfo.tagCount++;
@@ -134,13 +144,6 @@ public class Extractor {
             //if(countInfo.sbdi == 0){
             //    countInfo.sbdi = 1;
             //}
-
-//            if( tag.className().equals("postmessage_5451354")){
-//                System.out.println("节点: "  + tag.nodeName() + "." + tag.className()
-//                                + ", 文本长度：" + countInfo.textCount + ", 链接文本长度：" + countInfo.linkTextCount + ", tag数量" + countInfo.tagCount + ", linkTag：" + countInfo.linkTagCount
-//                                + ", p标签：" + countInfo.pCount+ " , 文字密度：" + countInfo.density + ",文本密度总数：" + countInfo.densitySum + ", 符号密度："
-//                          );
-//            }
 
             bodyInfoMap.put(tag, countInfo);
 
@@ -222,9 +225,39 @@ public class Extractor {
         cleanBodyElement(bodyElement);
         computeInfo(bodyElement);
         double maxScore = 0;
-        Element content = null;
-//        String tt = "";
-//        flag = flag.trim();
+        Element contentElement = null;
+        for (Map.Entry<Element, CountInfo> entry : bodyInfoMap.entrySet()) {
+            Element tag = entry.getKey();
+            if (tag.tagName().equals("a") || tag == bodyElement) {
+                continue;
+            }
+            double score = computeScore(tag);
+            if (score > maxScore) {
+                maxScore = score;
+                contentElement = tag;
+            }
+        }
+
+        if (contentElement != null) {
+            // KLog.e("正文是：" + contentElement.text());
+            return contentElement;
+        }
+        Logger.e("提取失败");
+        return null;
+    }
+    /**
+     * 我自己改的，去掉了报错
+     *
+     * @return
+     */
+    public Element getContentElementWithKeyword(String keyword) {
+        Element bodyElement = doc.body();
+        cleanBodyElement(bodyElement);
+        computeInfo(bodyElement);
+        double maxScore = 0;
+        Element contentElement = null;
+        String tmp = "";
+        keyword = keyword.trim();
         for (Map.Entry<Element, CountInfo> entry : bodyInfoMap.entrySet()) {
             Element tag = entry.getKey();
             if (tag.tagName().equals("a") || tag == bodyElement) {
@@ -232,28 +265,28 @@ public class Extractor {
             }
             double score = computeScore(tag);
 
-//            tt = tag.text().trim();
-//            if( tt.length() > 18){
-//                tt = tt.substring(0,18);
-//            }
-//            if(tt.startsWith(flag)){
-//                score = score * 1.5;
-//            }
-//            System.out.println("Tag: "  + tag.nodeName() + "." + tag.className()  + " , 分数：" + score + " , 文本：" + tt);
+            tmp = tag.ownText().trim();
+            if( tmp.length() > 6){
+                tmp = tmp.substring(0,6);
+            }
+            if(tmp.startsWith(keyword)){
+                score = score * 1.5;
+            }
+            // System.out.println("Tag: "  + tag.nodeName() + "." + tag.className()  + " , 分数：" + score + " , 文本：" + tt);
+
             if (score > maxScore) {
                 maxScore = score;
-                content = tag;
+                contentElement = tag;
             }
         }
 
-        if (content != null) {
-//            KLog.e("正文是：" + content.text());
-            return content;
+        if (contentElement != null) {
+            // KLog.e("正文是：" + content.text());
+            return contentElement;
         }
         Logger.e("提取失败");
         return null;
     }
-
     public ModPage getNews() throws Exception {
         ModPage modPage = new ModPage();
         Element contentElement;

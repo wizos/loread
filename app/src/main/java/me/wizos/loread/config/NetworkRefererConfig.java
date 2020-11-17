@@ -15,12 +15,13 @@ import me.wizos.loread.utils.FileUtil;
 import me.wizos.loread.utils.StringUtils;
 
 public class NetworkRefererConfig {
+    private static final String CONFIG_FILENAME = "network_referer.json";
     private transient static NetworkRefererConfig instance;
     public static NetworkRefererConfig i() {
         if (instance == null) {
             synchronized (NetworkRefererConfig.class) {
                 if (instance == null) {
-                    String json = FileUtil.readFile(App.i().getUserConfigPath() + "network_referer.json");
+                    String json = FileUtil.readFile(App.i().getUserConfigPath() + CONFIG_FILENAME);
                     instance = new NetworkRefererConfig();
                     if (TextUtils.isEmpty(json)) {
                         instance.domainReferer = new ArrayMap<String, String>();
@@ -33,7 +34,7 @@ public class NetworkRefererConfig {
         return instance;
     }
     public void save() {
-        FileUtil.save(App.i().getUserConfigPath() + "network_referer.json", new GsonBuilder().setPrettyPrinting().create().toJson(instance.domainReferer));
+        FileUtil.save(App.i().getUserConfigPath() + CONFIG_FILENAME, new GsonBuilder().setPrettyPrinting().create().toJson(instance.domainReferer));
     }
     public void reset() {
         instance = null;
@@ -66,13 +67,13 @@ public class NetworkRefererConfig {
         }
 
         if (domainReferer.containsKey(host)) {
-            return StringUtils.urlEncode(domainReferer.get(host));
+            return domainReferer.get(host);
         }
 
         String[] slices = host.split("\\.");
         for (int i = 1, size = slices.length; i+1 < size; i++) {
             host = StringUtils.join(".", Arrays.copyOfRange(slices, i, size));
-//            KLog.i("分割 Host 推测 Referer：" + host );
+            // KLog.i("分割 Host 推测 Referer：" + host );
             if (domainReferer.containsKey(host)) {
                 return domainReferer.get(host); // StringUtils.urlEncode();
             }

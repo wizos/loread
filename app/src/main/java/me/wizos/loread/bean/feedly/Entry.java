@@ -305,7 +305,19 @@ public class Entry {
         Article article = new Article();
         article.setId(id);
 
-        title = ArticleUtil.getOptimizedTitle(title);
+        String tmpContent = "";
+        if (content != null && !TextUtils.isEmpty(content.getContent())) {
+            tmpContent = ArticleUtil.getOptimizedContent(article.getLink(), content.getContent());
+        } else if (summary != null && !TextUtils.isEmpty(summary.getContent())) {
+            tmpContent = ArticleUtil.getOptimizedContent(article.getLink(), summary.getContent());
+        }
+        tmpContent = ArticleUtil.getOptimizedContentWithEnclosures(tmpContent,enclosure);
+        article.setContent(tmpContent);
+
+        String tmpSummary = ArticleUtil.getOptimizedSummary(tmpContent);
+        article.setSummary(tmpSummary);
+
+        title = ArticleUtil.getOptimizedTitle(title, tmpSummary);
         article.setTitle(title);
 
         article.setAuthor(author);
@@ -318,18 +330,6 @@ public class Entry {
             article.setFeedId(origin.getStreamId());
             article.setFeedTitle(origin.getTitle());
         }
-
-        String tmpContent = "";
-        if (content != null && !TextUtils.isEmpty(content.getContent())) {
-            tmpContent = ArticleUtil.getOptimizedContent(article.getLink(), content.getContent());
-        } else if (summary != null && !TextUtils.isEmpty(summary.getContent())) {
-            tmpContent = ArticleUtil.getOptimizedContent(article.getLink(), summary.getContent());
-        }
-        tmpContent = ArticleUtil.getOptimizedContentWithEnclosures(tmpContent,enclosure);
-        article.setContent(tmpContent);
-
-        String tmpSummary = ArticleUtil.getOptimizedSummary(tmpContent);
-        article.setSummary(tmpSummary);
 
         String coverUrl = ArticleUtil.getCoverUrl(article.getLink(),tmpContent);
         article.setImage(coverUrl);

@@ -1,20 +1,20 @@
-//package me.wizos.loread.config;
+// package me.wizos.loread.config;
 //
-//import android.net.Uri;
-//import android.text.TextUtils;
-//import android.util.ArrayMap;
+// import android.net.Uri;
+// import android.text.TextUtils;
+// import android.util.ArrayMap;
 //
-//import com.google.gson.Gson;
-//import com.google.gson.GsonBuilder;
-//import com.google.gson.reflect.TypeToken;
+// import com.google.gson.Gson;
+// import com.google.gson.GsonBuilder;
+// import com.google.gson.reflect.TypeToken;
 //
-//import me.wizos.loread.App;
-//import me.wizos.loread.utils.FileUtil;
+// import me.wizos.loread.App;
+// import me.wizos.loread.utils.FileUtil;
 //
-///**
+// /**
 // * @author Wizos on 2020/4/14.
 // */
-//public class HostConfig {
+// public class HostConfig {
 //    private HostConfig() { }
 //    public static HostConfig i() {
 //        if (instance == null) {
@@ -24,10 +24,9 @@
 //                    instance = new HostConfig();
 //
 //                    String config = FileUtil.readFile(App.i().getGlobalConfigPath() + "host_rewrite.json");
-//                    if (TextUtils.isEmpty(config)) {
-//                        instance.domainRewrite = new ArrayMap<>();
+//                    if (!TextUtils.isEmpty(config)) {
 //                    } else {
-//                        instance.domainRewrite = gson.fromJson(config, new TypeToken<ArrayMap<String,String>>() {}.getType());
+//                        instance = gson.fromJson(config, HostConfig.class);
 //                    }
 //                }
 //            }
@@ -38,21 +37,16 @@
 //        instance = null;
 //    }
 //    public void save() {
-//        FileUtil.save(App.i().getGlobalConfigPath() + "host_rewrite.json", new GsonBuilder().setPrettyPrinting().create().toJson(instance.domainRewrite));
+//        FileUtil.save(App.i().getGlobalConfigPath() + "host_rewrite.json", new GsonBuilder().setPrettyPrinting().create().toJson(instance));
 //    }
 //
-//    private static HostConfig instance;
-//    private ArrayMap<String, String> domainRewrite;
+//
+//    transient private static HostConfig instance;
+//    public String inoreaderHost = "www.inoreader.com";
 //
 //    //@SerializedName("url_match_domain_rewrite_url")
 //
-//    public String getRedirectUrl(String url) {
-//        Uri uri = Uri.parse(url);
-//        String host = uri.getHost();
-//        if (domainRewrite.containsKey(host)) {
-//            assert host != null;
-//            return url.replaceFirst(host, domainRewrite.get(host));
-//        }
-//        return "";
+//    public String getInoreaderHost(String url) {
+//        return inoreaderHost;
 //    }
-//}
+// }

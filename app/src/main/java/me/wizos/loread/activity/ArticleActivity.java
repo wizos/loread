@@ -73,6 +73,7 @@ import cc.shinichi.library.ImagePreview;
 import cc.shinichi.library.view.listener.OnBigImageLongClickListener;
 import me.wizos.loread.App;
 import me.wizos.loread.BuildConfig;
+import me.wizos.loread.Contract;
 import me.wizos.loread.R;
 import me.wizos.loread.bridge.ArticleBridge;
 import me.wizos.loread.config.AdBlock;
@@ -80,7 +81,6 @@ import me.wizos.loread.config.ArticleTags;
 import me.wizos.loread.config.LinkRewriteConfig;
 import me.wizos.loread.config.NetworkRefererConfig;
 import me.wizos.loread.config.SaveDirectory;
-import me.wizos.loread.config.TestConfig;
 import me.wizos.loread.db.Article;
 import me.wizos.loread.db.ArticleTag;
 import me.wizos.loread.db.Category;
@@ -211,9 +211,9 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
 
     @Override
     protected void onSaveInstanceState(Bundle outState) {
+        outState.putString("articleId", articleId);
         outState.putInt("articleNo", articleNo);
         outState.putInt("articleCount", 1);
-        outState.putString("articleId", articleId);
         outState.putInt("articleProgress", saveArticleProgress());
         outState.putInt("theme", App.i().getUser().getThemeMode());
         //KLog.i("自动保存：" + articleNo + "==" + "==" + articleId);
@@ -381,14 +381,17 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
         @Override
         public void onSuccess(Response<File> response) {
             MediaType mediaType = response.getRawResponse().body().contentType();
+            boolean rename = false;
             if( mediaType != null ){
                 if( mediaType.subtype().contains("svg") && !fileNameExt.endsWith(".svg")){
                     fileNameExt = fileNameExt + ".svg";
+                    rename = true;
                 }
             }
-            File downloadedOriginalFile = response.body();
-            if(!ImageUtil.isImg(downloadedOriginalFile)){
-                downloadedOriginalFile.delete();
+            File tmpOriginalFile = response.body();
+            if(!ImageUtil.isImg(tmpOriginalFile)){
+                //downloadedOriginalFile.delete();
+                tmpOriginalFile.renameTo(new File(originalFileDir + imgId + ".error"));
                 if (selectedWebView.get() != null) {
                     selectedWebView.get().loadUrl("javascript:setTimeout( onImageError('" + imgId + "'),1)");
                 }
@@ -397,17 +400,18 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
                 NetworkRefererConfig.i().addReferer(imageUrl, articleUrl);
             }
 
+            if(rename){
+                File targetOriginalFile = new File(originalFileDir + fileNameExt);
 
-            File targetOriginalFile = new File(originalFileDir + fileNameExt);
-
-            // 可能存在图片的文件名相同，但是实际是不同图片的情况。
-            if(targetOriginalFile.exists() && downloadedOriginalFile.length() != downloadedOriginalFile.length()){
-                fileNameExt = imgId + "_" + fileNameExt;
-                targetOriginalFile = new File(originalFileDir + fileNameExt);
+                // 可能存在图片的文件名相同，但是实际是不同图片的情况。
+                if(targetOriginalFile.exists() && tmpOriginalFile.length() != targetOriginalFile.length()){
+                   fileNameExt = imgId + "_" + fileNameExt;
+                   targetOriginalFile = new File(originalFileDir + fileNameExt);
+                }
+                tmpOriginalFile.renameTo(targetOriginalFile);
+                // tmpOriginalFile = targetOriginalFile;
             }
-            downloadedOriginalFile.renameTo(targetOriginalFile);
-
-            final File finalTargetFile = targetOriginalFile;
+            final File downloadedOriginalFile = tmpOriginalFile;
 
             if (selectedWebView.get() == null) {
                 return;
@@ -415,7 +419,8 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
             //KLog.i("下载图片成功，准备压缩：" + originalFileDir + prefix + fileNameExt + svgExt  + "，" + originalUrl );
 
             Luban.with(App.i())
-                    .load(targetOriginalFile)
+                    //.load(targetOriginalFile)
+                    .load(downloadedOriginalFile)
                     .ignoreBy(100) // 忽略100kb以下的文件
                     // 缓存压缩图片路径
                     // .setTargetPath(compressedFileDir + fileNameExt)
@@ -426,7 +431,8 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
                     .setRenameListener(new OnRenameListener() {
                         @Override
                         public String rename(String filePath) {
-                            return fileNameExt;
+                            return imgId;
+                            //return fileNameExt;
                         }
                     })
                     .filter(new MyCompressionPredicate())
@@ -472,7 +478,7 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
                                         @Override
                                         public void run() {
                                             if (selectedWebView.get() != null) {
-                                                selectedWebView.get().loadUrl("javascript:setTimeout( onImageLoadSuccess('" + imgId + "','" + finalTargetFile.getPath() + "'),1)");
+                                                selectedWebView.get().loadUrl("javascript:setTimeout( onImageLoadSuccess('" + imgId + "','" + downloadedOriginalFile.getPath() + "'),1)");
                                             }
                                          }
                                     });
@@ -488,7 +494,7 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
                                 @Override
                                 public void run() {
                                     if (selectedWebView.get() != null) {
-                                        selectedWebView.get().loadUrl("javascript:setTimeout( onImageLoadSuccess('" + imgId + "','" + finalTargetFile.getPath() + "'),1)");
+                                        selectedWebView.get().loadUrl("javascript:setTimeout( onImageLoadSuccess('" + imgId + "','" + downloadedOriginalFile.getPath() + "'),1)");
                                     }
                                 }
                             });
@@ -535,11 +541,12 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
                 .client(imgHttpClient);
 
         if( guessReferer ){
-            request.headers("referer", selectedArticle.getLink());
+            request.headers(Contract.REFERER, StringUtils.urlEncode(selectedArticle.getLink()));
         }else {
             String referer = NetworkRefererConfig.i().guessRefererByUrl(originalUrl);
+            // referer = StringUtils.urlEncode(referer);
             if (!StringUtils.isEmpty(referer)) {
-                request.headers("referer", referer);
+                request.headers(Contract.REFERER, referer);
             }
         }
 
@@ -771,7 +778,7 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
         articleNo = position;
 
         if (App.i().articlesAdapter != null && position < App.i().articlesAdapter.getItemCount()) {
-            KLog.e("重置文章状态");
+            //KLog.e("重置文章状态");
             articleId = App.i().articlesAdapter.get(position).getId();
         }
         selectedArticle = CoreDB.i().articleDao().getById(App.i().getUser().getId(), articleId);
@@ -781,7 +788,6 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
 
 
     private int downX, downY;
-
     // WebView在实例化后，可能还在渲染html，不一定能执行js
     @SuppressLint("ClickableViewAccessibility")
     private void initWebViewContent() {
@@ -821,7 +827,7 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
 
                     // 这里可以拦截很多类型，我们只处理超链接就可以了
                     new LongClickPopWindow(ArticleActivity.this, (WebView) webView, ScreenUtil.dp2px(ArticleActivity.this, 120), ScreenUtil.dp2px(ArticleActivity.this, 130), downX, downY + 10);
-//                    webViewLongClickedPopWindow.showAtLocation(webView, Gravity.TOP|Gravity.LEFT, downX, downY + 10);
+                    // webViewLongClickedPopWindow.showAtLocation(webView, Gravity.TOP|Gravity.LEFT, downX, downY + 10);
                     return true;
                 }
             });
@@ -832,11 +838,11 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
         Feed feed = CoreDB.i().feedDao().getById(App.i().getUser().getId(), selectedArticle.getFeedId());
         if (feed != null) {
             toolbar.setTitle(feed.getTitle());
-            if (App.DISPLAY_LINK.equals(TestConfig.i().getDisplayMode(feed.getId()))) {
+            if(feed.getDisplayMode() == App.OPEN_MODE_LINK){
+            //if (App.DISPLAY_LINK.equals(TestConfig.i().getDisplayMode(feed.getId()))) {
                 selectedWebView.loadUrl(selectedArticle.getLink());
                 // 判断是要在加载的时候获取还是同步的时候获取
             } else {
-                //KLog.e("加载文章：" + selectedArticle.getTitle());
                 selectedWebView.loadData(ArticleUtil.getPageForDisplay(selectedArticle));
             }
         } else {
@@ -867,6 +873,8 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
         // 表示进入全屏的时候
         @Override
         public void onShowCustomView(View view, CustomViewCallback callback) {
+            super.onShowCustomView(view,callback);
+            KLog.i("进入全屏");
             if (video != null) {
                 video.onShowCustomView(view, callback);
             }
@@ -875,6 +883,8 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
         //表示退出全屏的时候
         @Override
         public void onHideCustomView() {
+            super.onHideCustomView();
+            KLog.i("退出全屏");
             if (video != null) {
                 video.onHideCustomView();
             }
@@ -1010,7 +1020,6 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
         }
     }
 
-
     public void onClickReadIcon(View view) {
         //KLog.e("loread", "被点击的是：" + selectedArticle.getTitle());
         if (selectedArticle.getReadStatus() == App.STATUS_READED) {
@@ -1105,9 +1114,7 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
             ArticleTags.i().save();
         }
     }
-
-
-    public void editFavorites(String uid){
+    private void editFavorites(String uid){
         // 找出当前用户有的所有tags
         List<Tag> tags = CoreDB.i().tagDao().getAll(uid);
         // 找出当前用户该文章的tags
@@ -1177,7 +1184,7 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
             newFavorites(uid,null);
         }
     }
-    public void newFavorites(String uid,@Nullable MaterialDialog lastDialog){
+    private void newFavorites(String uid,@Nullable MaterialDialog lastDialog){
         new MaterialDialog.Builder(ArticleActivity.this)
                 .title(R.string.new_favorites)
                 .inputType(InputType.TYPE_CLASS_TEXT)
@@ -1218,11 +1225,10 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
         }
         CoreDB.i().articleDao().update(selectedArticle);
     }
-
-    public void clearDirectory(String uid){
+    private void clearDirectory(String uid){
         SaveDirectory.i().setArticleDirectory(selectedArticle.getId(),null);
     }
-    public void addToSaveDirectory(String uid){
+    private void addToSaveDirectory(String uid){
         String dir = SaveDirectory.i().getSaveDir(selectedArticle.getFeedId(),selectedArticle.getId());
         String msg;
         if (StringUtils.isEmpty(dir)) {
@@ -1234,8 +1240,7 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
         SnackbarUtil.Long(swipeRefreshLayoutS, bottomBar, msg)
                 .setAction(R.string.edit_directory, v -> editDirectory(uid)).show();
     }
-
-    public void editDirectory(String uid){
+    private void editDirectory(String uid){
         String[] savedFoldersTitle = SaveDirectory.i().getDirectoriesOptionName();
         List<String> savedFoldersValue = SaveDirectory.i().getDirectoriesOptionValue();
         new MaterialDialog.Builder(this)
@@ -1250,37 +1255,37 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
                         return true;
                     }
                 })
-//                .neutralText(getString(R.string.new_directory))
-//                .onNeutral(new MaterialDialog.SingleButtonCallback() {
-//                    @Override
-//                    public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
-//                        newDirectory(uid,dialog);
-//                    }
-//                })
+               // .neutralText(getString(R.string.new_directory))
+               // .onNeutral(new MaterialDialog.SingleButtonCallback() {
+               //     @Override
+               //     public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
+               //         newDirectory(uid,dialog);
+               //     }
+               // })
                 .show();
     }
 
-//    public void newDirectory(String uid,@Nullable MaterialDialog lastDialog){
-//        new MaterialDialog.Builder(this)
-//                .title(R.string.new_directory)
-//                .inputType(InputType.TYPE_CLASS_TEXT)
-//                .inputRange(1, 16)
-//                .input(getString(R.string.new_directory), null, new MaterialDialog.InputCallback() {
-//                    @Override
-//                    public void onInput(@NonNull MaterialDialog dialog, CharSequence input) {
-//                        SaveDirectory.i().newDirectory(input.toString());
-//                        SaveDirectory.i().save();
-//                        if(lastDialog != null){
-//                            lastDialog.dismiss();
-//                        }
-//                        editDirectory(uid);
-//                        KLog.e("正在新建收藏夹：" + input.toString());
-//                    }
-//                })
-//                .positiveText(R.string.confirm)
-//                .negativeText(android.R.string.cancel)
-//                .show();
-//    }
+    // public void newDirectory(String uid,@Nullable MaterialDialog lastDialog){
+    //     new MaterialDialog.Builder(this)
+    //             .title(R.string.new_directory)
+    //             .inputType(InputType.TYPE_CLASS_TEXT)
+    //             .inputRange(1, 16)
+    //             .input(getString(R.string.new_directory), null, new MaterialDialog.InputCallback() {
+    //                 @Override
+    //                 public void onInput(@NonNull MaterialDialog dialog, CharSequence input) {
+    //                     SaveDirectory.i().newDirectory(input.toString());
+    //                     SaveDirectory.i().save();
+    //                     if(lastDialog != null){
+    //                         lastDialog.dismiss();
+    //                     }
+    //                     editDirectory(uid);
+    //                     KLog.e("正在新建收藏夹：" + input.toString());
+    //                 }
+    //             })
+    //             .positiveText(R.string.confirm)
+    //             .negativeText(android.R.string.cancel)
+    //             .show();
+    // }
 
     public void openOriginalArticle(View view) {
         //Intent intent = new Intent(ArticleActivity.this, WebActivity.class);
@@ -1339,29 +1344,42 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
                 // OkHttp是一个面向于Java应用而不是特定平台(Android)的框架，那么它就无法在其中使用Android独有的Handler机制。
                 @Override
                 public void onResponse(@NotNull Call call, @NotNull okhttp3.Response response) throws IOException {
-                    App.i().oldArticles.put(selectedArticle.getId(),(Article)selectedArticle.clone());
-                    ArticleUtil.getReadabilityArticle(selectedArticle, response.body());
-                    CoreDB.i().articleDao().update(selectedArticle);
-                    articleHandler.post(new Runnable() {
-                        @Override
-                        public void run() {
-                            if (swipeRefreshLayoutS == null ||selectedWebView == null) {
-                                return;
+                    if(response.isSuccessful()){
+                        App.i().oldArticles.put(selectedArticle.getId(),(Article)selectedArticle.clone());
+                        ArticleUtil.getReadabilityArticle(selectedArticle, response.body());
+                        CoreDB.i().articleDao().update(selectedArticle);
+                        articleHandler.post(new Runnable() {
+                            @Override
+                            public void run() {
+                                if (swipeRefreshLayoutS == null ||selectedWebView == null) {
+                                    return;
+                                }
+                                swipeRefreshLayoutS.setRefreshing(false);
+                                ToastUtils.show(getString(R.string.get_readability_success));
+                                readabilityView.setText(getString(R.string.font_article_readability));
+                                selectedWebView.loadData(ArticleUtil.getPageForDisplay(selectedArticle));
                             }
-                            swipeRefreshLayoutS.setRefreshing(false);
-                            ToastUtils.show(getString(R.string.get_readability_success));
-                            readabilityView.setText(getString(R.string.font_article_readability));
-                            selectedWebView.loadData(ArticleUtil.getPageForDisplay(selectedArticle));
-                        }
-                    });
+                        });
+                    }else {
+                        articleHandler.post(new Runnable() {
+                            @Override
+                            public void run() {
+                                if (swipeRefreshLayoutS == null) {
+                                    return;
+                                }
+                                swipeRefreshLayoutS.setRefreshing(false);
+                                ToastUtils.show(getString(R.string.get_readability_failure));
+                            }
+                        });
+                    }
                 }
             });
         }
     }
 
 
-    public void showArticleInfo() {
-//        KLog.e("文章信息");
+    private void showArticleInfo() {
+        // KLog.e("文章信息");
         if (!BuildConfig.DEBUG) {
             return;
         }
@@ -1425,7 +1443,7 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
         if (keyCode == KeyEvent.KEYCODE_BACK && event.getRepeatCount() == 0) {
-            if (video != null && video.isPlaying()) {
+            if (video != null && video.isFullScreen()) {
                 video.onHideCustomView();
                 return true;
             }

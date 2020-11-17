@@ -29,17 +29,16 @@ public class LoginFormState {
         this.isDataValid = isDataValid;
     }
 
-
-    public void setHostHint(@Nullable Integer hostHint) {
-        this.hostHint = hostHint;
-    }
-
     public void setUsernameHint(@Nullable Integer usernameHint) {
         this.usernameHint = usernameHint;
     }
 
     public void setPasswordHint(@Nullable Integer passwordHint) {
         this.passwordHint = passwordHint;
+    }
+
+    public void setHostHint(@Nullable Integer hostHint) {
+        this.hostHint = hostHint;
     }
 
     @Nullable

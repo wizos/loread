@@ -12,7 +12,6 @@ import org.jsoup.nodes.Entities;
 import org.jsoup.parser.Parser;
 
 import java.io.File;
-import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
@@ -44,56 +43,52 @@ public class Unsubscribe {
             return;
         }
 
-        try {
-            String baseUri = "loread://unsubscribe.feed";
-            File file = new File(docDir.getAbsolutePath() + File.separator + user.getSource() + "_" + user.getUserName() + "_unsubscribe.opml");
-            Document doc;
-            Element bodyNode;
-            Element tagNode;
-            Element feedNode;
+        String baseUri = "loread://unsubscribe.feed";
+        File file = new File(docDir.getAbsolutePath() + File.separator + user.getSource() + "_" + user.getUserName() + "_unsubscribe.opml");
+        Document doc;
+        Element bodyNode;
+        Element tagNode;
+        Element feedNode;
 
-            if (!file.exists()) {
-                Document.OutputSettings settings = new Document.OutputSettings();
-                settings.syntax(Document.OutputSettings.Syntax.xml).prettyPrint(true);
-                doc = new Document(baseUri).outputSettings(settings);
-                Element opml = doc.appendElement("opml").attr("version", "1.0");
-                doc.charset(Charset.defaultCharset());
-                String title = "Subscriptions of " + user.getUserName() + " from " + user.getSource();
-                opml.appendElement("head").appendElement("title").text(title);
-                bodyNode = opml.appendElement("body");
-            } else {
-                doc = Jsoup.parse(FileUtil.readFile(file), baseUri, Parser.xmlParser());
-                bodyNode = doc.selectFirst("opml > body");
-            }
-
-            List<Category> categories;
-            for (Feed feed : feeds) {
-                //categories = WithDB.i().getCategoriesByFeedId(feed.getId());
-                categories = CoreDB.i().categoryDao().getByFeedId(App.i().getUser().getId(),feed.getId());
-                for (Category category:categories){
-                    tagNode = doc.selectFirst("opml > body > outline[title=\"" + category.getTitle() + "\"]");
-                    if (tagNode == null) {
-                        tagNode = bodyNode.appendElement("outline").attr("title", category.getTitle()).attr("text", category.getTitle());
-                    }
-
-                    feedNode = tagNode.selectFirst("outline[title=\"" + feed.getTitle() + "\"]");
-                    if (feedNode != null) {
-                        continue;
-                    }
-                    feedNode = createSelfClosingElement("outline");
-                    feedNode.attr("title", feed.getTitle())
-                            .attr("text", feed.getTitle())
-                            .attr("type", "rss")
-                            .attr("xmlUrl", feed.getFeedUrl())
-                            .attr("htmlUrl", feed.getHtmlUrl());
-                    tagNode.appendChild(feedNode);
-                }
-            }
-
-            FileUtil.save(file, doc.outerHtml());
-        } catch (IOException e) {
-            KLog.e("导出失败");
+        if (!file.exists()) {
+            Document.OutputSettings settings = new Document.OutputSettings();
+            settings.syntax(Document.OutputSettings.Syntax.xml).prettyPrint(true);
+            doc = new Document(baseUri).outputSettings(settings);
+            Element opml = doc.appendElement("opml").attr("version", "1.0");
+            doc.charset(Charset.defaultCharset());
+            String title = "Subscriptions of " + user.getUserName() + " from " + user.getSource();
+            opml.appendElement("head").appendElement("title").text(title);
+            bodyNode = opml.appendElement("body");
+        } else {
+            doc = Jsoup.parse(FileUtil.readFile(file), baseUri, Parser.xmlParser());
+            bodyNode = doc.selectFirst("opml > body");
         }
+
+        List<Category> categories;
+        for (Feed feed : feeds) {
+            //categories = WithDB.i().getCategoriesByFeedId(feed.getId());
+            categories = CoreDB.i().categoryDao().getByFeedId(App.i().getUser().getId(),feed.getId());
+            for (Category category:categories){
+                tagNode = doc.selectFirst("opml > body > outline[title=\"" + category.getTitle() + "\"]");
+                if (tagNode == null) {
+                    tagNode = bodyNode.appendElement("outline").attr("title", category.getTitle()).attr("text", category.getTitle());
+                }
+
+                feedNode = tagNode.selectFirst("outline[title=\"" + feed.getTitle() + "\"]");
+                if (feedNode != null) {
+                    continue;
+                }
+                feedNode = createSelfClosingElement("outline");
+                feedNode.attr("title", feed.getTitle())
+                        .attr("text", feed.getTitle())
+                        .attr("type", "rss")
+                        .attr("xmlUrl", feed.getFeedUrl())
+                        .attr("htmlUrl", feed.getHtmlUrl());
+                tagNode.appendChild(feedNode);
+            }
+        }
+
+        FileUtil.save(file, doc.outerHtml());
     }
 
 
@@ -109,69 +104,65 @@ public class Unsubscribe {
             return;
         }
 
-        try {
-            File file = new File(docDir.getAbsolutePath() + File.separator + user.getSource() + "_" + user.getUserName() + "_unsubscribe.opml");
-            Document doc;
-            if (file.exists()) {
-                // doc = Jsoup.parse(file, DataUtil.getCharsetFromContentType( FileUtil.readFile(file)),baseUri);
-                doc = Jsoup.parse(FileUtil.readFile(file), baseUri, Parser.xmlParser());
-                Element bodyNode = doc.selectFirst("opml > body");
-                Element tagNode;
-                Element feedNode;
-                ArrayList<OutFeed> outFeeds;
-                for (OutTag outTag : outTags) {
-                    tagNode = doc.selectFirst("opml > body > outline[title=\"" + outTag.getTitle() + "\"]");
-                    if (tagNode == null) {
-                        tagNode = bodyNode.appendElement("outline").attr("title", outTag.getTitle()).attr("text", outTag.getTitle());
-                    }
-                    outFeeds = outTag.getOutFeeds();
-                    for (OutFeed outFeed : outFeeds) {
-                        feedNode = tagNode.selectFirst("outline[title=\"" + outFeed.getTitle() + "\"]");
-                        if (feedNode != null) {
-                            continue;
-                        }
-                        feedNode = createSelfClosingElement("outline");
-                        feedNode.attr("title", outFeed.getTitle())
-                                .attr("text", outFeed.getTitle())
-                                .attr("type", "rss")
-                                .attr("xmlUrl", outFeed.getFeedUrl())
-                                .attr("htmlUrl", outFeed.getHtmlUrl());
-                        tagNode.appendChild(feedNode);
-                    }
+        File file = new File(docDir.getAbsolutePath() + File.separator + user.getSource() + "_" + user.getUserName() + "_unsubscribe.opml");
+        Document doc;
+        if (file.exists()) {
+            // doc = Jsoup.parse(file, DataUtil.getCharsetFromContentType( FileUtil.readFile(file)),baseUri);
+            doc = Jsoup.parse(FileUtil.readFile(file), baseUri, Parser.xmlParser());
+            Element bodyNode = doc.selectFirst("opml > body");
+            Element tagNode;
+            Element feedNode;
+            ArrayList<OutFeed> outFeeds;
+            for (OutTag outTag : outTags) {
+                tagNode = doc.selectFirst("opml > body > outline[title=\"" + outTag.getTitle() + "\"]");
+                if (tagNode == null) {
+                    tagNode = bodyNode.appendElement("outline").attr("title", outTag.getTitle()).attr("text", outTag.getTitle());
                 }
-            } else {
-                Document.OutputSettings settings = new Document.OutputSettings();
-                settings.syntax(Document.OutputSettings.Syntax.xml).prettyPrint(true);
-                doc = new Document(baseUri).outputSettings(settings);
-                Element opml = doc.appendElement("opml").attr("version", "1.0");
-                doc.charset(Charset.defaultCharset());
-                String title = "Subscriptions of " + user.getUserName() + " from " + user.getSource();
-                opml.appendElement("head").appendElement("title").text(title);
-                Element body = opml.appendElement("body");
-                Element tag;
-                Element feed;
-
-                ArrayList<OutFeed> outFeeds;
-                //KLog.e("获取A：" + outTags.toString()  );
-                for (OutTag outTag : outTags) {
-                    tag = body.appendElement("outline").attr("title", outTag.getTitle()).attr("text", outTag.getTitle());
-                    outFeeds = outTag.getOutFeeds();
-                    //KLog.e("获取B：" + outFeeds.toString()  );
-                    for (OutFeed outFeed : outFeeds) {
-                        feed = createSelfClosingElement("outline");
-                        feed.attr("title", outFeed.getTitle())
-                                .attr("text", outFeed.getTitle())
-                                .attr("type", "rss")
-                                .attr("xmlUrl", outFeed.getFeedUrl())
-                                .attr("htmlUrl", outFeed.getHtmlUrl());
-                        tag.appendChild(feed);
+                outFeeds = outTag.getOutFeeds();
+                for (OutFeed outFeed : outFeeds) {
+                    feedNode = tagNode.selectFirst("outline[title=\"" + outFeed.getTitle() + "\"]");
+                    if (feedNode != null) {
+                        continue;
                     }
+                    feedNode = createSelfClosingElement("outline");
+                    feedNode.attr("title", outFeed.getTitle())
+                            .attr("text", outFeed.getTitle())
+                            .attr("type", "rss")
+                            .attr("xmlUrl", outFeed.getFeedUrl())
+                            .attr("htmlUrl", outFeed.getHtmlUrl());
+                    tagNode.appendChild(feedNode);
                 }
             }
-            FileUtil.save(file, doc.outerHtml());
-        } catch (IOException e) {
-            KLog.e("导出失败");
+        } else {
+            Document.OutputSettings settings = new Document.OutputSettings();
+            settings.syntax(Document.OutputSettings.Syntax.xml).prettyPrint(true);
+            doc = new Document(baseUri).outputSettings(settings);
+            Element opml = doc.appendElement("opml").attr("version", "1.0");
+            doc.charset(Charset.defaultCharset());
+            String title = "Subscriptions of " + user.getUserName() + " from " + user.getSource();
+            opml.appendElement("head").appendElement("title").text(title);
+            Element body = opml.appendElement("body");
+            Element tag;
+            Element feed;
+
+            ArrayList<OutFeed> outFeeds;
+            //KLog.e("获取A：" + outTags.toString()  );
+            for (OutTag outTag : outTags) {
+                tag = body.appendElement("outline").attr("title", outTag.getTitle()).attr("text", outTag.getTitle());
+                outFeeds = outTag.getOutFeeds();
+                //KLog.e("获取B：" + outFeeds.toString()  );
+                for (OutFeed outFeed : outFeeds) {
+                    feed = createSelfClosingElement("outline");
+                    feed.attr("title", outFeed.getTitle())
+                            .attr("text", outFeed.getTitle())
+                            .attr("type", "rss")
+                            .attr("xmlUrl", outFeed.getFeedUrl())
+                            .attr("htmlUrl", outFeed.getHtmlUrl());
+                    tag.appendChild(feed);
+                }
+            }
         }
+        FileUtil.save(file, doc.outerHtml());
     }
 
     private static Element createSelfClosingElement(String tagName) {
@@ -198,56 +189,52 @@ public class Unsubscribe {
             return;
         }
 
-        try {
-            String baseUri = "loread://unsubscribe.feed";
-            File file = new File(docDir.getAbsolutePath() + File.separator + user.getSource() + "_" + user.getUserName() + "_unsubscribe.opml");
-            Document doc;
-            Element bodyNode;
-            Element tagNode;
-            Element feedNode;
+        String baseUri = "loread://unsubscribe.feed";
+        File file = new File(docDir.getAbsolutePath() + File.separator + user.getSource() + "_" + user.getUserName() + "_unsubscribe.opml");
+        Document doc;
+        Element bodyNode;
+        Element tagNode;
+        Element feedNode;
 
-            if (!file.exists()) {
-                Document.OutputSettings settings = new Document.OutputSettings();
-                settings.syntax(Document.OutputSettings.Syntax.xml).prettyPrint(true);
-                doc = new Document(baseUri).outputSettings(settings);
-                Element opml = doc.appendElement("opml").attr("version", "1.0");
-                doc.charset(Charset.defaultCharset());
-                String title = "Subscriptions of " + user.getUserName() + " from " + user.getSource();
-                opml.appendElement("head").appendElement("title").text(title);
-                bodyNode = opml.appendElement("body");
-            } else {
-                doc = Jsoup.parse(FileUtil.readFile(file), baseUri, Parser.xmlParser());
-                bodyNode = doc.selectFirst("opml > body");
-            }
-
-            List<Category> categories;
-            for (Feed feed : feeds) {
-                //categories = WithDB.i().getCategoriesByFeedId(feed.getId());
-                categories = CoreDB.i().categoryDao().getByFeedId(App.i().getUser().getId(),feed.getId());
-                for (Category category:categories){
-                    tagNode = doc.selectFirst("opml > body > outline[title=\"" + category.getTitle() + "\"]");
-                    if (tagNode == null) {
-                        tagNode = bodyNode.appendElement("outline").attr("title", category.getTitle()).attr("text", category.getTitle());
-                    }
-
-                    feedNode = tagNode.selectFirst("outline[title=\"" + feed.getTitle() + "\"]");
-                    if (feedNode != null) {
-                        continue;
-                    }
-                    feedNode = createSelfClosingElement("outline");
-                    feedNode.attr("title", feed.getTitle())
-                            .attr("text", feed.getTitle())
-                            .attr("type", "rss")
-                            .attr("xmlUrl", feed.getFeedUrl())
-                            .attr("htmlUrl", feed.getHtmlUrl());
-                    tagNode.appendChild(feedNode);
-                }
-            }
-
-            FileUtil.save(file, doc.outerHtml());
-        } catch (IOException e) {
-            KLog.e("导出失败");
+        if (!file.exists()) {
+            Document.OutputSettings settings = new Document.OutputSettings();
+            settings.syntax(Document.OutputSettings.Syntax.xml).prettyPrint(true);
+            doc = new Document(baseUri).outputSettings(settings);
+            Element opml = doc.appendElement("opml").attr("version", "1.0");
+            doc.charset(Charset.defaultCharset());
+            String title = "Subscriptions of " + user.getUserName() + " from " + user.getSource();
+            opml.appendElement("head").appendElement("title").text(title);
+            bodyNode = opml.appendElement("body");
+        } else {
+            doc = Jsoup.parse(FileUtil.readFile(file), baseUri, Parser.xmlParser());
+            bodyNode = doc.selectFirst("opml > body");
         }
+
+        List<Category> categories;
+        for (Feed feed : feeds) {
+            //categories = WithDB.i().getCategoriesByFeedId(feed.getId());
+            categories = CoreDB.i().categoryDao().getByFeedId(App.i().getUser().getId(),feed.getId());
+            for (Category category:categories){
+                tagNode = doc.selectFirst("opml > body > outline[title=\"" + category.getTitle() + "\"]");
+                if (tagNode == null) {
+                    tagNode = bodyNode.appendElement("outline").attr("title", category.getTitle()).attr("text", category.getTitle());
+                }
+
+                feedNode = tagNode.selectFirst("outline[title=\"" + feed.getTitle() + "\"]");
+                if (feedNode != null) {
+                    continue;
+                }
+                feedNode = createSelfClosingElement("outline");
+                feedNode.attr("title", feed.getTitle())
+                        .attr("text", feed.getTitle())
+                        .attr("type", "rss")
+                        .attr("xmlUrl", feed.getFeedUrl())
+                        .attr("htmlUrl", feed.getHtmlUrl());
+                tagNode.appendChild(feedNode);
+            }
+        }
+
+        FileUtil.save(file, doc.outerHtml());
     }
 
 }

@@ -218,20 +218,21 @@ public interface ArticleDao {
     @Query("SELECT * FROM article WHERE uid = :uid")
     List<Article> getAllNoOrder(String uid);
 
-    @Query("SELECT * FROM article " +
-            "WHERE uid = :uid " +
-            "AND crawlDate > :timeMillis ")
-    List<Article> getAllNoOrder(String uid,long timeMillis);
 
-
-    @Query("SELECT * FROM article " +
-            "WHERE uid = :uid " +
-            "AND article.starStatus = " + App.STATUS_STARED)
+    @Query("SELECT * FROM article WHERE uid = :uid AND article.starStatus = " + App.STATUS_UNSTAR)
+    List<Article> getUnStarNoOrder(String uid);
+    @Query("SELECT * FROM article WHERE uid = :uid AND article.starStatus = " + App.STATUS_STARED)
     List<Article> getStaredNoOrder(String uid);
+
     @Query("SELECT * FROM article " +
             "WHERE uid = :uid " +
             "AND (article.readStatus = " + App.STATUS_UNREAD  + " OR article.readStatus = " + App.STATUS_UNREADING  + ") ")
     List<Article>  getUnreadNoOrder(String uid);
+    @Query("SELECT * FROM article " +
+            "WHERE uid = :uid " +
+            "AND article.readStatus = " + App.STATUS_READED)
+    List<Article>  getReadNoOrder(String uid);
+
 
     @Query("SELECT count(1) FROM article " +
             "WHERE uid = :uid " +
@@ -285,8 +286,8 @@ public interface ArticleDao {
     @Query("SELECT article.* FROM article " +
             "LEFT JOIN Feed ON (article.uid = Feed.uid AND article.feedId = Feed.id) " +
             "WHERE article.uid = :uid " +
-            "AND article.crawlDate = :timeMillis " +
-            "AND Feed.displayMode = 1 ")
+            "AND article.crawlDate >= :timeMillis " +
+            "AND Feed.displayMode = " + App.OPEN_MODE_READABILITY)
     List<Article> getNeedReadability(String uid, long timeMillis);
 
     @Query("SELECT article.* FROM article " +

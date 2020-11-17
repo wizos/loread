@@ -16,7 +16,7 @@ body {
 	word-wrap: break-word !important;
 }
 
-body,div,p,font {
+body,p,font {
 	font-family: roboto_light,sans-serif !important;
 	font-size: 16px;
 	line-height: 160% !important;
@@ -29,9 +29,7 @@ body > *:first-child {
 body > *:last-child {
 	margin-bottom: 0 !important;
 }
-body * {
-	max-width: 100% !important;
-}
+
 
 /* BLOCKS */
 p, ul, ol, dl, table, pre, figure {
@@ -41,24 +39,34 @@ table pre{
 	margin: 0px 0;
 }
 
+/*
+* {
+	background-image:none !important;
+}
+*/
 
 /*
  * 设置最大宽度，防止超出屏幕
- */
+body * {
+	max-width: 100% !important;
+}
 div,p,tbody,textarea,ins,input{
 	max-width: 100% !important;
 }
-
+ */
+/*
+div:not(.plyr__menu__container),p,tbody,textarea,ins,input{
+	max-width: 100% !important;
+}
+*/
+p, tbody, textarea, ins, input{
+	max-width: 100% !important;
+}
 /* 
  * 如果表格内的div宽度过长，设置最大宽度是无法防止溢出的，所以得手动将其宽度改为自适应
  */
 table div{
 	width:auto !important;
-}
-
-
-* {
-	background-image:none !important;
 }
 
 p{
@@ -114,9 +122,9 @@ h6 {
 }
 
 
-/* LINKS */
+/* LINKS // !important*/
 a {
-	color: #51a1f1 !important;
+	color: #51a1f1;
 }
 a > svg{
 	width: 14px;
@@ -162,7 +170,6 @@ dl dt {
 	font-weight: bold;
 	font-style: italic;
 	margin: 15px 0 5px;
-	/*padding: 0;*/
 }
 
 dl dt:first-child {
@@ -194,7 +201,7 @@ dl dd > :last-child {
 table {
 	width: auto !important;
 	height: auto !important;
-	margin: 0 !important;
+	margin: 5px 0 !important;
 	border-collapse: collapse !important;
 	border-spacing: 0;
 	font-size: .8em;
@@ -225,11 +232,13 @@ table p{
 th img, td img{
 	vertical-align:middle;
 }
-/* 对齐是排版最重要的因素, 别让什么都居中 */
+/* 对齐是排版最重要的因素, 别让什么都居中 */ 
 caption, th {
 	text-align: left;
 }
-
+caption {
+	margin: 5px 0 !important;
+}
 td pre, td code,pre code, pre tt {
 	border: 0 !important;
 	background: transparent  !important;
@@ -296,11 +305,12 @@ textarea{
 }
 
 /* 图片，视频 */
-/* 隐藏"空/无效"元素 */
-img[src=''],audio:not([src]),iframe:not([src]),[src=''],blockquote:empty,figure:empty,table:empty,pre:empty,code:empty,div:empty {
+/* 隐藏src为空的元素 */
+/*
+img[src=''],img[original-src=''],audio:not([src]),iframe:not([src]),[src=''],blockquote:empty,figure:empty,table:empty,pre:empty,code:empty,div:empty {
 	display: none !important;
 }
-
+*/
 img {
 	margin: 5px 0 !important;
 	max-width: 100% !important;
@@ -332,10 +342,11 @@ audio {
 	width: 100% !important;
 	margin: 5px 0 !important;
 }
+/*
 video {
     background:rgba(0, 0, 0);
 }
-
+*/
 
 /* 文章相关信息的排版*/
 hr {
@@ -364,6 +375,15 @@ hr {
 	margin-top: 10px
 }
 
+
 del{
 	opacity:0.4;
+}
+
+mjx-container {
+    overflow-x: auto;
+    overflow-y: hidden;
+}
+.plyr {
+	border-radius: 5px !important;
 }

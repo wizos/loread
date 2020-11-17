@@ -398,6 +398,7 @@ public class LabActivity extends AppCompatActivity {
 
         EditText editText = findViewById(R.id.lab_enter_edittext);
         String url = editText.getText().toString();
+        KLog.e("修改host：" + url);
         user.setHost(url);
         CoreDB.i().userDao().insert(user);
     }

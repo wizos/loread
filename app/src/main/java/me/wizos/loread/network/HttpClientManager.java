@@ -116,7 +116,8 @@ public class HttpClientManager {
                             .followRedirects(true)
                             .followSslRedirects(true)
                             .addInterceptor(new RelyInterceptor())
-                            .addInterceptor(new RefererInterceptor())
+                            // 在 ArticlePagedListAdapter 类的 new GlideUrl中，已经给了referer
+                            // .addInterceptor(new RefererInterceptor())
                             .build();
                     glideHttpClient.dispatcher().setMaxRequests(4);
                 }

@@ -44,7 +44,6 @@ import me.wizos.loread.R;
 import me.wizos.loread.bean.feedly.CategoryItem;
 import me.wizos.loread.bean.feedly.input.EditFeed;
 import me.wizos.loread.config.SaveDirectory;
-import me.wizos.loread.config.TestConfig;
 import me.wizos.loread.config.Unsubscribe;
 import me.wizos.loread.db.Category;
 import me.wizos.loread.db.CoreDB;
@@ -309,7 +308,15 @@ public class FeedActivity extends BaseActivity {
         final View displayView = inflater.inflate(R.layout.setting_item_arrow, linearLayout, false);
         ((TextView) displayView.findViewById(R.id.setting_item_title)).setText(R.string.select_display_mode);
         final TextView displayValueView = displayView.findViewById(R.id.setting_item_value);
-        displayValueView.setText(TestConfig.i().getDisplayMode(feed.getId()));
+        //displayValueView.setText(TestConfig.i().getDisplayMode(feed.getId()));
+        int displayMode = feed.getDisplayMode();
+        if( displayMode == App.OPEN_MODE_LINK){
+            displayValueView.setText(R.string.original);
+        }else if( displayMode == App.OPEN_MODE_READABILITY){
+            displayValueView.setText(R.string.readability);
+        }else {
+            displayValueView.setText(R.string.rss);
+        }
         displayView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -322,31 +329,32 @@ public class FeedActivity extends BaseActivity {
                         .asAttachList(new String[]{getString(R.string.rss), getString(R.string.readability), getString(R.string.original)},
                                 null,
                                 (which, text) -> {
-                                    String selectedFeedDisplayMode = App.DISPLAY_RSS;
+                                    //String selectedFeedDisplayMode = App.DISPLAY_RSS;
+                                    //switch (which) {
+                                    //    case 0:
+                                    //        selectedFeedDisplayMode = App.DISPLAY_RSS;
+                                    //        break;
+                                    //    case 1:
+                                    //        selectedFeedDisplayMode = App.DISPLAY_READABILITY;
+                                    //        break;
+                                    //    case 2:
+                                    //        selectedFeedDisplayMode = App.DISPLAY_LINK;
+                                    //        break;
+                                    //    default:
+                                    //        break;
+                                    //}
 
-                                    switch (which) {
-                                        case 0:
-                                            selectedFeedDisplayMode = App.DISPLAY_RSS;
-                                            break;
-                                        case 1:
-                                            selectedFeedDisplayMode = App.DISPLAY_READABILITY;
-                                            break;
-                                        case 2:
-                                            selectedFeedDisplayMode = App.DISPLAY_LINK;
-                                            break;
-                                        default:
-                                            break;
-                                    }
-
-                                    if (!TextUtils.isEmpty(TestConfig.i().getDisplayMode(feed.getId()))) {
-                                        if (selectedFeedDisplayMode.equals(TestConfig.i().getDisplayMode(feed.getId()))) {
-                                            return;
-                                        }
-                                        TestConfig.i().removeDisplayRouter(feed.getId());
-                                        TestConfig.i().addDisplayRouter(feed.getId(), selectedFeedDisplayMode);
-                                        TestConfig.i().save();
-                                        displayValueView.setText(selectedFeedDisplayMode);
-                                    }
+                                    //if (!TextUtils.isEmpty(TestConfig.i().getDisplayMode(feed.getId()))) {
+                                    //    if (selectedFeedDisplayMode.equals(TestConfig.i().getDisplayMode(feed.getId()))) {
+                                    //        return;
+                                    //    }
+                                    //    TestConfig.i().removeDisplayRouter(feed.getId());
+                                    //    TestConfig.i().addDisplayRouter(feed.getId(), selectedFeedDisplayMode);
+                                    //    TestConfig.i().save();
+                                        feed.setDisplayMode(which);
+                                        CoreDB.i().feedDao().update(feed);
+                                        displayValueView.setText(text);
+                                    //}
                                 })
                         .show();
             }

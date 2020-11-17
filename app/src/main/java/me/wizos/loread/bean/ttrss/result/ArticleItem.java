@@ -5,6 +5,7 @@ import java.util.List;
 import me.wizos.loread.App;
 import me.wizos.loread.bean.Enclosure;
 import me.wizos.loread.db.Article;
+import me.wizos.loread.db.CoreDB;
 import me.wizos.loread.network.api.BaseApi;
 import me.wizos.loread.utils.ArticleUtil;
 
@@ -44,9 +45,24 @@ public class ArticleItem {
 
 
     public Article convert(BaseApi.ArticleChanger articleChanger) {
-        Article article = new Article();
+        Article article = CoreDB.i().articleDao().getById(App.i().getUser().getId(),String.valueOf(id));
+        if( article != null ){
+            article.setLink(link);
+            article.setFeedId(feed_id);
+            return article;
+        }
+        //Article article = new Article();
+        article = new Article();
         article.setId(String.valueOf(id));
-        title = ArticleUtil.getOptimizedTitle(title);
+
+        String tmpContent = ArticleUtil.getOptimizedContent(article.getLink(), content);
+        tmpContent = ArticleUtil.getOptimizedContentWithEnclosures(tmpContent, attachments);
+        article.setContent(tmpContent);
+
+        String tmpSummary = ArticleUtil.getOptimizedSummary(tmpContent);
+        article.setSummary(tmpSummary);
+
+        title = ArticleUtil.getOptimizedTitle(title,tmpSummary);
         article.setTitle(title);
 
         article.setAuthor(author);
@@ -55,13 +71,6 @@ public class ArticleItem {
         article.setLink(link);
         article.setFeedId(feed_id);
         article.setFeedTitle(feed_title);
-
-        String tmpContent = ArticleUtil.getOptimizedContent(article.getLink(), content);
-        tmpContent = ArticleUtil.getOptimizedContentWithEnclosures(tmpContent,attachments);
-        article.setContent(tmpContent);
-
-        String tmpSummary = ArticleUtil.getOptimizedSummary(tmpContent);
-        article.setSummary(tmpSummary);
 
         String coverUrl = ArticleUtil.getCoverUrl(article.getLink(),tmpContent);
         article.setImage(coverUrl);

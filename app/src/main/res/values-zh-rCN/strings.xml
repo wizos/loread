@@ -160,8 +160,6 @@
     <string name="loading">加载中</string>
     <string name="upgrading">升级中</string>
     <string name="upgrading_please_wait_a_moment">正在升级，请稍等…</string>
-    <string name="https_scheme">https://</string>
-    <string name="inoreader_url">https://inoreader.com</string>
 
     <!--关于-->
     <string name="about">关于</string>
@@ -330,43 +328,52 @@
 
     <string name="title_activity_scrolling">ScrollingActivity</string>
     <string name="action_settings">设置</string>
-    <string name="server_host">服务器网址</string>
+    <string name="server_site_url">服务器网址</string>
     <string name="account">账号</string>
     <string name="password">密码</string>
     <string name="welcome">"欢迎！"</string>
     <string name="invalid_username">用户名无效</string>
-    <string name="invalid_host">Host 无效，格式为 https://example.com</string>
-    <string name="empty_host">Host 为空，请重新设置</string>
+    <string name="invalid_site_url_hint">网址无效，格式为 https://example.com</string>
+    <string name="empty_site_url_hint">网址为空，请重新设置</string>
 
     <string name="invalid_password">密码必须大于5个字符</string>
 
     <string name="article_title_is">文章标题为：</string>
 
-    <string name="summary_pre">[此处有代码]</string>
-    <string name="summary_table">[此处有表格]</string>
-    <string name="summary_link">[此处有链接]</string>
-    <string name="summary_frame">[此处有框架]</string>
-    <string name="summary_audio">[此处有音频]</string>
-    <string name="summary_video">[此处有视频]</string>
-    <string name="summary_image">[此处有图片]</string>
+    <string name="pre_for_spreak">[此处有代码]</string>
+    <string name="table_for_spreak">[此处有表格]</string>
+    <string name="frame_for_spreak">[此处有框架]</string>
+    <string name="audio_for_spreak">[此处有音频]</string>
+    <string name="video_for_spreak">[此处有视频]</string>
+    <string name="image_for_spreak">[此处有图片]</string>
+    <string name="link_for_spreak">[此处有链接]</string>
 
-    <string name="frame">[框架]</string>
-    <string name="audio">[音频]</string>
-    <string name="video">[视频]</string>
-    <string name="image">[图片]</string>
+    <string name="pre_for_summary">" [代码] "</string>
+    <string name="table_for_summary">" [表格] "</string>
+    <string name="frame_for_summary">" [框架] "</string>
+    <string name="audio_for_summary">" [音频] "</string>
+    <string name="video_for_summary">" [视频] "</string>
+    <string name="image_for_summary">" [图片] "</string>
 
+    <string name="select_login_account">选择已登录的账户</string>
+
+    <string name="https_scheme">https://</string>
     <string name="inoreader_oauth">InoReader (OAuth)</string>
     <string name="inoreader_login">InoReader (登录)</string>
+    <string name="inoreader_site_url">Inoreader 网址</string>
+    <string name="inoreader_url">https://www.inoreader.com</string>
     <string name="feedly">Feedly</string>
     <string name="tinytinyrss">TinyTinyRSS</string>
     <string name="intro">简介</string>
+
+    <string name="need_to_access_inoreader_url_normally_hint">该服务需要您能正常访问 Inoreader 官网(如下)</string>
 
     <string name="everything_is_rssible">万物皆可 RSS</string>
     <string name="developed_by_wizos">行亘 · 作</string>
 
     <string name="do_you_want_to_delete_data_of_this_account_after_logout">退出登录后，是否删除该账号的所有数据？</string>
     <string name="loread_plugin_must_be_installed">注：须提前在 plugins.local 目录中安装 Loread 插件</string>
-    <string name="the_server_host_like">服务器网址格式为“https://example.com”</string>
+    <string name="the_server_site_url_like">服务器网址格式为“https://example.com”</string>
 
     <string name="rss_summary">
         通俗得说，RSS 是一种订阅资讯的方式。\n\n就像在微博上关注张三、在B站上关注李四，你可以在『RSS 阅读器』中添加对应的订阅网址来关注他们。\n\n由此可实现订阅微博、知乎、优酷、公众号、博客、论坛……</string>
@@ -386,5 +393,8 @@
     <string name="picture_error_click_here_to_retry">图片异常，点击重试</string>
 
     <string name="copied">已复制</string>
+
+    <string name="speed">速度</string>
+    <string name="normal">正常</string>
     <string name="the_rule_of_full_text_extraction_has_expired">全文提取规则已失效：%1$s</string>
 </resources>

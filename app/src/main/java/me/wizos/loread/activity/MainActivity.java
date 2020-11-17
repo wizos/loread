@@ -190,7 +190,7 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
                         if(integer == 0){
                             return;
                         }
-                        SnackbarUtil.Long(articleListView,bottomBar, getResources().getQuantityString(R.plurals.has_new_articles,integer,integer) )
+                        SnackbarUtil.Long(articleListView, bottomBar, getResources().getQuantityString(R.plurals.has_new_articles,integer,integer) )
                                 .setAction(getString(R.string.view), new View.OnClickListener() {
                                     @Override
                                     public void onClick(View v) {
@@ -336,11 +336,12 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
             @Override
             public void onChanged(PagedList<Article> articles) {
                 articlesAdapter.submitList(articles);
-                KLog.e("----更新列表数据----");
+
                 if( articlesAdapter.getCurrentList() != null ){
                     KLog.e("更新列表数据 A : " + articlesAdapter.getCurrentList().getLastKey()  + " == "+ articlesAdapter.getCurrentList().getLoadedCount() +  " , " + (linearLayoutManager.findLastVisibleItemPosition()-1) );
+                }else {
+                    KLog.e("更新列表数据 B");
                 }
-
                 loadViewByData( articles.size() );
             }
         });
@@ -537,7 +538,7 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
             @Override
             public void onCreateMenu(SwipeMenu leftMenu, SwipeMenu rightMenu, int position) {
                 Article article = articlesAdapter.get(position);
-                KLog.e("创建菜单: " + position + ", " + (article==null) + ", " +  articlesAdapter.getCurrentList().getLastKey() + " , " + articlesAdapter.getCurrentList().getLoadedCount()  );
+                //KLog.e("创建菜单: " + position + ", " + (article==null) + ", " +  articlesAdapter.getCurrentList().getLastKey() + " , " + articlesAdapter.getCurrentList().getLoadedCount()  );
                 if(article==null){
                     return;
                 }

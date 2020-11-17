@@ -42,6 +42,25 @@
         android:padding="10dp"
         android:layout_gravity="center"
         android:orientation="vertical">
+
+        <LinearLayout
+            android:id="@+id/select_login_account"
+            android:visibility="gone"
+            android:onClick="selectLoginAccount"
+            android:layout_margin="10dp"
+            android:layout_marginBottom="20dp"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+            <Button
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:clickable="false"
+                android:textAllCaps="false"
+                android:text="@string/select_login_account"/>
+        </LinearLayout>
+
         <LinearLayout
             android:onClick="oauthInoReader"
             android:layout_margin="10dp"

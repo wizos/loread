@@ -1,13 +1,15 @@
 package me.wizos.loread.extractor;
 
-import android.net.Uri;
-
 import com.hjq.toast.ToastUtils;
 import com.socks.library.KLog;
 
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import org.jsoup.select.Selector;
+
+import java.net.MalformedURLException;
+import java.net.URL;
 
 import javax.script.Bindings;
 import javax.script.SimpleBindings;
@@ -21,10 +23,9 @@ import me.wizos.loread.utils.StringUtils;
 
 public class ExtractorUtil {
     /*输入Jsoup的Document，获取正文文本*/
-    public static String getContent(String url, Document doc) { // throws Exception
-        Uri uri = Uri.parse(url);
+    public static String getContent(String url, Document doc) throws MalformedURLException {
+        URL uri = new URL(url);
         ArticleExtractRule rule;
-
         String content;
         rule = ArticleExtractConfig.i().getRuleByDomain(uri.getHost());
         if(rule != null){
@@ -32,7 +33,7 @@ public class ExtractorUtil {
             if(!StringUtils.isEmpty(content)){
                 return content;
             }else {
-                KLog.e("规则失效A");
+                KLog.e("规则失效A：" + doc.outerHtml() );
                 ToastUtils.show(App.i().getString(R.string.the_rule_of_full_text_extraction_has_expired, uri.getHost()));
             }
         }
@@ -47,16 +48,38 @@ public class ExtractorUtil {
                 ToastUtils.show(App.i().getString(R.string.the_rule_of_full_text_extraction_has_expired, uri.getHost()));
             }
         }
+        return getContentByExtractor(uri, doc);
+    }
+    /*输入Jsoup的Document，获取正文文本*/
+    public static String getContentWithKeyword(String url, Document doc, String keyword) throws MalformedURLException {
+        URL uri = new URL(url);
+        ArticleExtractRule rule;
+        String content;
+        rule = ArticleExtractConfig.i().getRuleByDomain(uri.getHost());
+        if(rule != null){
+            content = getContentByRule(uri, doc, rule);
+            if(!StringUtils.isEmpty(content)){
+                return content;
+            }else {
+                // KLog.e("规则失效A：" + doc.outerHtml() );
+                ToastUtils.show(App.i().getString(R.string.the_rule_of_full_text_extraction_has_expired, uri.getHost()));
+            }
+        }
 
-        //rule = ArticleExtractRuleConfig.i().getRuleByRegex(doc.outerHtml());
-        //if(rule != null){
-        //    return getContentByRule(uri, doc, rule);
-        //}
-
-        return getContentByExtractor(uri.getHost(), doc);
+        rule = ArticleExtractConfig.i().getRuleByCssSelector(doc);
+        if(rule != null){
+            content = getContentByRule(uri, doc, rule);
+            if(!StringUtils.isEmpty(content)){
+                return content;
+            }else {
+                KLog.e("规则失效B");
+                ToastUtils.show(App.i().getString(R.string.the_rule_of_full_text_extraction_has_expired, uri.getHost()));
+            }
+        }
+        return getContentByExtractorWithKeyword(uri, doc, keyword);
     }
 
-    private static String getContentByRule(Uri uri, Document doc, ArticleExtractRule rule) {
+    private static String getContentByRule(URL uri, Document doc, ArticleExtractRule rule) {
         if( !StringUtils.isEmpty(rule.getDocumentTrim()) ){
             Bindings bindings = new SimpleBindings();
             bindings.put("document", doc);
@@ -65,7 +88,7 @@ public class ExtractorUtil {
         }
 
         if( !StringUtils.isEmpty(rule.getContent()) ){
-            KLog.i("提取规则", "正文：" + rule.getContent() );
+            KLog.i("提取规则", "正文规则：" + rule.getContent() );
             Elements contentElements = doc.select(rule.getContent());
             if (!StringUtils.isEmpty(rule.getContentStrip())) {
                 KLog.i("提取规则", "正文过滤：" + rule.getContentStrip() );
@@ -86,14 +109,29 @@ public class ExtractorUtil {
     }
 
     /*输入Jsoup的Document，获取正文文本*/
-    private static String getContentByExtractor(String domain, Document doc) { // throws Exception
+    private static String getContentByExtractor(URL uri, Document doc) { // throws Exception
         Element newDoc = new Extractor(doc).getContentElement();
         if (newDoc == null) {
             return "";
         }
-        KLog.i("自动获取规则：" + newDoc.cssSelector());
-        String tmp1 = newDoc.cssSelector();
-        ArticleExtractConfig.i().saveRuleByDomain(doc, domain,newDoc.cssSelector());
+        try {
+            ArticleExtractConfig.i().saveRuleByDomain(doc, uri, newDoc.cssSelector());
+        }catch (Selector.SelectorParseException e){
+            e.printStackTrace();
+        }
+        return newDoc.html();
+    }
+    /*输入Jsoup的Document，获取正文文本*/
+    private static String getContentByExtractorWithKeyword(URL uri, Document doc, String keyword) { // throws Exception
+        Element newDoc = new Extractor(doc).getContentElementWithKeyword(keyword);
+        if (newDoc == null) {
+            return "";
+        }
+        try {
+            ArticleExtractConfig.i().saveRuleByDomain(doc, uri, newDoc.cssSelector());
+        }catch (Selector.SelectorParseException e){
+            e.printStackTrace();
+        }
         return newDoc.html();
     }
 }

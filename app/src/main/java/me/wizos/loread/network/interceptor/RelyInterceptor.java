@@ -1,14 +1,15 @@
 package me.wizos.loread.network.interceptor;
 
-import android.text.TextUtils;
 import android.webkit.CookieManager;
 
 import androidx.annotation.NonNull;
 
 import java.io.IOException;
 
+import me.wizos.loread.Contract;
 import me.wizos.loread.config.LinkRewriteConfig;
 import me.wizos.loread.config.NetworkUserAgentConfig;
+import me.wizos.loread.utils.StringUtils;
 import okhttp3.Interceptor;
 import okhttp3.Request;
 import okhttp3.Response;
@@ -31,7 +32,7 @@ public class RelyInterceptor implements Interceptor {
         String url = request.url().toString();
         boolean hasNew = false;
         String newUrl = LinkRewriteConfig.i().getRedirectUrl(url).trim();
-        if (!TextUtils.isEmpty(newUrl)) {
+        if (!StringUtils.isEmpty(newUrl)) {
             // 创建一个新请求，并相应地修改它
             builder.url(newUrl);
             url = newUrl;
@@ -40,8 +41,8 @@ public class RelyInterceptor implements Interceptor {
 
         // 使用完整的url或者topPrivateDomain都可以获取到cookie
         String cookie = CookieManager.getInstance().getCookie(url);
-        if (!TextUtils.isEmpty(cookie)) {
-            builder.header("Cookie", cookie );
+        if (!StringUtils.isEmpty(cookie)) {
+            builder.header(Contract.COOKIE, cookie );
             hasNew = true;
         }
 
@@ -52,8 +53,8 @@ public class RelyInterceptor implements Interceptor {
         //}
 
         String ua = NetworkUserAgentConfig.i().guessUserAgentByUrl(url);
-        if (!TextUtils.isEmpty(ua)) {
-            builder.header("User-Agent", ua );
+        if (!StringUtils.isEmpty(ua)) {
+            builder.header(Contract.USER_AGENT, ua );
             hasNew = true;
         }
         //KLog.i("拦截到依赖：" + url + " , " + newUrl + " , "  + " =  " + cookie  + " =  "  + ua );

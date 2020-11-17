@@ -19,22 +19,20 @@ public class SyncWorker extends Worker  {
         super(context, workerParams);
     }
 
-    private boolean running = false;
-
     @NonNull
     @Override
     public Result doWork() {
         //if(!App.i().getUser().isAutoSync() || (App.i().getUser().isAutoSyncOnlyWifi() && !NetworkUtil.isWiFiUsed()) ){
         //    return Result.success();
         //}
-        if(running){
+        if(App.i().isSyncing){
             return Result.failure();
         }
-        running = true;
+        App.i().isSyncing = true;
         LiveEventBus.get(SyncWorker.SYNC_TASK_STATUS).post(true);
         App.i().getApi().sync();
         LiveEventBus.get(SyncWorker.SYNC_TASK_STATUS).post(false);
-        running = false;
+        App.i().isSyncing = false;
         return Result.success();
     }
 

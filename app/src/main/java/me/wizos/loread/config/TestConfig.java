@@ -1,7 +1,6 @@
 package me.wizos.loread.config;
 
 import android.text.TextUtils;
-import android.util.ArrayMap;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -15,6 +14,7 @@ import me.wizos.loread.utils.FileUtil;
  */
 
 public class TestConfig {
+    private static final String CONFIG_FILENAME = "config.json";
     private static TestConfig instance;
     private TestConfig() { }
 
@@ -25,9 +25,8 @@ public class TestConfig {
                     instance = new TestConfig();
                     Gson gson = new Gson();
                     String config;
-                    config = FileUtil.readFile(App.i().getUserConfigPath() + "config.json");
+                    config = FileUtil.readFile(App.i().getUserConfigPath() + CONFIG_FILENAME);
                     if (TextUtils.isEmpty(config)) {
-                        instance.displayRouter = new ArrayMap<String, String>();
                         instance.save();
                     } else {
                         instance = gson.fromJson(config, new TypeToken<TestConfig>() {}.getType());
@@ -39,7 +38,7 @@ public class TestConfig {
     }
 
     public void save() {
-        FileUtil.save(App.i().getUserConfigPath() + "config.json", new GsonBuilder().setPrettyPrinting().create().toJson(instance));
+        FileUtil.save(App.i().getUserConfigPath() + CONFIG_FILENAME, new GsonBuilder().setPrettyPrinting().create().toJson(instance));
     }
     public void reset() {
         instance = null;
@@ -50,28 +49,7 @@ public class TestConfig {
     private boolean ttsFile = false;
     public int time = 60;
 
-    private ArrayMap<String, String> displayRouter;    // 格式是 feedId, mode
-
-
     public boolean isTtsFile() {
         return ttsFile;
     }
-
-
-    public String getDisplayMode(String feedId) {
-        if (!TextUtils.isEmpty(feedId) && displayRouter != null && displayRouter.containsKey(feedId)) {
-            return displayRouter.get(feedId);
-        }
-        return App.DISPLAY_RSS;
-    }
-
-    public void addDisplayRouter(String feedId, String displayMode) {
-        displayRouter.put(feedId, displayMode);
-    }
-
-    public void removeDisplayRouter(String key) {
-        displayRouter.remove(key);
-    }
-
-
 }

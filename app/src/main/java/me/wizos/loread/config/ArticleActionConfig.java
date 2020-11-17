@@ -28,6 +28,7 @@ import me.wizos.loread.utils.FileUtil;
 import me.wizos.loread.utils.StringUtils;
 
 public class ArticleActionConfig {
+    private static final String CONFIG_FILENAME = "article_action_rule.json";
     private static ArticleActionConfig instance;
     private ArticleActionConfig() { }
     public static ArticleActionConfig i() {
@@ -35,7 +36,7 @@ public class ArticleActionConfig {
             synchronized (ArticleActionConfig.class) {
                 if (instance == null) {
                     instance = new ArticleActionConfig();
-                    String json = FileUtil.readFile(App.i().getUserConfigPath() + "article_action_rule.json");
+                    String json = FileUtil.readFile(App.i().getUserConfigPath() + CONFIG_FILENAME);
                     if (TextUtils.isEmpty(json)) {
                         instance.actionRuleArrayMap = new ArrayMap<String, ArticleActionRule>();
                         instance.save();
@@ -48,7 +49,7 @@ public class ArticleActionConfig {
         return instance;
     }
     public void save() {
-        FileUtil.save(App.i().getUserConfigPath() + "article_action_rule.json", new GsonBuilder().setPrettyPrinting().create().toJson(instance.actionRuleArrayMap));
+        FileUtil.save(App.i().getUserConfigPath() + CONFIG_FILENAME, new GsonBuilder().setPrettyPrinting().create().toJson(instance.actionRuleArrayMap));
     }
     public void reset() {
         instance = null;
@@ -78,8 +79,7 @@ public class ArticleActionConfig {
                 SimpleSQLiteQuery query = new SimpleSQLiteQuery("SELECT * FROM article WHERE uid = ? AND crawlDate >= ? AND " + sql, new Object[]{uid,timeMillis});
                 List<Article> articles = CoreDB.i().articleDao().getActionRuleArticlesRaw(query);
                 doActionWithArticles(articles, articleActionRule);
-                KLog.e("文章结果 为：" + query.getSql() + " == " + articles.size());
-
+                //KLog.e("文章结果 为：" + query.getSql() + " == " + articles.size());
             }else if("not contain".equals(articleActionRule.getJudge())){
                 String[] keywords = articleActionRule.getValue().split("\\|");
                 Set<String> conditions = new HashSet<>();
@@ -90,7 +90,7 @@ public class ArticleActionConfig {
                 SimpleSQLiteQuery query = new SimpleSQLiteQuery("SELECT * FROM article WHERE uid = ? AND crawlDate >= ? AND " + sql, new Object[]{uid,timeMillis});
                 List<Article> articles = CoreDB.i().articleDao().getActionRuleArticlesRaw(query);
                 doActionWithArticles(articles, articleActionRule);
-                KLog.e("文章结果 为：" + query.getSql() + " == " + articles.size());
+                //KLog.e("文章结果 为：" + query.getSql() + " == " + articles.size());
             }else if("match".equals(articleActionRule.getJudge())){
                 List<String> needActionArticleIds = new ArrayList<>();
                 SimpleSQLiteQuery query = new SimpleSQLiteQuery("SELECT id, " + articleActionRule.getAttr() + " as entry FROM article WHERE uid = ? AND crawlDate >= ?" + sql, new Object[]{uid,timeMillis});
@@ -107,7 +107,7 @@ public class ArticleActionConfig {
                 }
                 List<Article> articles = CoreDB.i().articleDao().getArticles(uid, needActionArticleIds);
                 doActionWithArticles(articles, articleActionRule);
-                KLog.e("文章结果 为：" + query.getSql() + " == " + articles.size());
+                //KLog.e("文章结果 为：" + query.getSql() + " == " + articles.size());
             }else if("not match".equals(articleActionRule.getJudge())){
                 List<String> needActionArticleIds = new ArrayList<>();
                 SimpleSQLiteQuery query = new SimpleSQLiteQuery("SELECT id, " + articleActionRule.getAttr() + " as entry FROM article WHERE uid = ? AND crawlDate >= ?" + sql, new Object[]{uid,timeMillis});
@@ -124,7 +124,7 @@ public class ArticleActionConfig {
                 }
                 List<Article> articles = CoreDB.i().articleDao().getArticles(uid, needActionArticleIds);
                 doActionWithArticles(articles, articleActionRule);
-                KLog.e("文章结果 为：" + query.getSql() + " == " + articles.size());
+                //KLog.e("文章结果 为：" + query.getSql() + " == " + articles.size());
             }
         }else if(articleActionRule.getTarget().startsWith("feed/")){
             String feedUrl = articleActionRule.getTarget().substring(5);
@@ -140,7 +140,7 @@ public class ArticleActionConfig {
                 SimpleSQLiteQuery query = new SimpleSQLiteQuery("SELECT article.* FROM article LEFT JOIN Feed ON (article.uid = Feed.uid AND article.feedId = Feed.id) WHERE article.uid = ? AND crawlDate >= ? AND Feed.feedUrl = ? AND " + sql, new Object[]{uid, timeMillis, feedUrl});
                 List<Article> articles = CoreDB.i().articleDao().getActionRuleArticlesRaw(query);
                 doActionWithArticles(articles, articleActionRule);
-                KLog.e("文章结果 为：" + query.getSql() + " == " + articles.size());
+                //KLog.e("文章结果 为：" + query.getSql() + " == " + articles.size());
             }else if("not contain".equals(articleActionRule.getJudge())){
                 String[] keywords = articleActionRule.getValue().split("\\|");
                 Set<String> conditions = new HashSet<>();
@@ -151,7 +151,7 @@ public class ArticleActionConfig {
                 SimpleSQLiteQuery query = new SimpleSQLiteQuery("SELECT article.* FROM article LEFT JOIN Feed ON (article.uid = Feed.uid AND article.feedId = Feed.id) WHERE article.uid = ? AND crawlDate >= ? AND Feed.feedUrl = ? AND " + sql, new Object[]{uid,timeMillis, feedUrl});
                 List<Article> articles = CoreDB.i().articleDao().getActionRuleArticlesRaw(query);
                 doActionWithArticles(articles, articleActionRule);
-                KLog.e("文章结果 为：" + query.getSql() + " == " + articles.size());
+                //KLog.e("文章结果 为：" + query.getSql() + " == " + articles.size());
             }else if("match".equals(articleActionRule.getJudge())){
                 List<String> needActionArticleIds = new ArrayList<>();
                 SimpleSQLiteQuery query = new SimpleSQLiteQuery("SELECT article.id, article." + articleActionRule.getAttr() + " as entry FROM article LEFT JOIN Feed ON (article.uid = Feed.uid AND article.feedId = Feed.id) WHERE article.uid = ? AND crawlDate >= ? AND Feed.feedUrl = ? " + sql, new Object[]{App.i().getUser().getId(),timeMillis, feedUrl});
@@ -168,7 +168,7 @@ public class ArticleActionConfig {
                 }
                 List<Article> articles = CoreDB.i().articleDao().getArticles(uid, needActionArticleIds);
                 doActionWithArticles(articles, articleActionRule);
-                KLog.e("文章结果 为：" + query.getSql() + " == " + articles.size());
+                //KLog.e("文章结果 为：" + query.getSql() + " == " + articles.size());
             }else if("not match".equals(articleActionRule.getJudge())){
                 List<String> needActionArticleIds = new ArrayList<>();
                 SimpleSQLiteQuery query = new SimpleSQLiteQuery("SELECT article.id, article." + articleActionRule.getAttr() + " as entry FROM article LEFT JOIN Feed ON (article.uid = Feed.uid AND article.feedId = Feed.id) WHERE article.uid = ? AND crawlDate >= ? AND Feed.feedUrl = ? " + sql, new Object[]{uid,timeMillis, feedUrl});
@@ -185,7 +185,7 @@ public class ArticleActionConfig {
                 }
                 List<Article> articles = CoreDB.i().articleDao().getArticles(uid, needActionArticleIds);
                 doActionWithArticles(articles, articleActionRule);
-                KLog.e("文章结果 为：" + query.getSql() + " == " + articles.size());
+                //KLog.e("文章结果 为：" + query.getSql() + " == " + articles.size());
             }
         }
     }

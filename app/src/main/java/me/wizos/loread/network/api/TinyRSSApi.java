@@ -5,6 +5,7 @@ import android.text.TextUtils;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.collection.ArrayMap;
+import androidx.collection.ArraySet;
 
 import com.google.gson.GsonBuilder;
 import com.hjq.toast.ToastUtils;
@@ -17,6 +18,7 @@ import java.io.IOException;
 import java.net.ConnectException;
 import java.net.SocketTimeoutException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -65,34 +67,31 @@ import static me.wizos.loread.utils.StringUtils.getString;
 
 public class TinyRSSApi extends AuthApi<Feed, me.wizos.loread.bean.feedly.CategoryItem> implements LoginInterface{
     private TinyRSSService service;
-    private static String OFFICIAL_BASE_URL = "https://example.com";
+    private static String EXAMPLE_BASE_URL = "https://example.com";
+    private String tempBaseUrl;
 
     public TinyRSSApi() {
         this(App.i().getUser().getHost());
     }
 
-    public TinyRSSApi(String host) {
-        if (!TextUtils.isEmpty(host)) {
-            TinyRSSApi.OFFICIAL_BASE_URL = host;
+    public TinyRSSApi(String baseUrl) {
+        if (!TextUtils.isEmpty(baseUrl)) {
+            tempBaseUrl = baseUrl;
         }else {
-            ToastUtils.show(R.string.empty_host);
+            tempBaseUrl = EXAMPLE_BASE_URL;
+            ToastUtils.show(R.string.empty_site_url_hint);
         }
 
-        if (!TinyRSSApi.OFFICIAL_BASE_URL.endsWith("/")) {
-            TinyRSSApi.OFFICIAL_BASE_URL = TinyRSSApi.OFFICIAL_BASE_URL + "/";
+        if (!tempBaseUrl.endsWith("/")) {
+            tempBaseUrl = tempBaseUrl + "/";
         }
 
         Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl(TinyRSSApi.OFFICIAL_BASE_URL) // 设置网络请求的Url地址, 必须以/结尾
+                .baseUrl(tempBaseUrl) // 设置网络请求的Url地址, 必须以/结尾
                 .addConverterFactory(GsonConverterFactory.create(new GsonBuilder().setLenient().create()))  // 设置数据解析器
                 .client(HttpClientManager.i().ttrssHttpClient())
                 .build();
         service = retrofit.create(TinyRSSService.class);
-    }
-
-    public static void setHost(String host) {
-        TinyRSSApi.OFFICIAL_BASE_URL = host;
-        KLog.i("HOST 地址：" + OFFICIAL_BASE_URL );
     }
 
     public LoginResult login(String accountId, String accountPd) throws IOException {
@@ -213,7 +212,7 @@ public class TinyRSSApi extends AuthApi<Feed, me.wizos.loread.bean.feedly.Catego
             }
             KLog.e("未读" + idsResponse.getContent());
             HashSet<String> unreadRefsSet = handleUnreadRefs( idsResponse.getContent().split(",") );
-
+            //HashSet<String> unreadRefsSet = handleRefs2( idsResponse.getContent().split(",") );
             // 获取加星资源
             idsResponse = service.getSavedItemIds(new GetSavedItemIds(getAuthorization())).execute().body();
             assert idsResponse != null;
@@ -221,7 +220,7 @@ public class TinyRSSApi extends AuthApi<Feed, me.wizos.loread.bean.feedly.Catego
                 throw new HttpException("获取失败");
             }
             HashSet<String> staredRefsSet = handleStaredRefs( idsResponse.getContent().split(",") );
-
+            //HashSet<String> staredRefsSet = handleRefs2( idsResponse.getContent().split(",") );
 
             HashSet<String> idRefsSet = new HashSet<>();
             idRefsSet.addAll(unreadRefsSet);
@@ -270,22 +269,21 @@ public class TinyRSSApi extends AuthApi<Feed, me.wizos.loread.bean.feedly.Catego
 
             LiveEventBus.get(SyncWorker.SYNC_PROCESS_FOR_SUBTITLE).post(getString(R.string.clear_article));
             deleteExpiredArticles();
-            handleDuplicateArticle();
+            handleDuplicateArticles();
             handleCrawlDate();
             updateCollectionCount();
 
             // 获取文章全文
             LiveEventBus.get(SyncWorker.SYNC_PROCESS_FOR_SUBTITLE).post(getString(R.string.fetch_article_full_content));
             fetchReadability(uid, startSyncTimeMillis);
-
             // 执行文章自动处理脚本
             ArticleActionConfig.i().exeRules(uid,startSyncTimeMillis);
             // 清理无文章的tag
             //clearNotArticleTags(uid);
 
+            LiveEventBus.get(SyncWorker.SYNC_PROCESS_FOR_SUBTITLE).post( null );
             // 提示更新完成
             LiveEventBus.get(SyncWorker.NEW_ARTICLE_NUMBER).post(ids.size());
-            LiveEventBus.get(SyncWorker.SYNC_PROCESS_FOR_SUBTITLE).post( null );
         }catch (IllegalStateException e){
             handleException(e, "同步失败：IllegalState异常 "  + e.getMessage());
         }catch (HttpException e) {
@@ -453,7 +451,7 @@ public class TinyRSSApi extends AuthApi<Feed, me.wizos.loread.bean.feedly.Catego
         markArticle(0, 0, articleId, cb);
     }
 
-    private HashSet<String> handleUnreadRefs(String[] ids) {
+    private HashSet<String> handleUnreadRefs2(String[] ids) {
         KLog.i("处理未读资源：" + ids.length );
         String uid = App.i().getUser().getId();
         List<Article> localUnreadArticles = CoreDB.i().articleDao().getUnreadNoOrder(uid);
@@ -496,11 +494,71 @@ public class TinyRSSApi extends AuthApi<Feed, me.wizos.loread.bean.feedly.Catego
         return tempUnreadIds;
     }
 
-    private HashSet<String> handleStaredRefs(String[] ids) {
+
+    private HashSet<String> handleRefs2(String[] ids) {
+        HashSet<String> tempUnreadIds = new HashSet<>(ids.length);
+        for (String articleId : ids) {
+            tempUnreadIds.add(articleId);
+        }
+        return tempUnreadIds;
+    }
+
+    private HashSet<String> handleUnreadRefs(String[] ids) {
+        KLog.i("处理未读资源：" + ids.length );
+        String uid = App.i().getUser().getId();
+
+        List<Article> localUnreadArticles = CoreDB.i().articleDao().getUnreadNoOrder(uid);
+        Map<String, Article> localUnreadMap = new ArrayMap<>(localUnreadArticles.size());
+        for (Article article : localUnreadArticles) {
+            localUnreadMap.put(article.getId(), article);
+        }
+
+        List<Article> localReadArticles = CoreDB.i().articleDao().getReadNoOrder(uid);
+        Map<String, Article> localReadMap = new ArrayMap<>(localReadArticles.size());
+        for (Article article : localReadArticles) {
+            localReadMap.put(article.getId(), article);
+        }
+
+        List<Article> changedArticles = new ArrayList<>();
+        // 筛选下来，最终要去云端获取内容的未读Refs的集合
+        HashSet<String> tempUnreadIds = new HashSet<>(ids.length);
+        // 数据量小的一方
+        Article article;
+        ArraySet<String> articleIds = new ArraySet<>(Arrays.asList(ids));
+        for (String articleId : articleIds) {
+            article = localUnreadMap.get(articleId);
+            if (article == null) {
+                article = localReadMap.get(articleId);
+                if (article == null) {
+                    // 本地无，而云端有，加入要请求的未读资源
+                    tempUnreadIds.add(articleId);
+                } else {
+                    article.setReadStatus(App.STATUS_UNREAD);
+                    changedArticles.add(article);
+                    localReadMap.remove(articleId);
+                }
+            } else {
+                localUnreadMap.remove(articleId);
+            }
+        }
+        for (Map.Entry<String, Article> entry : localUnreadMap.entrySet()) {
+            if (entry.getKey() != null) {
+                article = localUnreadMap.get(entry.getKey());
+                // 本地未读设为已读
+                article.setReadStatus(App.STATUS_READED);
+                changedArticles.add(article);
+            }
+        }
+
+        CoreDB.i().articleDao().update(changedArticles);
+        return tempUnreadIds;
+    }
+
+
+    private HashSet<String> handleStaredRefs2(String[] ids) {
         KLog.i("处理加薪资源：" + ids.length);
         String uid = App.i().getUser().getId();
         List<Article> localStarredArticles = CoreDB.i().articleDao().getStaredNoOrder(uid);
-
         Map<String, Article> localStarredArticlesMap = new ArrayMap<>(localStarredArticles.size());
         List<Article> changedArticles = new ArrayList<>();
         HashSet<String> tempStarredIds = new HashSet<>(ids.length);
@@ -531,6 +589,57 @@ public class TinyRSSApi extends AuthApi<Feed, me.wizos.loread.bean.feedly.Catego
         for (Map.Entry<String, Article> entry : localStarredArticlesMap.entrySet()) {
             if (entry.getKey() != null) {
                 article = localStarredArticlesMap.get(entry.getKey());
+                article.setStarStatus(App.STATUS_UNSTAR);
+                changedArticles.add(article);// 取消加星
+            }
+        }
+
+        CoreDB.i().articleDao().update(changedArticles);
+        return tempStarredIds;
+    }
+
+
+    private HashSet<String> handleStaredRefs(String[] ids) {
+        String uid = App.i().getUser().getId();
+
+        List<Article> localStarArticles = CoreDB.i().articleDao().getStaredNoOrder(uid);
+        ArrayMap<String, Article> localStarMap = new ArrayMap<>(localStarArticles.size());
+        // 第1步，遍历数据量大的一方A，将其比对项目放入Map中
+        for (Article article : localStarArticles) {
+            localStarMap.put(article.getId(), article);
+        }
+
+        List<Article> localUnstarArticles = CoreDB.i().articleDao().getUnStarNoOrder(uid);
+        ArrayMap<String, Article> localUnstarMap = new ArrayMap<>(localUnstarArticles.size());
+        for (Article article : localUnstarArticles) {
+            localUnstarMap.put(article.getId(), article);
+        }
+
+        List<Article> changedArticles = new ArrayList<>();
+        HashSet<String> tempStarredIds = new HashSet<>(ids.length);
+        // 第2步，遍历数据量小的一方B。到Map中找，是否含有b中的比对项。有则XX，无则YY
+        Article article;
+        ArraySet<String> articleIds = new ArraySet<>(Arrays.asList(ids));
+        for (String articleId : articleIds) {
+            article = localStarMap.get(articleId);
+            if (article == null) {
+                article = localUnstarMap.get(articleId);
+                if (article == null) {
+                    // 本地无，而云远端有，加入要请求的加星资源
+                    tempStarredIds.add(articleId);
+                } else {
+                    article.setStarStatus(App.STATUS_STARED);
+                    changedArticles.add(article);
+                    localUnstarMap.remove(articleId);
+                }
+            } else {
+                localStarMap.remove(articleId);
+            }
+        }
+
+        for (Map.Entry<String, Article> entry : localStarMap.entrySet()) {
+            if (entry.getKey() != null) {
+                article = localStarMap.get(entry.getKey());
                 article.setStarStatus(App.STATUS_UNSTAR);
                 changedArticles.add(article);// 取消加星
             }

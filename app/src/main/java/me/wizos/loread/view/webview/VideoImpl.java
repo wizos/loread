@@ -18,9 +18,9 @@ package me.wizos.loread.view.webview;
 
 import android.app.Activity;
 import android.content.pm.ActivityInfo;
+import android.content.res.Configuration;
 import android.graphics.Color;
 import android.view.View;
-import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
 import android.webkit.WebChromeClient;
@@ -28,6 +28,8 @@ import android.webkit.WebView;
 import android.widget.FrameLayout;
 
 import androidx.core.util.Pair;
+
+import com.socks.library.KLog;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -43,27 +45,39 @@ public class VideoImpl { // implements IVideo, EventInterceptor
     private WebView mWebView;
     private Set<Pair<Integer, Integer>> mFlags = null;
     private View videoView = null;
-    private ViewGroup videoParentView = null;
+    private FrameLayout videoParentView = null;
     private WebChromeClient.CustomViewCallback mCallback;
 
-    private boolean isPlaying = false;
-
+    private boolean isFullScreen = false;
 
     public VideoImpl(Activity mActivity, WebView webView) {
         this.mActivity = mActivity;
         this.mWebView = webView;
-        mFlags = new HashSet<>();
+        this.mFlags = new HashSet<>();
     }
 
+    public boolean isFullScreen() {
+        return isFullScreen;
+    }
 
-    //    @Override
+    private void switchFullScreen(Activity mActivity) {
+        if (mActivity.getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT) {
+            mActivity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+            KLog.i("ToVmp","横屏");
+        } else {
+            mActivity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+            KLog.i("ToVmp","竖屏");
+        }
+    }
+
+    // FrameLayout frameLayout;
+
     public void onShowCustomView(View view, WebChromeClient.CustomViewCallback callback) {
-        Activity mActivity;
-        if ((mActivity = this.mActivity) == null || mActivity.isFinishing()) {
+        if (mActivity == null || mActivity.isFinishing()) {
             return;
         }
-        // 横屏
-        mActivity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+
+        switchFullScreen(mActivity);
 
         Window mWindow = mActivity.getWindow();
         Pair<Integer, Integer> mPair;
@@ -81,15 +95,23 @@ public class VideoImpl { // implements IVideo, EventInterceptor
             mFlags.add(mPair);
         }
 
+        // if (videoView != null) {
+        //     callback.onCustomViewHidden();
+        //     return;
+        // }
+        // videoView = view;
+        // videoParentView.addView(videoView);
+        // mWebView.setVisibility(View.GONE);
+        // videoParentView.setVisibility(View.VISIBLE);
+        // mActivity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+        // mCallback = callback;
 
-        if (videoView != null) {
-            callback.onCustomViewHidden();
-            return;
-        }
-//        KLog.e("设置" + mWebView  + "   "  + videoParentView);
+        // KLog.e("设置" + mWebView  + "   "  + videoParentView);
         if (mWebView != null) {
             mWebView.setVisibility(View.GONE);
         }
+
+        videoView = view;
 
         if (videoParentView == null) {
             FrameLayout mDecorView = (FrameLayout) mActivity.getWindow().getDecorView();
@@ -98,27 +120,39 @@ public class VideoImpl { // implements IVideo, EventInterceptor
             videoParentView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_FULLSCREEN); // 全屏
             mDecorView.addView(videoParentView);
         }
-
-//        KLog.e("设置" + mWebView.getVisibility()  + "   "  + videoParentView);
-        this.mCallback = callback;
-        this.videoView = view;
         videoParentView.addView(videoView, WindowManager.LayoutParams.MATCH_PARENT, WindowManager.LayoutParams.MATCH_PARENT);
         videoParentView.setVisibility(View.VISIBLE);
-        isPlaying = true;
+
+        // frameLayout = (FrameLayout) view;
+        // KLog.i("A 宽度：" + frameLayout.getMeasuredWidth() + " ，高度：" + frameLayout.getMeasuredHeight());
+        // view.getViewTreeObserver().addOnGlobalLayoutListener(
+        //         new ViewTreeObserver.OnGlobalLayoutListener() {
+        //             @Override
+        //             public void onGlobalLayout() {
+        //                 view.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+        //                 if( view instanceof FrameLayout){
+        //                     frameLayout = (FrameLayout) view;
+        //                     if( frameLayout.getChildCount() > 0 ){
+        //                         KLog.i("i 宽度：" + view.getWidth() + " ，高度：" + view.getHeight());
+        //                         KLog.i("G 宽度：" + frameLayout.getMeasuredWidth() + " ，高度：" + frameLayout.getMeasuredHeight());
+        //                         KLog.i("H 宽度：" + frameLayout.getChildAt(0).getMeasuredWidth() + " ，高度：" + frameLayout.getChildAt(0).getMeasuredHeight());
+        //                     }
+        //                 }
+        //             }
+        //         });
+
+
+        // KLog.e("设置" + mWebView.getVisibility()  + "   "  + videoParentView);
+        mCallback = callback;
+        isFullScreen = true;
     }
 
-    public boolean isPlaying() {
-        return isPlaying;
-    }
-
-    //    @Override
     public void onHideCustomView() {
-        if (videoView == null) {
+        if (videoView == null || mActivity == null || mActivity.isFinishing()) {
             return;
         }
-        if (mActivity != null && mActivity.getRequestedOrientation() != ActivityInfo.SCREEN_ORIENTATION_PORTRAIT) {
-            mActivity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
-        }
+
+        switchFullScreen(mActivity);
 
         if (!mFlags.isEmpty()) {
             for (Pair<Integer, Integer> mPair : mFlags) {
@@ -127,25 +161,22 @@ public class VideoImpl { // implements IVideo, EventInterceptor
             mFlags.clear();
         }
 
-        videoView.setVisibility(View.GONE);
-        if (videoParentView != null && videoView != null) {
-            videoParentView.removeView(videoView);
-
-        }
         if (videoParentView != null) {
+            videoParentView.removeView(videoView);
             // 状态栏和Activity共存，Activity不全屏显示。也就是应用平常的显示画面
             videoParentView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_VISIBLE);
             videoParentView.setVisibility(View.GONE);
         }
 
-        if (this.mCallback != null) {
+        if (mCallback != null) {
             mCallback.onCustomViewHidden();
         }
-        this.videoView = null;
+
+        videoView.setVisibility(View.GONE);
+        videoView = null;
         if (mWebView != null) {
             mWebView.setVisibility(View.VISIBLE);
         }
-        isPlaying = false;
+        isFullScreen = false;
     }
-
 }

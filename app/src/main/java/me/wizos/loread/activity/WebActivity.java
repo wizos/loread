@@ -67,9 +67,12 @@ import me.wizos.loread.view.webview.LongClickPopWindow;
 
 import static me.wizos.loread.Contract.HTTP;
 import static me.wizos.loread.Contract.HTTPS;
+import static me.wizos.loread.Contract.SCHEMA_FEEDME;
 import static me.wizos.loread.Contract.SCHEMA_HTTP;
 import static me.wizos.loread.Contract.SCHEMA_HTTPS;
 import static me.wizos.loread.Contract.SCHEMA_LOREAD;
+import static me.wizos.loread.Contract.SCHEMA_PALABRE;
+import static me.wizos.loread.Contract.SCHEMA_PDY;
 
 /**
  * 内置的 webView 页面，用来相应 a，iframe 的跳转内容
@@ -143,7 +146,7 @@ public class WebActivity extends BaseActivity implements WebBridge {
 
         agentWeb = AgentWeb.with(this)
                 .setAgentWebParent(containerLayout, -1, lp)//lp记得设置behavior属性
-//                .setAgentWebParent( containerLayout, new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))//传入AgentWeb的父控件。
+                // .setAgentWebParent( containerLayout, new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))//传入AgentWeb的父控件。
                 .useDefaultIndicator(-1, 3)//设置进度条颜色与高度，-1为默认值，高度为2，单位为dp。
                 .setWebView(new NestedScrollAgentWebView(this))
                 .setWebViewClient(mWebViewClient)//WebViewClient ， 与 WebView 使用一致 ，但是请勿获取WebView调用setWebViewClient(webViewScroll)方法了,会覆盖AgentWeb DefaultWebClient,同时相应的中间件也会失效。
@@ -151,19 +154,19 @@ public class WebActivity extends BaseActivity implements WebBridge {
                 .setSecurityType(AgentWeb.SecurityType.STRICT_CHECK) //严格模式 Android 4.2.2 以下会放弃注入对象 ，使用AgentWebView没影响。
                 .setOpenOtherPageWays(DefaultWebClient.OpenOtherPageWays.ASK)//打开其他应用时，弹窗咨询用户是否前往其他应用
                 .addJavascriptInterface(WebBridge.TAG, WebActivity.this)
-//                .setAgentWebWebSettings(getSettings())//设置 IAgentWebSettings。
-//                .setPermissionInterceptor(mPermissionInterceptor) //权限拦截 2.0.0 加入。
-//                .setAgentWebUIController(new UIController(getActivity())) //自定义UI  AgentWeb3.0.0 加入。
+                // .setAgentWebWebSettings(getSettings())//设置 IAgentWebSettings。
+                // .setPermissionInterceptor(mPermissionInterceptor) //权限拦截 2.0.0 加入。
+                // .setAgentWebUIController(new UIController(getActivity())) //自定义UI  AgentWeb3.0.0 加入。
                 .setMainFrameErrorView(R.layout.agentweb_error_page, -1) //参数1是错误显示的布局，参数2点击刷新控件ID -1表示点击整个布局都刷新， AgentWeb 3.0.0 加入。
-//                .setDownloadListener(mDownloadListener) // 4.0.0 删除该API//下载回调
-//                .openParallelDownload()// 4.0.0删除该api 打开并行下载 , 默认串行下载。 请通过AgentWebDownloader#Extra实现并行下载
-//                .setNotifyIcon(R.drawable.ic_file_download_black_24dp) 4.0.0删除该api //下载通知图标。4.0.0后的版本请通过AgentWebDownloader#Extra修改icon
+                // .setDownloadListener(mDownloadListener) // 4.0.0 删除该API//下载回调
+                // .openParallelDownload()// 4.0.0删除该api 打开并行下载 , 默认串行下载。 请通过AgentWebDownloader#Extra实现并行下载
+                // .setNotifyIcon(R.drawable.ic_file_download_black_24dp) 4.0.0删除该api //下载通知图标。4.0.0后的版本请通过AgentWebDownloader#Extra修改icon
                 .setOpenOtherPageWays(DefaultWebClient.OpenOtherPageWays.DISALLOW)//打开其他页面时，弹窗质询用户前往其他应用 AgentWeb 3.0.0 加入。
                 .interceptUnkownUrl() //拦截找不到相关页面的Url AgentWeb 3.0.0 加入。
                 .createAgentWeb()//创建AgentWeb。
                 .ready()//设置 WebSettings。
                 .go(link); //WebView载入该url地址的页面并显示。
-//        agentWeb.getWebCreator().getWebView().setHorizontalScrollBarEnabled(false);
+        // agentWeb.getWebCreator().getWebView().setHorizontalScrollBarEnabled(false);
         agentWeb.getWebCreator().getWebView().getSettings().setTextZoom(100);
         // 设置最小的字号，默认为8
         agentWeb.getWebCreator().getWebView().getSettings().setMinimumFontSize(10);
@@ -249,12 +252,11 @@ public class WebActivity extends BaseActivity implements WebBridge {
                     return false;
                 }
 
-//                // 这里可以拦截很多类型，我们只处理超链接就可以了
-//                final LongClickPopWindow webViewLongClickedPopWindow =
-//                        new LongClickPopWindow(WebActivity.this, status, ScreenUtil.dp2px(WebActivity.this,120), ScreenUtil.dp2px(WebActivity.this,90));
-//                webViewLongClickedPopWindow.showAtLocation(webView, Gravity.TOP|Gravity.LEFT, downX, downY + 10);
+                // 这里可以拦截很多类型，我们只处理超链接就可以了
+                // final LongClickPopWindow webViewLongClickedPopWindow =
+                //         new LongClickPopWindow(WebActivity.this, status, ScreenUtil.dp2px(WebActivity.this,120), ScreenUtil.dp2px(WebActivity.this,90));
+                // webViewLongClickedPopWindow.showAtLocation(webView, Gravity.TOP|Gravity.LEFT, downX, downY + 10);
                 new LongClickPopWindow(WebActivity.this, (WebView) webView, ScreenUtil.dp2px(WebActivity.this, 120), ScreenUtil.dp2px(WebActivity.this, 130), downX, downY + 10);
-
                 return true;
             }
         });
@@ -296,17 +298,17 @@ public class WebActivity extends BaseActivity implements WebBridge {
                 actionBar.hide();
             }
 
-//            View.SYSTEM_UI_FLAG_LOW_PROFILE                    状态栏显示处于低能显示状态(low profile模式)，状态栏上一些图标显示会被隐藏。
-//            View.SYSTEM_UI_FLAG_FULLSCREEN                     隐藏状态栏：全屏显示，但状态栏不会被隐藏覆盖，状态栏依然可见，Activity顶端布局部分会被状态遮住。
-//            View.SYSTEM_UI_FLAG_HIDE_NAVIGATION                隐藏导航栏
-//            View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN              布局占用状态栏区域
-//            View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION         布局占用导航栏区域
-//            View.SYSTEM_UI_FLAG_LAYOUT_STABLE                  稳定布局，防止系统栏隐藏时内容区域大小发生变化
-//            View.SYSTEM_UI_FLAG_IMMERSIVE                      沉浸式
-//            View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY               粘性沉浸式：向内滑动的操作会让系统栏临时显示
+            // View.SYSTEM_UI_FLAG_LOW_PROFILE                    状态栏显示处于低能显示状态(low profile模式)，状态栏上一些图标显示会被隐藏。
+            // View.SYSTEM_UI_FLAG_FULLSCREEN                     隐藏状态栏：全屏显示，但状态栏不会被隐藏覆盖，状态栏依然可见，Activity顶端布局部分会被状态遮住。
+            // View.SYSTEM_UI_FLAG_HIDE_NAVIGATION                隐藏导航栏
+            // View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN              布局占用状态栏区域
+            // View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION         布局占用导航栏区域
+            // View.SYSTEM_UI_FLAG_LAYOUT_STABLE                  稳定布局，防止系统栏隐藏时内容区域大小发生变化
+            // View.SYSTEM_UI_FLAG_IMMERSIVE                      沉浸式
+            // View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY               粘性沉浸式：向内滑动的操作会让系统栏临时显示
             containerLayout.setFitsSystemWindows(false);
             containerLayout.setSystemUiVisibility(
-//                            | View.SYSTEM_UI_FLAG_IMMERSIVE
+                    // | View.SYSTEM_UI_FLAG_IMMERSIVE
                     View.SYSTEM_UI_FLAG_LOW_PROFILE
                             | View.SYSTEM_UI_FLAG_LAYOUT_STABLE
                             | View.SYSTEM_UI_FLAG_FULLSCREEN // landscape status bar
@@ -412,7 +414,7 @@ public class WebActivity extends BaseActivity implements WebBridge {
                 }
 
                 String newUrl = LinkRewriteConfig.i().getRedirectUrl(url);
-                // KLog.e("重定向地址：" + url + " , " + newUrl);
+                KLog.e("重定向地址：" + url + " -> " + newUrl);
                 if(!TextUtils.isEmpty(newUrl) && !url.equalsIgnoreCase(newUrl)){
                     return super.shouldInterceptRequest(view, new WebResourceRequest() {
                         @Override
@@ -461,9 +463,16 @@ public class WebActivity extends BaseActivity implements WebBridge {
             if (url.startsWith(SCHEMA_HTTP) || url.startsWith(SCHEMA_HTTPS)) {
                 return false;
             }
+
+            String newUrl = LinkRewriteConfig.i().getRedirectUrl( url );
+            if (!TextUtils.isEmpty(newUrl)) {
+                // 创建一个新请求，并相应地修改它
+                url = newUrl;
+            }
+
             //其他的URL则会开启一个Acitity然后去调用原生APP
             final Intent in = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
-            if (url.startsWith(SCHEMA_LOREAD)) {
+            if (url.startsWith(SCHEMA_LOREAD) || url.startsWith(SCHEMA_PDY) || url.startsWith(SCHEMA_PALABRE) || url.startsWith(SCHEMA_FEEDME)) {
                 startActivity(in);
                 finish();
             }else if (in.resolveActivity(getPackageManager()) != null) {
@@ -571,7 +580,6 @@ public class WebActivity extends BaseActivity implements WebBridge {
                     KLog.e("标题：" + entry.getKey());
                 }
 
-
                 int finalSelected = selected;
                 new MaterialDialog.Builder(WebActivity.this)
                         .title(R.string.select_user_agent)
@@ -591,7 +599,7 @@ public class WebActivity extends BaseActivity implements WebBridge {
                                 NetworkUserAgentConfig.i().save();
                                 agentWeb.getWebCreator().getWebView().getSettings().setUserAgentString(NetworkUserAgentConfig.i().guessUserAgentByUrl(receivedUrl));
                                 agentWeb.getWebCreator().getWebView().reload();
-//                                    KLog.e("默认的UA是：" + agentWeb.getWebCreator().getWebView().getSettings().getUserAgentString() );
+                                // KLog.e("默认的UA是：" + agentWeb.getWebCreator().getWebView().getSettings().getUserAgentString() );
                                 dialog.dismiss();
                                 return true;
                             }
@@ -652,7 +660,6 @@ public class WebActivity extends BaseActivity implements WebBridge {
                     // 创建普通字符型ClipData
                     mClipData = ClipData.newRawUri(agentWeb.getWebCreator().getWebView().getTitle(), Uri.parse(originalUrl));
                 }
-//                ClipData mClipData = ClipData.newPlainText("url",webViewS.getUrl());
                 // 将ClipData内容放到系统剪贴板里。
                 cm.setPrimaryClip(mClipData);
                 ToastUtils.show(getString(R.string.copy_success));
@@ -662,7 +669,7 @@ public class WebActivity extends BaseActivity implements WebBridge {
                 sendIntent.setType("text/plain");
 
                 sendIntent.putExtra(Intent.EXTRA_SUBJECT, mToolbar.getTitle());
-//                sendIntent.putExtra(Intent.EXTRA_TEXT, mToolbar.getTitle() + " " +  webViewS.getUrl() );
+                // sendIntent.putExtra(Intent.EXTRA_TEXT, mToolbar.getTitle() + " " +  webViewS.getUrl() );
                 sendIntent.putExtra(Intent.EXTRA_TEXT, mToolbar.getTitle() + " " + agentWeb.getWebCreator().getWebView().getUrl());
                 sendIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 startActivity(Intent.createChooser(sendIntent, getString(R.string.share_to)));
@@ -754,98 +761,98 @@ public class WebActivity extends BaseActivity implements WebBridge {
      來源：简书
      简书著作权归作者所有，任何形式的转载都请联系作者获得授权并注明出处。
      */
-//    private void test(){
-//
-//        /**
-//         * BottomSheetDialog
-//         */
-//        Button btnShowDialog = (Button) findViewById(R.id.bottom_pull_sheet);
-//        mDatas = new ArrayList<>();
-//        View inflate = getLayoutInflater().inflate(R.layout.dialog_bottom_sheet, null);
-////        mLeftIcon = inflate.findViewById(R.id.delete);
-////        mLeftIcon.setOnClickListener(new View.OnClickListener() {
-////            @Override
-////            public void onClick(View view) {
-////                if (mBottomSheetDialog != null && mBottomSheetDialog.isShowing()) {
-////                    mBottomSheetDialog.dismiss();
-////                }
-////            }
-////        });
-////        RecyclerView recyclerView = inflate.findViewById(R.id.recyclerView);
-////        mDatas = new ArrayList<>();
-////        for (int i = 0; i < 50; i++) {
-////            mDatas.add("这是第" + i + "个数据");
-////        }
-////        recyclerView.addItemDecoration(new DividerItemDecoration(this, DividerItemDecoration.VERTICAL));
-////        recyclerView.setLayoutManager(new LinearLayoutManager(this));
-////        Adapter adapter = new Adapter();
-////        recyclerView.setAdapter(adapter);
-//
-//        BottomSheetDialog mBottomSheetDialog = new BottomSheetDialog(this);
-//        mBottomSheetDialog.setContentView(inflate);
-//        View container = mBottomSheetDialog.getDelegate().findViewById(android.support.design.R.id.design_bottom_sheet);
-//        final BottomSheetBehavior containerBehaviour = BottomSheetBehavior.from(container);
-//        containerBehaviour.setBottomSheetCallback(new BottomSheetBehavior.BottomSheetCallback() {
-//            @Override
-//            public void onStateChanged(@NonNull View bottomSheet, int newState) {
-//                KLog.e(TAG, "onStateChanged: newState === " + newState);
-//                if (newState == BottomSheetBehavior.STATE_HIDDEN) {
-//                    mBottomSheetDialog.dismiss();
-//                    containerBehaviour.setState(BottomSheetBehavior.STATE_COLLAPSED);
-//                } else if (newState == BottomSheetBehavior.STATE_COLLAPSED) {
-//                    //强制修改弹出高度为屏幕高度的0.9倍，不做此操作仅仅有CollapSed/Expand两种，就是0.5和1倍展开的效果
-//                    containerBehaviour.setPeekHeight((int) (0.9 * height));
-//                }
-//            }
-//
-//            @Override
-//            public void onSlide(@NonNull View bottomSheet, float slideOffset) {
-//                KLog.d("BottomBahaviour", "onSlide: slideOffset====" + slideOffset);
-//                if (slideOffset == 1.0) {
-////                    mLeftIcon.setImageResource(R.drawable.back);
-//                    // containerBehaviour.setPeekHeight(height + getStatusBarHeight());
-//                    //修改状态栏
-//                    mBottomSheetDialog.getWindow().addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
-//                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-//                        mBottomSheetDialog.getWindow().setStatusBarColor(getResources().getColor(android.R.color.transparent));
-//                        try {
-//                            //修改魅族系统状态栏字体颜色
-//                            WindowManager.LayoutParams lp = mBottomSheetDialog.getWindow().getAttributes();
-//                            Field darkFlag = WindowManager.LayoutParams.class
-//                                    .getDeclaredField("MEIZU_FLAG_DARK_STATUS_BAR_ICON");
-//                            Field meizuFlags = WindowManager.LayoutParams.class
-//                                    .getDeclaredField("meizuFlags");
-//                            darkFlag.setAccessible(true);
-//                            meizuFlags.setAccessible(true);
-//                            int bit = darkFlag.getInt(null);
-//                            int value = meizuFlags.getInt(lp);
-//                            value |= bit;
-//                            meizuFlags.setInt(lp, value);
-//                            mBottomSheetDialog.getWindow().setAttributes(lp);
-//
-//                        } catch (Exception e) {
-//
-//                        }
-//                    }
-//                } else {
-//
-//                    mLeftIcon.setImageResource(R.drawable.icon_delete);
-//                }
-//            }
-//        });
-//
-//        btnShowDialog.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View view) {
-//                if (!mBottomSheetDialog.isShowing()) {
-//                    containerBehaviour.setPeekHeight((int) (0.9 * height));
-//                    mBottomSheetDialog.portrait();
-//                } else {
-//                    mBottomSheetDialog.dismiss();
-//                }
-//            }
-//        });
-//    }
+    // private void test(){
+    //
+    //     /**
+    //      * BottomSheetDialog
+    //      */
+    //     Button btnShowDialog = (Button) findViewById(R.id.bottom_pull_sheet);
+    //     mDatas = new ArrayList<>();
+    //     View inflate = getLayoutInflater().inflate(R.layout.dialog_bottom_sheet, null);
+    //     //        mLeftIcon = inflate.findViewById(R.id.delete);
+    //     //        mLeftIcon.setOnClickListener(new View.OnClickListener() {
+    //     //            @Override
+    //     //            public void onClick(View view) {
+    //     //                if (mBottomSheetDialog != null && mBottomSheetDialog.isShowing()) {
+    //     //                    mBottomSheetDialog.dismiss();
+    //     //                }
+    //     //            }
+    //     //        });
+    //     //        RecyclerView recyclerView = inflate.findViewById(R.id.recyclerView);
+    //     //        mDatas = new ArrayList<>();
+    //     //        for (int i = 0; i < 50; i++) {
+    //     //            mDatas.add("这是第" + i + "个数据");
+    //     //        }
+    //     //        recyclerView.addItemDecoration(new DividerItemDecoration(this, DividerItemDecoration.VERTICAL));
+    //     //        recyclerView.setLayoutManager(new LinearLayoutManager(this));
+    //     //        Adapter adapter = new Adapter();
+    //     //        recyclerView.setAdapter(adapter);
+    //
+    //     BottomSheetDialog mBottomSheetDialog = new BottomSheetDialog(this);
+    //     mBottomSheetDialog.setContentView(inflate);
+    //     View container = mBottomSheetDialog.getDelegate().findViewById(android.support.design.R.id.design_bottom_sheet);
+    //     final BottomSheetBehavior containerBehaviour = BottomSheetBehavior.from(container);
+    //     containerBehaviour.setBottomSheetCallback(new BottomSheetBehavior.BottomSheetCallback() {
+    //         @Override
+    //         public void onStateChanged(@NonNull View bottomSheet, int newState) {
+    //             KLog.e(TAG, "onStateChanged: newState === " + newState);
+    //             if (newState == BottomSheetBehavior.STATE_HIDDEN) {
+    //                 mBottomSheetDialog.dismiss();
+    //                 containerBehaviour.setState(BottomSheetBehavior.STATE_COLLAPSED);
+    //             } else if (newState == BottomSheetBehavior.STATE_COLLAPSED) {
+    //                 //强制修改弹出高度为屏幕高度的0.9倍，不做此操作仅仅有CollapSed/Expand两种，就是0.5和1倍展开的效果
+    //                 containerBehaviour.setPeekHeight((int) (0.9 * height));
+    //             }
+    //         }
+    //
+    //         @Override
+    //         public void onSlide(@NonNull View bottomSheet, float slideOffset) {
+    //             KLog.d("BottomBahaviour", "onSlide: slideOffset====" + slideOffset);
+    //             if (slideOffset == 1.0) {
+    //                 //                    mLeftIcon.setImageResource(R.drawable.back);
+    //                 // containerBehaviour.setPeekHeight(height + getStatusBarHeight());
+    //                 //修改状态栏
+    //                 mBottomSheetDialog.getWindow().addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
+    //                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+    //                     mBottomSheetDialog.getWindow().setStatusBarColor(getResources().getColor(android.R.color.transparent));
+    //                     try {
+    //                         //修改魅族系统状态栏字体颜色
+    //                         WindowManager.LayoutParams lp = mBottomSheetDialog.getWindow().getAttributes();
+    //                         Field darkFlag = WindowManager.LayoutParams.class
+    //                                 .getDeclaredField("MEIZU_FLAG_DARK_STATUS_BAR_ICON");
+    //                         Field meizuFlags = WindowManager.LayoutParams.class
+    //                                 .getDeclaredField("meizuFlags");
+    //                         darkFlag.setAccessible(true);
+    //                         meizuFlags.setAccessible(true);
+    //                         int bit = darkFlag.getInt(null);
+    //                         int value = meizuFlags.getInt(lp);
+    //                         value |= bit;
+    //                         meizuFlags.setInt(lp, value);
+    //                         mBottomSheetDialog.getWindow().setAttributes(lp);
+    //
+    //                     } catch (Exception e) {
+    //
+    //                     }
+    //                 }
+    //             } else {
+    //
+    //                 mLeftIcon.setImageResource(R.drawable.icon_delete);
+    //             }
+    //         }
+    //     });
+    //
+    //     btnShowDialog.setOnClickListener(new View.OnClickListener() {
+    //         @Override
+    //         public void onClick(View view) {
+    //             if (!mBottomSheetDialog.isShowing()) {
+    //                 containerBehaviour.setPeekHeight((int) (0.9 * height));
+    //                 mBottomSheetDialog.portrait();
+    //             } else {
+    //                 mBottomSheetDialog.dismiss();
+    //             }
+    //         }
+    //     });
+    // }
 
 
 }

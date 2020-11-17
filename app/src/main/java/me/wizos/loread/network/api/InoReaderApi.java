@@ -1,5 +1,6 @@
 package me.wizos.loread.network.api;
 
+import android.net.Uri;
 import android.text.TextUtils;
 
 import androidx.annotation.NonNull;
@@ -43,6 +44,7 @@ import me.wizos.loread.network.HttpClientManager;
 import me.wizos.loread.network.StringConverterFactory;
 import me.wizos.loread.network.SyncWorker;
 import me.wizos.loread.network.callback.CallbackX;
+import me.wizos.loread.utils.StringUtils;
 import okhttp3.FormBody;
 import okhttp3.RequestBody;
 import retrofit2.Call;
@@ -64,54 +66,60 @@ import static me.wizos.loread.utils.StringUtils.getString;
 public class InoReaderApi extends OAuthApi<Feed, CategoryItem> implements LoginInterface{
     public static final String APP_ID = "1000001277";
     public static final String APP_KEY = "8dByWzO4AYi425yx5glICKntEY2g3uJo";
-    private static String OFFICIAL_BASE_URL = "https://www.inoreader.com";
-    private static final String REDIRECT_URI = "loread://oauth_inoreader";
+    public static final String OFFICIAL_BASE_URL = "https://www.inoreader.com/";
+    public static final String REDIRECT_URI_SCHEMA = "loread://";
+    public static final String REDIRECT_URI = "loread://oauth_inoreader";
 
-//    public static final String CLIENTLOGIN = "/accounts/ClientLogin";
-//    public static final String USER_INFO = "/reader/api/0/user-info";
-//    public static final String ITEM_IDS = "/reader/api/0/stream/items/ids"; // 获取所有文章的id
-//    public static final String ITEM_CONTENTS = "/reader/api/0/stream/items/contents"; // 获取流的内容
-//    public static final String EDIT_TAG = "/reader/api/0/edit-tag";
-//    public static final String RENAME_TAG = "/reader/api/0/rename-tag";
-//    public static final String EDIT_FEED = "/reader/api/0/subscription/edit";
-//    public static final String ADD_FEED = "/reader/api/0/subscription/quickadd";
-//    public static final String SUSCRIPTION_LIST = "/reader/api/0/subscription/list"; // 这个不知道现在用在了什么地方
-//    public static final String TAG_LIST = "/reader/api/0/tag/list";
-//    public static final String STREAM_PREFS = "/reader/api/0/preference/stream/list";
-//    public static final String UNREAD_COUNTS = "/reader/api/0/unread-count";
-//    public static final String STREAM_CONTENTS = "/reader/api/0/stream/contents/";
-//    public static final String Stream_Contents_Atom = "/reader/atom";
-//    public static final String Stream_Contents_User = "/reader/api/0/stream/contents/user/";
+    // public static final String CLIENTLOGIN = "/accounts/ClientLogin";
+    // public static final String USER_INFO = "/reader/api/0/user-info";
+    // public static final String ITEM_IDS = "/reader/api/0/stream/items/ids"; // 获取所有文章的id
+    // public static final String ITEM_CONTENTS = "/reader/api/0/stream/items/contents"; // 获取流的内容
+    // public static final String EDIT_TAG = "/reader/api/0/edit-tag";
+    // public static final String RENAME_TAG = "/reader/api/0/rename-tag";
+    // public static final String EDIT_FEED = "/reader/api/0/subscription/edit";
+    // public static final String ADD_FEED = "/reader/api/0/subscription/quickadd";
+    // public static final String SUSCRIPTION_LIST = "/reader/api/0/subscription/list"; // 这个不知道现在用在了什么地方
+    // public static final String TAG_LIST = "/reader/api/0/tag/list";
+    // public static final String STREAM_PREFS = "/reader/api/0/preference/stream/list";
+    // public static final String UNREAD_COUNTS = "/reader/api/0/unread-count";
+    // public static final String STREAM_CONTENTS = "/reader/api/0/stream/contents/";
+    // public static final String Stream_Contents_Atom = "/reader/atom";
+    // public static final String Stream_Contents_User = "/reader/api/0/stream/contents/user/";
+
     // 系统默认的分类
-//    public static final String READING_LIST = "/state/com.google/reading-list";
-//    public static final String NO_LABEL = "/state/com.google/no-label";
-//    public static final String STARRED = "/state/com.google/starred";
-//    public static final String UNREAND = "/state/com.google/unread";
+    // public static final String READING_LIST = "/state/com.google/reading-list";
+    // public static final String NO_LABEL = "/state/com.google/no-label";
+    // public static final String STARRED = "/state/com.google/starred";
+    // public static final String UNREAND = "/state/com.google/unread";
 
-    /*
-    Code 	Description
-    200 	Request OK
-    400 	Mandatory parameter(s) missing
-    401 	End-user not authorized
-    403 	You are not sending the correct AppID and/or AppSecret
-    404 	Method not implemented
-    429 	Daily limit reached for this zone
-    503 	Service unavailable
-     */
+    // Code Description
+    // 200 	Request OK
+    // 400 	Mandatory parameter(s) missing
+    // 401 	End-user not authorized
+    // 403 	You are not sending the correct AppID and/or AppSecret
+    // 404 	Method not implemented
+    // 429 	Daily limit reached for this zone
+    // 503 	Service unavailable
 
     private InoReaderService service;
 
     public InoReaderApi() {
-        if(App.i().getUser() != null){
-            InoReaderApi.OFFICIAL_BASE_URL = App.i().getUser().getHost();
-        }
+        this(App.i().getUser().getHost());
+    }
 
-        if (!InoReaderApi.OFFICIAL_BASE_URL.endsWith("/")) {
-            InoReaderApi.OFFICIAL_BASE_URL = InoReaderApi.OFFICIAL_BASE_URL + "/";
+    // 首次登录/授权时，根据前端传递对的host实例化api
+    public InoReaderApi(String baseUrl) {
+        if (TextUtils.isEmpty(baseUrl)) {
+            tempBaseUrl = InoReaderApi.OFFICIAL_BASE_URL;
+        }else {
+            tempBaseUrl = baseUrl;
         }
-
+        if (!tempBaseUrl.endsWith("/")) {
+            tempBaseUrl = tempBaseUrl + "/";
+        }
+        KLog.i(" tempBaseUrl 地址：" + tempBaseUrl );
         Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl(InoReaderApi.OFFICIAL_BASE_URL) // 设置网络请求的Url地址, 必须以/结尾
+                .baseUrl(tempBaseUrl) // 设置网络请求的Url地址, 必须以/结尾
                 .addConverterFactory(StringConverterFactory.create())
                 .addConverterFactory(GsonConverterFactory.create())  // 设置数据解析器
                 .client(HttpClientManager.i().inoreaderHttpClient())
@@ -119,29 +127,12 @@ public class InoReaderApi extends OAuthApi<Feed, CategoryItem> implements LoginI
         service = retrofit.create(InoReaderService.class);
     }
 
-    public InoReaderApi(String host) {
-        if (!TextUtils.isEmpty(host)) {
-            InoReaderApi.OFFICIAL_BASE_URL = host;
-        }
-
-        if (!InoReaderApi.OFFICIAL_BASE_URL.endsWith("/")) {
-            InoReaderApi.OFFICIAL_BASE_URL = InoReaderApi.OFFICIAL_BASE_URL + "/";
-        }
-        Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl(InoReaderApi.OFFICIAL_BASE_URL) // 设置网络请求的Url地址, 必须以/结尾
-                .addConverterFactory(StringConverterFactory.create())
-                .addConverterFactory(GsonConverterFactory.create())  // 设置数据解析器
-                .client(HttpClientManager.i().inoreaderHttpClient())
-                .build();
-        service = retrofit.create(InoReaderService.class);
+    private String tempBaseUrl;
+    public String getTempBaseUrl() {
+        return tempBaseUrl;
     }
 
-    public static void setHost(String host) {
-        InoReaderApi.OFFICIAL_BASE_URL = host;
-        KLog.i("HOST 地址：" + OFFICIAL_BASE_URL );
-    }
-
-    public void login(String accountId, String accountPd,CallbackX cb){
+    public void login(String accountId, String accountPd, CallbackX cb){
         service.login(accountId, accountPd).enqueue(new retrofit2.Callback<String>() {
             @Override
             public void onResponse(retrofit2.Call<String> call, Response<String> response) {
@@ -173,23 +164,43 @@ public class InoReaderApi extends OAuthApi<Feed, CategoryItem> implements LoginI
         super.setAuthorization(authorization);
     }
 
+    // public String getOAuthUrl2() {
+    //     return OFFICIAL_BASE_URL + "oauth2/auth?response_type=code&client_id=" + APP_ID + "&redirect_uri=" + REDIRECT_URI + "&state=loread&lang=" + Locale.getDefault();
+    // }
+    public static String getOAuthUrl(String baseUrl) {
+        String redirectUri;
+        if(StringUtils.isEmpty(baseUrl)){
+            baseUrl = OFFICIAL_BASE_URL;
+        }
+        redirectUri = Uri.parse(baseUrl).getHost();
+        return baseUrl + "oauth2/auth?response_type=code&client_id=" + APP_ID + "&redirect_uri=" + REDIRECT_URI + "/" + redirectUri + "&state=loread&lang=" + Locale.getDefault();
+    }
+
     public String getOAuthUrl() {
-//        String baseUrl = HostConfig.i().getRedirectUrl(OFFICIAL_BASE_URL);
-//        if(StringUtils.isEmpty(baseUrl)){
-//            baseUrl = OFFICIAL_BASE_URL;
-//        }
-        return OFFICIAL_BASE_URL + "oauth2/auth?response_type=code&client_id=" + APP_ID + "&redirect_uri=" + REDIRECT_URI + "&state=loread&lang=" + Locale.getDefault();
+        String baseUrl;
+        if(!StringUtils.isEmpty(tempBaseUrl)){
+            baseUrl = tempBaseUrl;
+        }else {
+            baseUrl = OFFICIAL_BASE_URL;
+        }
+        return baseUrl + "oauth2/auth?response_type=code&client_id=" + APP_ID + "&redirect_uri=" + REDIRECT_URI + "&state=loread&lang=" + Locale.getDefault();
     }
 
     public void getAccessToken(String authorizationCode,CallbackX cb) {
+        String redirectUri;
+        if(!StringUtils.isEmpty(tempBaseUrl)){
+            redirectUri = Uri.parse(tempBaseUrl).getHost();
+        }else {
+            redirectUri = Uri.parse(OFFICIAL_BASE_URL).getHost();
+        }
         FormBody.Builder builder = new FormBody.Builder();
         builder.add("grant_type", "authorization_code");
         builder.add("code", authorizationCode);
-        builder.add("redirect_uri", REDIRECT_URI);
+        builder.add("redirect_uri", REDIRECT_URI + "/" + redirectUri);
         builder.add("client_id", APP_ID);
         builder.add("client_secret", APP_KEY);
 
-        service.getAccessToken("authorization_code", REDIRECT_URI,APP_ID,APP_KEY,authorizationCode).enqueue(new Callback<Token>() {
+        service.getAccessToken("authorization_code", REDIRECT_URI, APP_ID,APP_KEY, authorizationCode).enqueue(new Callback<Token>() {
             @Override
             public void onResponse(@NotNull Call<Token> call, @NotNull Response<Token> response) {
                 if(response.isSuccessful()){
@@ -389,9 +400,9 @@ public class InoReaderApi extends OAuthApi<Feed, CategoryItem> implements LoginI
             // 清理无文章的tag
             //clearNotArticleTags(uid);
 
+            LiveEventBus.get(SyncWorker.SYNC_PROCESS_FOR_SUBTITLE).post( null );
             // 提示更新完成
             LiveEventBus.get(SyncWorker.NEW_ARTICLE_NUMBER).post(allSize);
-            LiveEventBus.get(SyncWorker.SYNC_PROCESS_FOR_SUBTITLE).post( null );
         } catch (IOException e) {
             KLog.e("错误");
             e.printStackTrace();
@@ -400,7 +411,7 @@ public class InoReaderApi extends OAuthApi<Feed, CategoryItem> implements LoginI
             }
         }
 
-        handleDuplicateArticle();
+        handleDuplicateArticles();
         handleCrawlDate();
         updateCollectionCount();
         LiveEventBus.get(SyncWorker.SYNC_PROCESS_FOR_SUBTITLE).post( null );

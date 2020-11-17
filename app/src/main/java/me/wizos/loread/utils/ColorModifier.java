@@ -96,6 +96,18 @@ public class ColorModifier {
             return modifyColor(themeColor, new RGB(r, g, b));
         }
 
+        // 处理 #ff00 类型的颜色
+        m = Pattern.compile("#\\W*(\\w{4})\\W*$", Pattern.CASE_INSENSITIVE).matcher(checkedColor);
+        if (m.find()) {
+            tmp = m.group(1).substring(0, 2);
+            r = Integer.parseInt(tmp, 16);
+            tmp = m.group(1).substring(2, 4);
+            g = Integer.parseInt(tmp, 16);
+            tmp = "00";
+            b = Integer.parseInt(tmp, 16);
+            return modifyColor(themeColor, new RGB(r, g, b));
+        }
+
         // 处理 #0F0 类型的颜色
         m = Pattern.compile("#\\W*(\\w{3})\\W*$", Pattern.CASE_INSENSITIVE).matcher(checkedColor);
         if (m.find()) {

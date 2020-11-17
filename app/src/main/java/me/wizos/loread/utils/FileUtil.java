@@ -166,16 +166,16 @@ public class FileUtil {
         save(App.i().getUserFilesDir() + "/config/articles-backup.json", content);
     }
 
-    public static void saveArticle(String dir, Article article) {
-        String title = getSaveableName(article.getTitle());
-        String filePathTitle = dir + title;
-        String html = ArticleUtil.getPageForSave(article, title);
-
-        String articleIdInMD5 = EncryptUtil.MD5(article.getId());
-        save(filePathTitle + ".html", html);
-        KLog.e("保存文件夹：" + filePathTitle + " , " + App.i().getUserFilesDir() + "/cache/" + articleIdInMD5 + "/original");
-        moveDir(App.i().getUserFilesDir() + "/cache/" + articleIdInMD5 + "/original", filePathTitle + "_files");
-    }
+    //public static void saveArticle(String dir, Article article) {
+    //    String title = getSaveableName(article.getTitle());
+    //    String filePathTitle = dir + title;
+    //    String html = ArticleUtil.getPageForSave(article, title);
+    //
+    //    String articleIdInMD5 = EncryptUtil.MD5(article.getId());
+    //    save(filePathTitle + ".html", html);
+    //    KLog.e("保存文件夹：" + filePathTitle + " , " + App.i().getUserFilesDir() + "/cache/" + articleIdInMD5 + "/original");
+    //    moveDir(App.i().getUserFilesDir() + "/cache/" + articleIdInMD5 + "/original", filePathTitle + "_files");
+    //}
 
 
     /**
@@ -228,16 +228,19 @@ public class FileUtil {
     }
 
     public static void save(String filePath, String fileContent) {
+        save(new File(filePath), fileContent);
+    }
+
+    public static void save(File file, String fileContent){
         if (!isExternalStorageWritable()) {
             return;
         }
-        File file = new File(filePath);
         File folder = file.getParentFile();
         try {
             if (folder != null && !folder.exists()) {
                 folder.mkdirs();
             }
-            KLog.i("保存规则：" + file.toString());
+            KLog.i("保存规则：" + file.toString() + "--" + folder.toString());
             FileWriter fileWriter = new FileWriter(file, false); //在 (file,false) 后者表示在 fileWriter 对文件再次写入时，是否会在该文件的结尾续写，true 是续写，false 是覆盖。
             fileWriter.write(fileContent);
             fileWriter.flush();  // 刷新该流中的缓冲。将缓冲区中的字符数据保存到目的文件中去。
@@ -248,38 +251,8 @@ public class FileUtil {
         }
     }
 
-    public static void save(File file, String fileContent) throws IOException {
-        File folder = file.getParentFile();
-        if (!folder.exists()) {
-            folder.mkdirs();
-        }
-        KLog.e("【】" + file.toString() + "--" + folder.toString());
-        FileWriter fileWriter = new FileWriter(file, false); //在 (file,false) 后者表示在 fileWriter 对文件再次写入时，是否会在该文件的结尾续写，true 是续写，false 是覆盖。
-        fileWriter.write(fileContent);
-        fileWriter.flush();  // 刷新该流中的缓冲。将缓冲区中的字符数据保存到目的文件中去。
-        fileWriter.close();  // 关闭此流。在关闭前会先刷新此流的缓冲区。在关闭后，再写入或者刷新的话，会抛IOException异常。
-    }
-
     public static String readFile(String filePath) {
         return readFile(new File(filePath));
-    }
-    private static final int REQUEST_EXTERNAL_STORAGE = 1;
-    private static String[] PERMISSIONS_STORAGE = {
-            Manifest.permission.READ_EXTERNAL_STORAGE,
-            Manifest.permission.WRITE_EXTERNAL_STORAGE
-    };
-    /**
-     * 在对sd卡进行读写操作之前调用这个方法
-     * Checks if the app has permission to write to device storage
-     * If the app does not has permission then the user will be prompted to grant permissions
-     */
-    public static void verifyStoragePermissions(Activity activity) {
-        // Check if we have write permission
-        int permission = ActivityCompat.checkSelfPermission(activity, Manifest.permission.WRITE_EXTERNAL_STORAGE);
-        if (permission != PackageManager.PERMISSION_GRANTED) {
-            // We don't have permission so prompt the user
-            ActivityCompat.requestPermissions(activity, PERMISSIONS_STORAGE, REQUEST_EXTERNAL_STORAGE);
-        }
     }
     public static String readFile(File file) {
         String fileContent = "", temp = "";
@@ -302,11 +275,25 @@ public class FileUtil {
 
     public static String readCacheFilePath(String articleIdInMD5, String originalUrl) {
         // 为了避免我自己来获取 FileNameExt 时，由于得到的结果是重复的而导致图片也获取到一致的。所以采用 base64 的方式加密 originalUrl，来保证唯一
-        String fileNameExt, filePath;
+        String fileNameExt, filePath, imgId;
         fileNameExt = UriUtil.guessFileNameExt(originalUrl);
+        imgId = String.valueOf(originalUrl.hashCode());
+
+        // 改为 id 存储图片，在保存时才改为图片src中的名称
+        filePath = App.i().getUserFilesDir() + "/cache/" + articleIdInMD5 + "/compressed/" + imgId;
+        if (new File(filePath).exists()) {
+            return filePath;
+        }
+
+        filePath = App.i().getUserFilesDir() + "/cache/" + articleIdInMD5 + "/original/" + imgId;
+        if (new File(filePath).exists()) {
+            return filePath;
+        }
 
         // 推测该图片在保存时，由于src有问题，导致获取的文件名有重复时自动加上 hashCode 的机制
         filePath = App.i().getUserFilesDir() + "/cache/" + articleIdInMD5 + "/original/" + originalUrl.hashCode() + "_" + fileNameExt;
+        //KLog.i("文件地址：" + filePath );
+        //KLog.i("文件网址：" + originalUrl );
         if (new File(filePath).exists()) {
             return filePath;
         }
@@ -327,7 +314,7 @@ public class FileUtil {
             return filePath;
         }
 
-//        KLog.e("ImageBridge", "要读取的url：" + originalUrl + "    文件位置" + filePath);
+        //KLog.e("ImageBridge", "要读取的url：" + originalUrl + "    文件位置" + filePath);
         return null;
     }
 
@@ -454,4 +441,23 @@ public class FileUtil {
             return ".jpg";
         }
     }
+    private static final int REQUEST_EXTERNAL_STORAGE = 1;
+    private static String[] PERMISSIONS_STORAGE = {
+            Manifest.permission.READ_EXTERNAL_STORAGE,
+            Manifest.permission.WRITE_EXTERNAL_STORAGE
+    };
+    /**
+     * 在对sd卡进行读写操作之前调用这个方法
+     * Checks if the app has permission to write to device storage
+     * If the app does not has permission then the user will be prompted to grant permissions
+     */
+    public static void verifyStoragePermissions(Activity activity) {
+        // Check if we have write permission
+        int permission = ActivityCompat.checkSelfPermission(activity, Manifest.permission.WRITE_EXTERNAL_STORAGE);
+        if (permission != PackageManager.PERMISSION_GRANTED) {
+            // We don't have permission so prompt the user
+            ActivityCompat.requestPermissions(activity, PERMISSIONS_STORAGE, REQUEST_EXTERNAL_STORAGE);
+        }
+    }
+
 }

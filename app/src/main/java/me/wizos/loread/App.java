@@ -21,6 +21,7 @@ import com.orhanobut.logger.AndroidLogAdapter;
 import com.orhanobut.logger.Logger;
 import com.socks.library.KLog;
 import com.tencent.bugly.crashreport.CrashReport;
+import com.tencent.mmkv.MMKV;
 import com.tencent.stat.MtaSDkException;
 import com.tencent.stat.StatConfig;
 import com.tencent.stat.StatCrashReporter;
@@ -71,14 +72,12 @@ public class App extends Application implements Thread.UncaughtExceptionHandler 
     public static final String CATEGORY_STARED = "/tag/global.saved";
     public static final String CATEGORY_MUST = "/category/global.must";
 
-    public static final String Referer = "Referer";
-
     public static final String DISPLAY_RSS = "rss";
     public static final String DISPLAY_LINK = "webpage";
     public static final String DISPLAY_READABILITY = "readability";
     public static final int OPEN_MODE_RSS = 0;
-    public static final int OPEN_MODE_LINK = 1;
-    public static final int OPEN_MODE_READABILITY = 2;
+    public static final int OPEN_MODE_READABILITY = 1;
+    public static final int OPEN_MODE_LINK = 2;
 
     public static final int STATUS_NOT_FILED = 0;
     public static final int STATUS_TO_BE_FILED = 1;
@@ -114,12 +113,19 @@ public class App extends Application implements Thread.UncaughtExceptionHandler 
 
     public ArticlePagedListAdapter articlesAdapter;
 
-    // public boolean isSyncing = false;
+    public boolean isSyncing = false;
     public static String webViewBaseUrl;
 
     public LinkedHashMap<String, Integer> articleProgress = new LinkedHashMap<String, Integer>() {
         @Override
         protected boolean removeEldestEntry(Map.Entry<String, Integer> eldest) {
+            return size() > 8;
+        }
+    };
+
+    public LinkedHashMap<String, String> articleFirstKeyword = new LinkedHashMap<String, String>() {
+        @Override
+        protected boolean removeEldestEntry(Map.Entry<String, String> eldest) {
             return size() > 8;
         }
     };
@@ -149,12 +155,14 @@ public class App extends Application implements Thread.UncaughtExceptionHandler 
 
         ToastUtils.init(this, new ToastAliPayStyle(this));
 
-        CoreDB.init(instance);
+        CoreDB.init(this);
+        MMKV.initialize(this);
 
         // 【提前初始化 WebView 内核】由于其内部会调用 Looper ，不能放在子线程中
         // 链接：https://www.jianshu.com/p/fc7909e24178
         // 经过测试，采用Application要比采用Activity的context要少用20~30M左右的内存。但采用Application会影响在 webview 中打开对话框。
         WebViewS articleWebView = new WebViewS(this);
+        CorePref.i().globalPref().putString(Contract.USER_AGENT, articleWebView.getSettings().getUserAgentString());
         articleWebView.destroy();
 
         if (BuildConfig.DEBUG) {
@@ -350,7 +358,7 @@ public class App extends Application implements Thread.UncaughtExceptionHandler 
 
 
     public void clearApiData() {
-        getKeyValue().getString(Contract.UID, null);
+        CorePref.i().globalPref().getString(Contract.UID, null);
         OkGo.getInstance().cancelAll();
         WorkManager.getInstance(this).cancelAllWork();
         CoreDB.i().articleDao().clear(App.i().getUser().getId());
@@ -367,7 +375,7 @@ public class App extends Application implements Thread.UncaughtExceptionHandler 
 
     public User getUser() {
         if (user == null) {
-            String uid = getKeyValue().getString(Contract.UID, null);
+            String uid = CorePref.i().globalPref().getString(Contract.UID, null);
             if (!TextUtils.isEmpty(uid)) {
                 user = CoreDB.i().userDao().getById(uid);
             }
@@ -375,9 +383,6 @@ public class App extends Application implements Thread.UncaughtExceptionHandler 
         return user;
     }
 
-    public CorePref getKeyValue() {
-        return CorePref.i();
-    }
 
     public AuthApi getAuthApi() {
         return (AuthApi) getApi();
@@ -405,7 +410,7 @@ public class App extends Application implements Thread.UncaughtExceptionHandler 
                     api = loreadApi;
                     break;
                 case Contract.PROVIDER_INOREADER:
-                    InoReaderApi inoReaderApi = new InoReaderApi();
+                    InoReaderApi inoReaderApi = new InoReaderApi(getUser().getHost());
                     inoReaderApi.setAuthorization(getUser().getAuth());
                     api = inoReaderApi;
                     break;

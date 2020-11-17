@@ -1,5 +1,4 @@
-
-// ArticleBridge.log("触发脚本" );
+// ArticleBridge.log("触发脚本");
 // 在这里调用是因为在第一次打开ArticleActivity时渲染WebView内容比较慢，此时在ArticleActivity中调用optimize不会执行。
 // 不直接执行optimize是因为在viewpager中预加载而生成webview的时候，这里的懒加载就被触发了，3个webview首屏的图片就都被触发下载了
 setTimeout( optimize(),30 );
@@ -7,15 +6,22 @@ setTimeout( optimize(),30 );
 
 function optimize() {
 	handleImage();
-	setTimeout( removeQQVideoAd(),30000 );
+	handleBilibiliVideoUrl();
+	handleQQVideoUrl();
+	//setTimeout( removeQQVideoAd(),30000 );
 	handleVideo();
-	handleIFrame();
-	handleEmbed();
+	handleFrame();
 	handleAudio();
 	handleTable();
 
-	const otherObserver = lozad(document.querySelectorAll('.lozad'));
-	otherObserver.observe();
+	lozad('.lozad').observe();
+	lozad('.video-lozad', {
+		load: function(el) {
+			new Plyr(el, PlyrConfig);
+		}
+	}).observe();
+	hljs.initHighlightingOnLoad();
+	MathJax = { tex:{inlineMath: [['$', '$'], ['\\(', '\\)']]}, svg:{fontCache: 'global'} };
 }
 
 //设置图片的默认加载行为
@@ -28,17 +34,16 @@ function handleImage() {
 		if( originalUrl == null || originalUrl == "" || originalUrl == undefined ){
 			return true;
 		}
-		// 为何用 hashCode 作为图片 id 来传递，而不是 src, window.btoa(url)？
-		// 1、这里获得的src是经过转义的，而传递到java层再传回来的src是未经过转义的（特别是中文）。
-		// 2、window.btoa(url) 中 url 的字符不能超出 0x00~0xFF 范围（不能有中文或特殊字符），否则报异常。
+		// 为何不用 src, window.btoa(src)，而是 hashCode(src) 作为图片 id 来传递？
+		// 不用 src 的理由：这里获得的 src 是经过转义的，而传递到 java 层再传回来的 src 是未经过转义的（特别是中文）。
+		// 不用 window.btoa(src) 的理由：src 的字符不能超出 0x00~0xFF 范围（不能有中文或特殊字符），否则报异常。
 		image.attr('id', hashCode(originalUrl) );
 	});
-	const imgObserver = lozad('.img-lozad', {
+	lozad('.img-lozad', {
 		load: function(el) {
 			el.src = ArticleBridge.readImage(articleId, el.getAttribute('id'), el.getAttribute('original-src'));
 		}
-	});
-	imgObserver.observe();
+	}).observe();
 
 	$('img').click(function(event) {
 		var image = $(this);
@@ -63,6 +68,14 @@ function handleImage() {
 		// 注意，虽然该方法不能阻止同一个 Document 节点上的其他事件句柄被调用，但是它可以阻止把事件分派到其他节点。
 		event.stopPropagation();
 	});
+}
+
+
+function handleBilibiliVideoUrl() {
+	var list = document.querySelectorAll('iframe[src*="player.bilibili.com/player.html"],iframe[src*="bilibili.com/blackboard/html5mobileplayer.html"]');
+	for (var i = 0,len = list.length; i < len; i++) {
+		list[i].src = list[i].src + "&high_quality=1&danmaku=1";
+	}
 }
 
 // 将老的QQ视频链接换成新的
@@ -95,76 +108,50 @@ function removeQQVideoAd() {
 
 
 // 针对 iframe 标签做处理
-function handleIFrame(){
+function handleFrame(){
 	$('iframe').each(function() {
 		var frame = $(this);
-		frame.removeAttr("sandbox");// sandbox 会限制 iframe 的各种能力
-		frame.attr("frameborder", "0");
-		frame.attr("allowfullscreen", "");
-		frame.attr("scrolling", "no");
 		frame.addClass("lozad");
-		frame.attr("data-src", frame.attr("src").replace(/(width|height)=\d+/ig, "").replace(/(&(amp;)*){2,}/ig, "&"));
+		frame.attr("data-src", frame.attr("src"));
 		frame.removeAttr("src");
 
-		// 让iframe默认为点击新窗口打开
-		frame.attr("style", "pointer-events:none;");
-		frame.wrap('<figure class="iframe_wrap"></figure>');
-		frame.parent().click(function(event) {
-			ArticleBridge.openLink(frame.attr("src"));
-			event.preventDefault();
-		});
-		// 当iframe加载完毕后，根据src来判断是否需要关闭新窗口打开
-		frame.on('load', function() {
-			if( loadOnInner(frame.attr('src')) ){
-				$(this).attr("style", "pointer-events:auto;");
-			}
-		});
+		addFrameClickEvent(frame);
 	});
-}
-function handleEmbed(){
+
 	$('embed').each(function() {
-		var frame = $(this);
-		frame.attr("autostart","1");
-
-		frame.addClass("lozad");
-		frame.attr("data-src", frame.attr("src").replace(/(width|height)=\d+/ig, "").replace(/(&(amp;)*){2,}/ig, "&"));
-		frame.removeAttr("src");
-
-		frame.attr("style", "pointer-events:none;");
-		frame.wrap('<figure class="embed_wrap"></figure>');
-		frame.parent().click(function(event) {
-			ArticleBridge.openLink(frame.attr("src"));
-			event.preventDefault();
-		});
-		// 当iframe加载完毕后，根据src来判断是否需要关闭新窗口打开
-		frame.on('load', function() {
-			if( loadOnInner(frame.attr('src')) ){
-				$(this).attr("style", "pointer-events:auto;");
-			}
-		});
+		addFrameClickEvent($(this));
 	});
 }
+
+function addFrameClickEvent(frame){
+	// 让iframe默认为点击新窗口打开
+	frame.attr("style", "pointer-events:none;");
+	frame.wrap('<div class="iframe_wrap"></div>');
+	frame.parent().click(function(event) {
+		ArticleBridge.openLink(frame.attr("src"));
+		event.preventDefault();
+	});
+	// 当iframe加载完毕后，根据src来判断是否需要关闭新窗口打开
+	frame.on('load', function() {
+		if( loadOnInner(frame.attr('src')) ){
+			$(this).attr("style", "pointer-events:auto;");
+		}
+	});
+}
+
+
 function handleVideo(){
 	$('video').each(function() {
 		var video = $(this);
-		video.attr("controls", "true");
-		video.attr("width", "100%");
-		video.attr("height", "auto");
-		video.attr("preload", "metadata");
-
-		video.addClass("lozad");
+		video.addClass("video-lozad");
 		video.attr("data-src", video.attr("src"));
 		video.removeAttr("src");
-
-		video.wrap('<div class="video_wrap"></div>');
-	});
+		//video.wrap('<div class="video_wrap"></div>');
+    })
 }
 function handleAudio(){
 	$('audio').each(function() {
 		var audio = $(this);
-		audio.attr("controls", "true");
-		audio.attr("width", "100%")
-
 		audio.addClass("lozad");
 		audio.attr("data-src", audio.attr("src"));
 		audio.removeAttr("src");
@@ -183,9 +170,12 @@ function handleTable(){
 	});
 }
 
+
+
 function loadOnInner(url){
-	var flags = ["music.163.com/outchain/player","player.bilibili.com/player.html","bilibili.com/blackboard/html5mobileplayer.html","player.youku.com","youtube.com/embed","open.iqiyi.com","v.qq.com","letv.com","sohu.com","fpie1.com/#/video","fpie2.com/#/video","www.google.com/maps/embed"];
-	for (var i = 0; i < flags.length; i++) {
+	var flags = ["music.163.com/outchain/player","player.bilibili.com/player.html","bilibili.com/blackboard/html5mobileplayer.html","player.youku.com","open.iqiyi.com","v.qq.com","letv.com","sohu.com","fpie1.com/#/video","fpie2.com/#/video","share.polyv.net","www.google.com/maps/embed","youtube.com/embed"];
+	
+  	for (var i = 0; i < flags.length; i++) {
 		if (url.indexOf(flags[i]) != -1 ){
 			return true;
 		}
@@ -209,6 +199,10 @@ function onImageLoading(imgId) {
 		image.attr('src', IMAGE_HOLDER_LOADING_URL);
 	}
 }
+function onImageLoadSuccess(imgId, displayUrl) {
+	var image = findImageById(imgId);
+	image.attr('src', displayUrl);
+}
 function onImageLoadFailed(imgId) {
 	var image = findImageById(imgId);
 	if (image) {
@@ -221,11 +215,6 @@ function onImageError(imgId) {
 		image.attr('src', IMAGE_HOLDER_IMAGE_ERROR_URL);
 	}
 }
-function onImageLoadSuccess(imgId, displayUrl) {
-	var image = findImageById(imgId);
-	image.attr('src', displayUrl);
-}
-
 //产生一个hash值，只有数字，规则和java的hashcode规则相同
 function hashCode(str){
 	var h = 0;

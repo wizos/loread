@@ -13,17 +13,20 @@ import java.util.Locale;
 import java.util.Map;
 
 import me.wizos.loread.App;
+import me.wizos.loread.Contract;
+import me.wizos.loread.db.CorePref;
 import me.wizos.loread.utils.FileUtil;
 import me.wizos.loread.utils.StringUtils;
 
 public class NetworkUserAgentConfig {
+    private static final String CONFIG_FILENAME = "network_user_agent.json";
     private static NetworkUserAgentConfig instance;
     private NetworkUserAgentConfig() {}
     public static NetworkUserAgentConfig i() {
         if (instance == null) {
             synchronized (NetworkUserAgentConfig.class) {
                 if (instance == null) {
-                    String config = FileUtil.readFile(App.i().getUserConfigPath() + "network_user_agent.json");
+                    String config = FileUtil.readFile(App.i().getUserConfigPath() + CONFIG_FILENAME);
                     instance = new NetworkUserAgentConfig();
                     if (TextUtils.isEmpty(config)) {
                         instance.domainUserAgent = new ArrayMap<String, String>();
@@ -41,15 +44,14 @@ public class NetworkUserAgentConfig {
     }
 
     public void save() {
-        FileUtil.save(App.i().getUserConfigPath() + "network_user_agent.json", new GsonBuilder().setPrettyPrinting().create().toJson(instance));
+        FileUtil.save(App.i().getUserConfigPath() + CONFIG_FILENAME, new GsonBuilder().setPrettyPrinting().create().toJson(instance));
     }
 
     private ArrayMap<String, String> userAgents; // 格式是 Name, UA
 
+    // 保持一直为该UA
     private String holdUserAgent;
-    private int holdUserAgentIndex = -1;
     private ArrayMap<String, String> domainUserAgent; // 格式是 Domain, Name
-
 
     public String getHoldUserAgent() {
         return holdUserAgent;
@@ -65,12 +67,21 @@ public class NetworkUserAgentConfig {
 
 
     public String guessUserAgentByUrl(String url) {
-        if (!TextUtils.isEmpty(holdUserAgent)) {
+        if (!StringUtils.isEmpty(holdUserAgent)) {
             return userAgents.get(holdUserAgent);
         }
-        return guessUserAgentByUrl1(url);
+        String ua = guessUserAgentByUrl1(url);
+        if(!StringUtils.isEmpty(ua)){
+            return ua;
+        }
+        return CorePref.i().globalPref().getString(Contract.USER_AGENT,null);
     }
-
+    //public String guessUserAgentByDefault() {
+    //    if (!TextUtils.isEmpty(holdUserAgent)) {
+    //        return userAgents.get(holdUserAgent);
+    //    }
+    //    return guessUserAgentByUrl1();
+    //}
     /**
      * 用于手动下载图片
      * 有3中方法获取referer：
@@ -112,7 +123,7 @@ public class NetworkUserAgentConfig {
 
     public String guessUserAgentByUrl2(String url) {
         if (TextUtils.isEmpty(url)) {
-            return "";
+            return null;
         }
         url = url.toLowerCase(Locale.getDefault());
         for (Map.Entry<String, String> entry : domainUserAgent.entrySet()) {
@@ -120,7 +131,7 @@ public class NetworkUserAgentConfig {
                 return entry.getValue();
             }
         }
-        return "";
+        return null;
     }
 
     public void reset() {
