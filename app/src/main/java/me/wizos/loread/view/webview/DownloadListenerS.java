@@ -18,8 +18,8 @@ import androidx.annotation.NonNull;
 import com.afollestad.materialdialogs.DialogAction;
 import com.afollestad.materialdialogs.MaterialDialog;
 import com.hjq.toast.ToastUtils;
-import com.socks.library.KLog;
 
+import me.wizos.loread.App;
 import me.wizos.loread.R;
 import me.wizos.loread.utils.FileUtil;
 import me.wizos.loread.utils.Tool;
@@ -47,20 +47,19 @@ public class DownloadListenerS implements DownloadListener {
 
     @Override
     public void onDownloadStart(final String url, final String userAgent, final String contentDisposition, final String mimeType, final long contentLength) {
-        String neutralText = "复制下载地址";
+        String neutralText = App.i().getString(R.string.copy_download_url);
         if (!TextUtils.isEmpty(mimeType) && webView != null) {
             if (mimeType.toLowerCase().startsWith("video")) {
-                neutralText = "播放该视频";
+                neutralText = App.i().getString(R.string.play_the_video);
             } else if (mimeType.toLowerCase().startsWith("audio")&& webView != null) {
-                neutralText = "播放该音频";
+                neutralText = App.i().getString(R.string.play_the_audio);
             }
         }
 
-
-        KLog.e("下载1：" + url + " , " + userAgent + " , "  + contentDisposition);
-//        KLog.e("下载", contentDisposition); // attachment; filename=com.android36kr.app_7.4.2_18060821.apk
-        KLog.e("下载2：" + mimeType); //  application/vnd.android.package-archive
-        KLog.e("下载3：" + contentLength);
+        // KLog.e("下载1：" + url + " , " + userAgent + " , "  + contentDisposition);
+        // KLog.e("下载4：", contentDisposition); // attachment; filename=com.android36kr.app_7.4.2_18060821.apk
+        // KLog.e("下载2：" + mimeType); //  application/vnd.android.package-archive
+        // KLog.e("下载3：" + contentLength);
 
         MaterialDialog downloadDialog = new MaterialDialog.Builder(context)
                 .title(R.string.do_you_want_to_download_files)
@@ -105,10 +104,10 @@ public class DownloadListenerS implements DownloadListener {
     // 作者：落英坠露 ,链接：https://www.jianshu.com/p/6e38e1ef203a
     private void downloadBySystem(String url, String fileName) {
         // 方法1：跳转浏览器下载
-//        final Intent intent = new Intent(Intent.ACTION_VIEW);
-//        intent.addCategory(Intent.CATEGORY_BROWSABLE);
-//        intent.setData(Uri.parse(url));
-//        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        // final Intent intent = new Intent(Intent.ACTION_VIEW);
+        // intent.addCategory(Intent.CATEGORY_BROWSABLE);
+        // intent.setData(Uri.parse(url));
+        // intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 
         // 方法2、使用系统的下载服务
         // 指定下载地址

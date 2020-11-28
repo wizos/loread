@@ -547,7 +547,7 @@ public class FeedActivity extends BaseActivity {
                                 @Override
                                 public void onFailure(Object error) {
                                     KLog.e("失败：" + error);
-                                    ToastUtils.show(getString(R.string.unsubscribe_failed,error));
+                                    ToastUtils.show(getString(R.string.unsubscribe_failed, error));
                                 }
                             });
 

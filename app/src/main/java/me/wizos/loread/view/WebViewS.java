@@ -29,104 +29,6 @@ public class WebViewS extends NestedScrollWebView {
         // 这个问题解决方案只要你创建 WebView 时候传入 Activity ， 或者 自己实现 onJsAlert 方法即可。
         super(context);
         initSettingsForWebPage();
-        // 获取手指点击事件的xy坐标
-//        setOnTouchListener( new View.OnTouchListener() {
-//            @Override
-//            public boolean onTouch(View arg0, MotionEvent arg1) {
-//                downX = (int) arg1.getX();
-//                downY = (int) arg1.getY();
-//                return false;
-//            }
-//        });
-//        作者：Wing_Li
-//        链接：https://www.jianshu.com/p/3fcf8ba18d7f
-//        setOnLongClickListener(new View.OnLongClickListener() {
-//            @Override
-//            public boolean onLongClick(View v) {
-//                if (!BuildConfig.DEBUG) {
-//                    return false;
-//                }
-//                final HitTestResult status = ((WebViewS) v).getHitTestResult();
-//                if (null == status) {
-//                    return false;
-//                }
-//                int type = status.getType();
-//                if (type == WebView.HitTestResult.UNKNOWN_TYPE) {
-//                    return false;
-//                }
-//
-//                // 这里可以拦截很多类型，我们只处理图片类型就可以了
-//                switch (type) {
-//                    case WebView.HitTestResult.PHONE_TYPE: // 处理拨号
-//                        Tool.show("长按手机号");
-//                        break;
-//                    case WebView.HitTestResult.EMAIL_TYPE: // 处理Email
-//                        Tool.show("长按邮件");
-//                        break;
-//                    case WebView.HitTestResult.GEO_TYPE: // 地图类型
-//                        Tool.show("长按地图");
-//                        break;
-//                    case WebView.HitTestResult.SRC_ANCHOR_TYPE: // 超链接
-//                        final LongClickPopWindow webViewLongClickedPopWindow = new LongClickPopWindow(context,WebView.HitTestResult.SRC_ANCHOR_TYPE, ScreenUtil.dp2px(context,120), ScreenUtil.dp2px(context,90));
-//                        webViewLongClickedPopWindow.showAtLocation(v, Gravity.TOP|Gravity.LEFT, downX, downY + 10);
-//
-//                        webViewLongClickedPopWindow.getView(R.id.webview_copy_link)
-//                                .setOnClickListener(new View.OnClickListener() {
-//                                    @Override
-//                                    public void onClick(View v) {
-//                                        webViewLongClickedPopWindow.dismiss();
-//                                        //获取剪贴板管理器：
-//                                        ClipboardManager cm = (ClipboardManager) context.getSystemService(Context.CLIPBOARD_SERVICE);
-//                                        // 创建普通字符型ClipData
-//                                        ClipData mClipData = ClipData.newPlainText("url", status.getExtra());
-//                                        // 将ClipData内容放到系统剪贴板里。
-//                                        cm.setPrimaryClip(mClipData);
-//                                        ToastUtil.showLong("复制成功");
-//                                    }
-//                                });
-//                        webViewLongClickedPopWindow.getView(R.id.webview_share_link)
-//                                .setOnClickListener(new View.OnClickListener() {
-//                                    @Override
-//                                    public void onClick(View v) {
-//                                        webViewLongClickedPopWindow.dismiss();
-//                                        Intent sendIntent = new Intent(Intent.ACTION_SEND);
-//                                        sendIntent.setType("text/plain");
-//                                        sendIntent.putExtra(Intent.EXTRA_TEXT, status.getExtra());
-//                                        sendIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-//                                        context.startActivity(Intent.createChooser(sendIntent, "分享到"));
-//                                    }
-//                                });
-//
-//
-////                        SnackbarUtil.Long(WebViewS.this.getRootView(), "链接：" + status.getExtra())
-////                                .setAction("复制", new View.OnClickListener() {
-////                                    @Override
-////                                    public void onClick(View v) {
-////                                        //获取剪贴板管理器：
-////                                        ClipboardManager cm = (ClipboardManager) context.getSystemService(Context.CLIPBOARD_SERVICE);
-////                                        // 创建普通字符型ClipData
-////                                        ClipData mClipData = ClipData.newPlainText("url", status.getExtra());
-////                                        // 将ClipData内容放到系统剪贴板里。
-////                                        cm.setPrimaryClip(mClipData);
-////                                        ToastUtil.showLong("复制成功");
-////                                    }
-////                                }).show();
-//                        break;
-//                    case WebView.HitTestResult.SRC_IMAGE_ANCHOR_TYPE: // 一个SRC_IMAGE_ANCHOR_TYPE类型表明了一个拥有图片为子对象的超链接。
-//                        Tool.show("长按图片：" + status.getExtra());
-//                        break;
-//                    case WebView.HitTestResult.IMAGE_TYPE: // 处理长按图片的菜单项
-//                        // 获取图片的路径
-//                        String saveImgUrl = status.getExtra();
-//                        Tool.show("长按图片：" + saveImgUrl);
-//                        // 跳转到图片详情页，显示图片
-//                        break;
-//                    default:
-//                        break;
-//                }
-//                return true;
-//            }
-//        });
     }
 
 
@@ -279,8 +181,6 @@ public class WebViewS extends NestedScrollWebView {
      * 4.4以上版本，使用evaluateJavascript方法调js方法，会有返回值
      */
     public void loadData(String htmlContent) {
-//        stopLoading();
-//        getSettings().setBlockNetworkImage(true); // 将图片下载阻塞
         loadDataWithBaseURL(App.i().getWebViewBaseUrl(), htmlContent, "text/html", "UTF-8", null);
         isReadability = false;
     }

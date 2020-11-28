@@ -172,7 +172,7 @@ public class VideoImpl { // implements IVideo, EventInterceptor
             mCallback.onCustomViewHidden();
         }
 
-        videoView.setVisibility(View.GONE);
+        // videoView.setVisibility(View.GONE);
         videoView = null;
         if (mWebView != null) {
             mWebView.setVisibility(View.VISIBLE);

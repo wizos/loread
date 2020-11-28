@@ -30,13 +30,14 @@ public class NetworkUserAgentConfig {
                     instance = new NetworkUserAgentConfig();
                     if (TextUtils.isEmpty(config)) {
                         instance.domainUserAgent = new ArrayMap<String, String>();
-                        instance.userAgents = new ArrayMap<>();
-                        instance.userAgents.put("iPhone", "Mozilla/5.0 (iPhone; CPU iPhone OS 11_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/11.0 Mobile/15E148 Safari/604.1");
-                        instance.userAgents.put("Android", "Mozilla/5.0 (Linux; Android 5.1; MX5 Build/LMY47I) AppleWebKit/605.1.15 (KHTML, like Gecko) Chrome/66.0.3359.181 Mobile Safari/604.1");
-                        instance.userAgents.put("Chrome(PC)", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/66.0.3359.181 Safari/537.36");
                     } else {
                         instance.domainUserAgent = new Gson().fromJson(config, new TypeToken<ArrayMap<String,String>>() {}.getType());
                     }
+
+                    instance.userAgents = new ArrayMap<>();
+                    instance.userAgents.put("iPhone", "Mozilla/5.0 (iPhone; CPU iPhone OS 11_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/11.0 Mobile/15E148 Safari/604.1");
+                    instance.userAgents.put("Android", "Mozilla/5.0 (Linux; Android 5.1; MX5 Build/LMY47I) AppleWebKit/605.1.15 (KHTML, like Gecko) Chrome/66.0.3359.181 Mobile Safari/604.1");
+                    instance.userAgents.put("Chrome(PC)", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/66.0.3359.181 Safari/537.36");
                 }
             }
         }

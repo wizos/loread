@@ -42,7 +42,7 @@ public class RelyInterceptor implements Interceptor {
         // 使用完整的url或者topPrivateDomain都可以获取到cookie
         String cookie = CookieManager.getInstance().getCookie(url);
         if (!StringUtils.isEmpty(cookie)) {
-            builder.header(Contract.COOKIE, cookie );
+            builder.header(Contract.COOKIE, cookie);
             hasNew = true;
         }
 
@@ -57,7 +57,7 @@ public class RelyInterceptor implements Interceptor {
             builder.header(Contract.USER_AGENT, ua );
             hasNew = true;
         }
-        //KLog.i("拦截到依赖：" + url + " , " + newUrl + " , "  + " =  " + cookie  + " =  "  + ua );
+        // KLog.i("拦截到依赖：" + url + " , " + newUrl + " =  " + cookie  + " =  "  + ua );
         if(hasNew){
             return chain.proceed(builder.build());
         }

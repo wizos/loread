@@ -202,6 +202,20 @@
             android:exported="false"
             android:permission="android.permission.BIND_SERVICE" />
 
+        <!--name的值一般都固定为androidx.core.content.FileProvider。如果开发者继承了FileProvider，则可以写上其绝对路径。-->
+        <!--authorities字段的值用来表明使用的使用者，在FileProvider的函数getUriForFile需要传入该参数。-->
+        <!--exported 的值为false，表示该FileProvider只能本应用使用，不是public的。-->
+        <!--grantUriPermissions 的值为true，表示允许赋予临时权限。-->
+        <!--<provider-->
+        <!--    android:name="androidx.core.content.FileProvider"-->
+        <!--    android:authorities="me.wizos.loread"-->
+        <!--    android:exported="false"-->
+        <!--    android:grantUriPermissions="true">-->
+        <!--    <meta-data-->
+        <!--        android:name="android.support.FILE_PROVIDER_PATHS"-->
+        <!--        android:resource="@xml/file_paths" />-->
+        <!--</provider>-->
+
         <!--<service-->
         <!--    android:name=".service.MainService"-->
         <!--    android:exported="false"-->

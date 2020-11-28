@@ -11,7 +11,6 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -23,9 +22,6 @@ import me.wizos.loread.bean.Enclosure;
 import me.wizos.loread.db.Article;
 import me.wizos.loread.db.CoreDB;
 import me.wizos.loread.db.Feed;
-import me.wizos.loread.extractor.ExtractorUtil;
-import okhttp3.MediaType;
-import okhttp3.ResponseBody;
 
 /**
  * 文章处理工具类
@@ -224,7 +220,7 @@ public class ArticleUtil {
                 "<script src='file:///android_asset/js/lozad.min.js'></script>" +
                 "<script src='file:///android_asset/js/highlight.pack.js'></script>" +
                 "<script src='file:///android_asset/js/placeholder.min.js'></script>" +
-                "<script src='file:///android_asset/js/plyr.min.js'></script>" +
+                "<script src='file:///android_asset/js/plyr.js'></script>" +
                 "<script>" + initImageHolderUrl + "</script>" +
                 "<script>const PlyrConfig = {controls: ['play-large','play','progress','current-time','duration','settings','download','fullscreen'],settings: ['captions', 'quality', 'speed'],speed : { selected: 2, options: [0.75, 1, 1.5, 1.75, 2] } " + plyrI18n + "}</script>" +
                 "<script src='" + mediaJsPath + "'></script>" +
@@ -582,6 +578,10 @@ public class ArticleUtil {
         pattern = Pattern.compile("(\\s|　|&nbsp;)*<([a-zA-Z0-9]{1,10})>(\\s|　|&nbsp;)*(<hr>)+(\\s|　|&nbsp;)*</\\2>(\\s|　|&nbsp;)*", Pattern.CASE_INSENSITIVE);
         content = pattern.matcher(content).replaceAll("<hr>");
 
+        // 把空的块状标签（有属性的）替换为换行 // noframes|noscript|
+        pattern = Pattern.compile("(\\s|　|&nbsp;)*<(address|blockquote|center|dir|div|dl|fieldset|form|h1|h2|h3|h4|h5|h6|hr|isindex|menu|ol|p|pre|table|ul) [^>/]+>(\\s|　|&nbsp;)*</\\2>(\\s|　|&nbsp;)*", Pattern.CASE_INSENSITIVE);
+        content = pattern.matcher(content).replaceAll("<br>");
+
         // 删除无效的空标签（无任何属性的）
         pattern = Pattern.compile("(\\s|　|&nbsp;)*<([a-zA-Z0-9]{1,10})>(\\s|　|&nbsp;)*</\\2>(\\s|　|&nbsp;)*", Pattern.CASE_INSENSITIVE);
         content = pattern.matcher(content).replaceAll("");
@@ -589,6 +589,7 @@ public class ArticleUtil {
         // 删除无效的空标签（有属性的）要排除video, audio，注意此处的空标签必须是指定的，不然会把一些类似图片/音频/视频等“有意义的带属性空标签”给去掉
         pattern = Pattern.compile("(\\s|　|&nbsp;)*<(i|p|section|div|figure|pre|table|blockquote) [^>/]+>(\\s|　|&nbsp;)*</\\2>(\\s|　|&nbsp;)*", Pattern.CASE_INSENSITIVE);
         content = pattern.matcher(content).replaceAll("");
+
 
         // 去掉没有属性的span标签（此时没有意义）
         pattern = Pattern.compile("[\\s　]*<span>([\\s\\S]*?)</span>[\\s　]*", Pattern.CASE_INSENSITIVE);
@@ -725,23 +726,28 @@ public class ArticleUtil {
 
         // 预加载，提前将图片的真实地址替换出来
         elements = document.getElementsByTag("img");
-        //int loadSize = Math.min(elements.size(),6);
-        for (int i = 0, size =elements.size(); i < size; i++) {
-            long ll = System.currentTimeMillis();
+        // int loadSize;
+        // if (App.i().articleProgress.get(article.getId()) == null){
+        //     loadSize = Math.min(elements.size(),6);
+        // }else {
+        //     loadSize = elements.size();
+        // }
+
+        for (int i = 0, size = elements.size(); i < size; i++) {
             element = elements.get(i);
+            // element.attr("original-src", element.attr("abs:src"));
             // 抽取图片的绝对连接
             originalUrl = element.attr("abs:src");
             element.attr("original-src", originalUrl);
 
             cacheUrl = FileUtil.readCacheFilePath(idInMD5, originalUrl);
+
             if (cacheUrl != null) {
                 element.attr("src", cacheUrl);
             } else {
                 element.attr("src", imgHolder);
                 element.addClass("img-lozad");
             }
-
-            KLog.i("修整图片耗时 " + i + " ：" + (System.currentTimeMillis()-ll));
         }
 
         elements = document.getElementsByTag("input");
@@ -823,7 +829,14 @@ public class ArticleUtil {
         }
         return coverUrl;
     }
-    
+
+    public static String getKeyword(String content) {
+        String keyword = Jsoup.parseBodyFragment(content).body().text().trim();
+        if( keyword.length() > 8){
+            keyword = keyword.substring(0,8);
+        }
+        return keyword;
+    }
     
     private static String getOptimizedAuthor(Feed feed, String articleAuthor) {
         if (null == feed) {
@@ -871,65 +884,65 @@ public class ArticleUtil {
         return content;
     }
 
-    public static Article getReadabilityArticle(Article article, ResponseBody responseBody) throws IOException{
-        MediaType mediaType  = responseBody.contentType();
-        String charset = null;
-        if( mediaType != null ){
-            charset = DataUtil.getCharsetFromContentType(mediaType.toString());
-        }
-        //KLog.i("解析得到的编码为：" + mediaType + " ， "+  charset );
-        // 从 https://soulteary.com/2020/11/08/upgrade-hugo-across-versions-2.html 获取到的html中，有一段代码错乱了（makeYearTemplate后面的tpl.push('<div变成了tpl.push('</textarea><div）。
-        // 换parser吧，jsoup默认使用是htmlParser，它会对返回内容做些改动来符合html规范，所以一般实际使用时都用的是xmlParser，代码如下
-        Document doc = Jsoup.parse(responseBody.byteStream(), charset, article.getLink());
-        // Document doc = Jsoup.parse(responseBody.string(), article.getLink());
-        doc.outputSettings().prettyPrint(false);
+    // public static Article getReadabilityArticle(Article article, ResponseBody responseBody) throws IOException{
+    //     MediaType mediaType  = responseBody.contentType();
+    //     String charset = null;
+    //     if( mediaType != null ){
+    //         charset = DataUtil.getCharsetFromContentType(mediaType.toString());
+    //     }
+    //     //KLog.i("解析得到的编码为：" + mediaType + " ， "+  charset );
+    //     // 从 https://soulteary.com/2020/11/08/upgrade-hugo-across-versions-2.html 获取到的html中，有一段代码错乱了（makeYearTemplate后面的tpl.push('<div变成了tpl.push('</textarea><div）。
+    //     // 换parser吧，jsoup默认使用是htmlParser，它会对返回内容做些改动来符合html规范，所以一般实际使用时都用的是xmlParser，代码如下
+    //     Document doc = Jsoup.parse(responseBody.byteStream(), charset, article.getLink());
+    //     // Document doc = Jsoup.parse(responseBody.string(), article.getLink());
+    //     doc.outputSettings().prettyPrint(false);
+    //
+    //     String keyword;
+    //     if( App.i().articleFirstKeyword.containsKey(article.getId()) ){
+    //         keyword = App.i().articleFirstKeyword.get(article.getId());
+    //     }else {
+    //         keyword = Jsoup.parseBodyFragment(article.getContent()).body().text().trim();
+    //         if( keyword.length() > 8){
+    //             keyword = keyword.substring(0,8);
+    //         }
+    //         App.i().articleFirstKeyword.put(article.getId(),keyword);
+    //     }
+    //     KLog.e("获取易读，原始keyword：" + keyword);
+    //     String content =  ExtractorUtil.getContentWithKeyword(article.getLink(), doc, keyword);
+    //     // KLog.e("获取易读，原文：" + content);
+    //     content = ArticleUtil.getOptimizedContent(article.getLink(), content);
+    //     article.setContent(content);
+    //
+    //     String summary = ArticleUtil.getOptimizedSummary(content);
+    //     article.setSummary(summary);
+    //
+    //     String coverUrl = ArticleUtil.getCoverUrl(article.getLink(), content);
+    //     article.setImage(coverUrl);
+    //
+    //     // if(!StringUtils.isEmpty(coverUrl)){
+    //     //     article.setImage(coverUrl);
+    //     // }else if( !StringUtils.isEmpty(article.getImage()) ){
+    //     //     article.setImage(null);
+    //     // }
+    //     return article;
+    // }
 
-        String keyword;
-        if( App.i().articleFirstKeyword.containsKey(article.getId()) ){
-            keyword = App.i().articleFirstKeyword.get(article.getId());
-        }else {
-            keyword = Jsoup.parseBodyFragment(article.getContent()).body().text().trim();
-            if( keyword.length() > 8){
-                keyword = keyword.substring(0,8);
-            }
-            App.i().articleFirstKeyword.put(article.getId(),keyword);
-        }
-        KLog.e("获取易读，原始keyword：" + keyword);
-        String content =  ExtractorUtil.getContentWithKeyword(article.getLink(), doc, keyword);
-        // KLog.e("获取易读，原文：" + content);
-        content = ArticleUtil.getOptimizedContent(article.getLink(), content);
-        article.setContent(content);
-
-        String summary = ArticleUtil.getOptimizedSummary(content);
-        article.setSummary(summary);
-
-        String coverUrl = ArticleUtil.getCoverUrl(article.getLink(), content);
-
-        if(!StringUtils.isEmpty(coverUrl)){
-            article.setImage(coverUrl);
-        }else if( !StringUtils.isEmpty(article.getImage()) ){
-            article.setImage(null);
-        }
-        return article;
-    }
-
-
-//    public static void autoSetArticleTags(Article article){
-//        List<Category> categories = CoreDB.i().categoryDao().getByFeedId(article.getUid(),article.getFeedId());
-//        List<ArticleTag> articleTags = CoreDB.i().articleTagDao().getByArticleId(article.getUid(),article.getId());
-//        if(categories != null && categories.size() > 0 && (articleTags == null || articleTags.size() == 0)){
-//            articleTags = new ArrayList<>(categories.size());
-//            for (Category category:categories) {
-//                Tag tag = new Tag();
-//                tag.setUid(article.getUid());
-//                tag.setId(category.getTitle());
-//                tag.setTitle(category.getTitle());
-//                ArticleTag articleTag = new ArticleTag(article.getUid(),article.getId(),tag.getId());
-//                articleTags.add(articleTag);
-//            }
-//            CoreDB.i().articleTagDao().insert(articleTags);
-//            ArticleTags.i().addArticleTags(articleTags);
-//            ArticleTags.i().save();
-//        }
-//    }
+    // public static void autoSetArticleTags(Article article){
+    //     List<Category> categories = CoreDB.i().categoryDao().getByFeedId(article.getUid(),article.getFeedId());
+    //     List<ArticleTag> articleTags = CoreDB.i().articleTagDao().getByArticleId(article.getUid(),article.getId());
+    //     if(categories != null && categories.size() > 0 && (articleTags == null || articleTags.size() == 0)){
+    //         articleTags = new ArrayList<>(categories.size());
+    //         for (Category category:categories) {
+    //             Tag tag = new Tag();
+    //             tag.setUid(article.getUid());
+    //             tag.setId(category.getTitle());
+    //             tag.setTitle(category.getTitle());
+    //             ArticleTag articleTag = new ArticleTag(article.getUid(),article.getId(),tag.getId());
+    //             articleTags.add(articleTag);
+    //         }
+    //         CoreDB.i().articleTagDao().insert(articleTags);
+    //         ArticleTags.i().addArticleTags(articleTags);
+    //         ArticleTags.i().save();
+    //     }
+    // }
 }

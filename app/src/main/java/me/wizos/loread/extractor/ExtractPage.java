@@ -22,11 +22,11 @@ import org.jsoup.nodes.Element;
 /**
  * @author hu
  */
-public class ModPage {
-
+public class ExtractPage {
     protected String url = null;
     protected String title = null;
     protected String content = null;
+    protected String msg = null;
     protected String time = null;
 
     protected Element contentElement = null;
@@ -56,9 +56,16 @@ public class ModPage {
         return content;
     }
 
-
     public void setContent(String content) {
         this.content = content;
+    }
+
+    public String getMsg() {
+        return msg;
+    }
+
+    public void setMsg(String msg) {
+        this.msg = msg;
     }
 
     public String getTime() {

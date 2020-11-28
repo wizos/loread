@@ -13,6 +13,7 @@ import me.wizos.loread.App;
 public class SyncWorker extends Worker  {
     public final static String TAG = "SyncWorker";
     public final static String SYNC_TASK_STATUS = "SyncStatus";
+    public final static String SYNC_TASK_START = "SyncStart";
     public final static String SYNC_PROCESS_FOR_SUBTITLE = "SyncProcess";
     public final static String NEW_ARTICLE_NUMBER = "NewArticleNumber";
     public SyncWorker(@NonNull Context context, @NonNull WorkerParameters workerParams) {

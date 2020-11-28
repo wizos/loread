@@ -5,9 +5,6 @@ import android.util.ArrayMap;
 
 import com.socks.library.KLog;
 
-import org.jetbrains.annotations.NotNull;
-
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -22,14 +19,11 @@ import me.wizos.loread.db.Category;
 import me.wizos.loread.db.CoreDB;
 import me.wizos.loread.db.Feed;
 import me.wizos.loread.db.FeedCategory;
-import me.wizos.loread.network.HttpClientManager;
+import me.wizos.loread.extractor.Distill;
 import me.wizos.loread.network.callback.CallbackX;
 import me.wizos.loread.utils.ArticleUtil;
 import me.wizos.loread.utils.EncryptUtil;
 import me.wizos.loread.utils.FileUtil;
-import okhttp3.Call;
-import okhttp3.Callback;
-import okhttp3.Request;
 
 /**
  * Created by Wizos on 2019/2/10.
@@ -113,26 +107,47 @@ public abstract class BaseApi<T, E> {
             if (TextUtils.isEmpty(article.getLink())) {
                 continue;
             }
-            //KLog.e("====开始请求" );
-            Request request = new Request.Builder().url(article.getLink()).build();
-            Call call = HttpClientManager.i().simpleClient().newCall(request);
-            call.enqueue(new Callback() {
+            String keyword;
+            if( App.i().articleFirstKeyword.containsKey(article.getId()) ){
+                keyword = App.i().articleFirstKeyword.get(article.getId());
+            }else {
+                keyword = ArticleUtil.getKeyword(article.getContent());
+                App.i().articleFirstKeyword.put(article.getId(),keyword);
+            }
+            Distill distill = new Distill(article.getLink(), keyword, new Distill.Listener() {
                 @Override
-                public void onFailure(@NotNull Call call, IOException e) {
-                    KLog.e("获取失败");
+                public void onResponse(String content) {
+                    article.updateContent(content);
+                    CoreDB.i().articleDao().update(article);
                 }
 
-                // 在Android应用中直接使用上述代码进行异步请求，并且在回调方法中操作了UI，那么你的程序就会抛出异常，并且告诉你不能在非UI线程中操作UI。
-                // 这是因为OkHttp对于异步的处理仅仅是开启了一个线程，并且在线程中处理响应。
-                // OkHttp是一个面向于Java应用而不是特定平台(Android)的框架，那么它就无法在其中使用Android独有的Handler机制。
                 @Override
-                public void onResponse(@NotNull Call call, @NotNull okhttp3.Response response) throws IOException {
-                    if (response.isSuccessful()) {
-                        Article optimizedArticle = ArticleUtil.getReadabilityArticle(article,response.body());
-                        CoreDB.i().articleDao().update(optimizedArticle);
-                    }
+                public void onFailure(String msg) {
+                    KLog.e("获取失败");
                 }
             });
+            distill.getContent();
+
+            // KLog.e("====开始请求" );
+            // Request request = new Request.Builder().url(article.getLink()).build();
+            // Call call = HttpClientManager.i().simpleClient().newCall(request);
+            // call.enqueue(new Callback() {
+            //     @Override
+            //     public void onFailure(@NotNull Call call, IOException e) {
+            //         KLog.e("获取失败");
+            //     }
+            //
+            //     // 在Android应用中直接使用上述代码进行异步请求，并且在回调方法中操作了UI，那么你的程序就会抛出异常，并且告诉你不能在非UI线程中操作UI。
+            //     // 这是因为OkHttp对于异步的处理仅仅是开启了一个线程，并且在线程中处理响应。
+            //     // OkHttp是一个面向于Java应用而不是特定平台(Android)的框架，那么它就无法在其中使用Android独有的Handler机制。
+            //     @Override
+            //     public void onResponse(@NotNull Call call, @NotNull okhttp3.Response response) throws IOException {
+            //         if (response.isSuccessful()) {
+            //             Article optimizedArticle = ArticleUtil.getReadabilityArticle(article,response.body());
+            //             CoreDB.i().articleDao().update(optimizedArticle);
+            //         }
+            //     }
+            // });
         }
     }
 

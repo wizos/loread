@@ -9,6 +9,7 @@ import androidx.room.Index;
 import org.jetbrains.annotations.NotNull;
 
 import me.wizos.loread.App;
+import me.wizos.loread.utils.ArticleUtil;
 
 /**
  * //    private Integer preference = 0; // 偏好（点击）：0是初始状态，1是不喜欢，2是喜欢
@@ -187,6 +188,11 @@ public class Article implements Cloneable{
 
     public void setStarUpdated(long starUpdated) {
         this.starUpdated = starUpdated;
+    }
+    public void updateContent(String content) {
+        this.content = ArticleUtil.getOptimizedContent(link, content);;
+        this.summary = ArticleUtil.getOptimizedSummary(content);
+        this.image = ArticleUtil.getCoverUrl(link, content);
     }
 
     @Override

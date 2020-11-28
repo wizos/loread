@@ -9,12 +9,15 @@ import android.view.View;
 import com.hjq.toast.ToastUtils;
 import com.socks.library.KLog;
 
+import java.io.IOException;
 import java.text.DecimalFormat;
 import java.util.List;
 
 import me.wizos.loread.App;
 import me.wizos.loread.BuildConfig;
 import me.wizos.loread.R;
+import okhttp3.RequestBody;
+import okio.Buffer;
 
 /**
  * 一些比较杂的工具函数
@@ -172,6 +175,21 @@ public class Tool {
             }
         }
         return false;
+    }
+
+    public static String bodyToString(final RequestBody request){
+        try {
+            final RequestBody copy = request;
+            final Buffer buffer = new Buffer();
+            if(copy != null)
+                copy.writeTo(buffer);
+            else
+                return "";
+            return buffer.readUtf8();
+        }
+        catch (final IOException e) {
+            return "did not work";
+        }
     }
 
 //    public boolean isDebug() {

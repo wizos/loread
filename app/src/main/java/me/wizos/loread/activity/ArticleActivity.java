@@ -15,6 +15,7 @@ import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.net.Uri;
 import android.net.http.SslError;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Parcelable;
@@ -54,18 +55,15 @@ import com.lzy.okgo.model.Response;
 import com.lzy.okgo.request.base.Request;
 import com.socks.library.KLog;
 
-import org.jetbrains.annotations.NotNull;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 
 import java.io.File;
-import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -80,6 +78,7 @@ import me.wizos.loread.config.AdBlock;
 import me.wizos.loread.config.ArticleTags;
 import me.wizos.loread.config.LinkRewriteConfig;
 import me.wizos.loread.config.NetworkRefererConfig;
+import me.wizos.loread.config.NetworkUserAgentConfig;
 import me.wizos.loread.config.SaveDirectory;
 import me.wizos.loread.db.Article;
 import me.wizos.loread.db.ArticleTag;
@@ -87,6 +86,7 @@ import me.wizos.loread.db.Category;
 import me.wizos.loread.db.CoreDB;
 import me.wizos.loread.db.Feed;
 import me.wizos.loread.db.Tag;
+import me.wizos.loread.extractor.Distill;
 import me.wizos.loread.network.HttpClientManager;
 import me.wizos.loread.network.callback.CallbackX;
 import me.wizos.loread.utils.ArticleUtil;
@@ -108,8 +108,6 @@ import me.wizos.loread.view.webview.DownloadListenerS;
 import me.wizos.loread.view.webview.LongClickPopWindow;
 import me.wizos.loread.view.webview.SlowlyProgressBar;
 import me.wizos.loread.view.webview.VideoImpl;
-import okhttp3.Call;
-import okhttp3.Callback;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import top.zibin.luban.CompressionPredicate;
@@ -189,7 +187,9 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
     protected void onDestroy() {
         saveArticleProgress();
         OkGo.cancelAll(imgHttpClient);
-
+        if(distill != null){
+            distill.cancel();
+        }
         // KLog.e("onDestroy：" + selectedWebView);
         // 如果参数为null的话，会将所有的Callbacks和Messages全部清除掉。
         // 这样做的好处是在 Acticity 退出的时候，可以避免内存泄露。因为 handler 内可能引用 Activity ，导致 Activity 退出后，内存泄漏。
@@ -236,8 +236,7 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
     @JavascriptInterface
     @Override
     public void readImage(String articleId, String imgId, String originalUrl) {
-        String idInMD5 = EncryptUtil.MD5(articleId);
-        String cacheUrl = FileUtil.readCacheFilePath(idInMD5, originalUrl);
+        String cacheUrl = FileUtil.readCacheFilePath(EncryptUtil.MD5(articleId), originalUrl);
         articleHandler.post(new Runnable() {
             @Override
             public void run() {
@@ -260,6 +259,29 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
                 }
             }
         });
+    }
+
+    @JavascriptInterface
+    @Override
+    public String read(String articleId, String imgId, String originalUrl) {
+        String cacheUrl = FileUtil.readCacheFilePath(EncryptUtil.MD5(articleId), originalUrl);
+        if (TextUtils.isEmpty(cacheUrl)) {
+            if (!NetworkUtils.isAvailable()) {
+                return "IMAGE_HOLDER_LOAD_FAILED_URL";
+            } else if (App.i().getUser().isDownloadImgOnlyWifi() && !NetworkUtils.getNetType().equals(NetType.WIFI)) {
+                return "IMAGE_HOLDER_CLICK_TO_LOAD_URL";
+            }else {
+                downImage(articleId, imgId, originalUrl, false);
+                return "IMAGE_HOLDER_LOADING_URL";
+            }
+        }else {
+            if(ImageUtil.isImg(new File(cacheUrl))){
+                return cacheUrl;
+            }else {
+                KLog.e("加载图片", "缓存文件读取失败：不是图片");
+                return "IMAGE_HOLDER_IMAGE_ERROR_URL";
+            }
+        }
     }
 
     @JavascriptInterface
@@ -553,6 +575,17 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
         request.execute(fileCallback);
         //KLog.e("下载图片：" + originalUrl);
     }
+    @JavascriptInterface
+    @Override
+    public void downFile(String url){
+        DownloadListenerS downloadListener = new DownloadListenerS(this).setWebView(selectedWebView);
+        articleHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                downloadListener.onDownloadStart(url, NetworkUserAgentConfig.i().guessUserAgentByUrl(url),"", "video/*", -1);
+            }
+        });
+    }
 
     @JavascriptInterface
     @Override
@@ -656,18 +689,18 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
     //    });
     //}
 
-    @JavascriptInterface
-    @Override
-    public String get(String url) throws IOException {
-        okhttp3.Request request = new okhttp3.Request.Builder().url(url).build();
-        Call call = HttpClientManager.i().simpleClient().newCall(request);
-        okhttp3.Response response = call.execute();
-        if(response.isSuccessful()){
-            return Objects.requireNonNull(response.body()).string();
-        }else {
-            return null;
-        }
-    }
+    // @JavascriptInterface
+    // @Override
+    // public String get(String url) throws IOException {
+    //     okhttp3.Request request = new okhttp3.Request.Builder().url(url).build();
+    //     Call call = HttpClientManager.i().simpleClient().newCall(request);
+    //     okhttp3.Response response = call.execute();
+    //     if(response.isSuccessful()){
+    //         return Objects.requireNonNull(response.body()).string();
+    //     }else {
+    //         return null;
+    //     }
+    // }
 
 
     private void initView() {
@@ -839,14 +872,37 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
         if (feed != null) {
             toolbar.setTitle(feed.getTitle());
             if(feed.getDisplayMode() == App.OPEN_MODE_LINK){
-            //if (App.DISPLAY_LINK.equals(TestConfig.i().getDisplayMode(feed.getId()))) {
                 selectedWebView.loadUrl(selectedArticle.getLink());
                 // 判断是要在加载的时候获取还是同步的时候获取
             } else {
-                selectedWebView.loadData(ArticleUtil.getPageForDisplay(selectedArticle));
+                // selectedWebView.loadData(ArticleUtil.getPageForDisplay(selectedArticle));
+                AsyncTask.execute(new Runnable() {
+                    @Override
+                    public void run() {
+                        String content = ArticleUtil.getPageForDisplay(selectedArticle);
+                        articleHandler.post(new Runnable() {
+                            @Override
+                            public void run() {
+                                selectedWebView.loadData(content);
+                            }
+                        });
+                    }
+                });
             }
         } else {
-            selectedWebView.loadData(ArticleUtil.getPageForDisplay(selectedArticle));
+            // selectedWebView.loadData(ArticleUtil.getPageForDisplay(selectedArticle));
+            AsyncTask.execute(new Runnable() {
+                @Override
+                public void run() {
+                    String content = ArticleUtil.getPageForDisplay(selectedArticle);
+                    articleHandler.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            selectedWebView.loadData(content);
+                        }
+                    });
+                }
+            });
         }
         selectedWebView.requestFocus();
     }
@@ -903,11 +959,31 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
         @SuppressLint("NewApi")
         @Override
         public WebResourceResponse shouldInterceptRequest(WebView view, final WebResourceRequest request) {
-            //KLog.e("【请求加载资源】" + url);
+            // 有广告的请求数据，我们直接返回空数据，注：不能直接返回null
             if ( AdBlock.i().isAd(request.getUrl().toString()) ) {
-                // 有广告的请求数据，我们直接返回空数据，注：不能直接返回null
                 return new WebResourceResponse(null, null, null);
             }
+            // String url = request.getUrl().toString().toLowerCase();
+            // 此处有2个方案来实现替换图片请求为本地下载好的图片
+            // 【1】无法将 图片链接 通过重定向到 file:/storage/emulated/0 以及 content://me.wizos.loread
+            // 【2】可以通过拦截 图片请求，直接返回本地图片流 WebResourceResponse。但是囿于以下2个问题，导致很复杂：
+            //      1.html 中的图片链接还是 http 或 https 协议的，导致点击打开图片时，打开的src链接是http链接，只能在html中js中遍历所有图片，找到本地有的图片，给其加个本地图片地址的属性。
+            //      2.本地没有的图片无法被替换成占位图，否则会导致<video>标签的封面也会被接管替换成占位图。只能在html中js中遍历所有图片，找到本地无的图片替换为占位图。这样还是会导致图片加载的闪烁。
+            // 不能通过此处来接管网页图片的加载，会导致<video>标签的封面也会被接管
+            // if (url.startsWith("data:") || url.endsWith(".css") || url.endsWith(".js") || url.endsWith(".woff") || url.endsWith(".ttf")){
+            //     return super.shouldInterceptRequest(view, request);
+            // }
+            // String cacheUrl = FileUtil.readCacheFilePath(EncryptUtil.MD5(selectedArticle.getId()), url);
+            // KLog.e("【请求加载资源】" + url  + " , " + cacheUrl);
+            // try {
+            //     if (cacheUrl != null) {
+            //         return new WebResourceResponse("image/png", "UTF-8", new FileInputStream(cacheUrl));
+            //     } else {
+            //         return new WebResourceResponse( "image/png", "UTF-8", getAssets().open("image/image_holder.png"));
+            //     }
+            // } catch (IOException e) {
+            //     e.printStackTrace();
+            // }
             return super.shouldInterceptRequest(view, request);
         }
 
@@ -917,7 +993,7 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
          * @return
          * 返回 true 表示你已经处理此次请求。
          * 返回 false 表示由webview自行处理（一般都是把此url加载出来）。
-         * 返回super.shouldOverrideUrlLoading(view, url); 这个返回的方法会调用父类方法，也就是跳转至手机浏览器
+         * 返回 super.shouldOverrideUrlLoading(view, url); 这个返回的方法会调用父类方法，也就是跳转至手机浏览器
          */
         @Override
         public boolean shouldOverrideUrlLoading(WebView webView, String url) {
@@ -938,7 +1014,6 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
 
             String newUrl = LinkRewriteConfig.i().getRedirectUrl( url );
             if (!TextUtils.isEmpty(newUrl)) {
-                // 创建一个新请求，并相应地修改它
                 url = newUrl;
             }
             openLink(url);
@@ -963,7 +1038,6 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
             super.onPageFinished(webView, url);
             webView.getSettings().setBlockNetworkImage(false);
             Integer process = App.i().articleProgress.get(articleId);
-            // KLog.e("页面加载完成：" + selectedArticle.getTitle() + "  " + articleId + "  " + process);
             if (process != null && selectedWebView != null) {
                 selectedWebView.scrollTo(0, process);
             }
@@ -1296,10 +1370,94 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
         openLink(selectedArticle.getLink());
     }
 
+    // public void switchReadabilityArticle2(View view) {
+    //     if(swipeRefreshLayoutS.isRefreshing()){
+    //         OkGo.cancelTag(HttpClientManager.i().simpleClient(),"Readability");
+    //         swipeRefreshLayoutS.setRefreshing(false);
+    //         return;
+    //     }
+    //     saveArticleProgress();
+    //
+    //     Article oldArticle = null;
+    //     if(App.i().oldArticles != null){
+    //         oldArticle = App.i().oldArticles.get(selectedArticle.getId());
+    //     }
+    //
+    //     if(oldArticle != null){
+    //         selectedArticle.setContent(oldArticle.getContent());
+    //         selectedArticle.setSummary(oldArticle.getSummary());
+    //         selectedArticle.setImage(oldArticle.getImage());
+    //         App.i().oldArticles.remove(selectedArticle.getId());
+    //         ToastUtils.show(getString(R.string.cancel_readability));
+    //         selectedWebView.loadData(ArticleUtil.getPageForDisplay(selectedArticle));
+    //         CoreDB.i().articleDao().update(selectedArticle);
+    //         readabilityView.setText(getString(R.string.font_article_original));
+    //     }else {
+    //         ToastUtils.show(getString(R.string.get_readability_ing));
+    //         swipeRefreshLayoutS.setRefreshing(true);
+    //
+    //         okhttp3.Request request = new okhttp3.Request.Builder().url(selectedArticle.getLink()).tag("Readability").build();
+    //         Call call = HttpClientManager.i().simpleClient().newCall(request);
+    //         call.enqueue(new Callback() {
+    //             @Override
+    //             public void onFailure(@NotNull Call call, @NotNull IOException e) {
+    //                 articleHandler.post(new Runnable() {
+    //                     @Override
+    //                     public void run() {
+    //                         if (swipeRefreshLayoutS == null) {
+    //                             return;
+    //                         }
+    //                         swipeRefreshLayoutS.setRefreshing(false);
+    //                         ToastUtils.show(getString(R.string.get_readability_failure));
+    //                     }
+    //                 });
+    //             }
+    //
+    //
+    //             // 这是因为OkHttp对于异步的处理仅仅是开启了一个线程，并且在线程中处理响应，所以不能再其中操作UI。
+    //             // OkHttp是一个面向于Java应用而不是特定平台(Android)的框架，那么它就无法在其中使用Android独有的Handler机制。
+    //             @Override
+    //             public void onResponse(@NotNull Call call, @NotNull okhttp3.Response response) throws IOException {
+    //                 if(response.isSuccessful()){
+    //                     App.i().oldArticles.put(selectedArticle.getId(),(Article)selectedArticle.clone());
+    //                     ArticleUtil.getReadabilityArticle(selectedArticle, response.body());
+    //                     CoreDB.i().articleDao().update(selectedArticle);
+    //                     articleHandler.post(new Runnable() {
+    //                         @Override
+    //                         public void run() {
+    //                             if (swipeRefreshLayoutS == null ||selectedWebView == null) {
+    //                                 return;
+    //                             }
+    //                             swipeRefreshLayoutS.setRefreshing(false);
+    //                             ToastUtils.show(getString(R.string.get_readability_success));
+    //                             readabilityView.setText(getString(R.string.font_article_readability));
+    //                             selectedWebView.loadData(ArticleUtil.getPageForDisplay(selectedArticle));
+    //                         }
+    //                     });
+    //                 }else {
+    //                     articleHandler.post(new Runnable() {
+    //                         @Override
+    //                         public void run() {
+    //                             if (swipeRefreshLayoutS == null) {
+    //                                 return;
+    //                             }
+    //                             swipeRefreshLayoutS.setRefreshing(false);
+    //                             ToastUtils.show(getString(R.string.get_readability_failure));
+    //                         }
+    //                     });
+    //                 }
+    //             }
+    //         });
+    //     }
+    // }
+
+    private Distill distill;
     public void switchReadabilityArticle(View view) {
         if(swipeRefreshLayoutS.isRefreshing()){
-            OkGo.cancelTag(HttpClientManager.i().simpleClient(),"Readability");
             swipeRefreshLayoutS.setRefreshing(false);
+            if(distill != null){
+                distill.cancel();
+            }
             return;
         }
         saveArticleProgress();
@@ -1315,18 +1473,69 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
             selectedArticle.setImage(oldArticle.getImage());
             App.i().oldArticles.remove(selectedArticle.getId());
             ToastUtils.show(getString(R.string.cancel_readability));
-            selectedWebView.loadData(ArticleUtil.getPageForDisplay(selectedArticle));
+            // selectedWebView.loadData(ArticleUtil.getPageForDisplay(selectedArticle));
+            AsyncTask.execute(new Runnable() {
+                @Override
+                public void run() {
+                    String content = ArticleUtil.getPageForDisplay(selectedArticle);
+                    articleHandler.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            selectedWebView.loadData(content);
+                        }
+                    });
+                }
+            });
             CoreDB.i().articleDao().update(selectedArticle);
             readabilityView.setText(getString(R.string.font_article_original));
         }else {
             ToastUtils.show(getString(R.string.get_readability_ing));
-            swipeRefreshLayoutS.setRefreshing(true);
 
-            okhttp3.Request request = new okhttp3.Request.Builder().url(selectedArticle.getLink()).tag("Readability").build();
-            Call call = HttpClientManager.i().simpleClient().newCall(request);
-            call.enqueue(new Callback() {
+            String keyword;
+            if( App.i().articleFirstKeyword.containsKey(selectedArticle.getId()) ){
+                keyword = App.i().articleFirstKeyword.get(selectedArticle.getId());
+            }else {
+                keyword = ArticleUtil.getKeyword(selectedArticle.getContent());
+                App.i().articleFirstKeyword.put(selectedArticle.getId(),keyword);
+            }
+
+            swipeRefreshLayoutS.setRefreshing(true);
+            distill = new Distill(selectedArticle.getLink(), keyword, new Distill.Listener() {
                 @Override
-                public void onFailure(@NotNull Call call, @NotNull IOException e) {
+                public void onResponse(String content) {
+                    App.i().oldArticles.put(selectedArticle.getId(),(Article)selectedArticle.clone());
+
+                    selectedArticle.updateContent(content);
+
+                    CoreDB.i().articleDao().update(selectedArticle);
+                    articleHandler.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            if (swipeRefreshLayoutS == null ||selectedWebView == null) {
+                                return;
+                            }
+                            swipeRefreshLayoutS.setRefreshing(false);
+                            ToastUtils.show(getString(R.string.get_readability_success));
+                            readabilityView.setText(getString(R.string.font_article_readability));
+                            // selectedWebView.loadData(ArticleUtil.getPageForDisplay(selectedArticle));
+                            AsyncTask.execute(new Runnable() {
+                                @Override
+                                public void run() {
+                                    String content = ArticleUtil.getPageForDisplay(selectedArticle);
+                                    articleHandler.post(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            selectedWebView.loadData(content);
+                                        }
+                                    });
+                                }
+                            });
+                        }
+                    });
+                }
+
+                @Override
+                public void onFailure(String msg) {
                     articleHandler.post(new Runnable() {
                         @Override
                         public void run() {
@@ -1334,49 +1543,14 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
                                 return;
                             }
                             swipeRefreshLayoutS.setRefreshing(false);
-                            ToastUtils.show(getString(R.string.get_readability_failure));
+                            ToastUtils.show(getString(R.string.get_readability_failure, msg));
                         }
                     });
                 }
-
-
-                // 这是因为OkHttp对于异步的处理仅仅是开启了一个线程，并且在线程中处理响应，所以不能再其中操作UI。
-                // OkHttp是一个面向于Java应用而不是特定平台(Android)的框架，那么它就无法在其中使用Android独有的Handler机制。
-                @Override
-                public void onResponse(@NotNull Call call, @NotNull okhttp3.Response response) throws IOException {
-                    if(response.isSuccessful()){
-                        App.i().oldArticles.put(selectedArticle.getId(),(Article)selectedArticle.clone());
-                        ArticleUtil.getReadabilityArticle(selectedArticle, response.body());
-                        CoreDB.i().articleDao().update(selectedArticle);
-                        articleHandler.post(new Runnable() {
-                            @Override
-                            public void run() {
-                                if (swipeRefreshLayoutS == null ||selectedWebView == null) {
-                                    return;
-                                }
-                                swipeRefreshLayoutS.setRefreshing(false);
-                                ToastUtils.show(getString(R.string.get_readability_success));
-                                readabilityView.setText(getString(R.string.font_article_readability));
-                                selectedWebView.loadData(ArticleUtil.getPageForDisplay(selectedArticle));
-                            }
-                        });
-                    }else {
-                        articleHandler.post(new Runnable() {
-                            @Override
-                            public void run() {
-                                if (swipeRefreshLayoutS == null) {
-                                    return;
-                                }
-                                swipeRefreshLayoutS.setRefreshing(false);
-                                ToastUtils.show(getString(R.string.get_readability_failure));
-                            }
-                        });
-                    }
-                }
             });
+            distill.getContent();
         }
     }
-
 
     private void showArticleInfo() {
         // KLog.e("文章信息");

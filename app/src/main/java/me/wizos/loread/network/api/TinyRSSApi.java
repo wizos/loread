@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Map;
 
 import me.wizos.loread.App;
+import me.wizos.loread.Contract;
 import me.wizos.loread.R;
 import me.wizos.loread.activity.login.LoginResult;
 import me.wizos.loread.bean.feedly.input.EditFeed;
@@ -151,7 +152,7 @@ public class TinyRSSApi extends AuthApi<Feed, me.wizos.loread.bean.feedly.Catego
             TinyResponse<List<CategoryItem>> categoryItemsTTRSSResponse = service.getCategories( new GetCategories(getAuthorization()) ).execute().body();
             KLog.e("获取回应：" + categoryItemsTTRSSResponse);
             if (!categoryItemsTTRSSResponse.isSuccessful()) {
-                throw new HttpException("获取失败");
+                throw new HttpException(categoryItemsTTRSSResponse.getMsg());
             }
 
             Iterator<CategoryItem> categoryItemsIterator = categoryItemsTTRSSResponse.getContent().iterator();
@@ -176,6 +177,8 @@ public class TinyRSSApi extends AuthApi<Feed, me.wizos.loread.bean.feedly.Catego
             ArrayList<Feed> feeds = new ArrayList<>();
             ArrayList<FeedCategory> feedCategories = new ArrayList<>(feedItemsTTRSSResponse.getContent().size());
             FeedCategory feedCategoryTmp;
+
+
             while (feedItemsIterator.hasNext()) {
                 ttrssFeedItem = feedItemsIterator.next();
                 Feed feed = ttrssFeedItem.convert2Feed();
@@ -285,9 +288,9 @@ public class TinyRSSApi extends AuthApi<Feed, me.wizos.loread.bean.feedly.Catego
             // 提示更新完成
             LiveEventBus.get(SyncWorker.NEW_ARTICLE_NUMBER).post(ids.size());
         }catch (IllegalStateException e){
-            handleException(e, "同步失败：IllegalState异常 "  + e.getMessage());
+            handleException(e, e.getMessage());
         }catch (HttpException e) {
-            handleException(e, "同步失败：Http异常 "  + e.message());
+            handleException(e, e.message());
         } catch (ConnectException e) {
             handleException(e, "同步失败：Connect异常");
         } catch (SocketTimeoutException e) {
@@ -300,9 +303,14 @@ public class TinyRSSApi extends AuthApi<Feed, me.wizos.loread.bean.feedly.Catego
     }
 
     private void handleException(Exception e, String msg) {
-        KLog.e(msg);
+        KLog.e("同步失败：" + e.getClass() + " = " + msg);
         e.printStackTrace();
-        ToastUtils.show(msg);
+        if(Contract.NOT_LOGGED_IN.equalsIgnoreCase(msg)){
+            ToastUtils.show(getString(R.string.not_logged_in));
+        }else {
+            ToastUtils.show(msg);
+        }
+
         LiveEventBus.get(SyncWorker.SYNC_PROCESS_FOR_SUBTITLE).post( null );
     }
 

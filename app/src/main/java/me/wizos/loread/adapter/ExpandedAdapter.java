@@ -34,10 +34,6 @@ public class ExpandedAdapter extends ExpandableAdapter<RecyclerView.ViewHolder> 
     public ExpandedAdapter(Context context) {
         this.mInflater = LayoutInflater.from(context);
     }
-//    public ExpandedAdapter(Context context, int countMode) {
-//        this.mInflater = LayoutInflater.from(context);
-//        this.countMode = countMode;
-//    }
 
     public void setParents(List<Collection> parents) {
         this.categories = parents;
@@ -69,15 +65,27 @@ public class ExpandedAdapter extends ExpandableAdapter<RecyclerView.ViewHolder> 
             List<Collection> feedWraps;
 
             if( App.i().getUser().getStreamStatus() == App.STATUS_UNREAD ){
-                feedWraps = CoreDB.i().feedDao().getFeedsUnreadCountByCategoryId(App.i().getUser().getId(), categories.get(groupPos).getId());
+                if(categories.get(groupPos).getId().contains(App.CATEGORY_UNCATEGORIZED)){
+                    feedWraps = CoreDB.i().feedDao().getFeedsUnreadCountByUnCategory(App.i().getUser().getId());
+                }else {
+                    feedWraps = CoreDB.i().feedDao().getFeedsUnreadCountByCategoryId(App.i().getUser().getId(), categories.get(groupPos).getId());
+                }
             }else if( App.i().getUser().getStreamStatus() == App.STATUS_STARED ){
-                feedWraps = CoreDB.i().feedDao().getFeedsStarCountByCategoryId(App.i().getUser().getId(), categories.get(groupPos).getId());
+                if(categories.get(groupPos).getId().contains(App.CATEGORY_UNCATEGORIZED)){
+                    feedWraps = CoreDB.i().feedDao().getFeedsStarCountByUnCategory(App.i().getUser().getId());
+                }else {
+                    feedWraps = CoreDB.i().feedDao().getFeedsStarCountByCategoryId(App.i().getUser().getId(), categories.get(groupPos).getId());
+                }
             }else {
-                feedWraps = CoreDB.i().feedDao().getFeedsAllCountByCategoryId(App.i().getUser().getId(), categories.get(groupPos).getId());
+                if(categories.get(groupPos).getId().contains(App.CATEGORY_UNCATEGORIZED)){
+                    feedWraps = CoreDB.i().feedDao().getFeedsAllCountByUnCategory(App.i().getUser().getId());
+                }else {
+                    feedWraps = CoreDB.i().feedDao().getFeedsAllCountByCategoryId(App.i().getUser().getId(), categories.get(groupPos).getId());
+                }
             }
 
             long d = System.currentTimeMillis() - time;
-            KLog.e("返回feedList，耗时：" + d + " = " + App.i().getUser().getId()  + " = " + categories.get(groupPos).getId() );
+            KLog.e("返回feedList，耗时：" + d + " = " + App.i().getUser().getId()  + " = " + categories.get(groupPos).getId() + " , " + ( feedWraps==null ? 0:feedWraps.size()));
             feedsMap.put(categories.get(groupPos).getId(), feedWraps);
 
             return feedWraps;
@@ -139,14 +147,18 @@ public class ExpandedAdapter extends ExpandableAdapter<RecyclerView.ViewHolder> 
             context = itemView.getContext();
         }
 
-        public void setData(@NonNull ExpandedAdapter mAdapter, @NonNull Collection category, @NonNull final int parentPosition) {
-//            KLog.e("设置父的数据A：" + category);
+        public void setData(@NonNull ExpandedAdapter mAdapter, @NonNull Collection category, final int parentPosition) {
             adapter = mAdapter;
-//            if(!category.getId().contains(App.CATEGORY_ALL) && !category.getId().contains(App.CATEGORY_UNCATEGORIZED)){
-//                category = CoreDB.i().categoryDao().getById(App.i().getUser().getId(), category.getId());
-//            }
 
-            if (CoreDB.i().feedCategoryDao().getCountByCategoryId(App.i().getUser().getId(), category.getId()) == 0) {
+            if(category.getId().contains(App.CATEGORY_UNCATEGORIZED)){
+                if(CoreDB.i().feedDao().getFeedsCountByUnCategory(App.i().getUser().getId()) == 0){
+                    icon.setText(context.getString(R.string.font_tag));
+                }else if (adapter.isExpanded(parentPosition)) {
+                    icon.setText(context.getString(R.string.font_arrow_down));
+                } else {
+                    icon.setText(context.getString(R.string.font_arrow_right));
+                }
+            } else if (CoreDB.i().feedCategoryDao().getCountByCategoryId(App.i().getUser().getId(), category.getId()) == 0) {
                 icon.setText(context.getString(R.string.font_tag));
             } else if (adapter.isExpanded(parentPosition)) {
                 icon.setText(context.getString(R.string.font_arrow_down));
@@ -154,7 +166,7 @@ public class ExpandedAdapter extends ExpandableAdapter<RecyclerView.ViewHolder> 
                 icon.setText(context.getString(R.string.font_arrow_right));
             }
 
-//            KLog.e("设置父的数据B ");
+
             title.setText(category.getTitle());
 
             int count = category.getCount();
@@ -180,7 +192,7 @@ public class ExpandedAdapter extends ExpandableAdapter<RecyclerView.ViewHolder> 
                         adapter.expandParent(parentPosition);
                         icon.setText(context.getString(R.string.font_arrow_down));
                     }
-                    KLog.e("点击展开收缩：" + (System.currentTimeMillis() - time) );
+                    // KLog.e("点击展开收缩：" + (System.currentTimeMillis() - time) );
                 }
             });
         }

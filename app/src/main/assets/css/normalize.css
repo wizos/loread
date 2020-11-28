@@ -4,7 +4,7 @@ html, body, div, span, applet, object, iframe, h1, h2, h3, h4, h5, h6, p, blockq
 	padding: 0;
 	border: 0;
 }
-:focus{outline:none}
+:focus,summary{outline:none;}
 
 @font-face {
 	font-family: 'roboto_light';
@@ -54,12 +54,8 @@ div,p,tbody,textarea,ins,input{
 	max-width: 100% !important;
 }
  */
-/*
-div:not(.plyr__menu__container),p,tbody,textarea,ins,input{
-	max-width: 100% !important;
-}
-*/
-p, tbody, textarea, ins, input{
+
+div:not(.plyr__menu__container):not(.plyr__progress), p, tbody, textarea, ins{
 	max-width: 100% !important;
 }
 /* 
@@ -322,6 +318,17 @@ img {
 a > img{
 	display: block;
 }
+
+audio {
+	height: 32px;
+	width: 100% !important;
+	margin: 5px 0 !important;
+}
+/*
+video {
+    background:rgba(0, 0, 0);
+}
+*/
 video,iframe,embed {
 	width: 100% !important;
 	height: 100% !important;
@@ -337,17 +344,6 @@ video,iframe,embed {
 .table_wrap{
 	overflow-x:auto !important;
 }
-audio {
-	height: 32px;
-	width: 100% !important;
-	margin: 5px 0 !important;
-}
-/*
-video {
-    background:rgba(0, 0, 0);
-}
-*/
-
 /* 文章相关信息的排版*/
 hr {
 	opacity: .2;

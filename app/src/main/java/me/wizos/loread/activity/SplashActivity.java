@@ -6,6 +6,7 @@ import android.text.TextUtils;
 
 import com.socks.library.KLog;
 
+import me.wizos.loread.App;
 import me.wizos.loread.Contract;
 import me.wizos.loread.R;
 import me.wizos.loread.db.CorePref;
@@ -30,21 +31,23 @@ public class SplashActivity extends BaseActivity {
                 }
             }
         }
-//        // 1.检查是否需要更新，是则跳转只更新页面/弹出更新Dialog
-//        // 2.获取已登录的服务商
-//        // 2.1 未登录则跳转登录页(服务商选择页)
-//        // 2.2 检查登录授权时间，超时则跳转对应服务商的重新授权页
-//        // 2.3 加载一些相关参数、配置到内存？还是在用到的时候再去加载？
-//        // 3.跳转至文章列表页
+        // 1.检查是否需要更新，是则跳转只更新页面/弹出更新Dialog
+        // 2.获取已登录的服务商
+        // 2.1 未登录则跳转登录页(服务商选择页)
+        // 2.2 检查登录授权时间，超时则跳转对应服务商的重新授权页
+        // 2.3 加载一些相关参数、配置到内存？还是在用到的时候再去加载？
+        // 3.跳转至文章列表页
         Intent intent;
         String uid = CorePref.i().globalPref().getString(Contract.UID, null);
-        KLog.e("获取UID：" + uid );
+
+        KLog.e("获取UID：" + uid + ", " + App.i().getUser().getId() );
         if ( TextUtils.isEmpty(uid) ) {
             intent = new Intent(this, ProviderActivity.class);
         } else {
             intent = new Intent(this, MainActivity.class);
         }
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         startActivity(intent);
         overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
         finish();

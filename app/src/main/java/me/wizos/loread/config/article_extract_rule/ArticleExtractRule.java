@@ -40,4 +40,14 @@ public class ArticleExtractRule {
         return contentTrim;
     }
 
+    @Override
+    public String toString() {
+        return "ArticleExtractRule{" +
+                "selector=" + selector +
+                ", documentTrim='" + documentTrim + '\'' +
+                ", content='" + content + '\'' +
+                ", contentStrip='" + contentStrip + '\'' +
+                ", contentTrim='" + contentTrim + '\'' +
+                '}';
+    }
 }

@@ -161,6 +161,22 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
         //WorkManager.getInstance(this).enqueueUniquePeriodicWork(SyncWorker.TAG, ExistingPeriodicWorkPolicy.KEEP,syncRequest);
         //KLog.i("SyncWorker Id: " + syncRequest.getId());
 
+        LiveEventBus.get(SyncWorker.SYNC_TASK_START, Boolean.class)
+                .observeSticky(this, new Observer<Boolean>() {
+                    @Override
+                    public void onChanged(Boolean startSyncTask) {
+                        if (!swipeRefreshLayoutS.isEnabled() || !startSyncTask) {
+                            return;
+                        }
+                        KLog.i("【刷新中】");
+                        Constraints.Builder builder = new Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED);
+                        OneTimeWorkRequest oneTimeWorkRequest = new OneTimeWorkRequest.Builder(SyncWorker.class)
+                                .setConstraints(builder.build())
+                                .addTag(SyncWorker.TAG)
+                                .build();
+                        WorkManager.getInstance(MainActivity.this).enqueue(oneTimeWorkRequest);
+                    }
+                });
 
         LiveEventBus.get(SyncWorker.SYNC_TASK_STATUS,Boolean.class)
                 .observeSticky(this, new Observer<Boolean>() {
@@ -335,14 +351,14 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
         articleViewModel.getArticles(uid,streamId,streamType,streamStatus).observe(this, new Observer<PagedList<Article>>() {
             @Override
             public void onChanged(PagedList<Article> articles) {
-                articlesAdapter.submitList(articles);
-
-                if( articlesAdapter.getCurrentList() != null ){
-                    KLog.e("更新列表数据 A : " + articlesAdapter.getCurrentList().getLastKey()  + " == "+ articlesAdapter.getCurrentList().getLoadedCount() +  " , " + (linearLayoutManager.findLastVisibleItemPosition()-1) );
-                }else {
-                    KLog.e("更新列表数据 B");
-                }
                 loadViewByData( articles.size() );
+                articlesAdapter.submitList(articles);
+                // KLog.e("更新列表数据 C：" + articles);
+                // if( articlesAdapter.getCurrentList() != null ){
+                //     KLog.e("更新列表数据 A : " + articlesAdapter.getCurrentList().getLastKey()  + " == "+ articlesAdapter.getCurrentList().getLoadedCount() +  " , " + (linearLayoutManager.findLastVisibleItemPosition()-1) );
+                // }else {
+                //     KLog.e("更新列表数据 B");
+                // }
             }
         });
         articleListView.scrollToPosition(0);
@@ -354,11 +370,11 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
         getSupportActionBar().setTitle(App.i().getUser().getStreamTitle());
         countTips.setText( getResources().getQuantityString(R.plurals.articles_count, size, size ) );
 
-//        KLog.i("【loadViewByData】" + App.i().getUser().getStreamId()+ "--" + App.i().getUser().getStreamTitle() + "--" + App.i().getUser().getStreamStatus() + "--" + toolbar.getTitle() + articlesAdapter.getItemCount());
-        if (articlesAdapter == null || articlesAdapter.getItemCount() == 0) {
-            //vPlaceHolder.setVisibility(View.VISIBLE);
+        // KLog.i("【loadViewByData】" + App.i().getUser().getStreamId()+ "--" + App.i().getUser().getStreamTitle() + "--" + App.i().getUser().getStreamStatus() + "--" + toolbar.getTitle() + articlesAdapter.getItemCount());
+        if (articlesAdapter == null) { // || articlesAdapter.getItemCount() == 0
+            // vPlaceHolder.setVisibility(View.VISIBLE);
             articleListView.setVisibility(View.GONE);
-        } else {
+        } else if (articleListView.getVisibility() == View.GONE){
             //vPlaceHolder.setVisibility(View.GONE);
             articleListView.setVisibility(View.VISIBLE);
         }
@@ -1011,8 +1027,8 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
         articleViewModel.getAllByKeyword(App.i().getUser().getId(),keyword).observe(this, new Observer<PagedList<Article>>() {
             @Override
             public void onChanged(PagedList<Article> articles) {
-                articlesAdapter.submitList(articles);
                 loadViewByData( articles.size() );
+                articlesAdapter.submitList(articles);
             }
         });
         articleListView.scrollToPosition(0);

@@ -47,5 +47,11 @@
         android:enabled="true"
         android:visible="true"
         app:showAsAction="never" />
-
+    <item
+        android:id="@+id/web_menu_get_html"
+        android:icon="@drawable/icon_download_new"
+        android:title="获取 Html"
+        android:enabled="true"
+        android:visible="false"
+        app:showAsAction="never" />
 </menu>

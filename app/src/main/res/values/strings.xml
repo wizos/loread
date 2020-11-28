@@ -202,7 +202,7 @@
     <string name="save_readability_content">Save Readability content?</string>
     <string name="get_readability_ing">Getting</string>
     <string name="get_readability_success">Get Successful</string>
-    <string name="get_readability_failure">Get failed</string>
+    <string name="get_readability_failure">Get failed: %1$s</string>
     <string name="cancel_readability">The full text obtained has been cancelled</string>
 
     <string name="music_time">0:00</string>
@@ -405,4 +405,17 @@
     <string name="normal">Normal</string>
     
     <string name="the_rule_of_full_text_extraction_has_expired">The rule of full-text extraction has expired: %1$s</string>
+
+    <string name="not_logged_in">NOT LOGGED IN</string>
+
+    <string name="timeout">Timeout</string>
+    <string name="not_responding">Not responding</string>
+    <string name="no_text_found">No full text found</string>
+    <string name="no_text_found_by_rule">No full text found according to %1$s rule</string>
+    <string name="no_text_found_by_rule_and_extractor">No full text found according to %1$s rule and extractor</string>
+
+    <string name="copy_download_url">Copy download url</string>
+    <string name="play_the_video">Play the video</string>
+    <string name="play_the_audio">Play the audio</string>
+
 </resources>

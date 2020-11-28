@@ -10,12 +10,7 @@ public class TinyResponse<T> {
     private T content;
 
     public boolean isSuccessful() {
-        if (status == 0) {
-            //KLog.i("请求正常");
-            return true;
-        }
-        //KLog.i("请求异常：" + content);
-        return false;
+        return status == 0;
     }
 
     public int getSeq() {

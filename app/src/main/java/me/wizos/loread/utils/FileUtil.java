@@ -2,11 +2,15 @@ package me.wizos.loread.utils;
 
 import android.Manifest;
 import android.app.Activity;
+import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Environment;
 import android.text.Html;
 
 import androidx.core.app.ActivityCompat;
+import androidx.core.content.FileProvider;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
@@ -255,29 +259,29 @@ public class FileUtil {
         return readFile(new File(filePath));
     }
     public static String readFile(File file) {
-        String fileContent = "", temp = "";
+        StringBuilder fileContent = new StringBuilder();
+        String temp = "";
         if (!file.exists()) {
-            return fileContent;
+            return fileContent.toString();
         }
         try {
             FileReader fileReader = new FileReader(file);
             BufferedReader br = new BufferedReader(fileReader);//一行一行读取 。在电子书程序上经常会用到。
             while ((temp = br.readLine()) != null) {
-                fileContent += temp; // +"\r\n"
+                fileContent.append(temp); // +"\r\n"
             }
             fileReader.close();
             br.close();
         } catch (IOException f){
             f.printStackTrace();
         }
-        return fileContent;
+        return fileContent.toString();
     }
 
     public static String readCacheFilePath(String articleIdInMD5, String originalUrl) {
-        // 为了避免我自己来获取 FileNameExt 时，由于得到的结果是重复的而导致图片也获取到一致的。所以采用 base64 的方式加密 originalUrl，来保证唯一
-        String fileNameExt, filePath, imgId;
-        fileNameExt = UriUtil.guessFileNameExt(originalUrl);
-        imgId = String.valueOf(originalUrl.hashCode());
+        // 由于有些图片链接并不标准，导致不同的 url 获取的 FileNameExt 是一致的，所以采用originalUrl的hashCode作为图片名称来保证唯一
+        String filePath;
+        String imgId = String.valueOf(originalUrl.hashCode());
 
         // 改为 id 存储图片，在保存时才改为图片src中的名称
         filePath = App.i().getUserFilesDir() + "/cache/" + articleIdInMD5 + "/compressed/" + imgId;
@@ -286,6 +290,75 @@ public class FileUtil {
         }
 
         filePath = App.i().getUserFilesDir() + "/cache/" + articleIdInMD5 + "/original/" + imgId;
+        if (new File(filePath).exists()) {
+            return filePath;
+        }
+
+        String fileNameExt = UriUtil.guessFileNameExt(originalUrl);
+        // 推测可能是svg格式的，该类文件必须有后缀名才能在webView中显示出来
+        filePath = App.i().getUserFilesDir() + "/cache/" + articleIdInMD5 + "/original/" + fileNameExt + ".svg";
+        if (new File(filePath).exists()) {
+            return filePath;
+        }
+
+        // 推测该图片在保存时，由于src有问题，导致获取的文件名有重复时自动加上 hashCode 的机制
+        filePath = App.i().getUserFilesDir() + "/cache/" + articleIdInMD5 + "/original/" + originalUrl.hashCode() + "_" + fileNameExt;
+        if (new File(filePath).exists()) {
+            return filePath;
+        }
+
+        filePath = App.i().getUserFilesDir() + "/cache/" + articleIdInMD5 + "/compressed/" + fileNameExt;
+        if (new File(filePath).exists()) {
+            return filePath;
+        }
+
+        filePath = App.i().getUserFilesDir() + "/cache/" + articleIdInMD5 + "/original/" + fileNameExt;
+        if (new File(filePath).exists()) {
+            return filePath;
+        }
+        return null;
+    }
+
+
+    public static String readCacheFilePath2(String articleIdInMD5, String originalUrl) {
+        // 为了避免我自己来获取 FileNameExt 时，由于得到的结果是重复的而导致图片也获取到一致的。所以采用 base64 的方式加密 originalUrl，来保证唯一
+        String fileNameExt, filePath, imgId;
+        fileNameExt = UriUtil.guessFileNameExt(originalUrl);
+        imgId = String.valueOf(originalUrl.hashCode());
+
+        File theFile;
+        // 改为 id 存储图片，在保存时才改为图片src中的名称
+        filePath = App.i().getUserFilesDir() + "/cache/" + articleIdInMD5 + "/compressed/" + imgId;
+
+        theFile = new File(filePath);
+        if (theFile.exists()) {
+            Uri data;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                data = FileProvider.getUriForFile(App.i(), "me.wizos.loread", theFile);
+            } else {
+                data = Uri.fromFile(theFile);
+            }
+            App.i().grantUriPermission("me.wizos.loread", data, Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+            return data.toString();
+        }
+
+        filePath = App.i().getUserFilesDir() + "/cache/" + articleIdInMD5 + "/original/" + imgId;
+
+        theFile = new File(filePath);
+        if (theFile.exists()) {
+            Uri data;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                data = FileProvider.getUriForFile(App.i(), "me.wizos.loread", theFile);
+            } else {
+                data = Uri.fromFile(theFile);
+            }
+            // 给目标应用一个临时授权
+            App.i().grantUriPermission("me.wizos.loread", data, Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+            return data.toString();
+        }
+
+        // 推测可能是svg格式的，该类文件必须有后缀名才能在webView中显示出来
+        filePath = App.i().getUserFilesDir() + "/cache/" + articleIdInMD5 + "/original/" + fileNameExt + ".svg";
         if (new File(filePath).exists()) {
             return filePath;
         }
@@ -304,20 +377,22 @@ public class FileUtil {
         }
 
         filePath = App.i().getUserFilesDir() + "/cache/" + articleIdInMD5 + "/original/" + fileNameExt;
-        if (new File(filePath).exists()) {
-            return filePath;
-        }
-
-        // 推测可能是svg格式的，该类文件必须有后缀名才能在webView中显示出来
-        filePath = App.i().getUserFilesDir() + "/cache/" + articleIdInMD5 + "/original/" + fileNameExt + ".svg";
-        if (new File(filePath).exists()) {
-            return filePath;
+        theFile = new File(filePath);
+        if (theFile.exists()) {
+            Uri data;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                data = FileProvider.getUriForFile(App.i(), "me.wizos.loread", theFile);
+            } else {
+                data = Uri.fromFile(theFile);
+            }
+            // 给目标应用一个临时授权
+            App.i().grantUriPermission("me.wizos.loread", data, Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+            return data.toString();
         }
 
         //KLog.e("ImageBridge", "要读取的url：" + originalUrl + "    文件位置" + filePath);
         return null;
     }
-
 
     //文件拷贝
     //要复制的目录下的所有非子目录(文件夹)文件拷贝

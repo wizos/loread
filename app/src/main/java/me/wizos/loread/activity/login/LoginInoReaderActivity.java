@@ -22,6 +22,7 @@ import com.socks.library.KLog;
 import me.wizos.loread.App;
 import me.wizos.loread.R;
 import me.wizos.loread.activity.BaseActivity;
+import me.wizos.loread.network.api.InoReaderApi;
 import me.wizos.loread.view.colorful.Colorful;
 import me.wizos.loread.viewmodel.InoReaderUserViewModel;
 
@@ -101,6 +102,7 @@ public class LoginInoReaderActivity extends BaseActivity {
                         usernameEditText.getText().toString(),
                         passwordEditText.getText().toString()
                 );
+                InoReaderApi.tempBaseUrl = hostEditText.getText().toString();
             }
         });
 

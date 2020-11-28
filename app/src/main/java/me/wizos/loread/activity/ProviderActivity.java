@@ -15,6 +15,7 @@ import com.afollestad.materialdialogs.MaterialDialog;
 import com.afollestad.materialdialogs.simplelist.MaterialSimpleListAdapter;
 import com.afollestad.materialdialogs.simplelist.MaterialSimpleListItem;
 import com.hjq.toast.ToastUtils;
+import com.jeremyliao.liveeventbus.LiveEventBus;
 import com.lxj.xpopup.XPopup;
 import com.lxj.xpopup.impl.LoadingPopupView;
 import com.socks.library.KLog;
@@ -34,6 +35,7 @@ import me.wizos.loread.bean.Token;
 import me.wizos.loread.db.CoreDB;
 import me.wizos.loread.db.CorePref;
 import me.wizos.loread.db.User;
+import me.wizos.loread.network.SyncWorker;
 import me.wizos.loread.network.api.FeedlyApi;
 import me.wizos.loread.network.api.InoReaderApi;
 import me.wizos.loread.network.api.OAuthApi;
@@ -120,6 +122,7 @@ public class ProviderActivity extends BaseActivity {
                             }
                             Intent intent = new Intent(ProviderActivity.this, WebActivity.class);
                             intent.setData(Uri.parse(InoReaderApi.getOAuthUrl(inoReaderUrl)));
+                            InoReaderApi.tempBaseUrl = inoReaderUrl;
                             startActivity(intent);
                             overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
                         } catch (MalformedURLException e) {
@@ -167,7 +170,11 @@ public class ProviderActivity extends BaseActivity {
                         user.setToken(token);
                         if(api instanceof InoReaderApi){
                             user.setHost( ((InoReaderApi)api).getTempBaseUrl() );
+                            KLog.e("用户资料aaa："  + user.getHost());
                         }
+                        // if(api instanceof InoReaderApi && !TextUtils.isEmpty(InoReaderApi.tempBaseUrl)){
+                        //     user.setHost( InoReaderApi.tempBaseUrl );
+                        // }
 
                         CorePref.i().globalPref().putString(Contract.UID, user.getId());
                         App.i().setApi(api);
@@ -175,6 +182,7 @@ public class ProviderActivity extends BaseActivity {
                         dialog.dismiss();
                         KLog.e(token);
                         App.i().restartApp();
+                        LiveEventBus.get(SyncWorker.SYNC_TASK_STATUS).post(true);
                     }
 
                     @Override
@@ -191,7 +199,6 @@ public class ProviderActivity extends BaseActivity {
         });
     }
 
-
     @Override
     protected void onNewIntent(Intent paramIntent) {
         super.onNewIntent(paramIntent);
@@ -205,12 +212,8 @@ public class ProviderActivity extends BaseActivity {
         String schema = uri.getScheme();
         String host = uri.getHost();
         String code = uri.getQueryParameter("code");
-        String source = uri.getPath();
-        if(!StringUtils.isEmpty(source)){
-            source = source.replace("/","");
-        }
 
-        KLog.e("获取：" + schema + host + code + source);
+        KLog.e("获取：" + schema + " , " + host + " , " + code);
         if (StringUtils.isEmpty(schema) || TextUtils.isEmpty(host) || TextUtils.isEmpty(code)) {
             ToastUtils.show(getString(R.string.auth_failure_please_try_again));
             return;
@@ -219,7 +222,7 @@ public class ProviderActivity extends BaseActivity {
         if (FeedlyApi.REDIRECT_URI.contains(host)) {
             getAccessToken(code, new FeedlyApi());
         } else if (InoReaderApi.REDIRECT_URI_SCHEMA.contains(schema)) {
-            getAccessToken(code, new InoReaderApi(Contract.SCHEMA_HTTPS + source));
+            getAccessToken(code, new InoReaderApi(InoReaderApi.tempBaseUrl));
         }
     }
 
@@ -228,7 +231,6 @@ public class ProviderActivity extends BaseActivity {
         super.onActivityResult(requestCode, resultCode, intent);
         KLog.e("---------" + resultCode + requestCode);
         if (resultCode == App.ActivityResult_LoginPageToProvider) {
-            App.i().getUser();
             App.i().restartApp();
         }
     }

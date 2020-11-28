@@ -287,33 +287,33 @@ public class Extractor {
         Logger.e("提取失败");
         return null;
     }
-    public ModPage getNews() throws Exception {
-        ModPage modPage = new ModPage();
+    public ExtractPage getNews() throws Exception {
+        ExtractPage extractPage = new ExtractPage();
         Element contentElement;
         try {
             contentElement = getContentElement();
-            modPage.setContentElement(contentElement);
+            extractPage.setContentElement(contentElement);
         } catch (Exception ex) {
             KLog.e("modPage content extraction failed,extraction abort", ex);
             throw new Exception(ex);
         }
 
         if (doc.baseUri() != null) {
-            modPage.setUrl(doc.baseUri());
+            extractPage.setUrl(doc.baseUri());
         }
 
         try {
-            modPage.setTime(getTime(contentElement));
+            extractPage.setTime(getTime(contentElement));
         } catch (Exception ex) {
             KLog.e("modPage title extraction failed", ex);
         }
 
         try {
-            modPage.setTitle(getTitle(contentElement));
+            extractPage.setTitle(getTitle(contentElement));
         } catch (Exception ex) {
             KLog.e("title extraction failed", ex);
         }
-        return modPage;
+        return extractPage;
     }
 
     private String getTime(Element contentElement) throws Exception {

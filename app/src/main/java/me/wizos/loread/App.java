@@ -16,7 +16,9 @@ import com.carlt.networklibs.annotation.NetWork;
 import com.carlt.networklibs.utils.Constants;
 import com.hjq.toast.ToastUtils;
 import com.hjq.toast.style.ToastAliPayStyle;
+import com.just.agentweb.AgentWebConfig;
 import com.lzy.okgo.OkGo;
+import com.oasisfeng.condom.CondomProcess;
 import com.orhanobut.logger.AndroidLogAdapter;
 import com.orhanobut.logger.Logger;
 import com.socks.library.KLog;
@@ -165,8 +167,9 @@ public class App extends Application implements Thread.UncaughtExceptionHandler 
         CorePref.i().globalPref().putString(Contract.USER_AGENT, articleWebView.getSettings().getUserAgentString());
         articleWebView.destroy();
 
-        if (BuildConfig.DEBUG) {
-            WebView.setWebContentsDebuggingEnabled(true);
+        WebView.setWebContentsDebuggingEnabled(BuildConfig.DEBUG);
+        if(BuildConfig.DEBUG){
+            AgentWebConfig.debug();
         }
 
         Logger.addLogAdapter(new AndroidLogAdapter());
@@ -196,7 +199,7 @@ public class App extends Application implements Thread.UncaughtExceptionHandler 
                 NetworkManager.getInstance().registerObserver(instance);
 
                 // 保险套
-                // CondomProcess.installExceptDefaultProcess(instance);
+                CondomProcess.installExceptDefaultProcess(instance);
             }
         });
     }
@@ -332,6 +335,12 @@ public class App extends Application implements Thread.UncaughtExceptionHandler 
         return getExternalFilesDir(null) + File.separator + "config" + File.separator;
     }
 
+
+    // KLog.e("路径1：" + new File(filePath).toURI()); // file:/storage/emulated/0/Android/data/me.wizos.loread/files
+    // KLog.e("路径2：" + new File(filePath).getAbsolutePath());
+    // KLog.e("路径3：" + App.i().getFilesDir()); // /data/user/0/me.wizos.loread/files
+    // KLog.e("路径4：" + App.i().getExternalCacheDir()); // /storage/emulated/0/Android/data/me.wizos.loread/cache
+    // KLog.e("路径5：" + App.i().getExternalFilesDir(null)); // /storage/emulated/0/Android/data/me.wizos.loread/files
     public String getUserFilesDir() {
         if (user == null) {
             KLog.e("用户为空");
@@ -428,7 +437,12 @@ public class App extends Application implements Thread.UncaughtExceptionHandler 
     }
 
     public void restartApp() {
+        App.i().user = null;
         Intent intent = new Intent(this, SplashActivity.class);
+        // Intent.FLAG_ACTIVITY_CLEAR_TASK 要起作用，必须和 Intent.FLAG_ACTIVITY_NEW_TASK 配合使用。
+        // 这两个 Flag 可以将原有任务栈清空,并将 intent 的目标 Activity 作为任务栈的根 Activity 。任务栈的 Id 没有变，如下所示，也就是说，并没有开辟新的任务栈。
+        // 链接：https://www.jianshu.com/p/e34ee1978fce
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         startActivity(intent);
         android.os.Process.killProcess(android.os.Process.myPid());

@@ -52,6 +52,7 @@ import java.util.ArrayList;
 import java.util.Map;
 
 import me.wizos.loread.App;
+import me.wizos.loread.BuildConfig;
 import me.wizos.loread.Contract;
 import me.wizos.loread.R;
 import me.wizos.loread.bridge.WebBridge;
@@ -60,7 +61,6 @@ import me.wizos.loread.config.LinkRewriteConfig;
 import me.wizos.loread.config.NetworkUserAgentConfig;
 import me.wizos.loread.utils.ScreenUtil;
 import me.wizos.loread.utils.StringUtils;
-import me.wizos.loread.utils.VideoInjectUtil;
 import me.wizos.loread.view.colorful.Colorful;
 import me.wizos.loread.view.webview.DownloadListenerS;
 import me.wizos.loread.view.webview.LongClickPopWindow;
@@ -166,58 +166,60 @@ public class WebActivity extends BaseActivity implements WebBridge {
                 .createAgentWeb()//创建AgentWeb。
                 .ready()//设置 WebSettings。
                 .go(link); //WebView载入该url地址的页面并显示。
-        // agentWeb.getWebCreator().getWebView().setHorizontalScrollBarEnabled(false);
-        agentWeb.getWebCreator().getWebView().getSettings().setTextZoom(100);
+
+        WebSettings webSettings = agentWeb.getWebCreator().getWebView().getSettings();
+        // webSettings.setHorizontalScrollBarEnabled(false);
+        webSettings.setTextZoom(100);
         // 设置最小的字号，默认为8
-        agentWeb.getWebCreator().getWebView().getSettings().setMinimumFontSize(10);
+        webSettings.setMinimumFontSize(10);
         // 设置最小的本地字号，默认为8
-        agentWeb.getWebCreator().getWebView().getSettings().setMinimumLogicalFontSize(10);
+        webSettings.setMinimumLogicalFontSize(10);
 
         // 设置此属性，可任意比例缩放
-        agentWeb.getWebCreator().getWebView().getSettings().setUseWideViewPort(true);
+        webSettings.setUseWideViewPort(true);
         // 缩放至屏幕的大小：如果webview内容宽度大于显示区域的宽度,那么将内容缩小,以适应显示区域的宽度, 默认是false
-        agentWeb.getWebCreator().getWebView().getSettings().setLoadWithOverviewMode(true);
+        webSettings.setLoadWithOverviewMode(true);
         // NARROW_COLUMNS 适应内容大小 ， SINGLE_COLUMN 自适应屏幕
-        agentWeb.getWebCreator().getWebView().getSettings().setLayoutAlgorithm(WebSettings.LayoutAlgorithm.SINGLE_COLUMN);
+        webSettings.setLayoutAlgorithm(WebSettings.LayoutAlgorithm.SINGLE_COLUMN);
 
         //缩放操作
-        agentWeb.getWebCreator().getWebView().getSettings().setSupportZoom(true); //支持缩放，默认为true。是下面那个的前提。
-        agentWeb.getWebCreator().getWebView().getSettings().setBuiltInZoomControls(true); //设置内置的缩放控件。若为false，则该WebView不可缩放
-        agentWeb.getWebCreator().getWebView().getSettings().setDisplayZoomControls(false); //隐藏原生的缩放控件
+        webSettings.setSupportZoom(true); //支持缩放，默认为true。是下面那个的前提。
+        webSettings.setBuiltInZoomControls(true); //设置内置的缩放控件。若为false，则该WebView不可缩放
+        webSettings.setDisplayZoomControls(false); //隐藏原生的缩放控件
 
-        agentWeb.getWebCreator().getWebView().getSettings().setDefaultTextEncodingName(StandardCharsets.UTF_8.name());
+        webSettings.setDefaultTextEncodingName(StandardCharsets.UTF_8.name());
 
-        agentWeb.getWebCreator().getWebView().getSettings().setJavaScriptEnabled(true);
+        webSettings.setJavaScriptEnabled(true);
         // 支持通过js打开新的窗口
-        agentWeb.getWebCreator().getWebView().getSettings().setJavaScriptCanOpenWindowsAutomatically(false);
+        webSettings.setJavaScriptCanOpenWindowsAutomatically(false);
 
         /* 缓存 */
-        agentWeb.getWebCreator().getWebView().getSettings().setDomStorageEnabled(true); // 临时简单的缓存（必须保留，否则无法播放优酷视频网页，其他的可以）
-        agentWeb.getWebCreator().getWebView().getSettings().setAppCacheEnabled(true); // 支持H5的 application cache 的功能
+        webSettings.setDomStorageEnabled(true); // 临时简单的缓存（必须保留，否则无法播放优酷视频网页，其他的可以）
+        webSettings.setAppCacheEnabled(true); // 支持H5的 application cache 的功能
         // webSettings.setDatabaseEnabled(true);  // 支持javascript读写db
         //根据cache-control获取数据。
-        agentWeb.getWebCreator().getWebView().getSettings().setCacheMode(WebSettings.LOAD_NO_CACHE);
+        webSettings.setCacheMode(WebSettings.LOAD_NO_CACHE);
 
         // 通过 file url 加载的 Javascript 读取其他的本地文件 .建议关闭
-        agentWeb.getWebCreator().getWebView().getSettings().setAllowFileAccessFromFileURLs(false);
+        webSettings.setAllowFileAccessFromFileURLs(false);
         // 允许通过 file url 加载的 Javascript 可以访问其他的源，包括其他的文件和 http，https 等其他的源
-        agentWeb.getWebCreator().getWebView().getSettings().setAllowUniversalAccessFromFileURLs(false);
+        webSettings.setAllowUniversalAccessFromFileURLs(false);
         // 允许访问文件
-        agentWeb.getWebCreator().getWebView().getSettings().setAllowFileAccess(true);
+        webSettings.setAllowFileAccess(true);
 
         // 保存表单数据
-        agentWeb.getWebCreator().getWebView().getSettings().setSaveFormData(true);
-        agentWeb.getWebCreator().getWebView().getSettings().setSavePassword(true);
+        webSettings.setSaveFormData(true);
+        webSettings.setSavePassword(true);
 
         // 允许在Android 5.0上 Webview 加载 Http 与 Https 混合内容。作者：Wing_Li，链接：https://www.jianshu.com/p/3fcf8ba18d7f
-        agentWeb.getWebCreator().getWebView().getSettings().setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
+        webSettings.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
 
         CookieManager instance = CookieManager.getInstance();
         instance.setAcceptCookie(true);
         instance.setAcceptThirdPartyCookies(agentWeb.getWebCreator().getWebView(), true);
         CookieManager.setAcceptFileSchemeCookies(true);
 
-        agentWeb.getWebCreator().getWebView().getSettings().setMediaPlaybackRequiresUserGesture(true);
+        webSettings.setMediaPlaybackRequiresUserGesture(true);
 
         /**
          * https://www.jianshu.com/p/6e38e1ef203a
@@ -229,7 +231,7 @@ public class WebActivity extends BaseActivity implements WebBridge {
 
         String guessUserAgent = NetworkUserAgentConfig.i().guessUserAgentByUrl(link);
         if (!TextUtils.isEmpty(guessUserAgent)) {
-            agentWeb.getWebCreator().getWebView().getSettings().setUserAgentString(guessUserAgent);
+            webSettings.setUserAgentString(guessUserAgent);
         }
 
         agentWeb.getWebCreator().getWebView().setOnTouchListener(new View.OnTouchListener() {
@@ -414,7 +416,7 @@ public class WebActivity extends BaseActivity implements WebBridge {
                 }
 
                 String newUrl = LinkRewriteConfig.i().getRedirectUrl(url);
-                KLog.e("重定向地址：" + url + " -> " + newUrl);
+                // KLog.e("重定向地址：" + url + " -> " + newUrl);
                 if(!TextUtils.isEmpty(newUrl) && !url.equalsIgnoreCase(newUrl)){
                     return super.shouldInterceptRequest(view, new WebResourceRequest() {
                         @Override
@@ -459,7 +461,7 @@ public class WebActivity extends BaseActivity implements WebBridge {
             // 如果存在，唤起该应用播放，如果不存在，则跳到应用市场下载该应用.
             String url = request.getUrl().toString();
 
-            KLog.i("地址：" + url);
+            KLog.e("地址：" + url);
             if (url.startsWith(SCHEMA_HTTP) || url.startsWith(SCHEMA_HTTPS)) {
                 return false;
             }
@@ -507,7 +509,11 @@ public class WebActivity extends BaseActivity implements WebBridge {
         public void onPageStarted(WebView webView, String url, Bitmap favicon) {
             KLog.i("onPageStarted = " + url);
             super.onPageStarted(webView, url, favicon);
-
+            if (url.startsWith(SCHEMA_LOREAD) || url.startsWith(SCHEMA_PDY) || url.startsWith(SCHEMA_PALABRE) || url.startsWith(SCHEMA_FEEDME)) {
+                Intent in = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+                startActivity(in);
+                finish();
+            }
             if (itemRefresh != null) {
                 itemRefresh.setVisible(false);
             }
@@ -520,7 +526,9 @@ public class WebActivity extends BaseActivity implements WebBridge {
         public void onPageFinished(WebView view, String url) {
             super.onPageFinished(view, url);
             // 注入视频全屏js
-            view.loadUrl(VideoInjectUtil.fullScreenJsFun(url));
+            view.loadUrl(WebBridge.Video.fullScreenJsFun(url));
+            // KLog.e("页面加载完成");
+            // view.loadUrl(Distill.Bridge.COMMEND_PRINT_HTML);
             if (itemStop != null) {
                 itemStop.setVisible(false);
             }
@@ -548,13 +556,17 @@ public class WebActivity extends BaseActivity implements WebBridge {
         }
     };
 
-    MenuItem itemRefresh, itemStop;
+    MenuItem itemRefresh, itemStop, itemGetHtml;
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_web, menu);
         itemRefresh = menu.findItem(R.id.web_menu_refresh);
         itemStop = menu.findItem(R.id.web_menu_stop);
+        itemGetHtml = menu.findItem(R.id.web_menu_get_html);
+        if(BuildConfig.DEBUG){
+            itemGetHtml.setVisible(true);
+        }
         return true;
     }
 
@@ -667,7 +679,6 @@ public class WebActivity extends BaseActivity implements WebBridge {
             case R.id.web_menu_share:
                 Intent sendIntent = new Intent(Intent.ACTION_SEND);
                 sendIntent.setType("text/plain");
-
                 sendIntent.putExtra(Intent.EXTRA_SUBJECT, mToolbar.getTitle());
                 // sendIntent.putExtra(Intent.EXTRA_TEXT, mToolbar.getTitle() + " " +  webViewS.getUrl() );
                 sendIntent.putExtra(Intent.EXTRA_TEXT, mToolbar.getTitle() + " " + agentWeb.getWebCreator().getWebView().getUrl());
@@ -681,11 +692,18 @@ public class WebActivity extends BaseActivity implements WebBridge {
             case R.id.web_menu_stop:
                 agentWeb.getWebCreator().getWebView().stopLoading();
                 break;
+            case R.id.web_menu_get_html:
+                KLog.e("测试点击");
+                agentWeb.getWebCreator().getWebView().loadUrl(COMMEND_PRINT_HTML);
+                agentWeb.getJsAccessEntrace().callJs(COMMEND_PRINT_HTML);
+                break;
             default:
                 break;
         }
         return super.onOptionsItemSelected(item);
     }
+    String COMMEND_PRINT_HTML = "javascript: function(){ console.log(document.documentElement.outerHTML); window.WebBridge.log(document.documentElement.outerHTML);} ";
+    // String COMMEND = "javascript:window.onload = function(){ReadabilityBridge.getHtml(document.documentElement.outerHTML);void(0);}";
 
 
     /**

@@ -1,7 +1,5 @@
 package me.wizos.loread.bridge;
 
-import java.io.IOException;
-
 /**
  * 设置图片的默认加载行为
  * <p>
@@ -36,7 +34,11 @@ public interface ArticleBridge {
      */
     void readImage(String articleId, String imgHashCode, String originalUrl);
 
+    String read(String articleId, String imgHashCode, String originalUrl);
+
     void downImage(String articleId, String imgHashCode, String originalUrl, boolean guessReferer);
+
+    void downFile(String url);
 
     void openImage(String articleId, String url);
 
@@ -44,5 +46,5 @@ public interface ArticleBridge {
 
     void openAudio(String link);
 
-    String get(String url) throws IOException;
+    // String get(String url) throws IOException;
 }

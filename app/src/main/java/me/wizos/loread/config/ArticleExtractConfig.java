@@ -7,7 +7,6 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.annotations.SerializedName;
 import com.google.gson.reflect.TypeToken;
-import com.socks.library.KLog;
 
 import org.jsoup.nodes.Document;
 import org.jsoup.select.Elements;
@@ -61,7 +60,6 @@ public class ArticleExtractConfig {
 
     public ArticleExtractRule getRuleByDomain(String domain){
         String rules = FileUtil.readFile(  App.i().getUserConfigPath() + CONFIG_FOLDER  + "/" + domain + ".json");
-        KLog.e("获取到的抓取规则内容："  + domain + " ==  " + rules);
         if (!StringUtils.isEmpty(rules)) {
             return new Gson().fromJson(rules, ArticleExtractRule.class);
         }

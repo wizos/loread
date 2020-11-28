@@ -117,7 +117,7 @@ public class InoReaderApi extends OAuthApi<Feed, CategoryItem> implements LoginI
         if (!tempBaseUrl.endsWith("/")) {
             tempBaseUrl = tempBaseUrl + "/";
         }
-        KLog.i(" tempBaseUrl 地址：" + tempBaseUrl );
+        KLog.i(" tempBaseUrl 地址：" + tempBaseUrl  + baseUrl );
         Retrofit retrofit = new Retrofit.Builder()
                 .baseUrl(tempBaseUrl) // 设置网络请求的Url地址, 必须以/结尾
                 .addConverterFactory(StringConverterFactory.create())
@@ -127,7 +127,7 @@ public class InoReaderApi extends OAuthApi<Feed, CategoryItem> implements LoginI
         service = retrofit.create(InoReaderService.class);
     }
 
-    private String tempBaseUrl;
+    public static String tempBaseUrl;
     public String getTempBaseUrl() {
         return tempBaseUrl;
     }
@@ -164,18 +164,18 @@ public class InoReaderApi extends OAuthApi<Feed, CategoryItem> implements LoginI
         super.setAuthorization(authorization);
     }
 
-    // public String getOAuthUrl2() {
-    //     return OFFICIAL_BASE_URL + "oauth2/auth?response_type=code&client_id=" + APP_ID + "&redirect_uri=" + REDIRECT_URI + "&state=loread&lang=" + Locale.getDefault();
-    // }
     public static String getOAuthUrl(String baseUrl) {
-        String redirectUri;
         if(StringUtils.isEmpty(baseUrl)){
             baseUrl = OFFICIAL_BASE_URL;
         }
-        redirectUri = Uri.parse(baseUrl).getHost();
-        return baseUrl + "oauth2/auth?response_type=code&client_id=" + APP_ID + "&redirect_uri=" + REDIRECT_URI + "/" + redirectUri + "&state=loread&lang=" + Locale.getDefault();
+        // String redirectUri;
+        // redirectUri = "/" + redirectUri + Uri.parse(baseUrl).getHost();
+        return baseUrl + "oauth2/auth?response_type=code&client_id=" + APP_ID + "&redirect_uri=" + REDIRECT_URI +  "&state=loread&lang=" + Locale.getDefault();
     }
 
+    // public String getOAuthUrl2() {
+    //     return OFFICIAL_BASE_URL + "oauth2/auth?response_type=code&client_id=" + APP_ID + "&redirect_uri=" + REDIRECT_URI + "&state=loread&lang=" + Locale.getDefault();
+    // }
     public String getOAuthUrl() {
         String baseUrl;
         if(!StringUtils.isEmpty(tempBaseUrl)){

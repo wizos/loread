@@ -198,7 +198,7 @@
     <string name="save_readability_content">保存 Readability 内容？</string>
     <string name="get_readability_ing">正在获取</string>
     <string name="get_readability_success">获取成功</string>
-    <string name="get_readability_failure">获取失败</string>
+    <string name="get_readability_failure">获取失败：%1$s</string>
     <string name="cancel_readability">已取消展示获取的全文</string>
 
     <string name="music_time">0:00</string>
@@ -397,4 +397,17 @@
     <string name="speed">速度</string>
     <string name="normal">正常</string>
     <string name="the_rule_of_full_text_extraction_has_expired">全文提取规则已失效：%1$s</string>
+
+
+    <string name="not_logged_in">未登录</string>
+
+    <string name="timeout">超时</string>
+    <string name="not_responding">无响应</string>
+    <string name="no_text_found">未发现正文</string>
+    <string name="no_text_found_by_rule">根据 %1$s 规则未发现正文</string>
+    <string name="no_text_found_by_rule_and_extractor">根据识别算法与 %1$s 规则都未发现正文</string>
+
+    <string name="copy_download_url">复制下载地址</string>
+    <string name="play_the_video">播放该视频</string>
+    <string name="play_the_audio">播放该音频</string>
 </resources>

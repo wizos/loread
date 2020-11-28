@@ -9,15 +9,18 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.util.regex.Pattern;
 
 import me.wizos.loread.App;
 import me.wizos.loread.activity.login.LoginResult;
 import me.wizos.loread.db.CoreDB;
 import me.wizos.loread.db.User;
 import me.wizos.loread.network.api.TinyRSSApi;
+import me.wizos.loread.utils.Tool;
 import okhttp3.Interceptor;
 import okhttp3.MediaType;
 import okhttp3.Request;
+import okhttp3.RequestBody;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
 import okio.Buffer;
@@ -77,7 +80,18 @@ public class TTRSSTokenInterceptor implements Interceptor {
                 user.setAuth(loginResult.getData());
                 CoreDB.i().userDao().update(user);
                 App.i().getAuthApi().setAuthorization(user.getAuth());
-                Request.Builder builder = request.newBuilder().header("authorization", user.getAuth());
+
+                String hhh = Tool.bodyToString(request.body());
+                KLog.e("修改前后的 string：" + hhh);
+                Pattern pattern = Pattern.compile("\"sid\"\\s*:\\s*\"(.*?)\"");
+                hhh = pattern.matcher(hhh).replaceAll("\"sid\":\"" + user.getAuth() +"\"");
+
+                Request.Builder builder = request
+                        .newBuilder()
+                        .post(RequestBody.create(MediaType.parse("application/json;charset=UTF-8"), hhh));
+
+                KLog.e("修改前后的 string：" + hhh);
+
                 return chain.proceed(builder.build());
             }
         }

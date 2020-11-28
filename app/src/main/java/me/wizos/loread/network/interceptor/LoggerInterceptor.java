@@ -46,7 +46,7 @@ public class LoggerInterceptor implements Interceptor {
 //            if (!HttpHeaders.hasBody(response)) {
 //                return response;
 //            }
-//
+
             ResponseBody responseBody = response.body();
             if (responseBody == null) {
                 return response;

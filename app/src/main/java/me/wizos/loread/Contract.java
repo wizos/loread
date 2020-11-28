@@ -9,6 +9,8 @@ public class Contract {
     public static final String COOKIE = "Cookie";
     public static final String REFERER = "Referer";
 
+    public static final String NOT_LOGGED_IN = "NOT_LOGGED_IN";
+
 
     public static final String PROVIDER_LOCALRSS = "LocalRSS";
     public static final String PROVIDER_INOREADER = "InoReader";
