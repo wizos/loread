@@ -219,11 +219,11 @@ public class Distill {
             if(StringUtils.isEmpty(content)){
                 Element newDoc = new Extractor(doc).getContentElementWithKeyword(keyword);
                 if(newDoc == null){
-                    extractPage.setMsg(App.i().getString(R.string.no_text_found_by_rule_and_extractor));
+                    extractPage.setMsg(App.i().getString(R.string.no_text_found_by_rule_and_extractor, uri.getHost()));
                 }else {
                     content = newDoc.html();
                     if(StringUtils.isEmpty(content)){
-                        extractPage.setMsg(App.i().getString(R.string.no_text_found_by_rule_and_extractor));
+                        extractPage.setMsg(App.i().getString(R.string.no_text_found_by_rule_and_extractor, uri.getHost()));
                     }else {
                         try {
                             ArticleExtractConfig.i().saveRuleByDomain(doc, uri, newDoc.cssSelector());

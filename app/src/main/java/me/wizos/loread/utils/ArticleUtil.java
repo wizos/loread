@@ -220,6 +220,7 @@ public class ArticleUtil {
                 "<script src='file:///android_asset/js/lozad.min.js'></script>" +
                 "<script src='file:///android_asset/js/highlight.pack.js'></script>" +
                 "<script src='file:///android_asset/js/placeholder.min.js'></script>" +
+                "<script src='file:///android_asset/js/fluidplayer.min.js'></script>" +
                 "<script src='file:///android_asset/js/plyr.js'></script>" +
                 "<script>" + initImageHolderUrl + "</script>" +
                 "<script>const PlyrConfig = {controls: ['play-large','play','progress','current-time','duration','settings','download','fullscreen'],settings: ['captions', 'quality', 'speed'],speed : { selected: 2, options: [0.75, 1, 1.5, 1.75, 2] } " + plyrI18n + "}</script>" +

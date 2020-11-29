@@ -1290,7 +1290,6 @@ typeof navigator === "object" && (function (global, factory) {
               return;
             } // Get current state
 
-
             var _player$media = player.media,
                 currentTime = _player$media.currentTime,
                 paused = _player$media.paused,
@@ -1305,7 +1304,6 @@ typeof navigator === "object" && (function (global, factory) {
               player.once('loadedmetadata', function () {
                 player.speed = playbackRate;
                 player.currentTime = currentTime; // Resume playing
-
                 if (!paused) {
                   silencePromise(player.play());
                 }
@@ -5151,12 +5149,19 @@ typeof navigator === "object" && (function (global, factory) {
 
         this.bind(elements.buttons.download, 'click', function () {
 	      // 修改点
-	      console.log("点击：" + elements.buttons.download.getAttribute('href') );
 	      ArticleBridge.downFile(elements.buttons.download.getAttribute('href'));
           //triggerEvent.call(player, player.media, 'download');
         }, 'download'); // Fullscreen toggle
 
         this.bind(elements.buttons.fullscreen, 'click', function () {
+	      // 修改点
+	      if(!player.fullscreen.active && player.isVideo){
+		    if(player.media.videoHeight > player.media.videoWidth){
+			  ArticleBridge.postVideoPortrait(true);
+		    }else{
+		      ArticleBridge.postVideoPortrait(false);
+		    }
+	      }
           player.fullscreen.toggle();
         }, 'fullscreen'); // Picture-in-Picture
 

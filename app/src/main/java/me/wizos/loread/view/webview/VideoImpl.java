@@ -70,14 +70,21 @@ public class VideoImpl { // implements IVideo, EventInterceptor
         }
     }
 
-    // FrameLayout frameLayout;
+    FrameLayout frameLayout;
+    private boolean oldActivityIsPortrait;
 
-    public void onShowCustomView(View view, WebChromeClient.CustomViewCallback callback) {
+    public void onShowCustomView(View view, boolean isPortrait, WebChromeClient.CustomViewCallback callback) {
         if (mActivity == null || mActivity.isFinishing()) {
             return;
         }
 
-        switchFullScreen(mActivity);
+        oldActivityIsPortrait = (mActivity.getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT);
+        if(isPortrait && !oldActivityIsPortrait){
+            mActivity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+        }else if(!isPortrait && oldActivityIsPortrait){
+            mActivity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+        }
+        // switchFullScreen(mActivity);
 
         Window mWindow = mActivity.getWindow();
         Pair<Integer, Integer> mPair;
@@ -94,17 +101,6 @@ public class VideoImpl { // implements IVideo, EventInterceptor
             mWindow.setFlags(WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED, WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED);
             mFlags.add(mPair);
         }
-
-        // if (videoView != null) {
-        //     callback.onCustomViewHidden();
-        //     return;
-        // }
-        // videoView = view;
-        // videoParentView.addView(videoView);
-        // mWebView.setVisibility(View.GONE);
-        // videoParentView.setVisibility(View.VISIBLE);
-        // mActivity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
-        // mCallback = callback;
 
         // KLog.e("设置" + mWebView  + "   "  + videoParentView);
         if (mWebView != null) {
@@ -123,23 +119,10 @@ public class VideoImpl { // implements IVideo, EventInterceptor
         videoParentView.addView(videoView, WindowManager.LayoutParams.MATCH_PARENT, WindowManager.LayoutParams.MATCH_PARENT);
         videoParentView.setVisibility(View.VISIBLE);
 
-        // frameLayout = (FrameLayout) view;
-        // KLog.i("A 宽度：" + frameLayout.getMeasuredWidth() + " ，高度：" + frameLayout.getMeasuredHeight());
-        // view.getViewTreeObserver().addOnGlobalLayoutListener(
-        //         new ViewTreeObserver.OnGlobalLayoutListener() {
-        //             @Override
-        //             public void onGlobalLayout() {
-        //                 view.getViewTreeObserver().removeOnGlobalLayoutListener(this);
-        //                 if( view instanceof FrameLayout){
-        //                     frameLayout = (FrameLayout) view;
-        //                     if( frameLayout.getChildCount() > 0 ){
-        //                         KLog.i("i 宽度：" + view.getWidth() + " ，高度：" + view.getHeight());
-        //                         KLog.i("G 宽度：" + frameLayout.getMeasuredWidth() + " ，高度：" + frameLayout.getMeasuredHeight());
-        //                         KLog.i("H 宽度：" + frameLayout.getChildAt(0).getMeasuredWidth() + " ，高度：" + frameLayout.getChildAt(0).getMeasuredHeight());
-        //                     }
-        //                 }
-        //             }
-        //         });
+        frameLayout = (FrameLayout) view;
+        View video = frameLayout.getFocusedChild();
+        KLog.i("i 宽度：" + view.getWidth() + " ，高度：" + view.getHeight());
+        KLog.i("k 宽度：" + video.getWidth() + " ，高度：" + video.getHeight());
 
 
         // KLog.e("设置" + mWebView.getVisibility()  + "   "  + videoParentView);
@@ -152,7 +135,14 @@ public class VideoImpl { // implements IVideo, EventInterceptor
             return;
         }
 
-        switchFullScreen(mActivity);
+        // switchFullScreen(mActivity);
+        if (oldActivityIsPortrait && mActivity.getResources().getConfiguration().orientation != Configuration.ORIENTATION_PORTRAIT) {
+            mActivity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+            // KLog.i("ToVmp","横屏");
+        } else if(!oldActivityIsPortrait && mActivity.getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT ){
+            mActivity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+            // KLog.i("ToVmp","竖屏");
+        }
 
         if (!mFlags.isEmpty()) {
             for (Pair<Integer, Integer> mPair : mFlags) {

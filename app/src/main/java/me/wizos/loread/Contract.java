@@ -30,7 +30,7 @@ public class Contract {
     public static final String HTTP = "http";
     public static final String HTTPS = "https";
 
-    public static final String isPortrait = "isPortrait";
+    public static final String ACTIVITY_IS_PORTRAIT = "activity_is_portrait";
 
     public static final String INOREADER_URL = "inoreader_url";
     // ACCOUNT_TYPE用于我们当前APP获取系统帐户的唯一标识，这个在account_preferences.xml中有，两处的声明必须是一致

@@ -144,6 +144,8 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
     private int articleNo;
     private String articleId;
 
+    private OkHttpClient imgHttpClient;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -656,51 +658,19 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
         intent.setData(Uri.parse(url));
         startActivity(intent);
     }
-    //
-    //@JavascriptInterface
-    //@Override
-    //public String get(String url) {
-    //    okhttp3.Request request = new okhttp3.Request.Builder().url(url).build();
-    //    Call call = HttpClientManager.i().simpleClient().newCall(request);
-    //    call.enqueue(new Callback() {
-    //        @Override
-    //        public void onFailure(@NotNull Call call, @NotNull IOException e) {
-    //
-    //        }
-    //
-    //        @Override
-    //        public void onResponse(@NotNull Call call, @NotNull okhttp3.Response response) throws IOException {
-    //            if(!response.isSuccessful()){
-    //                return;
-    //            }
-    //            String text = response.body().string();
-    //
-    //            articleHandler.post(new Runnable() {
-    //                @Override
-    //                public void run() {
-    //                    if (selectedWebView == null) {
-    //                        return;
-    //                    }
-    //
-    //                    selectedWebView.loadUrl("javascript:setTimeout( onGetSuccess('" + text + "'),1 )");
-    //                }
-    //            });
-    //        }
-    //    });
-    //}
 
-    // @JavascriptInterface
-    // @Override
-    // public String get(String url) throws IOException {
-    //     okhttp3.Request request = new okhttp3.Request.Builder().url(url).build();
-    //     Call call = HttpClientManager.i().simpleClient().newCall(request);
-    //     okhttp3.Response response = call.execute();
-    //     if(response.isSuccessful()){
-    //         return Objects.requireNonNull(response.body()).string();
-    //     }else {
-    //         return null;
-    //     }
-    // }
+    private static boolean videoIsPortrait = false;
+    @JavascriptInterface
+    @Override
+    public void postVideoPortrait(boolean isPortrait) {
+        videoIsPortrait = isPortrait;
+        articleHandler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                videoIsPortrait = false;
+            }
+        }, ViewConfiguration.getDoubleTapTimeout());
+    }
 
 
     private void initView() {
@@ -808,6 +778,7 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
         swipeRefreshLayoutS.setRefreshing(false);
         // 取消之前那篇文章的图片下载(但是如果回到之前那篇文章，怎么恢复下载呢？)
         OkGo.cancelTag(imgHttpClient, articleId);
+        // OkGo.cancelAll(imgHttpClient);
         articleNo = position;
 
         if (App.i().articlesAdapter != null && position < App.i().articlesAdapter.getItemCount()) {
@@ -930,17 +901,18 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
         @Override
         public void onShowCustomView(View view, CustomViewCallback callback) {
             super.onShowCustomView(view,callback);
-            KLog.i("进入全屏");
+            // KLog.i("进入全屏" + videoIsPortrait + " , " + (System.currentTimeMillis() - time));
             if (video != null) {
-                video.onShowCustomView(view, callback);
+                video.onShowCustomView(view, videoIsPortrait, callback);
             }
+            videoIsPortrait = false;
         }
 
         //表示退出全屏的时候
         @Override
         public void onHideCustomView() {
             super.onHideCustomView();
-            KLog.i("退出全屏");
+            // KLog.i("退出全屏");
             if (video != null) {
                 video.onHideCustomView();
             }
@@ -1652,8 +1624,6 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
         return mColorfulBuilder;
     }
 
-
-    private OkHttpClient imgHttpClient;
 
 
     @Override

@@ -46,5 +46,6 @@ public interface ArticleBridge {
 
     void openAudio(String link);
 
+    void postVideoPortrait(boolean isPortrait);
     // String get(String url) throws IOException;
 }

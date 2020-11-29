@@ -339,13 +339,13 @@ public class WebActivity extends BaseActivity implements WebBridge {
 
     @Override
     protected void onSaveInstanceState(Bundle outState) {
-        outState.putBoolean(Contract.isPortrait, isPortrait);
+        outState.putBoolean(Contract.ACTIVITY_IS_PORTRAIT, isPortrait);
         KLog.i("自动保存，是否为竖屏：" + isPortrait);
         super.onSaveInstanceState(outState);
     }
 
     private void onRecoveryInstanceState(@NonNull Bundle outState) {
-        if (outState.getBoolean(Contract.isPortrait, true)) {
+        if (outState.getBoolean(Contract.ACTIVITY_IS_PORTRAIT, true)) {
             portrait();
         } else {
             landscape();
