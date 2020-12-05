@@ -11,7 +11,7 @@ import me.wizos.loread.bean.ttrss.request.GetFeeds;
 import me.wizos.loread.bean.ttrss.request.GetHeadlines;
 import me.wizos.loread.bean.ttrss.request.GetSavedItemIds;
 import me.wizos.loread.bean.ttrss.request.GetUnreadItemIds;
-import me.wizos.loread.bean.ttrss.request.LoginParam;
+import me.wizos.loread.bean.ttrss.request.Login;
 import me.wizos.loread.bean.ttrss.request.SubscribeToFeed;
 import me.wizos.loread.bean.ttrss.request.UnsubscribeFeed;
 import me.wizos.loread.bean.ttrss.request.UpdateArticle;
@@ -37,7 +37,7 @@ public interface LoreadService {
     @Headers("Accept: application/json")
     @POST("plugins.local/loread/")
     Call<TinyResponse<TTRSSLoginResult>> login(
-            @NonNull @Body LoginParam loginParam
+            @NonNull @Body Login loginParam
     );
 
     @Headers("Accept: application/json")

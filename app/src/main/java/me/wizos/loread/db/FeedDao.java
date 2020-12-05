@@ -117,6 +117,6 @@ public interface FeedDao {
     @Query("DELETE FROM feed WHERE uid = (:uid) AND id = :id")
     void deleteById(String uid, String id);
 
-    @Query("DELETE FROM feed WHERE uid = (:uid)")
-    void clear(String... uid);
+    @Query("DELETE FROM feed WHERE uid = :uid")
+    void clear(String uid);
 }

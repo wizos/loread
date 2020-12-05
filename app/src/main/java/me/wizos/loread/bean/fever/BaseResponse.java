@@ -28,4 +28,14 @@ public class BaseResponse {
     public boolean isSuccessful(){
         return auth == 1;
     }
+
+    @Override
+    public String toString() {
+        return "BaseResponse{" +
+                "apiVersion=" + apiVersion +
+                ", auth=" + auth +
+                ", lastRefreshedOnTime=" + lastRefreshedOnTime +
+                ", error='" + error + '\'' +
+                '}';
+    }
 }

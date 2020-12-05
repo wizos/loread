@@ -129,6 +129,28 @@
         </LinearLayout>
 
         <LinearLayout
+            android:onClick="loginFever"
+            android:layout_margin="10dp"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+            <ImageView
+                android:id="@+id/provider_fever_logo"
+                android:src="@drawable/logo_fever"
+                android:layout_marginEnd="5dp"
+                android:layout_width="40dp"
+                android:layout_height="40dp" />
+            <Button
+                android:id="@+id/provider_fever_title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:clickable="false"
+                android:textAllCaps="false"
+                android:text="@string/fever"/>
+        </LinearLayout>
+
+        <LinearLayout
             android:onClick="loginTinyRSS"
             android:layout_margin="10dp"
             android:orientation="horizontal"
@@ -149,6 +171,7 @@
                 android:textAllCaps="false"
                 android:text="@string/tinytinyrss"/>
         </LinearLayout>
+
 
 <!--        <RelativeLayout-->
 <!--            android:layout_margin="10dp"-->

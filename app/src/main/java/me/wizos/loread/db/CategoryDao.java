@@ -69,6 +69,6 @@ public interface CategoryDao {
     @Transaction
     void delete(Category... categories);
 
-    @Query("DELETE FROM category WHERE uid = (:uid)")
-    void clear(String... uid);
+    @Query("DELETE FROM category WHERE uid = :uid")
+    void clear(String uid);
 }

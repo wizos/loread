@@ -5,7 +5,6 @@ import java.util.List;
 import me.wizos.loread.App;
 import me.wizos.loread.bean.Enclosure;
 import me.wizos.loread.db.Article;
-import me.wizos.loread.db.CoreDB;
 import me.wizos.loread.network.api.BaseApi;
 import me.wizos.loread.utils.ArticleUtil;
 
@@ -45,14 +44,14 @@ public class ArticleItem {
 
 
     public Article convert(BaseApi.ArticleChanger articleChanger) {
-        Article article = CoreDB.i().articleDao().getById(App.i().getUser().getId(),String.valueOf(id));
-        if( article != null ){
-            article.setLink(link);
-            article.setFeedId(feed_id);
-            return article;
-        }
-        //Article article = new Article();
-        article = new Article();
+        // Article article = CoreDB.i().articleDao().getById(App.i().getUser().getId(),String.valueOf(id));
+        // if( article != null ){
+        //     article.setLink(link);
+        //     article.setFeedId(feed_id);
+        //     return article;
+        // }
+        // article = new Article();
+        Article article = new Article();
         article.setId(String.valueOf(id));
 
         String tmpContent = ArticleUtil.getOptimizedContent(article.getLink(), content);

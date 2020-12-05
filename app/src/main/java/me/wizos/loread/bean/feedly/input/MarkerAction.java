@@ -2,6 +2,7 @@ package me.wizos.loread.bean.feedly.input;
 
 import com.google.gson.annotations.SerializedName;
 
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -32,13 +33,13 @@ public class MarkerAction {
     private String type;
 
     @SerializedName("entryIds")
-    private List<String> entryIds;
+    private Collection<String> entryIds;
 
     @SerializedName("feedIds")
-    private List<String> feedIds;
+    private Collection<String> feedIds;
 
     @SerializedName("categoryIds")
-    private List<String> categoryIds;
+    private Collection<String> categoryIds;
 
 //    @SerializedName("lastReadEntryId")
 //    private String lastReadEntryId;
@@ -63,15 +64,15 @@ public class MarkerAction {
         this.type = type;
     }
 
-    public List<String> getEntryIds() {
+    public Collection<String> getEntryIds() {
         return entryIds;
     }
 
-    public void setEntryIds(List<String> entryIds) {
+    public void setEntryIds(Collection<String> entryIds) {
         this.entryIds = entryIds;
     }
 
-    public List<String> getFeedIds() {
+    public Collection<String> getFeedIds() {
         return feedIds;
     }
 
@@ -79,7 +80,7 @@ public class MarkerAction {
         this.feedIds = feedIds;
     }
 
-    public List<String> getCategoryIds() {
+    public Collection<String> getCategoryIds() {
         return categoryIds;
     }
 

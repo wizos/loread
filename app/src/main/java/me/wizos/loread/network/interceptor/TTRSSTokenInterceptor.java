@@ -2,7 +2,7 @@ package me.wizos.loread.network.interceptor;
 
 import android.text.TextUtils;
 
-import com.socks.library.KLog;
+import com.elvishew.xlog.XLog;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -63,9 +63,9 @@ public class TTRSSTokenInterceptor implements Interceptor {
         String bodyString = buffer.clone().readString(charset);
         if (!TextUtils.isEmpty(bodyString)) {
             if (bodyString.length() > 88) {
-                KLog.i("body->" + bodyString.substring(0, 88));
+                XLog.d("body->" + bodyString.substring(0, 88));
             } else {
-                KLog.i("body->" + bodyString);
+                XLog.d("body->" + bodyString);
             }
         }
 
@@ -76,13 +76,13 @@ public class TTRSSTokenInterceptor implements Interceptor {
             // 通过一个特定的接口获取新的token，此处要用到同步的retrofit请求
             LoginResult loginResult = ((TinyRSSApi)App.i().getApi()).login(user.getUserId(),user.getUserPassword());
             if( loginResult.isSuccess() ){
-                KLog.e("TokenInterceptor授权过期：成功重新登录 " + loginResult.getData() );
+                XLog.d("TokenInterceptor授权过期：成功重新登录 " + loginResult.getData() );
                 user.setAuth(loginResult.getData());
                 CoreDB.i().userDao().update(user);
                 App.i().getAuthApi().setAuthorization(user.getAuth());
 
                 String hhh = Tool.bodyToString(request.body());
-                KLog.e("修改前后的 string：" + hhh);
+                XLog.d("修改前后的 string：" + hhh);
                 Pattern pattern = Pattern.compile("\"sid\"\\s*:\\s*\"(.*?)\"");
                 hhh = pattern.matcher(hhh).replaceAll("\"sid\":\"" + user.getAuth() +"\"");
 
@@ -90,7 +90,7 @@ public class TTRSSTokenInterceptor implements Interceptor {
                         .newBuilder()
                         .post(RequestBody.create(MediaType.parse("application/json;charset=UTF-8"), hhh));
 
-                KLog.e("修改前后的 string：" + hhh);
+                XLog.d("修改前后的 string：" + hhh);
 
                 return chain.proceed(builder.build());
             }

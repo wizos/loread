@@ -15,4 +15,12 @@ public class GroupFeeds {
     public String getFeedIds() {
         return feedIds;
     }
+
+    @Override
+    public String toString() {
+        return "GroupFeeds{" +
+                "groupId=" + groupId +
+                ", feedIds='" + feedIds + '\'' +
+                '}';
+    }
 }

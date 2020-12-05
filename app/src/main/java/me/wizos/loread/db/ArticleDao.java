@@ -31,14 +31,14 @@ public interface ArticleDao {
     @Query("SELECT * FROM article WHERE uid = :uid AND id = :id LIMIT 1")
     Article getById(String uid, String id);
 
-//    @Query("SELECT * FROM article WHERE uid = :uid " +
-//            "ORDER BY crawlDate DESC,pubDate DESC")
-//    Cursor getAll2(String uid);
 //    @Query("SELECT * FROM article " +
 //            "WHERE uid = :uid " +
 //            "AND (article.readStatus = " + App.STATUS_UNREAD  + " OR article.readStatus = " + App.STATUS_UNREADING  + " OR (article.readStatus = " + App.STATUS_READED +" AND article.readUpdated > :timeMillis) ) " +
 //            "ORDER BY crawlDate DESC,pubDate DESC")
 //    DataSource.Factory<Integer,Article> getUnread2(String uid,long timeMillis);
+
+    @Query("SELECT * FROM article WHERE uid = :uid")
+    List<Article> getAll(String uid);
 
     @Query("SELECT * FROM article " +
             "WHERE uid = :uid " +
@@ -188,6 +188,9 @@ public interface ArticleDao {
     // https://stackoverflow.com/questions/4057254/how-do-you-match-multiple-column-in-a-table-with-sqlite-fts3
     @Query("SELECT * FROM article WHERE uid = :uid AND title LIKE '%' || :keyword || '%' UNION SELECT article.* FROM article JOIN articlefts ON article.uid == articleFts.uid AND article.id == articleFts.id WHERE article.uid = :uid AND articlefts.content MATCH :keyword" )
     List<Article> search(String uid, String keyword);
+
+    @Query("SELECT * FROM article WHERE uid = :uid AND title LIKE '%' || :keyword || '%' UNION SELECT * FROM article WHERE uid = :uid AND content LIKE '%' || :keyword || '%' " )
+    List<Article> search2(String uid, String keyword);
 
     //@Query("DELETE FROM article WHERE uid = :uid AND pubDate < :timeMillis")
     //void clearPubDate(String uid,long timeMillis);
@@ -348,6 +351,9 @@ public interface ArticleDao {
     @Transaction
     void update(List<Article> articles);
 
+    @Query("UPDATE Article SET crawlDate = pubDate WHERE uid = :uid")
+    void updateCrawlDateToPubDate(String uid);
+
     /**
      * 将上次操作之后所有新同步文章的爬取时间都重置
      * @param uid
@@ -355,7 +361,7 @@ public interface ArticleDao {
      * @param targetTimeMillis
      */
     @Query("UPDATE Article SET crawlDate = :targetTimeMillis WHERE uid = :uid AND crawlDate > :lastMarkTimeMillis ")
-    void updateIdleCrawlDate(String uid,long lastMarkTimeMillis, long targetTimeMillis);
+    void updateIdleCrawlDate(String uid, long lastMarkTimeMillis, long targetTimeMillis);
 
     @Query("DELETE FROM article WHERE uid = :uid AND feedId = :feedId AND starStatus = " + App.STATUS_UNSTAR)
     void deleteUnStarByFeedId(String uid, String feedId);
@@ -377,6 +383,6 @@ public interface ArticleDao {
     @Query("SELECT * FROM article WHERE uid = :uid AND readStatus = " + App.STATUS_READED + " AND starStatus = " + App.STATUS_UNSTAR + " AND crawlDate < :time" )
     List<Article> getReadedUnstarLtTime(String uid, long time);
 
-    @Query("DELETE FROM article WHERE uid = (:uid)")
-    void clear(String... uid);
+    @Query("DELETE FROM article WHERE uid = :uid")
+    void clear(String uid);
 }

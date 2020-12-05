@@ -65,6 +65,7 @@
     <string name="login_failure_please_try_again">Login failed, please try again</string>
     <string name="login_failure_please_check_account">Login failed, please check account and password</string>
     <string name="temporarily_not_supported">Temporarily not supported</string>
+    <string name="server_api_not_supported">%1$s does not support this function</string>
 
     <!-- Strings related to Settings -->
     <string name="main_toolbar_title_search">Search: </string>
@@ -86,8 +87,8 @@
     <string name="unable_to_find_app">No corresponding application found</string>
 
 
-    <!--下面这个还没有用到-->
     <string name="sync_article_content">1. Sync article content [%1$d / %2$d]</string>
+    <string name="sync_article_size">1. Sync article [%1$d]</string>
     <string name="sync_article_refs">2. Sync Article Info</string>
     <string name="sync_feed_info">3. Sync feed info</string>
 
@@ -140,10 +141,11 @@
 
     <string name="setting_down_img_title">Save traffic to download pictures</string>
     <string name="proxy">Proxy</string>
-    <!--<struserNamename="setting_inoreader_proxy_dialog_title">设置代理地址</string>-->
 
     <!--界面显示-->
     <string name="setting_auto_toggle_theme_title">Auto switch night theme</string>
+
+    <string name="enable_logging">Enable logging</string>
 
     <string name="other">Other</string>
     <!--操作-->
@@ -345,13 +347,13 @@
 
     <string name="article_title_is">article title is: </string>
 
-    <string name="pre_for_spreak">[Here is a pre]</string>
-    <string name="table_for_spreak">[Here is a table]</string>
-    <string name="frame_for_spreak">[Here is a frame]</string>
-    <string name="audio_for_spreak">[Here is a audio]</string>
-    <string name="video_for_spreak">[Here is a video]</string>
-    <string name="image_for_spreak">[Here is a image]</string>
-    <string name="link_for_spreak">[Here is a link]</string>
+    <string name="pre_for_speak">[Here is a pre]</string>
+    <string name="table_for_speak">[Here is a table]</string>
+    <string name="frame_for_speak">[Here is a frame]</string>
+    <string name="audio_for_speak">[Here is a audio]</string>
+    <string name="video_for_speak">[Here is a video]</string>
+    <string name="image_for_speak">[Here is a image]</string>
+    <string name="link_for_speak">[Here is a link]</string>
 
 
     <string name="pre_for_summary">" [pre] "</string>
@@ -363,13 +365,14 @@
 
     <string name="select_login_account">Select the logged-in account</string>
 
-    <string name="https_scheme">https://</string>
+    <string name="https_scheme" translatable="false">https://</string>
     <string name="inoreader_oauth">InoReader (OAuth)</string>
     <string name="inoreader_login">InoReader (Login)</string>
     <string name="inoreader_site_url">"Inoreader's url"</string>
-    <string name="inoreader_url">https://inoreader.com</string>
-    <string name="feedly">Feedly</string>
-    <string name="tinytinyrss">TinyTinyRSS</string>
+    <string name="inoreader_url" translatable="false">https://inoreader.com</string>
+    <string name="feedly" translatable="false">Feedly</string>
+    <string name="tinytinyrss" translatable="false">TinyTinyRSS</string>
+    <string name="fever" translatable="false">Fever</string>
     <string name="intro">Intro</string>
 
     <string name="need_to_access_inoreader_url_normally_hint">"This service requires you to have normal access to the Inoreader'url (see below)"</string>
@@ -418,4 +421,5 @@
     <string name="play_the_video">Play the video</string>
     <string name="play_the_audio">Play the audio</string>
 
+    <string name="save">save</string>
 </resources>

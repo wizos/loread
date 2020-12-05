@@ -5,10 +5,10 @@ import android.util.ArrayMap;
 
 import androidx.sqlite.db.SimpleSQLiteQuery;
 
+import com.elvishew.xlog.XLog;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
-import com.socks.library.KLog;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -66,7 +66,7 @@ public class ArticleActionConfig {
         }
     }
     private void exeRule(String uid, ArticleActionRule articleActionRule, long timeMillis){
-        KLog.e("用户："+ uid + " , " + articleActionRule);
+        XLog.d("执行Action规则："+ articleActionRule);
         if("all".equals(articleActionRule.getTarget())){
             String sql = "";
             if("contain".equals(articleActionRule.getJudge())){
@@ -128,7 +128,6 @@ public class ArticleActionConfig {
             }
         }else if(articleActionRule.getTarget().startsWith("feed/")){
             String feedUrl = articleActionRule.getTarget().substring(5);
-            KLog.e("被处理的feedUrl为：" + feedUrl);
             String sql = "";
             if("contain".equals(articleActionRule.getJudge())){
                 String[] keywords = articleActionRule.getValue().split("\\|");

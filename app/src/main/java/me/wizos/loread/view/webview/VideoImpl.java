@@ -29,8 +29,6 @@ import android.widget.FrameLayout;
 
 import androidx.core.util.Pair;
 
-import com.socks.library.KLog;
-
 import java.util.HashSet;
 import java.util.Set;
 
@@ -60,17 +58,6 @@ public class VideoImpl { // implements IVideo, EventInterceptor
         return isFullScreen;
     }
 
-    private void switchFullScreen(Activity mActivity) {
-        if (mActivity.getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT) {
-            mActivity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
-            KLog.i("ToVmp","横屏");
-        } else {
-            mActivity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
-            KLog.i("ToVmp","竖屏");
-        }
-    }
-
-    FrameLayout frameLayout;
     private boolean oldActivityIsPortrait;
 
     public void onShowCustomView(View view, boolean isPortrait, WebChromeClient.CustomViewCallback callback) {
@@ -118,14 +105,6 @@ public class VideoImpl { // implements IVideo, EventInterceptor
         }
         videoParentView.addView(videoView, WindowManager.LayoutParams.MATCH_PARENT, WindowManager.LayoutParams.MATCH_PARENT);
         videoParentView.setVisibility(View.VISIBLE);
-
-        frameLayout = (FrameLayout) view;
-        View video = frameLayout.getFocusedChild();
-        KLog.i("i 宽度：" + view.getWidth() + " ，高度：" + view.getHeight());
-        KLog.i("k 宽度：" + video.getWidth() + " ，高度：" + video.getHeight());
-
-
-        // KLog.e("设置" + mWebView.getVisibility()  + "   "  + videoParentView);
         mCallback = callback;
         isFullScreen = true;
     }

@@ -69,7 +69,7 @@
     <string name="login_failure_please_try_again">登录失败，请重新尝试</string>
     <string name="login_failure_please_check_account">登录失败，请检查账户与密码是否正确</string>
     <string name="temporarily_not_supported">暂时不支持</string>
-    
+    <string name="server_api_not_supported">%1$s 不支持此功能</string>
     
     <!-- Strings related to Settings -->
     <string name="main_toolbar_title_search">搜索：</string>
@@ -91,6 +91,7 @@
 
     <!--下面这个还没有用到-->
     <string name="sync_article_content">1 - 同步文章内容[%1$d / %2$d]</string>
+    <string name="sync_article_size">1 - 同步文章 [%1$d]</string>
     <string name="sync_article_refs">2 - 同步文章信息</string>
     <string name="sync_feed_info">3 - 同步订阅源信息</string>
     <string name="fetch_article_full_content">抓取文章全文</string>
@@ -143,6 +144,7 @@
     <!--界面显示-->
     <string name="setting_auto_toggle_theme_title">自动切换夜间主题</string>
 
+    <string name="enable_logging">启用日志记录</string>
 
     <string name="other">其他</string>
     <!--操作-->
@@ -340,13 +342,13 @@
 
     <string name="article_title_is">文章标题为：</string>
 
-    <string name="pre_for_spreak">[此处有代码]</string>
-    <string name="table_for_spreak">[此处有表格]</string>
-    <string name="frame_for_spreak">[此处有框架]</string>
-    <string name="audio_for_spreak">[此处有音频]</string>
-    <string name="video_for_spreak">[此处有视频]</string>
-    <string name="image_for_spreak">[此处有图片]</string>
-    <string name="link_for_spreak">[此处有链接]</string>
+    <string name="pre_for_speak">[此处有代码]</string>
+    <string name="table_for_speak">[此处有表格]</string>
+    <string name="frame_for_speak">[此处有框架]</string>
+    <string name="audio_for_speak">[此处有音频]</string>
+    <string name="video_for_speak">[此处有视频]</string>
+    <string name="image_for_speak">[此处有图片]</string>
+    <string name="link_for_speak">[此处有链接]</string>
 
     <string name="pre_for_summary">" [代码] "</string>
     <string name="table_for_summary">" [表格] "</string>
@@ -357,13 +359,9 @@
 
     <string name="select_login_account">选择已登录的账户</string>
 
-    <string name="https_scheme">https://</string>
     <string name="inoreader_oauth">InoReader (OAuth)</string>
     <string name="inoreader_login">InoReader (登录)</string>
     <string name="inoreader_site_url">Inoreader 网址</string>
-    <string name="inoreader_url">https://www.inoreader.com</string>
-    <string name="feedly">Feedly</string>
-    <string name="tinytinyrss">TinyTinyRSS</string>
     <string name="intro">简介</string>
 
     <string name="need_to_access_inoreader_url_normally_hint">该服务需要您能正常访问 Inoreader 官网(如下)</string>
@@ -410,4 +408,6 @@
     <string name="copy_download_url">复制下载地址</string>
     <string name="play_the_video">播放该视频</string>
     <string name="play_the_audio">播放该音频</string>
+
+    <string name="save">保存</string>
 </resources>

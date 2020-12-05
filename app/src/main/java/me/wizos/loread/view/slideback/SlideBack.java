@@ -17,26 +17,26 @@ public class SlideBack {
     // 使用WeakHashMap防止内存泄漏
     private static WeakHashMap<Activity, SlideBackManager> map = new WeakHashMap<>();
 
-//    /**
-//     * 注册
-//     *
-//     * @param activity 目标Act
-//     * @param callBack 回调
-//     */
-//    public static void register(Activity activity, SlideBackCallBack callBack) {
-//        register(activity, false, callBack);
-//    }
-//
-//    /**
-//     * 注册
-//     *
-//     * @param activity   目标Act
-//     * @param haveScroll 页面是否有滑动
-//     * @param callBack   回调
-//     */
-//    public static void register(Activity activity, boolean haveScroll, SlideBackCallBack callBack) {
-//        with(activity).haveScroll(haveScroll).callBack(callBack).register();
-//    }
+    // /**
+    //  * 注册
+    //  *
+    //  * @param activity 目标Act
+    //  * @param callBack 回调
+    //  */
+    // public static void register(Activity activity, SlideBackCallBack callBack) {
+    //     register(activity, false, callBack);
+    // }
+    //
+    // /**
+    //  * 注册
+    //  *
+    //  * @param activity   目标Act
+    //  * @param haveScroll 页面是否有滑动
+    //  * @param callBack   回调
+    //  */
+    // public static void register(Activity activity, boolean haveScroll, SlideBackCallBack callBack) {
+    //     with(activity).haveScroll(haveScroll).callBack(callBack).register();
+    // }
 
     /**
      * 注销

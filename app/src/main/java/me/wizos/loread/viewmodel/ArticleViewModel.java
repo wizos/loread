@@ -6,7 +6,7 @@ import androidx.paging.DataSource;
 import androidx.paging.LivePagedListBuilder;
 import androidx.paging.PagedList;
 
-import com.socks.library.KLog;
+import com.elvishew.xlog.XLog;
 
 import me.wizos.loread.App;
 import me.wizos.loread.db.Article;
@@ -41,7 +41,7 @@ public class ArticleViewModel extends ViewModel {
                     articleFactory = articleDao.getAllByUncategory(uid, timeMillis);
                 }
             } else {
-                KLog.e("获取到的分类：" + streamId );
+                XLog.i("获取到的分类：" + streamId );
                 if (streamStatus == App.STATUS_STARED) {
                     //String title = CoreDB.i().categoryDao().getTitleById(App.i().getUser().getId(),streamId);
                     String title = App.i().getUser().getStreamTitle();

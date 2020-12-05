@@ -107,22 +107,22 @@
 
         </me.wizos.loread.view.FriendlyCardView>
 
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:alpha="0.8"
-        android:ellipsize="end"
-        android:gravity="center"
-        android:maxLines="1"
-        android:text="@string/the_server_site_url_like"
-        android:textColor="@color/dark_background"
-        android:textSize="12dp"
-        android:visibility="gone"
-        app:layout_constraintEnd_toEndOf="@+id/inoreader_login_form"
-        app:layout_constraintHorizontal_bias="0.0"
-        app:layout_constraintStart_toStartOf="@+id/inoreader_login_form"
-        app:layout_constraintTop_toBottomOf="@+id/inoreader_login_form"
-        tools:ignore="MissingConstraints,SpUsage" />
+    <!--<TextView-->
+    <!--    android:layout_width="match_parent"-->
+    <!--    android:layout_height="wrap_content"-->
+    <!--    android:alpha="0.8"-->
+    <!--    android:ellipsize="end"-->
+    <!--    android:gravity="center"-->
+    <!--    android:maxLines="1"-->
+    <!--    android:text="@string/the_server_site_url_like"-->
+    <!--    android:textColor="@color/dark_background"-->
+    <!--    android:textSize="12dp"-->
+    <!--    android:visibility="gone"-->
+    <!--    app:layout_constraintEnd_toEndOf="@+id/inoreader_login_form"-->
+    <!--    app:layout_constraintHorizontal_bias="0.0"-->
+    <!--    app:layout_constraintStart_toStartOf="@+id/inoreader_login_form"-->
+    <!--    app:layout_constraintTop_toBottomOf="@+id/inoreader_login_form"-->
+    <!--    tools:ignore="MissingConstraints,SpUsage" />-->
 
     <ProgressBar
         android:id="@+id/inoreader_loading"

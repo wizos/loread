@@ -22,9 +22,9 @@ import com.afollestad.materialdialogs.DialogAction;
 import com.afollestad.materialdialogs.MaterialDialog;
 import com.afollestad.materialdialogs.simplelist.MaterialSimpleListAdapter;
 import com.afollestad.materialdialogs.simplelist.MaterialSimpleListItem;
+import com.elvishew.xlog.XLog;
 import com.hjq.toast.ToastUtils;
 import com.kyleduo.switchbutton.SwitchButton;
-import com.socks.library.KLog;
 
 import java.util.List;
 
@@ -51,11 +51,14 @@ public class SettingActivity extends BaseActivity {
     @Nullable
     @BindView(R.id.setting_auto_sync_sb)
     SwitchButton autoSyncSB;
+
     @Nullable
     @BindView(R.id.setting_auto_sync_on_wifi_sb)
     SwitchButton autoSyncOnWifiSB;
+
     @BindView(R.id.setting_auto_sync_on_wifi)
     View autoSyncOnWifi;
+
     @Nullable
     @BindView(R.id.setting_auto_sync_frequency)
     View autoSyncFrequency;
@@ -91,7 +94,7 @@ public class SettingActivity extends BaseActivity {
     }
 
     private void initView() {
-        SwitchButton downImgWifi, openLinkMode, autoToggleTheme;
+        SwitchButton downImgWifi, openLinkMode, autoToggleTheme, enableLogging;
         // autoSyncSB = findViewById(R.id.setting_auto_sync_sb);
         // autoSyncOnWifi.findViewById(R.id.setting_auto_sync_on_wifi_sb);
         // autoSyncFrequency.findViewById(R.id.setting_auto_sync_on_wifi_sb);
@@ -126,6 +129,9 @@ public class SettingActivity extends BaseActivity {
         autoToggleTheme = findViewById(R.id.setting_auto_toggle_theme_sb);
         autoToggleTheme.setChecked(App.i().getUser().isAutoToggleTheme());
 
+        enableLogging = findViewById(R.id.setting_enable_log_sb);
+        enableLogging.setChecked(CorePref.i().globalPref().getBoolean(Contract.ENABLE_LOGGING, false));
+
         TextView versionSummary = findViewById(R.id.setting_about_summary);
         PackageManager manager = this.getPackageManager();
         String title;
@@ -154,8 +160,6 @@ public class SettingActivity extends BaseActivity {
 
     public void onSBClick(View view) {
         SwitchButton v = (SwitchButton) view;
-        KLog.i("点击");
-
         User user = App.i().getUser();
         switch (v.getId()) {
             case R.id.setting_link_open_mode_sb:
@@ -166,6 +170,9 @@ public class SettingActivity extends BaseActivity {
                 break;
             case R.id.setting_down_img_sb:
                 user.setDownloadImgOnlyWifi(v.isChecked());
+                break;
+            case R.id.setting_enable_log_title:
+                CorePref.i().globalPref().putBoolean(Contract.ENABLE_LOGGING,v.isChecked());
                 break;
             default:
                 break;
@@ -205,7 +212,7 @@ public class SettingActivity extends BaseActivity {
                         //App.i().getUserBox().put(user);
                         CoreDB.i().userDao().update(user);
 
-                        KLog.i("选择了" + which);
+                        XLog.i("选择了" + which);
                         autoSyncFrequencySummary.setText(timeDescArray[which]);
                         dialog.dismiss();
                         return true; // allow selection
@@ -242,7 +249,7 @@ public class SettingActivity extends BaseActivity {
                         CoreDB.i().userDao().update(user);
 
                         clearBeforeDaySummary.setText(dayDescArray[which]);
-                        KLog.i("选择了" + which);
+                        XLog.i("选择了" + which);
                         dialog.dismiss();
                         return true;
                     }
@@ -347,7 +354,7 @@ public class SettingActivity extends BaseActivity {
 
     public void onClickSwitchUser(View view) {
         final List<User> users = CoreDB.i().userDao().loadAll();
-        KLog.i("点击切换账号：" + users );
+        XLog.i("点击切换账号：" + users );
         // 弹窗的适配器
         MaterialSimpleListAdapter adapter = new MaterialSimpleListAdapter(new MaterialSimpleListAdapter.Callback() {
             @Override
@@ -376,8 +383,10 @@ public class SettingActivity extends BaseActivity {
                 case Contract.PROVIDER_TINYRSS:
                     iconRefs = R.drawable.logo_tinytinyrss;
                     break;
+                case Contract.PROVIDER_FEVER:
+                    iconRefs = R.drawable.logo_fever;
+                    break;
             }
-
             adapter.add(new MaterialSimpleListItem.Builder(SettingActivity.this)
                     .content( user.getUserName())
                     .icon(iconRefs)
@@ -392,7 +401,7 @@ public class SettingActivity extends BaseActivity {
                 .build());
         adapter.add(new MaterialSimpleListItem.Builder(SettingActivity.this)
                 .content(R.string.esc_account)
-                //                .icon(R.drawable.ic_rename)
+                // .icon(R.drawable.ic_rename)
                 .backgroundColor(Color.TRANSPARENT)
                 .build());
         new MaterialDialog.Builder(this)
@@ -419,35 +428,34 @@ public class SettingActivity extends BaseActivity {
     }
 
 
-
     @Override
     protected Colorful.Builder buildColorful(Colorful.Builder mColorfulBuilder) {
         mColorfulBuilder
-//                .backgroundDrawable(R.id.swipe_layout, R.attr.root_view_bg)
+                // .backgroundDrawable(R.id.swipe_layout, R.attr.root_view_bg)
                 // 设置view的背景图片
                 .backgroundColor(R.id.setting_coordinator, R.attr.root_view_bg)
                 // 设置 toolbar
                 .backgroundColor(R.id.setting_toolbar, R.attr.topbar_bg)
-//                .textColor(R.id.setting_toolbar_count, R.attr.topbar_fg)
+                // .textColor(R.id.setting_toolbar_count, R.attr.topbar_fg)
                 // 设置文章信息
-//                .textColor(R.id.setting_sync_first_open_title, R.attr.setting_title)
-//                .textColor(R.id.setting_sync_all_starred_title, R.attr.setting_title)
-//                .textColor(R.id.setting_sync_frequency_title, R.attr.setting_title)
-//                .textColor(R.id.setting_sync_frequency_summary, R.attr.setting_tips)
+                // .textColor(R.id.setting_sync_first_open_title, R.attr.setting_title)
+                // .textColor(R.id.setting_sync_all_starred_title, R.attr.setting_title)
+                // .textColor(R.id.setting_sync_frequency_title, R.attr.setting_title)
+                // .textColor(R.id.setting_sync_frequency_summary, R.attr.setting_tips)
                 .textColor(R.id.setting_clear_day_title, R.attr.setting_title)
                 .textColor(R.id.setting_clear_day_summary, R.attr.setting_tips)
                 .textColor(R.id.setting_down_img_title, R.attr.setting_title)
 
-//                .textColor(R.id.setting_scroll_mark_title, R.attr.setting_title)
-//                .textColor(R.id.setting_scroll_mark_tips, R.attr.setting_tips)
-//                .textColor(R.id.setting_order_tagfeed_title, R.attr.setting_title)
-//                .textColor(R.id.setting_order_tagfeed_tips, R.attr.setting_tips)
-//                .textColor(R.id.setting_link_open_mode_tips, R.attr.setting_tips)
-//                .textColor(R.id.setting_cache_path_starred_title, R.attr.setting_title)
-//                .textColor(R.id.setting_cache_path_starred_summary, R.attr.setting_tips)
+                // .textColor(R.id.setting_scroll_mark_title, R.attr.setting_title)
+                // .textColor(R.id.setting_scroll_mark_tips, R.attr.setting_tips)
+                // .textColor(R.id.setting_order_tagfeed_title, R.attr.setting_title)
+                // .textColor(R.id.setting_order_tagfeed_tips, R.attr.setting_tips)
+                // .textColor(R.id.setting_link_open_mode_tips, R.attr.setting_tips)
+                // .textColor(R.id.setting_cache_path_starred_title, R.attr.setting_title)
+                // .textColor(R.id.setting_cache_path_starred_summary, R.attr.setting_tips)
                 .textColor(R.id.setting_link_open_mode_title, R.attr.setting_title)
-                .textColor(R.id.setting_license_title, R.attr.setting_title)
-                .textColor(R.id.setting_license_summary, R.attr.setting_tips)
+                // .textColor(R.id.setting_license_title, R.attr.setting_title)
+                // .textColor(R.id.setting_license_summary, R.attr.setting_tips)
                 .textColor(R.id.setting_about_title, R.attr.setting_title)
                 .textColor(R.id.setting_about_summary, R.attr.setting_tips);
         return mColorfulBuilder;

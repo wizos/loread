@@ -19,12 +19,14 @@ import java.io.IOException;
 import java.net.ConnectException;
 import java.net.SocketTimeoutException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
 import me.wizos.loread.App;
+import me.wizos.loread.Contract;
 import me.wizos.loread.R;
 import me.wizos.loread.activity.login.LoginResult;
 import me.wizos.loread.bean.feedly.input.EditFeed;
@@ -34,7 +36,7 @@ import me.wizos.loread.bean.ttrss.request.GetFeeds;
 import me.wizos.loread.bean.ttrss.request.GetHeadlines;
 import me.wizos.loread.bean.ttrss.request.GetSavedItemIds;
 import me.wizos.loread.bean.ttrss.request.GetUnreadItemIds;
-import me.wizos.loread.bean.ttrss.request.LoginParam;
+import me.wizos.loread.bean.ttrss.request.Login;
 import me.wizos.loread.bean.ttrss.request.SubscribeToFeed;
 import me.wizos.loread.bean.ttrss.request.UnsubscribeFeed;
 import me.wizos.loread.bean.ttrss.request.UpdateArticle;
@@ -65,7 +67,7 @@ import static me.wizos.loread.utils.StringUtils.getString;
  * Created by Wizos on 2019/2/8.
  */
 
-public class LoreadApi extends AuthApi<Feed, me.wizos.loread.bean.feedly.CategoryItem> implements LoginInterface{
+public class LoreadApi extends AuthApi<Feed, me.wizos.loread.bean.feedly.CategoryItem> implements ILogin {
     private LoreadService service;
     private static final String EXAMPLE_BASE_URL = "https://example.com";
     private String tempBaseUrl;
@@ -95,7 +97,7 @@ public class LoreadApi extends AuthApi<Feed, me.wizos.loread.bean.feedly.Categor
     }
 
     public LoginResult login(String accountId, String accountPd) throws IOException {
-        LoginParam loginParam = new LoginParam();
+        Login loginParam = new Login();
         loginParam.setUser(accountId);
         loginParam.setPassword(accountPd);
         TinyResponse<TTRSSLoginResult> loginResultTTRSSResponse = service.login(loginParam).execute().body();
@@ -107,10 +109,10 @@ public class LoreadApi extends AuthApi<Feed, me.wizos.loread.bean.feedly.Categor
         }
     }
 
-    public void login(String accountId, String accountPd,CallbackX cb){
-        LoginParam loginParam = new LoginParam();
-        loginParam.setUser(accountId);
-        loginParam.setPassword(accountPd);
+    public void login(String account, String password, CallbackX cb){
+        Login loginParam = new Login();
+        loginParam.setUser(account);
+        loginParam.setPassword(password);
         service.login(loginParam).enqueue(new retrofit2.Callback<TinyResponse<TTRSSLoginResult>>() {
             @Override
             public void onResponse(retrofit2.Call<TinyResponse<TTRSSLoginResult>> call, Response<TinyResponse<TTRSSLoginResult>> response) {
@@ -134,7 +136,7 @@ public class LoreadApi extends AuthApi<Feed, me.wizos.loread.bean.feedly.Categor
     }
 
     public void fetchUserInfo(CallbackX cb){
-        cb.onFailure("暂时不支持");
+        cb.onFailure(App.i().getString(R.string.server_api_not_supported, Contract.PROVIDER_LOREAD));
     }
 
     @Override
@@ -177,7 +179,7 @@ public class LoreadApi extends AuthApi<Feed, me.wizos.loread.bean.feedly.Categor
             FeedCategory feedCategoryTmp;
             while (feedItemsIterator.hasNext()) {
                 ttrssFeedItem = feedItemsIterator.next();
-                Feed feed = ttrssFeedItem.convert2Feed();
+                Feed feed = ttrssFeedItem.convert();
                 feed.setUid(uid);
                 feeds.add(feed);
                 feedCategoryTmp = new FeedCategory(uid, String.valueOf(ttrssFeedItem.getId()), String.valueOf(ttrssFeedItem.getCatId()));
@@ -317,7 +319,7 @@ public class LoreadApi extends AuthApi<Feed, me.wizos.loread.bean.feedly.Categor
 
     @Override
     public void renameTag(String tagId, String targetName, CallbackX cb) {
-        cb.onFailure("暂时不支持");
+        cb.onFailure(App.i().getString(R.string.server_api_not_supported, Contract.PROVIDER_LOREAD));
     }
 
     public void addFeed(EditFeed editFeed, CallbackX cb) {
@@ -347,7 +349,7 @@ public class LoreadApi extends AuthApi<Feed, me.wizos.loread.bean.feedly.Categor
 
     @Override
     public void renameFeed(String feedId, String renamedTitle, CallbackX cb) {
-        cb.onFailure("暂时不支持");
+        cb.onFailure(App.i().getString(R.string.server_api_not_supported, Contract.PROVIDER_LOREAD));
     }
 
     /**
@@ -364,7 +366,7 @@ public class LoreadApi extends AuthApi<Feed, me.wizos.loread.bean.feedly.Categor
 
     @Override
     public void editFeedCategories(List<me.wizos.loread.bean.feedly.CategoryItem> lastCategoryItems, EditFeed editFeed, CallbackX cb) {
-        cb.onFailure("暂时不支持");
+        cb.onFailure(App.i().getString(R.string.server_api_not_supported, Contract.PROVIDER_LOREAD));
     }
 
     public void unsubscribeFeed(String feedId,CallbackX cb) {
@@ -388,7 +390,7 @@ public class LoreadApi extends AuthApi<Feed, me.wizos.loread.bean.feedly.Categor
     }
 
 
-    private void markArticles(int field, int mode, List<String> ids,CallbackX cb) {
+    private void markArticles(int field, int mode, Collection<String> ids, CallbackX cb) {
         UpdateArticle updateArticle = new UpdateArticle(getAuthorization());
         updateArticle.setArticle_ids(StringUtils.join(",", ids));
         updateArticle.setField(field);
@@ -432,7 +434,7 @@ public class LoreadApi extends AuthApi<Feed, me.wizos.loread.bean.feedly.Categor
         });
     }
 
-    public void markArticleListReaded(List<String> articleIds,CallbackX cb) {
+    public void markArticleListReaded(Collection<String> articleIds,CallbackX cb) {
         markArticles(2, 0, articleIds, cb);
     }
 

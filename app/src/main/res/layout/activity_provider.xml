@@ -83,11 +83,21 @@
         <Button
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:drawableStart="@drawable/logo_ttrss_icon"
+            android:drawableStart="@drawable/logo_fever_icon"
+            android:minWidth="150dp"
+            android:onClick="loginFever"
+            android:textAllCaps="false"
+            android:text="@string/fever" />
+
+        <Button
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:drawableStart="@drawable/logo_tinytinyrss_icon"
             android:minWidth="150dp"
             android:onClick="loginTinyRSS"
             android:textAllCaps="false"
             android:text="@string/tinytinyrss" />
+
     </LinearLayout>
 
 <!--    android:textColor="?attr/lv_item_title_color"-->

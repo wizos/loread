@@ -25,7 +25,6 @@ public interface FeedCategoryDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     @Transaction
     void insert(FeedCategory... feedCategories);
-
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     @Transaction
     void insert(List<FeedCategory> feedCategories);
@@ -33,6 +32,9 @@ public interface FeedCategoryDao {
     @Update
     @Transaction
     void update(FeedCategory... feedCategories);
+    @Update
+    @Transaction
+    void update(List<FeedCategory> feedCategories);
 
     @Query("UPDATE feedcategory SET categoryId = :newCategoryId where  uid = :uid AND categoryId = :oldCategoryId")
     void updateCategoryId(String uid,String oldCategoryId, String newCategoryId);
@@ -45,6 +47,6 @@ public interface FeedCategoryDao {
     @Query("DELETE FROM feedcategory WHERE uid = (:uid) AND feedId = :feedId")
     void deleteByFeedId(String uid, String feedId);
 
-    @Query("DELETE FROM feedcategory WHERE uid = (:uid)")
-    void clear(String... uid);
+    @Query("DELETE FROM feedcategory WHERE uid = :uid")
+    void clear(String uid);
 }

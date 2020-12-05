@@ -30,27 +30,6 @@ public class FeedCategory {
         this.uid = uid;
         this.feedId = feedId;
         this.categoryId = categoryId;
-
-//        if( feedId.startsWith("feed/") ){
-//            this.feedId = feedId;
-//        }else {
-//            this.feedId = "feed/" + feedId;
-//        }
-//
-//        if( categoryId.startsWith("user/")){
-//            this.categoryId = categoryId;
-//        }else {
-//            this.categoryId = "user/" + categoryId;
-//        }
-    }
-
-    @Override
-    public String toString() {
-        return "FeedCategory{" +
-                "uid=" + uid +
-                ", categoryId='" + categoryId + '\'' +
-                ", feedId='" + feedId + '\'' +
-                '}';
     }
 
     @NonNull
@@ -77,25 +56,17 @@ public class FeedCategory {
     }
 
 
-    public void setCategoryId(String categoryId) {
-        if( !categoryId.startsWith("user/")){
-            this.categoryId  = "user/" + categoryId;
-        }else {
-            this.categoryId = categoryId;
-        }
-    }
-
-
     public String getFeedId() {
         return this.feedId;
     }
 
-
-    public void setFeedId(String feedId) {
-        if( !feedId.startsWith("feed/") ){
-            this.feedId = "feed/" + feedId;
-        }else {
-            this.feedId = feedId;
-        }
+    @Override
+    public String toString() {
+        return "FeedCategory{" +
+                "uid=" + uid +
+                ", categoryId='" + categoryId + '\'' +
+                ", feedId='" + feedId + '\'' +
+                '}';
     }
+
 }

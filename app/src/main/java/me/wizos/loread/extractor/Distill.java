@@ -15,8 +15,8 @@ import android.webkit.WebView;
 
 import androidx.annotation.NonNull;
 
+import com.elvishew.xlog.XLog;
 import com.just.agentweb.WebViewClient;
-import com.socks.library.KLog;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -58,7 +58,7 @@ import static me.wizos.loread.Contract.HTTPS;
 
 public class Distill {
     private static final String TAG = "Distill";
-    private static final int TIMEOUT = 30_000; // 30 秒 30_000
+    private static final int TIMEOUT = 15_000; // 30 秒 30_000
     private String url;
     private String keyword;
     private Listener dispatcher;
@@ -66,6 +66,7 @@ public class Distill {
     private Call call;
     private WebViewS webViewS;
     private Handler handler;
+    private Document document;
 
     public Distill(@NotNull String url, @Nullable String keyword, @NotNull Listener callback) {
         this.url = url;
@@ -98,12 +99,19 @@ public class Distill {
         this.handler = new Handler(Looper.getMainLooper(), new Handler.Callback() {
             @Override
             public boolean handleMessage(@NonNull Message msg) {
-                KLog.e("handleMessage：" + msg.what);
+                XLog.e("处理超时：" + msg.what);
                 if(msg.what != TIMEOUT){
                     return false; //返回true 不对msg进行进一步处理
                 }
-                cancel();
-                callback.onFailure(App.i().getString(R.string.timeout));
+                if(document == null){
+                    dispatcher.onFailure(App.i().getString(R.string.timeout));
+                }else {
+                    try {
+                        readability(document);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
                 return true;
             }
         });
@@ -115,12 +123,12 @@ public class Distill {
         Request request = new Request.Builder().url(url).tag(TAG).build();
         call = HttpClientManager.i().simpleClient().newCall(request);
 
-        // KLog.e("获取全文");
+        XLog.d("开始用 OkHttp 获取全文");
         call.enqueue(new Callback() {
             @Override
             public void onFailure(@NotNull Call call, @NotNull IOException e) {
-                // KLog.e("获取全文2：" );
-                getByWebView();
+                XLog.d("OkHttp 获取全文失败，开始用 WebView 获取全文");
+                dispatcher.onFailure(App.i().getString(R.string.not_responding));
             }
             @Override
             public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
@@ -131,10 +139,9 @@ public class Distill {
                     if( mediaType != null ){
                         charset = DataUtil.getCharsetFromContentType(mediaType.toString());
                     }
-                    Document document = Jsoup.parse(responseBody.byteStream(), charset, url);
-                    document.getElementsByTag("script").remove();
-                    // KLog.e("获取全文1：" + keyword);
-                    // KLog.e("获取全文1：" + keyword + document.body().text() );
+                    document = Jsoup.parse(responseBody.byteStream(), charset, url);
+                    // document.getElementsByTag("script").remove();
+                    XLog.d("OkHttp 获取全文成功：" + keyword + " = " +  document.body().html() );
                     if(!document.body().text().contains(keyword)){
                         getByWebView();
                     }else {
@@ -160,7 +167,7 @@ public class Distill {
                     @JavascriptInterface
                     @Override
                     public void getHtml(String html) throws IOException {
-                        // KLog.e("获取全文2：" + html );
+                        XLog.d("WebView 获取全文成功：" + html );
                         if(!StringUtils.isEmpty(html)){
                             readability(Jsoup.parse(html, url));
                         }else {
@@ -176,9 +183,9 @@ public class Distill {
 
     private void readability(Document doc) throws IOException{
         doc.outputSettings().prettyPrint(false);
-        // KLog.i("获取易读，keyword：" + keyword);
+        XLog.i("易读，keyword：" + keyword);
         ExtractPage extractPage =  getContentWithKeyword(url, doc, keyword);
-        // KLog.e("获取易读，原文：" + content);
+        // XLog.e("获取易读，原文：" + content);
         if(!StringUtils.isEmpty(extractPage.getMsg())){
             dispatcher.onFailure( extractPage.getMsg() );
         }else if(StringUtils.isEmpty(extractPage.getContent())){
@@ -197,7 +204,7 @@ public class Distill {
         if(rule == null){
             rule = ArticleExtractConfig.i().getRuleByCssSelector(doc);
         }
-        // KLog.i("抓取规则："  + uri.getHost() + " ==  " + rule );
+        // XLog.i("抓取规则："  + uri.getHost() + " ==  " + rule );
         if(rule == null){
             Element newDoc = new Extractor(doc).getContentElementWithKeyword(keyword);
             if(newDoc == null){
@@ -248,10 +255,10 @@ public class Distill {
         }
 
         if( !StringUtils.isEmpty(rule.getContent()) ){
-            // KLog.i("提取规则", "正文规则：" + rule.getContent() );
+            // XLog.i("提取规则", "正文规则：" + rule.getContent() );
             Elements contentElements = doc.select(rule.getContent());
             if (!StringUtils.isEmpty(rule.getContentStrip())) {
-                // KLog.i("提取规则", "正文过滤：" + rule.getContentStrip() );
+                // XLog.i("提取规则", "正文过滤：" + rule.getContentStrip() );
                 // 移除不需要的内容，注意规则为空
                 contentElements.select(rule.getContentStrip()).remove();
             }
@@ -260,7 +267,7 @@ public class Distill {
                 Bindings bindings = new SimpleBindings();
                 bindings.put("content", contentElements.html());
                 ScriptUtil.i().eval(rule.getContentTrim(), bindings);
-                // KLog.i("提取规则", "正文处理：" + rule.getContentTrim() );
+                // XLog.i("提取规则", "正文处理：" + rule.getContentTrim() );
                 return (String)bindings.get("content");
             }
             return contentElements.html().trim();
@@ -277,14 +284,14 @@ public class Distill {
             String scheme = request.getUrl().getScheme();
             if (scheme.equalsIgnoreCase(HTTP) || scheme.equalsIgnoreCase(HTTPS)) {
                 String url = request.getUrl().toString().toLowerCase();
-                // KLog.e("重定向地址：" + url );
+                // XLog.e("重定向地址：" + url );
                 // 有广告的请求数据，我们直接返回空数据，注：不能直接返回null
                 if (AdBlock.i().isAd(url) || url.endsWith(".css")) { //
                     return new WebResourceResponse(null, null, null);
                 }
 
                 String newUrl = LinkRewriteConfig.i().getRedirectUrl(url);
-                // KLog.i("重定向地址：" + url + " -> " + newUrl);
+                // XLog.i("重定向地址：" + url + " -> " + newUrl);
                 if(!TextUtils.isEmpty(newUrl) && !url.equalsIgnoreCase(newUrl)){
                     return super.shouldInterceptRequest(view, new WebResourceRequest() {
                         @Override
@@ -345,6 +352,11 @@ public class Distill {
     public interface Listener {
         void onResponse(String content);
         void onFailure(String msg);
+
+
+        // void onTimeout();
+        // void onNotResponse();
+        // void onNoTextFound();
     }
 
     public interface Bridge {

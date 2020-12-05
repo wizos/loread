@@ -77,17 +77,15 @@ function handleAudio(){
 function handleVideo(){
 	$('video').each(function() {
 		var video = $(this);
-		//video.addClass("video-lozad");
 		video.attr("data-src", video.attr("src"));
 		video.removeAttr("src");
 	})
 	lozad('video', {load: function(el) {
 		new Plyr(el, PlyrConfig);
-		//$(el).wrap('<div class="video_wrap"></div>');
 	}}).observe();
 }
 
-// 针对 iframe 标签做处理
+// 处理 iframe,embed 标签
 function handleFrame(){
 	$('iframe').each(function() {
 		var frame = $(this);
@@ -123,6 +121,13 @@ function addFrameClickEvent(frame){
 		}
 	});
 }
+
+function handleTable(){
+	$('table').each(function() {
+		$(this).wrap('<div class="table_wrap"></div>');
+	});
+}
+
 // 见：https://www.ithmz.com/tencent-video-without-advertisement.html
 // 示例：https://v.qq.com/x/page/t0922htc5no.html, https://v.qq.com/txp/iframe/player.html?vid=t0922htc5no
 function qqVideoRemoveAd(el) {
@@ -138,7 +143,7 @@ function qqVideoRemoveAd(el) {
 	$.ajax({
 		async : true,
 		url : infoUrl,
-		dataType : "jsonp", // 返回的数据类型，设置为JSONP方式
+		dataType : "jsonp", // 返回的数据类型设置为JSONP
 		success: function(response){
 			var vurl = 'https://ugcws.video.gtimg.com/' + response.vl.vi[0].fn + "?vkey=" + response.vl.vi[0].fvkey;
 			var videoHtml = '<video controls src="' + vurl + '" poster="https://puui.qpic.cn/qqvideo_ori/0/' + vids + '_496_280/0"></video>';
@@ -156,15 +161,6 @@ function bilibiliVideoHighQuality(el) {
 		el.src = el.src + "&high_quality=1&danmaku=1";
 	}
 }
-
-
-function handleTable(){
-	$('table').each(function() {
-		$(this).wrap('<div class="table_wrap"></div>');
-	});
-}
-
-
 
 function loadOnInner(url){
 	var flags = ["music.163.com/outchain/player","player.bilibili.com/player.html","bilibili.com/blackboard/html5mobileplayer.html","player.youku.com","open.iqiyi.com","letv.com","sohu.com","fpie1.com/#/video","fpie2.com/#/video","share.polyv.net","www.google.com/maps/embed","youtube.com/embed"];
@@ -208,7 +204,7 @@ function onImageError(imgId) {
 		image.attr('src', IMAGE_HOLDER_IMAGE_ERROR_URL);
 	}
 }
-//产生一个hash值，只有数字，规则和java的hashcode规则相同
+//产生数字hash值，规则和java的hashcode相同
 function hashCode(str){
 	var h = 0;
 	var len = str.length;

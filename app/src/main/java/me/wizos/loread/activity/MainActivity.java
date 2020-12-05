@@ -40,8 +40,9 @@ import androidx.work.WorkManager;
 import com.afollestad.materialdialogs.MaterialDialog;
 import com.afollestad.materialdialogs.simplelist.MaterialSimpleListAdapter;
 import com.afollestad.materialdialogs.simplelist.MaterialSimpleListItem;
+import com.elvishew.xlog.XLog;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
-import com.hjq.permissions.OnPermission;
+import com.hjq.permissions.OnPermissionCallback;
 import com.hjq.permissions.Permission;
 import com.hjq.permissions.XXPermissions;
 import com.hjq.toast.ToastUtils;
@@ -50,7 +51,6 @@ import com.kyleduo.switchbutton.SwitchButton;
 import com.lxj.xpopup.XPopup;
 import com.lxj.xpopup.enums.PopupAnimation;
 import com.lxj.xpopup.interfaces.OnSelectListener;
-import com.socks.library.KLog;
 import com.yanzhenjie.recyclerview.OnItemClickListener;
 import com.yanzhenjie.recyclerview.OnItemLongClickListener;
 import com.yanzhenjie.recyclerview.OnItemMenuClickListener;
@@ -150,7 +150,7 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
                     .addTag(SyncWorker.TAG)
                     .build();
             WorkManager.getInstance(this).enqueueUniquePeriodicWork(SyncWorker.TAG, ExistingPeriodicWorkPolicy.KEEP,syncRequest);
-            KLog.i("SyncWorker Id: " + syncRequest.getId());
+            XLog.i("SyncWorker Id: " + syncRequest.getId());
         }
 
         //Constraints.Builder builder = new Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED);
@@ -159,7 +159,7 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
         //        .addTag(SyncWorker.TAG)
         //        .build();
         //WorkManager.getInstance(this).enqueueUniquePeriodicWork(SyncWorker.TAG, ExistingPeriodicWorkPolicy.KEEP,syncRequest);
-        //KLog.i("SyncWorker Id: " + syncRequest.getId());
+        //XLog.i("SyncWorker Id: " + syncRequest.getId());
 
         LiveEventBus.get(SyncWorker.SYNC_TASK_START, Boolean.class)
                 .observeSticky(this, new Observer<Boolean>() {
@@ -168,7 +168,7 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
                         if (!swipeRefreshLayoutS.isEnabled() || !startSyncTask) {
                             return;
                         }
-                        KLog.i("【刷新中】");
+                        XLog.i("同步中");
                         Constraints.Builder builder = new Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED);
                         OneTimeWorkRequest oneTimeWorkRequest = new OneTimeWorkRequest.Builder(SyncWorker.class)
                                 .setConstraints(builder.build())
@@ -182,7 +182,7 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
                 .observeSticky(this, new Observer<Boolean>() {
                     @Override
                     public void onChanged(Boolean isSyncing) {
-                        KLog.e("任务状态："  + isSyncing );
+                        XLog.e("任务状态："  + isSyncing );
                         swipeRefreshLayoutS.setRefreshing(false);
                         if(isSyncing){
                             swipeRefreshLayoutS.setEnabled(false);
@@ -224,15 +224,15 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
                 //.constantRequest() //可设置被拒绝后继续申请，直到用户授权或者永久拒绝
                 //.permission(Permission.SYSTEM_ALERT_WINDOW) //支持请求6.0悬浮窗权限8.0请求安装权限
                 .permission(Permission.Group.STORAGE) //不指定权限则自动获取清单中的危险权限
-                .request(new OnPermission() {
+                .request(new OnPermissionCallback() {
                     @Override
-                    public void hasPermission(List<String> granted, boolean isAll) {
+                    public void onGranted(List<String> permissions, boolean all) {
                     }
 
                     @Override
-                    public void noPermission(List<String> denied, boolean quick) {
-                        for (String id : denied) {
-                            KLog.e("无法获取权限" + id);
+                    public void onDenied(List<String> permissions, boolean never) {
+                        for (String id : permissions) {
+                            XLog.w("无法获取权限：" + id);
                         }
                         ToastUtils.show(getString(R.string.plz_grant_permission_tips));
                     }
@@ -304,7 +304,7 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
         if (!swipeRefreshLayoutS.isEnabled()) {
             return;
         }
-        KLog.i("【刷新中】");
+        XLog.i("下拉刷新");
         Constraints.Builder builder = new Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED);
         OneTimeWorkRequest oneTimeWorkRequest = new OneTimeWorkRequest.Builder(SyncWorker.class)
                 .setConstraints(builder.build())
@@ -329,7 +329,7 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
      * App.streamId 至少包含 1 个状态： Reading-list
      */
     protected void refreshData() { // 获取 App.articleList , 并且根据 App.articleList 的到未读数目
-        //KLog.e("refreshData：" + App.i().getUser().getStreamId() + " = " + App.i().getUser().getStreamStatus() + "   " + App.i().getUser().getUserId());
+        //XLog.e("refreshData：" + App.i().getUser().getStreamId() + " = " + App.i().getUser().getStreamStatus() + "   " + App.i().getUser().getUserId());
         getArtData();
         refreshIcon.setVisibility(View.GONE);
     }
@@ -353,16 +353,16 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
             public void onChanged(PagedList<Article> articles) {
                 loadViewByData( articles.size() );
                 articlesAdapter.submitList(articles);
-                // KLog.e("更新列表数据 C：" + articles);
+                // XLog.e("更新列表数据 C：" + articles);
                 // if( articlesAdapter.getCurrentList() != null ){
-                //     KLog.e("更新列表数据 A : " + articlesAdapter.getCurrentList().getLastKey()  + " == "+ articlesAdapter.getCurrentList().getLoadedCount() +  " , " + (linearLayoutManager.findLastVisibleItemPosition()-1) );
+                //     XLog.e("更新列表数据 A : " + articlesAdapter.getCurrentList().getLastKey()  + " == "+ articlesAdapter.getCurrentList().getLoadedCount() +  " , " + (linearLayoutManager.findLastVisibleItemPosition()-1) );
                 // }else {
-                //     KLog.e("更新列表数据 B");
+                //     XLog.e("更新列表数据 B");
                 // }
             }
         });
         articleListView.scrollToPosition(0);
-        // KLog.e("更新列表数据 A  , " + articlesAdapter.getItemCount() );
+        // XLog.e("更新列表数据 A  , " + articlesAdapter.getItemCount() );
     }
 
     private void loadViewByData(int size) {
@@ -370,7 +370,7 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
         getSupportActionBar().setTitle(App.i().getUser().getStreamTitle());
         countTips.setText( getResources().getQuantityString(R.plurals.articles_count, size, size ) );
 
-        // KLog.i("【loadViewByData】" + App.i().getUser().getStreamId()+ "--" + App.i().getUser().getStreamTitle() + "--" + App.i().getUser().getStreamStatus() + "--" + toolbar.getTitle() + articlesAdapter.getItemCount());
+        // XLog.i("【loadViewByData】" + App.i().getUser().getStreamId()+ "--" + App.i().getUser().getStreamTitle() + "--" + App.i().getUser().getStreamStatus() + "--" + toolbar.getTitle() + articlesAdapter.getItemCount());
         if (articlesAdapter == null) { // || articlesAdapter.getItemCount() == 0
             // vPlaceHolder.setVisibility(View.VISIBLE);
             articleListView.setVisibility(View.GONE);
@@ -415,7 +415,7 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
     }
 
     public void renameTag(final String renamedTagTitle, Collection category) {
-        KLog.i("renameTag", renamedTagTitle);
+        XLog.i("renameTag", renamedTagTitle);
         if (renamedTagTitle.equals("") || category.getTitle().equals(renamedTagTitle)) {
             return;
         }
@@ -530,20 +530,20 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
             public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
                 super.onScrollStateChanged(recyclerView, newState);
                 articlesAdapter.setLastPos(linearLayoutManager.findLastVisibleItemPosition()-1);
-                //KLog.i("【滚动】" + ((RecyclerView.LayoutParams) recyclerView.getChildAt(1).getLayoutParams()).getViewAdapterPosition() + " = "+  linearLayoutManager.findFirstVisibleItemPosition() + " , " + linearLayoutManager.findLastVisibleItemPosition());
+                //XLog.i("【滚动】" + ((RecyclerView.LayoutParams) recyclerView.getChildAt(1).getLayoutParams()).getViewAdapterPosition() + " = "+  linearLayoutManager.findFirstVisibleItemPosition() + " , " + linearLayoutManager.findLastVisibleItemPosition());
                 if (!autoMarkReaded) {
                     return;
                 }
                 //  || RecyclerView.SCROLL_STATE_SETTLING == newState
-                //KLog.i("滚动：" + newState);
+                //XLog.i("滚动：" + newState);
                 if (RecyclerView.SCROLL_STATE_DRAGGING == newState && scrollIndex == null) {
                     scrollIndex = new Integer[2];
                     scrollIndex[0] = ((RecyclerView.LayoutParams) recyclerView.getChildAt(0).getLayoutParams()).getViewAdapterPosition();
-                    KLog.i("滚动开始：" + scrollIndex[0] + " = "+  linearLayoutManager.findFirstVisibleItemPosition() );
+                    XLog.i("滚动开始：" + scrollIndex[0] + " = "+  linearLayoutManager.findFirstVisibleItemPosition() );
                 } else if (RecyclerView.SCROLL_STATE_IDLE == newState && scrollIndex != null) {
                     scrollIndex[1] = ((RecyclerView.LayoutParams) recyclerView.getChildAt(0).getLayoutParams()).getViewAdapterPosition();
                     new MarkListReadedAsyncTask().execute(scrollIndex);
-                    KLog.i("滚动结束：" + scrollIndex[1]  + " = "+  linearLayoutManager.findFirstVisibleItemPosition() );
+                    XLog.i("滚动结束：" + scrollIndex[1]  + " = "+  linearLayoutManager.findFirstVisibleItemPosition() );
                     scrollIndex = null;
                 }
             }
@@ -554,7 +554,7 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
             @Override
             public void onCreateMenu(SwipeMenu leftMenu, SwipeMenu rightMenu, int position) {
                 Article article = articlesAdapter.get(position);
-                //KLog.e("创建菜单: " + position + ", " + (article==null) + ", " +  articlesAdapter.getCurrentList().getLastKey() + " , " + articlesAdapter.getCurrentList().getLoadedCount()  );
+                //XLog.e("创建菜单: " + position + ", " + (article==null) + ", " +  articlesAdapter.getCurrentList().getLastKey() + " , " + articlesAdapter.getCurrentList().getLoadedCount()  );
                 if(article==null){
                     return;
                 }
@@ -563,7 +563,7 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
                 int width = getResources().getDimensionPixelSize(R.dimen.dp_80);
                 int margin = getResources().getDimensionPixelSize(R.dimen.dp_30);
 
-                // KLog.e("添加左右菜单" + position );
+                // XLog.e("添加左右菜单" + position );
                 // 1. MATCH_PARENT 自适应高度，保持和Item一样高;  2. 指定具体的高，比如80; 3. WRAP_CONTENT，自身高度，不推荐;
                 int height = ViewGroup.LayoutParams.MATCH_PARENT;
 
@@ -600,13 +600,13 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
 
             @Override
             public void onCloseLeft(int position) {
-                KLog.i("onCloseLeft：" + position + "  ");
+                XLog.i("onCloseLeft：" + position + "  ");
                 toggleStarState(position);
             }
 
             @Override
             public void onCloseRight(int position) {
-                KLog.i("onCloseRight：" + position + "  ");
+                XLog.i("onCloseRight：" + position + "  ");
                 toggleReadState(position);
             }
         });
@@ -621,12 +621,12 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
                 int direction = menuBridge.getDirection();
 
                 if (direction == SwipeRecyclerView.RIGHT_DIRECTION) {
-                    KLog.i("onItemClick  onCloseRight：" + position + "  ");
+                    XLog.i("onItemClick  onCloseRight：" + position + "  ");
                     if (position > -1) {
                         toggleReadState(position);
                     }
                 } else if (direction == SwipeRecyclerView.LEFT_DIRECTION) {
-                    KLog.i("onItemClick  onCloseLeft：" + position + "  ");
+                    XLog.i("onItemClick  onCloseLeft：" + position + "  ");
                     if (position > -1) {
                         toggleStarState(position);
                     }
@@ -647,7 +647,7 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
 
                 String articleId = articlesAdapter.get(position).getId();
 
-                KLog.e("点击文章，进入详情页" + "，位置：" + position + "，文章ID：" + articleId + "    ");
+                XLog.i("点击文章，进入详情页" + "，位置：" + position + "，文章ID：" + articleId);
                 intent.putExtra("articleId", articleId);
                 // 下标从 0 开始
                 intent.putExtra("articleNo", position);
@@ -667,7 +667,7 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
 
 //    private CategoryViewModel categoryViewModel;
 //    public void onTagIconClicked(View view) {
-//        KLog.i("tag按钮被点击");
+//        XLog.i("tag按钮被点击");
 //        tagBottomSheetDialog.show();
 //        if(categoryViewModel == null){
 //            categoryViewModel = new ViewModelProvider(this).get(CategoryViewModel.class);
@@ -749,7 +749,7 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
                     public void run() {
                         tagListAdapter.setParents(categoryListTemp);
                         tagListAdapter.notifyDataChanged();
-                        KLog.i("tag按钮被点击");
+                        XLog.i("tag按钮被点击");
                     }
                 });
             }
@@ -792,7 +792,7 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
 //                    public void run() {
 //                        tagListAdapter.setParents(categoryListTemp);
 //                        tagListAdapter.notifyDataChanged();
-//                        KLog.i("tag按钮被点击");
+//                        XLog.i("tag按钮被点击");
 //                    }
 //                });
 //            }
@@ -834,7 +834,7 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
                     App.i().getUser().setStreamId( tagListAdapter.getGroup(groupPosition).getId().replace("\"", "")  );
                     App.i().getUser().setStreamTitle( tagListAdapter.getGroup(groupPosition).getTitle() );
                     App.i().getUser().setStreamType( App.TYPE_GROUP );
-                    //KLog.i("【 TagList 被点击】" + App.i().getUser().toString());
+                    //XLog.i("【 TagList 被点击】" + App.i().getUser().toString());
                     refreshData();
                 } else {
                     int childPosition = tagListAdapter.childItemPosition(adapterPosition);
@@ -851,7 +851,7 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
         tagListView.setOnItemLongClickListener(new OnItemLongClickListener() {
             @Override
             public void onItemLongClick(View view, int adapterPosition) {
-                // KLog.e("被长安，view的id是" + allArticleHeaderView.getId() + "，parent的id" + parent.getId() + "，Tag是" + allArticleHeaderView.getCategoryById() + "，位置是" + tagListView.getPositionForView(allArticleHeaderView));
+                // XLog.e("被长安，view的id是" + allArticleHeaderView.getId() + "，parent的id" + parent.getId() + "，Tag是" + allArticleHeaderView.getCategoryById() + "，位置是" + tagListView.getPositionForView(allArticleHeaderView));
                 // 根据原position判断该item是否是parent item
                 if (tagListAdapter.isParentItem(adapterPosition)) {
                     int parentPosition = tagListAdapter.parentItemPosition(adapterPosition);
@@ -894,18 +894,18 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
         private void handleArticle(int i){
             try {
                 int retry = 0;
-                KLog.e("以上/以下处理");
+                XLog.e("以上/以下处理");
                 Article article = articlesAdapter.get(i);
                 if( article == null ){
                     //articlesAdapter.load(i);
                     do {
-                        //KLog.i("文章为空：" + i );
+                        //XLog.i("文章为空：" + i );
                         Thread.sleep(500);
                         retry ++;
-                        KLog.e("重新获取文章");
+                        XLog.e("重新获取文章");
                         article = articlesAdapter.get(i);
                     }while ( article == null && retry < 3 );
-                    //KLog.e("文章是否为空：" + (article==null)  + "   ,  " + (articlesAdapter.getItem(i)==null) );
+                    //XLog.e("文章是否为空：" + (article==null)  + "   ,  " + (articlesAdapter.getItem(i)==null) );
                     if( article == null ){ return; }
                 }
 
@@ -918,7 +918,7 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
                     publishProgress(i);
                 }
             } catch (IllegalStateException | InterruptedException e) {
-                KLog.e("获取数据错误");
+                XLog.e("获取数据错误");
                 e.printStackTrace();
             }
         }
@@ -987,7 +987,7 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
          */
         @Override
         protected void onProgressUpdate(Integer... progress) {
-            //KLog.e("更新进度" + progress[0] );
+            //XLog.e("更新进度" + progress[0] );
             // 应该是去通知对应的那个 item 改变。
             articlesAdapter.notifyItemChanged(progress[0]);
         }
@@ -1041,7 +1041,7 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
         }
         // String articleId = articlesAdapter.getItem(position).getId();
         // Article article = CoreDB.i().articleDao().getById(App.i().getUser().getId(),articleId);
-        KLog.e("切换已读状态" );
+        XLog.e("切换已读状态" );
         Article article = articlesAdapter.get(position);
         if (autoMarkReaded && article.getReadStatus() == App.STATUS_UNREAD) {
             article.setReadStatus(App.STATUS_UNREADING);
@@ -1058,7 +1058,7 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
                 public void onFailure(Object error) {
                     article.setReadStatus(App.STATUS_READED);
                     CoreDB.i().articleDao().update(article);
-                    KLog.e("失败的原因是：" + error );
+                    XLog.e("失败的原因是：" + error );
                 }
             });
         } else {
@@ -1076,7 +1076,7 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
                 }
             });
         }
-//        KLog.e("修改状态：" + position + "  "  + article);
+//        XLog.e("修改状态：" + position + "  "  + article);
         articlesAdapter.notifyItemChanged(position);
     }
 
@@ -1086,7 +1086,7 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
             return;
         }
 
-        KLog.e("切换加星状态" );
+        XLog.e("切换加星状态" );
         Article article = articlesAdapter.get(position);
 
         if (article.getStarStatus() == App.STATUS_STARED) {
@@ -1137,7 +1137,7 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
         super.onActivityResult(requestCode, resultCode, intent);
-        //KLog.e("------------------------------------------" + resultCode + requestCode);
+        //XLog.e("------------------------------------------" + resultCode + requestCode);
         switch (resultCode) {
             case App.ActivityResult_ArtToMain:
                 //在文章页的时候读到了第几篇文章，好让列表也自动将该项置顶
@@ -1150,7 +1150,7 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
                 articlesAdapter.notifyDataSetChanged();
                 break;
             case App.ActivityResult_SearchLocalArtsToMain:
-                //KLog.e("被搜索的词是" + intent.getExtras().getString("searchWord"));
+                //XLog.e("被搜索的词是" + intent.getExtras().getString("searchWord"));
                 showSearchResult(intent.getExtras().getString("searchWord"));
                 articlesAdapter.notifyDataSetChanged();
                 break;
@@ -1197,7 +1197,7 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
         SwitchButton autoMarkWhenScrolling = quickSettingDialog.findViewById(R.id.auto_mark_when_scrolling_switch);
         autoMarkWhenScrolling.setChecked(App.i().getUser().isMarkReadOnScroll());
         autoMarkWhenScrolling.setOnCheckedChangeListener((compoundButton, b) -> {
-            KLog.e("onClickedAutoMarkWhenScrolling图标被点击");
+            XLog.e("onClickedAutoMarkWhenScrolling图标被点击");
             User user = App.i().getUser();
             user.setMarkReadOnScroll(b);
             CoreDB.i().userDao().update(user);

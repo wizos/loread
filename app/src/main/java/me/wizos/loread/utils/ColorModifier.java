@@ -34,22 +34,27 @@ public class ColorModifier {
         if (App.i().getUser().getThemeMode() == App.THEME_DAY) {
             return modifyDocColor(doc, new RGB(255, 255, 255));
         } else {
-            // return new RGB(69, 73, 82);
+            // new RGB(69, 73, 82);
             return modifyDocColor(doc, new RGB(32, 43, 47));
         }
     }
 
-    private Document modifyDocColor(Document doc, RGB themeColor) {
+    public Document modifyDocColor(Document doc, RGB themeColor) {
         Elements elements;
+        // 先去掉背景色
         doc.select("[bgcolor]").removeAttr("bgcolor");
-        elements = doc.select("[style*=color]");
+        elements = doc.select("[style*=background]");
         for (Element element : elements) {
             tmp = element.attr("style");
-            // 先去掉背景色
             m = Pattern.compile("background(\\s*:|-color).*?(;|$)", Pattern.CASE_INSENSITIVE).matcher(tmp);
             tmp = m.replaceAll("");
             element.attr("style", tmp);
+        }
 
+        // 翻转字色
+        elements = doc.select("[style*=color]");
+        for (Element element : elements) {
+            tmp = element.attr("style");
             m = Pattern.compile("(^|\\s*)color\\s*:(.*?)($|;)", Pattern.CASE_INSENSITIVE).matcher(tmp);
             if (m.find()) {
                 tmp = m.replaceFirst("color:" + modifyColor(themeColor, m.group(2)) + ";");
@@ -57,6 +62,7 @@ public class ColorModifier {
             }
         }
 
+        // 翻转字色
         elements = doc.select("[color]");
         for (Element element : elements) {
             element.attr("style", "color:" + modifyColor(themeColor, element.attr("color")));

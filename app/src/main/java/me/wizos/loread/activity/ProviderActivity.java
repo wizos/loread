@@ -29,8 +29,7 @@ import java.util.List;
 import me.wizos.loread.App;
 import me.wizos.loread.Contract;
 import me.wizos.loread.R;
-import me.wizos.loread.activity.login.LoginInoReaderActivity;
-import me.wizos.loread.activity.login.LoginTinyRSSActivity;
+import me.wizos.loread.activity.login.LoginActivity;
 import me.wizos.loread.bean.Token;
 import me.wizos.loread.db.CoreDB;
 import me.wizos.loread.db.CorePref;
@@ -85,6 +84,9 @@ public class ProviderActivity extends BaseActivity {
                 case Contract.PROVIDER_TINYRSS:
                     iconRefs = R.drawable.logo_tinytinyrss;
                     break;
+                case Contract.PROVIDER_FEVER:
+                    iconRefs = R.drawable.logo_fever;
+                    break;
             }
             adapter.add(new MaterialSimpleListItem.Builder(this)
                     .content( user.getUserName())
@@ -98,11 +100,6 @@ public class ProviderActivity extends BaseActivity {
                 .show();
     }
 
-    public void loginInoReader(View view){
-        Intent intent = new Intent(this, LoginInoReaderActivity.class);
-        startActivityForResult(intent, App.ActivityResult_LoginPageToProvider);
-        overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
-    }
     public void oauthInoReader(View view) {
         new MaterialDialog.Builder(this)
                 .title(R.string.inoreader_site_url)
@@ -140,12 +137,28 @@ public class ProviderActivity extends BaseActivity {
         startActivity(intent);
         overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
     }
+
+    public void loginInoReader(View view){
+        // Intent intent = new Intent(this, LoginInoReaderActivity.class);
+        Intent intent = new Intent(this, LoginActivity.class);
+        intent.setAction(Contract.PROVIDER_INOREADER);
+        startActivityForResult(intent, App.ActivityResult_LoginPageToProvider);
+        overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
+    }
     public void loginTinyRSS(View view) {
-        Intent intent = new Intent(this, LoginTinyRSSActivity.class);
+        // Intent intent = new Intent(this, LoginTinyRSSActivity.class);
+        Intent intent = new Intent(this, LoginActivity.class);
+        intent.setAction(Contract.PROVIDER_TINYRSS);
         startActivityForResult(intent, App.ActivityResult_LoginPageToProvider);
         overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
     }
 
+    public void loginFever(View view) {
+        Intent intent = new Intent(this, LoginActivity.class);
+        intent.setAction(Contract.PROVIDER_FEVER);
+        startActivityForResult(intent, App.ActivityResult_LoginPageToProvider);
+        overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
+    }
     // TODO: 2019/2/16  跳转到自建RSS页（导入OPML，热门RSS）
     // public void selectLocalRSS(View view) {
     // }

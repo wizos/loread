@@ -6,6 +6,7 @@ import android.text.TextUtils;
 import androidx.annotation.NonNull;
 import androidx.collection.ArrayMap;
 
+import com.elvishew.xlog.XLog;
 import com.hjq.toast.ToastUtils;
 import com.jeremyliao.liveeventbus.LiveEventBus;
 import com.lzy.okgo.exception.HttpException;
@@ -15,6 +16,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -63,7 +65,7 @@ import static me.wizos.loread.utils.StringUtils.getString;
  * @author Wizos on 2019/2/15.
  */
 
-public class InoReaderApi extends OAuthApi<Feed, CategoryItem> implements LoginInterface{
+public class InoReaderApi extends OAuthApi<Feed, CategoryItem> implements ILogin {
     public static final String APP_ID = "1000001277";
     public static final String APP_KEY = "8dByWzO4AYi425yx5glICKntEY2g3uJo";
     public static final String OFFICIAL_BASE_URL = "https://www.inoreader.com/";
@@ -103,10 +105,6 @@ public class InoReaderApi extends OAuthApi<Feed, CategoryItem> implements LoginI
 
     private InoReaderService service;
 
-    public InoReaderApi() {
-        this(App.i().getUser().getHost());
-    }
-
     // 首次登录/授权时，根据前端传递对的host实例化api
     public InoReaderApi(String baseUrl) {
         if (TextUtils.isEmpty(baseUrl)) {
@@ -117,7 +115,7 @@ public class InoReaderApi extends OAuthApi<Feed, CategoryItem> implements LoginI
         if (!tempBaseUrl.endsWith("/")) {
             tempBaseUrl = tempBaseUrl + "/";
         }
-        KLog.i(" tempBaseUrl 地址：" + tempBaseUrl  + baseUrl );
+        KLog.i(" tempBaseUrl 地址：" + tempBaseUrl + " - " + baseUrl );
         Retrofit retrofit = new Retrofit.Builder()
                 .baseUrl(tempBaseUrl) // 设置网络请求的Url地址, 必须以/结尾
                 .addConverterFactory(StringConverterFactory.create())
@@ -132,14 +130,14 @@ public class InoReaderApi extends OAuthApi<Feed, CategoryItem> implements LoginI
         return tempBaseUrl;
     }
 
-    public void login(String accountId, String accountPd, CallbackX cb){
-        service.login(accountId, accountPd).enqueue(new retrofit2.Callback<String>() {
+    public void login(String account, String password, CallbackX cb){
+        service.login(account, password).enqueue(new retrofit2.Callback<String>() {
             @Override
             public void onResponse(retrofit2.Call<String> call, Response<String> response) {
                 if(response.isSuccessful()){
                     String result = response.body();
                     LoginResult loginResult = new LoginResult(result);
-                    KLog.e("登录结果：" + result + " , " + loginResult.getError() + loginResult.getAuth());
+                    XLog.i("登录结果：" + result + " , " + loginResult.getError() + loginResult.getAuth());
 
                     if (!loginResult.success) {
                         cb.onFailure(loginResult.getError());
@@ -271,19 +269,19 @@ public class InoReaderApi extends OAuthApi<Feed, CategoryItem> implements LoginI
         service.getUserInfo(getAuthorization()).enqueue(new Callback<UserInfo>() {
             @Override
             public void onResponse(@NonNull Call<UserInfo> call,@NonNull Response<UserInfo> response) {
-                KLog.e("获取响应" + getAuthorization() + response.message() );
-                KLog.e("获取响应" + response );
+                XLog.i("获取响应" + getAuthorization() + response.message() );
+                XLog.i("获取响应" + response );
                 if( response.isSuccessful()){
-                    KLog.e("获取响应成功" );
+                    XLog.i("获取响应成功" );
                     cb.onSuccess(response.body().getUser());
                 }else {
-                    KLog.e("获取响应失败");
+                    XLog.i("获取响应失败");
                     cb.onFailure("获取失败：" + response.message());
                 }
             }
             @Override
             public void onFailure(@NonNull Call<UserInfo> call,@NonNull Throwable t) {
-                KLog.e("响应失败");
+                XLog.i("响应失败");
                 cb.onFailure("获取失败：" + t.getMessage() + t.toString());
                 t.printStackTrace();
             }
@@ -296,7 +294,7 @@ public class InoReaderApi extends OAuthApi<Feed, CategoryItem> implements LoginI
             long startSyncTimeMillis = System.currentTimeMillis();
             String uid = App.i().getUser().getId();
 
-            KLog.e("3 - 同步订阅源信息");
+            XLog.i("3 - 同步订阅源信息");
             LiveEventBus.get(SyncWorker.SYNC_PROCESS_FOR_SUBTITLE).post( App.i().getString(R.string.sync_feed_info) );
 
             // 获取分类
@@ -341,14 +339,14 @@ public class InoReaderApi extends OAuthApi<Feed, CategoryItem> implements LoginI
             coverSaveCategories(categories);
             coverFeedCategory(feedCategories);
 
-            KLog.e("2 - 同步文章信息");
+            XLog.i("2 - 同步文章信息");
             LiveEventBus.get(SyncWorker.SYNC_PROCESS_FOR_SUBTITLE).post( App.i().getString(R.string.sync_article_refs) );
             // 获取未读资源
             HashSet<String> unreadRefsList = fetchUnreadRefs();
             // 获取加星资源
             HashSet<String> staredRefsList = fetchStaredRefs();
 
-            KLog.e("1 - 同步文章内容");
+            XLog.i("1 - 同步文章内容");
             ArrayList<HashSet<String>> refsList = splitRefs(unreadRefsList, staredRefsList);
             int allSize = refsList.get(0).size() + refsList.get(1).size() + refsList.get(2).size();
 
@@ -404,7 +402,7 @@ public class InoReaderApi extends OAuthApi<Feed, CategoryItem> implements LoginI
             // 提示更新完成
             LiveEventBus.get(SyncWorker.NEW_ARTICLE_NUMBER).post(allSize);
         } catch (IOException e) {
-            KLog.e("错误");
+            XLog.e("错误");
             e.printStackTrace();
             if (e.getMessage().equals("401")) {
                 ToastUtils.show("网络异常，请重新登录");
@@ -617,7 +615,7 @@ public class InoReaderApi extends OAuthApi<Feed, CategoryItem> implements LoginI
             @Override
             public void onResponse(Call<String> call, Response<String> response) {
                 if (response.isSuccessful()) {
-                    KLog.e("添加成功" + response.body().toString());
+                    XLog.i("添加成功" + response.body().toString());
                     cb.onSuccess("添加成功");
                 } else {
                     cb.onFailure("响应失败");
@@ -701,7 +699,7 @@ public class InoReaderApi extends OAuthApi<Feed, CategoryItem> implements LoginI
     }
 
 
-    public void markArticleListReaded(List<String> articleIDs,CallbackX cb) {
+    public void markArticleListReaded(Collection<String> articleIDs, CallbackX cb) {
         FormBody.Builder builder = new FormBody.Builder();
         builder.add("a", "user/-/state/com.google/read");
         for (String articleID : articleIDs) {
@@ -844,7 +842,7 @@ public class InoReaderApi extends OAuthApi<Feed, CategoryItem> implements LoginI
      * @return
      */
     public ArrayList<HashSet<String>> splitRefs(HashSet<String> tempUnreadIds, HashSet<String> tempStarredIds) {
-//        KLog.e("【reRefs1】云端未读" + tempUnreadIds.size() + "，云端加星" + tempStarredIds.size());
+//        XLog.i("【reRefs1】云端未读" + tempUnreadIds.size() + "，云端加星" + tempStarredIds.size());
         int total = Math.min(tempUnreadIds.size(), tempStarredIds.size());
 
         HashSet<String> reUnreadUnstarRefs;
@@ -865,7 +863,7 @@ public class InoReaderApi extends OAuthApi<Feed, CategoryItem> implements LoginI
         refsList.add(reUnreadUnstarRefs);
         refsList.add(reReadStarredRefs);
         refsList.add(reUnreadStarredRefs);
-//        KLog.e("【reRefs2】" + reUnreadUnstarRefs.size() + "--" + reReadStarredRefs.size() + "--" + reUnreadStarredRefs.size());
+//        XLog.i("【reRefs2】" + reUnreadUnstarRefs.size() + "--" + reReadStarredRefs.size() + "--" + reUnreadStarredRefs.size());
         return refsList;
     }
 }

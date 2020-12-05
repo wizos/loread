@@ -15,4 +15,11 @@ public class SavedItemIds extends BaseResponse {
             return savedItemIds.split(",");
         }
     }
+
+    @Override
+    public String toString() {
+        return "SavedItemIds{" +
+                "savedItemIds='" + savedItemIds + '\'' +
+                '}';
+    }
 }

@@ -3,13 +3,13 @@
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/tiny_rss_container"
+    android:id="@+id/ttrss_container"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".activity.login.LoginTinyRSSActivity">
 
     <com.google.android.material.appbar.AppBarLayout
-        android:id="@+id/tiny_rss_appBarLayout"
+        android:id="@+id/ttrss_appBarLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
@@ -18,7 +18,7 @@
         app:layout_constraintTop_toTopOf="parent">
 
         <androidx.appcompat.widget.Toolbar
-            android:id="@+id/tiny_rss_toolbar"
+            android:id="@+id/ttrss_toolbar"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
             android:background="?attr/topbar_bg"
@@ -35,30 +35,12 @@
     <!--当ScrollView没有fillVeewport=“true”时, 里面的元素(比如LinearLayout)会按照wrap_content来计算(不论它是否设了"fill_parent")-->
     <!--而如果LinearLayout的元素设置了fill_parent,那么也是不管用的，因为LinearLayout依赖里面的元素，而里面的元素又依赖LinearLayout,这样自相矛盾-->
     <!--所以里面元素设置了fill_parent，也会当做wrap_content来计算.-->
-
-<!--    <LinearLayout-->
-<!--        android:id="@+id/login_form"-->
-<!--        android:layout_width="match_parent"-->
-<!--        android:layout_height="wrap_content"-->
-<!--        android:gravity="center_horizontal"-->
-<!--        android:orientation="vertical"-->
-<!--        app:layout_constraintBottom_toBottomOf="parent"-->
-<!--        app:layout_constraintTop_toBottomOf="@+id/tiny_rss_appBarLayout"-->
-<!--        tools:layout_editor_absoluteX="0dp">-->
-
-<!--        <Space-->
-<!--            android:layout_width="0dp"-->
-<!--            android:layout_height="0dp"-->
-<!--            android:layout_weight="0" />-->
-
-        <!-- Using app:cardMaxElevation as margin. -->
-
         <me.wizos.loread.view.FriendlyCardView
-            android:id="@+id/tiny_rss_login_form"
+            android:id="@+id/ttrss_login_form"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/tiny_rss_appBarLayout"
+            app:layout_constraintTop_toBottomOf="@+id/ttrss_appBarLayout"
             android:layout_marginStart="30dp"
             android:layout_marginEnd="30dp"
             app:cardMaxElevation="10dp">
@@ -70,12 +52,12 @@
                 android:orientation="vertical">
 
                 <me.zhanghai.android.materialedittext.MaterialTextInputLayout
-                    android:id="@+id/tiny_rss_host_layout"
+                    android:id="@+id/ttrss_baseurl_layout"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     app:errorEnabled="true">
                     <me.zhanghai.android.materialedittext.MaterialEditText
-                        android:id="@+id/tiny_rss_host_edittext"
+                        android:id="@+id/ttrss_baseurl_edittext"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:hint="@string/server_site_url"
@@ -85,13 +67,13 @@
                 </me.zhanghai.android.materialedittext.MaterialTextInputLayout>
 
                 <me.zhanghai.android.materialedittext.MaterialTextInputLayout
-                    android:id="@+id/tiny_rss_username_layout"
+                    android:id="@+id/ttrss_account_layout"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     app:errorEnabled="true">
 
                     <me.zhanghai.android.materialedittext.MaterialEditText
-                        android:id="@+id/tiny_rss_username_edittext"
+                        android:id="@+id/ttrss_account_edittext"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:hint="@string/account"
@@ -100,13 +82,13 @@
                 </me.zhanghai.android.materialedittext.MaterialTextInputLayout>
 
                 <me.zhanghai.android.materialedittext.MaterialTextInputLayout
-                    android:id="@+id/tiny_rss_password_layout"
+                    android:id="@+id/ttrss_password_layout"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     app:errorEnabled="true">
 
                     <me.zhanghai.android.materialedittext.MaterialEditText
-                        android:id="@+id/tiny_rss_password_edittext"
+                        android:id="@+id/ttrss_password_edittext"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:hint="@string/auth_password"
@@ -119,7 +101,7 @@
                 </me.zhanghai.android.materialedittext.MaterialTextInputLayout>
 
                 <Button
-                    android:id="@+id/tiny_rss_login_button"
+                    android:id="@+id/ttrss_login_button"
                     style="@style/Widget.AppCompat.Button.Colored"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -127,50 +109,27 @@
                     android:enabled="false"
                     android:text="@string/login" />
             </LinearLayout>
-
-<!--            <Space-->
-<!--                android:id="@+id/login_space_a"-->
-<!--                android:layout_width="0dp"-->
-<!--                android:layout_height="0dp"-->
-<!--                android:layout_weight="1" />-->
-
-            <!--<me.zhanghai.android.materialprogressbar.MaterialProgressBar-->
-            <!--android:id="@+id/progress"-->
-            <!--android:layout_width="wrap_content"-->
-            <!--android:layout_height="wrap_content"-->
-            <!--android:layout_gravity="center"-->
-            <!--android:indeterminate="true"-->
-            <!--android:visibility="invisible"-->
-            <!--style="@style/Widget.MaterialProgressBar.ProgressBar" />-->
-
         </me.wizos.loread.view.FriendlyCardView>
 
-
-    <!--        <Space-->
-<!--            android:layout_width="0dp"-->
-<!--            android:layout_height="0dp"-->
-<!--            android:layout_weight="3" />-->
-<!--    </LinearLayout>-->
-
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:alpha="0.8"
-        android:ellipsize="end"
-        android:gravity="center"
-        android:maxLines="1"
-        android:text="@string/the_server_site_url_like"
-        android:textColor="@color/dark_background"
-        android:textSize="12dp"
-        android:visibility="gone"
-        app:layout_constraintEnd_toEndOf="@+id/tiny_rss_login_form"
-        app:layout_constraintHorizontal_bias="0.0"
-        app:layout_constraintStart_toStartOf="@+id/tiny_rss_login_form"
-        app:layout_constraintTop_toBottomOf="@+id/tiny_rss_login_form"
-        tools:ignore="MissingConstraints,SpUsage" />
+    <!--<TextView-->
+    <!--    android:layout_width="match_parent"-->
+    <!--    android:layout_height="wrap_content"-->
+    <!--    android:alpha="0.8"-->
+    <!--    android:ellipsize="end"-->
+    <!--    android:gravity="center"-->
+    <!--    android:maxLines="1"-->
+    <!--    android:text="@string/the_server_site_url_like"-->
+    <!--    android:textColor="@color/dark_background"-->
+    <!--    android:textSize="12dp"-->
+    <!--    android:visibility="visible"-->
+    <!--    app:layout_constraintEnd_toEndOf="@+id/ttrss_login_form"-->
+    <!--    app:layout_constraintHorizontal_bias="0.0"-->
+    <!--    app:layout_constraintStart_toStartOf="@+id/ttrss_login_form"-->
+    <!--    app:layout_constraintTop_toBottomOf="@+id/ttrss_login_form"-->
+    <!--    tools:ignore="MissingConstraints,SpUsage" />-->
 
     <ProgressBar
-        android:id="@+id/tiny_rss_loading"
+        android:id="@+id/ttrss_loading"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
@@ -180,7 +139,7 @@
         android:layout_marginBottom="64dp"
         android:visibility="gone"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="@+id/tiny_rss_login_form"
-        app:layout_constraintStart_toStartOf="@+id/tiny_rss_login_form"
+        app:layout_constraintEnd_toEndOf="@id/ttrss_login_form"
+        app:layout_constraintStart_toStartOf="@id/ttrss_login_form"
         app:layout_constraintTop_toTopOf="parent" />
 </androidx.constraintlayout.widget.ConstraintLayout>

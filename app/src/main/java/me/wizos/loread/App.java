@@ -13,23 +13,27 @@ import com.bumptech.glide.Glide;
 import com.carlt.networklibs.NetType;
 import com.carlt.networklibs.NetworkManager;
 import com.carlt.networklibs.annotation.NetWork;
-import com.carlt.networklibs.utils.Constants;
+import com.didichuxing.doraemonkit.DoraemonKit;
+import com.elvishew.xlog.LogConfiguration;
+import com.elvishew.xlog.LogLevel;
+import com.elvishew.xlog.XLog;
+import com.elvishew.xlog.flattener.ClassicFlattener;
+import com.elvishew.xlog.printer.AndroidPrinter;
+import com.elvishew.xlog.printer.Printer;
+import com.elvishew.xlog.printer.file.FilePrinter;
+import com.elvishew.xlog.printer.file.clean.FileLastModifiedCleanStrategy;
+import com.elvishew.xlog.printer.file.naming.DateFileNameGenerator;
 import com.hjq.toast.ToastUtils;
 import com.hjq.toast.style.ToastAliPayStyle;
 import com.just.agentweb.AgentWebConfig;
 import com.lzy.okgo.OkGo;
 import com.oasisfeng.condom.CondomProcess;
-import com.orhanobut.logger.AndroidLogAdapter;
-import com.orhanobut.logger.Logger;
 import com.socks.library.KLog;
 import com.tencent.bugly.crashreport.CrashReport;
 import com.tencent.mmkv.MMKV;
-import com.tencent.stat.MtaSDkException;
-import com.tencent.stat.StatConfig;
-import com.tencent.stat.StatCrashReporter;
-import com.tencent.stat.StatService;
-import com.tencent.stat.common.StatConstants;
 import com.yhao.floatwindow.view.FloatWindow;
+
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.LinkedHashMap;
@@ -41,9 +45,11 @@ import me.wizos.loread.db.Article;
 import me.wizos.loread.db.CoreDB;
 import me.wizos.loread.db.CorePref;
 import me.wizos.loread.db.User;
+import me.wizos.loread.log.SingleStackTraceFormatter;
 import me.wizos.loread.network.api.AuthApi;
 import me.wizos.loread.network.api.BaseApi;
 import me.wizos.loread.network.api.FeedlyApi;
+import me.wizos.loread.network.api.FeverApi;
 import me.wizos.loread.network.api.InoReaderApi;
 import me.wizos.loread.network.api.LoreadApi;
 import me.wizos.loread.network.api.OAuthApi;
@@ -153,12 +159,34 @@ public class App extends Application implements Thread.UncaughtExceptionHandler 
     public void onCreate() {
         super.onCreate();
         instance = this;
-        initVar();
+        MMKV.initialize(this);
+        CoreDB.init(this);
 
+        KLog.init(BuildConfig.DEBUG);
+        LogConfiguration config = new LogConfiguration.Builder()
+                .logLevel(CorePref.i().globalPref().getBoolean(Contract.ENABLE_LOGGING, false) ? LogLevel.ALL: LogLevel.INFO)
+                .tag("loread")
+                .enableStackTrace(1)
+                .stackTraceFormatter(new SingleStackTraceFormatter())
+                .build();
+
+        Printer androidPrinter = new AndroidPrinter();
+        Printer filePrinter = new FilePrinter
+                .Builder( getExternalCacheDir()  +"/log/") // 指定保存日志文件的路径
+                .flattener(new ClassicFlattener())
+                .fileNameGenerator(new DateFileNameGenerator())    // 指定日志文件名生成器，默认为 ChangelessFileNameGenerator("log")
+                // .backupStrategy(new NeverBackupStrategy())         // 指定日志文件备份策略，默认为 FileSizeBackupStrategy(1024 * 1024)
+                // .shouldBackup()
+                .cleanStrategy(new FileLastModifiedCleanStrategy(7*24*60*1000))     // 指定日志文件清除策略，默认为 NeverCleanStrategy()
+                .build();
+        // 初始化 XLog
+        XLog.init(config, androidPrinter, filePrinter);
+
+
+        initVar();
         ToastUtils.init(this, new ToastAliPayStyle(this));
 
-        CoreDB.init(this);
-        MMKV.initialize(this);
+        DoraemonKit.install(this, "1a9100642569bfed39d6b82032950e1f");
 
         // 【提前初始化 WebView 内核】由于其内部会调用 Looper ，不能放在子线程中
         // 链接：https://www.jianshu.com/p/fc7909e24178
@@ -172,7 +200,6 @@ public class App extends Application implements Thread.UncaughtExceptionHandler 
             AgentWebConfig.debug();
         }
 
-        Logger.addLogAdapter(new AndroidLogAdapter());
 
         initCrashReport();
 
@@ -184,9 +211,9 @@ public class App extends Application implements Thread.UncaughtExceptionHandler 
                 OkGo.getInstance().init(instance);
                 // 监听子线程的报错
                 Thread.setDefaultUncaughtExceptionHandler(instance);
-                // 初始化统计&监控服务
-                KLog.init(BuildConfig.DEBUG);
                 // initLeakCanary();
+
+                // 初始化统计&监控服务
 
                 ScriptUtil.init();
 
@@ -219,19 +246,19 @@ public class App extends Application implements Thread.UncaughtExceptionHandler 
     public void network(NetType netType) {
         switch (netType) {
             case WIFI:
-                KLog.e(Constants.LOG_TAG, "wifi");
+                XLog.i("wifi");
                 NetworkUtil.setTheNetwork(NETWORK_WIFI);
                 break;
             case CMNET:
             case CMWAP:
-                KLog.e(Constants.LOG_TAG, "4G");
+                XLog.i("4G");
                 NetworkUtil.setTheNetwork(NETWORK_MOBILE);
                 break;
             case AUTO:
-                KLog.e(Constants.LOG_TAG, "自动");
+                XLog.i("自动");
                 break;
             case NONE:
-                KLog.e(Constants.LOG_TAG, "无网络");
+                XLog.i("无网络");
                 NetworkUtil.setTheNetwork(NETWORK_NONE);
                 break;
             default:
@@ -240,9 +267,8 @@ public class App extends Application implements Thread.UncaughtExceptionHandler 
     }
 
     @Override
-    public void uncaughtException(Thread thread, Throwable ex) {
-        KLog.e("线程意外报错");
-        ex.printStackTrace();
+    public void uncaughtException(@NotNull Thread thread, @NotNull Throwable ex) {
+        XLog.e("线程意外报错：" + ex);
     }
 
 
@@ -267,7 +293,7 @@ public class App extends Application implements Thread.UncaughtExceptionHandler 
     @Override
     public void onTrimMemory(int level) {
         super.onTrimMemory(level);
-        KLog.e("内存onTrimMemory：" + level);
+        // XLog.v("onTrimMemory：" + level);
         if (level == TRIM_MEMORY_UI_HIDDEN) {
             Glide.get(this).clearMemory();
         }
@@ -280,34 +306,15 @@ public class App extends Application implements Thread.UncaughtExceptionHandler 
     @Override
     public void onLowMemory() {
         super.onLowMemory();
-        KLog.e("内存低");
+        // XLog.v("onLowMemory");
         // 清理 Glide 的缓存
         Glide.get(this).clearMemory();
     }
 
 
     private void initCrashReport() {
-        // 腾讯统计，[可选]设置是否打开debug输出，上线时请关闭，Logcat标签为"MtaSDK"
-        StatConfig.setDebugEnable(BuildConfig.DEBUG);
-        // 【基础统计API】由于其内部会调用 Looper.prepare() ，不能放在子线程中
-        StatService.registerActivityLifecycleCallbacks(this);
-        // 初始化并启动MTA：启动MTA线程，加载数据库配置信息，初始化环境，同时还对多版本SDK进行冲突检测
-        try {
-            // 第三个参数必须为：com.tencent.stat.common.StatConstants.VERSION
-            StatService.startStatService(this, "AAI4F2S2LM1U", StatConstants.VERSION);
-            KLog.d("MTA", "MTA初始化成功");
-        } catch (MtaSDkException e) {
-            // MTA初始化失败
-            KLog.d("MTA", "MTA初始化失败" + e);
-        }
-        // 开启或禁用java异常捕获，初始化不会带来任何的流量和性能消耗。生效后，会注册DefaultUncaughtExceptionHandler，crash时捕获相关信息，存储在本地并上报。
-        // 可通过添加StatCrashCallback监听Crash发生。
-        StatCrashReporter.getStatCrashReporter(getApplicationContext()).setJavaCrashHandlerStatus(true);
-
-        // 为了保证运营数据的准确性，建议不要在异步线程初始化Bugly。
+        // 为了保证运营数据的准确性，建议不要在异步线程初始化 Bugly。
         CrashReport.initCrashReport(getApplicationContext(), "900044326", BuildConfig.DEBUG);
-        // 官网现在改用以上的方式
-        //  Bugly.init(getApplicationContext(), "900044326", BuildConfig.DEBUG);
         // 在开发测试阶段，可以在初始化Bugly之前通过以下接口把调试设备设置成“开发设备”。
         CrashReport.setIsDevelopmentDevice(instance, BuildConfig.DEBUG);
     }
@@ -336,14 +343,14 @@ public class App extends Application implements Thread.UncaughtExceptionHandler 
     }
 
 
-    // KLog.e("路径1：" + new File(filePath).toURI()); // file:/storage/emulated/0/Android/data/me.wizos.loread/files
-    // KLog.e("路径2：" + new File(filePath).getAbsolutePath());
-    // KLog.e("路径3：" + App.i().getFilesDir()); // /data/user/0/me.wizos.loread/files
-    // KLog.e("路径4：" + App.i().getExternalCacheDir()); // /storage/emulated/0/Android/data/me.wizos.loread/cache
-    // KLog.e("路径5：" + App.i().getExternalFilesDir(null)); // /storage/emulated/0/Android/data/me.wizos.loread/files
+    // XLog.e("路径1：" + new File(filePath).toURI()); // file:/storage/emulated/0/Android/data/me.wizos.loread/files
+    // XLog.e("路径2：" + new File(filePath).getAbsolutePath());
+    // XLog.e("路径3：" + App.i().getFilesDir()); // /data/user/0/me.wizos.loread/files
+    // XLog.e("路径4：" + App.i().getExternalCacheDir()); // /storage/emulated/0/Android/data/me.wizos.loread/cache
+    // XLog.e("路径5：" + App.i().getExternalFilesDir(null)); // /storage/emulated/0/Android/data/me.wizos.loread/files
     public String getUserFilesDir() {
         if (user == null) {
-            KLog.e("用户为空");
+            XLog.e("用户为空");
             Tool.printCallStatck();
             return getExternalFilesDir(null) + "/";
         }
@@ -369,12 +376,15 @@ public class App extends Application implements Thread.UncaughtExceptionHandler 
     public void clearApiData() {
         CorePref.i().globalPref().getString(Contract.UID, null);
         OkGo.getInstance().cancelAll();
+        String uid = App.i().getUser().getId();
         WorkManager.getInstance(this).cancelAllWork();
-        CoreDB.i().articleDao().clear(App.i().getUser().getId());
-        CoreDB.i().feedDao().clear(App.i().getUser().getId());
-        CoreDB.i().categoryDao().clear(App.i().getUser().getId());
-        CoreDB.i().feedCategoryDao().clear(App.i().getUser().getId());
-        CoreDB.i().userDao().delete(App.i().getUser().getId());
+        CoreDB.i().articleDao().clear(uid);
+        CoreDB.i().articleTagDao().clear(uid);
+        CoreDB.i().tagDao().clear(uid);
+        CoreDB.i().feedDao().clear(uid);
+        CoreDB.i().categoryDao().clear(uid);
+        CoreDB.i().feedCategoryDao().clear(uid);
+        CoreDB.i().userDao().delete(uid);
         FileUtil.deleteHtmlDir(new File(App.i().getUserFilesDir()));
     }
 
@@ -409,9 +419,14 @@ public class App extends Application implements Thread.UncaughtExceptionHandler 
         if (api == null) {
             switch (getUser().getSource()) {
                 case Contract.PROVIDER_TINYRSS:
-                    TinyRSSApi tinyRSSApi = new TinyRSSApi();
+                    TinyRSSApi tinyRSSApi = new TinyRSSApi(getUser().getHost());
                     tinyRSSApi.setAuthorization(getUser().getAuth());
                     api = tinyRSSApi;
+                    break;
+                case Contract.PROVIDER_FEVER:
+                    FeverApi feverApi = new FeverApi(getUser().getHost());
+                    feverApi.setAuthorization(getUser().getAuth());
+                    api = feverApi;
                     break;
                 case Contract.PROVIDER_LOREAD:
                     LoreadApi loreadApi = new LoreadApi();
@@ -431,7 +446,7 @@ public class App extends Application implements Thread.UncaughtExceptionHandler 
                 case Contract.PROVIDER_LOCALRSS:
                     break;
             }
-            KLog.i("初始化 " + getUser().getSource() + " = " + App.i().getUser().getAuth());
+            XLog.i("初始化 " + getUser().getSource() + " = " + App.i().getUser().getAuth());
         }
         return api;
     }
@@ -442,7 +457,7 @@ public class App extends Application implements Thread.UncaughtExceptionHandler 
         // Intent.FLAG_ACTIVITY_CLEAR_TASK 要起作用，必须和 Intent.FLAG_ACTIVITY_NEW_TASK 配合使用。
         // 这两个 Flag 可以将原有任务栈清空,并将 intent 的目标 Activity 作为任务栈的根 Activity 。任务栈的 Id 没有变，如下所示，也就是说，并没有开辟新的任务栈。
         // 链接：https://www.jianshu.com/p/e34ee1978fce
-        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        // intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         startActivity(intent);
         android.os.Process.killProcess(android.os.Process.myPid());

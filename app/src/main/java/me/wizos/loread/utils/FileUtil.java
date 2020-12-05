@@ -2,6 +2,7 @@ package me.wizos.loread.utils;
 
 import android.Manifest;
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
@@ -27,10 +28,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.channels.FileChannel;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
 
 import me.wizos.loread.App;
+import me.wizos.loread.R;
 import me.wizos.loread.db.Article;
 import me.wizos.loread.db.CoreDB;
 
@@ -535,4 +538,29 @@ public class FileUtil {
         }
     }
 
+
+    public static String getFileSizeDescription(Context context, long size) {
+        if (context != null && size == -1) {
+            return context.getString(R.string.unknown);
+        }
+        StringBuilder bytes = new StringBuilder();
+        DecimalFormat format = new DecimalFormat("###.0");
+        if (size >= 1024 * 1024 * 1024) {
+            double i = (size / (1024.0 * 1024.0 * 1024.0));
+            bytes.append(format.format(i)).append("GB");
+        } else if (size >= 1024 * 1024) {
+            double i = (size / (1024.0 * 1024.0));
+            bytes.append(format.format(i)).append("MB");
+        } else if (size >= 1024) {
+            double i = (size / (1024.0));
+            bytes.append(format.format(i)).append("KB");
+        } else {
+            if (size <= 0) {
+                bytes.append("0B");
+            } else {
+                bytes.append((int) size).append("B");
+            }
+        }
+        return bytes.toString();
+    }
 }

@@ -119,14 +119,12 @@ h6 {
 
 
 /* LINKS // !important*/
-a {
-	color: #51a1f1;
-}
 a > svg{
 	width: 14px;
 	height:auto;
 }
 section a {
+	color: #51a1f1;
 	text-decoration: underline !important;
 }
 #title a {
@@ -344,6 +342,8 @@ video,iframe,embed {
 .table_wrap{
 	overflow-x:auto !important;
 }
+
+
 /* 文章相关信息的排版*/
 hr {
 	opacity: .2;
@@ -381,5 +381,6 @@ mjx-container {
     overflow-y: hidden;
 }
 .plyr {
+	margin: 5px 0 !important;
 	border-radius: 5px !important;
 }

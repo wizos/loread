@@ -82,7 +82,7 @@ public class FeedItem {
     }
 
 
-    public Feed convert2Feed() {
+    public Feed convert() {
         Feed feed = new Feed();
         feed.setId(String.valueOf(id));
         feed.setTitle(title);

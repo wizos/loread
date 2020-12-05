@@ -33,9 +33,9 @@ public interface UserDao {
     @Transaction
     void delete(User... users);
 
-    @Query("DELETE FROM user WHERE id = (:uid)")
+    @Query("DELETE FROM user WHERE id = :uid")
     @Transaction
-    void delete(String... uid);
+    void delete(String uid);
 
     @Query("DELETE FROM user")
     @Transaction

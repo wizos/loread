@@ -1,9 +1,9 @@
 package me.wizos.loread.bean.ttrss.request;
 
-public class LoginParam {
+public class Login {
+    private String op = "login";
     private String user = "admin";
     private String password;
-    private String op = "login";
 
     public String getUser() {
         return user;
@@ -23,10 +23,9 @@ public class LoginParam {
 
     @Override
     public String toString() {
-        return "login{" +
+        return "Login{" +
                 "user='" + user + '\'' +
                 ", password='" + password + '\'' +
-                ", op='" + op + '\'' +
                 '}';
     }
 }

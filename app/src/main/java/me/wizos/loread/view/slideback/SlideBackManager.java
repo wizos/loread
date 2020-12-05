@@ -77,21 +77,21 @@ public class SlideBackManager {
         return this;
     }
 
-//    /**
-//     * 回调
-//     */
-//    public SlideBackManager callBack(SlideBackCallBack callBack) {
-//        this.callBack = new SlideCallBack(callBack) {
-//            @Override
-//            public void onSlide(int edgeFrom) {
-//                onSlideBack();
-//            }
-//            @Override
-//            public void onViewSlide(int edgeFrom,int xposition) {
-//            }
-//        };
-//        return this;
-//    }
+    // /**
+    //  * 回调
+    //  */
+    // public SlideBackManager callBack(SlideBackCallBack callBack) {
+    //     this.callBack = new SlideCallBack(callBack) {
+    //         @Override
+    //         public void onSlide(int edgeFrom) {
+    //             onSlideBack();
+    //         }
+    //         @Override
+    //         public void onViewSlide(int edgeFrom,int xposition) {
+    //         }
+    //     };
+    //     return this;
+    // }
 
     /**
      * 回调 适用于新的左右模式

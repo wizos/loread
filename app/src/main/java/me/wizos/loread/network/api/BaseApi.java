@@ -3,9 +3,10 @@ package me.wizos.loread.network.api;
 import android.text.TextUtils;
 import android.util.ArrayMap;
 
-import com.socks.library.KLog;
+import com.elvishew.xlog.XLog;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -55,7 +56,7 @@ public abstract class BaseApi<T, E> {
 
     abstract public void markArticleUnstar(String articleId, CallbackX cb);
 
-    abstract public void markArticleListReaded(List<String> articleIds, CallbackX cb);
+    abstract public void markArticleListReaded(Collection<String> articleIds, CallbackX cb);
 
     public interface ArticleChanger {
         Article change(Article article);
@@ -71,7 +72,7 @@ public abstract class BaseApi<T, E> {
         //KLog.i("移动文章" + boxReadArts.size());
         for (Article article : boxReadArts) {
             article.setSaveStatus(App.STATUS_IS_FILED);
-            String dir = "/" + SaveDirectory.i().getSaveDir(article.getFeedId(),article.getId()) + "/";
+            String dir = "/" + SaveDirectory.i().getSaveDir(article.getFeedId(), article.getId()) + "/";
             //KLog.e("保存目录：" + dir);
             //FileUtil.saveArticle(App.i().getUserBoxPath() + dir, article);
             ArticleUtil.saveArticle(App.i().getUserBoxPath() + dir, article);
@@ -82,7 +83,7 @@ public abstract class BaseApi<T, E> {
         //KLog.i("移动文章" + storeReadArts.size());
         for (Article article : storeReadArts) {
             article.setSaveStatus(App.STATUS_IS_FILED);
-            String dir = "/" + SaveDirectory.i().getSaveDir(article.getFeedId(),article.getId()) + "/";
+            String dir = "/" + SaveDirectory.i().getSaveDir(article.getFeedId(), article.getId()) + "/";
             //KLog.e("保存目录：" + dir);
             //FileUtil.saveArticle(App.i().getUserStorePath() + dir, article);
             ArticleUtil.saveArticle(App.i().getUserStorePath() + dir, article);
@@ -99,20 +100,20 @@ public abstract class BaseApi<T, E> {
         CoreDB.i().articleDao().delete(expiredArticles);
     }
 
-    void fetchReadability(String uid, long syncTimeMillis){
+    void fetchReadability(String uid, long syncTimeMillis) {
         List<Article> articles = CoreDB.i().articleDao().getNeedReadability(uid, syncTimeMillis);
-        KLog.e("====获取易读文章：" + " , " + uid + " , " + syncTimeMillis );
+        XLog.i("开始获取易读文章 " + uid + " , " + syncTimeMillis);
         for (Article article : articles) {
-            KLog.e("====获取：" + " , " + article.getTitle() + " , " + article.getLink());
+            XLog.i("需要易读的文章：" + " , " + article.getTitle() + " , " + article.getLink());
             if (TextUtils.isEmpty(article.getLink())) {
                 continue;
             }
             String keyword;
-            if( App.i().articleFirstKeyword.containsKey(article.getId()) ){
+            if (App.i().articleFirstKeyword.containsKey(article.getId())) {
                 keyword = App.i().articleFirstKeyword.get(article.getId());
-            }else {
+            } else {
                 keyword = ArticleUtil.getKeyword(article.getContent());
-                App.i().articleFirstKeyword.put(article.getId(),keyword);
+                App.i().articleFirstKeyword.put(article.getId(), keyword);
             }
             Distill distill = new Distill(article.getLink(), keyword, new Distill.Listener() {
                 @Override
@@ -123,37 +124,16 @@ public abstract class BaseApi<T, E> {
 
                 @Override
                 public void onFailure(String msg) {
-                    KLog.e("获取失败");
+                    XLog.e("获取失败 - " + msg);
                 }
             });
             distill.getContent();
-
-            // KLog.e("====开始请求" );
-            // Request request = new Request.Builder().url(article.getLink()).build();
-            // Call call = HttpClientManager.i().simpleClient().newCall(request);
-            // call.enqueue(new Callback() {
-            //     @Override
-            //     public void onFailure(@NotNull Call call, IOException e) {
-            //         KLog.e("获取失败");
-            //     }
-            //
-            //     // 在Android应用中直接使用上述代码进行异步请求，并且在回调方法中操作了UI，那么你的程序就会抛出异常，并且告诉你不能在非UI线程中操作UI。
-            //     // 这是因为OkHttp对于异步的处理仅仅是开启了一个线程，并且在线程中处理响应。
-            //     // OkHttp是一个面向于Java应用而不是特定平台(Android)的框架，那么它就无法在其中使用Android独有的Handler机制。
-            //     @Override
-            //     public void onResponse(@NotNull Call call, @NotNull okhttp3.Response response) throws IOException {
-            //         if (response.isSuccessful()) {
-            //             Article optimizedArticle = ArticleUtil.getReadabilityArticle(article,response.body());
-            //             CoreDB.i().articleDao().update(optimizedArticle);
-            //         }
-            //     }
-            // });
         }
     }
 
     void coverSaveCategories(List<Category> cloudyCategories) {
         String uid = App.i().getUser().getId();
-        ArrayMap<String, Category> cloudyCategoriesTmp = new android.util.ArrayMap<>(cloudyCategories.size());
+        ArrayMap<String, Category> cloudyCategoriesTmp = new ArrayMap<>(cloudyCategories.size());
         for (Category category : cloudyCategories) {
             category.setUid(uid);
             cloudyCategoriesTmp.put(category.getId(), category);
@@ -162,18 +142,18 @@ public abstract class BaseApi<T, E> {
         List<Category> localCategories = CoreDB.i().categoryDao().getAll(uid);
         Iterator<Category> iterator = localCategories.iterator();
         Category tmpCategory;
-        while(iterator.hasNext()){
+        while (iterator.hasNext()) {
             tmpCategory = iterator.next();
             if (cloudyCategoriesTmp.get(tmpCategory.getId()) == null) {
                 CoreDB.i().categoryDao().delete(tmpCategory);
                 iterator.remove();
-            }else {
+            } else {
                 cloudyCategoriesTmp.remove(tmpCategory.getId());
             }
         }
 
         cloudyCategories.clear();
-        for (Map.Entry<String,Category> entry: cloudyCategoriesTmp.entrySet()) {
+        for (Map.Entry<String, Category> entry : cloudyCategoriesTmp.entrySet()) {
             cloudyCategories.add(entry.getValue());
         }
 
@@ -183,7 +163,7 @@ public abstract class BaseApi<T, E> {
 
     void coverSaveFeeds(List<Feed> cloudyFeeds) {
         String uid = App.i().getUser().getId();
-        ArrayMap<String, Feed> cloudyMap = new android.util.ArrayMap<>(cloudyFeeds.size());
+        ArrayMap<String, Feed> cloudyMap = new ArrayMap<>(cloudyFeeds.size());
         for (Feed feed : cloudyFeeds) {
             feed.setUid(uid);
             cloudyMap.put(feed.getId(), feed);
@@ -193,17 +173,17 @@ public abstract class BaseApi<T, E> {
         List<Feed> deleteFeeds = new ArrayList<>();
         Iterator<Feed> iterator = localFeeds.iterator();
         Feed localFeed, commonFeed;
-        while(iterator.hasNext()){
+        while (iterator.hasNext()) {
             localFeed = iterator.next();
             commonFeed = cloudyMap.get(localFeed.getId());
-            if ( commonFeed == null) {
+            if (commonFeed == null) {
                 CoreDB.i().feedCategoryDao().deleteByFeedId(localFeed.getUid(), localFeed.getId());
                 CoreDB.i().articleDao().deleteUnStarByFeedId(localFeed.getUid(), localFeed.getId());
                 CoreDB.i().feedDao().delete(localFeed);
                 deleteFeeds.add(localFeed);
                 iterator.remove();// 删除后，这里只剩2者的交集
-//                KLog.e("删除本地的feed：" + localFeed.getId() + " , " + localFeed.getTitle() + " , " + localFeed.getUnreadCount() );
-            }else {
+                // KLog.e("删除本地的feed：" + localFeed.getId() + " , " + localFeed.getTitle() + " , " + localFeed.getUnreadCount() );
+            } else {
                 localFeed.setTitle(commonFeed.getTitle());
                 localFeed.setFeedUrl(commonFeed.getFeedUrl());
                 localFeed.setHtmlUrl(commonFeed.getHtmlUrl());
@@ -211,7 +191,7 @@ public abstract class BaseApi<T, E> {
             }
         }
         cloudyFeeds.clear();
-        for (Map.Entry<String,Feed> entry: cloudyMap.entrySet()) {
+        for (Map.Entry<String, Feed> entry : cloudyMap.entrySet()) {
             cloudyFeeds.add(entry.getValue());
         }
 
@@ -226,7 +206,7 @@ public abstract class BaseApi<T, E> {
             cloudyCategoriesTmp.put(feedCategory.getFeedId() + feedCategory.getCategoryId(), feedCategory);
         }
 
-        List<FeedCategory> localFeedCategories =  CoreDB.i().feedCategoryDao().getAll(App.i().getUser().getId());
+        List<FeedCategory> localFeedCategories = CoreDB.i().feedCategoryDao().getAll(App.i().getUser().getId());
         FeedCategory tmp;
 
         for (FeedCategory feedCategory : localFeedCategories) {
@@ -239,7 +219,6 @@ public abstract class BaseApi<T, E> {
         }
         CoreDB.i().feedCategoryDao().insert(cloudyFeedCategories);
     }
-
 
 
     void handleDuplicateArticles() {
@@ -258,8 +237,8 @@ public abstract class BaseApi<T, E> {
             articleList.remove(0);
 
             List<Article> articles = new ArrayList<>();
-            for (Article article: articleList) {
-                if( articleSample.getCrawlDate() != article.getCrawlDate()){
+            for (Article article : articleList) {
+                if (articleSample.getCrawlDate() != article.getCrawlDate()) {
                     article.setCrawlDate(articleSample.getCrawlDate());
                     article.setPubDate(articleSample.getPubDate());
                     articles.add(article);
@@ -270,17 +249,17 @@ public abstract class BaseApi<T, E> {
     }
 
     // 优化在使用状态下多次同步到新文章时，这些文章的爬取时间
-    void handleCrawlDate(){
+    void handleCrawlDate() {
         String uid = App.i().getUser().getId();
         long lastReadMarkTimeMillis = CoreDB.i().articleDao().getLastReadTimeMillis(uid);
         long lastStarMaskTimeMillis = CoreDB.i().articleDao().getLastStarTimeMillis(uid);
-        long lastMarkTimeMillis = Math.max(lastReadMarkTimeMillis,lastStarMaskTimeMillis);
+        long lastMarkTimeMillis = Math.max(lastReadMarkTimeMillis, lastStarMaskTimeMillis);
         CoreDB.i().articleDao().updateIdleCrawlDate(uid, lastMarkTimeMillis, System.currentTimeMillis());
     }
 
     void updateCollectionCount() {
         String uid = App.i().getUser().getId();
-        CoreDB.i().feedDao().update( CoreDB.i().feedDao().getFeedsRealTimeCount(uid) );
-        CoreDB.i().categoryDao().update( CoreDB.i().categoryDao().getCategoriesRealTimeCount(uid) );
+        CoreDB.i().feedDao().update(CoreDB.i().feedDao().getFeedsRealTimeCount(uid));
+        CoreDB.i().categoryDao().update(CoreDB.i().categoryDao().getCategoriesRealTimeCount(uid));
     }
 }

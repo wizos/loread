@@ -22,7 +22,6 @@ import com.hjq.toast.ToastUtils;
 import me.wizos.loread.App;
 import me.wizos.loread.R;
 import me.wizos.loread.utils.FileUtil;
-import me.wizos.loread.utils.Tool;
 import me.wizos.loread.utils.UriUtil;
 
 import static android.content.Context.DOWNLOAD_SERVICE;
@@ -91,7 +90,7 @@ public class DownloadListenerS implements DownloadListener {
                 .show();
 
         String fileName = UriUtil.guessFileName(url, contentDisposition, mimeType);
-        String fileSize = Tool.getNetFileSizeDescription(context, contentLength);
+        String fileSize = FileUtil.getFileSizeDescription(context, contentLength);
 
         fileNameEditor = (EditText) downloadDialog.findViewById(R.id.file_name_edit);
         fileNameEditor.setText(fileName);

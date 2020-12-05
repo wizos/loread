@@ -19,8 +19,9 @@ import android.widget.TextView;
 
 import androidx.appcompat.widget.Toolbar;
 
+import com.elvishew.xlog.XLog;
 import com.freedom.lauzy.playpauseviewlib.PlayPauseView;
-import com.hjq.permissions.OnPermission;
+import com.hjq.permissions.OnPermissionCallback;
 import com.hjq.permissions.Permission;
 import com.hjq.permissions.XXPermissions;
 import com.hjq.toast.ToastUtils;
@@ -80,15 +81,15 @@ public class MusicActivity extends BaseActivity {
         XXPermissions.with(this)
                 //.constantRequest() //可设置被拒绝后继续申请，直到用户授权或者永久拒绝
                 .permission(Permission.SYSTEM_ALERT_WINDOW) //支持请求6.0悬浮窗权限8.0请求安装权限
-                .request(new OnPermission() {
+                .request(new OnPermissionCallback() {
                     @Override
-                    public void hasPermission(List<String> granted, boolean isAll) {
+                    public void onGranted(List<String> permissions, boolean all) {
                     }
 
                     @Override
-                    public void noPermission(List<String> denied, boolean quick) {
-                        for (String id : denied) {
-                            KLog.e("无法获取权限" + id);
+                    public void onDenied(List<String> permissions, boolean never) {
+                        for (String id : permissions) {
+                            XLog.w("无法获取权限：" + id);
                         }
                         ToastUtils.show(getString(R.string.plz_grant_permission_tips));
                     }

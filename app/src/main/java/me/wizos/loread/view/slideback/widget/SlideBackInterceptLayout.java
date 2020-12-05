@@ -15,9 +15,8 @@ import java.util.ArrayList;
  * desc   : 处理事件拦截的Layout
  */
 public class SlideBackInterceptLayout extends FrameLayout {
-
-    private float leftSideSlideLength = 0; // 边缘滑动响应距离
-    private float rightSideSlideLength = 0; // 边缘滑动响应距离
+    // private float leftSideSlideLength = 0; // 边缘滑动响应距离
+    // private float rightSideSlideLength = 0; // 边缘滑动响应距离
 
     public SlideBackInterceptLayout(Context context) {
         this(context, null);
@@ -31,19 +30,19 @@ public class SlideBackInterceptLayout extends FrameLayout {
         super(context, attrs, defStyleAttr);
     }
 
-    //    @Override
-//    public boolean onInterceptTouchEvent(MotionEvent ev) {
-//        return ev.getAction() == MotionEvent.ACTION_DOWN && (ev.getRawX() <= leftSideSlideLength || ev.getRawX() >= rightSideSlideLength);
-//    }
     @Override
     public boolean onInterceptTouchEvent(MotionEvent ev) {
         return ev.getAction() == MotionEvent.ACTION_DOWN && isMotionTrigger(ev);
     }
+    // @Override
+    // public boolean onInterceptTouchEvent(MotionEvent ev) {
+    //     return ev.getAction() == MotionEvent.ACTION_DOWN && (ev.getRawX() <= leftSideSlideLength || ev.getRawX() >= rightSideSlideLength);
+    // }
 
-    public void setSideSlideLength(float screenWidth, float sideSlideLength) {
-        this.leftSideSlideLength = sideSlideLength;
-        this.rightSideSlideLength = screenWidth - sideSlideLength;
-    }
+    // public void setSideSlideLength(float screenWidth, float sideSlideLength) {
+    //     this.leftSideSlideLength = sideSlideLength;
+    //     this.rightSideSlideLength = screenWidth - sideSlideLength;
+    // }
 
 
     private ArrayList<float[]> zoneList;

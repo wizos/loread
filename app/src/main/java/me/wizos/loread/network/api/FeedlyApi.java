@@ -479,7 +479,7 @@ public class FeedlyApi extends OAuthApi<Feed, CategoryItem> {
         });
     }
 
-    private void markArticles(String action, List<String> ids, CallbackX cb) {
+    private void markArticles(String action, java.util.Collection<String> ids, CallbackX cb) {
         MarkerAction markerAction = new MarkerAction();
         markerAction.setAction(action);
         markerAction.setType(MarkerAction.TYPE_ENTRIES);
@@ -508,7 +508,7 @@ public class FeedlyApi extends OAuthApi<Feed, CategoryItem> {
         markArticles(action, ids,cb);
     }
     @Override
-    public void markArticleListReaded(List<String> articleIds, CallbackX cb) {
+    public void markArticleListReaded(java.util.Collection<String> articleIds, CallbackX cb) {
         markArticles(MarkerAction.MARK_AS_READ, articleIds,cb);
     }
 

@@ -9,6 +9,9 @@ public class Contract {
     public static final String COOKIE = "Cookie";
     public static final String REFERER = "Referer";
 
+
+    public static final String ENABLE_LOGGING = "EnableLogging";
+
     public static final String NOT_LOGGED_IN = "NOT_LOGGED_IN";
 
 
@@ -16,6 +19,7 @@ public class Contract {
     public static final String PROVIDER_INOREADER = "InoReader";
     public static final String PROVIDER_FEEDLY = "Feedly";
     public static final String PROVIDER_TINYRSS = "TinyTinyRSS";
+    public static final String PROVIDER_FEVER = "Fever";
     public static final String PROVIDER_LOREAD = "Loread";
     public static final String UID = "UID";
     public static final String SCHEMA_HTTP = "http://";

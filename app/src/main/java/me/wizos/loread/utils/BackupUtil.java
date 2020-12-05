@@ -3,9 +3,9 @@ package me.wizos.loread.utils;
 import android.content.Context;
 import android.os.Environment;
 
+import com.elvishew.xlog.XLog;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-import com.socks.library.KLog;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -48,7 +48,7 @@ public class BackupUtil {
         if (articles == null) {
             return;
         }
-        KLog.e("文章数量：" + articles.size() );
+        XLog.i("文章数量：" + articles.size() );
         CoreDB.i().articleDao().update(articles);
 
         content = FileUtil.readFile(App.i().getUserFilesDir() + "/backup/tags.json");
@@ -56,7 +56,7 @@ public class BackupUtil {
         if (tags == null) {
             return;
         }
-        KLog.e("tag数量：" + tags.size() );
+        XLog.i("tag数量：" + tags.size() );
         CoreDB.i().tagDao().update(tags);
 
         content = FileUtil.readFile(App.i().getUserFilesDir() + "/backup/articleTags.json");
@@ -64,7 +64,7 @@ public class BackupUtil {
         if (articleTags == null) {
             return;
         }
-        KLog.e("articleTags数量：" + articleTags.size() );
+        XLog.i("articleTags数量：" + articleTags.size() );
         CoreDB.i().articleTagDao().update(articleTags);
     }
 
@@ -80,7 +80,7 @@ public class BackupUtil {
         return dir;
     }
 
-    public static String doInBackground(Context mContext, String command) {
+    public static void doInBackground(Context mContext, String command) {
         File dbFile = mContext.getDatabasePath(CoreDB.DATABASE_NAME);// 默认路径是 /data/data/(包名)/databases/*
         File dbFile_shm = mContext.getDatabasePath(CoreDB.DATABASE_NAME + "-shm");// 默认路径是 /data/data/(包名)/databases/*
         File dbFile_wal = mContext.getDatabasePath(CoreDB.DATABASE_NAME + "-wal");// 默认路径是 /data/data/(包名)/databases/*
@@ -101,12 +101,10 @@ public class BackupUtil {
                 fileCopy(dbFile_wal, backup_wal);//数据库文件拷贝至备份文件
                 String backup_version = TimeUtil.format(System.currentTimeMillis(),"yyyy.MM.dd_HH:mm:ss");
                 //backup.setLastModified(MyTimeUtils.getTimeLong());
-                KLog.d("myLog", "backup ok! 备份文件名："+backup.getName()+"\t"+backup_version);
-                return backup_version;
+                XLog.d("backup ok! 备份文件名："+ backup.getName()+"\t"+backup_version);
             } catch (Exception e) {
                 e.printStackTrace();
-                KLog.d("myLog", "backup fail! 备份文件名："+backup.getName());
-                return null;
+                XLog.d("backup fail! 备份文件名："+ backup.getName());
             }
         } else if (command.equals(COMMAND_RESTORE)) {
             try {
@@ -114,32 +112,19 @@ public class BackupUtil {
                 fileCopy(backup_shm, dbFile_shm);//备份文件拷贝至数据库文件
                 fileCopy(backup_wal, dbFile_wal);//备份文件拷贝至数据库文件
                 String backup_version = TimeUtil.format(backup.lastModified(),"yyyy.MM.dd_HH:mm:ss");
-                KLog.d("myLog", "restore success! 数据库文件名："+dbFile.getName()+"\t"+backup_version);
-                return backup_version;
+                XLog.d("restore success! 数据库文件名："+dbFile.getName()+"\t"+backup_version);
             } catch (Exception e) {
                 e.printStackTrace();
-                KLog.d("myLog", "restore fail! 数据库文件名："+dbFile.getName());
-                return null;
+                XLog.d( "restore fail! 数据库文件名："+ dbFile.getName());
             }
-        } else {
-            return null;
         }
     }
 
     private static void fileCopy(File dbFile, File backup) throws IOException {
-        FileChannel inChannel = new FileInputStream(dbFile).getChannel();
-        FileChannel outChannel = new FileOutputStream(backup).getChannel();
-        try {
+        try (FileChannel inChannel = new FileInputStream(dbFile).getChannel(); FileChannel outChannel = new FileOutputStream(backup).getChannel()) {
             inChannel.transferTo(0, inChannel.size(), outChannel);
         } catch (IOException e) {
             e.printStackTrace();
-        } finally {
-            if (inChannel != null) {
-                inChannel.close();
-            }
-            if (outChannel != null) {
-                outChannel.close();
-            }
         }
     }
 }

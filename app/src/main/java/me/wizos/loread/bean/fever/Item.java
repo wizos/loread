@@ -2,6 +2,11 @@ package me.wizos.loread.bean.fever;
 
 import com.google.gson.annotations.SerializedName;
 
+import me.wizos.loread.App;
+import me.wizos.loread.db.Article;
+import me.wizos.loread.network.api.BaseApi;
+import me.wizos.loread.utils.ArticleUtil;
+
 public class Item {
     @SerializedName("id")
     private int id;
@@ -18,9 +23,9 @@ public class Item {
     private String url;
 
     @SerializedName("is_saved")
-    private int isSaved;
+    private int isSaved; // 0 = false, 1 = true
     @SerializedName("is_read")
-    private int isRead;
+    private int isRead; // 0 = false, 1 = true
 
     @SerializedName("created_on_time")
     private long createdOnTime;
@@ -59,5 +64,63 @@ public class Item {
 
     public long getCreatedOnTime() {
         return createdOnTime;
+    }
+
+    public Article convert(BaseApi.ArticleChanger articleChanger) {
+        Article article = new Article();
+        article.setId(String.valueOf(id));
+
+        String tmpContent = ArticleUtil.getOptimizedContent(article.getLink(), html);
+        article.setContent(tmpContent);
+
+        String tmpSummary = ArticleUtil.getOptimizedSummary(tmpContent);
+        article.setSummary(tmpSummary);
+
+        title = ArticleUtil.getOptimizedTitle(title,tmpSummary);
+        article.setTitle(title);
+
+        article.setAuthor(author);
+        article.setPubDate(createdOnTime * 1000);
+
+        article.setLink(url);
+        article.setFeedId(String.valueOf(feedId));
+        article.setFeedTitle(title);
+
+        String coverUrl = ArticleUtil.getCoverUrl(article.getLink(),tmpContent);
+        article.setImage(coverUrl);
+
+        // 自己设置的字段
+        //  KLog.i("【增加文章】" + article.getId());
+        article.setSaveStatus(App.STATUS_NOT_FILED);
+        if (isRead == 0) {
+            article.setReadStatus(App.STATUS_UNREAD);
+        } else {
+            article.setReadStatus(App.STATUS_READED);
+        }
+        if (isSaved == 1) {
+            article.setStarStatus(App.STATUS_STARED);
+        } else {
+            article.setStarStatus(App.STATUS_UNSTAR);
+        }
+
+        if (articleChanger != null) {
+            articleChanger.change(article);
+        }
+        return article;
+    }
+
+    @Override
+    public String toString() {
+        return "Item{" +
+                "id=" + id +
+                ", feedId=" + feedId +
+                ", title='" + title + '\'' +
+                ", author='" + author + '\'' +
+                ", html='" + html + '\'' +
+                ", url='" + url + '\'' +
+                ", isSaved=" + isSaved +
+                ", isRead=" + isRead +
+                ", createdOnTime=" + createdOnTime +
+                '}';
     }
 }

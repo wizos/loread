@@ -31,8 +31,8 @@ public class LoginTinyRSSActivity extends BaseActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_login_tiny_rss);
-        Toolbar mToolbar = findViewById(R.id.tiny_rss_toolbar);
+        setContentView(R.layout.activity_login_tinytinyrss);
+        Toolbar mToolbar = findViewById(R.id.ttrss_toolbar);
         setSupportActionBar(mToolbar);
         // 这个小于4.0版本是默认为true，在4.0及其以上是false。该方法的作用：决定左上角的图标是否可以点击(没有向左的小图标)，true 可点
         getSupportActionBar().setHomeButtonEnabled(true);
@@ -42,11 +42,11 @@ public class LoginTinyRSSActivity extends BaseActivity {
 
         loginViewModel = new ViewModelProvider(this).get(TinyRSSUserViewModel.class);
 
-        final EditText hostEditText = findViewById(R.id.tiny_rss_host_edittext);
-        final EditText usernameEditText = findViewById(R.id.tiny_rss_username_edittext);
-        final EditText passwordEditText = findViewById(R.id.tiny_rss_password_edittext);
-        final Button loginButton = findViewById(R.id.tiny_rss_login_button);
-        final ProgressBar loadingProgressBar = findViewById(R.id.tiny_rss_loading);
+        final EditText baseUrlEditText = findViewById(R.id.ttrss_baseurl_edittext);
+        final EditText accountEditText = findViewById(R.id.ttrss_account_edittext);
+        final EditText passwordEditText = findViewById(R.id.ttrss_password_edittext);
+        final Button loginButton = findViewById(R.id.ttrss_login_button);
+        final ProgressBar loadingProgressBar = findViewById(R.id.ttrss_loading);
 
 
         TextWatcher afterTextChangedListener = new TextWatcher() {
@@ -61,14 +61,14 @@ public class LoginTinyRSSActivity extends BaseActivity {
             @Override
             public void afterTextChanged(Editable s) {
                 loginViewModel.loginDataChanged(
-                        hostEditText.getText().toString(),
-                        usernameEditText.getText().toString(),
+                        baseUrlEditText.getText().toString(),
+                        accountEditText.getText().toString(),
                         passwordEditText.getText().toString()
                 );
             }
         };
-        hostEditText.addTextChangedListener(afterTextChangedListener);
-        usernameEditText.addTextChangedListener(afterTextChangedListener);
+        baseUrlEditText.addTextChangedListener(afterTextChangedListener);
+        accountEditText.addTextChangedListener(afterTextChangedListener);
         passwordEditText.addTextChangedListener(afterTextChangedListener);
 
         /**
@@ -82,8 +82,8 @@ public class LoginTinyRSSActivity extends BaseActivity {
                 if (actionId == EditorInfo.IME_ACTION_DONE) {
                     loadingProgressBar.setVisibility(View.VISIBLE);
                     loginViewModel.login(
-                            hostEditText.getText().toString(),
-                            usernameEditText.getText().toString(),
+                            baseUrlEditText.getText().toString(),
+                            accountEditText.getText().toString(),
                             passwordEditText.getText().toString()
                     );
                 }
@@ -94,11 +94,14 @@ public class LoginTinyRSSActivity extends BaseActivity {
         loginButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                loadingProgressBar.setVisibility(View.VISIBLE);
                 loginButton.setEnabled(false);
+                baseUrlEditText.setEnabled(false);
+                accountEditText.setEnabled(false);
+                passwordEditText.setEnabled(false);
+                loadingProgressBar.setVisibility(View.VISIBLE);
                 loginViewModel.login(
-                        hostEditText.getText().toString(),
-                        usernameEditText.getText().toString(),
+                        baseUrlEditText.getText().toString(),
+                        accountEditText.getText().toString(),
                         passwordEditText.getText().toString()
                 );
             }
@@ -113,10 +116,10 @@ public class LoginTinyRSSActivity extends BaseActivity {
                 loginButton.setEnabled(loginFormState.isDataValid());
 
                 if (loginFormState.getHostHint() != null) {
-                    hostEditText.setError(getString(loginFormState.getHostHint()));
+                    baseUrlEditText.setError(getString(loginFormState.getHostHint()));
                 }
                 if (loginFormState.getUsernameHint() != null) {
-                    usernameEditText.setError(getString(loginFormState.getUsernameHint()));
+                    accountEditText.setError(getString(loginFormState.getUsernameHint()));
                 }
                 if (loginFormState.getPasswordHint() != null) {
                     passwordEditText.setError(getString(loginFormState.getPasswordHint()));
@@ -127,13 +130,13 @@ public class LoginTinyRSSActivity extends BaseActivity {
         loginViewModel.getLoginResult().observe(this, new Observer<LoginResult>() {
             @Override
             public void onChanged(@Nullable LoginResult loginResult) {
-                if (loginResult == null) {
-                    return;
-                }
                 loginButton.setEnabled(true);
+                baseUrlEditText.setEnabled(true);
+                accountEditText.setEnabled(true);
+                passwordEditText.setEnabled(true);
                 loadingProgressBar.setVisibility(View.GONE);
-                String tips = getString(R.string.welcome);
-                if (loginResult.isSuccess()) {
+                if (loginResult != null && loginResult.isSuccess()) {
+                    String tips = getString(R.string.welcome);
                     ToastUtils.show(tips);
                     KLog.e( tips + loginResult.getData() );
                     setResult(App.ActivityResult_LoginPageToProvider);

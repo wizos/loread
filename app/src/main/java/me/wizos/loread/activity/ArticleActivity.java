@@ -48,17 +48,19 @@ import com.afollestad.materialdialogs.MaterialDialog;
 import com.afollestad.materialdialogs.Theme;
 import com.carlt.networklibs.NetType;
 import com.carlt.networklibs.utils.NetworkUtils;
+import com.elvishew.xlog.XLog;
 import com.hjq.toast.ToastUtils;
 import com.lzy.okgo.OkGo;
 import com.lzy.okgo.callback.FileCallback;
 import com.lzy.okgo.model.Response;
 import com.lzy.okgo.request.base.Request;
-import com.socks.library.KLog;
 
+import org.jetbrains.annotations.NotNull;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 
 import java.io.File;
+import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -108,6 +110,8 @@ import me.wizos.loread.view.webview.DownloadListenerS;
 import me.wizos.loread.view.webview.LongClickPopWindow;
 import me.wizos.loread.view.webview.SlowlyProgressBar;
 import me.wizos.loread.view.webview.VideoImpl;
+import okhttp3.Call;
+import okhttp3.Callback;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import top.zibin.luban.CompressionPredicate;
@@ -164,7 +168,7 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
         // articleCount = bundle.getInt("articleCount");
         articleId = bundle.getString("articleId");
 
-        // KLog.e("开始初始化数据2" + articleNo + "==" + articleCount + "==" + articleId + " == " + articleIDs );
+        // XLog.e("开始初始化数据2" + articleNo + "==" + articleCount + "==" + articleId + " == " + articleIDs );
         initToolbar();
         initView(); // 初始化界面上的 View，将变量映射到布局上。
         initSelectedArticle(articleNo);
@@ -192,7 +196,7 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
         if(distill != null){
             distill.cancel();
         }
-        // KLog.e("onDestroy：" + selectedWebView);
+        // XLog.e("onDestroy：" + selectedWebView);
         // 如果参数为null的话，会将所有的Callbacks和Messages全部清除掉。
         // 这样做的好处是在 Acticity 退出的时候，可以避免内存泄露。因为 handler 内可能引用 Activity ，导致 Activity 退出后，内存泄漏。
         articleHandler.removeCallbacksAndMessages(null);
@@ -218,7 +222,7 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
         outState.putInt("articleCount", 1);
         outState.putInt("articleProgress", saveArticleProgress());
         outState.putInt("theme", App.i().getUser().getThemeMode());
-        //KLog.i("自动保存：" + articleNo + "==" + "==" + articleId);
+        //XLog.i("自动保存：" + articleNo + "==" + "==" + articleId);
         super.onSaveInstanceState(outState);
     }
 
@@ -226,7 +230,7 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
     @JavascriptInterface
     @Override
     public void log(String paramString) {
-        KLog.e(ArticleBridge.TAG, "【log】" + paramString);
+        XLog.e(ArticleBridge.TAG, "【log】" + paramString);
     }
 
     @JavascriptInterface
@@ -256,7 +260,7 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
                         selectedWebView.loadUrl("javascript:setTimeout( onImageLoadSuccess('" + imgId + "','" + cacheUrl + "'),1)");
                     }else {
                         selectedWebView.loadUrl("javascript:setTimeout( onImageError('" + imgId + "'),1 )");
-                        KLog.e("加载图片", "缓存文件读取失败：不是图片");
+                        XLog.e("加载图片", "缓存文件读取失败：不是图片");
                     }
                 }
             }
@@ -280,7 +284,7 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
             if(ImageUtil.isImg(new File(cacheUrl))){
                 return cacheUrl;
             }else {
-                KLog.e("加载图片", "缓存文件读取失败：不是图片");
+                XLog.e("加载图片", "缓存文件读取失败：不是图片");
                 return "IMAGE_HOLDER_IMAGE_ERROR_URL";
             }
         }
@@ -289,7 +293,7 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
     @JavascriptInterface
     @Override
     public void openImage(String articleId, String imageFilePath) {
-        KLog.e(ArticleBridge.TAG, "打开图片：" + this.getPackageName() + " , " + imageFilePath + "  " );
+        XLog.e(ArticleBridge.TAG, "打开图片：" + this.getPackageName() + " , " + imageFilePath + "  " );
         // 如果是 svg 格式的图片则点击无反应
         if(imageFilePath.endsWith(".svg")){
             return;
@@ -351,14 +355,14 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
     private static class MyCompressionPredicate implements CompressionPredicate {
         @Override
         public boolean apply(String preCompressedPath, InputStreamProvider path) {
-//         KLog.e("检测是否要压缩图片：" + preCompressedPath);
+//         XLog.e("检测是否要压缩图片：" + preCompressedPath);
             try {
                 if (preCompressedPath.toLowerCase().endsWith(".gif")) {
                     BitmapFactory.Options options = new BitmapFactory.Options();
                     options.inSampleSize = 1;
                     options.inJustDecodeBounds = true;
                     BitmapFactory.decodeStream(path.open(), null, options);
-//                   KLog.e("压缩图片，忽略压缩：" + preCompressedPath + options.outWidth );
+//                   XLog.e("压缩图片，忽略压缩：" + preCompressedPath + options.outWidth );
                     return options.outWidth >= 300 || options.outHeight >= 300;
                 } else {
                     return true;
@@ -440,7 +444,7 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
             if (selectedWebView.get() == null) {
                 return;
             }
-            //KLog.i("下载图片成功，准备压缩：" + originalFileDir + prefix + fileNameExt + svgExt  + "，" + originalUrl );
+            //XLog.i("下载图片成功，准备压缩：" + originalFileDir + prefix + fileNameExt + svgExt  + "，" + originalUrl );
 
             Luban.with(App.i())
                     //.load(targetOriginalFile)
@@ -467,7 +471,7 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
 
                         @Override
                         public void onUnChange(final File file) {
-//                            KLog.e("没有压缩图片：" + Thread.currentThread() + "   " + file.getPath() + "   " + compressedFileDir);
+//                            XLog.e("没有压缩图片：" + Thread.currentThread() + "   " + file.getPath() + "   " + compressedFileDir);
                             articleHandler.post(new Runnable() {
                                 @Override
                                 public void run() {
@@ -483,7 +487,7 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
                             ImageUtil.mergeBitmap(weakReferenceContext, file, new ImageUtil.OnMergeListener() {
                                 @Override
                                 public void onSuccess() {
-//                                    KLog.e("图片合成成功" + Thread.currentThread());
+//                                    XLog.e("图片合成成功" + Thread.currentThread());
                                     articleHandler.post(new Runnable() {
                                         @Override
                                         public void run() {
@@ -496,7 +500,7 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
 
                                 @Override
                                 public void onError(Throwable e) {
-                                    KLog.e("合成图片报错：" + Thread.currentThread());
+                                    XLog.e("合成图片报错：" + Thread.currentThread());
                                     e.printStackTrace();
                                     articleHandler.post(new Runnable() {
                                         @Override
@@ -512,7 +516,7 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
 
                         @Override
                         public void onError(Throwable e) {
-                            KLog.e("压缩图片报错" + Thread.currentThread() );
+                            XLog.e("压缩图片报错" + Thread.currentThread() );
 //                                selectedWebView.loadUrl("javascript:onImageLoadSuccess('" + originalUrl + "','" + originalFileDir + fileNameExt + "')");
                             articleHandler.post(new Runnable() {
                                 @Override
@@ -530,7 +534,7 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
         @Override
         public void onError(Response<File> response) {
             new File(originalFileDir + imgId).delete();
-            KLog.e("下载图片失败：" + imageUrl + "','" + response.code() + "  " + response.getException());
+            XLog.e("下载图片失败：" + imageUrl + "','" + response.code() + "  " + response.getException());
             articleHandler.post(new Runnable() {
                 @Override
                 public void run() {
@@ -575,12 +579,26 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
         }
 
         request.execute(fileCallback);
-        //KLog.e("下载图片：" + originalUrl);
+        //XLog.e("下载图片：" + originalUrl);
     }
     @JavascriptInterface
     @Override
     public void downFile(String url){
         DownloadListenerS downloadListener = new DownloadListenerS(this).setWebView(selectedWebView);
+        okhttp3.Request request = new okhttp3.Request.Builder().url(url).head().tag(TAG).build();
+        Call call = HttpClientManager.i().simpleClient().newCall(request);
+        call.enqueue(new Callback() {
+            @Override
+            public void onFailure(@NotNull Call call, @NotNull IOException e) {
+
+            }
+
+            @Override
+            public void onResponse(@NotNull Call call, @NotNull okhttp3.Response response) throws IOException {
+
+            }
+        });
+
         articleHandler.post(new Runnable() {
             @Override
             public void run() {
@@ -602,14 +620,14 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
             intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
             List<ResolveInfo> activities = getPackageManager().queryIntentActivities(intent, PackageManager.MATCH_DEFAULT_ONLY);
             List<ResolveInfo> activitiesToHide = getPackageManager().queryIntentActivities(new Intent(Intent.ACTION_VIEW, Uri.parse("https://wizos.me")), PackageManager.MATCH_DEFAULT_ONLY);
-            KLog.e("数量：" + activities.size() +" , " + activitiesToHide.size());
+            XLog.e("数量：" + activities.size() +" , " + activitiesToHide.size());
 
             if( activities.size() != activitiesToHide.size()){
                 HashSet<String> hideApp = new HashSet<>();
                 hideApp.add("com.kingsoft.moffice_pro");
                 for (ResolveInfo currentInfo : activitiesToHide) {
                     hideApp.add(currentInfo.activityInfo.packageName);
-                    KLog.e("内容1：" + currentInfo.activityInfo.packageName);
+                    XLog.e("内容1：" + currentInfo.activityInfo.packageName);
                 }
                 ArrayList<Intent> targetIntents = new ArrayList<Intent>();
                 for (ResolveInfo currentInfo : activities) {
@@ -619,7 +637,7 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
                         targetIntent.setPackage(packageName);
                         targetIntents.add(targetIntent);
                     }
-                    KLog.e("内容2：" + packageName);
+                    XLog.e("内容2：" + packageName);
                 }
                 if(targetIntents.size() > 0) {
                     intent = Intent.createChooser(targetIntents.remove(0),  getString(R.string.open_with));
@@ -699,7 +717,7 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
         entryView = findViewById(R.id.slide_arrow_layout);
         slideLayout = findViewById(R.id.art_slide_layout);
 
-        // KLog.e("子数量" + slideLayout.getChildCount() );
+        // XLog.e("子数量" + slideLayout.getChildCount() );
 
         int color;
         if (App.i().getUser().getThemeMode() == App.THEME_DAY) {
@@ -721,7 +739,7 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
 
             @Override
             public void onViewSlide(int edgeFrom, int offset) {
-                //KLog.e("拖动方向：" + edgeFrom + " , " + offset);
+                //XLog.e("拖动方向：" + edgeFrom + " , " + offset);
                 if (edgeFrom == SlideBack.EDGE_LEFT) {
                     entryView.scrollTo(-offset, 0);
                 } else {
@@ -782,7 +800,7 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
         articleNo = position;
 
         if (App.i().articlesAdapter != null && position < App.i().articlesAdapter.getItemCount()) {
-            //KLog.e("重置文章状态");
+            //XLog.e("重置文章状态");
             articleId = App.i().articlesAdapter.get(position).getId();
         }
         selectedArticle = CoreDB.i().articleDao().getById(App.i().getUser().getId(), articleId);
@@ -838,7 +856,7 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
         }
 
         // 检查该订阅源默认显示什么。【RSS，已读，保存的网页，原始网页】
-        // KLog.e("要加载的位置为：" + position + "  " + selectedArticle.getTitle());
+        // XLog.e("要加载的位置为：" + position + "  " + selectedArticle.getTitle());
         Feed feed = CoreDB.i().feedDao().getById(App.i().getUser().getId(), selectedArticle.getFeedId());
         if (feed != null) {
             toolbar.setTitle(feed.getTitle());
@@ -901,7 +919,7 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
         @Override
         public void onShowCustomView(View view, CustomViewCallback callback) {
             super.onShowCustomView(view,callback);
-            // KLog.i("进入全屏" + videoIsPortrait + " , " + (System.currentTimeMillis() - time));
+            // XLog.i("进入全屏" + videoIsPortrait + " , " + (System.currentTimeMillis() - time));
             if (video != null) {
                 video.onShowCustomView(view, videoIsPortrait, callback);
             }
@@ -912,7 +930,7 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
         @Override
         public void onHideCustomView() {
             super.onHideCustomView();
-            // KLog.i("退出全屏");
+            // XLog.i("退出全屏");
             if (video != null) {
                 video.onHideCustomView();
             }
@@ -923,7 +941,7 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
         // 通过重写WebViewClient的onReceivedSslError方法来接受所有网站的证书，忽略SSL错误。
         @Override
         public void onReceivedSslError(WebView view, SslErrorHandler handler, SslError error) {
-            KLog.e("SSL错误");
+            XLog.e("SSL错误");
             handler.proceed(); // 忽略SSL证书错误，继续加载页面
         }
 
@@ -946,7 +964,7 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
             //     return super.shouldInterceptRequest(view, request);
             // }
             // String cacheUrl = FileUtil.readCacheFilePath(EncryptUtil.MD5(selectedArticle.getId()), url);
-            // KLog.e("【请求加载资源】" + url  + " , " + cacheUrl);
+            // XLog.e("【请求加载资源】" + url  + " , " + cacheUrl);
             // try {
             //     if (cacheUrl != null) {
             //         return new WebResourceResponse("image/png", "UTF-8", new FileInputStream(cacheUrl));
@@ -969,7 +987,7 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
          */
         @Override
         public boolean shouldOverrideUrlLoading(WebView webView, String url) {
-            KLog.e("url为：" + url);
+            XLog.e("url为：" + url);
             // 判断重定向的方式一
             // 作者：胡几手，链接：https://www.jianshu.com/p/7dfb8797f893
             // 解决在webView第一次加载的url重定向到了另一个地址时，也会走shouldOverrideUrlLoading回调的问题
@@ -995,7 +1013,7 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
         @Override
         public void onPageStarted(WebView webView, String url, Bitmap favicon) {
             super.onPageStarted(webView, url, favicon);
-            //KLog.e("页面加载开始");
+            //XLog.e("页面加载开始");
             if (slowlyProgressBar != null) {
                 slowlyProgressBar.onProgressStart();
             }
@@ -1067,7 +1085,7 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
     }
 
     public void onClickReadIcon(View view) {
-        //KLog.e("loread", "被点击的是：" + selectedArticle.getTitle());
+        //XLog.e("loread", "被点击的是：" + selectedArticle.getTitle());
         if (selectedArticle.getReadStatus() == App.STATUS_READED) {
             readView.setText(getString(R.string.font_unread));
             selectedArticle.setReadStatus(App.STATUS_UNREADING);
@@ -1177,10 +1195,10 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
             for (int i = 0, size = tags.size(); i < size; i++) {
                 String title = tags.get(i).getTitle();
                 tagTitles[i] = title;
-                //KLog.e("标题ss：" + title + " , " + originalArticleTags + "  " + index + "  " + i );
+                //XLog.e("标题ss：" + title + " , " + originalArticleTags + "  " + index + "  " + i );
                 if(preSelectedIndices!=null){
                     for (ArticleTag articleTag:originalArticleTags) {
-                        //KLog.e("标题：" + title + " , " + articleTag.getTagId() + "  " + index + "  " + i );
+                        //XLog.e("标题：" + title + " , " + articleTag.getTagId() + "  " + index + "  " + i );
                         if(title.equals(articleTag.getTagId())){
                             preSelectedIndices[index] = i;
                             index ++;
@@ -1200,7 +1218,7 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
                             articleTag = new ArticleTag(uid, selectedArticle.getId(), tags.get(i).getId() );
                             selectedArticleTags.add(articleTag);
                         }
-                        KLog.e("已选择收藏夹：" + Arrays.toString(text));
+                        XLog.e("已选择收藏夹：" + Arrays.toString(text));
                         return true;
                     })
                     .positiveText(R.string.confirm)
@@ -1248,7 +1266,7 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
                             lastDialog.dismiss();
                         }
                         editFavorites(uid);
-                        KLog.e("正在新建收藏夹：" + input.toString());
+                        XLog.e("正在新建收藏夹：" + input.toString());
                     }
                 })
                 .positiveText(R.string.confirm)
@@ -1297,7 +1315,7 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
                     public boolean onSelection(MaterialDialog dialog, View itemView, int which, CharSequence text) {
                         SaveDirectory.i().setArticleDirectory(selectedArticle.getId(),savedFoldersValue.get(which));
                         SaveDirectory.i().save();
-                        KLog.e("被选择的目录为：" + text.toString());
+                        XLog.e("被选择的目录为：" + text.toString());
                         return true;
                     }
                 })
@@ -1325,7 +1343,7 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
     //                         lastDialog.dismiss();
     //                     }
     //                     editDirectory(uid);
-    //                     KLog.e("正在新建收藏夹：" + input.toString());
+    //                     XLog.e("正在新建收藏夹：" + input.toString());
     //                 }
     //             })
     //             .positiveText(R.string.confirm)
@@ -1525,7 +1543,7 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
     }
 
     private void showArticleInfo() {
-        // KLog.e("文章信息");
+        // XLog.e("文章信息");
         if (!BuildConfig.DEBUG) {
             return;
         }
@@ -1736,7 +1754,7 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
 //        }
 //        startActivity(intent);
 //        overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
-//        KLog.i("打开方式", "默认打开方式信息 = " + info + ";pkgName = " + info.activityInfo.packageName);
+//        XLog.i("打开方式", "默认打开方式信息 = " + info + ";pkgName = " + info.activityInfo.packageName);
 //    }
 
     // 打开选择默认打开方式的弹窗

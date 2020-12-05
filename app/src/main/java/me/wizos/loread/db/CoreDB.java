@@ -8,8 +8,6 @@ import androidx.room.Room;
 import androidx.room.RoomDatabase;
 import androidx.sqlite.db.SupportSQLiteDatabase;
 
-import com.socks.library.KLog;
-
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -45,7 +43,6 @@ public abstract class CoreDB extends RoomDatabase {
                                 @Override
                                 public void onOpen(@NonNull SupportSQLiteDatabase db) {
                                     super.onOpen(db);
-                                    KLog.e("创建触发器");
                                     createTriggers(db);
                                 }
                             })
@@ -99,7 +96,6 @@ public abstract class CoreDB extends RoomDatabase {
                         "        UPDATE FEED SET STARCOUNT = STARCOUNT + 1 WHERE ID IS new.FEEDID AND UID IS new.UID;" +
                         "      END";
         db.execSQL(updateFeedStarCountWhenInsertArticle);
-
 
 
         //【当删除文章时】

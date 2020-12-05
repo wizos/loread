@@ -5,6 +5,7 @@ import android.text.Html;
 
 import com.socks.library.KLog;
 
+import org.jetbrains.annotations.Nullable;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -147,6 +148,19 @@ public class ArticleUtil {
     //            "</body></html>";
     //}
 
+    //private static String getFormatContentForSave(String title, String content) {
+    //    Document document = Jsoup.parseBodyFragment(content);
+    //    Elements elements = document.getElementsByTag("img");
+    //    String url, filePath;
+    //    for (int i = 0, size = elements.size(); i < size; i++) {
+    //        url = elements.get(i).attr("src");
+    //        filePath = "./" + title + "_files/" + UriUtil.guessFileNameExt(url);
+    //        elements.get(i).attr("original-src", url);
+    //        elements.get(i).attr("src", filePath);
+    //    }
+    //    return document.body().html();
+    //}
+
     public static String getPageForDisplay(Article article) {
         if (null == article) {
             return "";
@@ -220,7 +234,7 @@ public class ArticleUtil {
                 "<script src='file:///android_asset/js/lozad.min.js'></script>" +
                 "<script src='file:///android_asset/js/highlight.pack.js'></script>" +
                 "<script src='file:///android_asset/js/placeholder.min.js'></script>" +
-                "<script src='file:///android_asset/js/fluidplayer.min.js'></script>" +
+                // "<script src='file:///android_asset/js/fluidplayer.min.js'></script>" +
                 "<script src='file:///android_asset/js/plyr.js'></script>" +
                 "<script>" + initImageHolderUrl + "</script>" +
                 "<script>const PlyrConfig = {controls: ['play-large','play','progress','current-time','duration','settings','download','fullscreen'],settings: ['captions', 'quality', 'speed'],speed : { selected: 2, options: [0.75, 1, 1.5, 1.75, 2] } " + plyrI18n + "}</script>" +
@@ -255,7 +269,7 @@ public class ArticleUtil {
 
         // 将网址替换为
         pattern = Pattern.compile("https*://[\\w?-_=./&]*([\\s　]|&nbsp;|[^\\w?-_=./&]|$)", Pattern.CASE_INSENSITIVE);
-        html = pattern.matcher(html).replaceAll(App.i().getString(R.string.link_for_spreak) + "$1");
+        html = pattern.matcher(html).replaceAll(App.i().getString(R.string.link_for_speak) + "$1");
 
         // KLog.i("初始化内容" + html );
         return App.i().getString(R.string.article_title_is) + article.getTitle() + html.trim();
@@ -585,12 +599,20 @@ public class ArticleUtil {
 
         // 删除无效的空标签（无任何属性的）
         pattern = Pattern.compile("(\\s|　|&nbsp;)*<([a-zA-Z0-9]{1,10})>(\\s|　|&nbsp;)*</\\2>(\\s|　|&nbsp;)*", Pattern.CASE_INSENSITIVE);
-        content = pattern.matcher(content).replaceAll("");
+        matcher = pattern.matcher(content);
+        while (matcher.find()){
+            content = matcher.replaceAll("");
+            matcher = pattern.matcher(content);
+        }
 
         // 删除无效的空标签（有属性的）要排除video, audio，注意此处的空标签必须是指定的，不然会把一些类似图片/音频/视频等“有意义的带属性空标签”给去掉
         pattern = Pattern.compile("(\\s|　|&nbsp;)*<(i|p|section|div|figure|pre|table|blockquote) [^>/]+>(\\s|　|&nbsp;)*</\\2>(\\s|　|&nbsp;)*", Pattern.CASE_INSENSITIVE);
-        content = pattern.matcher(content).replaceAll("");
-
+        // content = pattern.matcher(content).replaceAll("");
+        matcher = pattern.matcher(content);
+        while (matcher.find()){
+            content = matcher.replaceAll("");
+            matcher = pattern.matcher(content);
+        }
 
         // 去掉没有属性的span标签（此时没有意义）
         pattern = Pattern.compile("[\\s　]*<span>([\\s\\S]*?)</span>[\\s　]*", Pattern.CASE_INSENSITIVE);
@@ -622,19 +644,6 @@ public class ArticleUtil {
         return content;
     }
 
-
-    //private static String getFormatContentForSave(String title, String content) {
-    //    Document document = Jsoup.parseBodyFragment(content);
-    //    Elements elements = document.getElementsByTag("img");
-    //    String url, filePath;
-    //    for (int i = 0, size = elements.size(); i < size; i++) {
-    //        url = elements.get(i).attr("src");
-    //        filePath = "./" + title + "_files/" + UriUtil.guessFileNameExt(url);
-    //        elements.get(i).attr("original-src", url);
-    //        elements.get(i).attr("src", filePath);
-    //    }
-    //    return document.body().html();
-    //}
 
     /**
      * 获取修整后的概要
@@ -861,7 +870,7 @@ public class ArticleUtil {
     }
 
 
-    public static String getOptimizedContentWithEnclosures(String content, List<Enclosure> attachments){
+    public static String getOptimizedContentWithEnclosures(String content, @Nullable List<Enclosure> attachments){
         // 获取视频或者音频附件
         if (attachments != null && attachments.size() != 0) {
             for (Enclosure enclosure : attachments) {

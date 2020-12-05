@@ -4,12 +4,16 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.text.TextUtils;
 
-import com.socks.library.KLog;
+import com.elvishew.xlog.XLog;
+
+import java.util.List;
 
 import me.wizos.loread.App;
 import me.wizos.loread.Contract;
 import me.wizos.loread.R;
+import me.wizos.loread.db.CoreDB;
 import me.wizos.loread.db.CorePref;
+import me.wizos.loread.db.User;
 import me.wizos.loread.view.colorful.Colorful;
 
 public class SplashActivity extends BaseActivity {
@@ -40,8 +44,13 @@ public class SplashActivity extends BaseActivity {
         Intent intent;
         String uid = CorePref.i().globalPref().getString(Contract.UID, null);
 
-        KLog.e("获取UID：" + uid + ", " + App.i().getUser().getId() );
-        if ( TextUtils.isEmpty(uid) ) {
+        XLog.i("UID：" + uid);
+        List<User> articles = CoreDB.i().userDao().loadAll();
+        for (User user:articles) {
+            XLog.i(user );
+        }
+
+        if ( TextUtils.isEmpty(uid) || App.i().getUser() == null ) {
             intent = new Intent(this, ProviderActivity.class);
         } else {
             intent = new Intent(this, MainActivity.class);

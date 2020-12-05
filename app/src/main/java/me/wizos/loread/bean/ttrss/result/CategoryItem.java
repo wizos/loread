@@ -50,8 +50,6 @@ public class CategoryItem {
         Category category = new Category();
         category.setId(id);
         category.setTitle(title);
-//        category.setId( "user/" + id);
-//        category.setUnreadCount(unread);
         return category;
     }
 

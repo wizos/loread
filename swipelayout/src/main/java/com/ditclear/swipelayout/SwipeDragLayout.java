@@ -116,7 +116,7 @@ public class SwipeDragLayout extends FrameLayout {
                 if (mListener!=null){
                     mListener.onUpdate(SwipeDragLayout.this, offsetRatio,left);
                 }
-//                mListener.log("onViewPositionChanged：" + offsetRatio + "  left:" + left + "   top" + top + "  dx" + dx + "   dy" + dy );
+                // mListener.log("onViewPositionChanged：" + offsetRatio + "  left:" + left + "   top" + top + "  dx" + dx + "   dy" + dy );
                 // 兼容老版本
                 invalidate();
             }
@@ -125,26 +125,26 @@ public class SwipeDragLayout extends FrameLayout {
             @Override
             public void onViewReleased(View releasedChild, float xvel, float yvel) {
                 Log.e("滑动", "释放：" + xvel + "   " + yvel );
-//                mListener.log("-------------------------------------------------------------手指释放" );
+                // mListener.log("-------------------------------------------------------------手指释放" );
                 // Note: needOffset 最小偏移量 应该由左/右菜单View 的宽度来定。（）
                 if (releasedChild == contentView) {
                     if (isOpen()) {
                         if (offsetRatio != 1 && offsetRatio > (1 - needOffset)) {
                             openRight();
-//                            mListener.log("A：" + offsetRatio + "  " + needOffset);
+                            // mListener.log("A：" + offsetRatio + "  " + needOffset);
                         } else if (offsetRatio == 1) {
                             if (clickToClose) {
                                 close();
                             }
-//                            mListener.log("B：" + offsetRatio + "  " + clickToClose);
+                            // mListener.log("B：" + offsetRatio + "  " + clickToClose);
                         } else {
                             if( Math.abs(offsetRatio) < (1 - needOffset) ){
                                 close();
                             }else {
                                 openLeft();
                             }
-//                            close();
-//                            mListener.log("C：" + offsetRatio + "  " + clickToClose);
+                            // close();
+                            // mListener.log("C：" + offsetRatio + "  " + clickToClose);
                         }
                     } else {
                         if (offsetRatio != 0 && offsetRatio < needOffset) {

@@ -5,7 +5,7 @@ import android.text.TextUtils;
 
 import androidx.annotation.NonNull;
 
-import com.socks.library.KLog;
+import com.elvishew.xlog.XLog;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -64,9 +64,9 @@ public class LoggerInterceptor implements Interceptor {
             String bodyString = buffer.clone().readString(charset);
             if (!TextUtils.isEmpty(bodyString)) {
                 if (bodyString.length() > 88) {
-                    KLog.e("body---------->" + bodyString.substring(0, 88));
+                    XLog.d("body---------->" + bodyString.substring(0, 88));
                 } else {
-                    KLog.e("body---------->" + bodyString);
+                    XLog.e("body---------->" + bodyString);
                 }
             }
         }

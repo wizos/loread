@@ -20,6 +20,7 @@ public class User {
     @PrimaryKey
     private String id;
     // 账户信息
+    // TODO: 2020/12/4 以下的 userId, userName, userEmail 有歧义，无法区分哪个才是登录账号。应该用 account, password. name,email,gid（供应商内部的唯一标识id）
     private String source;
     private String userId; // 该用户在服务商那的id
     private String userName; // 该用户在服务商那的name
@@ -47,7 +48,7 @@ public class User {
     private boolean autoSyncOnlyWifi = false;
 
     private boolean downloadImgOnlyWifi = false;
-    private boolean openLinkBySysBrowser = false;
+    private boolean openLinkBySysBrowser = true;
     //是否滚动标记为已读
     private boolean markReadOnScroll = false;
     // 缓存的天数

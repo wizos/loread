@@ -17,8 +17,7 @@
  */
 package me.wizos.loread.extractor;
 
-import com.orhanobut.logger.Logger;
-import com.socks.library.KLog;
+import com.elvishew.xlog.XLog;
 
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -239,10 +238,10 @@ public class Extractor {
         }
 
         if (contentElement != null) {
-            // KLog.e("正文是：" + contentElement.text());
+            // XLog.e("正文是：" + contentElement.text());
             return contentElement;
         }
-        Logger.e("提取失败");
+        XLog.e("提取失败");
         return null;
     }
     /**
@@ -281,10 +280,10 @@ public class Extractor {
         }
 
         if (contentElement != null) {
-            // KLog.e("正文是：" + content.text());
+            // XLog.e("正文是：" + content.text());
             return contentElement;
         }
-        Logger.e("提取失败");
+        XLog.e("提取失败");
         return null;
     }
     public ExtractPage getNews() throws Exception {
@@ -294,7 +293,7 @@ public class Extractor {
             contentElement = getContentElement();
             extractPage.setContentElement(contentElement);
         } catch (Exception ex) {
-            KLog.e("modPage content extraction failed,extraction abort", ex);
+            XLog.e("modPage content extraction failed,extraction abort", ex);
             throw new Exception(ex);
         }
 
@@ -305,13 +304,13 @@ public class Extractor {
         try {
             extractPage.setTime(getTime(contentElement));
         } catch (Exception ex) {
-            KLog.e("modPage title extraction failed", ex);
+            XLog.e("modPage title extraction failed", ex);
         }
 
         try {
             extractPage.setTitle(getTitle(contentElement));
         } catch (Exception ex) {
-            KLog.e("title extraction failed", ex);
+            XLog.e("title extraction failed", ex);
         }
         return extractPage;
     }
@@ -556,11 +555,11 @@ public class Extractor {
 //        Extractor ce = new Extractor(doc,mKeyWord);
 //        Element newDoc = ce.getContentElement();
 //
-//        KLog.e("含关键字的正文3是：" + newDoc.outerHtml());
+//        XLog.e("含关键字的正文3是：" + newDoc.outerHtml());
 //        if( newDoc == null ){
 //            return "";
 //        }
-//        KLog.e("含关键字的正文4是：" + newDoc.outerHtml());
+//        XLog.e("含关键字的正文4是：" + newDoc.outerHtml());
 //        return newDoc.outerHtml();
 //    }
 
@@ -576,11 +575,11 @@ public class Extractor {
 //    }
 //    public static String getContentHtml(String baseUri,InputStream inputStream) throws Exception {
 //        Document doc = Jsoup.parse(inputStream,null,baseUri);
-//        KLog.e("编码是2：" + doc.charset() );
+//        XLog.e("编码是2：" + doc.charset() );
 //        return getContentElementByDoc(doc).outerHtml();
 //    }
 //    public static String getContentHtml(String baseUri,Document doc) throws Exception {
-//        KLog.e("编码是2：" + doc.charset() );
+//        XLog.e("编码是2：" + doc.charset() );
 //        return getContentElementByDoc(doc).outerHtml();
 //    }
 //    public static String getContentHtmlByUrl(String content) throws Exception {

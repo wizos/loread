@@ -3,10 +3,12 @@ package me.wizos.loread.bean.ttrss.request;
 public class GetHeadlines {
     private String op = "getHeadlines";
     private String sid;
+
     /**
      * all_articles, unread, adaptive, marked, updated
      */
-    private String view_mode = "unread";
+    private String view_mode = "unread, marked";
+
     /**
      * -1 starred
      * -2 published
@@ -23,7 +25,7 @@ public class GetHeadlines {
      */
     private String order_by = "date_reverse";
 
-    private int limit = 50;
+    private int limit = 20;
     private int skip;
     private String since_id;
     private boolean is_cat = false;

@@ -25,6 +25,7 @@ public class HttpClientManager {
     private static OkHttpClient simpleOkHttpClient;
     private static OkHttpClient loreadHttpClient;
     private static OkHttpClient ttrssHttpClient;
+    private static OkHttpClient feverHttpClient;
     private static OkHttpClient inoreaderHttpClient;
     private static OkHttpClient feedlyHttpClient;
 
@@ -55,9 +56,20 @@ public class HttpClientManager {
                             .hostnameVerifier(HttpsUtils.UnSafeHostnameVerifier)
                             .followRedirects(true)
                             .followSslRedirects(true)
-//                            .authenticator(new TTRSSAuthenticator())
+                            // .authenticator(new TTRSSAuthenticator())
                             .addInterceptor(new TTRSSTokenInterceptor())
                             .build();
+
+                    feverHttpClient = new OkHttpClient.Builder()
+                            .readTimeout(30, TimeUnit.SECONDS)
+                            .writeTimeout(30, TimeUnit.SECONDS)
+                            .connectTimeout(15, TimeUnit.SECONDS)
+                            .sslSocketFactory(HttpsUtils.getSslSocketFactory().sSLSocketFactory, HttpsUtils.getSslSocketFactory().trustManager)
+                            .hostnameVerifier(HttpsUtils.UnSafeHostnameVerifier)
+                            .followRedirects(true)
+                            .followSslRedirects(true)
+                            .build();
+
                     inoreaderHttpClient = new OkHttpClient.Builder()
                             .readTimeout(30, TimeUnit.SECONDS)
                             .writeTimeout(30, TimeUnit.SECONDS)
@@ -66,12 +78,14 @@ public class HttpClientManager {
                             .hostnameVerifier(HttpsUtils.UnSafeHostnameVerifier)
                             .followRedirects(true)
                             .followSslRedirects(true)
-//                            .addInterceptor(new AuthorizationInterceptor())
+                            // .addInterceptor(new AuthorizationInterceptor())
                             .addInterceptor(new InoreaderHeaderInterceptor())
                             .addInterceptor(new LoggerInterceptor())
                             .authenticator(new TokenAuthenticator())
-//                            .dns(new HttpDNS())
+                            // .dns(new HttpDNS())
                             .build();
+
+
                     feedlyHttpClient = new OkHttpClient.Builder()
                             .readTimeout(30, TimeUnit.SECONDS)
                             .writeTimeout(30, TimeUnit.SECONDS)
@@ -136,6 +150,8 @@ public class HttpClientManager {
     }
 
     public OkHttpClient ttrssHttpClient() {return ttrssHttpClient;}
+
+    public OkHttpClient feverHttpClient() {return feverHttpClient;}
 
     public OkHttpClient inoreaderHttpClient() {
         return inoreaderHttpClient;

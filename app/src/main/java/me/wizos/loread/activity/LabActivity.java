@@ -18,7 +18,9 @@ import androidx.work.PeriodicWorkRequest;
 import androidx.work.WorkManager;
 
 import com.afollestad.materialdialogs.MaterialDialog;
+import com.elvishew.xlog.XLog;
 import com.hjq.toast.ToastUtils;
+import com.lzy.okgo.OkGo;
 import com.socks.library.KLog;
 
 import java.io.File;
@@ -29,6 +31,7 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import me.wizos.loread.App;
+import me.wizos.loread.Contract;
 import me.wizos.loread.R;
 import me.wizos.loread.config.AdBlock;
 import me.wizos.loread.config.ArticleActionConfig;
@@ -40,9 +43,13 @@ import me.wizos.loread.db.Article;
 import me.wizos.loread.db.ArticleTag;
 import me.wizos.loread.db.Category;
 import me.wizos.loread.db.CoreDB;
+import me.wizos.loread.db.Feed;
+import me.wizos.loread.db.FeedCategory;
 import me.wizos.loread.db.Tag;
 import me.wizos.loread.db.User;
 import me.wizos.loread.network.SyncWorker;
+import me.wizos.loread.network.api.FeverApi;
+import me.wizos.loread.network.api.TinyRSSApi;
 import me.wizos.loread.utils.BackupUtil;
 import me.wizos.loread.utils.EncryptUtil;
 import me.wizos.loread.utils.FileUtil;
@@ -54,13 +61,11 @@ import static me.wizos.loread.Contract.SCHEMA_HTTPS;
 
 
 public class LabActivity extends AppCompatActivity {
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_lab);
     }
-
 
     private MaterialDialog materialDialog;
     public void onClickBackup(View view) {
@@ -90,10 +95,11 @@ public class LabActivity extends AppCompatActivity {
                 .canceledOnTouchOutside(false)
                 .progressIndeterminateStyle(false)
                 .show();
+        OkGo.getInstance().cancelAll();
         new Thread(new Runnable() {
             @Override
             public void run() {
-                //BackupUtil.restoreFile();
+                // BackupUtil.restoreFile();
                 BackupUtil.doInBackground(LabActivity.this,BackupUtil.COMMAND_RESTORE);
                 materialDialog.dismiss();
             }
@@ -113,21 +119,17 @@ public class LabActivity extends AppCompatActivity {
         LinkRewriteConfig.i().reset();
         NetworkRefererConfig.i().reset();
         NetworkUserAgentConfig.i().reset();
-        // UserConfig.i().reset();
         materialDialog.dismiss();
     }
 
 
     public void onClickArrangeCrawlDateArticle(View view) {
+        long time = System.currentTimeMillis();
         AsyncTask.THREAD_POOL_EXECUTOR.execute(new Runnable() {
             @Override
             public void run() {
-                List<Article> articles = CoreDB.i().articleDao().getAllNoOrder(App.i().getUser().getId());
-                for (Article article:articles) {
-                    article.setCrawlDate(article.getPubDate());
-                }
-                CoreDB.i().articleDao().update(articles);
-                KLog.i("整理完成：" + articles.size());
+                CoreDB.i().articleDao().updateCrawlDateToPubDate(App.i().getUser().getId());
+                XLog.i("整理耗时：" + (System.currentTimeMillis() - time));
             }
         });
     }
@@ -286,39 +288,7 @@ public class LabActivity extends AppCompatActivity {
         for (ResolveInfo currentInfo : activitiesToHide) {
             KLog.e("【GET_DISABLED_UNTIL_USED_COMPONENTS】" + currentInfo.activityInfo.packageName);
         }
-
-        //activitiesToHide = getPackageManager().queryIntentActivities(intent, PackageManager.MATCH_ALL);
-        //for (ResolveInfo currentInfo : activitiesToHide) {
-        //    KLog.e("【MATCH_ALL】" + currentInfo.activityInfo.packageName);
-        //}
-        //
-        //
-        //activitiesToHide = getPackageManager().queryIntentActivities(intent, PackageManager.MATCH_DIRECT_BOOT_UNAWARE);
-        //for (ResolveInfo currentInfo : activitiesToHide) {
-        //    KLog.e("【MATCH_DIRECT_BOOT_UNAWARE】" + currentInfo.activityInfo.packageName);
-        //}
-        //
-        //
-        //activitiesToHide = getPackageManager().queryIntentActivities(intent, PackageManager.MATCH_DIRECT_BOOT_AWARE);
-        //for (ResolveInfo currentInfo : activitiesToHide) {
-        //    KLog.e("【MATCH_DIRECT_BOOT_AWARE】" + currentInfo.activityInfo.packageName);
-        //}
-        //
-        //
-        //activitiesToHide = getPackageManager().queryIntentActivities(intent, PackageManager.MATCH_SYSTEM_ONLY);
-        //for (ResolveInfo currentInfo : activitiesToHide) {
-        //    KLog.e("【MATCH_SYSTEM_ONLY】" + currentInfo.activityInfo.packageName);
-        //}
-        //
-        //
-        //activitiesToHide = getPackageManager().queryIntentActivities(intent, PackageManager.MATCH_DISABLED_UNTIL_USED_COMPONENTS);
-        //for (ResolveInfo currentInfo : activitiesToHide) {
-        //    KLog.e("【MATCH_DISABLED_UNTIL_USED_COMPONENTS】" + currentInfo.activityInfo.packageName);
-        //}
-
     }
-
-
 
     private int getMatchActivitiesSize(String url){
         Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
@@ -398,16 +368,89 @@ public class LabActivity extends AppCompatActivity {
 
         EditText editText = findViewById(R.id.lab_enter_edittext);
         String url = editText.getText().toString();
-        KLog.e("修改host：" + url);
         user.setHost(url);
         CoreDB.i().userDao().insert(user);
+
+        AsyncTask.THREAD_POOL_EXECUTOR.execute(new Runnable() {
+            @Override
+            public void run() {
+                // 如果是 ttrss 服务，还得修改uid。
+                if(App.i().getApi() instanceof TinyRSSApi || App.i().getApi() instanceof FeverApi){
+                    String oldUid = user.getId();
+                    String newUid = Contract.PROVIDER_TINYRSS + "_" + (url + "_" + user.getUserId()).hashCode();
+                    XLog.i("uid 更新：" + oldUid + " -> " + newUid);
+
+                    App.i().getUser().setId(newUid);
+                    CoreDB.i().userDao().update(user);
+
+                    List<Category> categories = CoreDB.i().categoryDao().getAll(oldUid);
+                    for (Category ca: categories) {
+                        ca.setUid(newUid);
+                    }
+                    CoreDB.i().categoryDao().update(categories);
+
+                    List<Feed> feeds = CoreDB.i().feedDao().getAll(oldUid);
+                    for (Feed feed: feeds) {
+                        feed.setUid(newUid);
+                    }
+                    CoreDB.i().feedDao().update(feeds);
+
+                    List<FeedCategory> feedCategories = CoreDB.i().feedCategoryDao().getAll(oldUid);
+                    for (FeedCategory feedCategory: feedCategories) {
+                        feedCategory.setUid(newUid);
+                    }
+                    CoreDB.i().feedCategoryDao().update(feedCategories);
+
+                    List<Article> articles = CoreDB.i().articleDao().getAll(oldUid);
+                    for (Article article: articles) {
+                        article.setUid(newUid);
+                    }
+                    CoreDB.i().articleDao().update(articles);
+
+                    List<Tag> tags = CoreDB.i().tagDao().getAll(oldUid);
+                    for (Tag tag: tags) {
+                        tag.setUid(newUid);
+                    }
+                    CoreDB.i().tagDao().update(tags);
+
+                    List<ArticleTag> articleTags = CoreDB.i().articleTagDao().getAll(oldUid);
+                    for (ArticleTag articleTag: articleTags) {
+                        articleTag.setUid(newUid);
+                    }
+                    CoreDB.i().articleTagDao().update(articleTags);
+                    ToastUtils.show("已修改服务器及其数据为：" + url);
+                }else {
+                    ToastUtils.show("已修改服务器网址为：" + url);
+                }
+            }
+        });
+
+
     }
+
 
     public void onClickSearch(View view) {
         EditText editText = findViewById(R.id.lab_enter_edittext);
         String text = editText.getText().toString();
+        long time = System.currentTimeMillis();
         if(StringUtils.isEmpty(text)){
             ToastUtils.show("请输入关键词");
+        }else {
+            List<Article> articles = CoreDB.i().articleDao().search(App.i().getUser().getId(),text);
+            XLog.i("搜索耗时：" + (System.currentTimeMillis() - time));
+            XLog.i("搜索结果：" + articles);
+        }
+    }
+    public void onClickSearch2(View view) {
+        EditText editText = findViewById(R.id.lab_enter_edittext);
+        String text = editText.getText().toString();
+        long time = System.currentTimeMillis();
+        if(StringUtils.isEmpty(text)){
+            ToastUtils.show("请输入关键词");
+        }else {
+            List<Article> articles = CoreDB.i().articleDao().search2(App.i().getUser().getId(),text);
+            XLog.i("搜索耗时：" + (System.currentTimeMillis() - time));
+            XLog.i("搜索结果：" + articles);
         }
     }
 

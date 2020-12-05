@@ -1,8 +1,8 @@
 package me.wizos.loread.bean.ttrss.request;
 
 public class GetUnreadItemIds {
-    private String sid;
     private String op = "getUnreadItemIds";
+    private String sid;
 
     public GetUnreadItemIds(String sid) {
         this.sid = sid;
@@ -13,5 +13,12 @@ public class GetUnreadItemIds {
     }
     public String getSid() {
         return sid;
+    }
+
+    @Override
+    public String toString() {
+        return "GetUnreadItemIds{" +
+                "sid='" + sid + '\'' +
+                '}';
     }
 }

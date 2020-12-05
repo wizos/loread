@@ -8,21 +8,17 @@
     background: #888;
 }
 
-a {
-    color: #c6cddb;
-}
-
 body{
     color: #c6cddb;
-    //background: #494f5c;
     background-color: #454952;
 }
 
+header > h1 > a {
+	color: #c6cddb;
+}
 
-/* 表格
+/* 代码、表格
 =============================================================================*/
-    /*background-color: #141e21;
-    border: 1px solid #203238;*/
 pre {
     color: #eee;
     background: #2c3e50; 
@@ -36,7 +32,6 @@ table{
     color: #eee;
 	border: 1px solid rgba(0, 0, 0, 0.1) !important;
 	background: rgba(0, 0, 0, 0.08) !important;
-    /*background-color: #203238;*/
 }
 tt {
     background-color: #141e21;
@@ -44,7 +39,6 @@ tt {
 }
 
 table th, table td {
-    //border: 1px solid #212121;
 	border: 1px solid rgba(0, 0, 0, 0.1);
 }
 
@@ -57,4 +51,8 @@ blockquote{
 	border-left: 5px solid rgba(0, 0, 0, 0.3) !important;
 	color: rgba(255, 255, 255, 0.6) !important;
 }
-
+details{
+	padding: 5px 5px !important;
+	margin: 5px 0px !important;
+	background: rgba(0, 0, 0, 0.08) !important;
+}

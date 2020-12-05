@@ -10,7 +10,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.socks.library.KLog;
+import com.elvishew.xlog.XLog;
 import com.yanzhenjie.recyclerview.ExpandableAdapter;
 
 import java.util.List;
@@ -85,7 +85,7 @@ public class ExpandedAdapter extends ExpandableAdapter<RecyclerView.ViewHolder> 
             }
 
             long d = System.currentTimeMillis() - time;
-            KLog.e("返回feedList，耗时：" + d + " = " + App.i().getUser().getId()  + " = " + categories.get(groupPos).getId() + " , " + ( feedWraps==null ? 0:feedWraps.size()));
+            XLog.d("返回feedList，耗时：" + d + " = " + App.i().getUser().getId()  + " = " + categories.get(groupPos).getId() + " , " + ( feedWraps==null ? 0:feedWraps.size()));
             feedsMap.put(categories.get(groupPos).getId(), feedWraps);
 
             return feedWraps;
@@ -149,7 +149,6 @@ public class ExpandedAdapter extends ExpandableAdapter<RecyclerView.ViewHolder> 
 
         public void setData(@NonNull ExpandedAdapter mAdapter, @NonNull Collection category, final int parentPosition) {
             adapter = mAdapter;
-
             if(category.getId().contains(App.CATEGORY_UNCATEGORIZED)){
                 if(CoreDB.i().feedDao().getFeedsCountByUnCategory(App.i().getUser().getId()) == 0){
                     icon.setText(context.getString(R.string.font_tag));
