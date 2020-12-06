@@ -26,7 +26,7 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
         debug {
-            applicationIdSuffix '.debug' //增加包名后缀
+            // applicationIdSuffix '.debug' //增加包名后缀
             minifyEnabled false
             debuggable true
         }
@@ -68,8 +68,9 @@ dependencies {
     implementation project(path: ':swipelayout')
     implementation project(path: ':support')
 
-    // 浏览器
-    implementation project(path: ':agentweb-core')
+    // 浏览器[https://github.com/Justson/AgentWeb]
+    // implementation 'com.just.agentweb:agentweb-androidx:4.1.4'
+    implementation project(path: ':agentweb-core') // 修复双指放大后会自动缩小问题，并升级到androidx
 
 
     // 对话框
@@ -164,7 +165,7 @@ dependencies {
     // Glide 底层使用okhttp3
     implementation('com.github.bumptech.glide:okhttp3-integration:4.11.0') { transitive = false }
     // 查看大图 [https://github.com/SherlockGougou/BigImageViewPager]
-    implementation 'com.github.SherlockGougou:BigImageViewPager:androidx-6.1.3' // 6.0.1
+    implementation 'com.github.SherlockGougou:BigImageViewPager:androidx-6.0.1' // 6.0.1,6.1.3
 
     // 音频部件 [https://github.com/yhaolpz/FloatWindow]
     implementation project(path: ':floatwindow')
@@ -179,7 +180,9 @@ dependencies {
     implementation files('libs/okgo-3.0.4.jar')
 
     // 网络状态监听 [https://github.com/allenlzhang/NetworkState]
-    implementation 'com.github.allenlzhang:NetworkState:v1.0.0'
+    // implementation 'com.github.allenlzhang:NetworkState:v1.0.0'
+    // 本地版本修复部分手机出现空指针问题，并升级到androidx
+    implementation project(path: ':networklibs')
     // 图片压缩 [https://github.com/Curzibn/Luban]
     implementation project(path: ':luban')
 

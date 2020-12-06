@@ -36,8 +36,8 @@ import androidx.annotation.RequiresApi;
 import java.lang.reflect.Method;
 
 /**
- * @update WebChromeClientWrapper rename to WebChromeClientDelegate
  * @author cenxiaozhong
+ * @update WebChromeClientDelegate
  * @since 1.0.0
  */
 public class WebChromeClientDelegate extends WebChromeClient {
@@ -327,6 +327,7 @@ public class WebChromeClientDelegate extends WebChromeClient {
 
     /**
      * Android  >= 4.1
+     *
      * @param uploadFile
      * @param acceptType
      * @param capture
@@ -337,6 +338,7 @@ public class WebChromeClientDelegate extends WebChromeClient {
 
     /**
      * Android < 3.0
+     *
      * @param valueCallback
      */
     public void openFileChooser(ValueCallback<Uri> valueCallback) {
@@ -345,6 +347,7 @@ public class WebChromeClientDelegate extends WebChromeClient {
 
     /**
      * Android  >= 3.0
+     *
      * @param valueCallback
      * @param acceptType
      */

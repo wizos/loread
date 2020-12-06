@@ -18,8 +18,7 @@ package com.just.agentweb;
 
 import android.net.Uri;
 import android.text.TextUtils;
-
-import androidx.collection.ArrayMap;
+import android.util.ArrayMap;
 
 import java.util.Map;
 

@@ -2,6 +2,7 @@ package com.just.agentweb;
 
 import android.annotation.TargetApi;
 import android.content.Context;
+import android.content.res.Configuration;
 import android.os.Build;
 import android.util.AttributeSet;
 import android.webkit.WebView;
@@ -34,10 +35,10 @@ public class LollipopFixedWebView extends WebView {
     }
 
     public static Context getFixedContext(Context context) {
-//        if (Build.VERSION.SDK_INT >= 21 && Build.VERSION.SDK_INT < 23) {
-//            // A void crashing on Android 5 and 6 (API level 21 to 23)
-//            return context.createConfigurationContext(new Configuration());
-//        }
+        if (Build.VERSION.SDK_INT >= 21 && Build.VERSION.SDK_INT < 23) {
+            // Avoid crashing on Android 5 and 6 (API level 21 to 23)
+            return context.createConfigurationContext(new Configuration());
+        }
         return context;
     }
 

@@ -36,12 +36,12 @@ public class NestedScrollAgentWebView extends AgentWebView implements NestedScro
      */
     public NestedScrollAgentWebView(Context context) {
         super(context);
-        initView();
+        init();
     }
 
     private static final int INVALID_POINTER = -1;
 
-    private void initView() {
+    private void init() {
         mChildHelper = new NestedScrollingChildHelper(this);
         setNestedScrollingEnabled(true);
     }
@@ -69,29 +69,29 @@ public class NestedScrollAgentWebView extends AgentWebView implements NestedScro
 
     @Override
     public boolean onTouchEvent(MotionEvent ev) {
-        final int actionMasked = ev.getActionMasked();
+        final int action = ev.getActionMasked();
 
-        switch (actionMasked) {
+        switch (action) {
             case MotionEvent.ACTION_DOWN:
                 mIsBeingDragged = false;
 
                 // Remember where the motion event started
                 mLastMotionY = (int) ev.getY();
-//                downY = (int) ev.getY();
+                // downY = (int) ev.getY();
 
                 mActivePointerId = ev.getPointerId(0);
                 startNestedScroll(ViewCompat.SCROLL_AXIS_VERTICAL);
                 break;
 
             case MotionEvent.ACTION_MOVE:
-//                KLog.e("移动开始：");
+                // XLog.e("移动开始：");
                 final int activePointerIndex = ev.findPointerIndex(mActivePointerId);
                 if (activePointerIndex == -1) {
                     break;
                 }
-//                if( !onlyVerticalMove(ev) ){
-//                    break;
-//                }
+                // if( !onlyVerticalMove(ev) ){
+                //     break;
+                // }
 
                 final int y = (int) ev.getY(activePointerIndex);
                 int deltaY = mLastMotionY - y;
@@ -107,7 +107,7 @@ public class NestedScrollAgentWebView extends AgentWebView implements NestedScro
                 if (dispatchNestedScroll(0, scrolledDeltaY, 0, unconsumedY, mScrollOffset)) {
                     mLastMotionY -= mScrollOffset[1];
                 }
-//                KLog.e("移动结束：");
+                // KLog.e("移动结束：");
                 break;
             case MotionEvent.ACTION_UP:
                 mActivePointerId = INVALID_POINTER;
@@ -179,7 +179,6 @@ public class NestedScrollAgentWebView extends AgentWebView implements NestedScro
 
     @Override
     public boolean dispatchNestedScroll(int dxConsumed, int dyConsumed, int dxUnconsumed, int dyUnconsumed, int[] offsetInWindow) {
-//        KLog.e("分配滚动事件：" + dxConsumed + "  " + dyConsumed );
         return mChildHelper.dispatchNestedScroll(dxConsumed, dyConsumed, dxUnconsumed, dyUnconsumed, offsetInWindow);
     }
 

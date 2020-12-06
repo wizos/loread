@@ -37,11 +37,8 @@ public class AgentWebSettingsImpl extends AbsAgentWebSettings {
 
     @Override
     public WebListenerManager setDownloader(WebView webView, DownloadListener downloadListener) {
-        // Fix Android 5.1 crashing:
-        // ClassCastException: android.app.ContextImpl cannot be cast to android.app.Activity
         if (downloadListener == null) {
-            Activity activity = getActivityByContext(webView.getContext());
-            downloadListener = DefaultDownloadImpl.create(activity, webView, mAgentWeb.getPermissionInterceptor());
+            downloadListener = DefaultDownloadImpl.create(mAgentWeb.getActivity(), webView, mAgentWeb.getPermissionInterceptor());
         }
         return super.setDownloader(webView, downloadListener);
     }
@@ -57,10 +54,6 @@ public class AgentWebSettingsImpl extends AbsAgentWebSettings {
             }
             context = ((ContextWrapper) context).getBaseContext();
         }
-
-
-        LogUtils.e( "获取 B :", context + "" );
-        System.out.println("输出：" + context + "");
         return null;
     }
 

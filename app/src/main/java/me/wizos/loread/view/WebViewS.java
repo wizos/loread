@@ -7,7 +7,7 @@ import android.view.ViewGroup;
 import android.webkit.CookieManager;
 import android.webkit.WebSettings;
 
-import com.socks.library.KLog;
+import com.elvishew.xlog.XLog;
 
 import me.wizos.loread.App;
 import me.wizos.loread.view.webview.NestedScrollWebView;
@@ -19,8 +19,7 @@ import me.wizos.loread.view.webview.NestedScrollWebView;
 
 
 public class WebViewS extends NestedScrollWebView {
-    private boolean isReadability = false;
-//    private int downX,downY;
+    private boolean isDestroyed = false;
 
     @SuppressLint("NewApi")
     public WebViewS(final Context context) {
@@ -29,15 +28,6 @@ public class WebViewS extends NestedScrollWebView {
         // 这个问题解决方案只要你创建 WebView 时候传入 Activity ， 或者 自己实现 onJsAlert 方法即可。
         super(context);
         initSettingsForWebPage();
-    }
-
-
-    public boolean isReadability() {
-        return isReadability;
-    }
-
-    public void setReadability(boolean readability) {
-        isReadability = readability;
     }
 
     // 忽略 SetJavaScriptEnabled 的报错
@@ -85,7 +75,7 @@ public class WebViewS extends NestedScrollWebView {
         webSettings.setAppCacheEnabled(true); // 支持H5的 application cache 的功能
         webSettings.setDatabaseEnabled(true);  // 支持javascript读写db
         /* 根据cache-control获取数据 */
-//        webSettings.setCacheMode(WebSettings.LOAD_DEFAULT);
+        // webSettings.setCacheMode(WebSettings.LOAD_DEFAULT);
         webSettings.setCacheMode(WebSettings.LOAD_NO_CACHE);
 
         // 通过 file url 加载的 Javascript 读取其他的本地文件 .建议关闭
@@ -111,39 +101,41 @@ public class WebViewS extends NestedScrollWebView {
         webSettings.setRenderPriority(WebSettings.RenderPriority.HIGH);
 
         setLayerType(View.LAYER_TYPE_HARDWARE, null);
-//        setLayerType(View.LAYER_TYPE_SOFTWARE, null);//开启软件加速（在我的MX5上，滑动时会卡顿）
+        // setLayerType(View.LAYER_TYPE_SOFTWARE, null);//开启软件加速（在我的MX5上，滑动时会卡顿）
 
         // 设置WebView是否应加载图像资源。请注意，此方法控制所有图像的加载，包括使用数据URI方案嵌入的图像。
         webSettings.setLoadsImagesAutomatically(true);
         // 将图片下载阻塞，然后在浏览器的OnPageFinished事件中设置webView.getSettings().setBlockNetworkImage(false);
         // 通过图片的延迟载入，让网页能更快地显示。但是会造成懒加载失效，因为懒加载的脚本执行更早，所以认为所有未显示的图片都在同一屏幕内，要开始加载。
-//        webSettings.setBlockNetworkImage(true);
-
-//        webSettings.setSupportMultipleWindows(true);
-//        webSettings.setGeolocationEnabled(true);
-//        webSettings.setAppCacheMaxSize(Long.MAX_VALUE);
-//        webSettings.setPageCacheCapacity(IX5WebSettings.DEFAULT_CACHE_CAPACITY);
-//        webSettings.setPluginState(WebSettings.PluginState.ON_DEMAND);
+        // webSettings.setBlockNetworkImage(true);
+        // webSettings.setSupportMultipleWindows(true);
+        // webSettings.setGeolocationEnabled(true);
+        // webSettings.setAppCacheMaxSize(Long.MAX_VALUE);
+        // webSettings.setPageCacheCapacity(IX5WebSettings.DEFAULT_CACHE_CAPACITY);
+        // webSettings.setPluginState(WebSettings.PluginState.ON_DEMAND);
         // this.getSettingsExtension().setPageCacheCapacity(IX5WebSettings.DEFAULT_CACHE_CAPACITY);//extension
-//        this.evaluateJavascript();//  Android 4.4之后使用evaluateJavascript调用有返回值的JS方法
+        // this.evaluateJavascript();//  Android 4.4之后使用evaluateJavascript调用有返回值的JS方法
     }
 
+    public boolean isDestroyed(){
+        return isDestroyed;
+    }
 
     @Override
     public void destroy() {
+        isDestroyed = true;
         // 链接：http://www.jianshu.com/p/3e8f7dbb0dc7
         // 如果先调用destroy()方法，则会命中if (isDestroyed()) return;这一行代码，需要先onDetachedFromWindow()，再 destory()。
         // 在关闭了Activity时，如果Webview的音乐或视频，还在播放。就必须销毁Webview。
         // 但注意：webview调用destory时，仍绑定在Activity上，这是由于webview构建时传入了Activity对象。
         // 因此需要先从父容器中移除webview，然后再销毁webview。
 
-//        作者：听话哥
-//        链接：https://www.jianshu.com/p/9293505c7f71
-//        如果你在调用webview.destory();的时候，如果webview里面还有别的线程在操作，就会导致当前这个webview为空。这时候我们需要结束相应线程。例如我们项目中有一个广告拦截是通过在
-//        public void onPageFinished(final WebView view, String url)
-//        里面启用一个runnable去执行一串的js脚本，如果用户在你脚本没执行完成的时候就关闭了当前界面，系统就会抛出空指针异常。这时候就需要通过去onPageFinished获取webview对象
+       // 链接：https://www.jianshu.com/p/9293505c7f71
+       // 如果你在调用webview.destory();的时候，如果webview里面还有别的线程在操作，就会导致当前这个webview为空。这时候我们需要结束相应线程。例如我们项目中有一个广告拦截是通过在
+       // public void onPageFinished(final WebView view, String url)
+       // 里面启用一个runnable去执行一串的js脚本，如果用户在你脚本没执行完成的时候就关闭了当前界面，系统就会抛出空指针异常。这时候就需要通过去onPageFinished获取webview对象
 
-//        setVisibility(View.GONE);
+        // setVisibility(View.GONE);
         try {
             stopLoading();
             onPause();
@@ -151,15 +143,15 @@ public class WebViewS extends NestedScrollWebView {
 
             // 退出时调用此方法，移除绑定的服务，否则某些特定系统会报错
             getSettings().setJavaScriptEnabled(false);
-//            clearFormData(); // 清除自动完成填充的表单数据。需要注意的是，该方法仅仅清除当前表单域自动完成填充的表单数据，并不会清除WebView存储到本地的数据。
+            // clearFormData(); // 清除自动完成填充的表单数据。需要注意的是，该方法仅仅清除当前表单域自动完成填充的表单数据，并不会清除WebView存储到本地的数据。
             clearMatches(); // 清除网页查找的高亮匹配字符。
             clearSslPreferences(); //清除ssl信息。
             clearDisappearingChildren();
             clearAnimation();
 
             clearHistory();
-//            clearCache(true);
-//            destroyDrawingCache(); // 貌似影响内存回收
+            // clearCache(true);
+            // destroyDrawingCache(); // 貌似影响内存回收
             removeAllViews();
             // removeAllViewsInLayout(); 相比而言, removeAllViews() 也调用了removeAllViewsInLayout(), 但是后面还调用了requestLayout(),这个方法是当View的布局发生改变会调用它来更新当前视图, 移除子View会更加彻底. 所以除非必要, 还是推荐使用removeAllViews()这个方法.
             ViewGroup parent = (ViewGroup) this.getParent();
@@ -169,7 +161,7 @@ public class WebViewS extends NestedScrollWebView {
             setWebChromeClient(null);
             // 将缓存中的cookie数据同步到数据库。此调用将阻塞调用者，直到它完成并可能执行I/O。
         } catch (Exception e) {
-            KLog.e("报错");
+            XLog.e("报错：" + e);
             e.printStackTrace();
         }
         super.destroy();
@@ -182,13 +174,11 @@ public class WebViewS extends NestedScrollWebView {
      */
     public void loadData(String htmlContent) {
         loadDataWithBaseURL(App.i().getWebViewBaseUrl(), htmlContent, "text/html", "UTF-8", null);
-        isReadability = false;
     }
 
 
     @Override
-    protected void onScrollChanged(final int l, final int t, final int oldl,
-                                   final int oldt) {
+    protected void onScrollChanged(final int l, final int t, final int oldl, final int oldt) {
         super.onScrollChanged(l, t, oldl, oldt);
         if (mOnScrollChangedCallback != null) {
             mOnScrollChangedCallback.onScrollY(t - oldt);
@@ -199,8 +189,7 @@ public class WebViewS extends NestedScrollWebView {
         return mOnScrollChangedCallback;
     }
 
-    public void setOnScrollChangedCallback(
-            final OnScrollChangedCallback onScrollChangedCallback) {
+    public void setOnScrollChangedCallback(final OnScrollChangedCallback onScrollChangedCallback) {
         mOnScrollChangedCallback = onScrollChangedCallback;
     }
 
@@ -212,6 +201,4 @@ public class WebViewS extends NestedScrollWebView {
     public interface OnScrollChangedCallback {
         void onScrollY(int dy);
     }
-
-
 }

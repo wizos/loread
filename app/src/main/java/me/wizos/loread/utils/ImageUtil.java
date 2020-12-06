@@ -258,7 +258,10 @@ public class ImageUtil {
         }
     }
 
-    public static boolean isImg(File file) {
+    /**
+     * 常见的图片格式以及SVG
+     */
+    public static boolean isImgOrSvg(File file) {
         try {
             FileInputStream is = new FileInputStream(file);
             byte[] src = new byte[28];

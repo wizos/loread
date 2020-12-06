@@ -72,11 +72,12 @@ public class ColorModifier {
     }
 
     private String modifyColor(RGB themeColor, String checkedColor) {
-        // 处理 RGB 颜色
-        m = Pattern.compile("\\(\\s*(\\d+)\\s*,\\s*(\\d+)\\s*,\\s*(\\d+)\\s*\\)", Pattern.CASE_INSENSITIVE).matcher(checkedColor);
         int r = 0;
         int g = 0;
         int b = 0;
+
+        // 处理 RGB 颜色 (251, 228, 228)
+        m = Pattern.compile("\\(\\s*(\\d+)\\s*,\\s*(\\d+)\\s*,\\s*(\\d+)\\s*\\)", Pattern.CASE_INSENSITIVE).matcher(checkedColor);
         if (m.find()) {
             r = Integer.valueOf(m.group(1));
             g = Integer.valueOf(m.group(2));
@@ -84,6 +85,14 @@ public class ColorModifier {
             return modifyColor(themeColor, new RGB(r, g, b));
         }
 
+        // 处理 RGB 颜色 (251, 228, 228, 0.8)
+        m = Pattern.compile("\\(\\s*(\\d+)\\s*,\\s*(\\d+)\\s*,\\s*(\\d+)\\s*,\\s*\\S+\\s*\\)", Pattern.CASE_INSENSITIVE).matcher(checkedColor);
+        if (m.find()) {
+            r = Integer.valueOf(m.group(1));
+            g = Integer.valueOf(m.group(2));
+            b = Integer.valueOf(m.group(3));
+            return modifyColor(themeColor, new RGB(r, g, b));
+        }
         // 处理 #FF000000 类型的颜色
         m = Pattern.compile("#\\W*\\w{2}(\\w{6})\\W*$", Pattern.CASE_INSENSITIVE).matcher(checkedColor);
         if (m.find()) {

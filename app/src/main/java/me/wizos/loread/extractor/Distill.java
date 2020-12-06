@@ -68,6 +68,8 @@ public class Distill {
     private Handler handler;
     private Document document;
 
+    private boolean isCancel = false;
+
     public Distill(@NotNull String url, @Nullable String keyword, @NotNull Listener callback) {
         this.url = url;
         this.keyword = keyword;
@@ -75,25 +77,15 @@ public class Distill {
             @Override
             public void onResponse(String content) {
                 handler.removeMessages(TIMEOUT);
-                handler.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        cancel();
-                    }
-                });
-                callback.onResponse(content);
+                if(!isCancel) callback.onResponse(content);
+                handler.post(() -> destroy());
             }
 
             @Override
             public void onFailure(String msg) {
                 handler.removeMessages(TIMEOUT);
-                handler.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        cancel();
-                    }
-                });
-                callback.onFailure(msg);
+                if(!isCancel) callback.onFailure(msg);
+                handler.post(() -> destroy());
             }
         };
         this.handler = new Handler(Looper.getMainLooper(), new Handler.Callback() {
@@ -119,7 +111,7 @@ public class Distill {
 
 
     public void getContent(){
-        handler.sendEmptyMessageDelayed(TIMEOUT,TIMEOUT);
+        handler.sendEmptyMessageDelayed(TIMEOUT, TIMEOUT);
         Request request = new Request.Builder().url(url).tag(TAG).build();
         call = HttpClientManager.i().simpleClient().newCall(request);
 
@@ -150,6 +142,7 @@ public class Distill {
                 }else {
                     dispatcher.onFailure(App.i().getString(R.string.not_responding));
                 }
+                response.close();
             }
         });
     }
@@ -340,6 +333,15 @@ public class Distill {
     };
 
     public void cancel(){
+        isCancel = true;
+        destroy();
+    }
+
+
+    public void destroy(){
+        if(handler != null){
+            handler.removeMessages(TIMEOUT);
+        }
         if(call != null){
             call.cancel();
         }
@@ -348,12 +350,9 @@ public class Distill {
             webViewS = null;
         }
     }
-
     public interface Listener {
         void onResponse(String content);
         void onFailure(String msg);
-
-
         // void onTimeout();
         // void onNotResponse();
         // void onNoTextFound();

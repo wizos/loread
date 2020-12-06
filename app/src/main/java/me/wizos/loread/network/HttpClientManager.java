@@ -6,7 +6,6 @@ import java.util.concurrent.TimeUnit;
 
 import me.wizos.loread.network.interceptor.InoreaderHeaderInterceptor;
 import me.wizos.loread.network.interceptor.LoggerInterceptor;
-import me.wizos.loread.network.interceptor.LoreadTokenInterceptor;
 import me.wizos.loread.network.interceptor.RefererInterceptor;
 import me.wizos.loread.network.interceptor.RelyInterceptor;
 import me.wizos.loread.network.interceptor.TTRSSTokenInterceptor;
@@ -23,7 +22,7 @@ public class HttpClientManager {
 
     private static HttpClientManager instance;
     private static OkHttpClient simpleOkHttpClient;
-    private static OkHttpClient loreadHttpClient;
+    // private static OkHttpClient loreadHttpClient;
     private static OkHttpClient ttrssHttpClient;
     private static OkHttpClient feverHttpClient;
     private static OkHttpClient inoreaderHttpClient;
@@ -37,17 +36,16 @@ public class HttpClientManager {
             synchronized (HttpClientManager.class) {
                 if (instance == null) {
                     instance = new HttpClientManager();
-
-                    loreadHttpClient = new OkHttpClient.Builder()
-                            .readTimeout(30, TimeUnit.SECONDS)
-                            .writeTimeout(30, TimeUnit.SECONDS)
-                            .connectTimeout(15, TimeUnit.SECONDS)
-                            .sslSocketFactory(HttpsUtils.getSslSocketFactory().sSLSocketFactory, HttpsUtils.getSslSocketFactory().trustManager)
-                            .hostnameVerifier(HttpsUtils.UnSafeHostnameVerifier)
-                            .followRedirects(true)
-                            .followSslRedirects(true)
-                            .addInterceptor(new LoreadTokenInterceptor())
-                            .build();
+                    // loreadHttpClient = new OkHttpClient.Builder()
+                    //         .readTimeout(30, TimeUnit.SECONDS)
+                    //         .writeTimeout(30, TimeUnit.SECONDS)
+                    //         .connectTimeout(15, TimeUnit.SECONDS)
+                    //         .sslSocketFactory(HttpsUtils.getSslSocketFactory().sSLSocketFactory, HttpsUtils.getSslSocketFactory().trustManager)
+                    //         .hostnameVerifier(HttpsUtils.UnSafeHostnameVerifier)
+                    //         .followRedirects(true)
+                    //         .followSslRedirects(true)
+                    //         .addInterceptor(new LoreadTokenInterceptor())
+                    //         .build();
                     ttrssHttpClient = new OkHttpClient.Builder()
                             .readTimeout(30, TimeUnit.SECONDS)
                             .writeTimeout(30, TimeUnit.SECONDS)
@@ -58,8 +56,8 @@ public class HttpClientManager {
                             .followSslRedirects(true)
                             // .authenticator(new TTRSSAuthenticator())
                             .addInterceptor(new TTRSSTokenInterceptor())
+                            .dns(new FastDNS())
                             .build();
-
                     feverHttpClient = new OkHttpClient.Builder()
                             .readTimeout(30, TimeUnit.SECONDS)
                             .writeTimeout(30, TimeUnit.SECONDS)
@@ -68,6 +66,7 @@ public class HttpClientManager {
                             .hostnameVerifier(HttpsUtils.UnSafeHostnameVerifier)
                             .followRedirects(true)
                             .followSslRedirects(true)
+                            .dns(new FastDNS())
                             .build();
 
                     inoreaderHttpClient = new OkHttpClient.Builder()
@@ -84,8 +83,6 @@ public class HttpClientManager {
                             .authenticator(new TokenAuthenticator())
                             // .dns(new HttpDNS())
                             .build();
-
-
                     feedlyHttpClient = new OkHttpClient.Builder()
                             .readTimeout(30, TimeUnit.SECONDS)
                             .writeTimeout(30, TimeUnit.SECONDS)
@@ -108,6 +105,7 @@ public class HttpClientManager {
                             .followSslRedirects(true)
                             .addInterceptor(new RelyInterceptor())
                             .addInterceptor(new RefererInterceptor())
+                            .dns(new FastDNS())
                             .build();
                     imageHttpClient = new OkHttpClient.Builder()
                             .readTimeout(60, TimeUnit.SECONDS)
@@ -118,6 +116,7 @@ public class HttpClientManager {
                             .followRedirects(true)
                             .followSslRedirects(true)
                             .addInterceptor(new RelyInterceptor())
+                            .dns(new FastDNS())
                             .build();
                     imageHttpClient.dispatcher().setMaxRequests(4);
 
@@ -130,8 +129,7 @@ public class HttpClientManager {
                             .followRedirects(true)
                             .followSslRedirects(true)
                             .addInterceptor(new RelyInterceptor())
-                            // 在 ArticlePagedListAdapter 类的 new GlideUrl中，已经给了referer
-                            // .addInterceptor(new RefererInterceptor())
+                            .dns(new FastDNS())
                             .build();
                     glideHttpClient.dispatcher().setMaxRequests(4);
                 }
@@ -145,9 +143,9 @@ public class HttpClientManager {
         return simpleOkHttpClient;
     }
 
-    public OkHttpClient loreadHttpClient() {
-        return loreadHttpClient;
-    }
+    // public OkHttpClient loreadHttpClient() {
+    //     return loreadHttpClient;
+    // }
 
     public OkHttpClient ttrssHttpClient() {return ttrssHttpClient;}
 

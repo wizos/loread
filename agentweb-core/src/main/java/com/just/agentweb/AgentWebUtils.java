@@ -389,7 +389,6 @@ public class AgentWebUtils {
 	}
 
 	static Method isExistMethod(Object o, String methodName, Class... clazzs) {
-
 		if (null == o) {
 			return null;
 		}
@@ -399,9 +398,9 @@ public class AgentWebUtils {
 			mMethod.setAccessible(true);
 			return mMethod;
 		} catch (Throwable ignore) {
-			if (LogUtils.isDebug()) {
-				ignore.printStackTrace();
-			}
+//			if (LogUtils.isDebug()) {
+//				ignore.printStackTrace();
+//			}
 		}
 		return null;
 
@@ -418,9 +417,7 @@ public class AgentWebUtils {
 	}
 
 	static void clearWebViewAllCache(Context context, WebView webView) {
-
 		try {
-
 			AgentWebConfig.removeAllCookies(null);
 			webView.getSettings().setCacheMode(WebSettings.LOAD_NO_CACHE);
 			context.deleteDatabase("webviewCache.db");
@@ -439,9 +436,7 @@ public class AgentWebUtils {
 	}
 
 	static void clearWebViewAllCache(Context context) {
-
 		try {
-
 			clearWebViewAllCache(context, new LollipopFixedWebView(context.getApplicationContext()));
 		} catch (Exception e) {
 			e.printStackTrace();

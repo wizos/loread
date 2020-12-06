@@ -248,7 +248,7 @@ public class Luban implements Handler.Callback {
         File outFile = getImageCacheFile(context, path, Checker.SINGLE.extSuffix(path));
         if (mRenameListener != null) {
             String filename = mRenameListener.rename(path.getPath());
-            outFile = getImageCustomFile(context, filename);
+            outFile = getImageCustomFile(context, filename); // 此时还是空文件
         }
 
         if (mCompressionPredicate != null) {
@@ -263,7 +263,7 @@ public class Luban implements Handler.Callback {
             }
         } else {
             if( Checker.SINGLE.needCompress(mLeastCompressSize, path.getPath()) ){
-                fileProvider.file = new Engine(path, outFile,maxWidth,maxHeight, focusAlpha).compress();
+                fileProvider.file = new Engine(path, outFile, maxWidth, maxHeight, focusAlpha).compress();
                 fileProvider.hasCompressed = true;
             }else {
                 fileProvider.file = new File(path.getPath());

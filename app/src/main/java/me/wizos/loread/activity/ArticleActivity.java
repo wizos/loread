@@ -55,12 +55,10 @@ import com.lzy.okgo.callback.FileCallback;
 import com.lzy.okgo.model.Response;
 import com.lzy.okgo.request.base.Request;
 
-import org.jetbrains.annotations.NotNull;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 
 import java.io.File;
-import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -110,8 +108,6 @@ import me.wizos.loread.view.webview.DownloadListenerS;
 import me.wizos.loread.view.webview.LongClickPopWindow;
 import me.wizos.loread.view.webview.SlowlyProgressBar;
 import me.wizos.loread.view.webview.VideoImpl;
-import okhttp3.Call;
-import okhttp3.Callback;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import top.zibin.luban.CompressionPredicate;
@@ -230,7 +226,7 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
     @JavascriptInterface
     @Override
     public void log(String paramString) {
-        XLog.e(ArticleBridge.TAG, "【log】" + paramString);
+        XLog.d("【log】" + paramString);
     }
 
     @JavascriptInterface
@@ -243,6 +239,7 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
     @Override
     public void readImage(String articleId, String imgId, String originalUrl) {
         String cacheUrl = FileUtil.readCacheFilePath(EncryptUtil.MD5(articleId), originalUrl);
+        XLog.d("加载图片 - 缓存地址：" + cacheUrl);
         articleHandler.post(new Runnable() {
             @Override
             public void run() {
@@ -256,11 +253,11 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
                         downImage(articleId, imgId, originalUrl, false);
                     }
                 }else {
-                    if(ImageUtil.isImg(new File(cacheUrl))){
+                    if(ImageUtil.isImgOrSvg(new File(cacheUrl))){
                         selectedWebView.loadUrl("javascript:setTimeout( onImageLoadSuccess('" + imgId + "','" + cacheUrl + "'),1)");
                     }else {
                         selectedWebView.loadUrl("javascript:setTimeout( onImageError('" + imgId + "'),1 )");
-                        XLog.e("加载图片", "缓存文件读取失败：不是图片");
+                        XLog.d("加载图片 - 缓存文件读取失败：不是图片");
                     }
                 }
             }
@@ -281,7 +278,7 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
                 return "IMAGE_HOLDER_LOADING_URL";
             }
         }else {
-            if(ImageUtil.isImg(new File(cacheUrl))){
+            if(ImageUtil.isImgOrSvg(new File(cacheUrl))){
                 return cacheUrl;
             }else {
                 XLog.e("加载图片", "缓存文件读取失败：不是图片");
@@ -293,7 +290,7 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
     @JavascriptInterface
     @Override
     public void openImage(String articleId, String imageFilePath) {
-        XLog.e(ArticleBridge.TAG, "打开图片：" + this.getPackageName() + " , " + imageFilePath + "  " );
+        XLog.d("打开图片：" + imageFilePath + "  " );
         // 如果是 svg 格式的图片则点击无反应
         if(imageFilePath.endsWith(".svg")){
             return;
@@ -343,7 +340,6 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
                         //shareIntent.putExtra(Intent.EXTRA_SUBJECT, getString(R.string.share_img));
                         //shareIntent.putExtra(Intent.EXTRA_TEXT,getString(R.string.share_img));
                         //shareIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-
                         startActivity(Intent.createChooser(shareIntent, getString(R.string.share_img)));
                         return false;
                     }
@@ -355,14 +351,14 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
     private static class MyCompressionPredicate implements CompressionPredicate {
         @Override
         public boolean apply(String preCompressedPath, InputStreamProvider path) {
-//         XLog.e("检测是否要压缩图片：" + preCompressedPath);
+            // XLog.e("检测是否要压缩图片：" + preCompressedPath);
             try {
                 if (preCompressedPath.toLowerCase().endsWith(".gif")) {
                     BitmapFactory.Options options = new BitmapFactory.Options();
                     options.inSampleSize = 1;
                     options.inJustDecodeBounds = true;
                     BitmapFactory.decodeStream(path.open(), null, options);
-//                   XLog.e("压缩图片，忽略压缩：" + preCompressedPath + options.outWidth );
+                    // XLog.d("压缩图片，忽略压缩：" + preCompressedPath + options.outWidth );
                     return options.outWidth >= 300 || options.outHeight >= 300;
                 } else {
                     return true;
@@ -387,7 +383,7 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
         private boolean guessReferer;
 
         DownFileCallback(String destFileDir, String destFileName) {
-            super(destFileDir, destFileName);
+            super(destFileDir, destFileName + ".tmp");
             this.originalFileDir = destFileDir;
             this.imgId = destFileName;
         }
@@ -409,18 +405,16 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
         @Override
         public void onSuccess(Response<File> response) {
             MediaType mediaType = response.getRawResponse().body().contentType();
-            boolean rename = false;
-            if( mediaType != null ){
-                if( mediaType.subtype().contains("svg") && !fileNameExt.endsWith(".svg")){
-                    fileNameExt = fileNameExt + ".svg";
-                    rename = true;
-                }
+            boolean renameToFileNameForSvg = false;
+            if( mediaType != null && mediaType.subtype().contains("svg") && !fileNameExt.endsWith(".svg") ){
+                fileNameExt = fileNameExt + ".svg";
+                renameToFileNameForSvg = true;
             }
             File tmpOriginalFile = response.body();
-            if(!ImageUtil.isImg(tmpOriginalFile)){
-                //downloadedOriginalFile.delete();
-                tmpOriginalFile.renameTo(new File(originalFileDir + imgId + ".error"));
-                if (selectedWebView.get() != null) {
+            if(!ImageUtil.isImgOrSvg(tmpOriginalFile)){
+                tmpOriginalFile.delete();
+                // tmpOriginalFile.renameTo(new File(originalFileDir + imgId + ".error"));
+                if (selectedWebView.get() != null && !selectedWebView.get().isDestroyed()) {
                     selectedWebView.get().loadUrl("javascript:setTimeout( onImageError('" + imgId + "'),1)");
                 }
                 return;
@@ -428,23 +422,28 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
                 NetworkRefererConfig.i().addReferer(imageUrl, articleUrl);
             }
 
-            if(rename){
+            if(renameToFileNameForSvg){
                 File targetOriginalFile = new File(originalFileDir + fileNameExt);
-
                 // 可能存在图片的文件名相同，但是实际是不同图片的情况。
                 if(targetOriginalFile.exists() && tmpOriginalFile.length() != targetOriginalFile.length()){
                    fileNameExt = imgId + "_" + fileNameExt;
                    targetOriginalFile = new File(originalFileDir + fileNameExt);
                 }
-                tmpOriginalFile.renameTo(targetOriginalFile);
-                // tmpOriginalFile = targetOriginalFile;
-            }
-            final File downloadedOriginalFile = tmpOriginalFile;
 
-            if (selectedWebView.get() == null) {
-                return;
+                if(tmpOriginalFile.renameTo(targetOriginalFile)){
+                    // XLog.i("改名成功：" + tmpOriginalFile.getAbsolutePath() + ", " + targetOriginalFile.getAbsolutePath() );
+                    tmpOriginalFile = targetOriginalFile;
+                }
+            }else {
+                File targetOriginalFile = new File(originalFileDir + imgId);
+                if(tmpOriginalFile.renameTo(targetOriginalFile)){
+                    tmpOriginalFile = targetOriginalFile;
+                }
             }
-            //XLog.i("下载图片成功，准备压缩：" + originalFileDir + prefix + fileNameExt + svgExt  + "，" + originalUrl );
+
+            File downloadedOriginalFile = tmpOriginalFile;
+
+            // XLog.i("下载图片成功，准备压缩：" + originalFileDir + fileNameExt + " or " + imgId + " = " + imageUrl );
 
             Luban.with(App.i())
                     //.load(targetOriginalFile)
@@ -460,7 +459,6 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
                         @Override
                         public String rename(String filePath) {
                             return imgId;
-                            //return fileNameExt;
                         }
                     })
                     .filter(new MyCompressionPredicate())
@@ -471,11 +469,10 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
 
                         @Override
                         public void onUnChange(final File file) {
-//                            XLog.e("没有压缩图片：" + Thread.currentThread() + "   " + file.getPath() + "   " + compressedFileDir);
                             articleHandler.post(new Runnable() {
                                 @Override
                                 public void run() {
-                                    if (selectedWebView.get() != null) {
+                                    if (selectedWebView.get() != null && !selectedWebView.get().isDestroyed()) {
                                         selectedWebView.get().loadUrl("javascript:setTimeout( onImageLoadSuccess('" + imgId + "','" + file.getPath() + "'),1 )");
                                     }
                                 }
@@ -487,11 +484,11 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
                             ImageUtil.mergeBitmap(weakReferenceContext, file, new ImageUtil.OnMergeListener() {
                                 @Override
                                 public void onSuccess() {
-//                                    XLog.e("图片合成成功" + Thread.currentThread());
+                                    // XLog.d("图片合成成功" + Thread.currentThread());
                                     articleHandler.post(new Runnable() {
                                         @Override
                                         public void run() {
-                                            if (selectedWebView.get() != null) {
+                                            if (selectedWebView.get() != null && !selectedWebView.get().isDestroyed()) {
                                                 selectedWebView.get().loadUrl("javascript:setTimeout( onImageLoadSuccess('" + imgId + "','" + file.getPath() + "'),1 )");
                                             }
                                         }
@@ -500,12 +497,12 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
 
                                 @Override
                                 public void onError(Throwable e) {
-                                    XLog.e("合成图片报错：" + Thread.currentThread());
+                                    XLog.w("合成图片报错：" + e);
                                     e.printStackTrace();
                                     articleHandler.post(new Runnable() {
                                         @Override
                                         public void run() {
-                                            if (selectedWebView.get() != null) {
+                                            if (selectedWebView.get() != null && !selectedWebView.get().isDestroyed()) {
                                                 selectedWebView.get().loadUrl("javascript:setTimeout( onImageLoadSuccess('" + imgId + "','" + downloadedOriginalFile.getPath() + "'),1)");
                                             }
                                          }
@@ -516,12 +513,12 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
 
                         @Override
                         public void onError(Throwable e) {
-                            XLog.e("压缩图片报错" + Thread.currentThread() );
-//                                selectedWebView.loadUrl("javascript:onImageLoadSuccess('" + originalUrl + "','" + originalFileDir + fileNameExt + "')");
+                            XLog.d("压缩图片报错" + Thread.currentThread() );
+                            // selectedWebView.loadUrl("javascript:onImageLoadSuccess('" + originalUrl + "','" + originalFileDir + fileNameExt + "')");
                             articleHandler.post(new Runnable() {
                                 @Override
                                 public void run() {
-                                    if (selectedWebView.get() != null) {
+                                    if (selectedWebView.get() != null && !selectedWebView.get().isDestroyed()) {
                                         selectedWebView.get().loadUrl("javascript:setTimeout( onImageLoadSuccess('" + imgId + "','" + downloadedOriginalFile.getPath() + "'),1)");
                                     }
                                 }
@@ -534,11 +531,11 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
         @Override
         public void onError(Response<File> response) {
             new File(originalFileDir + imgId).delete();
-            XLog.e("下载图片失败：" + imageUrl + "','" + response.code() + "  " + response.getException());
+            XLog.d("下载图片失败：" + imageUrl + "','" + response.code() + "  " + response.getException());
             articleHandler.post(new Runnable() {
                 @Override
                 public void run() {
-                    if (selectedWebView.get() != null) {
+                    if (selectedWebView.get() != null && !selectedWebView.get().isDestroyed()) {
                         selectedWebView.get().loadUrl("javascript:setTimeout( onImageLoadFailed('" + imgId + "'),1)");
                     }
                 }
@@ -579,26 +576,23 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
         }
 
         request.execute(fileCallback);
-        //XLog.e("下载图片：" + originalUrl);
+        //XLog.d("下载图片：" + originalUrl);
     }
     @JavascriptInterface
     @Override
     public void downFile(String url){
         DownloadListenerS downloadListener = new DownloadListenerS(this).setWebView(selectedWebView);
-        okhttp3.Request request = new okhttp3.Request.Builder().url(url).head().tag(TAG).build();
-        Call call = HttpClientManager.i().simpleClient().newCall(request);
-        call.enqueue(new Callback() {
-            @Override
-            public void onFailure(@NotNull Call call, @NotNull IOException e) {
-
-            }
-
-            @Override
-            public void onResponse(@NotNull Call call, @NotNull okhttp3.Response response) throws IOException {
-
-            }
-        });
-
+        // 请求文件大小
+        // okhttp3.Request request = new okhttp3.Request.Builder().url(url).head().tag(TAG).build();
+        // Call call = HttpClientManager.i().simpleClient().newCall(request);
+        // call.enqueue(new Callback() {
+        //     @Override
+        //     public void onFailure(@NotNull Call call, @NotNull IOException e) {
+        //     }
+        //     @Override
+        //     public void onResponse(@NotNull Call call, @NotNull okhttp3.Response response) throws IOException {
+        //     }
+        // });
         articleHandler.post(new Runnable() {
             @Override
             public void run() {
@@ -620,14 +614,14 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
             intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
             List<ResolveInfo> activities = getPackageManager().queryIntentActivities(intent, PackageManager.MATCH_DEFAULT_ONLY);
             List<ResolveInfo> activitiesToHide = getPackageManager().queryIntentActivities(new Intent(Intent.ACTION_VIEW, Uri.parse("https://wizos.me")), PackageManager.MATCH_DEFAULT_ONLY);
-            XLog.e("数量：" + activities.size() +" , " + activitiesToHide.size());
+            XLog.d("数量：" + activities.size() +" , " + activitiesToHide.size());
 
             if( activities.size() != activitiesToHide.size()){
                 HashSet<String> hideApp = new HashSet<>();
                 hideApp.add("com.kingsoft.moffice_pro");
                 for (ResolveInfo currentInfo : activitiesToHide) {
                     hideApp.add(currentInfo.activityInfo.packageName);
-                    XLog.e("内容1：" + currentInfo.activityInfo.packageName);
+                    XLog.d("内容1：" + currentInfo.activityInfo.packageName);
                 }
                 ArrayList<Intent> targetIntents = new ArrayList<Intent>();
                 for (ResolveInfo currentInfo : activities) {
@@ -637,7 +631,7 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
                         targetIntent.setPackage(packageName);
                         targetIntents.add(targetIntent);
                     }
-                    XLog.e("内容2：" + packageName);
+                    XLog.d("内容2：" + packageName);
                 }
                 if(targetIntents.size() > 0) {
                     intent = Intent.createChooser(targetIntents.remove(0),  getString(R.string.open_with));
@@ -797,6 +791,10 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
         // 取消之前那篇文章的图片下载(但是如果回到之前那篇文章，怎么恢复下载呢？)
         OkGo.cancelTag(imgHttpClient, articleId);
         // OkGo.cancelAll(imgHttpClient);
+        // 取消之前的获取全文
+        if(distill != null){
+            distill.cancel();
+        }
         articleNo = position;
 
         if (App.i().articlesAdapter != null && position < App.i().articlesAdapter.getItemCount()) {

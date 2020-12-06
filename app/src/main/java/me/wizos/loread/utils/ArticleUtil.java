@@ -30,7 +30,6 @@ import me.wizos.loread.db.Feed;
  * @author by Wizos on 2020/3/16.
  */
 public class ArticleUtil {
-
     public static void saveArticle(String dir, Article article) {
         String title = FileUtil.getSaveableName(article.getTitle());
         String filePathTitle = dir + title;
@@ -319,6 +318,8 @@ public class ArticleUtil {
         documentBody.getElementsByTag("script").remove();
         // 去掉style标签
         documentBody.getElementsByTag("style").remove();
+        // 去掉link标签
+        documentBody.getElementsByTag("link").remove();
 
         // picture 元素下会有一个标准的 img 元素，以及多个在不同条件下适配的 source 元素。
         // 故先将 source 元素去掉，再将 picture unwrap，仅保留 img 元素

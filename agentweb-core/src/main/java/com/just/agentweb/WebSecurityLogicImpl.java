@@ -18,26 +18,29 @@ package com.just.agentweb;
 
 import android.annotation.TargetApi;
 import android.os.Build;
+import android.util.ArrayMap;
 import android.webkit.WebView;
-
-import androidx.collection.ArrayMap;
 
 
 /**
  * @author cenxiaozhong
  */
 public class WebSecurityLogicImpl implements WebSecurityCheckLogic {
-    private String TAG=this.getClass().getSimpleName();
-    public static WebSecurityLogicImpl getInstance() {
-        return new WebSecurityLogicImpl();
+    private String TAG = this.getClass().getSimpleName();
+    private int webviewType;
+
+    public static WebSecurityLogicImpl getInstance(int webViewType) {
+        return new WebSecurityLogicImpl(webViewType);
     }
 
-    public WebSecurityLogicImpl(){}
+    public WebSecurityLogicImpl(int webViewType) {
+        this.webviewType = webViewType;
+    }
 
     @TargetApi(Build.VERSION_CODES.HONEYCOMB)
     @Override
     public void dealHoneyComb(WebView view) {
-        if (Build.VERSION_CODES.HONEYCOMB > Build.VERSION.SDK_INT || Build.VERSION.SDK_INT > Build.VERSION_CODES.JELLY_BEAN_MR1){
+        if (Build.VERSION_CODES.HONEYCOMB > Build.VERSION.SDK_INT || Build.VERSION.SDK_INT > Build.VERSION_CODES.JELLY_BEAN_MR1) {
             return;
         }
         view.removeJavascriptInterface("searchBoxJavaBridge_");
@@ -47,10 +50,10 @@ public class WebSecurityLogicImpl implements WebSecurityCheckLogic {
 
     @Override
     public void dealJsInterface(ArrayMap<String, Object> objects, AgentWeb.SecurityType securityType) {
-        if (securityType== AgentWeb.SecurityType.STRICT_CHECK
-                &&AgentWebConfig.WEBVIEW_TYPE!=AgentWebConfig.WEBVIEW_AGENTWEB_SAFE_TYPE
-                &&Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN_MR1) {
-            LogUtils.e(TAG,"Give up all inject objects");
+        if (securityType == AgentWeb.SecurityType.STRICT_CHECK
+                && this.webviewType != AgentWebConfig.WEBVIEW_AGENTWEB_SAFE_TYPE
+                && Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN_MR1) {
+            LogUtils.e(TAG, "Give up all inject objects");
             objects.clear();
             objects = null;
             System.gc();
