@@ -20,12 +20,18 @@ public interface CategoryDao {
 
     @Query("SELECT id,title,unreadCount as count FROM category WHERE uid = :uid ORDER BY title COLLATE NOCASE ASC")
     List<Collection> getCategoriesUnreadCount(String uid);
+    @Query("SELECT id,title,unreadCount as count FROM category WHERE uid = :uid ORDER BY title COLLATE NOCASE ASC")
+    LiveData<List<Collection>> getCategoriesUnreadCountLiveData(String uid);
 
     @Query("SELECT id,title,starCount as count FROM category WHERE uid = :uid ORDER BY title COLLATE NOCASE ASC")
     List<Collection> getCategoriesStarCount(String uid);
+    @Query("SELECT id,title,starCount as count FROM category WHERE uid = :uid ORDER BY title COLLATE NOCASE ASC")
+    LiveData<List<Collection>> getCategoriesStarCountLiveData(String uid);
 
     @Query("SELECT id,title,allCount as count FROM category WHERE uid = :uid ORDER BY title COLLATE NOCASE ASC")
     List<Collection> getCategoriesAllCount(String uid);
+    @Query("SELECT id,title,allCount as count FROM category WHERE uid = :uid ORDER BY title COLLATE NOCASE ASC")
+    LiveData<List<Collection>> getCategoriesAllCountLiveData(String uid);
 
 
     @Query("SELECT * FROM category WHERE uid = :uid ORDER BY title COLLATE NOCASE ASC")

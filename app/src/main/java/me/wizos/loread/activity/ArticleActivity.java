@@ -9,7 +9,6 @@ import android.content.Intent;
 import android.content.MutableContextWrapper;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
-import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
@@ -50,6 +49,8 @@ import com.carlt.networklibs.NetType;
 import com.carlt.networklibs.utils.NetworkUtils;
 import com.elvishew.xlog.XLog;
 import com.hjq.toast.ToastUtils;
+import com.lxj.xpopup.XPopup;
+import com.lxj.xpopup.interfaces.OnInputConfirmListener;
 import com.lzy.okgo.OkGo;
 import com.lzy.okgo.callback.FileCallback;
 import com.lzy.okgo.model.Response;
@@ -96,6 +97,7 @@ import me.wizos.loread.utils.ImageUtil;
 import me.wizos.loread.utils.ScreenUtil;
 import me.wizos.loread.utils.SnackbarUtil;
 import me.wizos.loread.utils.StringUtils;
+import me.wizos.loread.utils.TimeUtil;
 import me.wizos.loread.utils.UriUtil;
 import me.wizos.loread.view.IconFontView;
 import me.wizos.loread.view.SwipeRefreshLayoutS;
@@ -148,6 +150,7 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        // XUI.initTheme(this);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_article);
         Bundle bundle;
@@ -336,7 +339,6 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
                         shareIntent.setAction(Intent.ACTION_SEND);
                         shareIntent.putExtra(Intent.EXTRA_STREAM, Uri.parse(imgUri));
                         shareIntent.setType("image/*");
-
                         //shareIntent.putExtra(Intent.EXTRA_SUBJECT, getString(R.string.share_img));
                         //shareIntent.putExtra(Intent.EXTRA_TEXT,getString(R.string.share_img));
                         //shareIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -581,7 +583,19 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
     @JavascriptInterface
     @Override
     public void downFile(String url){
-        DownloadListenerS downloadListener = new DownloadListenerS(this).setWebView(selectedWebView);
+        StringBuilder stringBuilder = new StringBuilder();
+        if(selectedArticle != null){
+            Feed feed = CoreDB.i().feedDao().getById(App.i().getUser().getId(), selectedArticle.getFeedId());
+            stringBuilder.append(ArticleUtil.getOptimizedAuthor(feed, selectedArticle.getAuthor()));
+            stringBuilder.append("_");
+            stringBuilder.append(TimeUtil.format(selectedArticle.getPubDate(), "yyyy-MM-dd HH:mm"));
+            if(!StringUtils.isEmpty(selectedArticle.getSummary())){
+                stringBuilder.append("_");
+                stringBuilder.append(ArticleUtil.getExtractedTitle(selectedArticle.getSummary()));
+            }
+        }
+
+        DownloadListenerS downloadListener = new DownloadListenerS(this).setWebView(selectedWebView).setSuggestedName(stringBuilder.toString());
         // 请求文件大小
         // okhttp3.Request request = new okhttp3.Request.Builder().url(url).head().tag(TAG).build();
         // Call call = HttpClientManager.i().simpleClient().newCall(request);
@@ -593,6 +607,7 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
         //     public void onResponse(@NotNull Call call, @NotNull okhttp3.Response response) throws IOException {
         //     }
         // });
+
         articleHandler.post(new Runnable() {
             @Override
             public void run() {
@@ -606,10 +621,10 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
     public void openLink(String url) {
         Intent intent;
         // 使用内置浏览器
-        if( App.i().getUser().isOpenLinkBySysBrowser() && (url.startsWith(SCHEMA_HTTP) || url.startsWith(SCHEMA_HTTPS))){
+        if(App.i().getUser().isOpenLinkBySysBrowser() && (url.startsWith(SCHEMA_HTTP) || url.startsWith(SCHEMA_HTTPS))){
             intent = new Intent(ArticleActivity.this, WebActivity.class);
             intent.setData(Uri.parse(url));
-            intent.putExtra("theme", App.i().getUser().getThemeMode());
+            // intent.putExtra("theme", App.i().getUser().getThemeMode());
         }else{
             intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
             List<ResolveInfo> activities = getPackageManager().queryIntentActivities(intent, PackageManager.MATCH_DEFAULT_ONLY);
@@ -799,9 +814,21 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
 
         if (App.i().articlesAdapter != null && position < App.i().articlesAdapter.getItemCount()) {
             //XLog.e("重置文章状态");
-            articleId = App.i().articlesAdapter.get(position).getId();
+            selectedArticle = App.i().articlesAdapter.get(position);
+            if(selectedArticle != null){
+                articleId = selectedArticle.getId();
+            }else {
+                swipeRefreshLayoutS.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        initSelectedArticle(position);
+                    }
+                },1000);
+                return;
+            }
+        }else {
+            selectedArticle = CoreDB.i().articleDao().getById(App.i().getUser().getId(), articleId);
         }
-        selectedArticle = CoreDB.i().articleDao().getById(App.i().getUser().getId(), articleId);
         initIconState();
         initWebViewContent();
     }
@@ -1358,86 +1385,6 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
         openLink(selectedArticle.getLink());
     }
 
-    // public void switchReadabilityArticle2(View view) {
-    //     if(swipeRefreshLayoutS.isRefreshing()){
-    //         OkGo.cancelTag(HttpClientManager.i().simpleClient(),"Readability");
-    //         swipeRefreshLayoutS.setRefreshing(false);
-    //         return;
-    //     }
-    //     saveArticleProgress();
-    //
-    //     Article oldArticle = null;
-    //     if(App.i().oldArticles != null){
-    //         oldArticle = App.i().oldArticles.get(selectedArticle.getId());
-    //     }
-    //
-    //     if(oldArticle != null){
-    //         selectedArticle.setContent(oldArticle.getContent());
-    //         selectedArticle.setSummary(oldArticle.getSummary());
-    //         selectedArticle.setImage(oldArticle.getImage());
-    //         App.i().oldArticles.remove(selectedArticle.getId());
-    //         ToastUtils.show(getString(R.string.cancel_readability));
-    //         selectedWebView.loadData(ArticleUtil.getPageForDisplay(selectedArticle));
-    //         CoreDB.i().articleDao().update(selectedArticle);
-    //         readabilityView.setText(getString(R.string.font_article_original));
-    //     }else {
-    //         ToastUtils.show(getString(R.string.get_readability_ing));
-    //         swipeRefreshLayoutS.setRefreshing(true);
-    //
-    //         okhttp3.Request request = new okhttp3.Request.Builder().url(selectedArticle.getLink()).tag("Readability").build();
-    //         Call call = HttpClientManager.i().simpleClient().newCall(request);
-    //         call.enqueue(new Callback() {
-    //             @Override
-    //             public void onFailure(@NotNull Call call, @NotNull IOException e) {
-    //                 articleHandler.post(new Runnable() {
-    //                     @Override
-    //                     public void run() {
-    //                         if (swipeRefreshLayoutS == null) {
-    //                             return;
-    //                         }
-    //                         swipeRefreshLayoutS.setRefreshing(false);
-    //                         ToastUtils.show(getString(R.string.get_readability_failure));
-    //                     }
-    //                 });
-    //             }
-    //
-    //
-    //             // 这是因为OkHttp对于异步的处理仅仅是开启了一个线程，并且在线程中处理响应，所以不能再其中操作UI。
-    //             // OkHttp是一个面向于Java应用而不是特定平台(Android)的框架，那么它就无法在其中使用Android独有的Handler机制。
-    //             @Override
-    //             public void onResponse(@NotNull Call call, @NotNull okhttp3.Response response) throws IOException {
-    //                 if(response.isSuccessful()){
-    //                     App.i().oldArticles.put(selectedArticle.getId(),(Article)selectedArticle.clone());
-    //                     ArticleUtil.getReadabilityArticle(selectedArticle, response.body());
-    //                     CoreDB.i().articleDao().update(selectedArticle);
-    //                     articleHandler.post(new Runnable() {
-    //                         @Override
-    //                         public void run() {
-    //                             if (swipeRefreshLayoutS == null ||selectedWebView == null) {
-    //                                 return;
-    //                             }
-    //                             swipeRefreshLayoutS.setRefreshing(false);
-    //                             ToastUtils.show(getString(R.string.get_readability_success));
-    //                             readabilityView.setText(getString(R.string.font_article_readability));
-    //                             selectedWebView.loadData(ArticleUtil.getPageForDisplay(selectedArticle));
-    //                         }
-    //                     });
-    //                 }else {
-    //                     articleHandler.post(new Runnable() {
-    //                         @Override
-    //                         public void run() {
-    //                             if (swipeRefreshLayoutS == null) {
-    //                                 return;
-    //                             }
-    //                             swipeRefreshLayoutS.setRefreshing(false);
-    //                             ToastUtils.show(getString(R.string.get_readability_failure));
-    //                         }
-    //                     });
-    //                 }
-    //             }
-    //         });
-    //     }
-    // }
 
     private Distill distill;
     public void switchReadabilityArticle(View view) {
@@ -1541,7 +1488,6 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
     }
 
     private void showArticleInfo() {
-        // XLog.e("文章信息");
         if (!BuildConfig.DEBUG) {
             return;
         }
@@ -1589,7 +1535,7 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
                 .contentColorRes(android.R.color.white)
                 .backgroundColorRes(R.color.material_blue_grey_800)
                 .dividerColorRes(R.color.material_teal_a400)
-//                .btnSelector(R.drawable.md_btn_selector_custom, DialogAction.POSITIVE)
+                // .btnSelector(R.drawable.md_btn_selector_custom, DialogAction.POSITIVE)
                 .positiveColor(Color.WHITE)
                 .negativeColorAttr(android.R.attr.textColorSecondaryInverse)
                 .theme(Theme.DARK)
@@ -1643,10 +1589,6 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
 
 
     @Override
-    public void onConfigurationChanged(Configuration config) {
-        super.onConfigurationChanged(config);
-    }
-    @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_article, menu);
         feedMenuItem = menu.findItem(R.id.article_menu_feed);
@@ -1656,13 +1598,13 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
         }else {
             feedMenuItem.setVisible(false);
         }
-        if(!BuildConfig.DEBUG){
+        if(BuildConfig.DEBUG){
             MenuItem speak = menu.findItem(R.id.article_menu_speak);
-            speak.setVisible(false);
+            speak.setVisible(true);
             MenuItem articleInfo = menu.findItem(R.id.article_menu_article_info);
-            articleInfo.setVisible(false);
+            articleInfo.setVisible(true);
             MenuItem editContent = menu.findItem(R.id.article_menu_edit_content);
-            editContent.setVisible(false);
+            editContent.setVisible(true);
         }
         return true;
     }
@@ -1684,7 +1626,7 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
                     intent.putExtra("feedId", selectedArticle.getFeedId());
                     startActivity(intent);
                 } else {
-                    ToastUtils.show("该订阅源已退订，无法编辑");
+                    ToastUtils.show(R.string.unable_to_edit_unsubscribed_feed);
                 }
                 break;
             case R.id.article_menu_speak:
@@ -1696,19 +1638,29 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
                 showArticleInfo();
                 break;
             case R.id.article_menu_edit_content:
-                new MaterialDialog.Builder(ArticleActivity.this)
-                        .title("修改文章内容")
-                        .inputType(InputType.TYPE_CLASS_TEXT)
-                        .inputRange(1, 5600000)
-                        .input(getString(R.string.site_remark), selectedArticle.getContent(), new MaterialDialog.InputCallback() {
-                            @Override
-                            public void onInput(@NonNull MaterialDialog dialog, CharSequence input) {
-                                selectedArticle.setContent(input.toString());
-                                CoreDB.i().articleDao().update(selectedArticle);
-                            }
-                        })
-                        .positiveText(R.string.save)
-                        .negativeText(android.R.string.cancel)
+                // new MaterialDialog.Builder(ArticleActivity.this)
+                //         .title("修改文章内容")
+                //         .inputType(InputType.TYPE_CLASS_TEXT)
+                //         .inputRange(1, 5600000)
+                //         .input(getString(R.string.site_remark), selectedArticle.getContent(), new MaterialDialog.InputCallback() {
+                //             @Override
+                //             public void onInput(@NonNull MaterialDialog dialog, CharSequence input) {
+                //                 selectedArticle.setContent(input.toString());
+                //                 CoreDB.i().articleDao().update(selectedArticle);
+                //             }
+                //         })
+                //         .positiveText(R.string.confirm)
+                //         .negativeText(android.R.string.cancel)
+                //         .show();
+                new XPopup.Builder(this)
+                        .asInputConfirm("修改文章内容",null,selectedArticle.getContent(),null,
+                                new OnInputConfirmListener() {
+                                    @Override
+                                    public void onConfirm(String text) {
+                                        selectedArticle.setContent(text);
+                                        CoreDB.i().articleDao().update(selectedArticle);
+                                    }
+                                })
                         .show();
                 break;
         }
@@ -1716,52 +1668,48 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
     }
 
 
-//    @Override
-//    public boolean onCreateOptionsMenu(Menu menu) {
-//        getMenuInflater().inflate(R.menu.menu_article_activity, menu);
-//        return true;
-//    }
 
-//    private void openMode(){
-    // 调用系统默认的图片查看应用
-//        Intent intentImage = new Intent(Intent.ACTION_VIEW);
-//        intentImage.addCategory(Intent.CATEGORY_DEFAULT);
-//        File file = new File(imageFilePath);
-//        intentImage.setDataAndType(Uri.fromFile(file), "image/*");
-//        startActivity(intentImage);
-
-    // 每次都要选择打开方式
-//        startActivity(Intent.createChooser(intentImage, "请选择一款"));
-
-    // 调起系统默认的图片查看应用（带有选择为默认）
-//        if(BuildConfig.DEBUG){
-//            Intent openImageIntent = new Intent(Intent.ACTION_VIEW);
-//            openImageIntent.addCategory(Intent.CATEGORY_DEFAULT);
-//            openImageIntent.setDataAndType(Uri.fromFile(new File(imageFilePath)), "image/*");
-//            getDefaultActivity(openImageIntent);
-//        }
-//    }
-//    // 获取默认的打开方式
-//    public void getDefaultActivity(Intent intent) {
-//        PackageManager pm = this.getPackageManager();
-//        ResolveInfo info = pm.resolveActivity(intent, PackageManager.MATCH_DEFAULT_ONLY);
-//        // 如果本应用没有询问过是否要选择默认打开方式，并且没有默认的打开方式，打开默认方式选择狂
-//        if (!WithPref.i().hadAskImageOpenMode() || info.activityInfo.packageName.equals("android")) {
-//            WithPref.i().setHadAskImageOpenMode(true);
-//            intent.setComponent(new ComponentName("android", "com.android.internal.app.ResolverActivity"));
-//        }
-//        startActivity(intent);
-//        overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
-//        XLog.i("打开方式", "默认打开方式信息 = " + info + ";pkgName = " + info.activityInfo.packageName);
-//    }
-
-    // 打开选择默认打开方式的弹窗
-//    public void startChooseDialog() {
-//        Intent intent = new Intent();
-//        intent.setAction("android.intent.action.VIEW");
-//        intent.addCategory(Intent.CATEGORY_DEFAULT);
-//        intent.setData(Uri.fromFile(new File(imageFilePath)));
-//        intent.setComponent(new ComponentName("android","com.android.internal.app.ResolverActivity"));
-//        startActivity(intent);
-//    }
+    // private void openMode(){
+    //     // 调用系统默认的图片查看应用
+    //     Intent intentImage = new Intent(Intent.ACTION_VIEW);
+    //     intentImage.addCategory(Intent.CATEGORY_DEFAULT);
+    //     File file = new File(imageFilePath);
+    //     intentImage.setDataAndType(Uri.fromFile(file), "image/*");
+    //     startActivity(intentImage);
+    //
+    //     // 每次都要选择打开方式
+    //     startActivity(Intent.createChooser(intentImage, "请选择一款"));
+    //
+    //     // 调起系统默认的图片查看应用（带有选择为默认）
+    //     if(BuildConfig.DEBUG){
+    //         Intent openImageIntent = new Intent(Intent.ACTION_VIEW);
+    //         openImageIntent.addCategory(Intent.CATEGORY_DEFAULT);
+    //         openImageIntent.setDataAndType(Uri.fromFile(new File(imageFilePath)), "image/*");
+    //         getDefaultActivity(openImageIntent);
+    //     }
+    // }
+    //
+    // // 获取默认的打开方式
+    // public void getDefaultActivity(Intent intent) {
+    //     PackageManager pm = this.getPackageManager();
+    //     ResolveInfo info = pm.resolveActivity(intent, PackageManager.MATCH_DEFAULT_ONLY);
+    //     // 如果本应用没有询问过是否要选择默认打开方式，并且没有默认的打开方式，打开默认方式选择狂
+    //     if (!WithPref.i().hadAskImageOpenMode() || info.activityInfo.packageName.equals("android")) {
+    //         WithPref.i().setHadAskImageOpenMode(true);
+    //         intent.setComponent(new ComponentName("android", "com.android.internal.app.ResolverActivity"));
+    //     }
+    //     startActivity(intent);
+    //     overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
+    //     XLog.i("打开方式", "默认打开方式信息 = " + info + ";pkgName = " + info.activityInfo.packageName);
+    // }
+    //
+    // // 打开选择默认打开方式的弹窗
+    // public void startChooseDialog() {
+    //     Intent intent = new Intent();
+    //     intent.setAction("android.intent.action.VIEW");
+    //     intent.addCategory(Intent.CATEGORY_DEFAULT);
+    //     intent.setData(Uri.fromFile(new File(imageFilePath)));
+    //     intent.setComponent(new ComponentName("android","com.android.internal.app.ResolverActivity"));
+    //     startActivity(intent);
+    // }
 }

@@ -2,6 +2,7 @@ package me.wizos.loread;
 
 import android.app.Application;
 import android.content.Intent;
+import android.content.res.Configuration;
 import android.os.AsyncTask;
 import android.text.TextUtils;
 import android.util.DisplayMetrics;
@@ -14,21 +15,12 @@ import com.carlt.networklibs.NetType;
 import com.carlt.networklibs.NetworkManager;
 import com.carlt.networklibs.annotation.NetWork;
 import com.didichuxing.doraemonkit.DoraemonKit;
-import com.elvishew.xlog.LogConfiguration;
-import com.elvishew.xlog.LogLevel;
 import com.elvishew.xlog.XLog;
-import com.elvishew.xlog.flattener.ClassicFlattener;
-import com.elvishew.xlog.printer.AndroidPrinter;
-import com.elvishew.xlog.printer.Printer;
-import com.elvishew.xlog.printer.file.FilePrinter;
-import com.elvishew.xlog.printer.file.clean.FileLastModifiedCleanStrategy;
-import com.elvishew.xlog.printer.file.naming.DateFileNameGenerator;
 import com.hjq.toast.ToastUtils;
 import com.hjq.toast.style.ToastAliPayStyle;
 import com.just.agentweb.AgentWebConfig;
 import com.lzy.okgo.OkGo;
 import com.oasisfeng.condom.CondomProcess;
-import com.socks.library.KLog;
 import com.tencent.bugly.crashreport.CrashReport;
 import com.tencent.mmkv.MMKV;
 import com.yhao.floatwindow.view.FloatWindow;
@@ -45,7 +37,6 @@ import me.wizos.loread.db.Article;
 import me.wizos.loread.db.CoreDB;
 import me.wizos.loread.db.CorePref;
 import me.wizos.loread.db.User;
-import me.wizos.loread.log.SingleStackTraceFormatter;
 import me.wizos.loread.network.api.AuthApi;
 import me.wizos.loread.network.api.BaseApi;
 import me.wizos.loread.network.api.FeedlyApi;
@@ -54,6 +45,7 @@ import me.wizos.loread.network.api.InoReaderApi;
 import me.wizos.loread.network.api.LoreadApi;
 import me.wizos.loread.network.api.OAuthApi;
 import me.wizos.loread.network.api.TinyRSSApi;
+import me.wizos.loread.service.TimeHandler;
 import me.wizos.loread.utils.FileUtil;
 import me.wizos.loread.utils.NetworkUtil;
 import me.wizos.loread.utils.ScriptUtil;
@@ -74,15 +66,15 @@ public class App extends Application implements Thread.UncaughtExceptionHandler 
     private static App instance;
     public static final String CATEGORY_ALL = "/category/global.all";
     public static final String CATEGORY_UNCATEGORIZED = "/category/global.uncategorized";
-    public static final String CATEGORY_TAG = "/category/global.tag";
-    public static final String CATEGORY_SEARCH = "/category/global.search";
+    // public static final String CATEGORY_TAG = "/category/global.tag";
+    // public static final String CATEGORY_SEARCH = "/category/global.search";
 
     public static final String CATEGORY_STARED = "/tag/global.saved";
     public static final String CATEGORY_MUST = "/category/global.must";
 
-    public static final String DISPLAY_RSS = "rss";
-    public static final String DISPLAY_LINK = "webpage";
-    public static final String DISPLAY_READABILITY = "readability";
+    // public static final String DISPLAY_RSS = "rss";
+    // public static final String DISPLAY_LINK = "webpage";
+    // public static final String DISPLAY_READABILITY = "readability";
     public static final int OPEN_MODE_RSS = 0;
     public static final int OPEN_MODE_READABILITY = 1;
     public static final int OPEN_MODE_LINK = 2;
@@ -93,7 +85,6 @@ public class App extends Application implements Thread.UncaughtExceptionHandler 
 
     public static final int ActivityResult_LoginPageToProvider = 1;
     public static final int ActivityResult_ArtToMain = 2;
-    public static final int ActivityResult_SearchLocalArtsToMain = 3;
 
     public static final int TYPE_GROUP = 0;
     public static final int TYPE_FEED = 1;
@@ -112,6 +103,7 @@ public class App extends Application implements Thread.UncaughtExceptionHandler 
     public static final int STATUS_UNSTAR = 5;
 
     public static final int MSG_DOUBLE_TAP = -1;
+    // public static final int MSG_SCROLL_TIMEOUT = 6;
 
     public int screenWidth;
     public int screenHeight;
@@ -161,32 +153,18 @@ public class App extends Application implements Thread.UncaughtExceptionHandler 
         instance = this;
         MMKV.initialize(this);
         CoreDB.init(this);
-
-        KLog.init(BuildConfig.DEBUG);
-        LogConfiguration config = new LogConfiguration.Builder()
-                .logLevel(CorePref.i().globalPref().getBoolean(Contract.ENABLE_LOGGING, false) ? LogLevel.ALL: LogLevel.INFO)
-                .tag("loread")
-                .enableStackTrace(1)
-                .stackTraceFormatter(new SingleStackTraceFormatter())
-                .build();
-
-        Printer androidPrinter = new AndroidPrinter();
-        Printer filePrinter = new FilePrinter
-                .Builder( getExternalCacheDir()  +"/log/") // 指定保存日志文件的路径
-                .flattener(new ClassicFlattener())
-                .fileNameGenerator(new DateFileNameGenerator())    // 指定日志文件名生成器，默认为 ChangelessFileNameGenerator("log")
-                // .backupStrategy(new NeverBackupStrategy())         // 指定日志文件备份策略，默认为 FileSizeBackupStrategy(1024 * 1024)
-                // .shouldBackup()
-                .cleanStrategy(new FileLastModifiedCleanStrategy(7*24*60*1000))     // 指定日志文件清除策略，默认为 NeverCleanStrategy()
-                .build();
-        // 初始化 XLog
-        XLog.init(config, androidPrinter, filePrinter);
+        CoreLog.init(this, CorePref.i().globalPref().getBoolean(Contract.ENABLE_LOGGING, false));
 
 
         initVar();
+        TimeHandler.init(this);
         ToastUtils.init(this, new ToastAliPayStyle(this));
 
         DoraemonKit.install(this, "1a9100642569bfed39d6b82032950e1f");
+
+        // Core.init(this);
+        // XUI.init(this); //初始化UI框架
+        // XUI.debug(true); //开启UI框架调试日志
 
         // 【提前初始化 WebView 内核】由于其内部会调用 Looper ，不能放在子线程中
         // 链接：https://www.jianshu.com/p/fc7909e24178
@@ -326,10 +304,12 @@ public class App extends Application implements Thread.UncaughtExceptionHandler 
         return webViewBaseUrl;
     }
 
+    private boolean deviceIsNight = false;
     private void initVar() {
         DisplayMetrics outMetrics = getResources().getDisplayMetrics();
         screenWidth = outMetrics.widthPixels;
         screenHeight = outMetrics.heightPixels;
+        deviceIsNight = (getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES;
     }
 
 
@@ -429,7 +409,7 @@ public class App extends Application implements Thread.UncaughtExceptionHandler 
                     api = feverApi;
                     break;
                 case Contract.PROVIDER_LOREAD:
-                    LoreadApi loreadApi = new LoreadApi();
+                    LoreadApi loreadApi = new LoreadApi(getUser().getHost());
                     loreadApi.setAuthorization(getUser().getAuth());
                     api = loreadApi;
                     break;
@@ -446,7 +426,7 @@ public class App extends Application implements Thread.UncaughtExceptionHandler 
                 case Contract.PROVIDER_LOCALRSS:
                     break;
             }
-            XLog.i("初始化 " + getUser().getSource() + " = " + App.i().getUser().getAuth());
+            XLog.i("getApi = " + getUser().getSource() + " - " + App.i().getUser().getAuth());
         }
         return api;
     }

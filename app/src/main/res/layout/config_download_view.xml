@@ -3,18 +3,23 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:focusable="true"
     android:focusableInTouchMode="true">
 
-    <EditText
+    <com.reginald.editspinner.EditSpinner
         android:id="@+id/file_name_edit"
         android:layout_width="match_parent"
-        android:layout_height="40dp"
+        android:layout_height="wrap_content"
         android:gravity="center_vertical"
         android:textSize="14sp"
-        tools:text="13sdddddddddddd答复打发斯蒂芬毒贩夫妇p"
         android:ellipsize="end"
-        android:singleLine="true" />
+        android:singleLine="true"
+        android:inputType="text"
+        app:dropDownDrawable="@drawable/ic_arrow_down_black"
+        app:dropDownDrawableSpacing="15dp"
+        app:dropDownDrawableWidth="25dp"
+        app:dropDownDrawableHeight="25dp" />
 
     <TextView
         android:id="@+id/file_download_dir"

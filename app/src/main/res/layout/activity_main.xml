@@ -96,7 +96,7 @@
                     android:id="@+id/main_bottombar_search"
                     style="@style/bottom_bar_iconfont"
                     android:layout_toStartOf="@id/main_bottombar_tag"
-                    android:text="@string/font_search"
+                    android:text="@string/font_search_feed"
                     android:onClick="clickSearchIcon" />
 
                 <me.wizos.loread.view.IconFontView
@@ -104,7 +104,7 @@
                     style="@style/bottom_bar_iconfont"
                     android:text="@string/font_more"
                     android:layout_toEndOf="@id/main_bottombar_tag"
-                    android:onClick="onQuickSettingIconClicked" />
+                    android:onClick="onClickQuickSettingIcon" />
 
                 <me.wizos.loread.view.IconFontView
                     android:id="@+id/main_bottombar_refresh_articles"
@@ -112,7 +112,7 @@
                     android:layout_alignParentEnd="true"
                     android:visibility="gone"
                     android:text="@string/font_update"
-                    android:onClick="clickRefreshIcon" />
+                    android:onClick="onClickRefreshIcon" />
             </RelativeLayout>
         </RelativeLayout>
     </me.wizos.loread.view.SwipeRefreshLayoutS>

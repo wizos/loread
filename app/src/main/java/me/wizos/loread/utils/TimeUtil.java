@@ -7,6 +7,9 @@ import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.Locale;
 
+import me.wizos.loread.App;
+import me.wizos.loread.R;
+
 /**
  * 关于时间操作的工具类
  * Created by xdsjs on 2015/10/14.
@@ -138,6 +141,37 @@ public class TimeUtil {
         SimpleDateFormat dateFormat = new SimpleDateFormat(pattern, Locale.getDefault());
         Date date = new Date(timestamp);
         return dateFormat.format(date);
+    }
+
+    public static String readability(long timestamp) {
+        // 如果“今天0点 <= 时间 < 今天24点59分”，则格式为“今天 HH:mm”
+        // 如果“昨天0点 <= 时间 < 昨天24点59分”，则格式为“昨天 HH:mm”
+        Calendar calendar = GregorianCalendar.getInstance(Locale.getDefault());
+        calendar.set(Calendar.HOUR_OF_DAY, 0);
+        calendar.set(Calendar.MINUTE, 0);
+        calendar.set(Calendar.SECOND, 0);
+        calendar.set(Calendar.MILLISECOND, 0);
+
+        long toadyStartMillis = calendar.getTimeInMillis();
+
+        calendar.add(Calendar.DATE, -1); // 明天的就是1，昨天是负1
+        long yesterdayStartMillis = calendar.getTimeInMillis();
+
+        calendar.add(Calendar.DATE, 2);
+        long tomorrowStartMillis = calendar.getTimeInMillis();
+
+        Date date = new Date(timestamp);
+        String displayTime;
+        if(timestamp < yesterdayStartMillis){
+            displayTime = new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()).format(date);
+        }else if(timestamp < toadyStartMillis){
+            displayTime = App.i().getString(R.string.yesterday_time, new SimpleDateFormat("HH:mm", Locale.getDefault()).format(date));
+        }else if(timestamp < tomorrowStartMillis){
+            displayTime = App.i().getString(R.string.today_time, new SimpleDateFormat("HH:mm", Locale.getDefault()).format(date));
+        }else {
+            displayTime = new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()).format(date);
+        }
+        return displayTime;
     }
 
     public static int getCurrentHour() {

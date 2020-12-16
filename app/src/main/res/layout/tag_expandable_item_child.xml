@@ -1,44 +1,46 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<!--<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"-->
+<!--    xmlns:tools="http://schemas.android.com/tools"-->
+<!--    android:layout_width="match_parent"-->
+<!--    android:layout_height="wrap_content">-->
+
+<!--</FrameLayout>-->
+
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/child_item"
+    android:orientation="horizontal"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content">
+    android:layout_height="wrap_content"
+    android:gravity="center_vertical"
+    android:background="?attr/root_view_bg"
+    tools:ShowIn="@layout/activity_main">
 
-    <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-        xmlns:tools="http://schemas.android.com/tools"
-        android:id="@+id/child_item"
-        android:orientation="horizontal"
-        android:layout_width="match_parent"
+    <TextView
+        android:id="@+id/child_item_title"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
+        android:paddingTop="15dp"
+        android:paddingBottom="15dp"
+        android:paddingStart="70dp"
+        android:layout_weight="1"
         android:gravity="center_vertical"
-        android:background="?attr/root_view_bg"
-        tools:ShowIn="@layout/activity_main">
+        android:lines="1"
+        android:textColor="?attr/lv_item_title_color"
+        android:textSize="16sp"
+        tools:text="这是父item"
+        tools:ignore="RtlSymmetry" />
 
-        <TextView
-            android:id="@+id/child_item_title"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:paddingTop="15dp"
-            android:paddingBottom="15dp"
-            android:paddingStart="70dp"
-            android:layout_weight="1"
-            android:gravity="center_vertical"
-            android:lines="1"
-            android:textColor="?attr/lv_item_title_color"
-            android:textSize="16sp"
-            tools:text="这是父item" />
+    <!--android:textColor="#5a8fca"-->
 
-        <!--android:textColor="#5a8fca"-->
-
-        <TextView
-            android:id="@+id/child_item_count"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:gravity="center"
-            android:layout_marginEnd="20dp"
-            android:textColor="?attr/lv_item_desc_color"
-            android:textSize="12sp"
-            tools:text="-9.9" />
-    </LinearLayout>
-
-</FrameLayout>
+    <TextView
+        android:id="@+id/child_item_count"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:layout_marginEnd="20dp"
+        android:textColor="?attr/lv_item_desc_color"
+        android:textSize="12sp"
+        tools:text="-9.9" />
+</LinearLayout>

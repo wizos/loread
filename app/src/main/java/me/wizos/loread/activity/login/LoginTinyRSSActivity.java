@@ -17,7 +17,6 @@ import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.hjq.toast.ToastUtils;
-import com.socks.library.KLog;
 
 import me.wizos.loread.App;
 import me.wizos.loread.R;
@@ -138,7 +137,6 @@ public class LoginTinyRSSActivity extends BaseActivity {
                 if (loginResult != null && loginResult.isSuccess()) {
                     String tips = getString(R.string.welcome);
                     ToastUtils.show(tips);
-                    KLog.e( tips + loginResult.getData() );
                     setResult(App.ActivityResult_LoginPageToProvider);
                     finish();
                     overridePendingTransition(R.anim.fade_in, R.anim.out_from_bottom);

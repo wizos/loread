@@ -1,14 +1,9 @@
 package me.wizos.loread.db;
 
 import android.annotation.SuppressLint;
-import android.app.Activity;
 import android.content.Context;
-import android.content.SharedPreferences;
 
 import com.tencent.mmkv.MMKV;
-
-import me.wizos.loread.App;
-import me.wizos.loread.R;
 
 /**
  * @author Wizos
@@ -16,20 +11,20 @@ import me.wizos.loread.R;
  * 内部设置
  */
 public class CorePref {
-    private static final String TAG = "CorePref";
+    // private static final String TAG = "CorePref";
     private static CorePref corePref;
-    private static SharedPreferences mySharedPreferences;
-    private static SharedPreferences.Editor editor;
+    // private static SharedPreferences mySharedPreferences;
+    // private static SharedPreferences.Editor editor;
 
     private static MMKV globalPref = MMKV.defaultMMKV();
     private static MMKV userPref;
 
     // 迁移旧数据
-    {
-        SharedPreferences old_man = App.i().getSharedPreferences(App.i().getString(R.string.app_id), Activity.MODE_PRIVATE);
-        globalPref.importFromSharedPreferences(old_man);
-        old_man.edit().clear().commit();
-    }
+    // {
+    //     SharedPreferences old_man = App.i().getSharedPreferences(App.i().getString(R.string.app_id), Activity.MODE_PRIVATE);
+    //     globalPref.importFromSharedPreferences(old_man);
+    //     old_man.edit().clear().apply();
+    // }
 
     private CorePref() {}
 
@@ -49,9 +44,9 @@ public class CorePref {
     public MMKV globalPref(){
         return globalPref;
     }
-    public MMKV userPref(){
-        return userPref;
-    }
+    // public MMKV userPref(){
+    //     return userPref;
+    // }
     public static void init(Context context){
         MMKV.initialize(context);
     }

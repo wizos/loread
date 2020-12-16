@@ -4,8 +4,6 @@ import android.app.Application;
 
 import androidx.annotation.NonNull;
 
-import com.socks.library.KLog;
-
 import me.wizos.loread.App;
 import me.wizos.loread.Contract;
 import me.wizos.loread.R;
@@ -43,7 +41,6 @@ public class InoReaderUserViewModel extends LoginViewModel {
                 user.setHost(baseUrl);
                 inoReaderApi.setAuthorization(auth);
                 CorePref.i().globalPref().putString(Contract.UID, user.getId());
-                KLog.i("登录成功：" + user.getId());
                 User userTmp = userDao.getById(user.getId());
                 if (userTmp != null) {
                     CoreDB.i().userDao().update(user);

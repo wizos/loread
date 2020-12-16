@@ -5,8 +5,6 @@ import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.widget.FrameLayout;
 
-import com.socks.library.KLog;
-
 import java.util.ArrayList;
 
 /**
@@ -80,11 +78,11 @@ public class SlideBackInterceptLayout extends FrameLayout {
     private boolean isMotionTrigger(MotionEvent ev) {
         for (float[] zone : zoneList) {
             if (zone[0] <= ev.getRawX() && ev.getRawX() <= zone[1]) {
-                KLog.e("事件成功：" + zone[0] + " , " + ev.getRawX() + " , " + zone[1] + " = " + ev.getAction());
+                // XLog.d("事件成功：" + zone[0] + " , " + ev.getRawX() + " , " + zone[1] + " = " + ev.getAction());
                 return true;
             }
         }
-        KLog.e("事件不成功：" + " , " + ev.getRawX() + " , " + " = " + ev.getAction());
+        // XLog.d("事件不成功：" + " , " + ev.getRawX() + " , " + " = " + ev.getAction());
         return false;
     }
 }

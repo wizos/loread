@@ -17,6 +17,12 @@ public class SearchFeedItem extends FeedItem {
     // private ArrayList<> tagCounts;
     // private ArrayList<String> deliciousTags;
 
+
+    public SearchFeedItem(String feedId, String feedTitle) {
+        this.feedId = feedId;
+        this.title = feedTitle;
+    }
+
     public long getLastUpdated() {
         return lastUpdated;
     }

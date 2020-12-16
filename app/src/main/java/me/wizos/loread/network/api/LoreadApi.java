@@ -4,14 +4,14 @@ import android.text.TextUtils;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.collection.ArrayMap;
+import androidx.collection.ArraySet;
 
+import com.elvishew.xlog.XLog;
 import com.google.gson.GsonBuilder;
 import com.hjq.toast.ToastUtils;
 import com.jeremyliao.liveeventbus.LiveEventBus;
 import com.lzy.okgo.callback.StringCallback;
 import com.lzy.okgo.exception.HttpException;
-import com.socks.library.KLog;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.net.ConnectException;
 import java.net.SocketTimeoutException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -33,7 +34,6 @@ import me.wizos.loread.bean.feedly.input.EditFeed;
 import me.wizos.loread.bean.ttrss.request.GetArticles;
 import me.wizos.loread.bean.ttrss.request.GetCategories;
 import me.wizos.loread.bean.ttrss.request.GetFeeds;
-import me.wizos.loread.bean.ttrss.request.GetHeadlines;
 import me.wizos.loread.bean.ttrss.request.GetSavedItemIds;
 import me.wizos.loread.bean.ttrss.request.GetUnreadItemIds;
 import me.wizos.loread.bean.ttrss.request.Login;
@@ -71,10 +71,6 @@ public class LoreadApi extends AuthApi<Feed, me.wizos.loread.bean.feedly.Categor
     private LoreadService service;
     private static final String EXAMPLE_BASE_URL = "https://example.com";
     private String tempBaseUrl;
-
-    public LoreadApi() {
-        this(App.i().getUser().getHost());
-    }
 
     public LoreadApi(String baseUrl) {
         if (!TextUtils.isEmpty(baseUrl)) {
@@ -122,15 +118,15 @@ public class LoreadApi extends AuthApi<Feed, me.wizos.loread.bean.feedly.Categor
                         cb.onSuccess(loginResultTTRSSResponse.getContent().getSession_id());
                         return;
                     }
-                    cb.onFailure("登录失败：原因未知" + loginResultTTRSSResponse.toString());
+                    cb.onFailure(App.i().getString(R.string.login_failed_reason, loginResultTTRSSResponse.toString()));
                 }else {
-                    cb.onFailure("登录失败：原因未知" + response.message());
+                    cb.onFailure(App.i().getString(R.string.login_failed_reason, response.message()));
                 }
             }
 
             @Override
             public void onFailure(retrofit2.Call<TinyResponse<TTRSSLoginResult>> call, Throwable t) {
-                cb.onFailure("登录失败：" + t.getMessage());
+                cb.onFailure(App.i().getString(R.string.login_failed_reason, t.getMessage()));
             }
         });
     }
@@ -145,44 +141,44 @@ public class LoreadApi extends AuthApi<Feed, me.wizos.loread.bean.feedly.Categor
             long startSyncTimeMillis = System.currentTimeMillis();
             String uid = App.i().getUser().getId();
 
-            KLog.e("3 - 同步订阅源信息：获取分类");
-            LiveEventBus.get(SyncWorker.SYNC_PROCESS_FOR_SUBTITLE).post(getString(R.string.sync_feed_info));
+            XLog.i("同步 - 获取分类");
+            LiveEventBus.get(SyncWorker.SYNC_PROCESS_FOR_SUBTITLE).post(getString(R.string.sync_feed_info, "3."));
 
             // 获取分类
             TinyResponse<List<CategoryItem>> categoryItemsTTRSSResponse = service.getCategories(getAuthorization(),new GetCategories(getAuthorization())).execute().body();
-            KLog.e("获取回应：" + categoryItemsTTRSSResponse);
+            // XLog.d("分类请求响应：" + categoryItemsTTRSSResponse);
             if (!categoryItemsTTRSSResponse.isSuccessful()) {
-                throw new HttpException("获取失败");
+                throw new HttpException("获取分类失败 - " + categoryItemsTTRSSResponse.getMsg());
             }
 
             Iterator<CategoryItem> categoryItemsIterator = categoryItemsTTRSSResponse.getContent().iterator();
-            CategoryItem TTRSSCategoryItem;
+            CategoryItem categoryItem;
             ArrayList<Category> categories = new ArrayList<>();
             while (categoryItemsIterator.hasNext()) {
-                TTRSSCategoryItem = categoryItemsIterator.next();
-                if (Integer.parseInt(TTRSSCategoryItem.getId()) < 1) {
+                categoryItem = categoryItemsIterator.next();
+                if (Integer.parseInt(categoryItem.getId()) < 1) {
                     continue;
                 }
-                categories.add(TTRSSCategoryItem.convert());
+                categories.add(categoryItem.convert());
             }
 
             // 获取feed
+            XLog.i("同步 - 获取订阅源");
             TinyResponse<List<FeedItem>> feedItemsTTRSSResponse = service.getFeeds(getAuthorization(),new GetFeeds(getAuthorization())).execute().body();
             if (!feedItemsTTRSSResponse.isSuccessful()) {
-                throw new HttpException("获取失败");
+                throw new HttpException(feedItemsTTRSSResponse.getMsg());
             }
 
             Iterator<FeedItem> feedItemsIterator = feedItemsTTRSSResponse.getContent().iterator();
-            FeedItem ttrssFeedItem;
+            FeedItem feedItem;
             ArrayList<Feed> feeds = new ArrayList<>();
             ArrayList<FeedCategory> feedCategories = new ArrayList<>(feedItemsTTRSSResponse.getContent().size());
             FeedCategory feedCategoryTmp;
             while (feedItemsIterator.hasNext()) {
-                ttrssFeedItem = feedItemsIterator.next();
-                Feed feed = ttrssFeedItem.convert();
-                feed.setUid(uid);
+                feedItem = feedItemsIterator.next();
+                Feed feed = feedItem.convert();
                 feeds.add(feed);
-                feedCategoryTmp = new FeedCategory(uid, String.valueOf(ttrssFeedItem.getId()), String.valueOf(ttrssFeedItem.getCatId()));
+                feedCategoryTmp = new FeedCategory(uid, String.valueOf(feedItem.getId()), String.valueOf(feedItem.getCatId()));
                 feedCategories.add(feedCategoryTmp);
             }
 
@@ -192,63 +188,50 @@ public class LoreadApi extends AuthApi<Feed, me.wizos.loread.bean.feedly.Categor
             coverSaveCategories(categories);
             coverFeedCategory(feedCategories);
 
-            // 获取所有未读的资源
-            KLog.e("2 - 同步文章信息");
-            LiveEventBus.get(SyncWorker.SYNC_PROCESS_FOR_SUBTITLE).post(getString(R.string.sync_article_refs));
-
-            GetHeadlines getHeadlines = new GetHeadlines();
-            getHeadlines.setSid(getAuthorization());
-            Article article = CoreDB.i().articleDao().getLastArticle(uid);
-            if (null != article) {
-                getHeadlines.setSince_id(article.getId());
-            }
-
-
+            int hadFetchCount = 0;
+            // 方法一
+            XLog.i("同步 - 获取未读文章ids");
+            LiveEventBus.get(SyncWorker.SYNC_PROCESS_FOR_SUBTITLE).post(getString(R.string.sync_article_refs, "2."));
             TinyResponse<String> idsResponse;
             // 获取未读资源
-            idsResponse = service.getUnreadItemIds(getAuthorization(),new GetUnreadItemIds(getAuthorization())).execute().body();
+            idsResponse = service.getUnreadItemIds(getAuthorization(), new GetUnreadItemIds(getAuthorization()) ).execute().body();
+            XLog.v("未读文章ids响应：" + idsResponse);
             if (!idsResponse.isSuccessful()) {
-                throw new HttpException("获取失败");
+                throw new HttpException("获取未读资源失败 - " + idsResponse.getMsg());
             }
-            KLog.e("未读" + idsResponse.getContent());
-            HashSet<String> unreadRefsSet = handleUnreadRefs( idsResponse.getContent().split(",") );
-
+            ArraySet<String> unreadRefsSet = handleUnreadRefs( Arrays.asList(idsResponse.getContent().split(",")) );
             // 获取加星资源
-            GetSavedItemIds getSavedItemIds = new GetSavedItemIds(getAuthorization());
-            idsResponse = service.getSavedItemIds(getAuthorization(),getSavedItemIds).execute().body();
+            XLog.i("同步 - 获取加星文章ids");
+            idsResponse = service.getSavedItemIds(getAuthorization(), new GetSavedItemIds(getAuthorization())).execute().body();
+            assert idsResponse != null;
             if (!idsResponse.isSuccessful()) {
-                throw new HttpException("获取失败");
+                throw new HttpException("获取加星资源 - " + idsResponse.getMsg());
             }
-            HashSet<String> staredRefsSet = handleStaredRefs( idsResponse.getContent().split(",") );
-
+            XLog.v("加星文章ids响应：" + idsResponse);
+            ArraySet<String> staredRefsSet = handleStaredRefs( Arrays.asList(idsResponse.getContent().split(",")) );
 
             HashSet<String> idRefsSet = new HashSet<>();
             idRefsSet.addAll(unreadRefsSet);
             idRefsSet.addAll(staredRefsSet);
 
-            KLog.i("文章id资源：" + idRefsSet );
+            XLog.i("同步 - 整合文章ids" + idRefsSet.size());
+            XLog.v("文章id资源：" + idRefsSet.size() + " , " + idRefsSet );
             ArrayList<String> ids = new ArrayList<>(idRefsSet);
-
-            int hadFetchCount, needFetchCount, num;
-            ArrayMap<String, ArrayList<Article>> classArticlesMap = new ArrayMap<String, ArrayList<Article>>();
-
-            needFetchCount = ids.size();
-            hadFetchCount = 0;
-
+            int num;
+            int needFetchCount = ids.size();
             GetArticles getArticles = new GetArticles(getAuthorization());
-            KLog.e("1 - 同步文章内容" + needFetchCount + "   " );
-
-            TinyResponse<List<ArticleItem>> ttrssArticleItemsResponse;
+            TinyResponse<List<ArticleItem>> articleItemsResponse;
             ArrayList<Article> articles;
 
             while (needFetchCount > 0) {
                 num = Math.min(needFetchCount, fetchContentCntForEach);
                 getArticles.setArticleIds( ids.subList(hadFetchCount, hadFetchCount = hadFetchCount + num) );
-                ttrssArticleItemsResponse = service.getArticles(getAuthorization(),getArticles).execute().body();
-                if (!ttrssArticleItemsResponse.isSuccessful()) {
-                    throw new HttpException("获取失败");
+                needFetchCount = ids.size() - hadFetchCount;
+                articleItemsResponse = service.getArticles(getAuthorization(), getArticles).execute().body();
+                if (!articleItemsResponse.isSuccessful()) {
+                    throw new HttpException("获取文章失败 - " + articleItemsResponse.getMsg());
                 }
-                List<ArticleItem> items = ttrssArticleItemsResponse.getContent();
+                List<ArticleItem> items = articleItemsResponse.getContent();
                 articles = new ArrayList<>(items.size());
                 long syncTimeMillis = System.currentTimeMillis();
                 for (ArticleItem item : items) {
@@ -263,9 +246,82 @@ public class LoreadApi extends AuthApi<Feed, me.wizos.loread.bean.feedly.Categor
                 }
 
                 CoreDB.i().articleDao().insert(articles);
-                needFetchCount = ids.size() - hadFetchCount;
-                LiveEventBus.get(SyncWorker.SYNC_PROCESS_FOR_SUBTITLE).post( App.i().getString(R.string.sync_article_content, hadFetchCount, ids.size()) );
+                LiveEventBus.get(SyncWorker.SYNC_PROCESS_FOR_SUBTITLE).post( App.i().getString(R.string.sync_article_content, "1.", hadFetchCount, ids.size()) );
             }
+
+
+            // 直接获取所有文章
+            //
+            // 方法二
+            // GetHeadlines getHeadlines = new GetHeadlines();
+            // getHeadlines.setSid(getAuthorization());
+            // Article article = CoreDB.i().articleDao().getLastArticle(uid);
+            // if (null != article) {
+            //     getHeadlines.setSince_id(article.getId());
+            // }
+            //
+            // TinyResponse<String> idsResponse;
+            // // 获取未读资源
+            // idsResponse = service.getUnreadItemIds(getAuthorization(),new GetUnreadItemIds(getAuthorization())).execute().body();
+            // if (!idsResponse.isSuccessful()) {
+            //     throw new HttpException("获取失败");
+            // }
+            // XLog.e("未读" + idsResponse.getContent());
+            // ArraySet<String> unreadRefsSet = handleUnreadRefs( Arrays.asList(idsResponse.getContent().split(",")) );
+            //
+            // // 获取加星资源
+            // GetSavedItemIds getSavedItemIds = new GetSavedItemIds(getAuthorization());
+            // idsResponse = service.getSavedItemIds(getAuthorization(),getSavedItemIds).execute().body();
+            // if (!idsResponse.isSuccessful()) {
+            //     throw new HttpException("获取失败");
+            // }
+            // ArraySet<String> staredRefsSet = handleStaredRefs( Arrays.asList(idsResponse.getContent().split(",")) );
+            //
+            //
+            // ArraySet<String> idRefsSet = new ArraySet<>();
+            // idRefsSet.addAll(unreadRefsSet);
+            // idRefsSet.addAll(staredRefsSet);
+            //
+            // XLog.i("文章id资源：" + idRefsSet );
+            // ArrayList<String> ids = new ArrayList<>(idRefsSet);
+            //
+            // int hadFetchCount, needFetchCount, num;
+            // ArrayMap<String, ArrayList<Article>> classArticlesMap = new ArrayMap<String, ArrayList<Article>>();
+            //
+            // needFetchCount = ids.size();
+            // hadFetchCount = 0;
+            //
+            // GetArticles getArticles = new GetArticles(getAuthorization());
+            // XLog.e("1 - 同步文章内容" + needFetchCount + "   " );
+            //
+            // TinyResponse<List<ArticleItem>> ttrssArticleItemsResponse;
+            // ArrayList<Article> articles;
+            //
+            // while (needFetchCount > 0) {
+            //     num = Math.min(needFetchCount, fetchContentCntForEach);
+            //     getArticles.setArticleIds( ids.subList(hadFetchCount, hadFetchCount = hadFetchCount + num) );
+            //     ttrssArticleItemsResponse = service.getArticles(getAuthorization(),getArticles).execute().body();
+            //     if (!ttrssArticleItemsResponse.isSuccessful()) {
+            //         throw new HttpException("获取失败");
+            //     }
+            //     List<ArticleItem> items = ttrssArticleItemsResponse.getContent();
+            //     articles = new ArrayList<>(items.size());
+            //     long syncTimeMillis = System.currentTimeMillis();
+            //     for (ArticleItem item : items) {
+            //         articles.add(item.convert(new ArticleChanger() {
+            //             @Override
+            //             public Article change(Article article) {
+            //                 article.setCrawlDate(syncTimeMillis);
+            //                 article.setUid(uid);
+            //                 return article;
+            //             }
+            //         }));
+            //     }
+            //
+            //     CoreDB.i().articleDao().insert(articles);
+            //     needFetchCount = ids.size() - hadFetchCount;
+            //     LiveEventBus.get(SyncWorker.SYNC_PROCESS_FOR_SUBTITLE).post( App.i().getString(R.string.sync_article_content, hadFetchCount, ids.size()) );
+            // }
 
             LiveEventBus.get(SyncWorker.SYNC_PROCESS_FOR_SUBTITLE).post(getString(R.string.clear_article));
             deleteExpiredArticles();
@@ -276,7 +332,6 @@ public class LoreadApi extends AuthApi<Feed, me.wizos.loread.bean.feedly.Categor
             // 获取文章全文
             LiveEventBus.get(SyncWorker.SYNC_PROCESS_FOR_SUBTITLE).post(getString(R.string.fetch_article_full_content));
             fetchReadability(uid, startSyncTimeMillis);
-
             // 执行文章自动处理脚本
             ArticleActionConfig.i().exeRules(uid,startSyncTimeMillis);
             // 清理无文章的tag
@@ -284,36 +339,31 @@ public class LoreadApi extends AuthApi<Feed, me.wizos.loread.bean.feedly.Categor
 
             LiveEventBus.get(SyncWorker.SYNC_PROCESS_FOR_SUBTITLE).post( null );
             // 提示更新完成
-            LiveEventBus.get(SyncWorker.NEW_ARTICLE_NUMBER).post(ids.size());
+            LiveEventBus.get(SyncWorker.NEW_ARTICLE_NUMBER).post(hadFetchCount);
         }catch (IllegalStateException e){
-            KLog.e("同步时产生IllegalStateException：" + e.getMessage());
-            e.printStackTrace();
-            handleException( "同步时产生IllegalStateException：" + e.getMessage() );
+            handleException(e, e.getMessage());
         }catch (HttpException e) {
-            KLog.e("同步时产生HttpException：" + e.message());
-            e.printStackTrace();
-            handleException("同步时产生HttpException：" + e.message());
+            handleException(e, e.message());
         } catch (ConnectException e) {
-            KLog.e("同步时产生异常ConnectException");
-            e.printStackTrace();
-            handleException("同步时产生异常ConnectException");
+            handleException(e, "同步失败：Connect异常");
         } catch (SocketTimeoutException e) {
-            KLog.e("同步时产生异常SocketTimeoutException");
-            e.printStackTrace();
-            handleException("同步时产生异常SocketTimeoutException");
+            handleException(e, "同步失败：Socket超时");
         } catch (IOException e) {
-            KLog.e("同步时产生异常IOException");
-            e.printStackTrace();
-            handleException("同步时产生异常IOException");
+            handleException(e, "同步失败：IO异常");
         } catch (RuntimeException e) {
-            KLog.e("同步时产生异常RuntimeException");
-            e.printStackTrace();
-            handleException("同步时产生异常RuntimeException");
+            handleException(e, "同步失败：Runtime异常");
         }
     }
 
-    private void handleException(String msg) {
-        ToastUtils.show(msg);
+    private void handleException(Exception e, String msg) {
+        XLog.e("同步失败：" + e.getClass() + " = " + msg);
+        e.printStackTrace();
+        if(Contract.NOT_LOGGED_IN.equalsIgnoreCase(msg)){
+            ToastUtils.show(getString(R.string.not_logged_in));
+        }else {
+            ToastUtils.show(msg);
+        }
+        updateCollectionCount();
         LiveEventBus.get(SyncWorker.SYNC_PROCESS_FOR_SUBTITLE).post( null );
     }
 
@@ -332,7 +382,7 @@ public class LoreadApi extends AuthApi<Feed, me.wizos.loread.bean.feedly.Categor
             @Override
             public void onResponse(@NotNull retrofit2.Call<TinyResponse<SubscribeToFeedResult>> call, @NotNull Response<TinyResponse<SubscribeToFeedResult>> response) {
                 if (response.isSuccessful() && response.body().isSuccessful()) {
-                    KLog.e("添加成功" + response.body().toString());
+                    XLog.v("添加成功" + response.body().toString());
                     cb.onSuccess("添加成功");
                 } else {
                     cb.onFailure("响应失败");
@@ -342,7 +392,7 @@ public class LoreadApi extends AuthApi<Feed, me.wizos.loread.bean.feedly.Categor
             @Override
             public void onFailure(@NotNull retrofit2.Call<TinyResponse<SubscribeToFeedResult>> call, @NotNull Throwable t) {
                 cb.onFailure("添加失败");
-                KLog.e("添加失败");
+                XLog.v("添加失败");
             }
         });
     }
@@ -376,168 +426,148 @@ public class LoreadApi extends AuthApi<Feed, me.wizos.loread.bean.feedly.Categor
             @Override
             public void onResponse(@NotNull retrofit2.Call<TinyResponse<Map>> call, @NotNull Response<TinyResponse<Map>> response) {
                 if(response.isSuccessful() && null != response.body() && null != response.body().getContent() && "OK".equals(response.body().getContent().get("status"))){
-                    cb.onSuccess("退订成功");
+                    if(cb!=null){
+                        cb.onSuccess(null);
+                    }
                 }else {
-                    cb.onFailure("退订失败" + response.body());
+                    if(cb!=null){
+                        cb.onFailure(response.body());
+                    }
                 }
             }
 
             @Override
             public void onFailure(@NotNull retrofit2.Call<TinyResponse<Map>> call, @NotNull Throwable t) {
-                cb.onSuccess("退订失败" + t.getMessage());
+                cb.onFailure(t.getMessage());
             }
         });
     }
 
 
-    private void markArticles(int field, int mode, Collection<String> ids, CallbackX cb) {
+    private void markArticles(int field, int mode, String articleIds, CallbackX cb) {
         UpdateArticle updateArticle = new UpdateArticle(getAuthorization());
-        updateArticle.setArticle_ids(StringUtils.join(",", ids));
+        updateArticle.setArticle_ids(articleIds);
         updateArticle.setField(field);
         updateArticle.setMode(mode);
         service.updateArticle(getAuthorization(),updateArticle).enqueue(new retrofit2.Callback<TinyResponse<UpdateArticleResult>>() {
             @Override
             public void onResponse(@NotNull retrofit2.Call<TinyResponse<UpdateArticleResult>> call, @NotNull Response<TinyResponse<UpdateArticleResult>> response) {
                 if (response.isSuccessful() ){
-                    cb.onSuccess(null);
+                    if(cb!=null){
+                        cb.onSuccess(null);
+                    }
                 }else {
-                    cb.onFailure("修改失败，原因未知");
+                    if(cb!=null){
+                        cb.onFailure(response.body());
+                    }
                 }
             }
 
             @Override
-            public void onFailure(@NotNull retrofit2.Call<TinyResponse<UpdateArticleResult>> call, @NotNull Throwable t) {
-                cb.onFailure("修改失败，原因未知");
-            }
-        });
-    }
+            public void onFailure(retrofit2.Call<TinyResponse<UpdateArticleResult>> call, Throwable t) {
 
-    private void markArticle(int field, int mode, String articleId,CallbackX cb) {
-        UpdateArticle updateArticle = new UpdateArticle(getAuthorization());
-        updateArticle.setArticle_ids(articleId);
-        updateArticle.setField(field);
-        updateArticle.setMode(mode);
-        service.updateArticle(getAuthorization(),updateArticle).enqueue(new retrofit2.Callback<TinyResponse<UpdateArticleResult>>() {
-            @Override
-            public void onResponse(@NotNull retrofit2.Call<TinyResponse<UpdateArticleResult>> call, @NotNull Response<TinyResponse<UpdateArticleResult>> response) {
-                if (response.isSuccessful() ){
-                    cb.onSuccess(null);
-                }else {
-                    cb.onFailure("修改失败，原因未知");
+                if(cb!=null){
+                    cb.onFailure(t.getMessage());
                 }
-            }
 
-            @Override
-            public void onFailure(@NotNull retrofit2.Call<TinyResponse<UpdateArticleResult>> call, @NotNull Throwable t) {
-                cb.onFailure("修改失败，原因未知");
             }
         });
     }
 
-    public void markArticleListReaded(Collection<String> articleIds,CallbackX cb) {
-        markArticles(2, 0, articleIds, cb);
+
+    public void markArticleListReaded(Collection<String> articleIds, CallbackX cb) {
+        markArticles(2, 0, StringUtils.join(",", articleIds), cb);
     }
 
     public void markArticleReaded(String articleId, CallbackX cb) {
-        markArticle(2, 0, articleId, cb);
+        markArticles(2, 0, articleId, cb);
     }
 
     public void markArticleUnread(String articleId, CallbackX cb) {
-        markArticle(2, 1, articleId, cb);
+        markArticles(2, 1, articleId, cb);
     }
 
     public void markArticleStared(String articleId, CallbackX cb) {
-        markArticle(0, 1, articleId, cb);
+        markArticles(0, 1, articleId, cb);
     }
 
     public void markArticleUnstar(String articleId,CallbackX cb) {
-        markArticle(0, 0, articleId, cb);
+        markArticles(0, 0, articleId, cb);
     }
 
-    private HashSet<String> handleUnreadRefs(String[] ids) {
-        KLog.i("处理未读资源：" + ids.length );
-        String uid = App.i().getUser().getId();
-        List<Article> localUnreadArticles = CoreDB.i().articleDao().getUnreadNoOrder(uid);
-
-        Map<String, Article> localUnreadArticlesMap = new ArrayMap<>(localUnreadArticles.size());
-        List<Article> changedArticles = new ArrayList<>();
-        // 筛选下来，最终要去云端获取内容的未读Refs的集合
-        HashSet<String> tempUnreadIds = new HashSet<>(ids.length);
-        // 数据量大的一方
-        for (Article article : localUnreadArticles) {
-            localUnreadArticlesMap.put(article.getId(), article);
-        }
-        // 数据量小的一方
-        Article article;
-        for (String articleId : ids) {
-            article = localUnreadArticlesMap.get(articleId);
-            if (article != null) {
-                localUnreadArticlesMap.remove(articleId);
-            } else {
-                article = CoreDB.i().articleDao().getById(uid,articleId);
-                if (article != null && article.getReadStatus() == App.STATUS_READED) {
-                    article.setReadStatus(App.STATUS_UNREAD);
-                    changedArticles.add(article);
-                } else {
-                    // 本地无，而云端有，加入要请求的未读资源
-                    tempUnreadIds.add(articleId+"");
-                }
-            }
-        }
-        for (Map.Entry<String, Article> entry : localUnreadArticlesMap.entrySet()) {
-            if (entry.getKey() != null) {
-                article = localUnreadArticlesMap.get(entry.getKey());
-                // 本地未读设为已读
-                article.setReadStatus(App.STATUS_READED);
-                changedArticles.add(article);
-            }
-        }
-
-        CoreDB.i().articleDao().update(changedArticles);
-        return tempUnreadIds;
-    }
-
-    private HashSet<String> handleStaredRefs(String[] ids) {
-        KLog.i("处理加薪资源：" + ids.length);
-        String uid = App.i().getUser().getId();
-        List<Article> localStarredArticles = CoreDB.i().articleDao().getStaredNoOrder(uid);
-
-        Map<String, Article> localStarredArticlesMap = new ArrayMap<>(localStarredArticles.size());
-        List<Article> changedArticles = new ArrayList<>();
-        HashSet<String> tempStarredIds = new HashSet<>(ids.length);
-
-        // 第1步，遍历数据量大的一方A，将其比对项目放入Map中
-        for (Article article : localStarredArticles) {
-            localStarredArticlesMap.put(article.getId(), article);
-        }
-
-        // 第2步，遍历数据量小的一方B。到Map中找，是否含有b中的比对项。有则XX，无则YY
-        Article article;
-        for (String articleId : ids) {
-            article = localStarredArticlesMap.get(articleId);
-            if (article != null) {
-                localStarredArticlesMap.remove(articleId);
-            } else {
-                article = CoreDB.i().articleDao().getById(uid,articleId);
-                if (article != null) {
-                    article.setStarStatus(App.STATUS_STARED);
-                    changedArticles.add(article);
-                } else {
-                    // 本地无，而云远端有，加入要请求的未读资源
-                    tempStarredIds.add(articleId);
-                }
-            }
-        }
-
-        for (Map.Entry<String, Article> entry : localStarredArticlesMap.entrySet()) {
-            if (entry.getKey() != null) {
-                article = localStarredArticlesMap.get(entry.getKey());
-                article.setStarStatus(App.STATUS_UNSTAR);
-                changedArticles.add(article);// 取消加星
-            }
-        }
-
-        CoreDB.i().articleDao().update(changedArticles);
-        return tempStarredIds;
-    }
+    // private ArraySet<String> handleUnreadRefs(String[] ids) {
+    //     XLog.i("处理未读资源：" + ids.length );
+    //     String uid = App.i().getUser().getId();
+    //
+    //     // 第1步，遍历数据量大的一方A，将其比对项目放入Map中
+    //     ArraySet<String> localUnReadIdSet = CoreDB.i().articleDao().getUnreadIdSet(uid);
+    //     ArraySet<String> localReadIdSet = CoreDB.i().articleDao().getReadIdSet(uid);
+    //
+    //     ArrayList<String> needMarkReadIds = new ArrayList<>();
+    //     ArrayList<String> needMarkUnReadIds = new ArrayList<>();
+    //     ArraySet<String> needRequestIds = new ArraySet<>(ids.length);
+    //
+    //
+    //     // 第2步，遍历数据量小的一方B。到Map中找，是否含有b中的比对项。有则XX，无则YY
+    //     ArraySet<String> articleIds = new ArraySet<>(Arrays.asList(ids));
+    //     for (String articleId : articleIds) {
+    //         if(localUnReadIdSet.contains(articleId)){
+    //             localUnReadIdSet.remove(articleId);
+    //         }else if(localReadIdSet.contains(articleId)){
+    //             localReadIdSet.remove(articleId);
+    //             needMarkReadIds.add(articleId);
+    //         }else {
+    //             needRequestIds.add(articleId);
+    //         }
+    //     }
+    //
+    //     // 取消加星
+    //     for (String entry : localUnReadIdSet) {
+    //         if (entry != null) {
+    //             needMarkReadIds.add(entry);
+    //         }
+    //     }
+    //
+    //     CoreDB.i().articleDao().markArticlesUnread(uid, needMarkUnReadIds);
+    //     CoreDB.i().articleDao().markArticlesRead(uid, needMarkReadIds);
+    //     return needRequestIds;
+    // }
+    //
+    //
+    // private ArraySet<String> handleStaredRefs(String[] ids) {
+    //     XLog.i("处理加薪资源：" + ids.length);
+    //     String uid = App.i().getUser().getId();
+    //
+    //     // 第1步，遍历数据量大的一方A，将其比对项目放入Map中
+    //     ArraySet<String> localStarIdSet = CoreDB.i().articleDao().getStaredIdSet(uid);
+    //     ArraySet<String> localUnStarIdSet = CoreDB.i().articleDao().getUnStarIdSet(uid);
+    //
+    //     ArrayList<String> needMarkStarIds = new ArrayList<>();
+    //     ArrayList<String> needMarkUnStarIds = new ArrayList<>();
+    //     ArraySet<String> needRequestIds = new ArraySet<>(ids.length);
+    //
+    //     // 第2步，遍历数据量小的一方B。到Map中找，是否含有b中的比对项。有则XX，无则YY
+    //     ArraySet<String> articleIds = new ArraySet<>(Arrays.asList(ids));
+    //     for (String articleId : articleIds) {
+    //         if(localStarIdSet.contains(articleId)){
+    //             localStarIdSet.remove(articleId);
+    //         }else if(localUnStarIdSet.contains(articleId)){
+    //             localUnStarIdSet.remove(articleId);
+    //             needMarkStarIds.add(articleId);
+    //         }else {
+    //             needRequestIds.add(articleId);
+    //         }
+    //     }
+    //
+    //     // 取消加星
+    //     for (String entry : localStarIdSet) {
+    //         if (entry != null) {
+    //             needMarkUnStarIds.add(entry);
+    //         }
+    //     }
+    //
+    //     CoreDB.i().articleDao().markArticlesStar(uid, needMarkStarIds);
+    //     CoreDB.i().articleDao().markArticlesUnStar(uid, needMarkUnStarIds);
+    //     return needRequestIds;
+    // }
 }

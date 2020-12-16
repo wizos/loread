@@ -1,11 +1,9 @@
 <resources>
 
     <style name="AppTheme.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />
-
     <style name="AppTheme.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" />
 
-    <!--Theme.AppCompat.Light.DarkActionBar-->
-    <!--QMUI.Compat.NoActionBar-->
+
     <style name="AppBaseTheme" parent="Theme.AppCompat.Light.DarkActionBar">
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
@@ -14,17 +12,6 @@
         <item name="toolbarNavigationButtonStyle">@style/MyToolbar.Navigation</item>
         <item name="coordinatorLayoutStyle">@style/Widget.Support.CoordinatorLayout</item>
         <item name="floatingActionButtonStyle">@style/Widget.Design.FloatingActionButton</item>
-        <!--<item name="floatingActionButtonStyle">@style/Widget.Support.FloatingActionButton</item>-->
-        <!--去掉toolbar下的阴影-->
-        <!--<iuserNamename="elevation">0dp</item>-->
-
-        <!--<iuserNamename="app:subtitleTextAppearance">@style/MyToolbar.SubTitle</item>-->
-        <!--app:subtitleTextAppearance="@style/toolbar_subtitle_style"-->
-        <!--<iuserNamename="android:windowDrawsSystemBarBackgrounds">true</item>-->
-        <!--<iuserNamename="android:statusBarColor">@android:color/transparent</item>-->
-        <!--<iuserNamename="android:fitsSystemWindows">true</item>-->
-        <!--<iuserNamename="android:addStatesFromChildren">true</item>-->
-        <!--<iuserNamename="android:windowBackground">@null</item>-->
     </style>
 
     <style name="AppBaseTheme.SplashTheme" parent="Theme.AppCompat.Light.DarkActionBar">
@@ -34,8 +21,6 @@
 
     <style name="AppBaseTheme.SplashTranslucentTheme" parent="AppTheme.Day.NoActionBar">
         <item name="android:windowBackground">@drawable/splash_layers</item>
-        <!--<iuserNamename="android:windowBackground">@android:color/transparent</item>-->
-        <!--<iuserNamename="android:windowIsTranslucent">true</item>-->
     </style>
 
     <style name="MyToolbar" parent="Widget.AppCompat.Toolbar">
@@ -67,16 +52,13 @@
     <style name="AppTheme.Day" parent="AppBaseTheme">
         <!-- Customize your theme here. -->
         <item name="status_bar">@color/main_day_dark</item>
-        <!--<iuserNamename="colorPrimary">@color/main_day_dark</item>-->
-        <!--<iuserNamename="colorPrimaryDark">@color/main_day_dark</item>-->
         <item name="root_view_bg">@color/white</item>
-        // white_screen_bg
+         <!--white_screen_bg-->
         <item name="topbar_bg">@color/main_day_dark</item>
         <item name="topbar_fg">@color/white</item>
 
         <item name="bottombar_divider">@color/white_bottombar_divider</item>
-        // 测试新的淡雅主题
-
+        <!--测试新的淡雅主题-->
         <item name="bottombar_bg">@color/white</item>
         <item name="bottombar_fg">@color/main_day_light</item>
 
@@ -90,8 +72,8 @@
         <item name="setting_header_title_color">@color/main_day_dark</item>
         <item name="lv_item_desc_color">@color/main_day_info</item>
         <item name="lv_item_info_color">@color/main_day_info</item>
-        <item name="lv_item_divider">@color/white</item>
-        // light_lv_divider
+        <item name="lv_item_divider">@color/main_day_info</item>
+        <!--light_lv_divider-->
 
         <item name="art_title">@color/main_day_dark</item>
         <item name="art_feed">@color/main_day_light</item>
@@ -101,7 +83,7 @@
         <item name="setting_title">@color/main_day_dark</item>
         <item name="setting_tips">@color/main_day_info</item>
 
-        <!--<iuserNamename="bubble_bg">@color/white_toolbar_bg</item>-->
+
         <item name="bubble_bg">@drawable/textview_border_day</item>
     </style>
 
@@ -129,10 +111,10 @@
         <item name="setting_header_title_color">@color/main_night_info</item>
         <item name="lv_item_title_color">@color/main_night_title</item>
         <item name="lv_item_desc_color">@color/main_night_info</item>
-        // main_night_dark
+        <!--// main_night_dark-->
         <item name="lv_item_info_color">@color/main_night_info</item>
-        <item name="lv_item_divider">@color/dark_background</item>
-        // black_lv_divider
+        <item name="lv_item_divider">@color/dark_foreground</item>
+        <!--// black_lv_divider-->
 
         <item name="art_title">#039586</item>
         <item name="art_feed">#057971</item>
@@ -242,7 +224,6 @@
     </style>
 
     <style name="SettingItemTips">
-        <!--<iuserNamename="android:alpha">0.80</item>-->
         <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">wrap_content</item>
         <item name="android:layout_marginStart">0dp</item>

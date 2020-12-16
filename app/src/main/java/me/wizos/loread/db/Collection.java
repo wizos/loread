@@ -7,6 +7,9 @@ public class Collection {
     private String id;
     private String title;
     private int count;
+    transient public boolean isExpand = false;
+
+
 
     public String getId() {
         return this.id;

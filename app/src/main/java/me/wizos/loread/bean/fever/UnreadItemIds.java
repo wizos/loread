@@ -4,14 +4,18 @@ import android.text.TextUtils;
 
 import com.google.gson.annotations.SerializedName;
 
+import java.util.Arrays;
+import java.util.List;
+
 public class UnreadItemIds extends BaseResponse {
     @SerializedName("unread_item_ids")
     private String unreadItemIds;
-    public String[] getUnreadItemIds(){
+
+    public List<String> getUnreadItemIds(){
         if(TextUtils.isEmpty(unreadItemIds)){
             return null;
         }else {
-            return unreadItemIds.split(",");
+            return Arrays.asList(unreadItemIds.split(","));
         }
     }
 

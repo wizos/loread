@@ -68,15 +68,17 @@
     <string name="server_api_not_supported">%1$s does not support this function</string>
 
     <!-- Strings related to Settings -->
-    <string name="main_toolbar_title_search">Search: </string>
+    <string name="title_search">Search: %1$s</string>
 
 
     <plurals name="search_result_followers">
-        <item quantity="one">%1$d follower</item>
-        <item quantity="other">%1$d followers</item>
+        <item quantity="one">%1$d follower | Update %1$f articles per week</item>
+        <item quantity="other">%1$d followers | Update %1$f articles per week</item>
     </plurals>
 
-    <string name="search_result_articles"> | Update %1$f articles per week</string>
+    <string name="search_result_meta">Follower: %1$d | Article: %2$s per week</string>
+
+    <string name="search_result_articles">" | Update %1$f articles per week"</string>
 
     <string name="search_result_summary">Intro: %1$s | Feed URL: %2$s</string>
     <string name="search_result_subs">%1$d followers | Update %2$s articles per week</string>
@@ -87,10 +89,11 @@
     <string name="unable_to_find_app">No corresponding application found</string>
 
 
-    <string name="sync_article_content">1. Sync article content [%1$d / %2$d]</string>
-    <string name="sync_article_size">1. Sync article [%1$d]</string>
-    <string name="sync_article_refs">2. Sync Article Info</string>
-    <string name="sync_feed_info">3. Sync feed info</string>
+    <string name="sync_article_content">%1$s Sync article content [%2$d / %3$d]</string>
+    <string name="sync_article_start">%1$s Sync article</string>
+    <string name="sync_article_size">%1$s Sync article [%2$d]</string>
+    <string name="sync_article_refs">%1$s Sync Article Info</string>
+    <string name="sync_feed_info">%1$s Sync feed info</string>
 
     <string name="fetch_article_full_content">Fetch article full content</string>
 
@@ -120,24 +123,26 @@
     <string name="mask_success">Mask successful</string>
     <string name="mask_fail">Mask fail</string>
 
-    <string name="main_dialog_esc_positive">YES ^_^</string>
-    <string name="main_dialog_esc_negative">NO ！</string>
+    <string name="exit_positive">YES ^_^</string>
+    <string name="exit_negative">NO ！</string>
 
     <string name="are_you_sure_that_unsubscribe_this_feed_link">Are you sure you want to unsubscribe from this site?</string>
-    <string name="main_dialog_confirm_mark_article_list">Are you sure you want to mark the following articles as read?</string>
-    <string name="main_dialog_esc_confirm">Are you sure you want to exit the app?</string>
-    <string name="setting_about_dialog_title">Sigh with emotion</string>
-    <string name="setting_about_dialog_content">路很长，纵然远望，却不知方向。\n抽支烟，思绪无常，奔跑着彷徨。\n逃不脱的苟且，到不了的远方…\n作于2016.10.07</string>
+    <string name="mark_the_above_articles_as_read">Mark the above articles as read?</string>
+    <string name="mark_the_below_articles_as_read">Mark the below articles as read?</string>
+    <string name="includes_forced_unread">Includes "forced unread"</string>
+    <string name="are_you_sure_you_want_to_exit_the_app">Are you sure you want to exit the app?</string>
+    <string name="sigh_with_emotion">Sigh with emotion</string>
+    <string name="sigh_with_emotion_content">路很长，纵然远望，却不知方向。\n抽支烟，思绪无常，奔跑着彷徨。\n逃不脱的苟且，到不了的远方…\n作于2016.10.07</string>
 
 
-    <string name="article_choose_tag_dialog_title">Select label</string>
+    <string name="select_label">Select label</string>
 
 
     <!--数据同步-->
     <string name="sync">Sync</string>
-    <string name="setting_auto_sync_title">Auto sync</string>
-    <string name="setting_auto_sync_on_wifi_title">Auto sync in Wifi mode</string>
-    <string name="setting_sync_frequency_title">Time interval for sync</string>
+    <string name="auto_sync">Auto sync</string>
+    <string name="auto_sync_on_wifi_title">Auto sync in Wifi mode</string>
+    <string name="sync_frequency">Time interval for sync</string>
 
     <string name="setting_down_img_title">Save traffic to download pictures</string>
     <string name="proxy">Proxy</string>
@@ -152,9 +157,9 @@
     <string name="open_link_by_builtin_browser">Open link by built-in browser</string>
     <!--缓存-->
     <string name="setting_clear_day_title">Retention period of read articles</string>
-    <!--<struserNamename="setting_clear_day_dialog_title">选择保留最近多少天的文章呢？</string>-->
+
     <string name="clear_article">Clean up articles</string>
-    <string name="handle_crawldate">Handle crawldate</string>
+    <string name="handle_crawl_date">Handle crawl date</string>
 
     <!--备份-->
     <string name="backup_now">Back up now</string>
@@ -168,9 +173,13 @@
     <string name="about">About</string>
     <string name="license">License</string>
     <string name="feedback">Feedback</string>
+    <string name="send_log_file">Send log file</string>
     <string name="qq_group">QQ group</string>
     <string name="qq_group_number">106211435</string>
     <string name="esc">Quit</string>
+
+
+    <string name="no_log_file_found">No log file found</string>
 
     <string name="add_account">Add account</string>
     <string name="esc_account">Logout</string>
@@ -181,9 +190,9 @@
     <string name="config_the_feed">Config this feed</string>
     <string name="theme_setting">Theme settings</string>
 
-    <string name="tips_no_net">Network is\'t connected, please check it</string>
-    <string name="bag_network">Network is not good, please try again</string>
-    <string name="fail_try">Failed, please try again</string>
+    <string name="network_not_connected_please_check_it">Network is\'t connected, please check it</string>
+    <string name="bag_network_please_check_it">Network is\'t good, please try again</string>
+    <string name="failed_please_try_again">Failed, please try again</string>
 
     <!--<string name="tag_choose_tips">想看哪个分类？</string>-->
 
@@ -195,9 +204,9 @@
     <string name="share_img">Share picture</string>
     <string name="rename">Rename</string>
 
-    <string name="mark_up">Mark Read Up</string>
-    <string name="mark_down">Mark Read Down</string>
-    <string name="mark_unread">Mark unread</string>
+    <string name="mark_above_as_read">Mark above as read</string>
+    <string name="mark_below_as_read">Mark below as read</string>
+    <string name="mark_as_unread">Mark as unread</string>
     <string name="speak_article">Speak article</string>
 
 
@@ -228,10 +237,11 @@
 
     <string name="subscribe">Subscribe</string>
     <string name="subscribe_success">Subscription succeeded, please sync manually</string>
-    <string name="subscribe_fail">Subscription failed, please try again</string>
+    <string name="subscribe_fail">Subscription failed: %1$s</string>
     <string name="unsubscribe_succeeded">Unsubscribe succeeded</string>
     <string name="unsubscribe_failed">Unsubscribe failed: %1$s</string>
     <string name="rename_failed">Rename failed, please try again</string>
+    <string name="unable_to_edit_unsubscribed_feed">Unable to edit unsubscribed feed</string>
 
     <string name="no_title">Untitled</string>
     <string name="no_thing">No</string>
@@ -272,64 +282,65 @@
 
     <string name="is_filed_cannot_edit">The article has been exported and cannot be modified</string>
 
-    <string name="font_unstar">&#xe64c;</string>
-    <string name="font_stared">&#xe64b;</string>
-    <string name="font_readed">&#xe72f;</string>
-    <string name="font_unread">&#xe656;</string>
+    <string name="font_unstar" translatable="false">&#xe64c;</string>
+    <string name="font_stared" translatable="false">&#xe64b;</string>
+    <string name="font_readed" translatable="false">&#xe72f;</string>
+    <string name="font_unread" translatable="false">&#xe656;</string>
 
-    <string name="font_setting">&#xe61f;</string>
-    <string name="font_theme">&#xe650;</string>
+    <string name="font_setting" translatable="false">&#xe61f;</string>
+    <string name="font_theme" translatable="false">&#xe650;</string>
 
-    <string name="font_unsave">&#xe604;</string>
-    <string name="font_saved">&#xe605;</string>
-    <string name="font_main">&#xe60c;</string>
+    <string name="font_unsave" translatable="false">&#xe604;</string>
+    <string name="font_saved" translatable="false">&#xe605;</string>
+    <string name="font_main" translatable="false">&#xe60c;</string>
 
-    <string name="font_add">&#xe699;</string>
-    <string name="font_cross">&#xe6cb;</string>
-    <string name="font_tick">&#xe636;</string>
-
-
-    <string name="font_group">&#xe615;</string>
-
-    <string name="font_tag">&#xe7c4;</string>
-    <string name="font_label">&#xe7c5;</string>
-
-    <string name="font_arrow_down">&#xe6a6;</string>
-    <string name="font_arrow_right">&#xe6a8;</string>
-    <string name="font_arrow_left">&#xe84e;</string>
-
-    <string name="font_list_reading">&#xe612;</string>
-    <string name="font_list_unread">&#xe613;</string>
+    <string name="font_add" translatable="false">&#xe699;</string>
+    <string name="font_cross" translatable="false">&#xe6cb;</string>
+    <string name="font_tick" translatable="false">&#xe636;</string>
 
 
-    <string name="font_no_data">&#xe608;</string>
-    <string name="font_search">&#xe741;</string>
+    <string name="font_group" translatable="false">&#xe615;</string>
+
+    <string name="font_tag" translatable="false">&#xe7c4;</string>
+    <string name="font_label" translatable="false">&#xe7c5;</string>
+
+    <string name="font_arrow_down" translatable="false">&#xe6a6;</string>
+    <string name="font_arrow_right" translatable="false">&#xe6a8;</string>
+    <string name="font_arrow_left" translatable="false">&#xe84e;</string>
+
+    <string name="font_list_reading" translatable="false">&#xe612;</string>
+    <string name="font_list_unread" translatable="false">&#xe613;</string>
 
 
-    <string name="font_share">&#xe616;</string>
-    <string name="font_more">&#xe60f;</string>
+    <string name="font_no_data" translatable="false">&#xe608;</string>
+    <string name="font_search" translatable="false">&#xe741;</string>
 
-    <string name="font_archive">&#xe680;</string>
+    <string name="font_share" translatable="false">&#xe616;</string>
+    <string name="font_more" translatable="false">&#xe60f;</string>
 
-    <string name="font_translation">&#xe6ba;</string>
-    <string name="font_chrome">&#xe678;</string>
-    <string name="font_book">&#xe65b;</string>
+    <string name="font_archive" translatable="false">&#xe680;</string>
+
+    <string name="font_translation" translatable="false">&#xe6ba;</string>
+    <string name="font_chrome" translatable="false">&#xe678;</string>
+    <string name="font_book" translatable="false">&#xe65b;</string>
     <string name="font_article_original" translatable="false">&#xe61b;</string>
     <string name="font_article_readability" translatable="false">&#xe743;</string>
-    <string name="font_readability">&#xe611;</string>
-    <string name="font_feed_config">&#xe72b;</string>
-    <string name="font_update">&#xe645;</string>
+
+    <string name="font_feed_config" translatable="false">&#xe72b;</string>
+    <string name="font_update" translatable="false">&#xe645;</string>
+
+    <string name="font_search_feed" translatable="false">&#xe64d;</string>
 
 
     <!--准备删除-->
-    <string name="font_last">&#xe65b;</string>
-    <string name="font_next">&#xe6a7;</string>
-    <string name="font_all_article">&#xe6a7;</string>
-    <string name="font_list_stared">&#xe617;</string>
-    <string name="font_list_unstar">&#xe614;</string>
+    <string name="font_last" translatable="false">&#xe65b;</string>
+    <string name="font_next" translatable="false">&#xe6a7;</string>
+    <string name="font_all_article" translatable="false">&#xe6a7;</string>
+    <string name="font_list_stared" translatable="false">&#xe617;</string>
+    <string name="font_list_unstar" translatable="false">&#xe614;</string>
 
     <!--气泡-->
-    <string name="font_untag_article">&#xe84d;</string>
+    <string name="font_untag_article" translatable="false">&#xe84d;</string>
 
 
     <string name="title_activity_scrolling">ScrollingActivity</string>
@@ -386,7 +397,7 @@
     <string name="the_server_site_url_like">The server host like "https://example.com"</string>
     <string name="rss_summary">
         In layman\'s terms, RSS is a way to subscribe to information.\n\n
-        Just like following John Doe on Twitter and Jane Doe on TikTok, you can follow them by subscribe for a FEED URL in the "RSS Reader".\n\n
+        Just as you follow John Doe on Twitter or Jane Doe on TikTok, you can follow them by adding their FEED URLs in the "RSS Reader".\n\n
         This allows you to subscribe to Youtube, Instagram, Quora, Blog, Forum …</string>
     <string name="authorizing">Authorizing…</string>
 
@@ -398,7 +409,7 @@
     <string name="feed_url">Feed url: </string>
     <string name="unsubscribe">Unsubscribe</string>
 
-    <string name="display_filter_in_development">\"Display Filter\", in development</string>
+    <string name="display_filter_is_under_development">Display filter function is still under development</string>
 
     <string name="click_to_load_this_picture">Click to load this picture</string>
     <string name="loading_failed_click_here_to_retry">Loading failed! Click here to retry</string>
@@ -421,5 +432,14 @@
     <string name="play_the_video">Play the video</string>
     <string name="play_the_audio">Play the audio</string>
 
-    <string name="save">save</string>
+    <string name="save">Save</string>
+    <string name="search_feeds">Search feeds</string>
+    <string name="search_articles">Search articles</string>
+    <string name="subscription">Subscription</string>
+
+
+    <string name="exit_search">Exit search</string>
+
+    <string name="yesterday_time">Yesterday %1$s</string>
+    <string name="today_time">%1$s</string>
 </resources>

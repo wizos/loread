@@ -33,9 +33,9 @@ import me.wizos.loread.utils.StringUtils;
 public class SaveDirectory {
     // 按 feed 或者 category 级别来设置保存目录是只能设置为 root, feed, category
     // 手动修改某个 文章 的保存目录时，可以设置为 root, feed, category, 目录名称
-    private String defaultDirectory; // 如果为null，代表根目录
-    @SerializedName("category")
-    private ArrayMap<String, String> settingByCategory; // root, feed, category, 目录名称
+    private String defaultDirectory = "loread_feed_title"; // 如果为null，代表根目录
+    // @SerializedName("category")
+    // private ArrayMap<String, String> settingByCategory; // root, feed, category, 目录名称
     @SerializedName("feed")
     private ArrayMap<String, String> settingByFeed; // root, feed, category, 目录名称
     @SerializedName("article")
@@ -95,35 +95,7 @@ public class SaveDirectory {
         }
         return name;
     }
-//    public String getSavedDirectory(String feedId, String articleId) {
-//        if(settingByArticle != null && settingByArticle.containsKey(articleId)){
-//            return settingByArticle.get(articleId);
-//        }
-//
-//        if(settingByFeed != null && settingByFeed.containsKey(feedId)){
-//            String dir = settingByFeed.get(feedId);
-//            if("loread_feed".equalsIgnoreCase(dir)){
-//                Feed feed = CoreDB.i().feedDao().getById(App.i().getUser().getId(), feedId);
-//                if(feed != null && !StringUtils.isEmpty(feed.getTitle())){
-//                    return feed.getTitle();
-//                }
-//            }
-////            else if("loread_category".equalsIgnoreCase(dir)){
-////                List<Category> categories = CoreDB.i().categoryDao().getByFeedId(App.i().getUser().getId(), feedId);
-////                if(categories != null && !StringUtils.isEmpty(categories)){
-////                    List<String> titles = new ArrayList<>(categories.size());
-////                    for (Category category:categories) {
-////                        titles.add(category.getTitle());
-////                    }
-////                    return StringUtils.join("_",titles);
-////                }
-////            }
-//            return settingByFeed.get(feedId);
-//        }
-//        return defaultDirectory;
-//    }
 
-//    String categoryId,
     public String getSaveDir(String feedId, String articleId) {
         // loread_root, loread_feed, loread_category, tag
         String value;
@@ -131,14 +103,15 @@ public class SaveDirectory {
             value = settingByArticle.get(articleId);
         }else if(settingByFeed != null && settingByFeed.containsKey(feedId)){
             value = settingByFeed.get(feedId);
-//        }else if( settingByCategory != null && settingByCategory.containsKey(categoryId) ){
-//            value = settingByCategory.get(categoryId);
+        // }else if( settingByCategory != null && settingByCategory.containsKey(categoryId) ){
+        //     value = settingByCategory.get(categoryId);
         }else {
             value = defaultDirectory;
         }
 
         String dir = null;
-        if("loread_root".equalsIgnoreCase(value)){
+        if("loread_root".equalsIgnoreCase(value) || StringUtils.isEmpty(value)){
+            dir = "";
         }else if("loread_feed_title".equalsIgnoreCase(value)){
             Feed feed = CoreDB.i().feedDao().getById(App.i().getUser().getId(), feedId);
             if(feed != null){
@@ -164,18 +137,18 @@ public class SaveDirectory {
         dirs.add("loread_root");
         dirs.add("loread_feed_title");
         dirs.add("loread_category_title");
-//        String[] dirs = new String[3];
-//        dirs[0] = "loread_root";
-//        dirs[1] = "loread_feed_title";
-//        dirs[2] = "loread_category_title";
+        // String[] dirs = new String[3];
+        // dirs[0] = "loread_root";
+        // dirs[1] = "loread_feed_title";
+        // dirs[2] = "loread_category_title";
         return dirs;
     }
     public String[] getDirectoriesOptionName(){
-//        List<String> dirs = new ArrayList<>();
-//        dirs.add(App.i().getString(R.string.default_directory));
-//        dirs.add(App.i().getString(R.string.feed_title_as_directory));
-//        dirs.add(App.i().getString(R.string.category_title_as_directory));
-        //dirs.add(App.i().getString(R.string.custom_save_directory));
+        // List<String> dirs = new ArrayList<>();
+        // dirs.add(App.i().getString(R.string.default_directory));
+        // dirs.add(App.i().getString(R.string.feed_title_as_directory));
+        // dirs.add(App.i().getString(R.string.category_title_as_directory));
+        // dirs.add(App.i().getString(R.string.custom_save_directory));
 
         String[] dirs = new String[3];
         dirs[0] = App.i().getString(R.string.root_directory);

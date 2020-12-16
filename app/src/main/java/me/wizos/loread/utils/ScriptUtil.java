@@ -1,6 +1,7 @@
 package me.wizos.loread.utils;
 
-import com.socks.library.KLog;
+
+import com.elvishew.xlog.XLog;
 
 import javax.script.Bindings;
 import javax.script.ScriptEngine;
@@ -37,7 +38,7 @@ public class ScriptUtil {
             engine.eval(js, bindings);
             return true;
         } catch (ScriptException e) {
-            KLog.e("脚本执行错误" + e.getMessage() + "," +e.getFileName()  + ","+ e.getColumnNumber()  + "," + e.getLineNumber() );
+            XLog.e("脚本执行错误" + e.getMessage() + "," +e.getFileName()  + ","+ e.getColumnNumber()  + "," + e.getLineNumber() );
             e.printStackTrace();
             return false;
         }

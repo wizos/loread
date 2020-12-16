@@ -14,8 +14,8 @@ import android.webkit.WebView;
 import android.widget.PopupWindow;
 import android.widget.TextView;
 
+import com.elvishew.xlog.XLog;
 import com.hjq.toast.ToastUtils;
-import com.socks.library.KLog;
 
 import me.wizos.loread.App;
 import me.wizos.loread.R;
@@ -52,7 +52,7 @@ public class LongClickPopWindow extends PopupWindow {
             return;
         }
         if (result.getType() == WebView.HitTestResult.UNKNOWN_TYPE) {
-            KLog.e("长按未知：" + result.getType() + " , " + result.getExtra());
+            XLog.d("长按未知：" + result.getType() + " , " + result.getExtra());
             return;
         }
         this.context = context;
@@ -106,7 +106,7 @@ public class LongClickPopWindow extends PopupWindow {
                 if(TextUtils.isEmpty(uri)){
                     return;
                 }
-                KLog.d("超链接：" + uri );
+                XLog.d("超链接：" + uri );
                 this.webViewLongClickedPopWindow.findViewById(R.id.webview_copy_link)
                         .setOnClickListener(new View.OnClickListener() {
                             @Override

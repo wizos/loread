@@ -2,7 +2,7 @@ package me.wizos.loread.network.interceptor;
 
 import android.text.TextUtils;
 
-import com.socks.library.KLog;
+import com.elvishew.xlog.XLog;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -60,9 +60,9 @@ public class LoreadTokenInterceptor implements Interceptor {
         String bodyString = buffer.clone().readString(charset);
         if (!TextUtils.isEmpty(bodyString)) {
             if (bodyString.length() > 88) {
-                KLog.i("body->" + bodyString.substring(0, 88));
+                XLog.i("body->" + bodyString.substring(0, 88));
             } else {
-                KLog.i("body->" + bodyString);
+                XLog.i("body->" + bodyString);
             }
         }
 
@@ -75,7 +75,7 @@ public class LoreadTokenInterceptor implements Interceptor {
             // 通过一个特定的接口获取新的token，此处要用到同步的retrofit请求
             LoginResult loginResult = ((LoreadApi)App.i().getApi()).login(user.getUserId(),user.getUserPassword());
             if( loginResult.isSuccess() ){
-                KLog.e("TokenInterceptor授权过期：成功重新登录 " + loginResult.getData() );
+                XLog.e("TokenInterceptor授权过期：成功重新登录 " + loginResult.getData() );
                 user.setAuth(loginResult.getData());
                 CoreDB.i().userDao().update(user);
                 App.i().getAuthApi().setAuthorization(user.getAuth());

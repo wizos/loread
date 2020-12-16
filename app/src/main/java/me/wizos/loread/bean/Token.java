@@ -3,7 +3,6 @@ package me.wizos.loread.bean;
 import android.text.TextUtils;
 
 import com.google.gson.annotations.SerializedName;
-import com.socks.library.KLog;
 
 /**
  * Created by Wizos on 2019/2/17.
@@ -71,7 +70,6 @@ public class Token {
     }
 
     public void setToken_type(String token_type) {
-        KLog.e("授权吗A：" + token_type);
         if (!TextUtils.isEmpty(token_type)) {
             token_type = token_type.substring(0, 1).toUpperCase() + token_type.substring(1);
         }

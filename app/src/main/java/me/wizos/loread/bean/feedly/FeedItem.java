@@ -14,8 +14,8 @@ import me.wizos.loread.db.Feed;
 
 public class FeedItem {
     private String id;
-    private String feedId;
-    private String title;
+    public String feedId;
+    public String title;
     private String description;
     private String website;
     private String iconUrl; // 可能为空，小图

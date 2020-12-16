@@ -26,13 +26,18 @@ import com.elvishew.xlog.XLog;
 import com.hjq.toast.ToastUtils;
 import com.kyleduo.switchbutton.SwitchButton;
 
+import java.io.File;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import me.wizos.loread.App;
 import me.wizos.loread.BuildConfig;
 import me.wizos.loread.Contract;
+import me.wizos.loread.CoreLog;
 import me.wizos.loread.R;
 import me.wizos.loread.db.CoreDB;
 import me.wizos.loread.db.CorePref;
@@ -171,8 +176,10 @@ public class SettingActivity extends BaseActivity {
             case R.id.setting_down_img_sb:
                 user.setDownloadImgOnlyWifi(v.isChecked());
                 break;
-            case R.id.setting_enable_log_title:
-                CorePref.i().globalPref().putBoolean(Contract.ENABLE_LOGGING,v.isChecked());
+            case R.id.setting_enable_log_sb:
+                CorePref.i().globalPref().putBoolean(Contract.ENABLE_LOGGING, v.isChecked()).commit();
+                // XLog.i("日志：" + MMKV.defaultMMKV().putBoolean(Contract.ENABLE_LOGGING, v.isChecked()).commit());
+                CoreLog.init(this, v.isChecked());
                 break;
             default:
                 break;
@@ -202,7 +209,7 @@ public class SettingActivity extends BaseActivity {
         final CharSequence[] timeDescArray = timeDescItems;
 
         new MaterialDialog.Builder(this)
-                .title(R.string.setting_sync_frequency_title)
+                .title(R.string.sync_frequency)
                 .items(timeDescArray)
                 .itemsCallbackSingleChoice(preSelectTimeFrequencyIndex, new MaterialDialog.ListCallbackSingleChoice() {
                     @Override
@@ -260,8 +267,8 @@ public class SettingActivity extends BaseActivity {
 
     public void showAbout(View view) {
         new MaterialDialog.Builder(this)
-                .title(R.string.setting_about_dialog_title)
-                .content(R.string.setting_about_dialog_content)
+                .title(R.string.sigh_with_emotion)
+                .content(R.string.sigh_with_emotion_content)
                 // .positiveText(R.string.agree)
                 // .negativeText(R.string.disagree)
                 // .positiveColorRes(R.color.material_red_400)
@@ -418,6 +425,20 @@ public class SettingActivity extends BaseActivity {
         getSupportActionBar().setDisplayShowTitleEnabled(true);
         // setDisplayShowHomeEnabled(true)   //使左上角图标是否显示，如果设成false，则没有程序图标，仅仅就个标题，否则，显示应用程序图标，对应id为android.R.id.home，对应ActionBar.DISPLAY_SHOW_HOME
         // setDisplayShowCustomEnabled(true)  // 使自定义的普通View能在title栏显示，即actionBar.setCustomView能起作用，对应ActionBar.DISPLAY_SHOW_CUSTOM
+    }
+
+    public void onClickSendLogFile(View view) {
+        String fileName = new SimpleDateFormat("yyyy-MM-dd", Locale.US).format(new Date());
+        File logFile = new File(getExternalCacheDir()  +"/log/" + fileName);
+        if(logFile.exists()){
+            Intent shareIntent = new Intent();
+            shareIntent.setAction(Intent.ACTION_SEND);
+            shareIntent.putExtra(Intent.EXTRA_STREAM, Uri.parse(logFile.getAbsolutePath()));
+            shareIntent.setType("text/plain");
+            startActivity(Intent.createChooser(shareIntent, getString(R.string.send_log_file)));
+        }else {
+            ToastUtils.show(R.string.no_log_file_found);
+        }
     }
 
     public void onClickFeedback(View view) {

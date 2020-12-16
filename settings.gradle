@@ -1,1 +1,1 @@
-include ':app', ':swipelayout', ":support",':floatwindow',':agentweb-core', ':luban', ':networklibs'
+include ':app', ":support",':floatwindow',':agentweb-core', ':luban', ':networklibs'//, ':swipelayout', ':EditSpinner' , ':xui'

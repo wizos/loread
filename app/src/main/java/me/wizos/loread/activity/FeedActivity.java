@@ -27,13 +27,13 @@ import com.afollestad.materialdialogs.MaterialDialog;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.RequestOptions;
 import com.carlt.networklibs.utils.NetworkUtils;
+import com.elvishew.xlog.XLog;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.hjq.toast.ToastUtils;
 import com.lxj.xpopup.XPopup;
 import com.lxj.xpopup.enums.PopupAnimation;
 import com.noober.background.BackgroundLibrary;
 import com.noober.background.drawable.DrawableCreator;
-import com.socks.library.KLog;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -113,7 +113,7 @@ public class FeedActivity extends BaseActivity {
             return;
         }
         String feedUrlId = "feed/" + feed.getFeedUrl();
-        KLog.i("展示feed的详情：" + feedId + ","  + feedUrlId + " , " + feed);
+        XLog.i("展示feed的详情：" + feedId + ","  + feedUrlId + " , " + feed);
 
         RequestOptions options = new RequestOptions().circleCrop();
 
@@ -158,7 +158,7 @@ public class FeedActivity extends BaseActivity {
 //
 //                FeedItem feedItem = response.body();
 //                // 对返回数据进行处理
-//                //KLog.e("取到数据：" + response.body().toString());
+//                //XLog.e("取到数据：" + response.body().toString());
 //                if (!TextUtils.isEmpty(feedItem.getDescription())) {
 ////                    descriptionLabelView.setVisibility(View.VISIBLE);
 //                    descriptionView.setVisibility(View.VISIBLE);
@@ -175,7 +175,7 @@ public class FeedActivity extends BaseActivity {
 //            //请求失败时候的回调
 //            @Override
 //            public void onFailure(Call<FeedItem> call, Throwable throwable) {
-//                KLog.e("连接失败" + throwable);
+//                XLog.e("连接失败" + throwable);
 //            }
 //        });
 
@@ -212,7 +212,7 @@ public class FeedActivity extends BaseActivity {
                             @Override
                             public void onInput(@NonNull MaterialDialog dialog, CharSequence input) {
                                 if (!NetworkUtils.isAvailable()) {
-                                    ToastUtils.show(getString(R.string.tips_no_net));
+                                    ToastUtils.show(getString(R.string.network_not_connected_please_check_it));
                                 } else {
                                     renameFeed(input.toString(), feed);
                                     dialog.dismiss();
@@ -321,36 +321,14 @@ public class FeedActivity extends BaseActivity {
             @Override
             public void onClick(View v) {
                 new XPopup.Builder(FeedActivity.this)
-                        .isCenterHorizontal(true) //是否与目标水平居中对齐
-                        .offsetY(-10)
+                        .isCenterHorizontal(false) //是否与目标水平居中对齐
+                        // .offsetY(-10)
                         .hasShadowBg(true)
                         .popupAnimation(PopupAnimation.ScaleAlphaFromCenter)
                         .atView(displayValueView)  // 依附于所点击的View，内部会自动判断在上方或者下方显示
                         .asAttachList(new String[]{getString(R.string.rss), getString(R.string.readability), getString(R.string.original)},
                                 null,
                                 (which, text) -> {
-                                    //String selectedFeedDisplayMode = App.DISPLAY_RSS;
-                                    //switch (which) {
-                                    //    case 0:
-                                    //        selectedFeedDisplayMode = App.DISPLAY_RSS;
-                                    //        break;
-                                    //    case 1:
-                                    //        selectedFeedDisplayMode = App.DISPLAY_READABILITY;
-                                    //        break;
-                                    //    case 2:
-                                    //        selectedFeedDisplayMode = App.DISPLAY_LINK;
-                                    //        break;
-                                    //    default:
-                                    //        break;
-                                    //}
-
-                                    //if (!TextUtils.isEmpty(TestConfig.i().getDisplayMode(feed.getId()))) {
-                                    //    if (selectedFeedDisplayMode.equals(TestConfig.i().getDisplayMode(feed.getId()))) {
-                                    //        return;
-                                    //    }
-                                    //    TestConfig.i().removeDisplayRouter(feed.getId());
-                                    //    TestConfig.i().addDisplayRouter(feed.getId(), selectedFeedDisplayMode);
-                                    //    TestConfig.i().save();
                                         feed.setDisplayMode(which);
                                         CoreDB.i().feedDao().update(feed);
                                         displayValueView.setText(text);
@@ -360,8 +338,6 @@ public class FeedActivity extends BaseActivity {
             }
         });
         linearLayout.addView(displayView);
-
-
 
 
         if(!BuildConfig.DEBUG){
@@ -379,8 +355,8 @@ public class FeedActivity extends BaseActivity {
             public void onClick(View v) {
 
                 new XPopup.Builder(FeedActivity.this)
-                        .isCenterHorizontal(true) //是否与目标水平居中对齐
-                        .offsetY(-10)
+                        .isCenterHorizontal(false) //是否与目标水平居中对齐
+                        // .offsetY(-10)
                         .hasShadowBg(true)
                         .popupAnimation(PopupAnimation.ScaleAlphaFromCenter)
                         .atView(saveFolderValueView)  // 依附于所点击的View，内部会自动判断在上方或者下方显示
@@ -398,7 +374,7 @@ public class FeedActivity extends BaseActivity {
     }
 
     public void renameFeed(final String renamedTitle, final Feed feed) {
-        KLog.e("=====" + renamedTitle + feed.getId());
+        XLog.d("=====" + renamedTitle + feed.getId());
         if (renamedTitle.equals("") || feed.getTitle().equals(renamedTitle)) {
             return;
         }
@@ -408,7 +384,7 @@ public class FeedActivity extends BaseActivity {
                 feed.setTitle(renamedTitle);
                 CoreDB.i().feedDao().update(feed);
                 ToastUtils.show(R.string.edit_success);
-                KLog.e("改了名字：" + renamedTitle);
+                XLog.e("改了名字：" + renamedTitle);
             }
 
             @Override
@@ -474,7 +450,7 @@ public class FeedActivity extends BaseActivity {
                 .itemsCallbackMultiChoice(null, (dialog, which, text) -> {
                     FeedActivity.this.selectIndices = which;
                     for (int i : which) {
-                        KLog.e("点选了：" + i);
+                        XLog.e("点选了：" + i);
                     }
                     return true;
                 })
@@ -491,7 +467,7 @@ public class FeedActivity extends BaseActivity {
                     App.i().getApi().addFeed(editFeed, new CallbackX() {
                         @Override
                         public void onSuccess(Object result) {
-                            KLog.e("添加成功");
+                            XLog.e("添加成功");
                             ((IconFontView) view).setText(R.string.font_tick);
                             ToastUtils.show(R.string.subscribe_success);
                             view.setClickable(true);
@@ -499,7 +475,7 @@ public class FeedActivity extends BaseActivity {
 
                         @Override
                         public void onFailure(Object error) {
-                            ToastUtils.show(getString(R.string.subscribe_fail));
+                            ToastUtils.show(getString(R.string.subscribe_fail, (String)error));
                             view.setClickable(true);
                         }
                     });
@@ -525,7 +501,7 @@ public class FeedActivity extends BaseActivity {
                             App.i().getApi().unsubscribeFeed(feed.getId(), new CallbackX() {
                                 @Override
                                 public void onSuccess(Object result) {
-                                    KLog.e("退订成功");
+                                    XLog.e("退订成功");
                                     ToastUtils.show(getString(R.string.unsubscribe_succeeded));
                                     ((AppCompatButton) view).setText(R.string.subscribe);
                                     Drawable drawable = new DrawableCreator.Builder()
@@ -546,7 +522,7 @@ public class FeedActivity extends BaseActivity {
 
                                 @Override
                                 public void onFailure(Object error) {
-                                    KLog.e("失败：" + error);
+                                    XLog.e("失败：" + error);
                                     ToastUtils.show(getString(R.string.unsubscribe_failed, error));
                                 }
                             });

@@ -9,7 +9,7 @@ import android.view.ViewGroup;
 import android.view.animation.DecelerateInterpolator;
 import android.widget.ProgressBar;
 
-import com.socks.library.KLog;
+import com.elvishew.xlog.XLog;
 
 /**
  * @author 林冠宏 on 2016/7/11. Wizos on 2018/3/18
@@ -33,7 +33,7 @@ public class SlowlyProgressBar {
             }
             progressBar = null;
         } catch (Exception e) {
-            KLog.e("报错");
+            XLog.e("报错");
             e.printStackTrace();
         }
     }
@@ -52,7 +52,7 @@ public class SlowlyProgressBar {
     public void onProgressChange(int newProgress) {
         int currentProgress = progressBar.getProgress();
         newProgress = newProgress > currentProgress ? newProgress : currentProgress;
-//        KLog.e("进度" + newProgress);
+//        XLog.e("进度" + newProgress);
         if (newProgress >= 100 && !isStart) {
             /** 防止调用多次动画 */
             isStart = true;

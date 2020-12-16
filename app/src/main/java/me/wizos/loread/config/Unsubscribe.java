@@ -3,7 +3,7 @@ package me.wizos.loread.config;
 
 import android.os.Environment;
 
-import com.socks.library.KLog;
+import com.elvishew.xlog.XLog;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -32,7 +32,7 @@ import me.wizos.loread.utils.FileUtil;
 public class Unsubscribe {
     public static void genBackupFile2(User user, List<Feed> feeds) {
         if (!Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
-            KLog.e("外置存储设备不可用");
+            XLog.e("外置存储设备不可用");
             return;
         }
         if (feeds.size() == 0) {
@@ -96,7 +96,7 @@ public class Unsubscribe {
     @Deprecated
     public static void genBackupFile(User user, String baseUri, ArrayList<OutTag> outTags) {
         if (!Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
-            KLog.e("外置存储设备不可用");
+            XLog.e("外置存储设备不可用");
             return;
         }
         File docDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS);
@@ -146,11 +146,11 @@ public class Unsubscribe {
             Element feed;
 
             ArrayList<OutFeed> outFeeds;
-            //KLog.e("获取A：" + outTags.toString()  );
+            //XLog.e("获取A：" + outTags.toString()  );
             for (OutTag outTag : outTags) {
                 tag = body.appendElement("outline").attr("title", outTag.getTitle()).attr("text", outTag.getTitle());
                 outFeeds = outTag.getOutFeeds();
-                //KLog.e("获取B：" + outFeeds.toString()  );
+                //XLog.e("获取B：" + outFeeds.toString()  );
                 for (OutFeed outFeed : outFeeds) {
                     feed = createSelfClosingElement("outline");
                     feed.attr("title", outFeed.getTitle())
@@ -181,7 +181,7 @@ public class Unsubscribe {
 
     public static void genBackupFile3(User user, List<Feed> feeds) {
         if (!Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
-            KLog.e("外置存储设备不可用");
+            XLog.e("外置存储设备不可用");
             return;
         }
         File docDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS);

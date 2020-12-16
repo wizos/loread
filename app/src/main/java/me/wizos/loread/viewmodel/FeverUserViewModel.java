@@ -4,7 +4,7 @@ import android.app.Application;
 
 import androidx.annotation.NonNull;
 
-import com.socks.library.KLog;
+import com.elvishew.xlog.XLog;
 
 import me.wizos.loread.App;
 import me.wizos.loread.Contract;
@@ -44,7 +44,7 @@ public class FeverUserViewModel extends LoginViewModel {
                 user.setHost(baseUrl);
                 feverApi.setAuthorization(auth);
                 CorePref.i().globalPref().putString(Contract.UID, user.getId());
-                KLog.i("登录成功：" + user.getId());
+                XLog.i("登录成功：" + user.getId());
                 User userTmp = userDao.getById(user.getId());
                 if (userTmp != null) {
                     CoreDB.i().userDao().update(user);

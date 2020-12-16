@@ -1,9 +1,12 @@
 package me.wizos.loread.activity;
 
+import android.content.res.Configuration;
 import android.os.Bundle;
 import android.view.KeyEvent;
 
 import androidx.appcompat.app.AppCompatActivity;
+
+import org.jetbrains.annotations.NotNull;
 
 import me.wizos.loread.App;
 import me.wizos.loread.R;
@@ -16,35 +19,11 @@ import me.wizos.loread.view.colorful.Colorful;
  */
 public abstract class BaseActivity extends AppCompatActivity {
     private static String TAG = "BaseActivity";
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         showCurrentTheme();
     }
-
-//    /**
-//     * // 获取当前的内容供应商
-//     * // 0是未登录
-//     * // 1是本地rss
-//     * // 2是inoreader
-//     * // 3是feedly
-//     * // 4是tinytinyrss
-//     * 初始化Api，Contract，DB
-//     */
-//    public void route() {
-//        Intent intent;
-//        String uid = App.i().getKeyValue().getString(Contract.UID, null);
-//        KLog.e("获取UID：" + uid );
-//        if ( TextUtils.isEmpty(uid) ) {
-//            intent = new Intent(this, ProviderActivity.class);
-//        } else {
-//            intent = new Intent(this, MainActivity.class);
-//        }
-//        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-//        startActivity(intent);
-//        overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
-//    }
 
     protected Colorful mColorful;
 
@@ -71,7 +50,6 @@ public abstract class BaseActivity extends AppCompatActivity {
         if (App.i().getUser().getThemeMode() == App.THEME_DAY) {
             mColorful.setTheme(R.style.AppTheme_Night);
             user.setThemeMode(App.THEME_NIGHT);
-
         } else {
             mColorful.setTheme(R.style.AppTheme_Day);
             user.setThemeMode(App.THEME_DAY);
@@ -79,6 +57,30 @@ public abstract class BaseActivity extends AppCompatActivity {
         CoreDB.i().userDao().update(user);
     }
 
+
+    /**
+     * 组件Activity在manifest.xml文件中可以指定参数android:ConfigChanges，用于捕获手机状态的改变。
+     * 添加后，在当所指定属性(Configuration Changes)发生改变时，通知程序调用onConfigurationChanged()函数。
+     * Android旋转屏幕不销毁Activity
+     */
+    @Override
+    public void onConfigurationChanged(@NotNull Configuration config) {
+        super.onConfigurationChanged(config);
+        // User user = App.i().getUser();
+        // if (user != null && user.isAutoToggleTheme()) {
+        //     int currentNightMode = config.uiMode & Configuration.UI_MODE_NIGHT_MASK;
+        //     if(currentNightMode == Configuration.UI_MODE_NIGHT_NO && user.getThemeMode() == App.THEME_NIGHT){
+        //         XLog.d("夜间模式未启用，使用浅色主题");
+        //         mColorful.setTheme(R.style.AppTheme_Day);
+        //         user.setThemeMode(App.THEME_DAY);
+        //     }else if(currentNightMode == Configuration.UI_MODE_NIGHT_YES && user.getThemeMode() == App.THEME_DAY){
+        //         XLog.d("夜间模式启用，使用深色主题");
+        //         mColorful.setTheme(R.style.AppTheme_Night);
+        //         user.setThemeMode(App.THEME_NIGHT);
+        //     }
+        //     CoreDB.i().userDao().update(user);
+        // }
+    }
 
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
@@ -90,6 +92,4 @@ public abstract class BaseActivity extends AppCompatActivity {
         }
         return super.onKeyDown(keyCode, event);
     }
-
-
 }

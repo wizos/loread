@@ -13,9 +13,10 @@ import android.text.Html;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.FileProvider;
 
+import com.elvishew.xlog.XLog;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-import com.socks.library.KLog;
+import com.vdurmont.emoji.EmojiParser;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -34,6 +35,7 @@ import java.util.List;
 
 import me.wizos.loread.App;
 import me.wizos.loread.R;
+import me.wizos.loread.config.TestConfig;
 import me.wizos.loread.db.Article;
 import me.wizos.loread.db.CoreDB;
 
@@ -57,7 +59,7 @@ public class FileUtil {
     public static void deleteHtmlDirList(ArrayList<String> fileNameInMD5List) {
         String externalCacheDir = App.i().getUserFilesDir() + "/cache/";
         for (String fileNameInMD5 : fileNameInMD5List) {
-//            KLog.e("删除文件：" +  externalCacheDir + fileNameInMD5 );
+//            XLog.e("删除文件：" +  externalCacheDir + fileNameInMD5 );
             deleteHtmlDir(new File(externalCacheDir + fileNameInMD5));
         }
     }
@@ -71,14 +73,14 @@ public class FileUtil {
      */
     public static boolean deleteHtmlDir(File dir) {
         if (dir.isDirectory()) {
-//            KLog.i( dir + "是文件夹");
+//            XLog.i( dir + "是文件夹");
             File[] files = dir.listFiles();
             for (File file : files) {
                 deleteHtmlDir(file);
             }
             return dir.delete(); // 删除目录
         } else {
-//            KLog.i( dir + "只是文件");
+//            XLog.i( dir + "只是文件");
             return dir.delete(); // 删除文件
         }
     }
@@ -86,7 +88,7 @@ public class FileUtil {
 
     public static boolean moveFile(String srcFileName, String destFileName) {
         File srcFile = new File(srcFileName);
-        //KLog.i("文件是否存在：" + srcFile.exists() + destFileName);
+        //XLog.i("文件是否存在：" + srcFile.exists() + destFileName);
         if (!srcFile.exists() || !srcFile.isFile()) {
             return false;
         }
@@ -106,7 +108,7 @@ public class FileUtil {
      * @return 目录移动成功返回true，否则返回false
      */
     public static boolean moveDir(String srcDirName, String destDirName) {
-        //KLog.i("移动文件夹a");
+        //XLog.i("移动文件夹a");
         File srcDir = new File(srcDirName);
         if (!srcDir.exists() || !srcDir.isDirectory()) {
             return false;
@@ -116,7 +118,7 @@ public class FileUtil {
         if (!destDir.exists()) {
             destDir.mkdirs();
         }
-        //KLog.i("移动文件夹b");
+        //XLog.i("移动文件夹b");
         /**
          * 如果是文件则移动，否则递归移动文件夹。删除最终的空源文件夹
          * 注意移动文件夹时保持文件夹的树状结构
@@ -142,7 +144,7 @@ public class FileUtil {
         if (articles == null) {
             return;
         }
-        KLog.e("文豪A：" + articles.size() );
+        XLog.e("文豪A：" + articles.size() );
         List<Article> unreadArticles = new ArrayList<>(articles.size());
         for (Article article : articles) {
             tmp = CoreDB.i().articleDao().getById(App.i().getUser().getId(), article.getId());
@@ -180,7 +182,7 @@ public class FileUtil {
     //
     //    String articleIdInMD5 = EncryptUtil.MD5(article.getId());
     //    save(filePathTitle + ".html", html);
-    //    KLog.e("保存文件夹：" + filePathTitle + " , " + App.i().getUserFilesDir() + "/cache/" + articleIdInMD5 + "/original");
+    //    XLog.e("保存文件夹：" + filePathTitle + " , " + App.i().getUserFilesDir() + "/cache/" + articleIdInMD5 + "/original");
     //    moveDir(App.i().getUserFilesDir() + "/cache/" + articleIdInMD5 + "/original", filePathTitle + "_files");
     //}
 
@@ -194,7 +196,12 @@ public class FileUtil {
     public static String getSaveableName(String fileName) {
         // 因为有些title会用 html中的转义。所以这里要改过来
         fileName = Html.fromHtml(fileName).toString();
-        fileName = SymbolUtil.filterEmoji(fileName);
+        if(TestConfig.i().useEmojiFilter){
+            fileName = EmojiParser.removeAllEmojis(fileName);
+        }else {
+            fileName = SymbolUtil.filterEmoji(fileName);
+        }
+
         fileName = SymbolUtil.filterUnsavedSymbol(fileName).trim();
         if (StringUtils.isEmpty(fileName)) {
             fileName = TimeUtil.format(System.currentTimeMillis(),"yyyyMMddHHmmss");
@@ -222,7 +229,7 @@ public class FileUtil {
                 }
             }
 
-//            KLog.d("【】" + file.toString() + "--"+ folder.toString());
+            // XLog.d("【】" + file.toString() + "--"+ folder.toString());
             FileWriter fileWriter = new FileWriter(file, append); //在 (file,false) 后者表示在 fileWriter 对文件再次写入时，是否会在该文件的结尾续写，true 是续写，false 是覆盖。
             fileWriter.write(fileContent);
             fileWriter.flush();  // 刷新该流中的缓冲。将缓冲区中的字符数据保存到目的文件中去。
@@ -247,13 +254,13 @@ public class FileUtil {
             if (folder != null && !folder.exists()) {
                 folder.mkdirs();
             }
-            KLog.i("保存规则：" + file.toString() + "--" + folder.toString());
+            XLog.i("保存规则：" + file.toString() + " -- " + fileContent);
             FileWriter fileWriter = new FileWriter(file, false); //在 (file,false) 后者表示在 fileWriter 对文件再次写入时，是否会在该文件的结尾续写，true 是续写，false 是覆盖。
             fileWriter.write(fileContent);
             fileWriter.flush();  // 刷新该流中的缓冲。将缓冲区中的字符数据保存到目的文件中去。
             fileWriter.close();  // 关闭此流。在关闭前会先刷新此流的缓冲区。在关闭后，再写入或者刷新的话，会抛IOException异常。
         } catch (IOException e) {
-            KLog.e("保存错误");
+            XLog.e("保存错误");
             e.printStackTrace();
         }
     }
@@ -368,8 +375,8 @@ public class FileUtil {
 
         // 推测该图片在保存时，由于src有问题，导致获取的文件名有重复时自动加上 hashCode 的机制
         filePath = App.i().getUserFilesDir() + "/cache/" + articleIdInMD5 + "/original/" + originalUrl.hashCode() + "_" + fileNameExt;
-        //KLog.i("文件地址：" + filePath );
-        //KLog.i("文件网址：" + originalUrl );
+        //XLog.i("文件地址：" + filePath );
+        //XLog.i("文件网址：" + originalUrl );
         if (new File(filePath).exists()) {
             return filePath;
         }
@@ -393,7 +400,7 @@ public class FileUtil {
             return data.toString();
         }
 
-        //KLog.e("ImageBridge", "要读取的url：" + originalUrl + "    文件位置" + filePath);
+        //XLog.e("ImageBridge", "要读取的url：" + originalUrl + "    文件位置" + filePath);
         return null;
     }
 
@@ -410,10 +417,10 @@ public class FileUtil {
             }
             fosfrom.close();
             fosto.close();
-            KLog.e("图片复制完成" + fosfrom.available() + new File(fromFile).exists());
+            XLog.e("图片复制完成" + fosfrom.available() + new File(fromFile).exists());
             return 0;
         } catch (Exception ex) {
-            KLog.e("报错", ex);
+            XLog.e("报错", ex);
             ex.printStackTrace();
             return -1;
         }

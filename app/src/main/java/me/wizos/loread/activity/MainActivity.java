@@ -10,6 +10,8 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.text.InputType;
 import android.view.KeyEvent;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewConfiguration;
 import android.view.ViewGroup;
@@ -37,6 +39,7 @@ import androidx.work.OneTimeWorkRequest;
 import androidx.work.PeriodicWorkRequest;
 import androidx.work.WorkManager;
 
+import com.afollestad.materialdialogs.DialogAction;
 import com.afollestad.materialdialogs.MaterialDialog;
 import com.afollestad.materialdialogs.simplelist.MaterialSimpleListAdapter;
 import com.afollestad.materialdialogs.simplelist.MaterialSimpleListItem;
@@ -49,6 +52,7 @@ import com.hjq.toast.ToastUtils;
 import com.jeremyliao.liveeventbus.LiveEventBus;
 import com.kyleduo.switchbutton.SwitchButton;
 import com.lxj.xpopup.XPopup;
+import com.lxj.xpopup.core.BasePopupView;
 import com.lxj.xpopup.enums.PopupAnimation;
 import com.lxj.xpopup.interfaces.OnSelectListener;
 import com.yanzhenjie.recyclerview.OnItemClickListener;
@@ -72,12 +76,14 @@ import java.util.concurrent.TimeUnit;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 import me.wizos.loread.App;
+import me.wizos.loread.Contract;
 import me.wizos.loread.R;
 import me.wizos.loread.adapter.ArticlePagedListAdapter;
 import me.wizos.loread.adapter.ExpandedAdapter;
 import me.wizos.loread.db.Article;
 import me.wizos.loread.db.Collection;
 import me.wizos.loread.db.CoreDB;
+import me.wizos.loread.db.CorePref;
 import me.wizos.loread.db.User;
 import me.wizos.loread.network.SyncWorker;
 import me.wizos.loread.network.callback.CallbackX;
@@ -88,6 +94,7 @@ import me.wizos.loread.view.SwipeRefreshLayoutS;
 import me.wizos.loread.view.colorful.Colorful;
 import me.wizos.loread.view.colorful.setter.ViewGroupSetter;
 import me.wizos.loread.viewmodel.ArticleViewModel;
+import me.wizos.loread.viewmodel.CategoryViewModel;
 
 
 /**
@@ -95,30 +102,37 @@ import me.wizos.loread.viewmodel.ArticleViewModel;
  */
 public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.OnRefreshListener {
     private static final String TAG = "MainActivity";
-    //private IconFontView vPlaceHolder;
     private ImageView vToolbarAutoMark;
     private Toolbar toolbar;
     private SwipeRefreshLayoutS swipeRefreshLayoutS;
     private SwipeRecyclerView articleListView;
-    // private MultiTypeAdapter articlesAdapter;
     private ArticlePagedListAdapter articlesAdapter;
     private IconFontView refreshIcon;
 
-    // 方案3
+    // 方案1
     private SwipeRecyclerView tagListView;
     private ExpandedAdapter tagListAdapter;
 
-    private TextView countTips;
+    // 方案2
+    // private ExpandableRecyclerView tagListView;
+    // private GroupedListAdapter tagListAdapter;
 
+    // 方案3
+    // private SwipeRecyclerView tagListView;
+    // private GroupAdapter tagListAdapter;
+
+
+    private TextView countTips;
     private Integer[] scrollIndex;
     private View articlesHeaderView;
 
     private BottomSheetDialog quickSettingDialog;
     private BottomSheetDialog tagBottomSheetDialog;
-    private RelativeLayout relativeLayout;
-    //private StickyHeaderLayout stickyHeaderLayout;
+    private RelativeLayout tagBottomSheetLayout;
     private boolean autoMarkReaded = false;
     private static Handler maHandler = new Handler();
+
+    private BasePopupView loadingPopupView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -132,7 +146,8 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
         showAutoSwitchThemeSnackBar();
         applyPermissions();
         super.onCreate(savedInstanceState);// 由于使用了自动换主题，所以要放在这里
-        getArtData();  // 获取文章列表数据为 App.articleList
+        loadArticlesData();  // 获取文章列表数据为 App.articleList
+        loadCategoriesData();
         autoMarkReaded = App.i().getUser().isMarkReadOnScroll();
         initWorkRequest();
     }
@@ -182,7 +197,7 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
                 .observeSticky(this, new Observer<Boolean>() {
                     @Override
                     public void onChanged(Boolean isSyncing) {
-                        XLog.e("任务状态："  + isSyncing );
+                        XLog.i("任务状态："  + isSyncing );
                         swipeRefreshLayoutS.setRefreshing(false);
                         if(isSyncing){
                             swipeRefreshLayoutS.setEnabled(false);
@@ -210,7 +225,7 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
                                 .setAction(getString(R.string.view), new View.OnClickListener() {
                                     @Override
                                     public void onClick(View v) {
-                                        refreshData();
+                                        refreshArticlesData();
                                     }
                                 }).show();
                         refreshIcon.setVisibility(View.VISIBLE);
@@ -328,59 +343,68 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
      * App.StreamState 包含 3 个状态：All，Unread，Stared
      * App.streamId 至少包含 1 个状态： Reading-list
      */
-    protected void refreshData() { // 获取 App.articleList , 并且根据 App.articleList 的到未读数目
+    protected void refreshArticlesData() { // 获取 App.articleList , 并且根据 App.articleList 的到未读数目
         //XLog.e("refreshData：" + App.i().getUser().getStreamId() + " = " + App.i().getUser().getStreamStatus() + "   " + App.i().getUser().getUserId());
-        getArtData();
+        loadArticlesData();
         refreshIcon.setVisibility(View.GONE);
     }
 
 
     private ArticleViewModel articleViewModel;
-    private void getArtData() {
+    private void loadArticlesData() {
+        openLoadingPopupView();
         String uid = App.i().getUser().getId();
         int streamStatus = App.i().getUser().getStreamStatus();
         int streamType = App.i().getUser().getStreamType();
         String streamId = App.i().getUser().getStreamId();
-        articlesAdapter.setLastPos(linearLayoutManager.findLastVisibleItemPosition()-1);
 
         if(articleViewModel.articles != null && articleViewModel.articles.hasObservers()){
             articleViewModel.articles.removeObservers(this);
             articleViewModel.articles = null;
         }
-        articlesAdapter.init();
+        if(articleViewModel.articleIdsLiveData != null && articleViewModel.articleIdsLiveData.hasObservers()){
+            articleViewModel.articleIdsLiveData.removeObservers(this);
+            articleViewModel.articleIdsLiveData = null;
+        }
         articleViewModel.getArticles(uid,streamId,streamType,streamStatus).observe(this, new Observer<PagedList<Article>>() {
             @Override
             public void onChanged(PagedList<Article> articles) {
-                loadViewByData( articles.size() );
+                if( articlesAdapter.getCurrentList() != null ){
+                    XLog.e("更新列表数据 A : " + articlesAdapter.getCurrentList().getLastKey()  + " == "+ articlesAdapter.getCurrentList().getLoadedCount() +  " , " + (linearLayoutManager.findLastVisibleItemPosition()-1) );
+                }else {
+                    XLog.e("更新列表数据 B");
+                }
+                renderViewByArticlesData(App.i().getUser().getStreamTitle(), articles.size() );
                 articlesAdapter.submitList(articles);
-                // XLog.e("更新列表数据 C：" + articles);
-                // if( articlesAdapter.getCurrentList() != null ){
-                //     XLog.e("更新列表数据 A : " + articlesAdapter.getCurrentList().getLastKey()  + " == "+ articlesAdapter.getCurrentList().getLoadedCount() +  " , " + (linearLayoutManager.findLastVisibleItemPosition()-1) );
+                dismissLoadingPopupView();
+                // XLog.d("更新列表数据 ：");
+                // if( articlesAdapter.getCurrentList() != null ){  // (articlesAdapter.getCurrentList().get(44)==null)
+                //     XLog.e("更新列表数据 C : " + articlesAdapter.getCurrentList().getLastKey()  + " == "+ articlesAdapter.getCurrentList().getLoadedCount() +  " , " + (linearLayoutManager.findLastVisibleItemPosition()-1) );
                 // }else {
-                //     XLog.e("更新列表数据 B");
+                //     XLog.e("更新列表数据 D");
                 // }
             }
         });
+        articleViewModel.articleIdsLiveData.observe(this, new Observer<List<String>>() {
+            @Override
+            public void onChanged(List<String> strings) {
+                articlesAdapter.setArticleIds(strings);
+                XLog.d("更新ids数据 ：");
+            }
+        });
+
         articleListView.scrollToPosition(0);
-        // XLog.e("更新列表数据 A  , " + articlesAdapter.getItemCount() );
+        articlesAdapter.setLastPos(0); // linearLayoutManager.findLastVisibleItemPosition()-1
+        XLog.e("【更新列表】"  );
     }
 
-    private void loadViewByData(int size) {
+    private void renderViewByArticlesData(String toolBarTitle, int articleSize) {
         // 在setSupportActionBar(toolbar)之后调用toolbar.setTitle()的话。 在onCreate()中调用无效。在onStart()中调用无效。 在onResume()中调用有效。
-        getSupportActionBar().setTitle(App.i().getUser().getStreamTitle());
-        countTips.setText( getResources().getQuantityString(R.plurals.articles_count, size, size ) );
-
-        // XLog.i("【loadViewByData】" + App.i().getUser().getStreamId()+ "--" + App.i().getUser().getStreamTitle() + "--" + App.i().getUser().getStreamStatus() + "--" + toolbar.getTitle() + articlesAdapter.getItemCount());
-        if (articlesAdapter == null) { // || articlesAdapter.getItemCount() == 0
-            // vPlaceHolder.setVisibility(View.VISIBLE);
-            articleListView.setVisibility(View.GONE);
-        } else if (articleListView.getVisibility() == View.GONE){
-            //vPlaceHolder.setVisibility(View.GONE);
-            articleListView.setVisibility(View.VISIBLE);
-        }
+        getSupportActionBar().setTitle(toolBarTitle);
+        countTips.setText( getResources().getQuantityString(R.plurals.articles_count, articleSize, articleSize) );
     }
 
-    public void showTagDialog(final Collection category) {
+    public void showTagMenuDialog(final Collection category) {
         // 重命名弹窗的适配器
         MaterialSimpleListAdapter adapter = new MaterialSimpleListAdapter(new MaterialSimpleListAdapter.Callback() {
             @Override
@@ -453,12 +477,11 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
         linearLayoutManager = new LinearLayoutManager(this);
         articleListView.setLayoutManager(linearLayoutManager);
 
-
         // HeaderView。
         articlesHeaderView = getLayoutInflater().inflate(R.layout.main_item_header, articleListView, false);
         countTips = (TextView) articlesHeaderView.findViewById(R.id.main_header_title);
         ImageView eye = articlesHeaderView.findViewById(R.id.main_header_eye);
-        eye.setOnClickListener(v -> ToastUtils.show(R.string.display_filter_in_development) );
+        eye.setOnClickListener(v -> ToastUtils.show(R.string.display_filter_is_under_development) );
         articleListView.addHeaderView(articlesHeaderView);
 
         articleListView.setOnItemLongClickListener(new OnItemLongClickListener() {
@@ -468,10 +491,11 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
                         .isCenterHorizontal(true) //是否与目标水平居中对齐
                         .offsetY(-view.getHeight() / 2)
                         .hasShadowBg(true)
+                        // .isDarkTheme((getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES)
                         .popupAnimation(PopupAnimation.ScaleAlphaFromCenter)
                         .atView(view)  // 依附于所点击的View，内部会自动判断在上方或者下方显示
                         .asAttachList(
-                                new String[]{getString(R.string.speak_article), getString(R.string.mark_up), getString(R.string.mark_down), getString(R.string.mark_unread)},
+                                new String[]{getString(R.string.speak_article), getString(R.string.mark_above_as_read), getString(R.string.mark_below_as_read), getString(R.string.mark_as_unread)},
                                 new int[]{R.drawable.ic_volume, R.drawable.ic_mark_up, R.drawable.ic_mark_down, R.drawable.ic_mark_unread},
                                 new OnSelectListener() {
                                     @Override
@@ -487,7 +511,8 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
                                                 Integer[] index = new Integer[2];
                                                 index[0] = position + 1;
                                                 index[1] = 0;
-                                                new MarkListReadedAsyncTask().execute(index);
+                                                // new MarkListReadedAsyncTask().execute(index);
+                                                showConfirmDialog(position + 1,0);
                                                 break;
                                             case 2:
                                                 showConfirmDialog(position,articlesAdapter.getItemCount());
@@ -513,7 +538,7 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
                                                 }
                                                 article.setReadStatus(App.STATUS_UNREADING);
                                                 CoreDB.i().articleDao().update(article);
-                                                articlesAdapter.notifyItemChanged(position);
+                                                // articlesAdapter.notifyItemChanged(position);
                                                 break;
                                             default:
                                                 break;
@@ -530,20 +555,21 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
             public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
                 super.onScrollStateChanged(recyclerView, newState);
                 articlesAdapter.setLastPos(linearLayoutManager.findLastVisibleItemPosition()-1);
-                //XLog.i("【滚动】" + ((RecyclerView.LayoutParams) recyclerView.getChildAt(1).getLayoutParams()).getViewAdapterPosition() + " = "+  linearLayoutManager.findFirstVisibleItemPosition() + " , " + linearLayoutManager.findLastVisibleItemPosition());
+                // XLog.i("【滚动】" + ((RecyclerView.LayoutParams) recyclerView.getChildAt(1).getLayoutParams()).getViewAdapterPosition() + " = "+  linearLayoutManager.findFirstVisibleItemPosition() + " , " + linearLayoutManager.findLastVisibleItemPosition());
+                // XLog.i("滚动：" + newState);
+
                 if (!autoMarkReaded) {
                     return;
                 }
                 //  || RecyclerView.SCROLL_STATE_SETTLING == newState
-                //XLog.i("滚动：" + newState);
                 if (RecyclerView.SCROLL_STATE_DRAGGING == newState && scrollIndex == null) {
                     scrollIndex = new Integer[2];
-                    scrollIndex[0] = ((RecyclerView.LayoutParams) recyclerView.getChildAt(0).getLayoutParams()).getViewAdapterPosition();
-                    XLog.i("滚动开始：" + scrollIndex[0] + " = "+  linearLayoutManager.findFirstVisibleItemPosition() );
-                } else if (RecyclerView.SCROLL_STATE_IDLE == newState && scrollIndex != null) {
                     scrollIndex[1] = ((RecyclerView.LayoutParams) recyclerView.getChildAt(0).getLayoutParams()).getViewAdapterPosition();
-                    new MarkListReadedAsyncTask().execute(scrollIndex);
-                    XLog.i("滚动结束：" + scrollIndex[1]  + " = "+  linearLayoutManager.findFirstVisibleItemPosition() );
+                    XLog.i("滚动开始：" + scrollIndex[1] + " = "+  linearLayoutManager.findFirstVisibleItemPosition() );
+                } else if (RecyclerView.SCROLL_STATE_IDLE == newState && scrollIndex != null) {
+                    scrollIndex[0] = ((RecyclerView.LayoutParams) recyclerView.getChildAt(0).getLayoutParams()).getViewAdapterPosition();
+                    new MarkListReadAsyncTask().execute(scrollIndex);
+                    XLog.i("滚动结束：" + scrollIndex[0]  + " = "+  linearLayoutManager.findFirstVisibleItemPosition() );
                     scrollIndex = null;
                 }
             }
@@ -659,51 +685,71 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
         });
         articleViewModel = new ViewModelProvider(this).get(ArticleViewModel.class);
         articlesAdapter = new ArticlePagedListAdapter();
-        articlesAdapter.setLinearLayoutManager(linearLayoutManager);
+        // articlesAdapter.setLinearLayoutManager(linearLayoutManager);
         articleListView.setAdapter(articlesAdapter);
         App.i().articlesAdapter = articlesAdapter;
     }
 
 
-//    private CategoryViewModel categoryViewModel;
-//    public void onTagIconClicked(View view) {
-//        XLog.i("tag按钮被点击");
-//        tagBottomSheetDialog.show();
-//        if(categoryViewModel == null){
-//            categoryViewModel = new ViewModelProvider(this).get(CategoryViewModel.class);
-//        }
-//        categoryViewModel.getCategoriesLiveData().observe(this, new Observer<List<Category>>() {
-//            @Override
-//            public void onChanged(List<Category> categories) {
-//                String userId = App.i().getUser().getUserId();
-//                // 总分类
-//                Category rootCategory = new Category();
-//                rootCategory.setTitle(getString(R.string.all));
-//                int unreadCount = CoreDB.i().articleDao().getUnreadCount(App.i().getUser().getId());
-//                rootCategory.setUnreadCount(unreadCount);
-//                rootCategory.setId("user/" + userId + App.CATEGORY_ALL);
-//
-//                // 未分类
-//                Category unCategory = new Category();
-//                unCategory.setTitle(getString(R.string.un_category));
-//                int unreadUnCategoryCount = CoreDB.i().articleDao().getUnreadUncategoryCount(App.i().getUser().getId());
-//                unCategory.setUnreadCount(unreadUnCategoryCount);
-//                unCategory.setId("user/" + userId + App.CATEGORY_UNCATEGORIZED);
-//
-//                categories.add(0,rootCategory);
-//                categories.add(1,unCategory);
-//                tagListAdapter.setParents(categories);
-//                tagListAdapter.notifyDataChanged();
-////                CategoryDiffCallback callback = new CategoryDiffCallback(tagListAdapter.getCategories(), categories);
-////                //对比数据
-////                DiffUtil.DiffResult result = DiffUtil.calculateDiff(callback);
-////                //然后刷新，完事儿
-////                result.dispatchUpdatesTo(tagListAdapter);
-//            }
-//        });
-//    }
+   private CategoryViewModel categoryViewModel;
+   public void onClickCategoryIcon(View view) {
+       XLog.i("tag按钮被点击");
+       tagBottomSheetDialog.show();
+   }
 
-    public void onClickCategoryIcon(View view) {
+   private void loadCategoriesData(){
+       if(categoryViewModel.categoriesLiveData != null && categoryViewModel.categoriesLiveData.hasObservers()){
+           categoryViewModel.categoriesLiveData.removeObservers(this);
+           categoryViewModel.categoriesLiveData = null;
+       }
+       categoryViewModel.loadCategories().observe(this, new Observer<List<Collection>>() {
+           @Override
+           public void onChanged(List<Collection> categories) {
+               AsyncTask.THREAD_POOL_EXECUTOR.execute(new Runnable() {
+                   @Override
+                   public void run() {
+                       String uid = App.i().getUser().getUserId();
+
+                       // 总分类
+                       Collection rootCategory = new Collection();
+                       rootCategory.setTitle(getString(R.string.all));
+                       rootCategory.setId("user/" + uid + App.CATEGORY_ALL);
+
+                       // 未分类
+                       Collection unCategory = new Collection();
+                       unCategory.setTitle(getString(R.string.un_category));
+                       unCategory.setId("user/" + uid + App.CATEGORY_UNCATEGORIZED);
+
+                       if( App.i().getUser().getStreamStatus() == App.STATUS_UNREAD ){
+                           rootCategory.setCount(CoreDB.i().articleDao().getUnreadCount(App.i().getUser().getId()));
+                           unCategory.setCount(CoreDB.i().articleDao().getUncategoryUnreadCount(App.i().getUser().getId()));
+                       }else if( App.i().getUser().getStreamStatus() == App.STATUS_STARED ){
+                           rootCategory.setCount(CoreDB.i().articleDao().getStarCount(App.i().getUser().getId()));
+                           unCategory.setCount(CoreDB.i().articleDao().getUncategoryStarCount(App.i().getUser().getId()));
+                       }else {
+                           rootCategory.setCount(CoreDB.i().articleDao().getAllCount(App.i().getUser().getId()));
+                           unCategory.setCount(CoreDB.i().articleDao().getUncategoryAllCount(App.i().getUser().getId()));
+                       }
+
+                       categories.add(0,rootCategory);
+                       categories.add(1,unCategory);
+                       tagListAdapter.setGroups(categories);
+
+                       runOnUiThread(new Runnable() {
+                           @Override
+                           public void run() {
+                               tagListAdapter.notifyDataChanged();
+                               // tagListView.setAdapter(tagListAdapter);
+                           }
+                       });
+                   }
+               });
+           }
+       });
+   }
+
+
+    public void onClickCategoryIcon2(View view) {
         tagBottomSheetDialog.show();
         AsyncTask.THREAD_POOL_EXECUTOR.execute(new Runnable() {
             @Override
@@ -713,13 +759,11 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
                 // 总分类
                 Collection rootCategory = new Collection();
                 rootCategory.setTitle(getString(R.string.all));
-                int unreadCount = CoreDB.i().articleDao().getUnreadCount(App.i().getUser().getId());
                 rootCategory.setId("user/" + uid + App.CATEGORY_ALL);
 
                 // 未分类
                 Collection unCategory = new Collection();
                 unCategory.setTitle(getString(R.string.un_category));
-                int unreadUnCategoryCount = CoreDB.i().articleDao().getUncategoryUnreadCount(App.i().getUser().getId());
                 unCategory.setId("user/" + uid + App.CATEGORY_UNCATEGORIZED);
 
                 // 已分类
@@ -747,7 +791,7 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        tagListAdapter.setParents(categoryListTemp);
+                        tagListAdapter.setGroups(categoryListTemp);
                         tagListAdapter.notifyDataChanged();
                         XLog.i("tag按钮被点击");
                     }
@@ -756,59 +800,11 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
         });
     }
 
-//    public void onClickCategoryIcon2(View view) {
-//        tagBottomSheetDialog.show();
-//        AsyncTask.THREAD_POOL_EXECUTOR.execute(new Runnable() {
-//            @Override
-//            public void run() {
-//                String uid = App.i().getUser().getUserId();
-//
-//                // 总分类
-//                Category rootCategory = new Category();
-//                rootCategory.setTitle(getString(R.string.all));
-//                int unreadCount = CoreDB.i().articleDao().getUnreadCount(App.i().getUser().getId());
-//                rootCategory.setUnreadCount(unreadCount);
-//                rootCategory.setId("user/" + uid + App.CATEGORY_ALL);
-//
-//                // 未分类
-//                Category unCategory = new Category();
-//                unCategory.setTitle(getString(R.string.un_category));
-//                int unreadUnCategoryCount = CoreDB.i().articleDao().getUnreadUncategoryCount(App.i().getUser().getId());
-//                unCategory.setUnreadCount(unreadUnCategoryCount);
-//                unCategory.setId("user/" + uid + App.CATEGORY_UNCATEGORIZED);
-//
-//                List<Category> categoryListTemp = new ArrayList<>();
-//                categoryListTemp.add(rootCategory);
-//                categoryListTemp.add(unCategory);
-////                categoryListTemp.add(tagCategory);
-//
-//                List<Category> categories;
-//                categories = CoreDB.i().categoryDao().getAll(App.i().getUser().getId());
-//
-//                // 数据库中的所有分类
-//                categoryListTemp.addAll(categories);
-//                runOnUiThread(new Runnable() {
-//                    @Override
-//                    public void run() {
-//                        tagListAdapter.setParents(categoryListTemp);
-//                        tagListAdapter.notifyDataChanged();
-//                        XLog.i("tag按钮被点击");
-//                    }
-//                });
-//            }
-//        });
-//    }
 
     public void initTagListView() {
         tagBottomSheetDialog = new BottomSheetDialog(MainActivity.this);
         tagBottomSheetDialog.setContentView(R.layout.bottom_sheet_category);
-        relativeLayout = tagBottomSheetDialog.findViewById(R.id.sheet_tag);
-
-        IconFontView iconFontView = tagBottomSheetDialog.findViewById(R.id.main_tag_close);
-        iconFontView.setOnClickListener(view -> {
-            tagBottomSheetDialog.dismiss();
-            // iconFontView.setVisibility(View.GONE);
-        });
+        tagBottomSheetLayout = tagBottomSheetDialog.findViewById(R.id.sheet_tag);
 
         tagListView = tagBottomSheetDialog.findViewById(R.id.main_tag_list_view);
 
@@ -817,10 +813,11 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
         tagListView.getItemAnimator().setChangeDuration(0);
         // 关闭默认的动画
         ((SimpleItemAnimator) tagListView.getItemAnimator()).setSupportsChangeAnimations(false);
+        // 设置悬浮头部VIEW
+        // tagListView.setHeaderView(getLayoutInflater().inflate(R.layout.main_expandable_item_group_header, tagListView, false));
 
-        //stickyHeaderLayout = tagBottomSheetDialog.findViewById(R.id.sticky_header_layout);
-        //headerPinnedView = getLayoutInflater().inflate(R.layout.tag_expandable_item_group_header, stickyHeaderLayout, false);
-        //stickyHeaderLayout.setStickyHeaderView(headerPinnedView);
+        // View headerView = getLayoutInflater().inflate(R.layout.tag_expandable_item_group, tagListView, false);
+        // tagListView.addHeaderView(headerView);
 
         tagListAdapter = new ExpandedAdapter(this);
         tagListView.setOnItemClickListener(new OnItemClickListener() {
@@ -831,18 +828,18 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
                 int groupPosition = tagListAdapter.parentItemPosition(adapterPosition);
                 User user = App.i().getUser();
                 if (tagListAdapter.isParentItem(adapterPosition)) {
-                    App.i().getUser().setStreamId( tagListAdapter.getGroup(groupPosition).getId().replace("\"", "")  );
-                    App.i().getUser().setStreamTitle( tagListAdapter.getGroup(groupPosition).getTitle() );
-                    App.i().getUser().setStreamType( App.TYPE_GROUP );
-                    //XLog.i("【 TagList 被点击】" + App.i().getUser().toString());
-                    refreshData();
+                    user.setStreamId( tagListAdapter.getGroup(groupPosition).getId().replace("\"", "")  );
+                    user.setStreamTitle( tagListAdapter.getGroup(groupPosition).getTitle() );
+                    user.setStreamType( App.TYPE_GROUP );
+                    //XLog.i("【 TagList 被点击】" + user.toString());
+                    refreshArticlesData();
                 } else {
                     int childPosition = tagListAdapter.childItemPosition(adapterPosition);
                     Collection feed = tagListAdapter.getChild(groupPosition, childPosition);
-                    App.i().getUser().setStreamId( feed.getId() );
-                    App.i().getUser().setStreamTitle( feed.getTitle() );
-                    App.i().getUser().setStreamType( App.TYPE_FEED );
-                    refreshData();
+                    user.setStreamId( feed.getId() );
+                    user.setStreamTitle( feed.getTitle() );
+                    user.setStreamType( App.TYPE_FEED );
+                    refreshArticlesData();
                 }
                 CoreDB.i().userDao().update(user);
             }
@@ -855,7 +852,7 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
                 // 根据原position判断该item是否是parent item
                 if (tagListAdapter.isParentItem(adapterPosition)) {
                     int parentPosition = tagListAdapter.parentItemPosition(adapterPosition);
-                    showTagDialog(tagListAdapter.getGroup(parentPosition));
+                    showTagMenuDialog(tagListAdapter.getGroup(parentPosition));
                 } else {
                     // 换取child position
                     int parentPosition = tagListAdapter.parentItemPosition(adapterPosition);
@@ -864,37 +861,238 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
                 }
             }
         });
+
+
+        // tagListAdapter = new GroupedListAdapter(this);
+        // tagListAdapter.setGroupClickListener(new GroupedListAdapter.OnGroupClickListener() {
+        //     @Override
+        //     public void onClick(View view, int groupPosition) {
+        //         //XLog.i("【 TagList 被点击】" + App.i().getUser().toString());
+        //         tagBottomSheetDialog.dismiss();
+        //         User user = App.i().getUser();
+        //         user.setStreamId( tagListAdapter.getGroup(groupPosition).getId().replace("\"", "")  );
+        //         user.setStreamTitle( tagListAdapter.getGroup(groupPosition).getTitle() );
+        //         user.setStreamType( App.TYPE_GROUP );
+        //         CoreDB.i().userDao().update(user);
+        //         refreshArticlesData();
+        //     }
+        //
+        //     @Override
+        //     public void onLongClick(View view, int groupPosition) {
+        //         showTagMenuDialog(tagListAdapter.getGroup(groupPosition));
+        //     }
+        // });
+        //
+        // tagListAdapter.setChildClickListener(new GroupedListAdapter.OnChildClickListener() {
+        //     @Override
+        //     public void onClick(View view, int groupPosition, int childPosition) {
+        //         tagBottomSheetDialog.dismiss();
+        //         Collection feed = tagListAdapter.getChild(groupPosition, childPosition);
+        //         User user = App.i().getUser();
+        //         user.setStreamId( feed.getId() );
+        //         user.setStreamTitle( feed.getTitle() );
+        //         user.setStreamType( App.TYPE_FEED );
+        //         CoreDB.i().userDao().update(user);
+        //         refreshArticlesData();
+        //     }
+        //
+        //     @Override
+        //     public void onLongClick(View view, int groupPosition, int childPosition) {
+        //         showFeedActivity(groupPosition, childPosition);
+        //     }
+        // });
+
+        // tagListAdapter = new GroupAdapter(this);
+        // tagListAdapter.setOnHeaderClickListener(new GroupedRecyclerViewAdapter.OnHeaderClickListener() {
+        //     @Override
+        //     public void onHeaderClick(GroupedRecyclerViewAdapter adapter, BaseViewHolder holder, int groupPosition) {
+        //         tagBottomSheetDialog.dismiss();
+        //         Collection category = tagListAdapter.getGroup(groupPosition);
+        //         User user = App.i().getUser();
+        //         user.setStreamId( category.getId().replace("\"", "")  );
+        //         user.setStreamTitle( category.getTitle() );
+        //         user.setStreamType( App.TYPE_GROUP );
+        //         CoreDB.i().userDao().update(user);
+        //         refreshArticlesData();
+        //     }
+        // });
+        // tagListAdapter.setOnChildClickListener(new GroupedRecyclerViewAdapter.OnChildClickListener() {
+        //     @Override
+        //     public void onChildClick(GroupedRecyclerViewAdapter adapter, BaseViewHolder holder, int groupPosition, int childPosition) {
+        //         tagBottomSheetDialog.dismiss();
+        //         Collection feed = tagListAdapter.getChild(groupPosition, childPosition);
+        //         User user = App.i().getUser();
+        //         user.setStreamId( feed.getId() );
+        //         user.setStreamTitle( feed.getTitle() );
+        //         user.setStreamType( App.TYPE_FEED );
+        //         CoreDB.i().userDao().update(user);
+        //         refreshArticlesData();
+        //     }
+        // });
+        // tagListAdapter.setHeaderLongClickListener(new GroupAdapter.OnHeaderLongClickListener() {
+        //     @Override
+        //     public void onLongClick(View view, int groupPosition) {
+        //         showTagMenuDialog(tagListAdapter.getGroup(groupPosition));
+        //     }
+        // });
+        // tagListAdapter.setChildLongClickListener(new GroupAdapter.OnChildLongClickListener() {
+        //     @Override
+        //     public void onLongClick(View view, int groupPosition, int childPosition) {
+        //         showFeedActivity(groupPosition, childPosition);
+        //     }
+        // });
+
         tagListView.setAdapter(tagListAdapter);
+        categoryViewModel = new ViewModelProvider(this).get(CategoryViewModel.class);
     }
 
     private void showConfirmDialog(final int start, final int end) {
-        new AlertDialog.Builder(MainActivity.this)
-                .setMessage(R.string.main_dialog_confirm_mark_article_list)
-                .setPositiveButton(R.string.confirm, (dialog, which) -> {
-                    Integer[] index = new Integer[2];
-                    index[0] = start;
-                    index[1] = end;
-                    new MarkListReadedAsyncTask().execute(index);
-                })
-                .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
+        // new AlertDialog.Builder(MainActivity.this)
+        //         .setMessage(R.string.do_you_want_to_mark_the_following_articles_as_read)
+        //         .setPositiveButton(R.string.confirm, (dialog, which) -> {
+        //             Integer[] index = new Integer[2];
+        //             index[0] = start;
+        //             index[1] = end;
+        //             new MarkListReadedAsyncTask().execute(index);
+        //         })
+        //         .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
+        //             @Override
+        //             public void onClick(DialogInterface dialog, int which) {
+        //                 dialog.dismiss();
+        //             }
+        //         })
+        //         .show();
+
+        int titleRes;
+        if(start < end){
+            titleRes = R.string.mark_the_below_articles_as_read;
+        }else {
+            titleRes = R.string.mark_the_above_articles_as_read;
+        }
+
+        new MaterialDialog.Builder(this)
+                .title(titleRes)
+                .positiveText(R.string.confirm)
+                .negativeText(android.R.string.cancel)
+                .checkBoxPrompt(getString(R.string.includes_forced_unread),
+                        CorePref.i().globalPref().getBoolean(Contract.INCLUDES_FORCED_UNREAD, false),
+                        new CompoundButton.OnCheckedChangeListener() {
+                            @Override
+                            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                                CorePref.i().globalPref().putBoolean(Contract.INCLUDES_FORCED_UNREAD, isChecked);
+                            }
+                        })
+                .onPositive(new MaterialDialog.SingleButtonCallback() {
                     @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        dialog.dismiss();
+                    public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
+                        Integer[] index = new Integer[2];
+                        index[0] = start;
+                        index[1] = end;
+                        new MarkListReadAsyncTask().execute(index);
                     }
                 })
                 .show();
     }
 
 
+
+    // 标记以上/以下为已读
+    private class MarkListReadAsyncTask extends AsyncTask<Integer, Integer, Integer> {
+        @Override
+        protected Integer doInBackground(Integer... params) {
+            int startIndex = params[0];
+            int endIndex = params[1];
+            boolean desc = startIndex >= endIndex;
+
+            List<String> articleIDs;
+            if( desc ){
+                articleIDs = new ArrayList<>(startIndex - endIndex);
+                for (int i = startIndex - 1; i >= endIndex; i--){
+                    articleIDs.add(articlesAdapter.getId(i));
+                }
+            }else {
+                articleIDs = new ArrayList<>(endIndex - startIndex);
+                for (int i = startIndex; i < endIndex; i++){
+                    articleIDs.add(articlesAdapter.getId(i));
+                }
+            }
+
+            if (articleIDs.size() == 0) {
+                return 0;
+            }
+            // if (desc) {
+            //     Collections.reverse(articleIDs);
+            // }
+
+            // 是否需要包含强制未读的文章
+            boolean includesForcedUnread = CorePref.i().globalPref().getBoolean(Contract.INCLUDES_FORCED_UNREAD, false);
+
+            int needCount = articleIDs.size();
+            int hadCount = 0;
+            int num = 0;
+
+            while (needCount > 0) {
+                num = Math.min(100, needCount);
+                List<String> subArticleIDs = articleIDs.subList(hadCount, hadCount + num);
+                hadCount = hadCount + num;
+                needCount = articleIDs.size() - hadCount;
+
+                markReadWithUnread(CoreDB.i().articleDao().getUnreadArticles(App.i().getUser().getId(), subArticleIDs));
+                if(includesForcedUnread){
+                    markReadWithUnreading(CoreDB.i().articleDao().getUnreadingArticles(App.i().getUser().getId(), subArticleIDs));
+                }
+            }
+            // if(includesForcedUnread){
+            //     unreadArticleIDs = CoreDB.i().articleDao().getUnreadArticles(App.i().getUser().getId(), articleIDs);
+            //     unreadingArticleIDs = CoreDB.i().articleDao().getUnreadingArticles(App.i().getUser().getId(), articleIDs);
+            //     markReadWithUnread(unreadArticleIDs);
+            //     markReadWithUnreading(unreadingArticleIDs);
+            // }else{
+            //     articleIDs = CoreDB.i().articleDao().getUnreadArticles(App.i().getUser().getId(), articleIDs);
+            //     markReadWithUnread(articleIDs);
+            // }
+            //返回结果
+            return 0;
+        }
+
+        private void markReadWithUnread(List<String> articleIDs){
+            CoreDB.i().articleDao().markArticlesRead(App.i().getUser().getId(), articleIDs);
+            App.i().getApi().markArticleListReaded(articleIDs, new CallbackX() {
+                @Override
+                public void onSuccess(Object result) {
+                }
+
+                @Override
+                public void onFailure(Object error) {
+                    CoreDB.i().articleDao().markArticlesUnread(App.i().getUser().getId(), articleIDs);
+                }
+            });
+        }
+
+        private void markReadWithUnreading(List<String> articleIDs){
+            CoreDB.i().articleDao().markArticlesRead(App.i().getUser().getId(), articleIDs);
+            App.i().getApi().markArticleListReaded(articleIDs, new CallbackX() {
+                @Override
+                public void onSuccess(Object result) {
+                }
+
+                @Override
+                public void onFailure(Object error) {
+                    CoreDB.i().articleDao().markArticlesUnreading(App.i().getUser().getId(), articleIDs);
+                }
+            });
+        }
+    }
+
     // 标记以上/以下为已读
     @SuppressLint("StaticFieldLeak")
-    private class MarkListReadedAsyncTask extends AsyncTask<Integer, Integer, Integer> {
+    private class MarkListReadedAsyncTask2 extends AsyncTask<Integer, Integer, Integer> {
         private List<Article> articleList;
         private List<String> articleIDs;
         private void handleArticle(int i){
             try {
                 int retry = 0;
-                XLog.e("以上/以下处理");
+                XLog.i("以上/以下处理");
                 Article article = articlesAdapter.get(i);
                 if( article == null ){
                     //articlesAdapter.load(i);
@@ -902,14 +1100,14 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
                         //XLog.i("文章为空：" + i );
                         Thread.sleep(500);
                         retry ++;
-                        XLog.e("重新获取文章");
+                        XLog.i("重新获取文章");
                         article = articlesAdapter.get(i);
                     }while ( article == null && retry < 3 );
-                    //XLog.e("文章是否为空：" + (article==null)  + "   ,  " + (articlesAdapter.getItem(i)==null) );
+                    //XLog.i("文章是否为空：" + (article==null)  + "   ,  " + (articlesAdapter.getItem(i)==null) );
                     if( article == null ){ return; }
                 }
 
-                articlesAdapter.setLastItem(linearLayoutManager.findLastVisibleItemPosition()-1);
+                // articlesAdapter.setLastItem(linearLayoutManager.findLastVisibleItemPosition()-1);
                 if (article.getReadStatus() == App.STATUS_UNREAD) {
                     article.setReadStatus(App.STATUS_READED);
                     articleList.add(article);
@@ -918,7 +1116,7 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
                     publishProgress(i);
                 }
             } catch (IllegalStateException | InterruptedException e) {
-                XLog.e("获取数据错误");
+                XLog.e("获取数据错误：" + e);
                 e.printStackTrace();
             }
         }
@@ -987,7 +1185,7 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
          */
         @Override
         protected void onProgressUpdate(Integer... progress) {
-            //XLog.e("更新进度" + progress[0] );
+            //XLog.i("更新进度" + progress[0] );
             // 应该是去通知对应的那个 item 改变。
             articlesAdapter.notifyItemChanged(progress[0]);
         }
@@ -1013,35 +1211,13 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
         //}
     }
 
-    private void showSearchResult(String keyword) {
-        User user = App.i().getUser();
-        user.setStreamId(App.CATEGORY_SEARCH);
-        user.setStreamTitle(getString(R.string.main_toolbar_title_search) + keyword);
-        CoreDB.i().userDao().update(user);
-
-        if(articleViewModel.articles != null && articleViewModel.articles.hasObservers()){
-            articleViewModel.articles.removeObservers(this);
-            articleViewModel.articles = null;
-        }
-        articlesAdapter.init();
-        articleViewModel.getAllByKeyword(App.i().getUser().getId(),keyword).observe(this, new Observer<PagedList<Article>>() {
-            @Override
-            public void onChanged(PagedList<Article> articles) {
-                loadViewByData( articles.size() );
-                articlesAdapter.submitList(articles);
-            }
-        });
-        articleListView.scrollToPosition(0);
-    }
-
-
     private void toggleReadState(final int position) {
         if (position < 0) {
             return;
         }
         // String articleId = articlesAdapter.getItem(position).getId();
         // Article article = CoreDB.i().articleDao().getById(App.i().getUser().getId(),articleId);
-        XLog.e("切换已读状态" );
+        XLog.i("切换已读状态" );
         Article article = articlesAdapter.get(position);
         if (autoMarkReaded && article.getReadStatus() == App.STATUS_UNREAD) {
             article.setReadStatus(App.STATUS_UNREADING);
@@ -1076,8 +1252,8 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
                 }
             });
         }
-//        XLog.e("修改状态：" + position + "  "  + article);
-        articlesAdapter.notifyItemChanged(position);
+       // XLog.i("修改状态：" + position + "  "  + article);
+       // articlesAdapter.notifyItemChanged(position);
     }
 
 
@@ -1086,7 +1262,7 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
             return;
         }
 
-        XLog.e("切换加星状态" );
+        XLog.i("切换加星状态" );
         Article article = articlesAdapter.get(position);
 
         if (article.getStarStatus() == App.STATUS_STARED) {
@@ -1119,7 +1295,7 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
                  }
              });
         }
-        articlesAdapter.notifyItemChanged(position);
+        // articlesAdapter.notifyItemChanged(position);
     }
 
 
@@ -1137,30 +1313,20 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
         super.onActivityResult(requestCode, resultCode, intent);
-        //XLog.e("------------------------------------------" + resultCode + requestCode);
-        switch (resultCode) {
-            case App.ActivityResult_ArtToMain:
-                //在文章页的时候读到了第几篇文章，好让列表也自动将该项置顶
-                //LinearLayoutManager linearLayoutManager = (LinearLayoutManager) articleListView.getLayoutManager();
-                int articleNo = intent.getExtras().getInt("articleNo");
-                assert linearLayoutManager != null;
-                if (articleNo > linearLayoutManager.findLastVisibleItemPosition() - 1) {
-                    slvSetSelection(articleNo);
-                }
-                articlesAdapter.notifyDataSetChanged();
-                break;
-            case App.ActivityResult_SearchLocalArtsToMain:
-                //XLog.e("被搜索的词是" + intent.getExtras().getString("searchWord"));
-                showSearchResult(intent.getExtras().getString("searchWord"));
-                articlesAdapter.notifyDataSetChanged();
-                break;
-            default:
-                break;
+        //XLog.i("------------------------------------------" + resultCode + requestCode);
+        if (resultCode == App.ActivityResult_ArtToMain) {//在文章页的时候读到了第几篇文章，好让列表也自动将该项置顶
+            //LinearLayoutManager linearLayoutManager = (LinearLayoutManager) articleListView.getLayoutManager();
+            int articleNo = intent.getExtras().getInt("articleNo");
+            assert linearLayoutManager != null;
+            if (articleNo > linearLayoutManager.findLastVisibleItemPosition() - 1) {
+                listScrollPosition(articleNo);
+            }
+            // articlesAdapter.notifyDataSetChanged();
         }
     }
 
     // 滚动到指定位置
-    private void slvSetSelection(final int position) {
+    private void listScrollPosition(final int position) {
         // 保证滚动到指定位置时，view至最顶端
         LinearSmoothScroller smoothScroller = new LinearSmoothScroller(this) {
             @Override
@@ -1172,11 +1338,11 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
         Objects.requireNonNull(articleListView.getLayoutManager()).startSmoothScroll(smoothScroller);
     }
 
-    public void clickRefreshIcon(View view) {
-        refreshData();
+    public void onClickRefreshIcon(View view) {
+        refreshArticlesData();
     }
 
-    public void onQuickSettingIconClicked(View view) {
+    public void onClickQuickSettingIcon(View view) {
         quickSettingDialog = new BottomSheetDialog(MainActivity.this);
         quickSettingDialog.setContentView(R.layout.main_bottom_sheet_more);
         //quickSettingDialog.dismiss(); //dialog消失
@@ -1197,7 +1363,7 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
         SwitchButton autoMarkWhenScrolling = quickSettingDialog.findViewById(R.id.auto_mark_when_scrolling_switch);
         autoMarkWhenScrolling.setChecked(App.i().getUser().isMarkReadOnScroll());
         autoMarkWhenScrolling.setOnCheckedChangeListener((compoundButton, b) -> {
-            XLog.e("onClickedAutoMarkWhenScrolling图标被点击");
+            XLog.i("onClickedAutoMarkWhenScrolling图标被点击");
             User user = App.i().getUser();
             user.setMarkReadOnScroll(b);
             CoreDB.i().userDao().update(user);
@@ -1256,7 +1422,8 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
                     toolbar.setNavigationIcon(R.drawable.ic_state_all);
                 }
                 CoreDB.i().userDao().update(user);
-                refreshData();
+                refreshArticlesData();
+                loadCategoriesData();
                 quickSettingDialog.dismiss();
             }
         });
@@ -1277,6 +1444,7 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
     public void clickToolbar(View view) {
         if (maHandler.hasMessages(App.MSG_DOUBLE_TAP)) {
             maHandler.removeMessages(App.MSG_DOUBLE_TAP);
+            // maHandler.sendEmptyMessageDelayed(App.MSG_SCROLL_TIMEOUT, 1000);
             articleListView.smoothScrollToPosition(0);
         } else {
             maHandler.sendEmptyMessageDelayed(App.MSG_DOUBLE_TAP, ViewConfiguration.getDoubleTapTimeout());
@@ -1300,14 +1468,14 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
 
     private void quitDialog() {
         new AlertDialog.Builder(this)
-                .setMessage(R.string.main_dialog_esc_confirm)
-                .setPositiveButton(R.string.main_dialog_esc_positive, new DialogInterface.OnClickListener() {
+                .setMessage(R.string.are_you_sure_you_want_to_exit_the_app)
+                .setPositiveButton(R.string.exit_positive, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         System.exit(0);
                     }
                 })
-                .setNegativeButton(R.string.main_dialog_esc_negative, new DialogInterface.OnClickListener() {
+                .setNegativeButton(R.string.exit_negative, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         dialog.dismiss();
@@ -1341,6 +1509,71 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
         bottomBar = findViewById(R.id.main_bottombar);
     }
 
+    private void openLoadingPopupView(){
+        loadingPopupView = new XPopup.Builder(MainActivity.this)
+                .asLoading(getString(R.string.loading))
+                .show();
+    }
+    private void dismissLoadingPopupView(){
+        if(loadingPopupView != null) loadingPopupView.smartDismiss();
+    }
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_main, menu);
+        return true;
+    }
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        //监听左上角的返回箭头
+        if (item.getItemId() == R.id.main_menu_search_articles) {
+            new MaterialDialog.Builder(this)
+                    .title(R.string.search_articles)
+                    .inputType(InputType.TYPE_CLASS_TEXT)
+                    .inputRange(2, 18)
+                    .input("", "", new MaterialDialog.InputCallback() {
+                        @Override
+                        public void onInput(@NonNull MaterialDialog dialog, CharSequence input) {
+                            showSearchResult(input.toString());
+                        }
+                    })
+                    .negativeText(android.R.string.cancel)
+                    .positiveText(R.string.confirm)
+                    .show();
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+
+    private void showSearchResult(String keyword) {
+        openLoadingPopupView();
+
+        if(articleViewModel.articles != null && articleViewModel.articles.hasObservers()){
+            articleViewModel.articles.removeObservers(this);
+            articleViewModel.articles = null;
+        }
+        if(articleViewModel.articleIdsLiveData != null && articleViewModel.articleIdsLiveData.hasObservers()){
+            articleViewModel.articleIdsLiveData.removeObservers(this);
+            articleViewModel.articleIdsLiveData = null;
+        }
+        articleViewModel.getAllByKeyword(App.i().getUser().getId(), keyword).observe(this, new Observer<PagedList<Article>>() {
+            @Override
+            public void onChanged(PagedList<Article> articles) {
+                renderViewByArticlesData( getString(R.string.title_search,keyword), articles.size() );
+                articlesAdapter.submitList(articles);
+                dismissLoadingPopupView();
+            }
+        });
+        articleViewModel.articleIdsLiveData.observe(this, new Observer<List<String>>() {
+            @Override
+            public void onChanged(List<String> strings) {
+                articlesAdapter.setArticleIds(strings);
+                XLog.d("更新ids数据 ：");
+            }
+        });
+        articleListView.scrollToPosition(0);
+        articlesAdapter.setLastPos(0);
+    }
+
 
     /**
      * 设置各个视图与颜色属性的关联
@@ -1359,11 +1592,16 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
         artListViewSetter.childViewTextColor(R.id.main_slv_item_summary, R.attr.lv_item_desc_color);
         artListViewSetter.childViewTextColor(R.id.main_slv_item_author, R.attr.lv_item_info_color);
         artListViewSetter.childViewTextColor(R.id.main_slv_item_time, R.attr.lv_item_info_color);
-        artListViewSetter.childViewBgColor(R.id.main_slv_item_divider, R.attr.lv_item_divider);
+        // artListViewSetter.childViewBgColor(R.id.main_slv_item_divider, R.attr.lv_item_divider);
         artListViewSetter.childViewBgColor(R.id.main_list_item_surface, R.attr.root_view_bg);
         // artListViewSetter.childViewBgColor(R.id.main_list_item_menu_left, R.attr.root_view_bg);
         // artListViewSetter.childViewBgColor(R.id.main_list_item_menu_right, R.attr.root_view_bg);
         // artListViewSetter.childViewBgColor(R.id.swipe_layout, R.attr.root_view_bg);
+
+        ViewGroupSetter relative = new ViewGroupSetter(tagBottomSheetLayout);
+        relative.childViewBgColor(R.id.sheet_tag, R.attr.root_view_bg);
+        // relative.childViewBgColor(R.id.sheet_tag_sticky_header,R.attr.root_view_bg);
+        relative.childViewBgColor(R.id.main_tag_list_view, R.attr.root_view_bg);
 
         // 绑定ListView的Item View中的news_title视图，在换肤时修改它的text_color属性
         ViewGroupSetter tagListViewSetter = new ViewGroupSetter(tagListView);
@@ -1371,32 +1609,10 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
         tagListViewSetter.childViewTextColor(R.id.group_item_icon, R.attr.tag_slv_item_icon);
         tagListViewSetter.childViewTextColor(R.id.group_item_title, R.attr.lv_item_title_color);
         tagListViewSetter.childViewTextColor(R.id.group_item_count, R.attr.lv_item_desc_color);
-        // tagListViewSetter.childViewBgDrawable(R.id.group_item_count, R.attr.bubble_bg);
-
-        ViewGroupSetter relative = new ViewGroupSetter(relativeLayout);
-        relative.childViewBgColor(R.id.main_tag_close, R.attr.root_view_bg);
-        relative.childViewTextColor(R.id.main_tag_close, R.attr.bottombar_fg);
-        relative.childViewBgColor(R.id.sheet_tag, R.attr.root_view_bg);
-        relative.childViewBgColor(R.id.main_tag_list_view, R.attr.root_view_bg);
-
 
         tagListViewSetter.childViewBgColor(R.id.child_item, R.attr.root_view_bg);  // 这个不生效，反而会影响底色修改
         tagListViewSetter.childViewTextColor(R.id.child_item_title, R.attr.lv_item_title_color);
         tagListViewSetter.childViewTextColor(R.id.child_item_count, R.attr.lv_item_desc_color);
-//        tagListViewSetter.childViewBgDrawable(R.id.child_item_count, R.attr.bubble_bg);
-
-//        ViewGroupSetter headerHomeViewSetter = new ViewGroupSetter((ViewGroup) headerHomeView);
-//        headerHomeViewSetter.childViewBgColor(R.id.header_home, R.attr.root_view_bg);  // 这个不生效，反而会影响底色修改
-//        headerHomeViewSetter.childViewTextColor(R.id.header_home_icon, R.attr.tag_slv_item_icon);
-//        headerHomeViewSetter.childViewTextColor(R.id.header_home_title, R.attr.lv_item_title_color);
-//        headerHomeViewSetter.childViewTextColor(R.id.header_home_count, R.attr.lv_item_desc_color);
-
-//        ViewGroupSetter headerPinnedViewSetter = new ViewGroupSetter((ViewGroup) headerPinnedView);
-//        headerPinnedViewSetter.childViewBgColor(R.id.header_item, R.attr.root_view_bg);
-//        headerPinnedViewSetter.childViewTextColor(R.id.header_item_icon, R.attr.tag_slv_item_icon);
-//        headerPinnedViewSetter.childViewTextColor(R.id.header_item_title, R.attr.lv_item_title_color);
-//        headerPinnedViewSetter.childViewTextColor(R.id.header_item_count, R.attr.lv_item_desc_color);
-//        headerPinnedViewSetter.childViewBgDrawable(R.id.header_item_count, R.attr.bubble_bg);
 
         mColorfulBuilder
                 // 这里做设置，实质都是直接生成了一个View（根据Activity的findViewById），并直接添加到 colorful 内的 mElements 中。
@@ -1419,8 +1635,6 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
                 // 设置 listview 背景色
                 // 这里做设置，实质是将View（根据Activity的findViewById），并直接添加到 colorful 内的 mElements 中。
                 .setter(relative)
-//                .setter(headerPinnedViewSetter)
-//                .setter(headerHomeViewSetter)
                 .setter(articlesHeaderVS)
                 .setter(artListViewSetter)
                 .setter(tagListViewSetter);

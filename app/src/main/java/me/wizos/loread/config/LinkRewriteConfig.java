@@ -4,10 +4,10 @@ import android.net.Uri;
 import android.text.TextUtils;
 import android.util.ArrayMap;
 
+import com.elvishew.xlog.XLog;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.annotations.SerializedName;
-import com.socks.library.KLog;
 
 import javax.script.Bindings;
 import javax.script.SimpleBindings;
@@ -65,7 +65,7 @@ public class LinkRewriteConfig {
             Bindings bindings = new SimpleBindings();
             bindings.put("url", url);
             ScriptUtil.i().eval(urlRewrite.get(host), bindings);
-            KLog.i("重定向JS：" + urlRewrite.get(host));
+            XLog.i("重定向JS：" + urlRewrite.get(host));
             return (String) bindings.get("url");
         }
         return "";

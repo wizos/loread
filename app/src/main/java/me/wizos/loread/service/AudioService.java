@@ -15,8 +15,8 @@ import android.speech.tts.UtteranceProgressListener;
 
 import androidx.annotation.Nullable;
 
+import com.elvishew.xlog.XLog;
 import com.hjq.toast.ToastUtils;
-import com.socks.library.KLog;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -49,7 +49,7 @@ public class AudioService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
-        KLog.e(TAG, "onCreate");
+        XLog.e(TAG, "onCreate");
 
         createTextToSpeech();
         //这里只执行一次，用于准备播放器
@@ -58,7 +58,7 @@ public class AudioService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        KLog.e(TAG, "onStartCommand");
+        XLog.e(TAG, "onStartCommand");
         if (intent != null) {
             articleNo = intent.getIntExtra("articleNo", 0);
             isQueue = intent.getBooleanExtra("isQueue",false);
@@ -70,7 +70,7 @@ public class AudioService extends Service {
     @Override
     public IBinder onBind(Intent intent) {
         //当执行完了onCreate后，就会执行onBind把操作歌曲的方法返回
-        KLog.e(TAG, "onBind");
+        XLog.e(TAG, "onBind");
         return new AudioControlBinder();
     }
 
@@ -79,7 +79,7 @@ public class AudioService extends Service {
     public void speak(){
         Article article = App.i().articlesAdapter.get(articleNo);
 
-        KLog.e("准备播放" + article.getId() + " , " + utteranceId + " , " + textToSpeech.isSpeaking());
+        XLog.e("准备播放" + article.getId() + " , " + utteranceId + " , " + textToSpeech.isSpeaking());
         if ( textToSpeech.isSpeaking() && article.getId().equalsIgnoreCase(utteranceId) ){
             return;
         }
@@ -87,7 +87,7 @@ public class AudioService extends Service {
 
         String content = ArticleUtil.getContentForSpeak(article);
 
-        if(TestConfig.i().isTtsFile()){
+        if(TestConfig.i().ttsFile){
             File file = new File(App.i().getExternalCacheDir() + "/" + utteranceId + ".wav");
             textToSpeech.synthesizeToFile(content,null,file,utteranceId);
             //textToSpeech.synthesizeToFile(content,null,new File("/mnt/sdcard/speak.wav"),"test");
@@ -95,7 +95,7 @@ public class AudioService extends Service {
                 //这个是开始的时候。是先发声之后才会走这里
                 @Override
                 public void onStart(String utteranceId) {
-                    KLog.e("textToSpeech UtteranceProgressListener", "开始: " + file.getAbsolutePath() + "  " + file.exists());
+                    XLog.e("textToSpeech UtteranceProgressListener", "开始: " + file.getAbsolutePath() + "  " + file.exists());
                     if(file.exists()){
                         playMusic(file);
                     }
@@ -103,7 +103,7 @@ public class AudioService extends Service {
                 //这个是播报完毕的时候 每一次播报完毕都会走
                 @Override
                 public void onDone(String utteranceId) {
-                    KLog.e("textToSpeech UtteranceProgressListener", "播放完毕  " + file.exists());
+                    XLog.e("textToSpeech UtteranceProgressListener", "播放完毕  " + file.exists());
                     if(file.exists()){
 //                        file.delete();
                     }
@@ -112,7 +112,7 @@ public class AudioService extends Service {
                 //错误
                 @Override
                 public void onError(String utteranceId) {
-                    KLog.e("textToSpeech UtteranceProgressListener", "错误");
+                    XLog.e("textToSpeech UtteranceProgressListener", "错误");
                 }
             });
         }else {
@@ -122,7 +122,7 @@ public class AudioService extends Service {
                 //这个是开始的时候。是先发声之后才会走这里
                 @Override
                 public void onStart(String utteranceId) {
-                    KLog.i("textToSpeech  onStart");
+                    XLog.i("textToSpeech  onStart");
                 }
                 //这个是播报完毕的时候 每一次播报完毕都会走
                 @Override
@@ -132,12 +132,12 @@ public class AudioService extends Service {
                         speak();
                     }
 
-                    KLog.e("播放完毕" + isQueue + articleNo );
+                    XLog.e("播放完毕" + isQueue + articleNo );
                 }
                 //错误
                 @Override
                 public void onError(String utteranceId) {
-                    KLog.i("textToSpeech  onError: " + utteranceId);
+                    XLog.i("textToSpeech  onError: " + utteranceId);
                 }
             });
         }
@@ -145,7 +145,7 @@ public class AudioService extends Service {
 
 
     public void playMusic(final String playUrl) {
-        KLog.i(TAG,"播放音乐");
+        XLog.i(TAG,"播放音乐");
         try {
             if (player == null) {
                 player = createMediaPlayer();
@@ -158,14 +158,14 @@ public class AudioService extends Service {
             player.prepareAsync();
         } catch (IllegalStateException e) {
             e.printStackTrace();
-            KLog.e("设置播放地址失败A");
+            XLog.e("设置播放地址失败A");
         } catch (IOException e) {
             e.printStackTrace();
-            KLog.e("设置播放地址失败B");
+            XLog.e("设置播放地址失败B");
         }
     }
     public void playMusic(File file) {
-        KLog.i(TAG,"播放音乐");
+        XLog.i(TAG,"播放音乐");
         try {
             if (player == null) {
                 player = createMediaPlayer();
@@ -179,10 +179,10 @@ public class AudioService extends Service {
             player.prepareAsync();
         } catch (IllegalStateException e) {
             e.printStackTrace();
-            KLog.e("设置播放地址失败A");
+            XLog.e("设置播放地址失败A");
         } catch (IOException e) {
             e.printStackTrace();
-            KLog.e("设置播放地址失败B");
+            XLog.e("设置播放地址失败B");
         }
     }
 
@@ -204,7 +204,7 @@ public class AudioService extends Service {
         public void play() {
             speak();
             //player.start();
-            KLog.i("服务", "播放音乐");
+            XLog.i("服务", "播放音乐");
         }
 
         public void pause() {
@@ -212,7 +212,7 @@ public class AudioService extends Service {
                 textToSpeech.stop();
                 textToSpeech.shutdown();
             }
-            KLog.i("服务", "暂停音乐");
+            XLog.i("服务", "暂停音乐");
         }
 
 //        public boolean isPrepared() {
@@ -293,11 +293,11 @@ public class AudioService extends Service {
             textToSpeech = new TextToSpeech(this, new TextToSpeech.OnInitListener() {
                 @Override
                 public void onInit(int status) {
-                    KLog.e(TAG, "onInit   "  + status);
+                    XLog.e(TAG, "onInit   "  + status);
                     if (status == TextToSpeech.SUCCESS) {
                         //初始化tts引擎
                         int result = textToSpeech.setLanguage(Locale.CHINA);
-                        KLog.i("初始化" + result );
+                        XLog.i("初始化" + result );
                         //设置参数
                         // ttsParam();
                         // TextToSpeech.LANG_MISSING_DATA：表示语言的数据丢失
@@ -321,7 +321,7 @@ public class AudioService extends Service {
         player.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
             @Override
             public void onPrepared(MediaPlayer mediaPlayer) {
-                KLog.e("准备好了，开始播放");
+                XLog.e("准备好了，开始播放");
                 //mErrorCount = 0;//清空原来的错误
                 //如果准备好了，就会进行这个方法
                 mediaPlayer.start();
@@ -335,7 +335,7 @@ public class AudioService extends Service {
             public void onBufferingUpdate(MediaPlayer arg0, int percent) {
                 bufferedPercent = percent;
                 /* 打印缓冲的百分比, 如果缓冲 */
-                KLog.i("缓冲了的百分比 : " + percent + " %");
+                XLog.i("缓冲了的百分比 : " + percent + " %");
             }
         });
 
@@ -397,7 +397,7 @@ public class AudioService extends Service {
                 if (playStatusListener != null && error) {
                     playStatusListener.onError(whatStr + ", " + extraStr );
                 }
-                KLog.e("onError播放出现错误,waht:" + what + ",extra:" + extra + ", 原因为：" + whatStr + "=" + extraStr);
+                XLog.e("onError播放出现错误,waht:" + what + ",extra:" + extra + ", 原因为：" + whatStr + "=" + extraStr);
                 // 如果方法处理了错误，则为True。如果没有处理，则为false。返回false，或者根本没有OnErrorListener，将导致调用OnCompletionListener。
                 return true;
             }
@@ -448,7 +448,7 @@ public class AudioService extends Service {
              * AUDIOFOCUS_LOSS_TRANSIENT:你会短暂的失去音频焦点，你可以暂停音乐，但不要释放资源，因为你一会就可以夺回焦点并继续使用
              * AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK:你的焦点会短暂失去，但是你可以与新的使用者共同使用音频焦点
              */
-            KLog.e("焦点转移：" + focusChange);
+            XLog.e("焦点转移：" + focusChange);
             switch (focusChange) {
                 case AUDIOFOCUS_GAIN:
                     // Resume playback

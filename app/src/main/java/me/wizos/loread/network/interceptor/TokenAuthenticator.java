@@ -4,7 +4,7 @@ import android.text.TextUtils;
 
 import androidx.annotation.NonNull;
 
-import com.socks.library.KLog;
+import com.elvishew.xlog.XLog;
 
 import java.io.IOException;
 
@@ -36,14 +36,14 @@ public class TokenAuthenticator implements Authenticator {
      */
     @Override
     public Request authenticate(Route route, @NonNull Response response) throws IOException {
-        KLog.e("TokenAuthenticator授权过期");
+        XLog.e("TokenAuthenticator授权过期");
         // 重试超过限制则放弃
         if (responseCount(response) >= 2) {
             return null;
         }
         //取出本地的refreshToken
         String refreshToken = App.i().getUser().getRefreshToken();
-        KLog.e("TokenAuthenticator授权过期：刷新码 " + refreshToken);
+        XLog.e("TokenAuthenticator授权过期：刷新码 " + refreshToken);
         if (TextUtils.isEmpty(refreshToken)) {
             return null;
         }
@@ -52,8 +52,8 @@ public class TokenAuthenticator implements Authenticator {
         String authorization = App.i().getOAuthApi().refreshingAccessToken(refreshToken);
 
         //要用retrofit的同步方式
-//        String newToken = call.execute().body();
-        KLog.e("TokenAuthenticator授权过期：授权码 " + authorization);
+        // String newToken = call.execute().body();
+        XLog.e("TokenAuthenticator授权过期：授权码 " + authorization);
 
         return response.request().newBuilder()
                 .header("authorization", authorization)

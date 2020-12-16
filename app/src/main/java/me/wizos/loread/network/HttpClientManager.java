@@ -56,7 +56,7 @@ public class HttpClientManager {
                             .followSslRedirects(true)
                             // .authenticator(new TTRSSAuthenticator())
                             .addInterceptor(new TTRSSTokenInterceptor())
-                            .dns(new FastDNS())
+                            // .dns(new FastDNS())
                             .build();
                     feverHttpClient = new OkHttpClient.Builder()
                             .readTimeout(30, TimeUnit.SECONDS)
@@ -66,7 +66,7 @@ public class HttpClientManager {
                             .hostnameVerifier(HttpsUtils.UnSafeHostnameVerifier)
                             .followRedirects(true)
                             .followSslRedirects(true)
-                            .dns(new FastDNS())
+                            // .dns(new FastDNS())
                             .build();
 
                     inoreaderHttpClient = new OkHttpClient.Builder()
@@ -91,7 +91,7 @@ public class HttpClientManager {
                             .hostnameVerifier(HttpsUtils.UnSafeHostnameVerifier)
                             .followRedirects(true)
                             .followSslRedirects(true)
-//                            .addInterceptor(new AuthorizationInterceptor())
+                            // .addInterceptor(new AuthorizationInterceptor())
                             .addInterceptor(new LoggerInterceptor())
                             .authenticator(new TokenAuthenticator())
                             .build();
@@ -105,7 +105,7 @@ public class HttpClientManager {
                             .followSslRedirects(true)
                             .addInterceptor(new RelyInterceptor())
                             .addInterceptor(new RefererInterceptor())
-                            .dns(new FastDNS())
+                            // .dns(new FastDNS())
                             .build();
                     imageHttpClient = new OkHttpClient.Builder()
                             .readTimeout(60, TimeUnit.SECONDS)
@@ -116,7 +116,7 @@ public class HttpClientManager {
                             .followRedirects(true)
                             .followSslRedirects(true)
                             .addInterceptor(new RelyInterceptor())
-                            .dns(new FastDNS())
+                            // .dns(new FastDNS())
                             .build();
                     imageHttpClient.dispatcher().setMaxRequests(4);
 
@@ -129,7 +129,7 @@ public class HttpClientManager {
                             .followRedirects(true)
                             .followSslRedirects(true)
                             .addInterceptor(new RelyInterceptor())
-                            .dns(new FastDNS())
+                            // .dns(new FastDNS())
                             .build();
                     glideHttpClient.dispatcher().setMaxRequests(4);
                 }

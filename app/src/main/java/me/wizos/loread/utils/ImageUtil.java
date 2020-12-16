@@ -9,7 +9,7 @@ import android.graphics.Paint;
 import android.media.ThumbnailUtils;
 import android.os.AsyncTask;
 
-import com.socks.library.KLog;
+import com.elvishew.xlog.XLog;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -75,7 +75,7 @@ public class ImageUtil {
                 } catch (Exception e) {
 
                     e.printStackTrace();
-                    KLog.e("报错");
+                    XLog.e("报错");
                     onMergeListener.onError(e);
                 }
             }
@@ -138,9 +138,9 @@ public class ImageUtil {
                     //将合并后的bitmap3保存为png图片到本地
                     FileOutputStream out = new FileOutputStream(fileNew);
                     newBitmap.compress(Bitmap.CompressFormat.JPEG, 100, out);
-                    KLog.e("成功获取 getThumbnail");
+                    XLog.e("成功获取 getThumbnail");
                 } catch (Exception e) {
-                    KLog.e("报错");
+                    XLog.e("报错");
                     e.printStackTrace();
                 }
             }
@@ -169,7 +169,7 @@ public class ImageUtil {
         int imgWidth = options.outWidth;
         int imgHeight = options.outHeight;
 
-        KLog.e("宽高1=" + imgWidth + "  " + imgHeight);
+        XLog.e("宽高1=" + imgWidth + "  " + imgHeight);
         // 将长宽变为偶数
         imgWidth = imgWidth % 2 == 1 ? imgWidth + 1 : imgWidth;
         imgHeight = imgHeight % 2 == 1 ? imgHeight + 1 : imgHeight;

@@ -5,7 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.net.ConnectivityManager;
 
-import com.socks.library.KLog;
+import com.elvishew.xlog.XLog;
 
 import me.wizos.loread.utils.NetworkUtil;
 
@@ -23,7 +23,7 @@ import me.wizos.loread.utils.NetworkUtil;
 public class NetworkStateReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
-        KLog.e("接收到网络变化" + intent.getAction() + " . " + NetworkUtil.getNetWorkState());
+        XLog.e("接收到网络变化" + intent.getAction() + " . " + NetworkUtil.getNetWorkState());
         if (ConnectivityManager.CONNECTIVITY_ACTION.equals(intent.getAction())) {
             NetworkUtil.getNetWorkState();
         }

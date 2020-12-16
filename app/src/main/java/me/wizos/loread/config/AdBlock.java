@@ -4,7 +4,7 @@ import android.annotation.SuppressLint;
 import android.net.Uri;
 import android.os.AsyncTask;
 
-import com.socks.library.KLog;
+import com.elvishew.xlog.XLog;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -57,7 +57,7 @@ public class AdBlock {
                     }
                 } catch (IOException i) {
                     i.printStackTrace();
-                    KLog.i(i);
+                    XLog.i(i);
                 }
             }
         });

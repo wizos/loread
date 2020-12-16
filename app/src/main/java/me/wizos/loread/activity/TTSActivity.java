@@ -15,10 +15,10 @@ import android.widget.TextView;
 
 import androidx.appcompat.widget.Toolbar;
 
+import com.elvishew.xlog.XLog;
 import com.freedom.lauzy.playpauseviewlib.PlayPauseView;
 import com.hjq.toast.ToastUtils;
 import com.noober.background.drawable.DrawableCreator;
-import com.socks.library.KLog;
 import com.yhao.floatwindow.constant.MoveType;
 import com.yhao.floatwindow.constant.Screen;
 import com.yhao.floatwindow.view.FloatWindow;
@@ -43,7 +43,7 @@ public class TTSActivity extends BaseActivity {
         isQueue = intent.getBooleanExtra("isQueue",false);
 
         // Broadcast
-        KLog.e("获取到要播报："  + isQueue);
+        XLog.e("获取到要播报："  + isQueue);
 
         playConnection = new PlayConnection();
         intent = new Intent(this, AudioService.class);
@@ -89,7 +89,7 @@ public class TTSActivity extends BaseActivity {
 //                currTimeView.setText(TimeUtil.getTime(currentPosition));
 //                totalTimeView.setText(TimeUtil.getTime(duration));
 //            }
-//            //KLog.e("进度：" + seekBar + ", " + currTimeView + " , " + duration + " = "  + TimeUtil.getTime(duration));
+//            //XLog.e("进度：" + seekBar + ", " + currTimeView + " , " + duration + " = "  + TimeUtil.getTime(duration));
 //            maHandler.postDelayed(progressTask, 1000);
 //        }
 //    };
@@ -99,13 +99,13 @@ public class TTSActivity extends BaseActivity {
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
             //获得service中的MyBinder
-            KLog.e("服务连接：onServiceConnected, musicControl: " + audioControl);
+            XLog.e("服务连接：onServiceConnected, musicControl: " + audioControl);
             initView(service);
         }
 
         @Override
         public void onServiceDisconnected(ComponentName name) {
-            KLog.e("服务断开连接：onServiceDisconnected, musicControl: " + audioControl);
+            XLog.e("服务断开连接：onServiceDisconnected, musicControl: " + audioControl);
         }
     }
 

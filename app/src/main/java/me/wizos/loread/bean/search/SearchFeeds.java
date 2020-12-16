@@ -53,6 +53,7 @@ public class SearchFeeds {
         this.results = results;
     }
 
+
     @Override
     public String toString() {
         return "SearchFeeds{" +

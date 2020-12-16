@@ -1,25 +1,25 @@
-//package com.yanzhenjie.recyclerview;
+// package com.yanzhenjie.recyclerview;
 //
-//import android.content.Context;
-//import androidx.annotation.AttrRes;
-//import androidx.annotation.NonNull;
-//import androidx.annotation.Nullable;
-//import androidx.recyclerview.widget.GridLayoutManager;
-//import androidx.recyclerview.widget.LinearLayoutManager;
-//import androidx.recyclerview.widget.RecyclerView;
-//import androidx.recyclerview.widget.StaggeredGridLayoutManager;
+// import android.content.Context;
+// import androidx.annotation.AttrRes;
+// import androidx.annotation.NonNull;
+// import androidx.annotation.Nullable;
+// import androidx.recyclerview.widget.GridLayoutManager;
+// import androidx.recyclerview.widget.LinearLayoutManager;
+// import androidx.recyclerview.widget.RecyclerView;
+// import androidx.recyclerview.widget.StaggeredGridLayoutManager;
 //
-//import android.util.AttributeSet;
-//import android.util.Log;
-//import android.util.SparseArray;
-//import android.view.View;
-//import android.view.ViewGroup;
-//import android.widget.FrameLayout;
+// import android.util.AttributeSet;
+// import android.util.Log;
+// import android.util.SparseArray;
+// import android.view.View;
+// import android.view.ViewGroup;
+// import android.widget.FrameLayout;
 //
 //
-//import java.lang.reflect.Method;
+// import java.lang.reflect.Method;
 //
-///**
+// /**
 // * Depiction:头部吸顶布局。只要用StickyHeaderLayout包裹{@link RecyclerView},
 // * 并且实现{@link StickyCreator },就可以实现列表头部吸顶功能。
 // * StickyHeaderLayout只能包裹RecyclerView，而且只能包裹一个RecyclerView。
@@ -27,7 +27,7 @@
 // * Author:donkingliang  QQ:1043214265
 // * Dat:2017/11/14
 // */
-//public class StickyHeaderLayout extends FrameLayout {
+// public class StickyHeaderLayout extends FrameLayout {
 //    private Context mContext;
 //    private RecyclerView mRecyclerView;
 //
@@ -124,6 +124,7 @@
 //        mStickyHeaderView = mHeaderView;
 //        mStickyLayout.addView(mHeaderView);
 //    }
+//
 //    /**
 //     * 用于在列表头显示的 View,mHeaderViewVisible 为 true 才可见
 //     */
@@ -171,7 +172,7 @@
 //    private int lastVisibleItem = -1;
 //    public void updateStickyView() {
 //        RecyclerView.Adapter adapter = mRecyclerView.getAdapter();
-//        if ( adapter == null || !(adapter instanceof AdapterWrapper) ) {
+//        if (!(adapter instanceof AdapterWrapper)) {
 //            return;
 //        }
 //        mAdapter = (StickyCreator) ((AdapterWrapper)adapter).getOriginAdapter();
@@ -279,37 +280,37 @@
 //        }, 100);
 //    }
 //
-////    /**
-////     * 判断是否需要先回收吸顶布局，如果要回收，则回收吸顶布局并返回null。
-////     * 如果不回收，则返回吸顶布局的ViewHolder。
-////     * 这样做可以避免频繁的添加和移除吸顶布局。
-////     *
-////     * @param viewType
-////     * @return
-////     */
-////    private RecyclerView.ViewHolder recycleStickyView(int viewType) {
-////        if (mStickyLayout.getChildCount() > 0) {
-////            View view = mStickyLayout.getChildAt(0);
-////            int type = (int) view.getTag(VIEW_TAG_TYPE);
-////            if (type == viewType) {
-////                return (RecyclerView.ViewHolder)view.getTag(VIEW_TAG_HOLDER);
-////            } else {
-////                recycle();
-////            }
-////        }
-////        return null;
-////    }
-////
-////    /**
-////     * 回收并移除吸顶布局
-////     */
-////    private void recycle() {
-////        if (mStickyLayout.getChildCount() > 0) {
-////            View view = mStickyLayout.getChildAt(0);
-////            mStickyViews.put((int) (view.getTag(VIEW_TAG_TYPE)), (RecyclerView.ViewHolder)view.getTag(VIEW_TAG_HOLDER));
-////            mStickyLayout.removeAllViews();
-////        }
-////    }
+// //    /**
+// //     * 判断是否需要先回收吸顶布局，如果要回收，则回收吸顶布局并返回null。
+// //     * 如果不回收，则返回吸顶布局的ViewHolder。
+// //     * 这样做可以避免频繁的添加和移除吸顶布局。
+// //     *
+// //     * @param viewType
+// //     * @return
+// //     */
+// //    private RecyclerView.ViewHolder recycleStickyView(int viewType) {
+// //        if (mStickyLayout.getChildCount() > 0) {
+// //            View view = mStickyLayout.getChildAt(0);
+// //            int type = (int) view.getTag(VIEW_TAG_TYPE);
+// //            if (type == viewType) {
+// //                return (RecyclerView.ViewHolder)view.getTag(VIEW_TAG_HOLDER);
+// //            } else {
+// //                recycle();
+// //            }
+// //        }
+// //        return null;
+// //    }
+// //
+// //    /**
+// //     * 回收并移除吸顶布局
+// //     */
+// //    private void recycle() {
+// //        if (mStickyLayout.getChildCount() > 0) {
+// //            View view = mStickyLayout.getChildAt(0);
+// //            mStickyViews.put((int) (view.getTag(VIEW_TAG_TYPE)), (RecyclerView.ViewHolder)view.getTag(VIEW_TAG_HOLDER));
+// //            mStickyLayout.removeAllViews();
+// //        }
+// //    }
 //
 //    /**
 //     * 获取当前第一个显示的item .
@@ -401,4 +402,4 @@
 //            super.scrollTo(x, y);
 //        }
 //    }
-//}
+// }

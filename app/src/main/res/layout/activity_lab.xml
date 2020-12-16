@@ -92,7 +92,16 @@
             android:layout_height="wrap_content">
 
             <Button
-                android:text="打开相应 Activity"
+                android:text="打开 URL"
+                android:textAllCaps="false"
+                android:onClick="openLink"
+                android:layout_height="50dp"
+                style="@style/SettingItem"
+                android:gravity="center_vertical"
+                android:layout_gravity="center_vertical"/>
+
+            <Button
+                android:text="打印相应 Activity"
                 android:textAllCaps="false"
                 android:onClick="openActivity"
                 android:layout_height="50dp"
@@ -134,6 +143,15 @@
                 android:layout_height="50dp"
                 style="@style/SettingItem"
                 android:text="清理因故障未被删除的缓存文件"/>
+
+            <Button
+                android:layout_width="match_parent"
+                android:onClick="onClickArchive"
+                android:gravity="center_vertical"
+                android:layout_gravity="center_vertical"
+                android:layout_height="50dp"
+                style="@style/SettingItem"
+                android:text="归档：清理过期数据"/>
 
             <Button
                 android:layout_width="match_parent"

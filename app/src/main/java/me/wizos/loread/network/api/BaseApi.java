@@ -3,6 +3,8 @@ package me.wizos.loread.network.api;
 import android.text.TextUtils;
 import android.util.ArrayMap;
 
+import androidx.collection.ArraySet;
+
 import com.elvishew.xlog.XLog;
 
 import java.util.ArrayList;
@@ -63,7 +65,7 @@ public abstract class BaseApi<T, E> {
     }
 
 
-    void deleteExpiredArticles() {
+    public void deleteExpiredArticles() {
         // 最后的 300 * 1000L 是留前5分钟时间的不删除 WithPref.i().getClearBeforeDay()
         long time = System.currentTimeMillis() - App.i().getUser().getCachePeriod() * 24 * 3600 * 1000L - 60 * 1000L;
         String uid = App.i().getUser().getId();
@@ -72,7 +74,7 @@ public abstract class BaseApi<T, E> {
         //KLog.i("移动文章" + boxReadArts.size());
         for (Article article : boxReadArts) {
             article.setSaveStatus(App.STATUS_IS_FILED);
-            String dir = "/" + SaveDirectory.i().getSaveDir(article.getFeedId(), article.getId()) + "/";
+            String dir = SaveDirectory.i().getSaveDir(article.getFeedId(), article.getId()) + "/";
             //KLog.e("保存目录：" + dir);
             //FileUtil.saveArticle(App.i().getUserBoxPath() + dir, article);
             ArticleUtil.saveArticle(App.i().getUserBoxPath() + dir, article);
@@ -261,5 +263,82 @@ public abstract class BaseApi<T, E> {
         String uid = App.i().getUser().getId();
         CoreDB.i().feedDao().update(CoreDB.i().feedDao().getFeedsRealTimeCount(uid));
         CoreDB.i().categoryDao().update(CoreDB.i().categoryDao().getCategoriesRealTimeCount(uid));
+    }
+
+
+
+
+    ArraySet<String> handleUnreadRefs(List<String> ids) {
+        XLog.i("处理未读资源：" + ids.size() );
+        String uid = App.i().getUser().getId();
+
+        // 第1步，遍历数据量大的一方A，将其比对项目放入Map中
+        List<String> localUnReadIdSet = CoreDB.i().articleDao().getUnreadIdSet(uid);
+        List<String> localReadIdSet = CoreDB.i().articleDao().getReadIdSet(uid);
+
+        ArrayList<String> needMarkReadIds = new ArrayList<>();
+        ArrayList<String> needMarkUnReadIds = new ArrayList<>();
+        ArraySet<String> needRequestIds = new ArraySet<>(ids.size());
+
+
+        // 第2步，遍历数据量小的一方B。到Map中找，是否含有b中的比对项。有则XX，无则YY
+        for (String articleId : ids) {
+            if(localUnReadIdSet.contains(articleId)){
+                localUnReadIdSet.remove(articleId);
+            }else if(localReadIdSet.contains(articleId)){
+                localReadIdSet.remove(articleId);
+                needMarkReadIds.add(articleId);
+            }else {
+                needRequestIds.add(articleId);
+            }
+        }
+
+        // 取消加星
+        for (String entry : localUnReadIdSet) {
+            if (entry != null) {
+                needMarkReadIds.add(entry);
+            }
+        }
+
+        CoreDB.i().articleDao().markArticlesUnread(uid, needMarkUnReadIds);
+        CoreDB.i().articleDao().markArticlesRead(uid, needMarkReadIds);
+        return needRequestIds;
+    }
+
+
+    ArraySet<String> handleStaredRefs(List<String> ids) {
+        XLog.i("处理加薪资源：" + ids.size());
+        String uid = App.i().getUser().getId();
+
+        // 第1步，遍历数据量大的一方A，将其比对项目放入Map中
+        List<String> localStarIdSet = CoreDB.i().articleDao().getStaredIdSet(uid);
+        List<String> localUnStarIdSet = CoreDB.i().articleDao().getUnStarIdSet(uid);
+
+        ArrayList<String> needMarkStarIds = new ArrayList<>();
+        ArrayList<String> needMarkUnStarIds = new ArrayList<>();
+        ArraySet<String> needRequestIds = new ArraySet<>(ids.size());
+
+        // 第2步，遍历数据量小的一方B。到Map中找，是否含有b中的比对项。有则XX，无则YY
+        for (String articleId : ids) {
+            if(localStarIdSet.contains(articleId)){
+                localStarIdSet.remove(articleId);
+            }else if(localUnStarIdSet.contains(articleId)){
+                localUnStarIdSet.remove(articleId);
+                needMarkStarIds.add(articleId);
+            }else {
+                needRequestIds.add(articleId);
+            }
+        }
+
+        // 取消加星
+        for (String entry : localStarIdSet) {
+            if (entry != null) {
+                needMarkUnStarIds.add(entry);
+            }
+        }
+
+        CoreDB.i().articleDao().markArticlesStar(uid, needMarkStarIds);
+        CoreDB.i().articleDao().markArticlesUnStar(uid, needMarkUnStarIds);
+        return needRequestIds;
     }
 }

@@ -8,7 +8,6 @@ import android.view.View;
 
 import com.elvishew.xlog.XLog;
 import com.hjq.toast.ToastUtils;
-import com.socks.library.KLog;
 
 import java.io.IOException;
 import java.util.List;
@@ -28,7 +27,7 @@ public class Tool {
 
     public static void show(String msg) {
         if (BuildConfig.DEBUG) {
-            KLog.e(msg);
+            XLog.e(msg);
             ToastUtils.show(msg);
         }
     }

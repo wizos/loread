@@ -1,37 +1,49 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/sheet_tag"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:background="?attr/root_view_bg">
 
-<!--    android:layout_below="@id/header_item"-->
+
+
+    <!--<com.yanzhenjie.recyclerview.StickyHeaderLayout-->
+    <!--    android:id="@+id/sheet_tag_sticky_header"-->
+    <!--    android:layout_width="match_parent"-->
+    <!--    android:layout_height="wrap_content"-->
+    <!--    android:background="?attr/root_view_bg">-->
+    <!--</com.yanzhenjie.recyclerview.StickyHeaderLayout>-->
+
+    <!--<com.donkingliang.groupedadapter.widget.StickyHeaderLayout-->
+    <!--    android:id="@+id/sheet_tag_sticky_header"-->
+    <!--    android:layout_width="match_parent"-->
+    <!--    android:layout_height="wrap_content"-->
+    <!--    android:background="?attr/root_view_bg">-->
+    <!--    <com.yanzhenjie.recyclerview.SwipeRecyclerView-->
+    <!--        android:id="@+id/main_tag_list_view"-->
+    <!--        android:layout_width="match_parent"-->
+    <!--        android:layout_height="wrap_content"-->
+    <!--        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"/>-->
+    <!--</com.donkingliang.groupedadapter.widget.StickyHeaderLayout>-->
+
+
     <com.yanzhenjie.recyclerview.SwipeRecyclerView
         android:id="@+id/main_tag_list_view"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"/>
-    <!--<com.yanzhenjie.recyclerview.StickyHeaderLayout-->
-        <!--android:id="@+id/sticky_header_layout"-->
-        <!--android:layout_below="@id/header_item"-->
-        <!--android:layout_width="match_parent"-->
-        <!--android:layout_height="wrap_content">-->
-    <!--</com.yanzhenjie.recyclerview.StickyHeaderLayout>-->
+        android:layout_height="wrap_content"
+        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"/>
 
-
-    <me.wizos.loread.view.IconFontView
-        tools:visibility="visible"
-        android:id="@+id/main_tag_close"
-        android:layout_width="match_parent"
-        android:layout_height="40dp"
-        android:padding="5dp"
-        android:visibility="gone"
-        android:gravity="center"
-        android:textSize="20sp"
-        android:textColor="?attr/bottombar_fg"
-        android:layout_centerHorizontal="true"
-        android:layout_alignParentBottom="true"
-        android:text="@string/font_cross" />
-
+    <!--<pokercc.android.expandablerecyclerview.StickyHeaderRecyclerViewContainer-->
+    <!--    android:id="@+id/sheet_tag_sticky_header"-->
+    <!--    android:layout_width="match_parent"-->
+    <!--    android:layout_height="wrap_content"-->
+    <!--    android:background="?attr/root_view_bg">-->
+    <!--    <pokercc.android.expandablerecyclerview.ExpandableRecyclerView-->
+    <!--        android:id="@+id/main_tag_list_view"-->
+    <!--        android:layout_width="match_parent"-->
+    <!--        android:layout_height="wrap_content"-->
+    <!--        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager" />-->
+    <!--</pokercc.android.expandablerecyclerview.StickyHeaderRecyclerViewContainer>-->
 </RelativeLayout>
 

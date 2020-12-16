@@ -35,7 +35,7 @@
         app:showAsAction="never" />
     <item
         android:id="@+id/web_menu_copy_link"
-        android:icon="@drawable/ic_copy_link"
+        android:icon="@drawable/ic_link"
         android:title="@string/copy_link"
         android:enabled="true"
         android:visible="true"

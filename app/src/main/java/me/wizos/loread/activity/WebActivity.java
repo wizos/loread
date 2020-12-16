@@ -36,6 +36,7 @@ import androidx.coordinatorlayout.widget.CoordinatorLayout;
 
 import com.afollestad.materialdialogs.DialogAction;
 import com.afollestad.materialdialogs.MaterialDialog;
+import com.elvishew.xlog.XLog;
 import com.google.android.material.appbar.AppBarLayout;
 import com.hjq.toast.ToastUtils;
 import com.just.agentweb.AgentWeb;
@@ -43,7 +44,6 @@ import com.just.agentweb.DefaultWebClient;
 import com.just.agentweb.NestedScrollAgentWebView;
 import com.just.agentweb.WebChromeClient;
 import com.just.agentweb.WebViewClient;
-import com.socks.library.KLog;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -119,7 +119,7 @@ public class WebActivity extends BaseActivity implements WebBridge {
             finish();
         }
         String newUrl = LinkRewriteConfig.i().getRedirectUrl(originalUrl);
-        //KLog.i("获取到链接，准备跳转B：" + originalUrl + ", newUrl = " + newUrl);
+        //XLog.i("获取到链接，准备跳转B：" + originalUrl + ", newUrl = " + newUrl);
         if (!TextUtils.isEmpty(newUrl)) {
             originalUrl =  newUrl;
         }
@@ -289,10 +289,10 @@ public class WebActivity extends BaseActivity implements WebBridge {
         @SuppressLint("InlinedApi")
         @Override
         public void run() {
-            KLog.e("屏幕：隐藏状态");
+            XLog.e("屏幕：隐藏状态");
 
             AppBarLayout.LayoutParams params = (AppBarLayout.LayoutParams) appBarLayout.getChildAt(0).getLayoutParams();
-            KLog.e("屏幕：隐藏状态" + containerLayout.getSystemUiVisibility());
+            XLog.e("屏幕：隐藏状态" + containerLayout.getSystemUiVisibility());
             params.setScrollFlags(0);
 
             ActionBar actionBar = getSupportActionBar();
@@ -340,7 +340,7 @@ public class WebActivity extends BaseActivity implements WebBridge {
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         outState.putBoolean(Contract.ACTIVITY_IS_PORTRAIT, isPortrait);
-        KLog.i("自动保存，是否为竖屏：" + isPortrait);
+        XLog.i("自动保存，是否为竖屏：" + isPortrait);
         super.onSaveInstanceState(outState);
     }
 
@@ -379,7 +379,7 @@ public class WebActivity extends BaseActivity implements WebBridge {
 
     @Override
     public void log(String msg) {
-        KLog.e(WebBridge.TAG, msg);
+        XLog.e(WebBridge.TAG, msg);
     }
 
     @Override
@@ -416,7 +416,7 @@ public class WebActivity extends BaseActivity implements WebBridge {
                 }
 
                 String newUrl = LinkRewriteConfig.i().getRedirectUrl(url);
-                // KLog.e("重定向地址：" + url + " -> " + newUrl);
+                // XLog.e("重定向地址：" + url + " -> " + newUrl);
                 if(!TextUtils.isEmpty(newUrl) && !url.equalsIgnoreCase(newUrl)){
                     return super.shouldInterceptRequest(view, new WebResourceRequest() {
                         @Override
@@ -461,7 +461,7 @@ public class WebActivity extends BaseActivity implements WebBridge {
             // 如果存在，唤起该应用播放，如果不存在，则跳到应用市场下载该应用.
             String url = request.getUrl().toString();
 
-            KLog.e("地址：" + url);
+            XLog.e("地址：" + url);
             if (url.startsWith(SCHEMA_HTTP) || url.startsWith(SCHEMA_HTTPS)) {
                 return false;
             }
@@ -483,7 +483,7 @@ public class WebActivity extends BaseActivity implements WebBridge {
                 try {
                     name = "" + getPackageManager().getApplicationLabel(getPackageManager().getApplicationInfo(in.resolveActivity(getPackageManager()).getPackageName(), PackageManager.GET_META_DATA));
                 } catch (PackageManager.NameNotFoundException e) {
-                    KLog.e(R.string.unable_to_find_app);
+                    XLog.e(R.string.unable_to_find_app);
                     e.printStackTrace();
                 }
                 if (TextUtils.isEmpty(name)) {
@@ -507,7 +507,7 @@ public class WebActivity extends BaseActivity implements WebBridge {
 
         @Override
         public void onPageStarted(WebView webView, String url, Bitmap favicon) {
-            KLog.i("onPageStarted = " + url);
+            XLog.i("onPageStarted = " + url);
             super.onPageStarted(webView, url, favicon);
             if (url.startsWith(SCHEMA_LOREAD) || url.startsWith(SCHEMA_PDY) || url.startsWith(SCHEMA_PALABRE) || url.startsWith(SCHEMA_FEEDME)) {
                 Intent in = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
@@ -527,7 +527,7 @@ public class WebActivity extends BaseActivity implements WebBridge {
             super.onPageFinished(view, url);
             // 注入视频全屏js
             view.loadUrl(WebBridge.Video.fullScreenJsFun(url));
-            // KLog.e("页面加载完成");
+            // XLog.e("页面加载完成");
             // view.loadUrl(Distill.Bridge.COMMEND_PRINT_HTML);
             if (itemStop != null) {
                 itemStop.setVisible(false);
@@ -540,19 +540,19 @@ public class WebActivity extends BaseActivity implements WebBridge {
         @Override
         public void onReceivedHttpError(WebView view, WebResourceRequest request, WebResourceResponse errorResponse) {
             super.onReceivedHttpError(view, request, errorResponse);
-            //KLog.e("接受http错误 = " + request.getUrl() + errorResponse);
+            //XLog.e("接受http错误 = " + request.getUrl() + errorResponse);
         }
 
         @Override
         public void onReceivedSslError(WebView view, SslErrorHandler handler, SslError error) {
-            //KLog.e("接受Ssl错误 = " + view.getUrl() + error);
+            //XLog.e("接受Ssl错误 = " + view.getUrl() + error);
             handler.proceed();//接受证书
         }
 
         @Override
         public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
             super.onReceivedError(view, request, error);
-            //KLog.e("接受错误 = " + request.getUrl() + error);
+            //XLog.e("接受错误 = " + request.getUrl() + error);
         }
     };
 
@@ -589,7 +589,7 @@ public class WebActivity extends BaseActivity implements WebBridge {
                         selected = i;
                     }
                     i++;
-                    KLog.e("标题：" + entry.getKey());
+                    XLog.e("标题：" + entry.getKey());
                 }
 
                 int finalSelected = selected;
@@ -611,7 +611,7 @@ public class WebActivity extends BaseActivity implements WebBridge {
                                 NetworkUserAgentConfig.i().save();
                                 agentWeb.getWebCreator().getWebView().getSettings().setUserAgentString(NetworkUserAgentConfig.i().guessUserAgentByUrl(receivedUrl));
                                 agentWeb.getWebCreator().getWebView().reload();
-                                // KLog.e("默认的UA是：" + agentWeb.getWebCreator().getWebView().getSettings().getUserAgentString() );
+                                // XLog.e("默认的UA是：" + agentWeb.getWebCreator().getWebView().getSettings().getUserAgentString() );
                                 dialog.dismiss();
                                 return true;
                             }
@@ -630,7 +630,7 @@ public class WebActivity extends BaseActivity implements WebBridge {
                                                 NetworkUserAgentConfig.i().setHoldUserAgent(getString(R.string.custom));
                                                 NetworkUserAgentConfig.i().getUserAgents().put(getString(R.string.custom),input.toString());
                                                 NetworkUserAgentConfig.i().save();
-                                                KLog.e("当前输入的是：" + input.toString());
+                                                XLog.e("当前输入的是：" + input.toString());
                                                 agentWeb.getWebCreator().getWebView().getSettings().setUserAgentString(NetworkUserAgentConfig.i().guessUserAgentByUrl(receivedUrl));
                                                 agentWeb.getWebCreator().getWebView().reload();
                                             }
@@ -693,7 +693,7 @@ public class WebActivity extends BaseActivity implements WebBridge {
                 agentWeb.getWebCreator().getWebView().stopLoading();
                 break;
             case R.id.web_menu_get_html:
-                KLog.e("测试点击");
+                XLog.e("测试点击");
                 agentWeb.getWebCreator().getWebView().loadUrl(COMMEND_PRINT_HTML);
                 agentWeb.getJsAccessEntrace().callJs(COMMEND_PRINT_HTML);
                 break;
@@ -704,15 +704,6 @@ public class WebActivity extends BaseActivity implements WebBridge {
     }
     String COMMEND_PRINT_HTML = "javascript: function(){ console.log(document.documentElement.outerHTML); window.WebBridge.log(document.documentElement.outerHTML);} ";
     // String COMMEND = "javascript:window.onload = function(){ReadabilityBridge.getHtml(document.documentElement.outerHTML);void(0);}";
-
-
-    /**
-     * Android旋转屏幕不销毁Activity
-     */
-    @Override
-    public void onConfigurationChanged(Configuration newConfig) {
-        super.onConfigurationChanged(newConfig);
-    }
 
 
     private void exit() {
@@ -813,7 +804,7 @@ public class WebActivity extends BaseActivity implements WebBridge {
     //     containerBehaviour.setBottomSheetCallback(new BottomSheetBehavior.BottomSheetCallback() {
     //         @Override
     //         public void onStateChanged(@NonNull View bottomSheet, int newState) {
-    //             KLog.e(TAG, "onStateChanged: newState === " + newState);
+    //             XLog.e(TAG, "onStateChanged: newState === " + newState);
     //             if (newState == BottomSheetBehavior.STATE_HIDDEN) {
     //                 mBottomSheetDialog.dismiss();
     //                 containerBehaviour.setState(BottomSheetBehavior.STATE_COLLAPSED);
@@ -825,7 +816,7 @@ public class WebActivity extends BaseActivity implements WebBridge {
     //
     //         @Override
     //         public void onSlide(@NonNull View bottomSheet, float slideOffset) {
-    //             KLog.d("BottomBahaviour", "onSlide: slideOffset====" + slideOffset);
+    //             XLog.d("BottomBahaviour", "onSlide: slideOffset====" + slideOffset);
     //             if (slideOffset == 1.0) {
     //                 //                    mLeftIcon.setImageResource(R.drawable.back);
     //                 // containerBehaviour.setPeekHeight(height + getStatusBarHeight());

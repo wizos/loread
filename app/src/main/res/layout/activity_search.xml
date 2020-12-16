@@ -37,7 +37,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginEnd="15dp"
-                android:hint="@string/search"
+                android:hint="@string/search_feeds"
                 android:imeOptions="actionSearch"
                 android:singleLine="true" />
 
@@ -63,6 +63,8 @@
             android:layout_below="@id/search_appBarLayout"
             android:groupIndicator="@null"
             android:fadingEdgeLength="4dp"
-            android:background="?attr/bottombar_bg" />
+            android:background="?attr/bottombar_bg"
+            tools:listheader="@layout/activity_search_list_header_result_count"
+            tools:listitem="@layout/activity_search_list_item_feed"/>
     </me.wizos.loread.view.SwipeRefreshLayoutS>
 </RelativeLayout>

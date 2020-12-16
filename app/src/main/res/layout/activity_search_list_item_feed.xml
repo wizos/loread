@@ -16,23 +16,25 @@
     <!--MarginStart指的是控件距离开头View部分的间距大小，MarginLeft则指的是控件距离左边View部分的间距大小，MarginEnd和MarginRight同理。-->
     <!--一般情况下，View开始部分就是左边，但是有的语言目前为止还是按照从右往左的顺序来书写的-->
 
+    <ImageView
+        android:id="@+id/search_list_item_icon"
+        android:layout_width="30dp"
+        android:layout_height="30dp"
+        android:paddingEnd="5dp"
+        android:layout_gravity="center_vertical"
+        android:adjustViewBounds="true"
+        android:layout_centerVertical="true"
+        tools:visibility="visible"
+        tools:ignore="ContentDescription,RtlSymmetry" />
+
     <LinearLayout
         android:id="@+id/search_list_item_text"
+        android:layout_toEndOf="@id/search_list_item_icon"
         android:layout_marginTop="6dp"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center_vertical"
         android:orientation="horizontal">
-
-        <ImageView
-            android:id="@+id/search_list_item_icon"
-            android:layout_width="22dp"
-            android:layout_height="16dp"
-            android:paddingEnd="6dp"
-            android:layout_gravity="center_vertical"
-            android:adjustViewBounds="true"
-            tools:visibility="visible"
-            tools:ignore="ContentDescription" />
 
         <LinearLayout
             android:id="@+id/search_list_item_title_summary"
@@ -92,11 +94,13 @@
             android:textColor="?attr/lv_item_title_color" />
     </LinearLayout>
 
+
     <RelativeLayout
         android:id="@+id/search_list_item_info"
         android:layout_marginTop="6dp"
         android:layout_marginBottom="6dp"
         android:layout_below="@id/search_list_item_text"
+        android:layout_toEndOf="@id/search_list_item_icon"
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
@@ -122,12 +126,11 @@
             tools:text="上次更新时间"
             android:textColor="?attr/lv_item_info_color" />
     </RelativeLayout>
-
-    <View
-        android:id="@+id/search_list_item_divider"
-        android:layout_width="match_parent"
-        android:layout_height="0.5dp"
-        android:layout_below="@id/search_list_item_info"
-        android:background="?attr/lv_item_divider" />
+    <!--<View-->
+    <!--    android:id="@+id/search_list_item_divider"-->
+    <!--    android:layout_width="match_parent"-->
+    <!--    android:layout_height="0.5dp"-->
+    <!--    android:layout_below="@id/search_list_item_info"-->
+    <!--    android:background="?attr/lv_item_divider" />-->
 
 </RelativeLayout>

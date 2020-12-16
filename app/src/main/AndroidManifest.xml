@@ -68,33 +68,6 @@
             android:value="AppGlideModule" />
 
         <activity
-            android:label="@string/app_name"
-            android:name=".activity.login.LoginActivity"
-            android:parentActivityName=".activity.ProviderActivity"
-            android:configChanges="orientation|screenSize|keyboardHidden"
-            android:launchMode="singleTask"
-            android:screenOrientation="user"
-            android:theme="@style/AppTheme.Day.NoActionBar"/>
-
-        <activity
-            android:label="@string/app_name"
-            android:name=".activity.login.LoginTinyRSSActivity"
-            android:parentActivityName=".activity.ProviderActivity"
-            android:configChanges="orientation|screenSize|keyboardHidden"
-            android:launchMode="singleTask"
-            android:screenOrientation="user"
-            android:theme="@style/AppTheme.Day.NoActionBar"/>
-
-        <activity
-            android:label="@string/app_name"
-            android:name=".activity.login.LoginInoReaderActivity"
-            android:parentActivityName=".activity.ProviderActivity"
-            android:configChanges="orientation|screenSize|keyboardHidden"
-            android:launchMode="singleTask"
-            android:screenOrientation="user"
-            android:theme="@style/AppTheme.Day.NoActionBar"/>
-
-        <activity
             android:name=".activity.SplashActivity"
             android:label="@string/app_name"
             android:launchMode="singleTask"
@@ -108,7 +81,7 @@
 
         <activity
             android:name=".activity.ProviderActivity"
-            android:configChanges="orientation|screenSize"
+            android:configChanges="uiMode|orientation|screenSize|keyboardHidden"
             android:label="@string/app_name"
             android:launchMode="singleTask"
             android:screenOrientation="user"
@@ -134,8 +107,35 @@
         </activity>
 
         <activity
+            android:label="@string/app_name"
+            android:name=".activity.login.LoginActivity"
+            android:parentActivityName=".activity.ProviderActivity"
+            android:configChanges="uiMode|orientation|screenSize|keyboardHidden"
+            android:launchMode="singleTask"
+            android:screenOrientation="user"
+            android:theme="@style/AppTheme.Day.NoActionBar"/>
+
+        <activity
+            android:label="@string/app_name"
+            android:name=".activity.login.LoginTinyRSSActivity"
+            android:parentActivityName=".activity.ProviderActivity"
+            android:configChanges="uiMode|orientation|screenSize|keyboardHidden"
+            android:launchMode="singleTask"
+            android:screenOrientation="user"
+            android:theme="@style/AppTheme.Day.NoActionBar"/>
+
+        <activity
+            android:label="@string/app_name"
+            android:name=".activity.login.LoginInoReaderActivity"
+            android:parentActivityName=".activity.ProviderActivity"
+            android:configChanges="uiMode|orientation|screenSize|keyboardHidden"
+            android:launchMode="singleTask"
+            android:screenOrientation="user"
+            android:theme="@style/AppTheme.Day.NoActionBar"/>
+
+        <activity
             android:name=".activity.MainActivity"
-            android:configChanges="orientation|screenSize|keyboardHidden"
+            android:configChanges="uiMode|orientation|screenSize|keyboardHidden"
             android:label="@string/app_name"
             android:launchMode="singleTask"
             android:screenOrientation="user"
@@ -143,7 +143,7 @@
 
         <activity
             android:name=".activity.ArticleActivity"
-            android:configChanges="orientation|screenSize|keyboardHidden"
+            android:configChanges="uiMode|orientation|screenSize|keyboardHidden"
             android:label="@string/app_name"
             android:launchMode="singleTask"
             android:parentActivityName=".activity.MainActivity"
@@ -152,7 +152,7 @@
             android:windowSoftInputMode="adjustResize|stateHidden" />
         <activity
             android:name=".activity.MusicActivity"
-            android:configChanges="orientation|screenSize|keyboardHidden"
+            android:configChanges="uiMode|orientation|screenSize|keyboardHidden"
             android:label="@string/music"
             android:launchMode="singleTask"
             android:screenOrientation="user"
@@ -161,7 +161,7 @@
 
         <activity
             android:name=".activity.TTSActivity"
-            android:configChanges="orientation|screenSize|keyboardHidden"
+            android:configChanges="uiMode|orientation|screenSize|keyboardHidden"
             android:label="@string/speak"
             android:launchMode="singleTask"
             android:screenOrientation="user"
@@ -171,19 +171,21 @@
         <!-- 最好不要注册为系统浏览器组件，不然当被设为系统默认的浏览器时，因为我没有处理添加下载监听，和默认打开系统浏览器的事件，会导致循环在这个页面 -->
         <activity
             android:name=".activity.WebActivity"
-            android:configChanges="orientation|screenSize|keyboardHidden"
+            android:configChanges="uiMode|orientation|screenSize|keyboardHidden"
             android:hardwareAccelerated="true"
             android:launchMode="singleTop"
             android:theme="@style/AppBaseTheme.SplashTranslucentTheme" />
 
         <activity
             android:name=".activity.SearchActivity"
+            android:configChanges="uiMode|orientation|screenSize|keyboardHidden"
             android:launchMode="singleTop"
             android:parentActivityName=".activity.MainActivity"
             android:screenOrientation="user"
             android:theme="@style/AppTheme.Day.NoActionBar" />
         <activity
             android:name=".activity.SettingActivity"
+            android:configChanges="uiMode|orientation|screenSize|keyboardHidden"
             android:label="@string/settings"
             android:launchMode="singleTask"
             android:parentActivityName=".activity.MainActivity"
@@ -192,12 +194,13 @@
 
         <activity
             android:name=".activity.LabActivity"
-            android:configChanges="orientation|screenSize|keyboardHidden"
+            android:configChanges="uiMode|orientation|screenSize|keyboardHidden"
             android:hardwareAccelerated="true"
             android:launchMode="singleTop" />
         <activity android:name=".activity.RuleGenerateActivity" />
         <activity
             android:name=".activity.FeedActivity"
+            android:configChanges="uiMode|orientation|screenSize|keyboardHidden"
             android:label="@string/title_activity_scrolling"
             android:theme="@style/AppTheme.Day.NoActionBar" />
 

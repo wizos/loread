@@ -8,11 +8,11 @@ android {
         minSdkVersion 22
         targetSdkVersion 29
         applicationId "me.wizos.loread"
-        versionCode 10
-        versionName "2.1.0"
-        ndk {
-            abiFilters 'armeabi-v7a', 'arm64-v8a'
-        }
+        versionCode 11
+        versionName "2.1.1"
+        // ndk {
+        //     abiFilters 'armeabi-v7a', 'arm64-v8a'
+        // }
         javaCompileOptions {
             annotationProcessorOptions {
                 includeCompileClasspath = true // 解决 Error:Execution failed for task ‘:app:javaPreCompileDebug 问题
@@ -34,6 +34,12 @@ android {
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
+    }
+    lintOptions {
+        checkReleaseBuilds false
+        // Or, if you prefer, you can continue to check for errors in release builds,
+        // but continue the build even when errors are found:
+        abortOnError false
     }
 }
 
@@ -64,14 +70,14 @@ dependencies {
     // https://github.com/liangjingkanji/BRV  由于该库过于入侵代码，且替换成本较高，暂不使用
     // implementation 'com.github.liangjingkanji:BRV:1.3.13'
 
+    implementation 'com.reginald:editspinner:1.1.0'
+    // implementation project(path: ':EditSpinner') // 有typevalue错误，Error inflating class EditText
+    // implementation project(path: ':xui')
     // 列表项左右滑动布局
-    implementation project(path: ':swipelayout')
+    // implementation project(path: ':swipelayout')
     implementation project(path: ':support')
-
-    // 浏览器[https://github.com/Justson/AgentWeb]
-    // implementation 'com.just.agentweb:agentweb-androidx:4.1.4'
-    implementation project(path: ':agentweb-core') // 修复双指放大后会自动缩小问题，并升级到androidx
-
+    implementation 'com.github.donkingliang:GroupedRecyclerViewAdapter:2.4.0'
+    implementation "pokercc.android.ExpandableRecyclerView:expandableRecyclerView:0.7.2"
 
     // 对话框
     // implementation 'com.kongzue.dialog_v3x:dialog:3.1.6'
@@ -80,19 +86,16 @@ dependencies {
     implementation 'com.afollestad.material-dialogs:core:0.9.6.0'
     implementation 'com.afollestad.material-dialogs:commons:0.9.6.0'
 
-    // 加载 view [https://github.com/ybq/Android-SpinKit]
-    // implementation 'com.github.ybq:Android-SpinKit:1.4.0'
-
     // 透明通知栏
     // implementation 'com.readystatesoftware.systembartint:systembartint:1.0.3'
 
     // popup [https://github.com/li-xiaojun/XPopup]
-    implementation 'com.lxj:xpopup:2.2.6' // 1.8.13
+    implementation 'com.lxj:xpopup:2.2.6'
     // toast [https://github.com/getActivity/ToastUtils]
-    implementation 'com.hjq:toast:8.8' // 8.0
+    implementation 'com.hjq:toast:8.8'
 
     // 开关按钮
-    implementation 'com.kyleduo.switchbutton:library:2.0.2' // 2.0.0
+    implementation 'com.kyleduo.switchbutton:library:2.0.2'
 
     // 让播放、暂停按钮优雅的过渡 [https://github.com/Lauzy/PlayPauseView]
     implementation 'com.github.Lauzy:PlayPauseView:1.0.7'
@@ -102,8 +105,15 @@ dependencies {
     // [https://github.com/zhanghai/materialedittext]， 用在了 activity_login_tiny_tiny_rss_rss.xml 中
     implementation 'me.zhanghai.android.materialedittext:library:1.0.5'
 
+    // 浏览器[https://github.com/Justson/AgentWeb]
+    // implementation 'com.just.agentweb:agentweb-androidx:4.1.4'
+    implementation project(path: ':agentweb-core') // 修复双指放大后会自动缩小问题，并升级到androidx
+
+    // 加载 view [https://github.com/ybq/Android-SpinKit]
+    // implementation 'com.github.ybq:Android-SpinKit:1.4.0'
+
     // 时间总线
-    implementation 'com.jeremyliao:live-event-bus-x:1.7.2' // 1.6.1
+    implementation 'com.jeremyliao:live-event-bus-x:1.7.2'
 
     // JS Bridge
     // implementation 'com.github.wendux:DSBridge-Android:3.0-SNAPSHOT'
@@ -112,14 +122,14 @@ dependencies {
     annotationProcessor "androidx.room:room-compiler:2.2.5"
 
     // 基于 mmap 的高性能通用 key-value 组件
-    implementation 'com.tencent:mmkv:1.2.6' // 1.2.2
+    implementation 'com.tencent:mmkv:1.2.6'
 
     // 内存泄漏检测工具
     // debugImplementation 'com.squareup.leakcanary:leakcanary-android:1.6.1'
     // releaseImplementation 'com.squareup.leakcanary:leakcanary-android-no-op:1.6.1'
 
     // 日志
-    implementation 'com.github.zhaokaiqiang.klog:library:1.6.0'
+    // implementation 'com.github.zhaokaiqiang.klog:library:1.6.0'
     // [https://github.com/elvishew/xLog]
     implementation 'com.elvishew:xlog:1.7.2'
 
@@ -145,6 +155,7 @@ dependencies {
     // 正文抽取器
     // implementation project(path: ':extractor')
 
+    implementation 'com.vdurmont:emoji-java:5.1.1'
     // HTML 解析 [https://github.com/jhy/jsoup]
     implementation 'org.jsoup:jsoup:1.13.1'
     // 使用xpath解析提取html数据 [https://github.com/zhegexiaohuozi/JsoupXpath]

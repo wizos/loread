@@ -23,11 +23,11 @@ public interface FeedDao {
     @Query("SELECT * FROM feed WHERE uid = :uid AND id = :id LIMIT 1")
     Feed getById(String uid,String id);
 
-//    @Query("SELECT feed.* FROM feed " +
-//            "LEFT JOIN feedcategory ON (feed.uid = feedcategory.uid AND feed.id = feedcategory.feedId) " +
-//            "WHERE feed.uid = :uid " +
-//            "AND feedcategory.categoryId = :categoryId " +
-//            "ORDER BY case when feed.unreadCount > 0 then 0 else 1 end, feed.title ASC")
+    // @Query("SELECT feed.* FROM feed " +
+    //         "LEFT JOIN feedcategory ON (feed.uid = feedcategory.uid AND feed.id = feedcategory.feedId) " +
+    //         "WHERE feed.uid = :uid " +
+    //         "AND feedcategory.categoryId = :categoryId " +
+    //         "ORDER BY case when feed.unreadCount > 0 then 0 else 1 end, feed.title ASC")
 
     @Query("SELECT * FROM feed " +
             "WHERE feed.uid = :uid " +
@@ -40,26 +40,42 @@ public interface FeedDao {
             "AND id IN ( SELECT feedid FROM feedcategory WHERE categoryId = :categoryId) " +
             "ORDER BY CASE WHEN feed.unreadCount > 0 THEN 0 ELSE 1 END, feed.title COLLATE NOCASE ASC")
     List<Collection> getFeedsUnreadCountByCategoryId(String uid, String categoryId);
+    @Query("SELECT id,title,unreadCount as count FROM feed " +
+            "WHERE feed.uid = :uid " +
+            "AND id IN ( SELECT feedid FROM feedcategory WHERE categoryId = :categoryId) " +
+            "ORDER BY CASE WHEN feed.unreadCount > 0 THEN 0 ELSE 1 END, feed.title COLLATE NOCASE ASC")
+    LiveData<List<Collection>> getFeedsLiveDataUnreadCountByCategoryId(String uid, String categoryId);
 
     @Query("SELECT id,title,starCount as count FROM feed " +
             "WHERE feed.uid = :uid " +
             "AND id IN ( SELECT feedid FROM feedcategory WHERE categoryId = :categoryId) " +
             "ORDER BY CASE WHEN feed.starCount > 0 THEN 0 ELSE 1 END, feed.title COLLATE NOCASE ASC")
     List<Collection> getFeedsStarCountByCategoryId(String uid, String categoryId);
+    @Query("SELECT id,title,starCount as count FROM feed " +
+            "WHERE feed.uid = :uid " +
+            "AND id IN ( SELECT feedid FROM feedcategory WHERE categoryId = :categoryId) " +
+            "ORDER BY CASE WHEN feed.starCount > 0 THEN 0 ELSE 1 END, feed.title COLLATE NOCASE ASC")
+    LiveData<List<Collection>> getFeedsLiveDataStarCountByCategoryId(String uid, String categoryId);
 
+    // sql一
     @Query("SELECT id,title,allCount as count FROM feed " +
             "WHERE feed.uid = :uid " +
             "AND id IN ( SELECT feedid FROM feedcategory WHERE categoryId = :categoryId) " +
             "ORDER BY CASE WHEN feed.allCount > 0 THEN 0 ELSE 1 END, feed.title COLLATE NOCASE ASC")
     List<Collection> getFeedsAllCountByCategoryId2(String uid, String categoryId);
-
-
+    // sql二
     @Query("SELECT id,title,allCount as count FROM feed " +
             "LEFT JOIN FeedCategory ON (feed.uid = FeedCategory.uid AND feed.id = FeedCategory.feedId) " +
             "WHERE feed.uid = :uid " +
             "AND feedcategory.categoryId = :categoryId " +
             "ORDER BY CASE WHEN feed.allCount > 0 THEN 0 ELSE 1 END, feed.title COLLATE NOCASE ASC")
     List<Collection> getFeedsAllCountByCategoryId(String uid, String categoryId);
+    @Query("SELECT id,title,allCount as count FROM feed " +
+            "LEFT JOIN FeedCategory ON (feed.uid = FeedCategory.uid AND feed.id = FeedCategory.feedId) " +
+            "WHERE feed.uid = :uid " +
+            "AND feedcategory.categoryId = :categoryId " +
+            "ORDER BY CASE WHEN feed.allCount > 0 THEN 0 ELSE 1 END, feed.title COLLATE NOCASE ASC")
+    LiveData<List<Collection>> getFeedsLiveDataAllCountByCategoryId(String uid, String categoryId);
 
     @Query("SELECT id,title,unreadCount as count FROM feed " +
             "LEFT JOIN FeedCategory ON (feed.uid = FeedCategory.uid AND feed.id = FeedCategory.feedId) " +
@@ -67,6 +83,13 @@ public interface FeedDao {
             "AND (FeedCategory.categoryId = 0 OR FeedCategory.categoryId is Null) " +
             "ORDER BY CASE WHEN feed.unreadCount > 0 THEN 0 ELSE 1 END, feed.title COLLATE NOCASE ASC")
     List<Collection> getFeedsUnreadCountByUnCategory(String uid);
+    @Query("SELECT id,title,unreadCount as count FROM feed " +
+            "LEFT JOIN FeedCategory ON (feed.uid = FeedCategory.uid AND feed.id = FeedCategory.feedId) " +
+            "WHERE feed.uid = :uid " +
+            "AND (FeedCategory.categoryId = 0 OR FeedCategory.categoryId is Null) " +
+            "ORDER BY CASE WHEN feed.unreadCount > 0 THEN 0 ELSE 1 END, feed.title COLLATE NOCASE ASC")
+    LiveData<List<Collection>> getFeedsLiveDataUnreadCountByUnCategory(String uid);
+
 
     @Query("SELECT id,title,starCount as count FROM feed " +
             "LEFT JOIN FeedCategory ON (feed.uid = FeedCategory.uid AND feed.id = FeedCategory.feedId) " +
@@ -74,6 +97,12 @@ public interface FeedDao {
             "AND (FeedCategory.categoryId = 0 OR FeedCategory.categoryId is Null) " +
             "ORDER BY CASE WHEN feed.starCount > 0 THEN 0 ELSE 1 END, feed.title COLLATE NOCASE ASC")
     List<Collection> getFeedsStarCountByUnCategory(String uid);
+    @Query("SELECT id,title,starCount as count FROM feed " +
+            "LEFT JOIN FeedCategory ON (feed.uid = FeedCategory.uid AND feed.id = FeedCategory.feedId) " +
+            "WHERE feed.uid = :uid " +
+            "AND (FeedCategory.categoryId = 0 OR FeedCategory.categoryId is Null) " +
+            "ORDER BY CASE WHEN feed.starCount > 0 THEN 0 ELSE 1 END, feed.title COLLATE NOCASE ASC")
+    LiveData<List<Collection>> getFeedsLiveDataStarCountByUnCategory(String uid);
 
     @Query("SELECT id,title,allCount as count FROM feed " +
             "LEFT JOIN FeedCategory ON (feed.uid = FeedCategory.uid AND feed.id = FeedCategory.feedId) " +
@@ -81,6 +110,12 @@ public interface FeedDao {
             "AND (FeedCategory.categoryId = 0 OR FeedCategory.categoryId is Null) " +
             "ORDER BY CASE WHEN feed.allCount > 0 THEN 0 ELSE 1 END, feed.title COLLATE NOCASE ASC")
     List<Collection> getFeedsAllCountByUnCategory(String uid);
+    @Query("SELECT id,title,allCount as count FROM feed " +
+            "LEFT JOIN FeedCategory ON (feed.uid = FeedCategory.uid AND feed.id = FeedCategory.feedId) " +
+            "WHERE feed.uid = :uid " +
+            "AND (FeedCategory.categoryId = 0 OR FeedCategory.categoryId is Null) " +
+            "ORDER BY CASE WHEN feed.allCount > 0 THEN 0 ELSE 1 END, feed.title COLLATE NOCASE ASC")
+    LiveData<List<Collection>> getFeedsLiveDataAllCountByUnCategory(String uid);
 
     @Query("SELECT count(1) FROM feed " +
             "LEFT JOIN FeedCategory ON (feed.uid = FeedCategory.uid AND feed.id = FeedCategory.feedId)" +

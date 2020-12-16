@@ -12,7 +12,7 @@ import android.text.TextUtils;
 
 import androidx.annotation.Nullable;
 
-import com.socks.library.KLog;
+import com.elvishew.xlog.XLog;
 
 import java.io.IOException;
 
@@ -32,7 +32,7 @@ public class MusicService extends Service {
         audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
         //这里只执行一次，用于准备播放器
         player = createMediaPlayer();
-        KLog.e("服务", "准备播放音乐");
+        XLog.e("服务", "准备播放音乐");
     }
 
     String playUrl;
@@ -42,7 +42,7 @@ public class MusicService extends Service {
     public int onStartCommand(Intent intent, int flags, int startId) {
         if (intent != null && !TextUtils.isEmpty(intent.getDataString()) && !intent.getDataString().equals(playUrl)) {
             playUrl = intent.getDataString();
-            KLog.i("获取到链接：" + playUrl);
+            XLog.i("获取到链接：" + playUrl);
             // 补救，获取 playUrl
             if (TextUtils.isEmpty(playUrl)) {
                 playUrl = intent.getStringExtra(Intent.EXTRA_TEXT);
@@ -66,10 +66,10 @@ public class MusicService extends Service {
             player.prepareAsync();
         } catch (IllegalStateException e) {
             e.printStackTrace();
-            KLog.e("设置播放地址失败A");
+            XLog.e("设置播放地址失败A");
         } catch (IOException e) {
             e.printStackTrace();
-            KLog.e("设置播放地址失败B");
+            XLog.e("设置播放地址失败B");
         }
     }
 
@@ -79,7 +79,7 @@ public class MusicService extends Service {
                 player = new MediaPlayer();
                 player.setAudioStreamType(AudioManager.STREAM_MUSIC);
             } else {
-                KLog.e("Player不为空");
+                XLog.e("Player不为空");
                 player.reset();
                 player.stop();
             }
@@ -94,7 +94,7 @@ public class MusicService extends Service {
             player.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
                 @Override
                 public void onPrepared(MediaPlayer mediaPlayer) {
-                    KLog.e("准备好了，开始播放");
+                    XLog.e("准备好了，开始播放");
                     //如果准备好了，就会进行这个方法
                     mediaPlayer.start();
                     if (playStatusListener != null) {
@@ -107,7 +107,7 @@ public class MusicService extends Service {
                 public void onBufferingUpdate(MediaPlayer arg0, int percent) {
                     bufferedPercent = percent;
                     /* 打印缓冲的百分比, 如果缓冲 */
-                    KLog.i("缓冲了的百分比 : " + percent + " %");
+                    XLog.i("缓冲了的百分比 : " + percent + " %");
                 }
             });
 
@@ -169,17 +169,17 @@ public class MusicService extends Service {
                     if (playStatusListener != null && error) {
                         playStatusListener.onError(whatStr + ", " + extraStr );
                     }
-                    KLog.e("onError播放出现错误,waht:" + what + ",extra:" + extra + "," + whatStr + "=" + extraStr);
+                    XLog.e("onError播放出现错误,waht:" + what + ",extra:" + extra + "," + whatStr + "=" + extraStr);
                     // 如果方法处理了错误，则为True。如果没有处理，则为false。返回false，或者根本没有OnErrorListener，将导致调用OnCompletionListener。
                     return true;
                 }
             });
         } catch (IllegalStateException e) {
             e.printStackTrace();
-            KLog.e("设置播放地址失败A");
+            XLog.e("设置播放地址失败A");
         } catch (IOException e) {
             e.printStackTrace();
-            KLog.e("设置播放地址失败B");
+            XLog.e("设置播放地址失败B");
         }
     }
 
@@ -193,7 +193,7 @@ public class MusicService extends Service {
         player.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
             @Override
             public void onPrepared(MediaPlayer mediaPlayer) {
-                KLog.e("准备好了，开始播放");
+                XLog.e("准备好了，开始播放");
                 //mErrorCount = 0;//清空原来的错误
                 //如果准备好了，就会进行这个方法
                 mediaPlayer.start();
@@ -207,7 +207,7 @@ public class MusicService extends Service {
             public void onBufferingUpdate(MediaPlayer arg0, int percent) {
                 bufferedPercent = percent;
                 /* 打印缓冲的百分比, 如果缓冲 */
-                KLog.i("缓冲了的百分比 : " + percent + " %");
+                XLog.i("缓冲了的百分比 : " + percent + " %");
             }
         });
 
@@ -230,7 +230,7 @@ public class MusicService extends Service {
              */
             @Override
             public boolean onError(MediaPlayer mp, int what, int extra) {
-                KLog.e("播放出现错误,waht:" + what + ",extra:" + extra);
+                XLog.e("播放出现错误,waht:" + what + ",extra:" + extra);
                 String whatStr = "";
                 String extraStr = "";
                 boolean error = false;
@@ -271,7 +271,7 @@ public class MusicService extends Service {
                 if (playStatusListener != null && error) {
                     playStatusListener.onError(whatStr + ", " + extraStr );
                 }
-                KLog.e("onError播放出现错误,waht:" + what + ",extra:" + extra + "," + whatStr + "=" + extraStr);
+                XLog.e("onError播放出现错误,waht:" + what + ",extra:" + extra + "," + whatStr + "=" + extraStr);
                 //mErrorCount = 0;
                 // 如果方法处理了错误，则为True。如果没有处理，则为false。返回false，或者根本没有OnErrorListener，将导致调用OnCompletionListener。
                 return true;
@@ -300,12 +300,12 @@ public class MusicService extends Service {
         //播放或暂停歌曲
         public void play() {
             player.start();
-            KLog.i("服务", "播放音乐");
+            XLog.i("服务", "播放音乐");
         }
 
         public void pause() {
             player.pause();
-            KLog.i("服务", "暂停音乐");
+            XLog.i("服务", "暂停音乐");
         }
 
 
@@ -391,7 +391,7 @@ public class MusicService extends Service {
              AUDIOFOCUS_LOSS_TRANSIENT:你会短暂的失去音频焦点，你可以暂停音乐，但不要释放资源，因为你一会就可以夺回焦点并继续使用
              AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK:你的焦点会短暂失去，但是你可以与新的使用者共同使用音频焦点
              */
-            KLog.e("焦点转移：" + focusChange);
+            XLog.e("焦点转移：" + focusChange);
             switch (focusChange) {
                 case AudioManager.AUDIOFOCUS_GAIN:
                     // Resume playback

@@ -4,15 +4,19 @@ import android.text.TextUtils;
 
 import com.google.gson.annotations.SerializedName;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 public class SavedItemIds extends BaseResponse {
     @SerializedName("saved_item_ids")
     private String savedItemIds;
 
-    public String[] getSavedItemIds(){
+    public List<String> getSavedItemIds(){
         if(TextUtils.isEmpty(savedItemIds)){
-            return null;
+            return new ArrayList<>();
         }else {
-            return savedItemIds.split(",");
+            return Arrays.asList(savedItemIds.split(","));
         }
     }
 

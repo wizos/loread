@@ -34,11 +34,13 @@ public class ArticleExtractConfig {
                     instance = new ArticleExtractConfig();
                     String json = FileUtil.readFile(App.i().getUserConfigPath() + CONFIG_FILENAME);
                     if (TextUtils.isEmpty(json)) {
-                        instance.pageMatchRegex = new ArrayMap<>();
+                        instance.hostContainKeyword = new ArrayMap<>();
                         instance.pageMatchCssSelector = new ArrayMap<>();
+                        instance.pageMatchRegex = new ArrayMap<>();
                         instance.save();
                     }else {
                         instance = new Gson().fromJson(json, ArticleExtractConfig.class);
+                        instance.save();
                     }
                 }
             }
@@ -52,26 +54,91 @@ public class ArticleExtractConfig {
         instance = null;
     }
 
-
+    @SerializedName("host_contain_keyword")
+    private ArrayMap<String, String> hostContainKeyword;
     @SerializedName("page_match_css_selector")
-    private ArrayMap<String, ArticleExtractRule> pageMatchCssSelector;
+    private ArrayMap<String, String> pageMatchCssSelector;
     @SerializedName("page_match_regex")
-    private ArrayMap<String, ArticleExtractRule> pageMatchRegex;
+    private ArrayMap<String, String> pageMatchRegex;
 
-    public ArticleExtractRule getRuleByDomain(String domain){
-        String rules = FileUtil.readFile(  App.i().getUserConfigPath() + CONFIG_FOLDER  + "/" + domain + ".json");
+    public ArticleExtractRule getRule(String host, Document document){
+        ArticleExtractRule rule = null;
+        rule = getRuleByDomain(host);
+        if(rule == null){
+            String ruleFileName = getRuleFileNameByHost(host);
+            if(StringUtils.isEmpty(ruleFileName)){
+                ruleFileName = getRuleFileNameByCssSelector(document);
+            }
+            if(StringUtils.isEmpty(ruleFileName)){
+                rule = getRuleByDomain(ruleFileName);
+            }
+        }
+        return rule;
+    }
+
+    public ArticleExtractRule getRuleByDomain(String host){
+        String rules = FileUtil.readFile(  App.i().getUserConfigPath() + CONFIG_FOLDER  + "/" + host + ".json");
         if (!StringUtils.isEmpty(rules)) {
             return new Gson().fromJson(rules, ArticleExtractRule.class);
         }
         return null;
     }
 
-//    public void invalidRuleByDomain(String domain){
-//        File file = new File(App.i().getUserConfigPath() + "article_extract_rule/" + domain + ".json");
-//        if(file.exists()){
-//            file.renameTo(new File(App.i().getUserConfigPath() + "article_extract_rule_invalid/" + domain + ".json"));
-//        }
-//    }
+    // public String getRuleFileName(String url, Document document){
+    //     String host = Uri.parse(url).getHost();
+    //     String ruleFileName = getRuleFileNameByHost(host);
+    //     if(StringUtils.isEmpty(ruleFileName)){
+    //         ruleFileName = getRuleFileNameByCssSelector(document);
+    //     }
+    //     return ruleFileName;
+    // }
+
+    public String getRuleFileNameByHost(String host){
+        if(hostContainKeyword == null || StringUtils.isEmpty(host)){
+            return null;
+        }
+
+        for (Map.Entry<String, String> entry:hostContainKeyword.entrySet()) {
+            if(host.contains(entry.getKey())) {
+                return entry.getValue();
+            }
+        }
+        return null;
+    }
+
+    public String getRuleFileNameByCssSelector(Document document){
+        if(pageMatchCssSelector == null || document == null){
+            return null;
+        }
+        Elements elements;
+        for (Map.Entry<String, String> entry:pageMatchCssSelector.entrySet()) {
+            elements = document.select(entry.getKey());
+            if(elements != null && elements.size() > 0) {
+                return entry.getValue();
+            }
+        }
+        return null;
+    }
+
+    public String getRuleFileNameByRegex(String page){
+        if(pageMatchRegex == null || StringUtils.isEmpty(page)){
+            return null;
+        }
+        Pattern pattern;
+        for (Map.Entry<String, String> entry:pageMatchRegex.entrySet()) {
+            pattern = Pattern.compile(entry.getKey(),Pattern.CASE_INSENSITIVE);
+            if(pattern.matcher(page).find()){
+                return entry.getValue();
+            }
+        }
+        return null;
+    }
+    // public void invalidRuleByDomain(String domain){
+    //     File file = new File(App.i().getUserConfigPath() + "article_extract_rule/" + domain + ".json");
+    //     if(file.exists()){
+    //         file.renameTo(new File(App.i().getUserConfigPath() + "article_extract_rule_invalid/" + domain + ".json"));
+    //     }
+    // }
 
     public void saveRuleByDomain(Document document, URL uri, String originalCssSelector){
         String optimizedCssSelector = optimizeCSSSelector(originalCssSelector);
@@ -81,6 +148,7 @@ public class ArticleExtractConfig {
             saveSiteRule(uri, originalCssSelector);
         }
     }
+
     private static final String RE_RULE1 = " *(div|post|entry|article)(\\.[A-z0-9-_]+)*([.#])(entry|post|article)([-_])(content|article|body)([. ]|$)";
     private static final String RE_RULE2 = " *(div|post|entry|article)(\\.[A-z0-9-_]+)*([.#])(entry|post|article|content|body)([. ]|$)";
     private static String optimizeCSSSelector(String cssQuery) {
@@ -97,16 +165,16 @@ public class ArticleExtractConfig {
         return cssQuery;
     }
 
-    private static void saveSiteRule2(URL uri, String cssSelector) {
-        ArticleExtractRule articleExtractRule = new ArticleExtractRule();
-        articleExtractRule.setContent(cssSelector);
-
-        Gson gson = new GsonBuilder()
-                .setPrettyPrinting() //对结果进行格式化，增加换行
-                .disableHtmlEscaping() //避免Gson使用时将一些字符自动转换为Unicode转义字符
-                .create();
-        FileUtil.save(App.i().getUserConfigPath() + CONFIG_FOLDER  + "/" + uri.getHost() + ".new", gson.toJson(articleExtractRule, ArticleExtractRule.class));
-    }
+    // private static void saveSiteRule2(URL uri, String cssSelector) {
+    //     ArticleExtractRule articleExtractRule = new ArticleExtractRule();
+    //     articleExtractRule.setContent(cssSelector);
+    //
+    //     Gson gson = new GsonBuilder()
+    //             .setPrettyPrinting() //对结果进行格式化，增加换行
+    //             .disableHtmlEscaping() //避免Gson使用时将一些字符自动转换为Unicode转义字符
+    //             .create();
+    //     FileUtil.save(App.i().getUserConfigPath() + CONFIG_FOLDER  + "/" + uri.getHost() + ".new", gson.toJson(articleExtractRule, ArticleExtractRule.class));
+    // }
 
     private static void saveSiteRule(URL uri, String cssSelector) {
         Gson gson = new GsonBuilder()
@@ -153,39 +221,10 @@ public class ArticleExtractConfig {
                     file.renameTo(new File(App.i().getUserConfigPath() + CONFIG_FOLDER  + "/" + uri.getHost() + ".old"));
                 }
                 FileUtil.save(App.i().getUserConfigPath() + CONFIG_FOLDER  + "/" + uri.getHost() + ".json", gson.toJson(articleExtractRule, ArticleExtractRule.class));
-                //logFile.delete();
             }
         }
 
         FileUtil.save(logFile, gson.toJson(cssSelectorMap));
     }
 
-
-    public ArticleExtractRule getRuleByCssSelector(Document document){
-        if(pageMatchCssSelector == null || document == null){
-            return null;
-        }
-        Elements elements;
-        for (Map.Entry<String, ArticleExtractRule> entry:pageMatchCssSelector.entrySet()) {
-            elements = document.select(entry.getKey());
-            if(elements != null && elements.size() > 0) {
-                return entry.getValue();
-            }
-        }
-        return null;
-    }
-
-    public ArticleExtractRule getRuleByRegex(String page){
-        if(pageMatchRegex == null || StringUtils.isEmpty(page)){
-            return null;
-        }
-        Pattern pattern;
-        for (Map.Entry<String, ArticleExtractRule> entry:pageMatchRegex.entrySet()) {
-            pattern = Pattern.compile(entry.getKey(),Pattern.CASE_INSENSITIVE);
-            if(pattern.matcher(page).find()){
-                return entry.getValue();
-            }
-        }
-        return null;
-    }
 }

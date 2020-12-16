@@ -45,7 +45,7 @@
                 <TextView
                     android:id="@+id/setting_auto_sync_title"
                     style="@style/SettingItemTitle2"
-                    android:text="@string/setting_auto_sync_title" />
+                    android:text="@string/auto_sync" />
                 <com.kyleduo.switchbutton.SwitchButton
                     android:id="@+id/setting_auto_sync_sb"
                     style="@style/SwitchButtonStyle"
@@ -64,7 +64,7 @@
                     android:layout_width="0dp"
                     android:layout_weight="1"
                     style="@style/SettingItemTitle2"
-                    android:text="@string/setting_auto_sync_on_wifi_title" />
+                    android:text="@string/auto_sync_on_wifi_title" />
                 <com.kyleduo.switchbutton.SwitchButton
                     android:id="@+id/setting_auto_sync_on_wifi_sb"
                     style="@style/SwitchButtonStyle"
@@ -79,9 +79,9 @@
                 android:onClick="onClickAutoSyncFrequencySelect"
                 style="@style/SettingItem">
                 <TextView
-                    style="@style/SettingItemTitleHorizontal"
+                    style="@style/SettingItemTitle2"
                     android:background="?android:attr/selectableItemBackground"
-                    android:text="@string/setting_sync_frequency_title" />
+                    android:text="@string/sync_frequency" />
                 <TextView
                     android:id="@+id/setting_sync_frequency_summary"
                     style="@style/SettingItemSummary"
@@ -196,13 +196,27 @@
             </LinearLayout>
 
             <LinearLayout
+                android:id="@+id/setting_send_log_file"
+                style="@style/SettingItem"
+                android:onClick="onClickSendLogFile"
+                android:orientation="horizontal">
+                <TextView
+                    android:id="@+id/setting_send_log_file_title"
+                    style="@style/SettingItemTitle2"
+                    android:text="@string/send_log_file" />
+                <TextView
+                    android:id="@+id/setting_send_log_file_summary"
+                    style="@style/SettingItemSummary" />
+            </LinearLayout>
+
+            <LinearLayout
                 android:id="@+id/setting_join_qqgroup"
                 style="@style/SettingItem"
                 android:onClick="joinQQGroup"
                 android:orientation="horizontal">
                 <TextView
                     android:id="@+id/setting_join_qqgroup_title"
-                    style="@style/SettingItemTitleHorizontal"
+                    style="@style/SettingItemTitle2"
                     android:text="@string/qq_group" />
                 <TextView
                     android:id="@+id/setting_join_qqgroup_summary"
@@ -217,7 +231,7 @@
                 android:orientation="horizontal">
                 <TextView
                     android:id="@+id/setting_feedback_title"
-                    style="@style/SettingItemTitleHorizontal"
+                    style="@style/SettingItemTitle2"
                     android:text="@string/feedback" />
                 <TextView
                     android:id="@+id/setting_feedback_summary"
@@ -231,7 +245,7 @@
                 android:orientation="horizontal">
                 <TextView
                     android:id="@+id/setting_about_title"
-                    style="@style/SettingItemTitleHorizontal"
+                    style="@style/SettingItemTitle2"
                     android:text="@string/about" />
                 <TextView
                     android:id="@+id/setting_about_summary"

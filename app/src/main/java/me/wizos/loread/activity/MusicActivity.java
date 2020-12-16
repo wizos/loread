@@ -29,7 +29,6 @@ import com.lxj.xpopup.XPopup;
 import com.lxj.xpopup.enums.PopupAnimation;
 import com.lxj.xpopup.interfaces.OnSelectListener;
 import com.noober.background.drawable.DrawableCreator;
-import com.socks.library.KLog;
 import com.yhao.floatwindow.constant.MoveType;
 import com.yhao.floatwindow.constant.Screen;
 import com.yhao.floatwindow.view.FloatWindow;
@@ -61,7 +60,7 @@ public class MusicActivity extends BaseActivity {
         }
         String title = intent.getStringExtra("title");
 
-        KLog.e("获取到链接：" + title + playUrl);
+        XLog.e("获取到链接：" + title + playUrl);
 
         playConnection = new PlayConnection();
         intent = new Intent(this, MusicService.class);
@@ -136,7 +135,7 @@ public class MusicActivity extends BaseActivity {
                 currTimeView.setText(TimeUtil.getTime(currentPosition));
                 totalTimeView.setText(TimeUtil.getTime(duration));
             }
-            //KLog.e("进度：" + seekBar + ", " + currTimeView + " , " + duration + " = "  + TimeUtil.getTime(duration));
+            //XLog.e("进度：" + seekBar + ", " + currTimeView + " , " + duration + " = "  + TimeUtil.getTime(duration));
             maHandler.postDelayed(progressTask, 1000);
         }
     };
@@ -146,7 +145,7 @@ public class MusicActivity extends BaseActivity {
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
             //获得service中的MyBinder
-            KLog.e("服务连接：onServiceConnected" + musicControl);
+            XLog.e("服务连接：onServiceConnected" + musicControl);
             initView(service);
         }
 

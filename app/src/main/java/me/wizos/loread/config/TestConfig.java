@@ -46,10 +46,8 @@ public class TestConfig {
 
 
 
-    private boolean ttsFile = false;
+    public boolean ttsFile = false;
+    public boolean useEmojiFilter = false;
     public int time = 60;
 
-    public boolean isTtsFile() {
-        return ttsFile;
-    }
 }

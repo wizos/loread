@@ -5,12 +5,12 @@ import android.text.TextUtils;
 
 import androidx.annotation.NonNull;
 import androidx.collection.ArrayMap;
+import androidx.collection.ArraySet;
 
 import com.elvishew.xlog.XLog;
 import com.hjq.toast.ToastUtils;
 import com.jeremyliao.liveeventbus.LiveEventBus;
 import com.lzy.okgo.exception.HttpException;
-import com.socks.library.KLog;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -18,7 +18,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -115,7 +114,7 @@ public class InoReaderApi extends OAuthApi<Feed, CategoryItem> implements ILogin
         if (!tempBaseUrl.endsWith("/")) {
             tempBaseUrl = tempBaseUrl + "/";
         }
-        KLog.i(" tempBaseUrl 地址：" + tempBaseUrl + " - " + baseUrl );
+        XLog.i(" tempBaseUrl 地址：" + tempBaseUrl + " - " + baseUrl );
         Retrofit retrofit = new Retrofit.Builder()
                 .baseUrl(tempBaseUrl) // 设置网络请求的Url地址, 必须以/结尾
                 .addConverterFactory(StringConverterFactory.create())
@@ -295,7 +294,7 @@ public class InoReaderApi extends OAuthApi<Feed, CategoryItem> implements ILogin
             String uid = App.i().getUser().getId();
 
             XLog.i("3 - 同步订阅源信息");
-            LiveEventBus.get(SyncWorker.SYNC_PROCESS_FOR_SUBTITLE).post( App.i().getString(R.string.sync_feed_info) );
+            LiveEventBus.get(SyncWorker.SYNC_PROCESS_FOR_SUBTITLE).post( App.i().getString(R.string.sync_feed_info, "3.") );
 
             // 获取分类
             List<Category> categories = service.getCategoryItems(getAuthorization()).execute().body().getCategories();
@@ -340,14 +339,14 @@ public class InoReaderApi extends OAuthApi<Feed, CategoryItem> implements ILogin
             coverFeedCategory(feedCategories);
 
             XLog.i("2 - 同步文章信息");
-            LiveEventBus.get(SyncWorker.SYNC_PROCESS_FOR_SUBTITLE).post( App.i().getString(R.string.sync_article_refs) );
+            LiveEventBus.get(SyncWorker.SYNC_PROCESS_FOR_SUBTITLE).post( App.i().getString(R.string.sync_article_refs, "2.") );
             // 获取未读资源
-            HashSet<String> unreadRefsList = fetchUnreadRefs();
+            ArraySet<String> unreadRefsList = fetchUnreadRefs();
             // 获取加星资源
-            HashSet<String> staredRefsList = fetchStaredRefs();
+            ArraySet<String> staredRefsList = fetchStaredRefs();
 
             XLog.i("1 - 同步文章内容");
-            ArrayList<HashSet<String>> refsList = splitRefs(unreadRefsList, staredRefsList);
+            ArrayList<ArraySet<String>> refsList = splitRefs(unreadRefsList, staredRefsList);
             int allSize = refsList.get(0).size() + refsList.get(1).size() + refsList.get(2).size();
 
             // 抓取【未读、未加星】文章
@@ -428,12 +427,15 @@ public class InoReaderApi extends OAuthApi<Feed, CategoryItem> implements ILogin
                 tempArticleList.add(item.convert(articleChanger));
             }
             CoreDB.i().articleDao().insert(tempArticleList);
-            LiveEventBus.get(SyncWorker.SYNC_PROCESS_FOR_SUBTITLE).post( App.i().getString(R.string.sync_article_content, syncedSize = syncedSize + fetchUnit, allSize) );
+            LiveEventBus.get(SyncWorker.SYNC_PROCESS_FOR_SUBTITLE).post( App.i().getString(R.string.sync_article_content, "1.", syncedSize = syncedSize + fetchUnit, allSize) );
             needFetchCount = subIds.size() - hadFetchCount;
         }
     }
 
-    private HashSet<String> fetchUnreadRefs() throws IOException {
+
+
+
+    private ArraySet<String> fetchUnreadRefs() throws IOException {
         List<ItemRefs> itemRefs = new ArrayList<>();
         // String info;
         ItemIds tempItemIds = new ItemIds();
@@ -445,49 +447,55 @@ public class InoReaderApi extends OAuthApi<Feed, CategoryItem> implements ILogin
         } while (tempItemIds.getContinuation() != null && i < 5);
         Collections.reverse(itemRefs); // 倒序排列
 
-        List<Article> localUnreadArticles = CoreDB.i().articleDao().getUnreadNoOrder(App.i().getUser().getId());
-        Map<String, Article> localUnreadArticlesMap = new ArrayMap<>(localUnreadArticles.size());
-        List<Article> changedArticles = new ArrayList<>();
-        // 筛选下来，最终要去云端获取内容的未读Refs的集合
-        HashSet<String> tempUnreadIds = new HashSet<>(itemRefs.size());
-        // 数据量大的一方
-        String articleId;
-        for (Article article : localUnreadArticles) {
-            articleId = article.getId();
-            localUnreadArticlesMap.put(articleId, article);
-        }
-        // 数据量小的一方
-        Article article;
-        for (ItemRefs item : itemRefs) {
-            articleId = item.getLongId();
-            article = localUnreadArticlesMap.get(articleId);
-            if (article != null) {
-                localUnreadArticlesMap.remove(articleId);
-            } else {
-                article = CoreDB.i().articleDao().getById(App.i().getUser().getId(), articleId);
-                if (article != null && article.getReadStatus() == App.STATUS_READED) {
-                    article.setReadStatus(App.STATUS_UNREAD);
-                    changedArticles.add(article);
-                } else {
-                    // 本地无，而云端有，加入要请求的未读资源
-                    tempUnreadIds.add(articleId);
-                }
-            }
-        }
-        for (Map.Entry<String, Article> entry : localUnreadArticlesMap.entrySet()) {
-            if (entry.getKey() != null) {
-                article = localUnreadArticlesMap.get(entry.getKey());
-                // 本地未读设为已读
-                article.setReadStatus(App.STATUS_READED);
-                changedArticles.add(article);
-            }
-        }
+        // List<Article> localUnreadArticles = CoreDB.i().articleDao().getUnreadNoOrder(App.i().getUser().getId());
+        // Map<String, Article> localUnreadArticlesMap = new ArrayMap<>(localUnreadArticles.size());
+        // List<Article> changedArticles = new ArrayList<>();
+        // // 筛选下来，最终要去云端获取内容的未读Refs的集合
+        // HashSet<String> tempUnreadIds = new HashSet<>(itemRefs.size());
+        // // 数据量大的一方
+        // String articleId;
+        // for (Article article : localUnreadArticles) {
+        //     articleId = article.getId();
+        //     localUnreadArticlesMap.put(articleId, article);
+        // }
+        // // 数据量小的一方
+        // Article article;
+        // for (ItemRefs item : itemRefs) {
+        //     articleId = item.getLongId();
+        //     article = localUnreadArticlesMap.get(articleId);
+        //     if (article != null) {
+        //         localUnreadArticlesMap.remove(articleId);
+        //     } else {
+        //         article = CoreDB.i().articleDao().getById(App.i().getUser().getId(), articleId);
+        //         if (article != null && article.getReadStatus() == App.STATUS_READED) {
+        //             article.setReadStatus(App.STATUS_UNREAD);
+        //             changedArticles.add(article);
+        //         } else {
+        //             // 本地无，而云端有，加入要请求的未读资源
+        //             tempUnreadIds.add(articleId);
+        //         }
+        //     }
+        // }
+        // for (Map.Entry<String, Article> entry : localUnreadArticlesMap.entrySet()) {
+        //     if (entry.getKey() != null) {
+        //         article = localUnreadArticlesMap.get(entry.getKey());
+        //         // 本地未读设为已读
+        //         article.setReadStatus(App.STATUS_READED);
+        //         changedArticles.add(article);
+        //     }
+        // }
+        //
+        // CoreDB.i().articleDao().update(changedArticles);
+        // return tempUnreadIds;
 
-        CoreDB.i().articleDao().update(changedArticles);
-        return tempUnreadIds;
+        ArrayList<String> ids = new ArrayList<>(itemRefs.size());
+        for (ItemRefs item : itemRefs) {
+            ids.add(item.getLongId());
+        }
+        return handleUnreadRefs(ids);
     }
 
-    private HashSet<String> fetchStaredRefs() throws HttpException, IOException {
+    private ArraySet<String> fetchStaredRefs() throws HttpException, IOException {
         List<ItemRefs> itemRefs = new ArrayList<>();
         String info;
         ItemIds tempItemIds = new ItemIds();
@@ -499,47 +507,53 @@ public class InoReaderApi extends OAuthApi<Feed, CategoryItem> implements ILogin
         } while (tempItemIds.getContinuation() != null && i < 5);
         Collections.reverse(itemRefs); // 倒序排列
 
-        List<Article> localStarredArticles = CoreDB.i().articleDao().getStaredNoOrder(App.i().getUser().getId());
-        Map<String, Article> localStarredArticlesMap = new ArrayMap<>(localStarredArticles.size());
-        List<Article> changedArticles = new ArrayList<>();
-        HashSet<String> tempStarredIds = new HashSet<>(itemRefs.size());
+        // List<Article> localStarredArticles = CoreDB.i().articleDao().getStaredNoOrder(App.i().getUser().getId());
+        // Map<String, Article> localStarredArticlesMap = new ArrayMap<>(localStarredArticles.size());
+        // List<Article> changedArticles = new ArrayList<>();
+        // HashSet<String> tempStarredIds = new HashSet<>(itemRefs.size());
+        //
+        // String articleId;
+        // // 第1步，遍历数据量大的一方A，将其比对项目放入Map中
+        // for (Article article : localStarredArticles) {
+        //     articleId = article.getId();
+        //     localStarredArticlesMap.put(articleId, article);
+        // }
+        //
+        // // 第2步，遍历数据量小的一方B。到Map中找，是否含有b中的比对项。有则XX，无则YY
+        // Article article;
+        // for (ItemRefs item : itemRefs) {
+        //     articleId = item.getLongId();
+        //     article = localStarredArticlesMap.get(articleId);
+        //     if (article != null) {
+        //         localStarredArticlesMap.remove(articleId);
+        //     } else {
+        //         article = CoreDB.i().articleDao().getById(App.i().getUser().getId(), articleId);
+        //         if (article != null) {
+        //             article.setStarStatus(App.STATUS_STARED);
+        //             changedArticles.add(article);
+        //         } else {
+        //             // 本地无，而云远端有，加入要请求的未读资源
+        //             tempStarredIds.add(articleId);
+        //         }
+        //     }
+        // }
+        //
+        // for (Map.Entry<String, Article> entry : localStarredArticlesMap.entrySet()) {
+        //     if (entry.getKey() != null) {
+        //         article = localStarredArticlesMap.get(entry.getKey());
+        //         article.setStarStatus(App.STATUS_UNSTAR);
+        //         changedArticles.add(article);// 取消加星
+        //     }
+        // }
+        //
+        // CoreDB.i().articleDao().update(changedArticles);
+        // return tempStarredIds;
 
-        String articleId;
-        // 第1步，遍历数据量大的一方A，将其比对项目放入Map中
-        for (Article article : localStarredArticles) {
-            articleId = article.getId();
-            localStarredArticlesMap.put(articleId, article);
-        }
-
-        // 第2步，遍历数据量小的一方B。到Map中找，是否含有b中的比对项。有则XX，无则YY
-        Article article;
+        ArrayList<String> ids = new ArrayList<>(itemRefs.size());
         for (ItemRefs item : itemRefs) {
-            articleId = item.getLongId();
-            article = localStarredArticlesMap.get(articleId);
-            if (article != null) {
-                localStarredArticlesMap.remove(articleId);
-            } else {
-                article = CoreDB.i().articleDao().getById(App.i().getUser().getId(), articleId);
-                if (article != null) {
-                    article.setStarStatus(App.STATUS_STARED);
-                    changedArticles.add(article);
-                } else {
-                    // 本地无，而云远端有，加入要请求的未读资源
-                    tempStarredIds.add(articleId);
-                }
-            }
+            ids.add(item.getLongId());
         }
-
-        for (Map.Entry<String, Article> entry : localStarredArticlesMap.entrySet()) {
-            if (entry.getKey() != null) {
-                article = localStarredArticlesMap.get(entry.getKey());
-                article.setStarStatus(App.STATUS_UNSTAR);
-                changedArticles.add(article);// 取消加星
-            }
-        }
-
-        CoreDB.i().articleDao().update(changedArticles);
-        return tempStarredIds;
+        return handleStaredRefs(ids);
     }
 
     private RequestBody genRequestBody(List<String> ids) {
@@ -841,13 +855,13 @@ public class InoReaderApi extends OAuthApi<Feed, CategoryItem> implements ILogin
      * @param tempStarredIds
      * @return
      */
-    public ArrayList<HashSet<String>> splitRefs(HashSet<String> tempUnreadIds, HashSet<String> tempStarredIds) {
-//        XLog.i("【reRefs1】云端未读" + tempUnreadIds.size() + "，云端加星" + tempStarredIds.size());
+    public ArrayList<ArraySet<String>> splitRefs(ArraySet<String> tempUnreadIds, ArraySet<String> tempStarredIds) {
+        // XLog.i("【reRefs1】云端未读" + tempUnreadIds.size() + "，云端加星" + tempStarredIds.size());
         int total = Math.min(tempUnreadIds.size(), tempStarredIds.size());
 
-        HashSet<String> reUnreadUnstarRefs;
-        HashSet<String> reReadStarredRefs = new HashSet<>(tempStarredIds.size());
-        HashSet<String> reUnreadStarredRefs = new HashSet<>(total);
+        ArraySet<String> reUnreadUnstarRefs;
+        ArraySet<String> reReadStarredRefs = new ArraySet<>(tempStarredIds.size());
+        ArraySet<String> reUnreadStarredRefs = new ArraySet<>(total);
 
         for (String id : tempStarredIds) {
             if (tempUnreadIds.contains(id)) {
@@ -859,11 +873,11 @@ public class InoReaderApi extends OAuthApi<Feed, CategoryItem> implements ILogin
         }
         reUnreadUnstarRefs = tempUnreadIds;
 
-        ArrayList<HashSet<String>> refsList = new ArrayList<>();
+        ArrayList<ArraySet<String>> refsList = new ArrayList<>();
         refsList.add(reUnreadUnstarRefs);
         refsList.add(reReadStarredRefs);
         refsList.add(reUnreadStarredRefs);
-//        XLog.i("【reRefs2】" + reUnreadUnstarRefs.size() + "--" + reReadStarredRefs.size() + "--" + reUnreadStarredRefs.size());
+        // XLog.i("【reRefs2】" + reUnreadUnstarRefs.size() + "--" + reReadStarredRefs.size() + "--" + reUnreadStarredRefs.size());
         return refsList;
     }
 }

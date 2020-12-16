@@ -4,7 +4,7 @@ import android.net.Uri;
 import android.text.TextUtils;
 import android.webkit.URLUtil;
 
-import com.socks.library.KLog;
+import com.elvishew.xlog.XLog;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
@@ -21,7 +21,7 @@ public class UriUtil {
         return uri.getScheme() + "://" + uri.getHost() + "/favicon.ico";
     }
 
-    public static String guessFileName(String url, String contentDisposition, String mimeType) {
+    public static String guessFileNameExt(String url, String contentDisposition, String mimeType) {
         String fileNameByGuess;
         // 处理会把 epub 文件，识别为 bin 文件的 bug：https://blog.csdn.net/imesong/article/details/45568697
         if ("application/octet-stream".equals(mimeType)) {
@@ -47,7 +47,7 @@ public class UriUtil {
             fileNameByGuess = URLUtil.guessFileName(url, contentDisposition, mimeType);
         }
 
-        KLog.i("猜测的文件名为：" + mimeType + " -- " + fileNameByGuess + " -- " + contentDisposition );
+        XLog.i("猜测的文件名为：" + mimeType + " -- " + fileNameByGuess + " -- " + contentDisposition );
         // 处理 url 中包含乱码中文的问题
         try {
             fileNameByGuess = URLDecoder.decode(fileNameByGuess, "UTF-8");
@@ -89,10 +89,16 @@ public class UriUtil {
         return FileUtil.getSaveableName(fileName);
     }
 
+    public static String guessFileSuffix(String name) {
+        if (TextUtils.isEmpty(name)) {
+            return "";
+        }
+        return name.substring(name.lastIndexOf("."));
+    }
 
     public static String guessImageSuffix(String url) {
         int typeIndex = url.lastIndexOf(".");
-        String fileExt = url.substring(typeIndex, url.length());
+        String fileExt = url.substring(typeIndex);
         if (fileExt.contains(".jpg")) {
             url = url.substring(0, typeIndex) + ".jpg";
         } else if (fileExt.contains(".jpeg")) {
@@ -102,7 +108,7 @@ public class UriUtil {
         } else if (fileExt.contains(".gif")) {
             url = url.substring(0, typeIndex) + ".gif";
         }
-        KLog.d("【 修正后的url 】" + url);
+        XLog.d("【 修正后的url 】" + url);
         return url;
     }
 }

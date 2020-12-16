@@ -21,7 +21,6 @@ import com.afollestad.materialdialogs.MaterialDialog;
 import com.elvishew.xlog.XLog;
 import com.hjq.toast.ToastUtils;
 import com.lzy.okgo.OkGo;
-import com.socks.library.KLog;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -134,6 +133,25 @@ public class LabActivity extends AppCompatActivity {
         });
     }
 
+
+    public void onClickArchive(View view) {
+        materialDialog = new MaterialDialog.Builder(this)
+                .title("正在处理")
+                .content("请耐心等待下")
+                .progress(true, 0)
+                .canceledOnTouchOutside(false)
+                .progressIndeterminateStyle(false)
+                .show();
+        AsyncTask.SERIAL_EXECUTOR.execute(new Runnable() {
+            @Override
+            public void run() {
+                App.i().getApi().deleteExpiredArticles();
+                materialDialog.dismiss();
+            }
+        });
+    }
+
+
     public void onClickClearHtmlDir(View view) {
         AsyncTask.SERIAL_EXECUTOR.execute(new Runnable() {
             @Override
@@ -142,6 +160,7 @@ public class LabActivity extends AppCompatActivity {
             }
         });
     }
+
 
     /**
      * 将某些没有被清理到的缓存文件夹给清理掉
@@ -158,12 +177,12 @@ public class LabActivity extends AppCompatActivity {
 
         File dir = new File(App.i().getUserCachePath());
         File[] arts = dir.listFiles();
-        KLog.e("文件数量：" + arts.length);
+        XLog.e("文件数量：" + arts.length);
         String x = "";
         for (File sourceFile : arts) {
             x = temp.get(sourceFile.getName());
             if (null == x) {
-                KLog.e("移动文件名：" + "   " + sourceFile.getName());
+                XLog.e("移动文件名：" + "   " + sourceFile.getName());
                 FileUtil.moveDir(sourceFile.getAbsolutePath(), App.i().getUserFilesDir() + "/move/" + sourceFile.getName());
             }
         }
@@ -191,7 +210,7 @@ public class LabActivity extends AppCompatActivity {
     public void openActivity2(View view){
         EditText editText = findViewById(R.id.lab_enter_edittext);
         String url = editText.getText().toString();
-        KLog.e( "获取的url：" + url );
+        XLog.e( "获取的url：" + url );
         int enterSize = getMatchActivitiesSize(url);
         int wizosSize = getMatchActivitiesSize("https://wizos.me");
         Intent intent;
@@ -212,7 +231,7 @@ public class LabActivity extends AppCompatActivity {
         if(StringUtils.isEmpty(url)){
             url = "https://blog.wizos.me";
         }
-        KLog.e( "获取的url：" + url );
+        XLog.e( "获取的url：" + url );
         Intent intent;
         // 使用内置浏览器
         if( App.i().getUser().isOpenLinkBySysBrowser() && (url.startsWith(SCHEMA_HTTP) || url.startsWith(SCHEMA_HTTPS))){
@@ -225,14 +244,14 @@ public class LabActivity extends AppCompatActivity {
             intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
             List<ResolveInfo> activities = getPackageManager().queryIntentActivities(intent, PackageManager.MATCH_DEFAULT_ONLY);
             List<ResolveInfo> activitiesToHide = getPackageManager().queryIntentActivities(new Intent(Intent.ACTION_VIEW, Uri.parse("https://wizos.me")), PackageManager.MATCH_DEFAULT_ONLY);
-            KLog.e("数量：" + activities.size() +" , " + activitiesToHide.size());
+            XLog.e("数量：" + activities.size() +" , " + activitiesToHide.size());
 
             if( activities.size() != activitiesToHide.size()){
                 HashSet<String> hideApp = new HashSet<>();
                 //hideApp.add("com.kingsoft.moffice_pro");
                 for (ResolveInfo currentInfo : activitiesToHide) {
                     hideApp.add(currentInfo.activityInfo.packageName);
-                    KLog.e("内容1：" + currentInfo.activityInfo.packageName);
+                    XLog.e("内容1：" + currentInfo.activityInfo.packageName);
                 }
                 ArrayList<Intent> targetIntents = new ArrayList<Intent>();
                 for (ResolveInfo currentInfo : activities) {
@@ -242,7 +261,7 @@ public class LabActivity extends AppCompatActivity {
                         targetIntent.setPackage(packageName);
                         targetIntents.add(targetIntent);
                     }
-                    KLog.e("内容2：" + packageName);
+                    XLog.e("内容2：" + packageName);
                 }
                 if(targetIntents.size() > 0) {
                     intent = Intent.createChooser(targetIntents.remove(0),  getString(R.string.open_with));
@@ -260,33 +279,47 @@ public class LabActivity extends AppCompatActivity {
         overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
     }
 
+    public void openLink(View view){
+        EditText editText = findViewById(R.id.lab_enter_edittext);
+        String url = editText.getText().toString();
+        if(StringUtils.isEmpty(url)){
+            ToastUtils.show("未输入网址，请检查");
+            return;
+        }
+        Intent intent;
+        intent = new Intent(this, WebActivity.class);
+        intent.setData(Uri.parse(url));
+        startActivity(intent);
+        overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
+    }
+
     public void openActivity(View view){
         EditText editText = findViewById(R.id.lab_enter_edittext);
         String url = editText.getText().toString();
         if(StringUtils.isEmpty(url)){
             url = "https://blog.wizos.me";
         }
-        KLog.e( "获取的url：" + url );
+        XLog.e( "获取的url：" + url );
         Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
         List<ResolveInfo> activitiesToHide = getPackageManager().queryIntentActivities(intent, PackageManager.MATCH_DEFAULT_ONLY);
         for (ResolveInfo currentInfo : activitiesToHide) {
-            KLog.e("【MATCH_DEFAULT_ONLY】" + currentInfo.activityInfo.packageName);
+            XLog.e("【MATCH_DEFAULT_ONLY】" + currentInfo.activityInfo.packageName);
         }
 
         activitiesToHide = getPackageManager().queryIntentActivities(intent, PackageManager.GET_DISABLED_UNTIL_USED_COMPONENTS);
         for (ResolveInfo currentInfo : activitiesToHide) {
-            KLog.e("【GET_DISABLED_UNTIL_USED_COMPONENTS】" + currentInfo.activityInfo.packageName);
+            XLog.e("【GET_DISABLED_UNTIL_USED_COMPONENTS】" + currentInfo.activityInfo.packageName);
         }
 
         activitiesToHide = getPackageManager().queryIntentActivities(intent, PackageManager.GET_RESOLVED_FILTER);
         for (ResolveInfo currentInfo : activitiesToHide) {
-            KLog.e("【GET_RESOLVED_FILTER】" + currentInfo.activityInfo.packageName);
+            XLog.e("【GET_RESOLVED_FILTER】" + currentInfo.activityInfo.packageName);
         }
 
 
         activitiesToHide = getPackageManager().queryIntentActivities(intent, PackageManager.GET_DISABLED_UNTIL_USED_COMPONENTS);
         for (ResolveInfo currentInfo : activitiesToHide) {
-            KLog.e("【GET_DISABLED_UNTIL_USED_COMPONENTS】" + currentInfo.activityInfo.packageName);
+            XLog.e("【GET_DISABLED_UNTIL_USED_COMPONENTS】" + currentInfo.activityInfo.packageName);
         }
     }
 
@@ -295,7 +328,7 @@ public class LabActivity extends AppCompatActivity {
         PackageManager packageManager = getPackageManager();
         List<ResolveInfo> list = packageManager.queryIntentActivities(intent, PackageManager.MATCH_DEFAULT_ONLY);
         for (ResolveInfo resolveInfo:list) {
-            KLog.e( "适配的包名：" + resolveInfo.activityInfo.packageName );
+            XLog.e( "适配的包名：" + resolveInfo.activityInfo.packageName );
         }
         return list.size();
     }
@@ -329,20 +362,20 @@ public class LabActivity extends AppCompatActivity {
         String uid = App.i().getUser().getId();
         List<Article> articles = CoreDB.i().articleDao().getNotTagStar(uid,0);
         List<ArticleTag> articleTags = new ArrayList<>();
-        KLog.e("设置 没有tag的 数据：" + articles.size() );
+        XLog.e("设置 没有tag的 数据：" + articles.size() );
         Set<String> tagTitleSet = new HashSet<>();
         for (Article article: articles){
-            KLog.e("article feedId：" + article.getFeedId() );
+            XLog.e("article feedId：" + article.getFeedId() );
             if(StringUtils.isEmpty(article.getFeedId())){
                 continue;
             }
-            KLog.e("article 数据：" + article);
+            XLog.e("article 数据：" + article);
             List<Category> categories = CoreDB.i().categoryDao().getByFeedId(uid,article.getFeedId());
             for (Category category:categories) {
                 tagTitleSet.add(category.getTitle());
                 ArticleTag articleTag = new ArticleTag(uid, article.getId(), category.getTitle());
                 articleTags.add(articleTag );
-                KLog.e("设置 articleTag 数据：" + articleTag);
+                XLog.e("设置 articleTag 数据：" + articleTag);
             }
         }
 
@@ -353,7 +386,7 @@ public class LabActivity extends AppCompatActivity {
             tag.setId(title);
             tag.setTitle(title);
             tags.add(tag);
-            KLog.e("设置 Tag 数据：" + tag);
+            XLog.e("设置 Tag 数据：" + tag);
         }
         CoreDB.i().tagDao().insert(tags);
         CoreDB.i().articleTagDao().insert(articleTags);
@@ -438,7 +471,7 @@ public class LabActivity extends AppCompatActivity {
         }else {
             List<Article> articles = CoreDB.i().articleDao().search(App.i().getUser().getId(),text);
             XLog.i("搜索耗时：" + (System.currentTimeMillis() - time));
-            XLog.i("搜索结果：" + articles);
+            XLog.i("搜索结果：" + (articles==null ? 0:articles.size()));
         }
     }
     public void onClickSearch2(View view) {
@@ -450,7 +483,7 @@ public class LabActivity extends AppCompatActivity {
         }else {
             List<Article> articles = CoreDB.i().articleDao().search2(App.i().getUser().getId(),text);
             XLog.i("搜索耗时：" + (System.currentTimeMillis() - time));
-            XLog.i("搜索结果：" + articles);
+            XLog.i("搜索结果：" + (articles==null ? 0:articles.size()));
         }
     }
 

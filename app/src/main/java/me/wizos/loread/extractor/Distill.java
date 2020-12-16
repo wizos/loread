@@ -119,11 +119,17 @@ public class Distill {
         call.enqueue(new Callback() {
             @Override
             public void onFailure(@NotNull Call call, @NotNull IOException e) {
-                XLog.d("OkHttp 获取全文失败，开始用 WebView 获取全文");
+                XLog.d("OkHttp 获取全文失败");
+                if(call.isCanceled()){
+                    return;
+                }
                 dispatcher.onFailure(App.i().getString(R.string.not_responding));
             }
             @Override
             public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
+                if(call.isCanceled()){
+                    return;
+                }
                 ResponseBody responseBody = response.body();
                 if( response.isSuccessful() && responseBody != null){
                     MediaType mediaType  = responseBody.contentType();
@@ -133,7 +139,7 @@ public class Distill {
                     }
                     document = Jsoup.parse(responseBody.byteStream(), charset, url);
                     // document.getElementsByTag("script").remove();
-                    XLog.d("OkHttp 获取全文成功：" + keyword + " = " +  document.body().html() );
+                    XLog.d("OkHttp 获取全文成功：" + keyword + " = " );
                     if(!document.body().text().contains(keyword)){
                         getByWebView();
                     }else {
@@ -193,10 +199,7 @@ public class Distill {
         ArticleExtractRule rule;
         String content = null;
         ExtractPage extractPage = new ExtractPage();
-        rule = ArticleExtractConfig.i().getRuleByDomain(uri.getHost());
-        if(rule == null){
-            rule = ArticleExtractConfig.i().getRuleByCssSelector(doc);
-        }
+        rule = ArticleExtractConfig.i().getRule(uri.getHost(),doc);
         // XLog.i("抓取规则："  + uri.getHost() + " ==  " + rule );
         if(rule == null){
             Element newDoc = new Extractor(doc).getContentElementWithKeyword(keyword);

@@ -14,11 +14,11 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import com.afollestad.materialdialogs.MaterialDialog;
 import com.afollestad.materialdialogs.simplelist.MaterialSimpleListAdapter;
 import com.afollestad.materialdialogs.simplelist.MaterialSimpleListItem;
+import com.elvishew.xlog.XLog;
 import com.hjq.toast.ToastUtils;
 import com.jeremyliao.liveeventbus.LiveEventBus;
 import com.lxj.xpopup.XPopup;
 import com.lxj.xpopup.impl.LoadingPopupView;
-import com.socks.library.KLog;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -62,7 +62,7 @@ public class ProviderActivity extends BaseActivity {
 
     public void selectLoginAccount(View view){
         final List<User> users = CoreDB.i().userDao().loadAll();
-        KLog.i("点击切换账号：" + users );
+        XLog.i("点击切换账号：" + users );
         // 弹窗的适配器
         MaterialSimpleListAdapter adapter = new MaterialSimpleListAdapter(new MaterialSimpleListAdapter.Callback() {
             @Override
@@ -112,7 +112,7 @@ public class ProviderActivity extends BaseActivity {
                         try {
                             URL url = new URL(input.toString());
                             String inoReaderUrl = input.toString();
-                            KLog.e("输入的url" + inoReaderUrl);
+                            XLog.e("输入的url" + inoReaderUrl);
                             if(StringUtils.isEmpty(inoReaderUrl)){
                                 ToastUtils.show(R.string.invalid_site_url_hint);
                                 return;
@@ -173,17 +173,17 @@ public class ProviderActivity extends BaseActivity {
         api.getAccessToken(code, new CallbackX<Token,String>() {
             @Override
             public void onSuccess(Token token) {
-                KLog.e("授权为：" + token);
+                XLog.e("授权为：" + token);
                 dialog.setTitle(getString(R.string.fetch_user_info));
                 api.setAuthorization(token.getAuth());
                 api.fetchUserInfo(new CallbackX<User,String>() {
                     @Override
                     public void onSuccess(User user) {
-                        KLog.e("用户资料：" + user + token.getAuth());
+                        XLog.e("用户资料：" + user + token.getAuth());
                         user.setToken(token);
                         if(api instanceof InoReaderApi){
                             user.setHost( ((InoReaderApi)api).getTempBaseUrl() );
-                            KLog.e("用户资料aaa："  + user.getHost());
+                            XLog.e("用户资料aaa："  + user.getHost());
                         }
                         // if(api instanceof InoReaderApi && !TextUtils.isEmpty(InoReaderApi.tempBaseUrl)){
                         //     user.setHost( InoReaderApi.tempBaseUrl );
@@ -193,7 +193,7 @@ public class ProviderActivity extends BaseActivity {
                         App.i().setApi(api);
                         CoreDB.i().userDao().insert(user);
                         dialog.dismiss();
-                        KLog.e(token);
+                        XLog.e(token);
                         App.i().restartApp();
                         LiveEventBus.get(SyncWorker.SYNC_TASK_STATUS).post(true);
                     }
@@ -216,7 +216,7 @@ public class ProviderActivity extends BaseActivity {
     protected void onNewIntent(Intent paramIntent) {
         super.onNewIntent(paramIntent);
         String url = paramIntent.getDataString();
-        KLog.e("获取到数据：" + url + " , " + paramIntent );
+        XLog.e("获取到数据：" + url + " , " + paramIntent );
         if (TextUtils.isEmpty(url)) {
             // ToastUtils.show(getString(R.string.auth_failure_please_try_again));
             return;
@@ -226,7 +226,7 @@ public class ProviderActivity extends BaseActivity {
         String host = uri.getHost();
         String code = uri.getQueryParameter("code");
 
-        KLog.e("获取：" + schema + " , " + host + " , " + code);
+        XLog.e("获取：" + schema + " , " + host + " , " + code);
         if (StringUtils.isEmpty(schema) || TextUtils.isEmpty(host) || TextUtils.isEmpty(code)) {
             ToastUtils.show(getString(R.string.auth_failure_please_try_again));
             return;
@@ -242,7 +242,7 @@ public class ProviderActivity extends BaseActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
         super.onActivityResult(requestCode, resultCode, intent);
-        KLog.e("---------" + resultCode + requestCode);
+        XLog.e("---------" + resultCode + requestCode);
         if (resultCode == App.ActivityResult_LoginPageToProvider) {
             App.i().restartApp();
         }

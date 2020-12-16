@@ -9,7 +9,7 @@
     android:background="?attr/bottombar_bg"
     tools:ShowIn="@layout/activity_search">
 
-    <TextView
+    <Button
         android:id="@+id/search_intent_feeds"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -22,21 +22,23 @@
         android:background="?android:attr/selectableItemBackground"
         android:clickable="true"
         android:textColor="?attr/lv_item_desc_color"
-        android:onClick="onSearchFeedsClicked" />
+        android:onClick="onClickSearchFeeds"
+        android:focusable="true" />
 
-    <TextView
-        android:id="@+id/search_local_articles"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
-        android:layout_marginBottom="5dp"
-        android:layout_gravity="center"
-        android:padding="10dp"
-        android:gravity="center"
-        android:text="@string/search_header_search_local_articles"
-        android:background="?android:attr/selectableItemBackground"
-        android:clickable="true"
-        android:textColor="?attr/lv_item_desc_color"
-        android:onClick="onSearchLocalArtsClicked" />
+    <!--<Button-->
+    <!--    android:id="@+id/search_local_articles"-->
+    <!--    android:layout_width="match_parent"-->
+    <!--    android:layout_height="wrap_content"-->
+    <!--    android:layout_marginTop="10dp"-->
+    <!--    android:layout_marginBottom="5dp"-->
+    <!--    android:layout_gravity="center"-->
+    <!--    android:padding="10dp"-->
+    <!--    android:gravity="center"-->
+    <!--    android:text="@string/search_header_search_local_articles"-->
+    <!--    android:background="?android:attr/selectableItemBackground"-->
+    <!--    android:clickable="true"-->
+    <!--    android:textColor="?attr/lv_item_desc_color"-->
+    <!--    android:onClick="onClickSearchLocalArticles"-->
+    <!--    android:focusable="true" />-->
 
 </LinearLayout>

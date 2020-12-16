@@ -8,7 +8,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
 
-import com.socks.library.KLog;
+import com.elvishew.xlog.XLog;
 
 import me.wizos.loread.R;
 import me.wizos.loread.view.slideback.callback.SlideCallBack;
@@ -213,10 +213,10 @@ public class SlideBackManager {
             container.addView(slideBackIconViewRight);
         }
         for (int i = 0, x = container.getChildCount(); i < x; i++) {
-            KLog.e(" 子视图：" + container.getChildAt(i));
+            XLog.e(" 子视图：" + container.getChildAt(i));
         }
-//        KLog.e(" 添加箭头：" + slideBackIconViewLeft.getRight() + " , " + slideBackIconViewRight.getRight());
-        KLog.e(" 是否要添加箭头：" + isAllowEdgeLeft + " , " + isAllowEdgeRight);
+        // XLog.e(" 添加箭头：" + slideBackIconViewLeft.getRight() + " , " + slideBackIconViewRight.getRight());
+        XLog.e(" 是否要添加箭头：" + isAllowEdgeLeft + " , " + isAllowEdgeRight);
 
         container.setOnTouchListener(new View.OnTouchListener() {
             private boolean isSideSlideLeft = false;  // 是否从左边边缘开始滑动
@@ -243,9 +243,9 @@ public class SlideBackManager {
                         } else if (isAllowEdgeRight && downX >= (screenWidth - maxSlideLength) && downX <= (screenWidth - sideSlideLength / 2)) {
                             isSideSlideRight = true;
                         }
-//                        KLog.e(" 是否要添加箭头A：" + isAllowEdgeLeft + " , " + isAllowEdgeRight);
-//                        KLog.e(" 是否要添加箭头B：" + (downX <= sideSlideLength) + " , " + (downX >= screenWidth - sideSlideLength ));
-//                        KLog.e(" 是否要添加箭头C：" + isSideSlideLeft + " , " + isSideSlideRight);
+//                        XLog.e(" 是否要添加箭头A：" + isAllowEdgeLeft + " , " + isAllowEdgeRight);
+//                        XLog.e(" 是否要添加箭头B：" + (downX <= sideSlideLength) + " , " + (downX >= screenWidth - sideSlideLength ));
+//                        XLog.e(" 是否要添加箭头C：" + isSideSlideLeft + " , " + isSideSlideRight);
                         break;
                     case MotionEvent.ACTION_MOVE: // 移动
                         if (isSideSlideLeft || isSideSlideRight) {

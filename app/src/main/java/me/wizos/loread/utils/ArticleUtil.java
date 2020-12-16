@@ -3,7 +3,7 @@ package me.wizos.loread.utils;
 
 import android.text.Html;
 
-import com.socks.library.KLog;
+import com.elvishew.xlog.XLog;
 
 import org.jetbrains.annotations.Nullable;
 import org.jsoup.Jsoup;
@@ -115,50 +115,8 @@ public class ArticleUtil {
 
         FileUtil.save(filePathTitle + ".html", html);
         FileUtil.moveDir(App.i().getUserFilesDir() + "/cache/" + articleIdInMD5 + "/original", filePathTitle + "_files");
-        KLog.e("保存文件夹：" + filePathTitle + " , " + App.i().getUserFilesDir() + "/cache/" + articleIdInMD5 + "/original");
+        XLog.e("保存文件夹：" + filePathTitle + " , " + App.i().getUserFilesDir() + "/cache/" + articleIdInMD5 + "/original");
     }
-
-    ///**
-    // * 将文章保存到内存
-    // * @param article
-    // * @param title
-    // * @return
-    // */
-    //public static String getPageForSave(Article article, String title) {
-    //    String published = TimeUtil.format(article.getPubDate(), "yyyy-MM-dd HH:mm");
-    //    String link = article.getLink();
-    //    String content = getFormatContentForSave(title, article.getContent());
-    //    Feed feed = CoreDB.i().feedDao().getById(App.i().getUser().getId(), article.getFeedId());
-    //    String author = getOptimizedAuthor(feed, article.getAuthor());
-    //
-    //    return "<!DOCTYPE html><html><head>" +
-    //            "<meta charset=\"UTF-8\">" +
-    //            "<link rel=\"stylesheet\" type=\"text/css\" href=\"./normalize.css\" />" +
-    //            "<title>" + title + "</title>" +
-    //            "</head><body>" +
-    //            "<article id=\"article\" >" +
-    //            "<header id=\"header\">" +
-    //            "<h1 id=\"title\"><a href=\"" + link + "\">" + title + "</a></h1>" +
-    //            "<p id=\"author\">" + author + "</p>" +
-    //            "<p id=\"pubDate\">" + published + "</p>" +
-    //            "</header>" +
-    //            "<section id=\"content\">" + content + "</section>" +
-    //            "</article>" +
-    //            "</body></html>";
-    //}
-
-    //private static String getFormatContentForSave(String title, String content) {
-    //    Document document = Jsoup.parseBodyFragment(content);
-    //    Elements elements = document.getElementsByTag("img");
-    //    String url, filePath;
-    //    for (int i = 0, size = elements.size(); i < size; i++) {
-    //        url = elements.get(i).attr("src");
-    //        filePath = "./" + title + "_files/" + UriUtil.guessFileNameExt(url);
-    //        elements.get(i).attr("original-src", url);
-    //        elements.get(i).attr("src", filePath);
-    //    }
-    //    return document.body().html();
-    //}
 
     public static String getPageForDisplay(Article article) {
         if (null == article) {
@@ -177,7 +135,7 @@ public class ArticleUtil {
         }
 
         // 获取主题文件路径
-        String themeCssPath, hljCSssPath;
+        String themeCssPath;
         if (App.i().getUser().getThemeMode() == App.THEME_DAY) {
             themeCssPath = App.i().getUserConfigPath() + "article_theme_day.css";
             if (!new File(typesettingCssPath).exists()) {
@@ -189,7 +147,7 @@ public class ArticleUtil {
                 themeCssPath = "file:///android_asset/css/article_theme_night.css";
             }
         }
-        hljCSssPath = "file:///android_asset/css/android_studio.css";
+
 
         Feed feed = CoreDB.i().feedDao().getById(App.i().getUser().getId(), article.getFeedId());
         String author = getOptimizedAuthor(feed, article.getAuthor());
@@ -214,7 +172,7 @@ public class ArticleUtil {
                 "<meta name='viewport' content='width=device-width, initial-scale=1.0, user-scalable=no'>" +
                 "<link rel='stylesheet' type='text/css' href='" + typesettingCssPath + "'/>" +
                 "<link rel='stylesheet' type='text/css' href='" + themeCssPath + "'/>" +
-                "<link rel='stylesheet' type='text/css' href='" + hljCSssPath + "'/>" +
+                "<link rel='stylesheet' type='text/css' href='file:///android_asset/css/android_studio.css'/>" +
                 "<link rel='stylesheet' type='text/css' href='file:///android_asset/css/plyr.css'/>" +
                 "<script src='file:///android_asset/js/tex-mml-chtml.js' async></script>" +
                 "<title>" + title + "</title>" +
@@ -233,7 +191,6 @@ public class ArticleUtil {
                 "<script src='file:///android_asset/js/lozad.min.js'></script>" +
                 "<script src='file:///android_asset/js/highlight.pack.js'></script>" +
                 "<script src='file:///android_asset/js/placeholder.min.js'></script>" +
-                // "<script src='file:///android_asset/js/fluidplayer.min.js'></script>" +
                 "<script src='file:///android_asset/js/plyr.js'></script>" +
                 "<script>" + initImageHolderUrl + "</script>" +
                 "<script>const PlyrConfig = {controls: ['play-large','play','progress','current-time','duration','settings','download','fullscreen'],settings: ['captions', 'quality', 'speed'],speed : { selected: 2, options: [0.75, 1, 1.5, 1.75, 2] } " + plyrI18n + "}</script>" +
@@ -270,7 +227,7 @@ public class ArticleUtil {
         pattern = Pattern.compile("https*://[\\w?-_=./&]*([\\s　]|&nbsp;|[^\\w?-_=./&]|$)", Pattern.CASE_INSENSITIVE);
         html = pattern.matcher(html).replaceAll(App.i().getString(R.string.link_for_speak) + "$1");
 
-        // KLog.i("初始化内容" + html );
+        // XLog.i("初始化内容" + html );
         return App.i().getString(R.string.article_title_is) + article.getTitle() + html.trim();
     }
 
@@ -290,6 +247,50 @@ public class ArticleUtil {
         }
         return title;
     }
+
+    // 结束符号
+    private static final String EndSymbol = "(?:[。;；?？!！)）}｝\\]】…])";
+    // 暂停符号
+    private static final String StopSymbol = "[-_.,，:：#￥%&*(（{｛\\[【]";
+
+    public static String getExtractedTitle(String content) {
+        if (!StringUtils.isEmpty(content)) {
+            // content = Html.fromHtml(content).toString();
+            // content = content.replace("\r", "_").replace("\n", "_");
+            content = content.substring(0, Math.min(48, content.length()));
+            String reverse = new StringBuilder(content).reverse().toString();
+            int length = reverse.length();
+
+            // "(?:" + EndSymbol + "|" + StopSymbol + ")"
+            Matcher endSymbolMatcher = Pattern.compile(EndSymbol , Pattern.CASE_INSENSITIVE).matcher(reverse);
+            Matcher stopSymbolMatcher = Pattern.compile(StopSymbol , Pattern.CASE_INSENSITIVE).matcher(reverse);
+
+            XLog.d("长度：" +  length);
+            int endSymbolPosition = 0;
+            int stopSymbolPosition = 0;
+            if(endSymbolMatcher.find()){
+                endSymbolPosition = length - endSymbolMatcher.start();
+                XLog.d("位置a：" +  content.substring(endSymbolPosition, endSymbolPosition + 1));
+            }
+            if(stopSymbolMatcher.find()){
+                stopSymbolPosition = length - stopSymbolMatcher.start();
+                XLog.d("位置b：" +  content.substring(stopSymbolPosition, stopSymbolPosition + 1));
+            }
+
+            XLog.d("标志：" +  stopSymbolPosition + " , " + endSymbolPosition);
+            if(stopSymbolPosition == 0){
+                stopSymbolPosition = endSymbolPosition;
+            }else if(endSymbolPosition == 0){
+                endSymbolPosition = stopSymbolPosition;
+            }
+            int endPosition = Math.min(stopSymbolPosition, endSymbolPosition);
+            if(endPosition > 0){
+                content = content.substring(0, endPosition);
+            }
+        }
+        return content;
+    }
+
 
     /**
      * 在将服务器的文章入库前，对文章进行修整，主要是过滤无用&有干扰的标签、属性
@@ -505,7 +506,7 @@ public class ArticleUtil {
 
         // 清除空的style
         documentBody.select("[style='']").removeAttr("style");
-        //KLog.e("正文D：" + documentBody.html());
+        //XLog.e("正文D：" + documentBody.html());
 
         // 将相对连接转为绝对链接
         elements = documentBody.getElementsByAttribute("src");
@@ -560,7 +561,7 @@ public class ArticleUtil {
                 circulate = false;
             }
         }while (circulate);
-        //KLog.e("正文E：" + documentBody.html());
+        //XLog.e("正文E：" + documentBody.html());
 
         content = documentBody.html().trim();
 
@@ -849,7 +850,7 @@ public class ArticleUtil {
         return keyword;
     }
     
-    private static String getOptimizedAuthor(Feed feed, String articleAuthor) {
+    public static String getOptimizedAuthor(Feed feed, String articleAuthor) {
         if (null == feed) {
             if (StringUtils.isEmpty(articleAuthor)) {
                 return "";
@@ -901,7 +902,7 @@ public class ArticleUtil {
     //     if( mediaType != null ){
     //         charset = DataUtil.getCharsetFromContentType(mediaType.toString());
     //     }
-    //     //KLog.i("解析得到的编码为：" + mediaType + " ， "+  charset );
+    //     //XLog.i("解析得到的编码为：" + mediaType + " ， "+  charset );
     //     // 从 https://soulteary.com/2020/11/08/upgrade-hugo-across-versions-2.html 获取到的html中，有一段代码错乱了（makeYearTemplate后面的tpl.push('<div变成了tpl.push('</textarea><div）。
     //     // 换parser吧，jsoup默认使用是htmlParser，它会对返回内容做些改动来符合html规范，所以一般实际使用时都用的是xmlParser，代码如下
     //     Document doc = Jsoup.parse(responseBody.byteStream(), charset, article.getLink());
@@ -918,9 +919,9 @@ public class ArticleUtil {
     //         }
     //         App.i().articleFirstKeyword.put(article.getId(),keyword);
     //     }
-    //     KLog.e("获取易读，原始keyword：" + keyword);
+    //     XLog.e("获取易读，原始keyword：" + keyword);
     //     String content =  ExtractorUtil.getContentWithKeyword(article.getLink(), doc, keyword);
-    //     // KLog.e("获取易读，原文：" + content);
+    //     // XLog.e("获取易读，原文：" + content);
     //     content = ArticleUtil.getOptimizedContent(article.getLink(), content);
     //     article.setContent(content);
     //
