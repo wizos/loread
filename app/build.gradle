@@ -9,10 +9,10 @@ android {
         targetSdkVersion 29
         applicationId "me.wizos.loread"
         versionCode 11
-        versionName "2.1.1"
-        // ndk {
-        //     abiFilters 'armeabi-v7a', 'arm64-v8a'
-        // }
+        versionName "2.1.2"
+        ndk {
+            abiFilters 'armeabi-v7a', 'arm64-v8a'
+        }
         javaCompileOptions {
             annotationProcessorOptions {
                 includeCompileClasspath = true // 解决 Error:Execution failed for task ‘:app:javaPreCompileDebug 问题
@@ -71,7 +71,6 @@ dependencies {
     // implementation 'com.github.liangjingkanji:BRV:1.3.13'
 
     implementation 'com.reginald:editspinner:1.1.0'
-    // implementation project(path: ':EditSpinner') // 有typevalue错误，Error inflating class EditText
     // implementation project(path: ':xui')
     // 列表项左右滑动布局
     // implementation project(path: ':swipelayout')
@@ -86,6 +85,8 @@ dependencies {
     implementation 'com.afollestad.material-dialogs:core:0.9.6.0'
     implementation 'com.afollestad.material-dialogs:commons:0.9.6.0'
 
+    // app 更新弹窗 [https://github.com/MZCretin/AutoUpdateProject]
+    // implementation 'com.github.MZCretin:AutoUpdateProject:2.0.4'
     // 透明通知栏
     // implementation 'com.readystatesoftware.systembartint:systembartint:1.0.3'
 

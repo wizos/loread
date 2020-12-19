@@ -26,7 +26,7 @@ import me.wizos.loread.view.IconFontView;
  * Created by Wizos on 2019/4/17.
  */
 
-public class ExpandedAdapter extends ExpandableAdapter<RecyclerView.ViewHolder> implements StickyCreator{ // implements StickyCreator
+public class ExpandedAdapter extends ExpandableAdapter<RecyclerView.ViewHolder> implements StickyCreator { // implements StickyCreator
     private Context context;
     private LayoutInflater mInflater;
     private List<Collection> categories;

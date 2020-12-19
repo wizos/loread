@@ -3,6 +3,7 @@ package me.wizos.loread.config;
 import android.text.TextUtils;
 import android.util.ArrayMap;
 
+import com.elvishew.xlog.XLog;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.annotations.SerializedName;
@@ -40,7 +41,6 @@ public class ArticleExtractConfig {
                         instance.save();
                     }else {
                         instance = new Gson().fromJson(json, ArticleExtractConfig.class);
-                        instance.save();
                     }
                 }
             }
@@ -70,6 +70,9 @@ public class ArticleExtractConfig {
                 ruleFileName = getRuleFileNameByCssSelector(document);
             }
             if(StringUtils.isEmpty(ruleFileName)){
+                ruleFileName = getRuleFileNameByRegex(document.outerHtml());
+            }
+            if(!StringUtils.isEmpty(ruleFileName)){
                 rule = getRuleByDomain(ruleFileName);
             }
         }
@@ -113,6 +116,7 @@ public class ArticleExtractConfig {
         Elements elements;
         for (Map.Entry<String, String> entry:pageMatchCssSelector.entrySet()) {
             elements = document.select(entry.getKey());
+            XLog.d("测试通用CSSSelect规则：" + entry.getKey() + " " + (elements != null && elements.size() > 0) + " , " + entry.getValue() );
             if(elements != null && elements.size() > 0) {
                 return entry.getValue();
             }

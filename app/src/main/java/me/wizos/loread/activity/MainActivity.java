@@ -68,7 +68,6 @@ import com.yanzhenjie.recyclerview.SwipeRecyclerView;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
@@ -124,6 +123,8 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
 
     private TextView countTips;
     private Integer[] scrollIndex;
+    // private int scrollPositionStart;
+    private int scrollPositionEnd;
     private View articlesHeaderView;
 
     private BottomSheetDialog quickSettingDialog;
@@ -370,9 +371,9 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
             @Override
             public void onChanged(PagedList<Article> articles) {
                 if( articlesAdapter.getCurrentList() != null ){
-                    XLog.e("更新列表数据 A : " + articlesAdapter.getCurrentList().getLastKey()  + " == "+ articlesAdapter.getCurrentList().getLoadedCount() +  " , " + (linearLayoutManager.findLastVisibleItemPosition()-1) );
+                    XLog.d("更新列表数据 A : " + articlesAdapter.getCurrentList().getLastKey()  + " == "+ articlesAdapter.getCurrentList().getLoadedCount() +  " , " + (linearLayoutManager.findLastVisibleItemPosition()-1) );
                 }else {
-                    XLog.e("更新列表数据 B");
+                    XLog.d("更新列表数据 B");
                 }
                 renderViewByArticlesData(App.i().getUser().getStreamTitle(), articles.size() );
                 articlesAdapter.submitList(articles);
@@ -389,13 +390,13 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
             @Override
             public void onChanged(List<String> strings) {
                 articlesAdapter.setArticleIds(strings);
-                XLog.d("更新ids数据 ：");
+                // XLog.d("更新ids数据 ：");
             }
         });
 
         articleListView.scrollToPosition(0);
         articlesAdapter.setLastPos(0); // linearLayoutManager.findLastVisibleItemPosition()-1
-        XLog.e("【更新列表】"  );
+        XLog.d("【更新列表】"  );
     }
 
     private void renderViewByArticlesData(String toolBarTitle, int articleSize) {
@@ -561,15 +562,20 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
                 if (!autoMarkReaded) {
                     return;
                 }
+
+                if(linearLayoutManager.findFirstVisibleItemPosition() == scrollPositionEnd +1 || linearLayoutManager.findFirstVisibleItemPosition() == scrollPositionEnd -1){
+                    scrollPositionEnd = linearLayoutManager.findFirstVisibleItemPosition();
+                }
                 //  || RecyclerView.SCROLL_STATE_SETTLING == newState
                 if (RecyclerView.SCROLL_STATE_DRAGGING == newState && scrollIndex == null) {
                     scrollIndex = new Integer[2];
-                    scrollIndex[1] = ((RecyclerView.LayoutParams) recyclerView.getChildAt(0).getLayoutParams()).getViewAdapterPosition();
-                    XLog.i("滚动开始：" + scrollIndex[1] + " = "+  linearLayoutManager.findFirstVisibleItemPosition() );
+                    scrollIndex[1] = linearLayoutManager.findFirstVisibleItemPosition();
+                    // XLog.i("滚动开始：" + scrollIndex[1] );
                 } else if (RecyclerView.SCROLL_STATE_IDLE == newState && scrollIndex != null) {
-                    scrollIndex[0] = ((RecyclerView.LayoutParams) recyclerView.getChildAt(0).getLayoutParams()).getViewAdapterPosition();
+                    scrollIndex[0] = scrollPositionEnd;
+                    // scrollIndex[0] = linearLayoutManager.findFirstVisibleItemPosition(); // ((RecyclerView.LayoutParams) recyclerView.getChildAt(0).getLayoutParams()).getViewAdapterPosition()
                     new MarkListReadAsyncTask().execute(scrollIndex);
-                    XLog.i("滚动结束：" + scrollIndex[0]  + " = "+  linearLayoutManager.findFirstVisibleItemPosition() );
+                    // XLog.i("滚动结束：" + scrollPositionEnd );
                     scrollIndex = null;
                 }
             }
@@ -997,6 +1003,7 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
 
 
     // 标记以上/以下为已读
+    @SuppressLint("StaticFieldLeak")
     private class MarkListReadAsyncTask extends AsyncTask<Integer, Integer, Integer> {
         @Override
         protected Integer doInBackground(Integer... params) {
@@ -1020,9 +1027,6 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
             if (articleIDs.size() == 0) {
                 return 0;
             }
-            // if (desc) {
-            //     Collections.reverse(articleIDs);
-            // }
 
             // 是否需要包含强制未读的文章
             boolean includesForcedUnread = CorePref.i().globalPref().getBoolean(Contract.INCLUDES_FORCED_UNREAD, false);
@@ -1042,15 +1046,6 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
                     markReadWithUnreading(CoreDB.i().articleDao().getUnreadingArticles(App.i().getUser().getId(), subArticleIDs));
                 }
             }
-            // if(includesForcedUnread){
-            //     unreadArticleIDs = CoreDB.i().articleDao().getUnreadArticles(App.i().getUser().getId(), articleIDs);
-            //     unreadingArticleIDs = CoreDB.i().articleDao().getUnreadingArticles(App.i().getUser().getId(), articleIDs);
-            //     markReadWithUnread(unreadArticleIDs);
-            //     markReadWithUnreading(unreadingArticleIDs);
-            // }else{
-            //     articleIDs = CoreDB.i().articleDao().getUnreadArticles(App.i().getUser().getId(), articleIDs);
-            //     markReadWithUnread(articleIDs);
-            // }
             //返回结果
             return 0;
         }
@@ -1084,133 +1079,6 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
         }
     }
 
-    // 标记以上/以下为已读
-    @SuppressLint("StaticFieldLeak")
-    private class MarkListReadedAsyncTask2 extends AsyncTask<Integer, Integer, Integer> {
-        private List<Article> articleList;
-        private List<String> articleIDs;
-        private void handleArticle(int i){
-            try {
-                int retry = 0;
-                XLog.i("以上/以下处理");
-                Article article = articlesAdapter.get(i);
-                if( article == null ){
-                    //articlesAdapter.load(i);
-                    do {
-                        //XLog.i("文章为空：" + i );
-                        Thread.sleep(500);
-                        retry ++;
-                        XLog.i("重新获取文章");
-                        article = articlesAdapter.get(i);
-                    }while ( article == null && retry < 3 );
-                    //XLog.i("文章是否为空：" + (article==null)  + "   ,  " + (articlesAdapter.getItem(i)==null) );
-                    if( article == null ){ return; }
-                }
-
-                // articlesAdapter.setLastItem(linearLayoutManager.findLastVisibleItemPosition()-1);
-                if (article.getReadStatus() == App.STATUS_UNREAD) {
-                    article.setReadStatus(App.STATUS_READED);
-                    articleList.add(article);
-                    articleIDs.add(article.getId());
-                    //提交之后，会执行onProcessUpdate方法，通知对应这个item更新界面
-                    publishProgress(i);
-                }
-            } catch (IllegalStateException | InterruptedException e) {
-                XLog.e("获取数据错误：" + e);
-                e.printStackTrace();
-            }
-        }
-        @Override
-        protected Integer doInBackground(Integer... params) {
-            int startIndex, endIndex;
-            boolean desc;
-            desc = params[0] >= params[1];
-            startIndex = params[0];
-            endIndex = params[1];
-
-            if( desc ){
-                articleList = new ArrayList<>(startIndex - endIndex);
-                articleIDs = new ArrayList<>(startIndex - endIndex);
-                for (int i = startIndex - 1; i >= endIndex; i--){
-                    handleArticle(i);
-                }
-            }else {
-                articleList = new ArrayList<>(endIndex - startIndex);
-                articleIDs = new ArrayList<>(endIndex - startIndex);
-                for (int i = startIndex; i < endIndex; i++){
-                    handleArticle(i);
-                }
-            }
-
-            if (articleIDs.size() == 0) {
-                return 0;
-            }
-            if (desc) {
-                Collections.reverse(articleList);
-                Collections.reverse(articleIDs);
-            }
-
-            int needCount = articleIDs.size();
-            int hadCount = 0;
-            int num = 0;
-
-            while (needCount > 0) {
-                num = Math.min(100, needCount);
-                List<Article> subArticles = articleList.subList(hadCount, hadCount + num);
-                List<String> subArticleIDs = articleIDs.subList(hadCount, hadCount + num);
-                hadCount = hadCount + num;
-                CoreDB.i().articleDao().update(subArticles);
-                App.i().getApi().markArticleListReaded(subArticleIDs, new CallbackX() {
-                    @Override
-                    public void onSuccess(Object result) {
-                    }
-
-                    @Override
-                    public void onFailure(Object error) {
-                        for (Article article: subArticles) {
-                            article.setReadStatus(App.STATUS_UNREAD);
-                        }
-                        CoreDB.i().articleDao().update(subArticles);
-                    }
-                });
-
-                needCount = articleIDs.size() - hadCount;
-            }
-            //返回结果
-            return 0;
-        }
-
-        /**
-         * @param progress
-         */
-        @Override
-        protected void onProgressUpdate(Integer... progress) {
-            //XLog.i("更新进度" + progress[0] );
-            // 应该是去通知对应的那个 item 改变。
-            articlesAdapter.notifyItemChanged(progress[0]);
-        }
-        ///**
-        // * 在调用cancel方法后会执行到这里
-        // */
-        //@Override
-        //protected void onCancelled() {
-        //}
-        //
-        ///**
-        // * 在doInbackground之后执行
-        // */
-        //@Override
-        //protected void onPostExecute(Integer args3) {
-        //}
-        //
-        ///**
-        // * 在doInBackground之前执行
-        // */
-        //@Override
-        //protected void onPreExecute() {
-        //}
-    }
-
     private void toggleReadState(final int position) {
         if (position < 0) {
             return;
@@ -1234,7 +1102,7 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
                 public void onFailure(Object error) {
                     article.setReadStatus(App.STATUS_READED);
                     CoreDB.i().articleDao().update(article);
-                    XLog.e("失败的原因是：" + error );
+                    XLog.w("失败的原因是：" + error );
                 }
             });
         } else {
@@ -1252,8 +1120,6 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
                 }
             });
         }
-       // XLog.i("修改状态：" + position + "  "  + article);
-       // articlesAdapter.notifyItemChanged(position);
     }
 
 
@@ -1295,7 +1161,6 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
                  }
              });
         }
-        // articlesAdapter.notifyItemChanged(position);
     }
 
 
@@ -1315,13 +1180,11 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
         super.onActivityResult(requestCode, resultCode, intent);
         //XLog.i("------------------------------------------" + resultCode + requestCode);
         if (resultCode == App.ActivityResult_ArtToMain) {//在文章页的时候读到了第几篇文章，好让列表也自动将该项置顶
-            //LinearLayoutManager linearLayoutManager = (LinearLayoutManager) articleListView.getLayoutManager();
             int articleNo = intent.getExtras().getInt("articleNo");
             assert linearLayoutManager != null;
             if (articleNo > linearLayoutManager.findLastVisibleItemPosition() - 1) {
                 listScrollPosition(articleNo);
             }
-            // articlesAdapter.notifyDataSetChanged();
         }
     }
 

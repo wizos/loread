@@ -22,10 +22,15 @@ function handleImage() {
 		if( originalUrl == null || originalUrl == "" || originalUrl == undefined ){
 			return true;
 		}
+		var pathname = new URL(originalUrl).pathname;
+		if( pathname == null || pathname == "" || pathname == undefined ){
+			return true;
+		}
+
 		// 为何不用 src, window.btoa(src)，而是 hashCode(src) 作为图片 id 来传递？
 		// 不用 src 的理由：这里获得的 src 是经过转义的，而传递到 java 层再传回来的 src 是未经过转义的（特别是中文）。
 		// 不用 window.btoa(src) 的理由：src 的字符不能超出 0x00~0xFF 范围（不能有中文或特殊字符），否则报异常。
-		image.attr('id', hashCode(originalUrl) );
+		image.attr('id', hashCode(pathname) );
 	});
 
 	$('img').click(function(event) {

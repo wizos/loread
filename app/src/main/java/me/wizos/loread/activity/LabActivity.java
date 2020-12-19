@@ -34,9 +34,11 @@ import me.wizos.loread.Contract;
 import me.wizos.loread.R;
 import me.wizos.loread.config.AdBlock;
 import me.wizos.loread.config.ArticleActionConfig;
+import me.wizos.loread.config.ArticleExtractConfig;
 import me.wizos.loread.config.LinkRewriteConfig;
 import me.wizos.loread.config.NetworkRefererConfig;
 import me.wizos.loread.config.NetworkUserAgentConfig;
+import me.wizos.loread.config.SaveDirectory;
 import me.wizos.loread.config.TestConfig;
 import me.wizos.loread.db.Article;
 import me.wizos.loread.db.ArticleTag;
@@ -118,6 +120,9 @@ public class LabActivity extends AppCompatActivity {
         LinkRewriteConfig.i().reset();
         NetworkRefererConfig.i().reset();
         NetworkUserAgentConfig.i().reset();
+        ArticleExtractConfig.i().reset();
+        ArticleActionConfig.i().reset();
+        SaveDirectory.i().reset();
         materialDialog.dismiss();
     }
 

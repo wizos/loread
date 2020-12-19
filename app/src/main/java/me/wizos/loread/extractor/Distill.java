@@ -200,7 +200,7 @@ public class Distill {
         String content = null;
         ExtractPage extractPage = new ExtractPage();
         rule = ArticleExtractConfig.i().getRule(uri.getHost(),doc);
-        // XLog.i("抓取规则："  + uri.getHost() + " ==  " + rule );
+        XLog.i("抓取规则："  + uri.getHost() + " ==  " + rule );
         if(rule == null){
             Element newDoc = new Extractor(doc).getContentElementWithKeyword(keyword);
             if(newDoc == null){
@@ -219,6 +219,7 @@ public class Distill {
             }
         }else {
             content = getContentByRule(uri, doc, rule);
+            XLog.d("获取到的内容：" + content);
             if(StringUtils.isEmpty(content)){
                 Element newDoc = new Extractor(doc).getContentElementWithKeyword(keyword);
                 if(newDoc == null){
@@ -251,10 +252,10 @@ public class Distill {
         }
 
         if( !StringUtils.isEmpty(rule.getContent()) ){
-            // XLog.i("提取规则", "正文规则：" + rule.getContent() );
+            XLog.d("提取规则 - 正文规则：" + rule.getContent() );
             Elements contentElements = doc.select(rule.getContent());
             if (!StringUtils.isEmpty(rule.getContentStrip())) {
-                // XLog.i("提取规则", "正文过滤：" + rule.getContentStrip() );
+                XLog.d("提取规则 - 正文过滤：" + rule.getContentStrip() );
                 // 移除不需要的内容，注意规则为空
                 contentElements.select(rule.getContentStrip()).remove();
             }
@@ -263,7 +264,7 @@ public class Distill {
                 Bindings bindings = new SimpleBindings();
                 bindings.put("content", contentElements.html());
                 ScriptUtil.i().eval(rule.getContentTrim(), bindings);
-                // XLog.i("提取规则", "正文处理：" + rule.getContentTrim() );
+                XLog.d("提取规则 - 正文处理：" + rule.getContentTrim() );
                 return (String)bindings.get("content");
             }
             return contentElements.html().trim();

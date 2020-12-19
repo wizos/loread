@@ -209,7 +209,6 @@ public class ArticleUtil {
         html = pattern.matcher(html).replaceAll(App.i().getString(R.string.image_for_summary));
         pattern = Pattern.compile("<embed.*?>", Pattern.CASE_INSENSITIVE);
         html = pattern.matcher(html).replaceAll(App.i().getString(R.string.frame_for_summary));
-
         pattern = Pattern.compile("<(audio).*?>.*?</\\1>", Pattern.CASE_INSENSITIVE);
         html = pattern.matcher(html).replaceAll(App.i().getString(R.string.audio_for_summary));
         pattern = Pattern.compile("<(video).*?>.*?</\\1>", Pattern.CASE_INSENSITIVE);
@@ -257,11 +256,16 @@ public class ArticleUtil {
         if (!StringUtils.isEmpty(content)) {
             // content = Html.fromHtml(content).toString();
             // content = content.replace("\r", "_").replace("\n", "_");
-            content = content.substring(0, Math.min(48, content.length()));
+            content = content.replace(App.i().getString(R.string.image_for_summary),"")
+                    .replace(App.i().getString(R.string.frame_for_summary),"")
+                    .replace(App.i().getString(R.string.audio_for_summary),"")
+                    .replace(App.i().getString(R.string.video_for_summary),"")
+                    .replace(App.i().getString(R.string.pre_for_summary),"")
+                    .replace(App.i().getString(R.string.table_for_summary),"");
+            content = content.substring(0, Math.min(64, content.length()));
             String reverse = new StringBuilder(content).reverse().toString();
             int length = reverse.length();
 
-            // "(?:" + EndSymbol + "|" + StopSymbol + ")"
             Matcher endSymbolMatcher = Pattern.compile(EndSymbol , Pattern.CASE_INSENSITIVE).matcher(reverse);
             Matcher stopSymbolMatcher = Pattern.compile(StopSymbol , Pattern.CASE_INSENSITIVE).matcher(reverse);
 
@@ -270,11 +274,9 @@ public class ArticleUtil {
             int stopSymbolPosition = 0;
             if(endSymbolMatcher.find()){
                 endSymbolPosition = length - endSymbolMatcher.start();
-                XLog.d("位置a：" +  content.substring(endSymbolPosition, endSymbolPosition + 1));
             }
             if(stopSymbolMatcher.find()){
-                stopSymbolPosition = length - stopSymbolMatcher.start();
-                XLog.d("位置b：" +  content.substring(stopSymbolPosition, stopSymbolPosition + 1));
+                stopSymbolPosition = length - stopSymbolMatcher.start() -1;
             }
 
             XLog.d("标志：" +  stopSymbolPosition + " , " + endSymbolPosition);
@@ -283,9 +285,9 @@ public class ArticleUtil {
             }else if(endSymbolPosition == 0){
                 endSymbolPosition = stopSymbolPosition;
             }
-            int endPosition = Math.min(stopSymbolPosition, endSymbolPosition);
+            int endPosition = Math.max(stopSymbolPosition, endSymbolPosition);
             if(endPosition > 0){
-                content = content.substring(0, endPosition);
+                content = content.substring(0, endPosition).trim();
             }
         }
         return content;
@@ -666,7 +668,6 @@ public class ArticleUtil {
         html = pattern.matcher(html).replaceAll(App.i().getString(R.string.image_for_summary));
         pattern = Pattern.compile("<embed.*?>", Pattern.CASE_INSENSITIVE);
         html = pattern.matcher(html).replaceAll(App.i().getString(R.string.frame_for_summary));
-
         pattern = Pattern.compile("<(audio).*?>.*?</\\1>", Pattern.CASE_INSENSITIVE);
         html = pattern.matcher(html).replaceAll(App.i().getString(R.string.audio_for_summary));
         pattern = Pattern.compile("<(video).*?>.*?</\\1>", Pattern.CASE_INSENSITIVE);
@@ -738,12 +739,6 @@ public class ArticleUtil {
 
         // 预加载，提前将图片的真实地址替换出来
         elements = document.getElementsByTag("img");
-        // int loadSize;
-        // if (App.i().articleProgress.get(article.getId()) == null){
-        //     loadSize = Math.min(elements.size(),6);
-        // }else {
-        //     loadSize = elements.size();
-        // }
 
         for (int i = 0, size = elements.size(); i < size; i++) {
             element = elements.get(i);

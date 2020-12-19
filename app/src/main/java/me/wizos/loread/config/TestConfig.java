@@ -44,8 +44,6 @@ public class TestConfig {
         instance = null;
     }
 
-
-
     public boolean ttsFile = false;
     public boolean useEmojiFilter = false;
     public int time = 60;

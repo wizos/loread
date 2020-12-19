@@ -44,13 +44,6 @@ public class ArticleItem {
 
 
     public Article convert(BaseApi.ArticleChanger articleChanger) {
-        // Article article = CoreDB.i().articleDao().getById(App.i().getUser().getId(),String.valueOf(id));
-        // if( article != null ){
-        //     article.setLink(link);
-        //     article.setFeedId(feed_id);
-        //     return article;
-        // }
-        // article = new Article();
         Article article = new Article();
         article.setId(String.valueOf(id));
 
@@ -75,7 +68,6 @@ public class ArticleItem {
         article.setImage(coverUrl);
 
         // 自己设置的字段
-        //  KLog.i("【增加文章】" + article.getId());
         article.setSaveStatus(App.STATUS_NOT_FILED);
         if (unread) {
             article.setReadStatus(App.STATUS_UNREAD);

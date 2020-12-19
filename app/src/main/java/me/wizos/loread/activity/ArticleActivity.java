@@ -49,8 +49,6 @@ import com.carlt.networklibs.NetType;
 import com.carlt.networklibs.utils.NetworkUtils;
 import com.elvishew.xlog.XLog;
 import com.hjq.toast.ToastUtils;
-import com.lxj.xpopup.XPopup;
-import com.lxj.xpopup.interfaces.OnInputConfirmListener;
 import com.lzy.okgo.OkGo;
 import com.lzy.okgo.callback.FileCallback;
 import com.lzy.okgo.model.Response;
@@ -1638,30 +1636,30 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
                 showArticleInfo();
                 break;
             case R.id.article_menu_edit_content:
-                // new MaterialDialog.Builder(ArticleActivity.this)
-                //         .title("修改文章内容")
-                //         .inputType(InputType.TYPE_CLASS_TEXT)
-                //         .inputRange(1, 5600000)
-                //         .input(getString(R.string.site_remark), selectedArticle.getContent(), new MaterialDialog.InputCallback() {
-                //             @Override
-                //             public void onInput(@NonNull MaterialDialog dialog, CharSequence input) {
-                //                 selectedArticle.setContent(input.toString());
-                //                 CoreDB.i().articleDao().update(selectedArticle);
-                //             }
-                //         })
-                //         .positiveText(R.string.confirm)
-                //         .negativeText(android.R.string.cancel)
-                //         .show();
-                new XPopup.Builder(this)
-                        .asInputConfirm("修改文章内容",null,selectedArticle.getContent(),null,
-                                new OnInputConfirmListener() {
-                                    @Override
-                                    public void onConfirm(String text) {
-                                        selectedArticle.setContent(text);
-                                        CoreDB.i().articleDao().update(selectedArticle);
-                                    }
-                                })
+                new MaterialDialog.Builder(ArticleActivity.this)
+                        .title("修改文章内容")
+                        .inputType(InputType.TYPE_CLASS_TEXT)
+                        // .inputRange(1, 5600000)
+                        .input(getString(R.string.site_remark), selectedArticle.getContent(), new MaterialDialog.InputCallback() {
+                            @Override
+                            public void onInput(@NonNull MaterialDialog dialog, CharSequence input) {
+                                selectedArticle.setContent(input.toString());
+                                CoreDB.i().articleDao().update(selectedArticle);
+                            }
+                        })
+                        .positiveText(R.string.confirm)
+                        .negativeText(android.R.string.cancel)
                         .show();
+                // new XPopup.Builder(this)
+                //         .asInputConfirm("修改文章内容",null,selectedArticle.getContent(),null,
+                //                 new OnInputConfirmListener() {
+                //                     @Override
+                //                     public void onConfirm(String text) {
+                //                         selectedArticle.setContent(text);
+                //                         CoreDB.i().articleDao().update(selectedArticle);
+                //                     }
+                //                 })
+                //         .show();
                 break;
         }
         return super.onOptionsItemSelected(item);

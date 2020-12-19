@@ -304,6 +304,22 @@ public class FileUtil {
             return filePath;
         }
 
+        // 支持使用 img url 的 path 为 imgId
+        imgId = Uri.parse(originalUrl).getPath();
+        if(!StringUtils.isEmpty(imgId)){
+            imgId = String.valueOf(imgId.hashCode());
+            filePath = App.i().getUserFilesDir() + "/cache/" + articleIdInMD5 + "/compressed/" + imgId;
+            if (new File(filePath).exists()) {
+                return filePath;
+            }
+            filePath = App.i().getUserFilesDir() + "/cache/" + articleIdInMD5 + "/original/" + imgId;
+            if (new File(filePath).exists()) {
+                return filePath;
+            }
+        }
+
+
+
         String fileNameExt = UriUtil.guessFileNameExt(originalUrl);
         // 推测可能是svg格式的，该类文件必须有后缀名才能在webView中显示出来
         filePath = App.i().getUserFilesDir() + "/cache/" + articleIdInMD5 + "/original/" + fileNameExt + ".svg";

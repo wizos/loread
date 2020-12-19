@@ -197,18 +197,18 @@ public class TinyRSSApi extends AuthApi<Feed, me.wizos.loread.bean.feedly.Catego
             coverFeedCategory(feedCategories);
 
             int hadFetchCount = 0;
+
             LiveEventBus.get(SyncWorker.SYNC_PROCESS_FOR_SUBTITLE).post( App.i().getString(R.string.sync_article_start, "1.") );
             GetHeadlines getHeadlines = new GetHeadlines();
             getHeadlines.setSid(getAuthorization());
-            Article article = CoreDB.i().articleDao().getLastArticle(uid);
-            if (null != article) {
-                getHeadlines.setSince_id(article.getId());
-            }
+            int sinceId = CoreDB.i().articleDao().getLastArticleId(uid);
+            getHeadlines.setSince_id(sinceId + "");
+
             TinyResponse<List<ArticleItem>> articleItemsResponse;
             ArrayList<Article> articleList;
             int fetchArticlesUnit;
             do{
-                XLog.i("1 - 同步文章 " + uid + " , Since_id " + article.getId());
+                XLog.i("1 - 同步文章 " + uid + " , Since_id = " + sinceId);
                 getHeadlines.setSkip(hadFetchCount);
                 articleItemsResponse = service.getHeadlines(getHeadlines).execute().body();
                 if (!articleItemsResponse.isSuccessful()) {
