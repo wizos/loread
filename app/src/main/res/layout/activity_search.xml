@@ -25,19 +25,13 @@
             android:background="?attr/topbar_bg"
             app:contentInsetStartWithNavigation="0dp"
             app:subtitleTextAppearance="@style/MyToolbar.SubTitle">
-            <!--<me.wizos.loread.view.IconFontView-->
-            <!--android:id="@+id/search_toolbar_clear_icon"-->
-            <!--style="@style/top_bar_iconfont"-->
-            <!--android:layout_gravity="end|center"-->
-            <!--android:layout_weight="1"-->
-            <!--android:visibility="gone"-->
-            <!--android:text="@string/font_clear_search_word"/>-->
+
             <com.xw.repo.XEditText
                 android:id="@+id/search_toolbar_edittext"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginEnd="15dp"
-                android:hint="@string/search_feeds"
+                android:hint="@string/search_feeds_enter_keywords_or_url"
                 android:imeOptions="actionSearch"
                 android:singleLine="true" />
 

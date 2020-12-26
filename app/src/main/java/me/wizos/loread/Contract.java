@@ -39,12 +39,6 @@ public class Contract {
 
     public static final String ACTIVITY_IS_PORTRAIT = "activity_is_portrait";
 
-    // public static final String INOREADER_URL = "inoreader_url";
-
-    public static final String INCLUDES_FORCED_UNREAD = "includes_forced_unread";
-
-
-    public static final String USE_EMOJI_LIB = "use_emoji_lib";
     // ACCOUNT_TYPE用于我们当前APP获取系统帐户的唯一标识，这个在account_preferences.xml中有，两处的声明必须是一致
     // public static final String ACCOUNT_TYPE = "me.wizos.loread";
 }

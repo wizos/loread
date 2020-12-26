@@ -8,7 +8,6 @@ import android.util.ArrayMap;
 import androidx.annotation.NonNull;
 
 import com.elvishew.xlog.XLog;
-import com.lzy.okgo.https.HttpsUtils;
 
 import org.jetbrains.annotations.NotNull;
 import org.jsoup.Jsoup;
@@ -20,13 +19,11 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
 import me.wizos.loread.App;
 import me.wizos.loread.R;
-import me.wizos.loread.network.interceptor.RefererInterceptor;
-import me.wizos.loread.network.interceptor.RelyInterceptor;
+import me.wizos.loread.network.HttpClientManager;
 import me.wizos.loread.utils.DataUtil;
 import me.wizos.loread.utils.StringUtils;
 import okhttp3.Call;
@@ -37,39 +34,24 @@ import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
 
-public class RSSFinder {
-    private static final String TAG = "RSSFinder";
-    private static final int TIMEOUT = 30_000; // 30 秒 30_000
+public class RSSSeeker {
+    private static final String TAG = "RSSSeeker";
+    private static final int TIMEOUT = 5_000; // 30 秒 30_000
     private String url;
     private Listener dispatcher;
 
     private OkHttpClient okHttpClient;
-    // private WebViewS webViewS;
     private Handler handler;
     private Document document;
-
-    private boolean isCancel = false;
-
 
     private ArrayMap<String, String> rssMap = new ArrayMap<>();
     private ArrayMap<String, String> unKnowRSSMap = new ArrayMap<>();
     private String[] feedSuffix = {"feed", "rss", "rss.xml", "atom.xml", "feed.xml", "?feed=rss2", "?feed=rss"};
 
 
-    public RSSFinder(@NotNull String url, @NotNull Listener callback) {
+    public RSSSeeker(@NotNull String url, @NotNull Listener callback) {
         this.url = url;
-        this.okHttpClient = new OkHttpClient.Builder()
-                .readTimeout(30, TimeUnit.SECONDS)
-                .writeTimeout(30, TimeUnit.SECONDS)
-                .connectTimeout(15, TimeUnit.SECONDS)
-                .sslSocketFactory(HttpsUtils.getSslSocketFactory().sSLSocketFactory, HttpsUtils.getSslSocketFactory().trustManager)
-                .hostnameVerifier(HttpsUtils.UnSafeHostnameVerifier)
-                .followRedirects(true)
-                .followSslRedirects(true)
-                .addInterceptor(new RelyInterceptor())
-                .addInterceptor(new RefererInterceptor())
-                // .dns(new FastDNS())
-                .build();
+        this.okHttpClient = HttpClientManager.i().searchClient();
         this.okHttpClient.dispatcher().setMaxRequests(10);
         this.dispatcher = new Listener() {
             @Override
@@ -144,22 +126,12 @@ public class RSSFinder {
                 response.close();
             }
         });
-
-        // Response response = call.execute();
-        // ResponseBody responseBody = response.body();
-        // MediaType mediaType  = responseBody.contentType();
-        // String charset = null;
-        // if( mediaType != null ){
-        //     charset = DataUtil.getCharsetFromContentType(mediaType.toString());
-        // }
-        // document = Jsoup.parse(responseBody.byteStream(), charset, url);
-        // find(document);
     }
 
 
     public void find(Document doc){
         doc.outputSettings().prettyPrint(false);
-        XLog.i("RSS Finder：" + url );
+        XLog.i("RSS Seeker：" + url );
         getFeedsFromHeader(doc);
         XLog.d("发现 RSSMap (Header)：" + rssMap);
         if(rssMap.size() > 0){
@@ -275,101 +247,6 @@ public class RSSFinder {
             map.put(url,title);
         }
     }
-    
-    
-    
-    // @SuppressLint("JavascriptInterface")
-    // private void getByWebView(){
-    //     handler.post(new Runnable() {
-    //         @Override
-    //         public void run() {
-    //             webViewS = new WebViewS(new MutableContextWrapper(App.i()));
-    //             webViewS.getSettings().setLoadsImagesAutomatically(false);//设置自动加载图片
-    //             webViewS.getSettings().setBlockNetworkImage(true);//设置网页在加载的时候暂时不加载图片
-    //             webViewS.addJavascriptInterface(new Bridge() {
-    //                 @JavascriptInterface
-    //                 @Override
-    //                 public void getHtml(String html) throws IOException {
-    //                     XLog.d("WebView 获取全文成功：" + html );
-    //                     if(!StringUtils.isEmpty(html)){
-    //                         find(Jsoup.parse(html, url));
-    //                     }else {
-    //                         dispatcher.onFailure(App.i().getString(R.string.not_responding));
-    //                     }
-    //                 }
-    //             }, Bridge.TAG);
-    //             webViewS.setWebViewClient(mWebViewClient);
-    //             webViewS.loadUrl(url);
-    //         }
-    //     });
-    // }
-    //
-    // private WebViewClient mWebViewClient = new WebViewClient() {
-    //     @Override
-    //     public WebResourceResponse shouldInterceptRequest(WebView view, final WebResourceRequest request) {
-    //         String scheme = request.getUrl().getScheme();
-    //         if (scheme.equalsIgnoreCase(HTTP) || scheme.equalsIgnoreCase(HTTPS)) {
-    //             String url = request.getUrl().toString().toLowerCase();
-    //             // XLog.e("重定向地址：" + url );
-    //             // 有广告的请求数据，我们直接返回空数据，注：不能直接返回null
-    //             if (AdBlock.i().isAd(url) || url.endsWith(".css")) { //
-    //                 return new WebResourceResponse(null, null, null);
-    //             }
-    //
-    //             String newUrl = LinkRewriteConfig.i().getRedirectUrl(url);
-    //             // XLog.i("重定向地址：" + url + " -> " + newUrl);
-    //             if(!TextUtils.isEmpty(newUrl) && !url.equalsIgnoreCase(newUrl)){
-    //                 return super.shouldInterceptRequest(view, new WebResourceRequest() {
-    //                     @Override
-    //                     public Uri getUrl() {
-    //                         return Uri.parse(newUrl);
-    //                     }
-    //                     @SuppressLint("NewApi")
-    //                     @Override
-    //                     public boolean isRedirect(){
-    //                         return true;
-    //                     }
-    //                     @SuppressLint("NewApi")
-    //                     @Override
-    //                     public boolean isForMainFrame() {
-    //                         return request.isForMainFrame();
-    //                     }
-    //                     @SuppressLint("NewApi")
-    //                     @Override
-    //                     public boolean hasGesture() {
-    //                         return request.hasGesture();
-    //                     }
-    //                     @SuppressLint("NewApi")
-    //                     @Override
-    //                     public String getMethod() {
-    //                         return request.getMethod();
-    //                     }
-    //                     @SuppressLint("NewApi")
-    //                     @Override
-    //                     public Map<String, String> getRequestHeaders() {
-    //                         return request.getRequestHeaders();
-    //                     }
-    //                 });
-    //             }
-    //         }
-    //         return super.shouldInterceptRequest(view, request);
-    //     }
-    //     @Override
-    //     public void onPageStarted(WebView webView, String url, Bitmap favicon) {
-    //         super.onPageStarted(webView, url, favicon);
-    //     }
-    //     @Override
-    //     public void onPageFinished(WebView webView, String url) {
-    //         super.onPageFinished(webView, url);
-    //         webView.loadUrl(Bridge.COMMEND);
-    //     }
-    // };
-    //
-    public void cancel(){
-        isCancel = true;
-        destroy();
-    }
-
 
     public void destroy(){
         if(handler != null){
@@ -380,20 +257,16 @@ public class RSSFinder {
             it = okHttpClient.dispatcher().queuedCalls().iterator();
             Call call;
             while(it.hasNext()) {
-                call = (Call) it.next();
+                call = it.next();
                 call.cancel();
             }
 
             it = okHttpClient.dispatcher().runningCalls().iterator();
             while(it.hasNext()) {
-                call = (Call) it.next();
+                call = it.next();
                 call.cancel();
             }
         }
-        // if(webViewS != null){
-        //     webViewS.destroy();
-        //     webViewS = null;
-        // }
     }
     public interface Listener {
         void onResponse(ArrayMap<String, String> rssMap);
@@ -402,11 +275,4 @@ public class RSSFinder {
         // void onNotResponse();
         // void onNoTextFound();
     }
-
-    // public interface Bridge {
-    //     String TAG = "ReadabilityBridge";
-    //     String COMMEND = "javascript:ReadabilityBridge.getHtml(document.documentElement.outerHTML)";
-    //     // void log(String msg);
-    //     void getHtml(String html) throws IOException;
-    // }
 }

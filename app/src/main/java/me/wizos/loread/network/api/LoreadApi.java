@@ -419,7 +419,7 @@ public class LoreadApi extends AuthApi<Feed, me.wizos.loread.bean.feedly.Categor
         cb.onFailure(App.i().getString(R.string.server_api_not_supported, Contract.PROVIDER_LOREAD));
     }
 
-    public void unsubscribeFeed(String feedId,CallbackX cb) {
+    public void unsubscribeFeed(String feedId, CallbackX cb) {
         UnsubscribeFeed unsubscribeFeed = new UnsubscribeFeed(getAuthorization());
         unsubscribeFeed.setFeedId(Integer.parseInt(feedId));
         service.unsubscribeFeed(getAuthorization(),unsubscribeFeed).enqueue(new retrofit2.Callback<TinyResponse<Map>>() {

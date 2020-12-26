@@ -107,7 +107,7 @@ import me.wizos.loread.view.slideback.callback.SlideCallBack;
 import me.wizos.loread.view.webview.DownloadListenerS;
 import me.wizos.loread.view.webview.LongClickPopWindow;
 import me.wizos.loread.view.webview.SlowlyProgressBar;
-import me.wizos.loread.view.webview.VideoImpl;
+import me.wizos.loread.view.webview.VideoHelper;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import top.zibin.luban.CompressionPredicate;
@@ -132,13 +132,11 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
     private SlowlyProgressBar slowlyProgressBar;
     private IconFontView starView, readView, saveView, readabilityView;
     private WebViewS selectedWebView;
-    // private MirrorSwipeBackLayout entryView;
-    // private RefreshLayout entryView;
     private FrameLayout entryView;
     private SlideLayout slideLayout;
     private Toolbar toolbar;
     private RelativeLayout bottomBar;
-    private VideoImpl video;
+    private VideoHelper videoHelper;
 
     private Article selectedArticle;
     private int articleNo;
@@ -192,6 +190,9 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
         OkGo.cancelAll(imgHttpClient);
         if(distill != null){
             distill.cancel();
+        }
+        if(videoHelper != null){
+            videoHelper.onDestroy();
         }
         // XLog.e("onDestroy：" + selectedWebView);
         // 如果参数为null的话，会将所有的Callbacks和Messages全部清除掉。
@@ -586,10 +587,11 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
             Feed feed = CoreDB.i().feedDao().getById(App.i().getUser().getId(), selectedArticle.getFeedId());
             stringBuilder.append(ArticleUtil.getOptimizedAuthor(feed, selectedArticle.getAuthor()));
             stringBuilder.append("_");
-            stringBuilder.append(TimeUtil.format(selectedArticle.getPubDate(), "yyyy-MM-dd HH:mm"));
-            if(!StringUtils.isEmpty(selectedArticle.getSummary())){
+            stringBuilder.append(TimeUtil.format(selectedArticle.getPubDate(), "yyMMdd-HHmm"));
+            String fileName = ArticleUtil.getExtractedTitle(selectedArticle.getSummary());
+            if(!StringUtils.isEmpty(fileName)){
                 stringBuilder.append("_");
-                stringBuilder.append(ArticleUtil.getExtractedTitle(selectedArticle.getSummary()));
+                stringBuilder.append(fileName);
             }
         }
 
@@ -841,8 +843,11 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
             entryView.removeAllViews();
             entryView.addView(selectedWebView);
             // 初始化视频处理类
-            video = new VideoImpl(ArticleActivity.this, selectedWebView);
-            selectedWebView.setWebChromeClient(new WebChromeClientX(video, new WeakReference<SlowlyProgressBar>(slowlyProgressBar)));
+            if(videoHelper !=null){
+                videoHelper.onDestroy();
+            }
+            videoHelper = new VideoHelper(ArticleActivity.this, selectedWebView);
+            selectedWebView.setWebChromeClient(new WebChromeClientX(new WeakReference<>(videoHelper), new WeakReference<>(slowlyProgressBar)));
             selectedWebView.setWebViewClient(new WebViewClientX());
             // 原本想放在选择 webview 页面的时候去加载，但可能由于那时页面内容已经加载所以无法设置下面这个JSInterface？
             selectedWebView.addJavascriptInterface(ArticleActivity.this, ArticleBridge.TAG);
@@ -921,10 +926,10 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
 
 
     private static class WebChromeClientX extends WebChromeClient {
-        VideoImpl video;
+        WeakReference<VideoHelper> video;
         WeakReference<SlowlyProgressBar> slowlyProgressBar;
 
-        WebChromeClientX(VideoImpl video, WeakReference<SlowlyProgressBar> progressBar) {
+        WebChromeClientX(WeakReference<VideoHelper> video, WeakReference<SlowlyProgressBar> progressBar) {
             this.video = video;
             this.slowlyProgressBar = progressBar;
         }
@@ -943,8 +948,8 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
         public void onShowCustomView(View view, CustomViewCallback callback) {
             super.onShowCustomView(view,callback);
             // XLog.i("进入全屏" + videoIsPortrait + " , " + (System.currentTimeMillis() - time));
-            if (video != null) {
-                video.onShowCustomView(view, videoIsPortrait, callback);
+            if (video.get() != null) {
+                video.get().onShowCustomView(view, videoIsPortrait, callback);
             }
             videoIsPortrait = false;
         }
@@ -954,8 +959,8 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
         public void onHideCustomView() {
             super.onHideCustomView();
             // XLog.i("退出全屏");
-            if (video != null) {
-                video.onHideCustomView();
+            if (video.get() != null) {
+                video.get().onHideCustomView();
             }
         }
     }
@@ -1549,8 +1554,8 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
         if (keyCode == KeyEvent.KEYCODE_BACK && event.getRepeatCount() == 0) {
-            if (video != null && video.isFullScreen()) {
-                video.onHideCustomView();
+            if (videoHelper != null && videoHelper.isFullScreen()) {
+                videoHelper.onHideCustomView();
                 return true;
             }
             Intent data = new Intent();

@@ -64,75 +64,6 @@ public abstract class BaseApi<T, E> {
         Article change(Article article);
     }
 
-
-    public void deleteExpiredArticles() {
-        // 最后的 300 * 1000L 是留前5分钟时间的不删除 WithPref.i().getClearBeforeDay()
-        long time = System.currentTimeMillis() - App.i().getUser().getCachePeriod() * 24 * 3600 * 1000L - 60 * 1000L;
-        String uid = App.i().getUser().getId();
-
-        List<Article> boxReadArts = CoreDB.i().articleDao().getReadedUnstarBeFiledLtTime(uid, time);
-        //KLog.i("移动文章" + boxReadArts.size());
-        for (Article article : boxReadArts) {
-            article.setSaveStatus(App.STATUS_IS_FILED);
-            String dir = SaveDirectory.i().getSaveDir(article.getFeedId(), article.getId()) + "/";
-            //KLog.e("保存目录：" + dir);
-            //FileUtil.saveArticle(App.i().getUserBoxPath() + dir, article);
-            ArticleUtil.saveArticle(App.i().getUserBoxPath() + dir, article);
-        }
-        CoreDB.i().articleDao().update(boxReadArts);
-
-        List<Article> storeReadArts = CoreDB.i().articleDao().getReadedStaredBeFiledLtTime(uid, time);
-        //KLog.i("移动文章" + storeReadArts.size());
-        for (Article article : storeReadArts) {
-            article.setSaveStatus(App.STATUS_IS_FILED);
-            String dir = "/" + SaveDirectory.i().getSaveDir(article.getFeedId(), article.getId()) + "/";
-            //KLog.e("保存目录：" + dir);
-            //FileUtil.saveArticle(App.i().getUserStorePath() + dir, article);
-            ArticleUtil.saveArticle(App.i().getUserStorePath() + dir, article);
-        }
-        CoreDB.i().articleDao().update(storeReadArts);
-
-        List<Article> expiredArticles = CoreDB.i().articleDao().getReadedUnstarLtTime(uid, time);
-        ArrayList<String> idListMD5 = new ArrayList<>(expiredArticles.size());
-        for (Article article : expiredArticles) {
-            idListMD5.add(EncryptUtil.MD5(article.getId()));
-        }
-        //KLog.i("清除A：" + time + "--" + expiredArticles.size());
-        FileUtil.deleteHtmlDirList(idListMD5);
-        CoreDB.i().articleDao().delete(expiredArticles);
-    }
-
-    void fetchReadability(String uid, long syncTimeMillis) {
-        List<Article> articles = CoreDB.i().articleDao().getNeedReadability(uid, syncTimeMillis);
-        XLog.i("开始获取易读文章 " + uid + " , " + syncTimeMillis);
-        for (Article article : articles) {
-            XLog.i("需要易读的文章：" + " , " + article.getTitle() + " , " + article.getLink());
-            if (TextUtils.isEmpty(article.getLink())) {
-                continue;
-            }
-            String keyword;
-            if (App.i().articleFirstKeyword.containsKey(article.getId())) {
-                keyword = App.i().articleFirstKeyword.get(article.getId());
-            } else {
-                keyword = ArticleUtil.getKeyword(article.getContent());
-                App.i().articleFirstKeyword.put(article.getId(), keyword);
-            }
-            Distill distill = new Distill(article.getLink(), keyword, new Distill.Listener() {
-                @Override
-                public void onResponse(String content) {
-                    article.updateContent(content);
-                    CoreDB.i().articleDao().update(article);
-                }
-
-                @Override
-                public void onFailure(String msg) {
-                    XLog.e("获取失败 - " + msg);
-                }
-            });
-            distill.getContent();
-        }
-    }
-
     void coverSaveCategories(List<Category> cloudyCategories) {
         String uid = App.i().getUser().getId();
         ArrayMap<String, Category> cloudyCategoriesTmp = new ArrayMap<>(cloudyCategories.size());
@@ -223,51 +154,6 @@ public abstract class BaseApi<T, E> {
     }
 
 
-    void handleDuplicateArticles() {
-        // 清理重复的文章
-        Article articleSample;
-        List<String> links = CoreDB.i().articleDao().getDuplicatesLink(App.i().getUser().getId());
-        List<Article> articleList;
-        for (String link : links) {
-            articleList = CoreDB.i().articleDao().getDuplicates(App.i().getUser().getId(), link);
-            if (articleList == null || articleList.size() == 0) {
-                continue;
-            }
-            // KLog.e("获取到的重复文章数量：" + articleList.size());
-            // 获取第一个作为范例
-            articleSample = articleList.get(0);
-            articleList.remove(0);
-
-            List<Article> articles = new ArrayList<>();
-            for (Article article : articleList) {
-                if (articleSample.getCrawlDate() != article.getCrawlDate()) {
-                    article.setCrawlDate(articleSample.getCrawlDate());
-                    article.setPubDate(articleSample.getPubDate());
-                    articles.add(article);
-                }
-            }
-            CoreDB.i().articleDao().update(articles);
-        }
-    }
-
-    // 优化在使用状态下多次同步到新文章时，这些文章的爬取时间
-    void handleCrawlDate() {
-        String uid = App.i().getUser().getId();
-        long lastReadMarkTimeMillis = CoreDB.i().articleDao().getLastReadTimeMillis(uid);
-        long lastStarMaskTimeMillis = CoreDB.i().articleDao().getLastStarTimeMillis(uid);
-        long lastMarkTimeMillis = Math.max(lastReadMarkTimeMillis, lastStarMaskTimeMillis);
-        CoreDB.i().articleDao().updateIdleCrawlDate(uid, lastMarkTimeMillis, System.currentTimeMillis());
-    }
-
-    void updateCollectionCount() {
-        String uid = App.i().getUser().getId();
-        CoreDB.i().feedDao().update(CoreDB.i().feedDao().getFeedsRealTimeCount(uid));
-        CoreDB.i().categoryDao().update(CoreDB.i().categoryDao().getCategoriesRealTimeCount(uid));
-    }
-
-
-
-
     ArraySet<String> handleUnreadRefs(List<String> ids) {
         XLog.i("处理未读资源：" + ids.size() );
         String uid = App.i().getUser().getId();
@@ -340,5 +226,116 @@ public abstract class BaseApi<T, E> {
         CoreDB.i().articleDao().markArticlesStar(uid, needMarkStarIds);
         CoreDB.i().articleDao().markArticlesUnStar(uid, needMarkUnStarIds);
         return needRequestIds;
+    }
+
+    void handleDuplicateArticles() {
+        // 清理重复的文章
+        Article articleSample;
+        List<String> links = CoreDB.i().articleDao().getDuplicatesLink(App.i().getUser().getId());
+        List<Article> articleList;
+        for (String link : links) {
+            articleList = CoreDB.i().articleDao().getDuplicates(App.i().getUser().getId(), link);
+            if (articleList == null || articleList.size() == 0) {
+                continue;
+            }
+            // KLog.e("获取到的重复文章数量：" + articleList.size());
+            // 获取第一个作为范例
+            articleSample = articleList.get(0);
+            articleList.remove(0);
+
+            List<Article> articles = new ArrayList<>();
+            for (Article article : articleList) {
+                // if (articleSample.getCrawlDate() != article.getCrawlDate()) {
+                // }
+                article.setCrawlDate(articleSample.getCrawlDate());
+                article.setPubDate(articleSample.getPubDate());
+                articles.add(article);
+            }
+            CoreDB.i().articleDao().update(articles);
+        }
+    }
+
+    // 优化在使用状态下多次同步到新文章时，这些文章的爬取时间
+    void handleCrawlDate() {
+        String uid = App.i().getUser().getId();
+        long lastReadMarkTimeMillis = CoreDB.i().articleDao().getLastReadTimeMillis(uid);
+        long lastStarMaskTimeMillis = CoreDB.i().articleDao().getLastStarTimeMillis(uid);
+        long lastMarkTimeMillis = Math.max(lastReadMarkTimeMillis, lastStarMaskTimeMillis);
+        CoreDB.i().articleDao().updateIdleCrawlDate(uid, lastMarkTimeMillis, System.currentTimeMillis());
+    }
+
+    void updateCollectionCount() {
+        String uid = App.i().getUser().getId();
+        CoreDB.i().feedDao().update(CoreDB.i().feedDao().getFeedsRealTimeCount(uid));
+        CoreDB.i().categoryDao().update(CoreDB.i().categoryDao().getCategoriesRealTimeCount(uid));
+    }
+
+
+    public void deleteExpiredArticles() {
+        // 最后的 300 * 1000L 是留前5分钟时间的不删除 WithPref.i().getClearBeforeDay()
+        long time = System.currentTimeMillis() - App.i().getUser().getCachePeriod() * 24 * 3600 * 1000L - 60 * 1000L;
+        String uid = App.i().getUser().getId();
+
+        List<Article> boxReadArts = CoreDB.i().articleDao().getReadedUnstarBeFiledLtTime(uid, time);
+        //KLog.i("移动文章" + boxReadArts.size());
+        for (Article article : boxReadArts) {
+            article.setSaveStatus(App.STATUS_IS_FILED);
+            String dir = SaveDirectory.i().getSaveDir(article.getFeedId(), article.getId()) + "/";
+            //KLog.e("保存目录：" + dir);
+            //FileUtil.saveArticle(App.i().getUserBoxPath() + dir, article);
+            ArticleUtil.saveArticle(App.i().getUserBoxPath() + dir, article);
+        }
+        CoreDB.i().articleDao().update(boxReadArts);
+
+        List<Article> storeReadArts = CoreDB.i().articleDao().getReadedStaredBeFiledLtTime(uid, time);
+        //KLog.i("移动文章" + storeReadArts.size());
+        for (Article article : storeReadArts) {
+            article.setSaveStatus(App.STATUS_IS_FILED);
+            String dir = "/" + SaveDirectory.i().getSaveDir(article.getFeedId(), article.getId()) + "/";
+            //KLog.e("保存目录：" + dir);
+            //FileUtil.saveArticle(App.i().getUserStorePath() + dir, article);
+            ArticleUtil.saveArticle(App.i().getUserStorePath() + dir, article);
+        }
+        CoreDB.i().articleDao().update(storeReadArts);
+
+        List<Article> expiredArticles = CoreDB.i().articleDao().getReadedUnstarLtTime(uid, time);
+        ArrayList<String> idListMD5 = new ArrayList<>(expiredArticles.size());
+        for (Article article : expiredArticles) {
+            idListMD5.add(EncryptUtil.MD5(article.getId()));
+        }
+        //KLog.i("清除A：" + time + "--" + expiredArticles.size());
+        FileUtil.deleteHtmlDirList(idListMD5);
+        CoreDB.i().articleDao().delete(expiredArticles);
+    }
+
+    void fetchReadability(String uid, long syncTimeMillis) {
+        List<Article> articles = CoreDB.i().articleDao().getNeedReadability(uid, syncTimeMillis);
+        XLog.i("开始获取易读文章 " + uid + " , " + syncTimeMillis);
+        for (Article article : articles) {
+            XLog.i("需要易读的文章：" + " , " + article.getTitle() + " , " + article.getLink());
+            if (TextUtils.isEmpty(article.getLink())) {
+                continue;
+            }
+            String keyword;
+            if (App.i().articleFirstKeyword.containsKey(article.getId())) {
+                keyword = App.i().articleFirstKeyword.get(article.getId());
+            } else {
+                keyword = ArticleUtil.getKeyword(article.getContent());
+                App.i().articleFirstKeyword.put(article.getId(), keyword);
+            }
+            Distill distill = new Distill(article.getLink(), keyword, new Distill.Listener() {
+                @Override
+                public void onResponse(String content) {
+                    article.updateContent(content);
+                    CoreDB.i().articleDao().update(article);
+                }
+
+                @Override
+                public void onFailure(String msg) {
+                    XLog.e("获取失败 - " + msg);
+                }
+            });
+            distill.getContent();
+        }
     }
 }

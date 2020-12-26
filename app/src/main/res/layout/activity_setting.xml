@@ -9,17 +9,23 @@
     android:id="@+id/setting_coordinator"
     tools:context="me.wizos.loread.activity.SettingActivity">
 
+    <!--android:theme="@style/AppTheme.AppBarOverlay"-->
     <com.google.android.material.appbar.AppBarLayout
         android:id="@+id/appBarLayout"
-        android:theme="@style/AppTheme.AppBarOverlay"
+        android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
         <androidx.appcompat.widget.Toolbar
             android:id="@+id/setting_toolbar"
             android:layout_width="match_parent"
-            app:popupTheme="@style/AppTheme.PopupOverlay"
+            android:layout_height="?attr/actionBarSize"
             android:background="?attr/topbar_bg"
-            android:layout_height="?attr/actionBarSize" />
+            app:contentInsetStartWithNavigation="0dp"
+            app:layout_scrollFlags="scroll|enterAlways|snap"
+            app:subtitleTextAppearance="@style/MyToolbar.SubTitle"
+            app:popupTheme="@style/OverflowMenuStyle"
+            tools:navigationIcon="@drawable/ic_close"
+            tools:title="源标题" />
     </com.google.android.material.appbar.AppBarLayout>
 
     <androidx.core.widget.NestedScrollView
@@ -227,6 +233,7 @@
             <LinearLayout
                 android:id="@+id/setting_feedback"
                 style="@style/SettingItem"
+                android:visibility="gone"
                 android:onClick="onClickFeedback"
                 android:orientation="horizontal">
                 <TextView

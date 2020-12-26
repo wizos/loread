@@ -317,7 +317,7 @@ public class FeedlyApi extends OAuthApi<Feed, CategoryItem> {
             // 执行文章自动处理脚本
             ArticleActionConfig.i().exeRules(uid, syncTimeMillis);
             // 清理无文章的tag
-            //clearNotArticleTags(uid);
+            // clearNotArticleTags(uid);
 
             LiveEventBus.get(SyncWorker.SYNC_PROCESS_FOR_SUBTITLE).post( null );
             // 提示更新完成

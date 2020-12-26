@@ -433,7 +433,7 @@
     <string name="play_the_audio">Play the audio</string>
 
     <string name="save">Save</string>
-    <string name="search_feeds">Search feeds</string>
+    <string name="search_feeds_enter_keywords_or_url">Search feeds (Enter keywords or url)</string>
     <string name="search_articles">Search articles</string>
     <string name="subscription">Subscription</string>
 

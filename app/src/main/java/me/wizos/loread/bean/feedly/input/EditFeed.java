@@ -14,6 +14,9 @@ import me.wizos.loread.db.Feed;
  */
 
 public class EditFeed {
+    /**
+     * 此id并非feedId，而是 feed/xxxx
+     */
     private String id;
     private String title;
     private ArrayList<CategoryItem> categoryItems = new ArrayList<>();

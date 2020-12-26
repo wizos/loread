@@ -47,5 +47,7 @@ public class TestConfig {
     public boolean ttsFile = false;
     public boolean useEmojiFilter = false;
     public int time = 60;
+    public String rssFinderUser = null;
+    public boolean useArticleMod = true;
 
 }

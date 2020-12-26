@@ -1,4 +1,4 @@
-package me.wizos.loread.bean.domain;
+package me.wizos.loread.bean.export;
 
 import java.util.ArrayList;
 

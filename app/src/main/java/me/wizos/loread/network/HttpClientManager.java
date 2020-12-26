@@ -22,7 +22,7 @@ public class HttpClientManager {
 
     private static HttpClientManager instance;
     private static OkHttpClient simpleOkHttpClient;
-    // private static OkHttpClient loreadHttpClient;
+    private static OkHttpClient searchHttpClient;
     private static OkHttpClient ttrssHttpClient;
     private static OkHttpClient feverHttpClient;
     private static OkHttpClient inoreaderHttpClient;
@@ -36,16 +36,29 @@ public class HttpClientManager {
             synchronized (HttpClientManager.class) {
                 if (instance == null) {
                     instance = new HttpClientManager();
-                    // loreadHttpClient = new OkHttpClient.Builder()
-                    //         .readTimeout(30, TimeUnit.SECONDS)
-                    //         .writeTimeout(30, TimeUnit.SECONDS)
-                    //         .connectTimeout(15, TimeUnit.SECONDS)
-                    //         .sslSocketFactory(HttpsUtils.getSslSocketFactory().sSLSocketFactory, HttpsUtils.getSslSocketFactory().trustManager)
-                    //         .hostnameVerifier(HttpsUtils.UnSafeHostnameVerifier)
-                    //         .followRedirects(true)
-                    //         .followSslRedirects(true)
-                    //         .addInterceptor(new LoreadTokenInterceptor())
-                    //         .build();
+                    searchHttpClient = new OkHttpClient.Builder()
+                            .readTimeout(10, TimeUnit.SECONDS)
+                            .writeTimeout(10, TimeUnit.SECONDS)
+                            .connectTimeout(10, TimeUnit.SECONDS)
+                            .sslSocketFactory(HttpsUtils.getSslSocketFactory().sSLSocketFactory, HttpsUtils.getSslSocketFactory().trustManager)
+                            .hostnameVerifier(HttpsUtils.UnSafeHostnameVerifier)
+                            .followRedirects(true)
+                            .followSslRedirects(true)
+                            .addInterceptor(new RelyInterceptor())
+                            .addInterceptor(new RefererInterceptor())
+                            .build();
+                    simpleOkHttpClient = new OkHttpClient.Builder()
+                            .readTimeout(30, TimeUnit.SECONDS)
+                            .writeTimeout(30, TimeUnit.SECONDS)
+                            .connectTimeout(15, TimeUnit.SECONDS)
+                            .sslSocketFactory(HttpsUtils.getSslSocketFactory().sSLSocketFactory, HttpsUtils.getSslSocketFactory().trustManager)
+                            .hostnameVerifier(HttpsUtils.UnSafeHostnameVerifier)
+                            .followRedirects(true)
+                            .followSslRedirects(true)
+                            .addInterceptor(new RelyInterceptor())
+                            .addInterceptor(new RefererInterceptor())
+                            // .dns(new FastDNS())
+                            .build();
                     ttrssHttpClient = new OkHttpClient.Builder()
                             .readTimeout(30, TimeUnit.SECONDS)
                             .writeTimeout(30, TimeUnit.SECONDS)
@@ -95,18 +108,6 @@ public class HttpClientManager {
                             .addInterceptor(new LoggerInterceptor())
                             .authenticator(new TokenAuthenticator())
                             .build();
-                    simpleOkHttpClient = new OkHttpClient.Builder()
-                            .readTimeout(30, TimeUnit.SECONDS)
-                            .writeTimeout(30, TimeUnit.SECONDS)
-                            .connectTimeout(15, TimeUnit.SECONDS)
-                            .sslSocketFactory(HttpsUtils.getSslSocketFactory().sSLSocketFactory, HttpsUtils.getSslSocketFactory().trustManager)
-                            .hostnameVerifier(HttpsUtils.UnSafeHostnameVerifier)
-                            .followRedirects(true)
-                            .followSslRedirects(true)
-                            .addInterceptor(new RelyInterceptor())
-                            .addInterceptor(new RefererInterceptor())
-                            // .dns(new FastDNS())
-                            .build();
                     imageHttpClient = new OkHttpClient.Builder()
                             .readTimeout(60, TimeUnit.SECONDS)
                             .writeTimeout(60, TimeUnit.SECONDS)
@@ -143,9 +144,9 @@ public class HttpClientManager {
         return simpleOkHttpClient;
     }
 
-    // public OkHttpClient loreadHttpClient() {
-    //     return loreadHttpClient;
-    // }
+    public OkHttpClient searchClient() {
+        return searchHttpClient;
+    }
 
     public OkHttpClient ttrssHttpClient() {return ttrssHttpClient;}
 

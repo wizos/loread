@@ -7,17 +7,18 @@
     android:orientation="vertical"
     tools:context="me.wizos.loread.activity.LabActivity">
 
-    <!--    <LinearLayout style="@style/SettingItem">-->
-    <!--        <TextView-->
-    <!--            android:id="@+id/lab_use_httpdns"-->
-    <!--            style="@style/SettingItemTitle2"-->
-    <!--            android:text="使用HttpDns访问网站" />-->
+    <!--<LinearLayout-->
+    <!--    style="@style/SettingItem">-->
+    <!--    <TextView-->
+    <!--        android:id="@+id/lab_use_httpdns"-->
+    <!--        style="@style/SettingItemTitle2"-->
+    <!--        android:text="使用HttpDns访问网站" />-->
 
-    <!--        <com.kyleduo.switchbutton.SwitchButton-->
-    <!--            android:id="@+id/lab_use_httpdns_sb"-->
-    <!--            style="@style/SwitchButtonStyle"-->
-    <!--            android:checked="true" />-->
-    <!--    </LinearLayout>-->
+    <!--    <com.kyleduo.switchbutton.SwitchButton-->
+    <!--        android:id="@+id/lab_use_httpdns_sb"-->
+    <!--        style="@style/SwitchButtonStyle"-->
+    <!--        android:checked="true" />-->
+    <!--</LinearLayout>-->
 
     <Button
         android:id="@+id/setting_backup"
@@ -99,7 +100,6 @@
                 style="@style/SettingItem"
                 android:gravity="center_vertical"
                 android:layout_gravity="center_vertical"/>
-
             <Button
                 android:text="打印相应 Activity"
                 android:textAllCaps="false"
@@ -116,19 +116,27 @@
                 android:gravity="center_vertical"
                 android:layout_gravity="center_vertical"/>
             <Button
-                android:text="全文搜索"
-                android:onClick="onClickSearch"
+                android:text="获取全文"
+                android:textAllCaps="false"
+                android:onClick="getFullText"
                 android:layout_height="50dp"
                 style="@style/SettingItem"
                 android:gravity="center_vertical"
                 android:layout_gravity="center_vertical"/>
-            <Button
-                android:text="精准搜索"
-                android:onClick="onClickSearch2"
-                android:layout_height="50dp"
-                style="@style/SettingItem"
-                android:gravity="center_vertical"
-                android:layout_gravity="center_vertical"/>
+            <!--<Button-->
+            <!--    android:text="全文搜索"-->
+            <!--    android:onClick="onClickSearch"-->
+            <!--    android:layout_height="50dp"-->
+            <!--    style="@style/SettingItem"-->
+            <!--    android:gravity="center_vertical"-->
+            <!--    android:layout_gravity="center_vertical"/>-->
+            <!--<Button-->
+            <!--    android:text="精准搜索"-->
+            <!--    android:onClick="onClickSearch2"-->
+            <!--    android:layout_height="50dp"-->
+            <!--    style="@style/SettingItem"-->
+            <!--    android:gravity="center_vertical"-->
+            <!--    android:layout_gravity="center_vertical"/>-->
 
             <Space
                 android:layout_width="match_parent"

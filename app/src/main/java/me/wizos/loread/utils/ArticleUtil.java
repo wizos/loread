@@ -230,6 +230,9 @@ public class ArticleUtil {
         return App.i().getString(R.string.article_title_is) + article.getTitle() + html.trim();
     }
 
+    private static Pattern endSymbol = Pattern.compile("(?:[。;；?？!！)）}｝\\]】…])" , Pattern.CASE_INSENSITIVE);
+    private static Pattern stopSymbol = Pattern.compile("(?:[。;；?？!！)）}｝\\]】…])" , Pattern.CASE_INSENSITIVE);
+
     /**
      * 优化标题，去掉html转义、换行符
      * @param title 文章标题
@@ -241,33 +244,52 @@ public class ArticleUtil {
             title = Html.fromHtml(Html.fromHtml(title).toString()).toString();
             return title;
         }else if (!StringUtils.isEmpty(summary)){
-            int size = Math.min(summary.length(), 24);
-            title = summary.substring(0,size);
+            int length = Math.min(summary.length(), 64);
+            title = summary.substring(0,length).trim();
+            String reverse = new StringBuilder(title).reverse().toString();
+            length = reverse.length();
+            // 结束符号
+            Matcher endSymbolMatcher = endSymbol.matcher(reverse);
+            // 暂停符号
+            Matcher stopSymbolMatcher = stopSymbol.matcher(reverse);
+            int endSymbolPosition = 0;
+            int stopSymbolPosition = 0;
+            if(endSymbolMatcher.find()){
+                endSymbolPosition = length - endSymbolMatcher.start();
+            }
+            if(stopSymbolMatcher.find()){
+                stopSymbolPosition = length - stopSymbolMatcher.start() -1;
+            }
+
+            if(stopSymbolPosition == 0){
+                stopSymbolPosition = endSymbolPosition;
+            }else if(endSymbolPosition == 0){
+                endSymbolPosition = stopSymbolPosition;
+            }
+            int endPosition = Math.max(stopSymbolPosition, endSymbolPosition);
+            if(endPosition > 0){
+                title = title.substring(0, endPosition).trim();
+            }
         }
         return title;
     }
 
-    // 结束符号
-    private static final String EndSymbol = "(?:[。;；?？!！)）}｝\\]】…])";
-    // 暂停符号
-    private static final String StopSymbol = "[-_.,，:：#￥%&*(（{｛\\[【]";
-
     public static String getExtractedTitle(String content) {
         if (!StringUtils.isEmpty(content)) {
-            // content = Html.fromHtml(content).toString();
-            // content = content.replace("\r", "_").replace("\n", "_");
             content = content.replace(App.i().getString(R.string.image_for_summary),"")
-                    .replace(App.i().getString(R.string.frame_for_summary),"")
-                    .replace(App.i().getString(R.string.audio_for_summary),"")
-                    .replace(App.i().getString(R.string.video_for_summary),"")
-                    .replace(App.i().getString(R.string.pre_for_summary),"")
-                    .replace(App.i().getString(R.string.table_for_summary),"");
-            content = content.substring(0, Math.min(64, content.length()));
+                    .replace(App.i().getString(R.string.frame_for_summary).trim(),"")
+                    .replace(App.i().getString(R.string.audio_for_summary).trim(),"")
+                    .replace(App.i().getString(R.string.video_for_summary).trim(),"")
+                    .replace(App.i().getString(R.string.pre_for_summary).trim(),"")
+                    .replace(App.i().getString(R.string.table_for_summary).trim(),"");
+            content = content.substring(0, Math.min(64, content.length())).trim();
             String reverse = new StringBuilder(content).reverse().toString();
             int length = reverse.length();
 
-            Matcher endSymbolMatcher = Pattern.compile(EndSymbol , Pattern.CASE_INSENSITIVE).matcher(reverse);
-            Matcher stopSymbolMatcher = Pattern.compile(StopSymbol , Pattern.CASE_INSENSITIVE).matcher(reverse);
+            // 结束符号
+            Matcher endSymbolMatcher = endSymbol.matcher(reverse);
+            // 暂停符号
+            Matcher stopSymbolMatcher = stopSymbol.matcher(reverse);
 
             XLog.d("长度：" +  length);
             int endSymbolPosition = 0;
@@ -294,6 +316,10 @@ public class ArticleUtil {
     }
 
 
+    final static Pattern p_inoreader_ad = Pattern.compile("(?=<center>)[\\s\\S]*?inoreader[\\s\\S]*?(?<=</center>)", Pattern.CASE_INSENSITIVE);
+    final static Pattern p_space_between_codes = Pattern.compile("(\\s|　|&nbsp;)*<([^>/]+)>(\\s|　|&nbsp;)*([\\s\\S]+)(\\s|　|&nbsp;)*</\\1>(\\s|　|&nbsp;)*", Pattern.CASE_INSENSITIVE);
+    // final static Pattern p_display_inline_block = Pattern.compile("display\\s*:\\s*inline-block\\s*(;|$)", Pattern.CASE_INSENSITIVE);
+
     /**
      * 在将服务器的文章入库前，对文章进行修整，主要是过滤无用&有干扰的标签、属性
      * @param articleUrl 文章链接
@@ -308,8 +334,7 @@ public class ArticleUtil {
         Matcher matcher;
 
         // 过滤Ino广告
-        pattern = Pattern.compile("(?=<center>)[\\s\\S]*?inoreader[\\s\\S]*?(?<=</center>)", Pattern.CASE_INSENSITIVE);
-        content = pattern.matcher(content).replaceAll("");
+        content = p_inoreader_ad.matcher(content).replaceAll("");
 
         Element element;
         Elements elements;
@@ -335,8 +360,7 @@ public class ArticleUtil {
         // documentBody.getElementsByTag("noscript").unwrap();
         // elements = documentBody.getElementsByTag("noscript");
         // for (int i = 0, size = elements.size(); i < size; i++) {
-        //    element = elements.get(i);
-        //    element.tagName("details");
+        //    element = elements.get(i).tagName("details");
         //    element.insertChildren(0,new Element("summary").text("\uD83D\uDD17"));
         // }
 
@@ -364,25 +388,14 @@ public class ArticleUtil {
         documentBody.select("[onmouseover]").removeAttr("onmouseover");
 
         String tmp;
-        // \s匹配的是 制表符\t,换行符\n,回车符\r，换页符\f以及半角空格
-        // elements = documentBody.getElementsByTag("pre");
-        // for (int i = 0, size = elements.size(); i < size; i++) {
-        //     tmp = elements.get(i).html().trim();
-        //     pattern = Pattern.compile("(\\s|　|&nbsp;)*<([^>/]+)>(\\s|　|&nbsp;)*([\\s\\S]+)(\\s|　|&nbsp;)*</\\1>(\\s|　|&nbsp;)*", Pattern.CASE_INSENSITIVE);
-        //     matcher = pattern.matcher(tmp);
-        //     if (matcher.matches()) {
-        //         tmp = pattern.matcher(tmp).replaceAll("<$2>$4</$2>");
-        //         elements.get(i).html(tmp);
-        //     }
-        // }
 
+        // 去掉代码之间的空格
         elements = documentBody.getElementsByTag("code");
         for (int i = 0, size = elements.size(); i < size; i++) {
             tmp = elements.get(i).html().trim();
-            pattern = Pattern.compile("(\\s|　|&nbsp;)*<([^>/]+)>(\\s|　|&nbsp;)*([\\s\\S]+)(\\s|　|&nbsp;)*</\\1>(\\s|　|&nbsp;)*", Pattern.CASE_INSENSITIVE);
-            matcher = pattern.matcher(tmp);
+            matcher = p_space_between_codes.matcher(tmp);
             if (matcher.matches()) {
-                tmp = pattern.matcher(tmp).replaceAll("<$2>$4</$2>");
+                tmp = matcher.replaceAll("<$2>$4</$2>");
                 elements.get(i).html(tmp);
             }
         }
@@ -440,8 +453,16 @@ public class ArticleUtil {
             tmp = pattern.matcher(tmp).replaceAll("");
             elements.get(i).attr("style", tmp);
         }
+        // 去掉内联的css样式中的强制行块
+        elements = documentBody.select("[style*=display]");
+        pattern = Pattern.compile("display\\s*:\\s*inline-block\\s*(;|$)", Pattern.CASE_INSENSITIVE);
+        for (int i = 0, size = elements.size(); i < size; i++) {
+            tmp = elements.get(i).attr("style");
+            tmp = pattern.matcher(tmp).replaceAll("");
+            elements.get(i).attr("style", tmp);
+        }
 
-        // 去掉内联的css样式中的不展示的问题
+        // 去掉内联的css样式中的不展示
         elements = documentBody.select("[style*=display]");
         pattern = Pattern.compile("display\\s*:\\s*none\\s*(;|$)", Pattern.CASE_INSENSITIVE);
         for (int i = 0, size = elements.size(); i < size; i++) {
@@ -489,7 +510,7 @@ public class ArticleUtil {
         }
 
 
-        // 去掉内联的css样式中的固定位置的问题
+        // 去掉内联的css样式中的固定位置
         elements = documentBody.select("[style*=position]");
         for (int i = 0, size = elements.size(); i < size; i++) {
             tmp = elements.get(i).attr("style");
@@ -498,6 +519,7 @@ public class ArticleUtil {
             elements.get(i).attr("style", tmp);
         }
 
+        // 去掉内联的css样式中的固定宽度
         elements = documentBody.select("[style*=width]");
         for (int i = 0, size = elements.size(); i < size; i++) {
             tmp = elements.get(i).attr("style");
@@ -508,7 +530,6 @@ public class ArticleUtil {
 
         // 清除空的style
         documentBody.select("[style='']").removeAttr("style");
-        //XLog.e("正文D：" + documentBody.html());
 
         // 将相对连接转为绝对链接
         elements = documentBody.getElementsByAttribute("src");
@@ -539,19 +560,6 @@ public class ArticleUtil {
         documentBody.select("[src=''],[src='about:blank']").remove();
 
 
-        // 如果文章的开头就是 header 元素，则移除
-        elements = documentBody.children();
-        if( elements.size() > 0 ){
-            element = elements.first();
-            if(element.nodeName().equalsIgnoreCase("article") || element.nodeName().equalsIgnoreCase("section")){
-                element = element.children().first();
-            }
-            if(element.nodeName().equalsIgnoreCase("header")){
-                element.remove();
-            }
-        }
-
-
         // 去掉空标签（无法去掉标签内的text内容是纯空字符串的）
         boolean circulate;
         do {
@@ -563,31 +571,39 @@ public class ArticleUtil {
                 circulate = false;
             }
         }while (circulate);
-        //XLog.e("正文E：" + documentBody.html());
+
+
+        // 如果文章的开头就是 header 元素，或者是 article > header / section > header，则移除
+        elements = documentBody.children();
+        if( elements.size() > 0 ){
+            element = elements.first();
+            if(element.tagName().equalsIgnoreCase("article") || element.nodeName().equalsIgnoreCase("section")){
+                element = element.children().first();
+            }
+            if(element.tagName().equalsIgnoreCase("header")){
+                element.remove();
+            }
+        }
+
+        // 如果跟元素是个单元素，则把它去掉
+        elements = documentBody.children();
+        while (elements.size()==1){
+            tmp = elements.first().tagName();
+            if(tmp.equalsIgnoreCase("div")
+                    || tmp.equalsIgnoreCase("article")
+                    || tmp.equalsIgnoreCase("section")
+                    || tmp.equalsIgnoreCase("table")
+                    || tmp.equalsIgnoreCase("tbody")
+                    || tmp.equalsIgnoreCase("tr")
+                    || tmp.equalsIgnoreCase("td")){
+                elements.unwrap();
+                elements = documentBody.children();
+            }else {
+                elements = elements.first().children();
+            }
+        }
 
         content = documentBody.html().trim();
-
-
-        // Matcher unPreStartMatcher = Pattern.compile("</pre>", Pattern.CASE_INSENSITIVE).matcher(content);
-        // Matcher unPreEndMatcher = Pattern.compile("<pre", Pattern.CASE_INSENSITIVE).matcher(content);
-        // int start = 0;
-        // int end = 0;
-        // do {
-        //     if(unPreStartMatcher.find()){
-        //         start = unPreStartMatcher.end();
-        //     }
-        //     if(unPreEndMatcher.find()){
-        //         end = unPreEndMatcher.start();
-        //         circulate = true;
-        //     }else {
-        //         end = content.length();
-        //         circulate = false;
-        //     }
-        //     // 删除无效的空标签（有属性的），注意此处的空标签必须是指定的，不然会把一些类似图片/音频/视频等“有意义的带属性空标签”给去掉
-        //     pattern = Pattern.compile("(\\s|　|&nbsp;)*<(i|p|section|div|figure|pre|table|blockquote) [^>/]+>(\\s|　|&nbsp;)*</\\2>(\\s|　|&nbsp;)*", Pattern.CASE_INSENSITIVE);
-        //     content = pattern.matcher(content).region(start, end).replaceAll("");
-        // }while (circulate);
-
 
         // 将包含<br>的空标签给解脱出来
         pattern = Pattern.compile("(\\s|　|&nbsp;)*<([a-zA-Z0-9]{1,10})>(\\s|　|&nbsp;)*(<br>)+(\\s|　|&nbsp;)*</\\2>(\\s|　|&nbsp;)*", Pattern.CASE_INSENSITIVE);
@@ -645,6 +661,10 @@ public class ArticleUtil {
         pattern = Pattern.compile("</a>(\\s|　|&nbsp;)*<a", Pattern.CASE_INSENSITIVE);
         content = pattern.matcher(content).replaceAll("</a><br><a");
 
+        pattern = Pattern.compile("^(\\s|\\n|　|&nbsp;)+", Pattern.CASE_INSENSITIVE);
+        content = pattern.matcher(content).replaceAll("");
+        pattern = Pattern.compile("$\\n+", Pattern.CASE_INSENSITIVE);
+        content = pattern.matcher(content).replaceAll("");
         return content;
     }
 

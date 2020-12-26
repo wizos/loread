@@ -47,7 +47,7 @@ public class ArticleItem {
         Article article = new Article();
         article.setId(String.valueOf(id));
 
-        String tmpContent = ArticleUtil.getOptimizedContent(article.getLink(), content);
+        String tmpContent = ArticleUtil.getOptimizedContent(link, content);
         tmpContent = ArticleUtil.getOptimizedContentWithEnclosures(tmpContent, attachments);
         article.setContent(tmpContent);
 
@@ -64,7 +64,7 @@ public class ArticleItem {
         article.setFeedId(feed_id);
         article.setFeedTitle(feed_title);
 
-        String coverUrl = ArticleUtil.getCoverUrl(article.getLink(),tmpContent);
+        String coverUrl = ArticleUtil.getCoverUrl(link,tmpContent);
         article.setImage(coverUrl);
 
         // 自己设置的字段

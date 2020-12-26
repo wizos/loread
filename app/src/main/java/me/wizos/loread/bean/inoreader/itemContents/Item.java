@@ -150,22 +150,9 @@ public class Item {
 
 
     public Article convert(BaseApi.ArticleChanger articleChanger) {
-        String tempTitle;
         Article article = new Article();
         // 返回的字段
         article.setId(id);
-
-
-        String tmpContent = ArticleUtil.getOptimizedContent(article.getLink(), summary.getContent());
-        tmpContent = ArticleUtil.getOptimizedContentWithEnclosures(tmpContent,enclosure);
-        article.setContent(tmpContent);
-
-        String tmpSummary = ArticleUtil.getOptimizedSummary(tmpContent);
-        article.setSummary(tmpSummary);
-
-        title = ArticleUtil.getOptimizedTitle(title,tmpSummary);
-        article.setTitle(title);
-
         article.setAuthor(author);
         article.setPubDate(published * 1000);
 
@@ -176,6 +163,16 @@ public class Item {
             article.setFeedId(origin.getStreamId());
             article.setFeedTitle(origin.getTitle());
         }
+
+        String tmpContent = ArticleUtil.getOptimizedContent(article.getLink(), summary.getContent());
+        tmpContent = ArticleUtil.getOptimizedContentWithEnclosures(tmpContent,enclosure);
+        article.setContent(tmpContent);
+
+        String tmpSummary = ArticleUtil.getOptimizedSummary(tmpContent);
+        article.setSummary(tmpSummary);
+
+        title = ArticleUtil.getOptimizedTitle(title,tmpSummary);
+        article.setTitle(title);
 
         String coverUrl = ArticleUtil.getCoverUrl(article.getLink(),tmpContent);
         article.setImage(coverUrl);

@@ -3,21 +3,27 @@ package me.wizos.loread.activity;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
+import android.graphics.Color;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Parcelable;
+import android.text.Html;
 import android.util.ArrayMap;
 import android.view.View;
 import android.widget.EditText;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.work.Constraints;
 import androidx.work.NetworkType;
 import androidx.work.PeriodicWorkRequest;
 import androidx.work.WorkManager;
 
+import com.afollestad.materialdialogs.DialogAction;
+import com.afollestad.materialdialogs.GravityEnum;
 import com.afollestad.materialdialogs.MaterialDialog;
+import com.afollestad.materialdialogs.Theme;
 import com.elvishew.xlog.XLog;
 import com.hjq.toast.ToastUtils;
 import com.lzy.okgo.OkGo;
@@ -48,6 +54,7 @@ import me.wizos.loread.db.Feed;
 import me.wizos.loread.db.FeedCategory;
 import me.wizos.loread.db.Tag;
 import me.wizos.loread.db.User;
+import me.wizos.loread.extractor.Distill;
 import me.wizos.loread.network.SyncWorker;
 import me.wizos.loread.network.api.FeverApi;
 import me.wizos.loread.network.api.TinyRSSApi;
@@ -338,25 +345,75 @@ public class LabActivity extends AppCompatActivity {
         return list.size();
     }
 
-//    public void loginAccount(){
-//        // TODO: 2020/4/14 开始模拟登录
-//        if(!Config.i().enableAuth){
-//            return;
-//        }
-//        handleAccount();
-//
-//        Account account = new Account(getString(R.string.app_name),ACCOUNT_TYPE);
-//        // 帐户密码和信息这里用null演示
-//        mAccountManager.addAccountExplicitly(account, null, null);
-//        // 自动同步
-//        Bundle bundle= new Bundle();
-//        ContentResolver.setIsSyncable(account, AccountProvider.AUTHORITY, 1);
-//        ContentResolver.setSyncAutomatically(account, AccountProvider.AUTHORITY,true);
-//        ContentResolver.addPeriodicSync(account, AccountProvider.AUTHORITY,bundle, 30);    // 间隔时间为30秒
-//        // 手动同步
-////        ContentResolver.requestSync(account, AccountProvider.AUTHORITY, bundle);
-////        finish();
-//    }
+    // public void loginAccount(){
+    //     // TODO: 2020/4/14 开始模拟登录
+    //     if(!Config.i().enableAuth){
+    //         return;
+    //     }
+    //     handleAccount();
+    //
+    //     Account account = new Account(getString(R.string.app_name),ACCOUNT_TYPE);
+    //     // 帐户密码和信息这里用null演示
+    //     mAccountManager.addAccountExplicitly(account, null, null);
+    //     // 自动同步
+    //     Bundle bundle= new Bundle();
+    //     ContentResolver.setIsSyncable(account, AccountProvider.AUTHORITY, 1);
+    //     ContentResolver.setSyncAutomatically(account, AccountProvider.AUTHORITY,true);
+    //     ContentResolver.addPeriodicSync(account, AccountProvider.AUTHORITY,bundle, 30);    // 间隔时间为30秒
+    //     // 手动同步
+    //     ContentResolver.requestSync(account, AccountProvider.AUTHORITY, bundle);
+    //     finish();
+    // }
+
+    public void getFullText(View view){
+        EditText editText = findViewById(R.id.lab_enter_edittext);
+        String url = editText.getText().toString();
+        if(StringUtils.isEmpty(url)){
+            ToastUtils.show("未输入网址，请检查");
+            return;
+        }
+        new Distill(url, "", new Distill.Listener() {
+            @Override
+            public void onResponse(String content) {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        new MaterialDialog.Builder(LabActivity.this)
+                                .title(R.string.article_info)
+                                .content(Html.fromHtml(content))
+                                .positiveText("显示源代码")
+                                .onPositive(new MaterialDialog.SingleButtonCallback() {
+                                    @Override
+                                    public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
+                                        dialog.setContent(content);
+                                    }
+                                })
+
+                                .positiveColorRes(R.color.material_red_400)
+                                .titleGravity(GravityEnum.CENTER)
+                                .titleColorRes(R.color.material_red_400)
+                                .contentColorRes(android.R.color.white)
+                                .backgroundColorRes(R.color.material_blue_grey_800)
+                                .dividerColorRes(R.color.material_teal_a400)
+                                .positiveColor(Color.WHITE)
+                                .negativeColorAttr(android.R.attr.textColorSecondaryInverse)
+                                .theme(Theme.DARK)
+                                .show();
+                    }
+                });
+            }
+
+            @Override
+            public void onFailure(String msg) {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        ToastUtils.show(getString(R.string.get_readability_failure, msg));
+                    }
+                });
+            }
+        });
+    }
 
     public void onClickClearTags(View view) {
         CoreDB.i().tagDao().clear(App.i().getUser().getId());
@@ -467,30 +524,19 @@ public class LabActivity extends AppCompatActivity {
     }
 
 
-    public void onClickSearch(View view) {
-        EditText editText = findViewById(R.id.lab_enter_edittext);
-        String text = editText.getText().toString();
-        long time = System.currentTimeMillis();
-        if(StringUtils.isEmpty(text)){
-            ToastUtils.show("请输入关键词");
-        }else {
-            List<Article> articles = CoreDB.i().articleDao().search(App.i().getUser().getId(),text);
-            XLog.i("搜索耗时：" + (System.currentTimeMillis() - time));
-            XLog.i("搜索结果：" + (articles==null ? 0:articles.size()));
-        }
-    }
-    public void onClickSearch2(View view) {
-        EditText editText = findViewById(R.id.lab_enter_edittext);
-        String text = editText.getText().toString();
-        long time = System.currentTimeMillis();
-        if(StringUtils.isEmpty(text)){
-            ToastUtils.show("请输入关键词");
-        }else {
-            List<Article> articles = CoreDB.i().articleDao().search2(App.i().getUser().getId(),text);
-            XLog.i("搜索耗时：" + (System.currentTimeMillis() - time));
-            XLog.i("搜索结果：" + (articles==null ? 0:articles.size()));
-        }
-    }
+    // public void onClickSearch(View view) {
+    //     EditText editText = findViewById(R.id.lab_enter_edittext);
+    //     String text = editText.getText().toString();
+    //     long time = System.currentTimeMillis();
+    //     if(StringUtils.isEmpty(text)){
+    //         ToastUtils.show("请输入关键词");
+    //     }else {
+    //         List<Article> articles = CoreDB.i().articleDao().search(App.i().getUser().getId(),text);
+    //         XLog.i("搜索耗时：" + (System.currentTimeMillis() - time));
+    //         XLog.i("搜索结果：" + (articles==null ? 0:articles.size()));
+    //     }
+    // }
+
 
     public void actionArticle(View view){
         User user = App.i().getUser();

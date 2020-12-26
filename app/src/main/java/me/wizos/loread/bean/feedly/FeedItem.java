@@ -13,35 +13,35 @@ import me.wizos.loread.db.Feed;
  */
 
 public class FeedItem {
-    private String id;
-    public String feedId;
-    public String title;
-    private String description;
-    private String website;
-    private String iconUrl; // 可能为空，小图
-    private String visualUrl; // 可能为空，大图
-    private String language; // 值可能为：zh，en
-    private int subscribers;
-    private long updated;
-    private float velocity; // 每周发布的文章的平均数量。 此号码每隔几天更新一次
-    private boolean partial; // 可能为空；部分的; 偏爱的
-    private String contentType; // 可能为空；可能为 article， longform
-    private String state; // 可能为空。值可能为：dead.stale，dormant
-    private ArrayList<String> topics; // 可能为空
+    protected String id;
+    protected String feedId;
+    protected String title;
+    protected String description;
+    protected String website; // 网站url
+    protected String iconUrl; // 可能为空，小图
+    protected String visualUrl; // 可能为空，大图
+    protected String language; // 值可能为：zh，en
+    protected int subscribers;
+    protected long updated;
+    protected float velocity; // 每周发布的文章的平均数量。 此号码每隔几天更新一次
+    protected boolean partial; // 可能为空；部分的; 偏爱的
+    protected String contentType; // 可能为空；可能为 article， longform
+    protected String state; // 可能为空。值可能为：dead.stale，dormant
+    protected ArrayList<String> topics; // 可能为空
 
     // 单独获取feed信息时可见(批量接口)
-    // private int estimatedEngagement;
+    // protected int estimatedEngagement;
 
     // 搜索时可见
-    // private long lastUpdated; // 可能用不到吧，和 Updated 字段类似
-    // private float score;
-    // private int coverage;
-    // private int coverageScore;
-    // private int averageReadTime;
-    // private String websiteTitle;
-    // private int totalTagCount;
-    // private ArrayList<> tagCounts;
-    // private ArrayList<String> deliciousTags;
+    // protected long lastUpdated; // 可能用不到吧，和 Updated 字段类似
+    // protected float score;
+    // protected int coverage;
+    // protected int coverageScore;
+    // protected int averageReadTime;
+    // protected String websiteTitle;
+    // protected int totalTagCount;
+    // protected ArrayList<> tagCounts;
+    // protected ArrayList<String> deliciousTags;
 
     // 以下不常见到
     // String coverColor;
@@ -154,7 +154,7 @@ public class FeedItem {
     @NotNull
     @Override
     public String toString() {
-        return "TTRSSFeedItem{" +
+        return "FeedItem{" +
                 "id='" + id + '\'' +
                 ", feedId='" + feedId + '\'' +
                 ", title='" + title + '\'' +

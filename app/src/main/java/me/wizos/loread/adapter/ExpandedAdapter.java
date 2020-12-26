@@ -262,7 +262,6 @@ public class ExpandedAdapter extends ExpandableAdapter<RecyclerView.ViewHolder> 
             icon.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    long time = System.currentTimeMillis();
                     // 判断parent是否打开了二级菜单
                     if (adapter.isExpanded(parentPosition)) {
                         // 关闭该parent下的二级菜单
@@ -273,7 +272,6 @@ public class ExpandedAdapter extends ExpandableAdapter<RecyclerView.ViewHolder> 
                         adapter.expandParent(parentPosition);
                         icon.setText(context.getString(R.string.font_arrow_down));
                     }
-                    // KLog.e("点击展开收缩：" + (System.currentTimeMillis() - time) );
                 }
             });
         }

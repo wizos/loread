@@ -365,7 +365,7 @@
     <string name="play_the_audio">播放该音频</string>
 
     <string name="save">保存</string>
-    <string name="search_feeds">搜索源</string>
+    <string name="search_feeds_enter_keywords_or_url">搜索源（输入关键词或url）</string>
     <string name="search_articles">搜索文章</string>
     <string name="subscription">订阅源</string>
 

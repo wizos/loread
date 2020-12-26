@@ -197,7 +197,7 @@ public class WebActivity extends BaseActivity implements WebBridge {
         webSettings.setDomStorageEnabled(true); // 临时简单的缓存（必须保留，否则无法播放优酷视频网页，其他的可以）
         webSettings.setAppCacheEnabled(true); // 支持H5的 application cache 的功能
         // webSettings.setDatabaseEnabled(true);  // 支持javascript读写db
-        //根据cache-control获取数据。
+        // 根据cache-control获取数据。
         webSettings.setCacheMode(WebSettings.LOAD_NO_CACHE);
 
         // 通过 file url 加载的 Javascript 读取其他的本地文件 .建议关闭
@@ -289,10 +289,10 @@ public class WebActivity extends BaseActivity implements WebBridge {
         @SuppressLint("InlinedApi")
         @Override
         public void run() {
-            XLog.e("屏幕：隐藏状态");
+            XLog.i("屏幕：隐藏状态");
 
             AppBarLayout.LayoutParams params = (AppBarLayout.LayoutParams) appBarLayout.getChildAt(0).getLayoutParams();
-            XLog.e("屏幕：隐藏状态" + containerLayout.getSystemUiVisibility());
+            XLog.i("屏幕：隐藏状态" + containerLayout.getSystemUiVisibility());
             params.setScrollFlags(0);
 
             ActionBar actionBar = getSupportActionBar();
@@ -379,7 +379,7 @@ public class WebActivity extends BaseActivity implements WebBridge {
 
     @Override
     public void log(String msg) {
-        XLog.e(WebBridge.TAG, msg);
+        XLog.i(WebBridge.TAG, msg);
     }
 
     @Override
@@ -416,7 +416,7 @@ public class WebActivity extends BaseActivity implements WebBridge {
                 }
 
                 String newUrl = LinkRewriteConfig.i().getRedirectUrl(url);
-                // XLog.e("重定向地址：" + url + " -> " + newUrl);
+                // XLog.i("重定向地址：" + url + " -> " + newUrl);
                 if(!TextUtils.isEmpty(newUrl) && !url.equalsIgnoreCase(newUrl)){
                     return super.shouldInterceptRequest(view, new WebResourceRequest() {
                         @Override
@@ -461,7 +461,7 @@ public class WebActivity extends BaseActivity implements WebBridge {
             // 如果存在，唤起该应用播放，如果不存在，则跳到应用市场下载该应用.
             String url = request.getUrl().toString();
 
-            XLog.e("地址：" + url);
+            XLog.i("地址：" + url);
             if (url.startsWith(SCHEMA_HTTP) || url.startsWith(SCHEMA_HTTPS)) {
                 return false;
             }
@@ -483,7 +483,7 @@ public class WebActivity extends BaseActivity implements WebBridge {
                 try {
                     name = "" + getPackageManager().getApplicationLabel(getPackageManager().getApplicationInfo(in.resolveActivity(getPackageManager()).getPackageName(), PackageManager.GET_META_DATA));
                 } catch (PackageManager.NameNotFoundException e) {
-                    XLog.e(R.string.unable_to_find_app);
+                    XLog.i(R.string.unable_to_find_app);
                     e.printStackTrace();
                 }
                 if (TextUtils.isEmpty(name)) {
@@ -527,7 +527,7 @@ public class WebActivity extends BaseActivity implements WebBridge {
             super.onPageFinished(view, url);
             // 注入视频全屏js
             view.loadUrl(WebBridge.Video.fullScreenJsFun(url));
-            // XLog.e("页面加载完成");
+            // XLog.i("页面加载完成");
             // view.loadUrl(Distill.Bridge.COMMEND_PRINT_HTML);
             if (itemStop != null) {
                 itemStop.setVisible(false);
@@ -540,19 +540,19 @@ public class WebActivity extends BaseActivity implements WebBridge {
         @Override
         public void onReceivedHttpError(WebView view, WebResourceRequest request, WebResourceResponse errorResponse) {
             super.onReceivedHttpError(view, request, errorResponse);
-            //XLog.e("接受http错误 = " + request.getUrl() + errorResponse);
+            //XLog.i("接受http错误 = " + request.getUrl() + errorResponse);
         }
 
         @Override
         public void onReceivedSslError(WebView view, SslErrorHandler handler, SslError error) {
-            //XLog.e("接受Ssl错误 = " + view.getUrl() + error);
+            //XLog.i("接受Ssl错误 = " + view.getUrl() + error);
             handler.proceed();//接受证书
         }
 
         @Override
         public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
             super.onReceivedError(view, request, error);
-            //XLog.e("接受错误 = " + request.getUrl() + error);
+            //XLog.i("接受错误 = " + request.getUrl() + error);
         }
     };
 
@@ -589,7 +589,7 @@ public class WebActivity extends BaseActivity implements WebBridge {
                         selected = i;
                     }
                     i++;
-                    XLog.e("标题：" + entry.getKey());
+                    XLog.i("标题：" + entry.getKey());
                 }
 
                 int finalSelected = selected;
@@ -611,7 +611,7 @@ public class WebActivity extends BaseActivity implements WebBridge {
                                 NetworkUserAgentConfig.i().save();
                                 agentWeb.getWebCreator().getWebView().getSettings().setUserAgentString(NetworkUserAgentConfig.i().guessUserAgentByUrl(receivedUrl));
                                 agentWeb.getWebCreator().getWebView().reload();
-                                // XLog.e("默认的UA是：" + agentWeb.getWebCreator().getWebView().getSettings().getUserAgentString() );
+                                // XLog.i("默认的UA是：" + agentWeb.getWebCreator().getWebView().getSettings().getUserAgentString() );
                                 dialog.dismiss();
                                 return true;
                             }
@@ -630,7 +630,7 @@ public class WebActivity extends BaseActivity implements WebBridge {
                                                 NetworkUserAgentConfig.i().setHoldUserAgent(getString(R.string.custom));
                                                 NetworkUserAgentConfig.i().getUserAgents().put(getString(R.string.custom),input.toString());
                                                 NetworkUserAgentConfig.i().save();
-                                                XLog.e("当前输入的是：" + input.toString());
+                                                XLog.i("当前输入的是：" + input.toString());
                                                 agentWeb.getWebCreator().getWebView().getSettings().setUserAgentString(NetworkUserAgentConfig.i().guessUserAgentByUrl(receivedUrl));
                                                 agentWeb.getWebCreator().getWebView().reload();
                                             }
@@ -693,7 +693,7 @@ public class WebActivity extends BaseActivity implements WebBridge {
                 agentWeb.getWebCreator().getWebView().stopLoading();
                 break;
             case R.id.web_menu_get_html:
-                XLog.e("测试点击");
+                XLog.i("测试点击");
                 agentWeb.getWebCreator().getWebView().loadUrl(COMMEND_PRINT_HTML);
                 agentWeb.getJsAccessEntrace().callJs(COMMEND_PRINT_HTML);
                 break;
@@ -743,125 +743,4 @@ public class WebActivity extends BaseActivity implements WebBridge {
                 .backgroundColor(R.id.web_toolbar, R.attr.topbar_bg);
         return mColorfulBuilder;
     }
-
-
-    /**
-     *
-     作者：AmatorLee
-     链接：https://www.jianshu.com/p/b008e04987e0
-     來源：简书
-     简书著作权归作者所有，任何形式的转载都请联系作者获得授权并注明出处。
-
-     #####二、仿魅族应用商店应用详情效果
-     作为一个多年的魅族手机使用者，看起来魅族的应用商店也挺不错的，来看看要实现的效果（**注：实现效果而非实现实现界面**）
-
-     ![sheet](http://upload-images.jianshu.io/upload_images/2605454-3b9fc78ca7aaaa87.gif?imageMogr2/auto-orient/strip)
-
-     1. 思路一：使用Activity实现，但是这样需要解决的问题有：
-     1.  Activity进场/出场动画
-     2.     对于滑动的监听
-     3. 对状态栏的动态改变
-
-     2. 思路二：由于我们这边使用的是Behaviour，而系统给我们提供了一个```BottomSheetBehavior```应该可以完美的给我们解决滑动的问题，但是Activity方面的问题依然存在，然后找到了一个强大的Dialog(```BottomSheetDialog```)和一个DialogFragment(```BottomSheetDialogFragment```),,以我夜观天象应该这个就是实现了``````BottomSheetBehavior```的View，很好很强大。
-     我们来看看我们是怎样是实现的：
-
-     作者：AmatorLee
-     链接：https://www.jianshu.com/p/b008e04987e0
-     來源：简书
-     简书著作权归作者所有，任何形式的转载都请联系作者获得授权并注明出处。
-     */
-    // private void test(){
-    //
-    //     /**
-    //      * BottomSheetDialog
-    //      */
-    //     Button btnShowDialog = (Button) findViewById(R.id.bottom_pull_sheet);
-    //     mDatas = new ArrayList<>();
-    //     View inflate = getLayoutInflater().inflate(R.layout.dialog_bottom_sheet, null);
-    //     //        mLeftIcon = inflate.findViewById(R.id.delete);
-    //     //        mLeftIcon.setOnClickListener(new View.OnClickListener() {
-    //     //            @Override
-    //     //            public void onClick(View view) {
-    //     //                if (mBottomSheetDialog != null && mBottomSheetDialog.isShowing()) {
-    //     //                    mBottomSheetDialog.dismiss();
-    //     //                }
-    //     //            }
-    //     //        });
-    //     //        RecyclerView recyclerView = inflate.findViewById(R.id.recyclerView);
-    //     //        mDatas = new ArrayList<>();
-    //     //        for (int i = 0; i < 50; i++) {
-    //     //            mDatas.add("这是第" + i + "个数据");
-    //     //        }
-    //     //        recyclerView.addItemDecoration(new DividerItemDecoration(this, DividerItemDecoration.VERTICAL));
-    //     //        recyclerView.setLayoutManager(new LinearLayoutManager(this));
-    //     //        Adapter adapter = new Adapter();
-    //     //        recyclerView.setAdapter(adapter);
-    //
-    //     BottomSheetDialog mBottomSheetDialog = new BottomSheetDialog(this);
-    //     mBottomSheetDialog.setContentView(inflate);
-    //     View container = mBottomSheetDialog.getDelegate().findViewById(android.support.design.R.id.design_bottom_sheet);
-    //     final BottomSheetBehavior containerBehaviour = BottomSheetBehavior.from(container);
-    //     containerBehaviour.setBottomSheetCallback(new BottomSheetBehavior.BottomSheetCallback() {
-    //         @Override
-    //         public void onStateChanged(@NonNull View bottomSheet, int newState) {
-    //             XLog.e(TAG, "onStateChanged: newState === " + newState);
-    //             if (newState == BottomSheetBehavior.STATE_HIDDEN) {
-    //                 mBottomSheetDialog.dismiss();
-    //                 containerBehaviour.setState(BottomSheetBehavior.STATE_COLLAPSED);
-    //             } else if (newState == BottomSheetBehavior.STATE_COLLAPSED) {
-    //                 //强制修改弹出高度为屏幕高度的0.9倍，不做此操作仅仅有CollapSed/Expand两种，就是0.5和1倍展开的效果
-    //                 containerBehaviour.setPeekHeight((int) (0.9 * height));
-    //             }
-    //         }
-    //
-    //         @Override
-    //         public void onSlide(@NonNull View bottomSheet, float slideOffset) {
-    //             XLog.d("BottomBahaviour", "onSlide: slideOffset====" + slideOffset);
-    //             if (slideOffset == 1.0) {
-    //                 //                    mLeftIcon.setImageResource(R.drawable.back);
-    //                 // containerBehaviour.setPeekHeight(height + getStatusBarHeight());
-    //                 //修改状态栏
-    //                 mBottomSheetDialog.getWindow().addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
-    //                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-    //                     mBottomSheetDialog.getWindow().setStatusBarColor(getResources().getColor(android.R.color.transparent));
-    //                     try {
-    //                         //修改魅族系统状态栏字体颜色
-    //                         WindowManager.LayoutParams lp = mBottomSheetDialog.getWindow().getAttributes();
-    //                         Field darkFlag = WindowManager.LayoutParams.class
-    //                                 .getDeclaredField("MEIZU_FLAG_DARK_STATUS_BAR_ICON");
-    //                         Field meizuFlags = WindowManager.LayoutParams.class
-    //                                 .getDeclaredField("meizuFlags");
-    //                         darkFlag.setAccessible(true);
-    //                         meizuFlags.setAccessible(true);
-    //                         int bit = darkFlag.getInt(null);
-    //                         int value = meizuFlags.getInt(lp);
-    //                         value |= bit;
-    //                         meizuFlags.setInt(lp, value);
-    //                         mBottomSheetDialog.getWindow().setAttributes(lp);
-    //
-    //                     } catch (Exception e) {
-    //
-    //                     }
-    //                 }
-    //             } else {
-    //
-    //                 mLeftIcon.setImageResource(R.drawable.icon_delete);
-    //             }
-    //         }
-    //     });
-    //
-    //     btnShowDialog.setOnClickListener(new View.OnClickListener() {
-    //         @Override
-    //         public void onClick(View view) {
-    //             if (!mBottomSheetDialog.isShowing()) {
-    //                 containerBehaviour.setPeekHeight((int) (0.9 * height));
-    //                 mBottomSheetDialog.portrait();
-    //             } else {
-    //                 mBottomSheetDialog.dismiss();
-    //             }
-    //         }
-    //     });
-    // }
-
-
 }

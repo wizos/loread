@@ -1,4 +1,4 @@
-package me.wizos.loread;
+package me.wizos.loread.log;
 
 import android.content.Context;
 
@@ -12,7 +12,7 @@ import com.elvishew.xlog.printer.file.FilePrinter;
 import com.elvishew.xlog.printer.file.clean.FileLastModifiedCleanStrategy;
 import com.elvishew.xlog.printer.file.naming.DateFileNameGenerator;
 
-import me.wizos.loread.log.SingleStackTraceFormatter;
+import me.wizos.loread.Contract;
 
 public class CoreLog {
     public static void init(Context context, boolean allLogging){

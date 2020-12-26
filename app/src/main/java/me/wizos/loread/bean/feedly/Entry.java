@@ -305,6 +305,17 @@ public class Entry {
         Article article = new Article();
         article.setId(id);
 
+        article.setAuthor(author);
+        article.setPubDate(published);
+
+        if (alternate != null && alternate.size() > 0) {
+            article.setLink(alternate.get(0).getHref());
+        }
+        if (origin != null) {
+            article.setFeedId(origin.getStreamId());
+            article.setFeedTitle(origin.getTitle());
+        }
+
         String tmpContent = "";
         if (content != null && !TextUtils.isEmpty(content.getContent())) {
             tmpContent = ArticleUtil.getOptimizedContent(article.getLink(), content.getContent());
@@ -319,17 +330,6 @@ public class Entry {
 
         title = ArticleUtil.getOptimizedTitle(title, tmpSummary);
         article.setTitle(title);
-
-        article.setAuthor(author);
-        article.setPubDate(published);
-
-        if (alternate != null && alternate.size() > 0) {
-            article.setLink(alternate.get(0).getHref());
-        }
-        if (origin != null) {
-            article.setFeedId(origin.getStreamId());
-            article.setFeedTitle(origin.getTitle());
-        }
 
         String coverUrl = ArticleUtil.getCoverUrl(article.getLink(),tmpContent);
         article.setImage(coverUrl);

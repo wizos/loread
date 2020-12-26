@@ -69,8 +69,14 @@ public class Item {
     public Article convert(BaseApi.ArticleChanger articleChanger) {
         Article article = new Article();
         article.setId(String.valueOf(id));
+        article.setAuthor(author);
+        article.setPubDate(createdOnTime * 1000);
 
-        String tmpContent = ArticleUtil.getOptimizedContent(article.getLink(), html);
+        article.setLink(url);
+        article.setFeedId(String.valueOf(feedId));
+        article.setFeedTitle(title);
+
+        String tmpContent = ArticleUtil.getOptimizedContent(url, html);
         article.setContent(tmpContent);
 
         String tmpSummary = ArticleUtil.getOptimizedSummary(tmpContent);
@@ -78,13 +84,6 @@ public class Item {
 
         title = ArticleUtil.getOptimizedTitle(title,tmpSummary);
         article.setTitle(title);
-
-        article.setAuthor(author);
-        article.setPubDate(createdOnTime * 1000);
-
-        article.setLink(url);
-        article.setFeedId(String.valueOf(feedId));
-        article.setFeedTitle(title);
 
         String coverUrl = ArticleUtil.getCoverUrl(article.getLink(),tmpContent);
         article.setImage(coverUrl);

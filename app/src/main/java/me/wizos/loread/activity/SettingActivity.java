@@ -25,6 +25,7 @@ import com.afollestad.materialdialogs.simplelist.MaterialSimpleListItem;
 import com.elvishew.xlog.XLog;
 import com.hjq.toast.ToastUtils;
 import com.kyleduo.switchbutton.SwitchButton;
+import com.umeng.analytics.MobclickAgent;
 
 import java.io.File;
 import java.text.SimpleDateFormat;
@@ -37,11 +38,11 @@ import butterknife.ButterKnife;
 import me.wizos.loread.App;
 import me.wizos.loread.BuildConfig;
 import me.wizos.loread.Contract;
-import me.wizos.loread.CoreLog;
 import me.wizos.loread.R;
 import me.wizos.loread.db.CoreDB;
 import me.wizos.loread.db.CorePref;
 import me.wizos.loread.db.User;
+import me.wizos.loread.log.CoreLog;
 import me.wizos.loread.view.colorful.Colorful;
 
 /**
@@ -331,6 +332,8 @@ public class SettingActivity extends BaseActivity {
                         dialog.dismiss();
                         CorePref.i().globalPref().remove(Contract.UID);
                         App.i().clearApiData();
+                        //登出
+                        MobclickAgent.onProfileSignOff();
                         Intent intent = new Intent(SettingActivity.this, ProviderActivity.class)
                                 .setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
                         startActivity(intent);
@@ -369,7 +372,10 @@ public class SettingActivity extends BaseActivity {
                 dialog.dismiss();
                 int count = users.size();
                 if (index < count) {
-                    CorePref.i().globalPref().putString(Contract.UID, users.get(index).getId());
+                    User user = users.get(index);
+                    CorePref.i().globalPref().putString(Contract.UID, user.getId());
+                    //当用户使用第三方账号（如新浪微博）登录时，可以这样统计：
+                    MobclickAgent.onProfileSignIn(user.getSource(), user.getUserId());
                     App.i().restartApp();
                 } else if (index == count) {
                     addAccount();

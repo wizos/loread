@@ -1,4 +1,4 @@
-package me.wizos.loread.bean.domain;
+package me.wizos.loread.bean.export;
 
 /**
  * Created by Wizos on 2019/5/15.

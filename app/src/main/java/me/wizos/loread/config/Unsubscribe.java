@@ -17,8 +17,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import me.wizos.loread.App;
-import me.wizos.loread.bean.domain.OutFeed;
-import me.wizos.loread.bean.domain.OutTag;
+import me.wizos.loread.bean.export.OutFeed;
+import me.wizos.loread.bean.export.OutTag;
 import me.wizos.loread.db.Category;
 import me.wizos.loread.db.CoreDB;
 import me.wizos.loread.db.Feed;

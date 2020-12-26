@@ -19,9 +19,11 @@ public interface FeedDao {
     @Query("SELECT * FROM feed WHERE uid = :uid")
     LiveData<List<Feed>> getAllLiveData(String uid);
 
-
     @Query("SELECT * FROM feed WHERE uid = :uid AND id = :id LIMIT 1")
     Feed getById(String uid,String id);
+
+    @Query("SELECT * FROM feed WHERE uid = :uid AND feedUrl = :feedUrl LIMIT 1")
+    Feed getByFeedUrl(String uid,String feedUrl);
 
     // @Query("SELECT feed.* FROM feed " +
     //         "LEFT JOIN feedcategory ON (feed.uid = feedcategory.uid AND feed.id = feedcategory.feedId) " +

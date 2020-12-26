@@ -299,8 +299,6 @@ public interface ArticleDao {
     @Query("SELECT * FROM article WHERE uid = :uid AND title LIKE '%' || :keyword || '%' UNION SELECT article.* FROM article JOIN articlefts ON article.uid == articleFts.uid AND article.id == articleFts.id WHERE article.uid = :uid AND articlefts.content MATCH :keyword" )
     List<Article> search(String uid, String keyword);
 
-    @Query("SELECT * FROM article WHERE uid = :uid AND title LIKE '%' || :keyword || '%' UNION SELECT * FROM article WHERE uid = :uid AND content LIKE '%' || :keyword || '%' " )
-    List<Article> search2(String uid, String keyword);
 
     //@Query("DELETE FROM article WHERE uid = :uid AND pubDate < :timeMillis")
     //void clearPubDate(String uid,long timeMillis);

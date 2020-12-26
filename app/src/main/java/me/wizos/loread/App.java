@@ -23,6 +23,8 @@ import com.lzy.okgo.OkGo;
 import com.oasisfeng.condom.CondomProcess;
 import com.tencent.bugly.crashreport.CrashReport;
 import com.tencent.mmkv.MMKV;
+import com.umeng.analytics.MobclickAgent;
+import com.umeng.commonsdk.UMConfigure;
 import com.yhao.floatwindow.view.FloatWindow;
 
 import org.jetbrains.annotations.NotNull;
@@ -37,6 +39,7 @@ import me.wizos.loread.db.Article;
 import me.wizos.loread.db.CoreDB;
 import me.wizos.loread.db.CorePref;
 import me.wizos.loread.db.User;
+import me.wizos.loread.log.CoreLog;
 import me.wizos.loread.network.api.AuthApi;
 import me.wizos.loread.network.api.BaseApi;
 import me.wizos.loread.network.api.FeedlyApi;
@@ -162,9 +165,15 @@ public class App extends Application implements Thread.UncaughtExceptionHandler 
 
         DoraemonKit.install(this, "1a9100642569bfed39d6b82032950e1f");
 
-        // Core.init(this);
-        // XUI.init(this); //初始化UI框架
-        // XUI.debug(true); //开启UI框架调试日志
+        UMConfigure.init(this, "5fe169310b4a4938464e0332", "CoolApk", UMConfigure.DEVICE_TYPE_PHONE, null);
+        UMConfigure.setLogEnabled(true);
+        /*
+         * 子进程是否支持自定义事件统计。
+         * 参数：boolean 默认不使用
+         */
+        UMConfigure. setProcessEvent(false);
+        // 选用AUTO页面采集模式
+        MobclickAgent.setPageCollectionMode(MobclickAgent.PageMode.AUTO);
 
         // 【提前初始化 WebView 内核】由于其内部会调用 Looper ，不能放在子线程中
         // 链接：https://www.jianshu.com/p/fc7909e24178
@@ -189,7 +198,6 @@ public class App extends Application implements Thread.UncaughtExceptionHandler 
                 OkGo.getInstance().init(instance);
                 // 监听子线程的报错
                 Thread.setDefaultUncaughtExceptionHandler(instance);
-                // initLeakCanary();
 
                 // 初始化统计&监控服务
 
@@ -442,13 +450,4 @@ public class App extends Application implements Thread.UncaughtExceptionHandler 
         startActivity(intent);
         android.os.Process.killProcess(android.os.Process.myPid());
     }
-
-
-    //    //  内存泄漏检测工具
-    //    private void initLeakCanary() {
-    ////        if (LeakCanary.isInAnalyzerProcess(this)) {
-    ////            return;
-    ////        }
-    //        LeakCanary.install(this);
-    //    }
 }

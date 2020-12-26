@@ -17,6 +17,7 @@ import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.hjq.toast.ToastUtils;
+import com.umeng.analytics.MobclickAgent;
 
 import me.wizos.loread.App;
 import me.wizos.loread.Contract;
@@ -149,6 +150,8 @@ public class LoginActivity extends BaseActivity {
                 passwordEditText.setEnabled(true);
                 loadingProgressBar.setVisibility(View.GONE);
                 if (loginResult != null && loginResult.isSuccess()) {
+                    //当用户使用第三方账号（如新浪微博）登录时，可以这样统计：
+                    MobclickAgent.onProfileSignIn(App.i().getUser().getSource(), App.i().getUser().getUserId());
                     String tips = getString(R.string.welcome);
                     ToastUtils.show(tips);
                     setResult(App.ActivityResult_LoginPageToProvider);

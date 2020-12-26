@@ -84,14 +84,24 @@
                 android:textColor="?attr/lv_item_desc_color" />
         </LinearLayout>
 
-        <me.wizos.loread.view.IconFontView
+        <CheckBox
             android:id="@+id/search_list_item_sub_state"
             android:layout_width="30dp"
             android:layout_height="30dp"
             android:layout_gravity="center_vertical"
             android:gravity="center"
             android:textSize="13sp"
-            android:textColor="?attr/lv_item_title_color" />
+            android:textColor="?attr/lv_item_title_color"
+            android:button="@drawable/selector_subscription"
+            android:checked="false"/>
+        <!--<me.wizos.loread.view.IconFontView-->
+        <!--    android:id="@+id/search_list_item_sub_state"-->
+        <!--    android:layout_width="30dp"-->
+        <!--    android:layout_height="30dp"-->
+        <!--    android:layout_gravity="center_vertical"-->
+        <!--    android:gravity="center"-->
+        <!--    android:textSize="13sp"-->
+        <!--    android:textColor="?attr/lv_item_title_color" />-->
     </LinearLayout>
 
 

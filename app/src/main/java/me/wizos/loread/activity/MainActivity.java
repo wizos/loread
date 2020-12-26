@@ -75,14 +75,12 @@ import java.util.concurrent.TimeUnit;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 import me.wizos.loread.App;
-import me.wizos.loread.Contract;
 import me.wizos.loread.R;
 import me.wizos.loread.adapter.ArticlePagedListAdapter;
 import me.wizos.loread.adapter.ExpandedAdapter;
 import me.wizos.loread.db.Article;
 import me.wizos.loread.db.Collection;
 import me.wizos.loread.db.CoreDB;
-import me.wizos.loread.db.CorePref;
 import me.wizos.loread.db.User;
 import me.wizos.loread.network.SyncWorker;
 import me.wizos.loread.network.callback.CallbackX;
@@ -721,6 +719,11 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
                        rootCategory.setTitle(getString(R.string.all));
                        rootCategory.setId("user/" + uid + App.CATEGORY_ALL);
 
+                       boolean hasUnCategory = false;
+                       if(CoreDB.i().feedDao().getFeedsCountByUnCategory(App.i().getUser().getId()) != 0){
+                           hasUnCategory = true;
+                       }
+
                        // 未分类
                        Collection unCategory = new Collection();
                        unCategory.setTitle(getString(R.string.un_category));
@@ -728,17 +731,17 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
 
                        if( App.i().getUser().getStreamStatus() == App.STATUS_UNREAD ){
                            rootCategory.setCount(CoreDB.i().articleDao().getUnreadCount(App.i().getUser().getId()));
-                           unCategory.setCount(CoreDB.i().articleDao().getUncategoryUnreadCount(App.i().getUser().getId()));
+                           if(hasUnCategory) unCategory.setCount(CoreDB.i().articleDao().getUncategoryUnreadCount(App.i().getUser().getId()));
                        }else if( App.i().getUser().getStreamStatus() == App.STATUS_STARED ){
                            rootCategory.setCount(CoreDB.i().articleDao().getStarCount(App.i().getUser().getId()));
-                           unCategory.setCount(CoreDB.i().articleDao().getUncategoryStarCount(App.i().getUser().getId()));
+                           if(hasUnCategory) unCategory.setCount(CoreDB.i().articleDao().getUncategoryStarCount(App.i().getUser().getId()));
                        }else {
                            rootCategory.setCount(CoreDB.i().articleDao().getAllCount(App.i().getUser().getId()));
-                           unCategory.setCount(CoreDB.i().articleDao().getUncategoryAllCount(App.i().getUser().getId()));
+                           if(hasUnCategory) unCategory.setCount(CoreDB.i().articleDao().getUncategoryAllCount(App.i().getUser().getId()));
                        }
 
                        categories.add(0,rootCategory);
-                       categories.add(1,unCategory);
+                       if(hasUnCategory) categories.add(1,unCategory);
                        tagListAdapter.setGroups(categories);
 
                        runOnUiThread(new Runnable() {
@@ -753,59 +756,6 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
            }
        });
    }
-
-
-    public void onClickCategoryIcon2(View view) {
-        tagBottomSheetDialog.show();
-        AsyncTask.THREAD_POOL_EXECUTOR.execute(new Runnable() {
-            @Override
-            public void run() {
-                String uid = App.i().getUser().getUserId();
-
-                // 总分类
-                Collection rootCategory = new Collection();
-                rootCategory.setTitle(getString(R.string.all));
-                rootCategory.setId("user/" + uid + App.CATEGORY_ALL);
-
-                // 未分类
-                Collection unCategory = new Collection();
-                unCategory.setTitle(getString(R.string.un_category));
-                unCategory.setId("user/" + uid + App.CATEGORY_UNCATEGORIZED);
-
-                // 已分类
-                List<Collection> categories;
-
-                if( App.i().getUser().getStreamStatus() == App.STATUS_UNREAD ){
-                    rootCategory.setCount(CoreDB.i().articleDao().getUnreadCount(App.i().getUser().getId()));
-                    unCategory.setCount(CoreDB.i().articleDao().getUncategoryUnreadCount(App.i().getUser().getId()));
-                    categories = CoreDB.i().categoryDao().getCategoriesUnreadCount(App.i().getUser().getId());
-                }else if( App.i().getUser().getStreamStatus() == App.STATUS_STARED ){
-                    rootCategory.setCount(CoreDB.i().articleDao().getStarCount(App.i().getUser().getId()));
-                    unCategory.setCount(CoreDB.i().articleDao().getUncategoryStarCount(App.i().getUser().getId()));
-                    categories = CoreDB.i().categoryDao().getCategoriesStarCount(App.i().getUser().getId());
-                }else {
-                    rootCategory.setCount(CoreDB.i().articleDao().getAllCount(App.i().getUser().getId()));
-                    unCategory.setCount(CoreDB.i().articleDao().getUncategoryAllCount(App.i().getUser().getId()));
-                    categories = CoreDB.i().categoryDao().getCategoriesAllCount(App.i().getUser().getId());
-                }
-
-                List<Collection> categoryListTemp = new ArrayList<>();
-                categoryListTemp.add(rootCategory);
-                categoryListTemp.add(unCategory);
-                // 数据库中的所有分类
-                categoryListTemp.addAll(categories);
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        tagListAdapter.setGroups(categoryListTemp);
-                        tagListAdapter.notifyDataChanged();
-                        XLog.i("tag按钮被点击");
-                    }
-                });
-            }
-        });
-    }
-
 
     public void initTagListView() {
         tagBottomSheetDialog = new BottomSheetDialog(MainActivity.this);
@@ -953,22 +903,6 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
     }
 
     private void showConfirmDialog(final int start, final int end) {
-        // new AlertDialog.Builder(MainActivity.this)
-        //         .setMessage(R.string.do_you_want_to_mark_the_following_articles_as_read)
-        //         .setPositiveButton(R.string.confirm, (dialog, which) -> {
-        //             Integer[] index = new Integer[2];
-        //             index[0] = start;
-        //             index[1] = end;
-        //             new MarkListReadedAsyncTask().execute(index);
-        //         })
-        //         .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
-        //             @Override
-        //             public void onClick(DialogInterface dialog, int which) {
-        //                 dialog.dismiss();
-        //             }
-        //         })
-        //         .show();
-
         int titleRes;
         if(start < end){
             titleRes = R.string.mark_the_below_articles_as_read;
@@ -979,24 +913,27 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
         new MaterialDialog.Builder(this)
                 .title(titleRes)
                 .positiveText(R.string.confirm)
-                .negativeText(android.R.string.cancel)
-                .checkBoxPrompt(getString(R.string.includes_forced_unread),
-                        CorePref.i().globalPref().getBoolean(Contract.INCLUDES_FORCED_UNREAD, false),
-                        new CompoundButton.OnCheckedChangeListener() {
-                            @Override
-                            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                                CorePref.i().globalPref().putBoolean(Contract.INCLUDES_FORCED_UNREAD, isChecked);
-                            }
-                        })
                 .onPositive(new MaterialDialog.SingleButtonCallback() {
                     @Override
                     public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
                         Integer[] index = new Integer[2];
                         index[0] = start;
                         index[1] = end;
-                        new MarkListReadAsyncTask().execute(index);
+                        new MarkListReadAsyncTask().setIncludesForcedUnread(false).execute(index);
                     }
                 })
+                .neutralText(R.string.includes_forced_unread)
+                .neutralColor(getResources().getColor(R.color.material_red_400) )
+                .onNeutral(new MaterialDialog.SingleButtonCallback() {
+                    @Override
+                    public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
+                        Integer[] index = new Integer[2];
+                        index[0] = start;
+                        index[1] = end;
+                        new MarkListReadAsyncTask().setIncludesForcedUnread(true).execute(index);
+                    }
+                })
+                .negativeText(android.R.string.cancel)
                 .show();
     }
 
@@ -1005,6 +942,11 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
     // 标记以上/以下为已读
     @SuppressLint("StaticFieldLeak")
     private class MarkListReadAsyncTask extends AsyncTask<Integer, Integer, Integer> {
+       private boolean includesForcedUnread = false;
+       protected MarkListReadAsyncTask setIncludesForcedUnread(boolean includesForcedUnread){
+           this.includesForcedUnread = includesForcedUnread;
+           return this;
+       }
         @Override
         protected Integer doInBackground(Integer... params) {
             int startIndex = params[0];
@@ -1027,9 +969,6 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
             if (articleIDs.size() == 0) {
                 return 0;
             }
-
-            // 是否需要包含强制未读的文章
-            boolean includesForcedUnread = CorePref.i().globalPref().getBoolean(Contract.INCLUDES_FORCED_UNREAD, false);
 
             int needCount = articleIDs.size();
             int hadCount = 0;

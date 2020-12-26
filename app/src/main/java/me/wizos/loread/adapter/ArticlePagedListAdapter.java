@@ -30,7 +30,6 @@ import com.elvishew.xlog.XLog;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 import me.wizos.loread.App;
 import me.wizos.loread.Contract;
@@ -89,7 +88,7 @@ public class ArticlePagedListAdapter extends PagedListAdapter<Article, ArticlePa
             handler.removeMessages(TIMEOUT);
         }
         Article article = getItem(position);
-        XLog.d("创建onBindViewHolder，LastKey = " + Objects.requireNonNull(getCurrentList()).getLastKey() + " , " + getCurrentList().getPositionOffset() + "  " + (article == null) + "  " + position);
+        // XLog.d("创建onBindViewHolder，LastKey = " + Objects.requireNonNull(getCurrentList()).getLastKey() + " , " + getCurrentList().getPositionOffset() + "  " + (article == null) + "  " + position);
         // 如果article是null，在此处不停循环的获取getItem得到的还是null
         if (article != null) {
             holder.bindTo(article);

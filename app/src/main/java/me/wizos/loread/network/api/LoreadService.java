@@ -5,6 +5,7 @@ import androidx.annotation.NonNull;
 import java.util.List;
 import java.util.Map;
 
+import me.wizos.loread.bean.search.SearchFeeds;
 import me.wizos.loread.bean.ttrss.request.GetArticles;
 import me.wizos.loread.bean.ttrss.request.GetCategories;
 import me.wizos.loread.bean.ttrss.request.GetFeeds;
@@ -24,9 +25,11 @@ import me.wizos.loread.bean.ttrss.result.TinyResponse;
 import me.wizos.loread.bean.ttrss.result.UpdateArticleResult;
 import retrofit2.Call;
 import retrofit2.http.Body;
+import retrofit2.http.GET;
 import retrofit2.http.Header;
 import retrofit2.http.Headers;
 import retrofit2.http.POST;
+import retrofit2.http.Query;
 
 /**
  * Created by Wizos on 2019/11/23.
@@ -102,9 +105,12 @@ public interface LoreadService {
             @NonNull @Body UnsubscribeFeed unsubscribeFeed
     );
 
-//    @Headers("Accept: application/json")
-//    @POST("subscriptions")
-//    Call<List<EditFeed>> editFeed(
-//            @NonNull @Body EditFeed editFeed
-//    );
+    // @Headers("Accept: application/json")
+    // @POST("subscriptions")
+    // Call<List<EditFeed>> editFeed(
+    //         @NonNull @Body EditFeed editFeed
+    // );
+
+    @GET("search/feeds")
+    Call<SearchFeeds> getSearchFeeds(@Query("q") String keyWord, @Query("n") int count);
 }

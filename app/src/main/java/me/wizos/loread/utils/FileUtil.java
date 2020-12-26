@@ -32,6 +32,7 @@ import java.nio.channels.FileChannel;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
 
 import me.wizos.loread.App;
 import me.wizos.loread.R;
@@ -318,7 +319,16 @@ public class FileUtil {
             }
         }
 
-
+        imgId = Pattern.compile("https*://.*?/", Pattern.CASE_INSENSITIVE).matcher(originalUrl).replaceFirst("");
+        imgId = String.valueOf(imgId.hashCode());
+        filePath = App.i().getUserFilesDir() + "/cache/" + articleIdInMD5 + "/compressed/" + imgId;
+        if (new File(filePath).exists()) {
+            return filePath;
+        }
+        filePath = App.i().getUserFilesDir() + "/cache/" + articleIdInMD5 + "/original/" + imgId;
+        if (new File(filePath).exists()) {
+            return filePath;
+        }
 
         String fileNameExt = UriUtil.guessFileNameExt(originalUrl);
         // 推测可能是svg格式的，该类文件必须有后缀名才能在webView中显示出来
