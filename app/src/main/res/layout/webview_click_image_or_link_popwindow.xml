@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:background="#2F2F2F"
+    android:orientation="vertical">
+
+    <TextView
+        android:id="@+id/webview_open_mode"
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        android:gravity="center"
+        android:background="?android:attr/selectableItemBackground"
+        android:text="@string/open_by_outer"
+        android:textColor="@android:color/white"
+        android:textSize="16sp" />
+    <TextView
+        android:id="@+id/webview_copy_link"
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        android:gravity="center"
+        android:background="?android:attr/selectableItemBackground"
+        android:text="@string/copy_link"
+        android:textColor="@android:color/white"
+        android:textSize="16sp" />
+    <TextView
+        android:id="@+id/webview_share_link"
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        android:gravity="center"
+        android:background="?android:attr/selectableItemBackground"
+        android:text="@string/share_link"
+        android:textColor="@android:color/white"
+        android:textSize="16sp" />
+
+    <!--<TextView-->
+    <!--    android:id="@+id/webview_open_link"-->
+    <!--    android:layout_width="match_parent"-->
+    <!--    android:layout_height="40dp"-->
+    <!--    android:gravity="center"-->
+    <!--    android:background="?android:attr/selectableItemBackground"-->
+    <!--    android:text="@string/open_link"-->
+    <!--    android:textColor="@android:color/white"-->
+    <!--    android:textSize="16sp" />-->
+    <TextView
+        android:id="@+id/webview_view_image"
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        android:gravity="center"
+        android:background="?android:attr/selectableItemBackground"
+        android:text="@string/view_image"
+        android:textColor="@android:color/white"
+        android:textSize="16sp" />
+</LinearLayout>

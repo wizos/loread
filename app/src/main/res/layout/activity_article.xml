@@ -69,6 +69,20 @@
 
     </com.google.android.material.appbar.AppBarLayout>
 
+    <!--<me.wizos.loread.view.slideback.SlideLayout-->
+    <!--    android:id="@+id/art_slide_layout"-->
+    <!--    android:layout_width="match_parent"-->
+    <!--    android:layout_height="match_parent"-->
+    <!--    android:background="?attr/root_view_bg"-->
+    <!--    app:layout_behavior="@string/appbar_scrolling_view_behavior">-->
+    <!--    <FrameLayout-->
+    <!--        android:id="@+id/slide_arrow_layout"-->
+    <!--        android:layout_width="match_parent"-->
+    <!--        android:layout_height="match_parent"-->
+    <!--        android:persistentDrawingCache="animation"-->
+    <!--        android:background="?attr/root_view_bg" />-->
+    <!--</me.wizos.loread.view.slideback.SlideLayout>-->
+
     <me.wizos.loread.view.SwipeRefreshLayoutS
         android:id="@+id/art_swipe_refresh"
         android:layout_width="match_parent"
@@ -87,6 +101,58 @@
                 android:background="?attr/root_view_bg" />
         </me.wizos.loread.view.slideback.SlideLayout>
     </me.wizos.loread.view.SwipeRefreshLayoutS>
+
+
+    <!--<com.scwang.smart.refresh.layout.SmartRefreshLayout-->
+    <!--    android:id="@+id/art_swipe_refresh"-->
+    <!--    android:layout_width="match_parent"-->
+    <!--    android:layout_height="match_parent"-->
+    <!--    app:srlEnableLoadMore="false"-->
+    <!--    app:srlHeaderMaxDragRate="2"-->
+    <!--    app:srlFooterMaxDragRate="2"-->
+    <!--    app:layout_behavior="@string/appbar_scrolling_view_behavior">-->
+
+    <!--    &lt;!&ndash;app:srlHeaderHeight="150dp"&ndash;&gt;-->
+    <!--    &lt;!&ndash;app:srlFooterHeight="150dp"&ndash;&gt;-->
+    <!--    <TextView-->
+    <!--        android:id="@+id/art_header"-->
+    <!--        android:layout_width="match_parent"-->
+    <!--        android:layout_height="wrap_content"-->
+    <!--        android:lineSpacingExtra="5dp"-->
+    <!--        android:padding="20dp"-->
+    <!--        android:background="#555"-->
+    <!--        android:gravity="center_horizontal"-->
+    <!--        android:textColor="#aaa"-->
+    <!--        android:textSize="16sp"-->
+    <!--        android:text="@string/open_article_link"-->
+    <!--        app:layout_srlBackgroundColor="#555"-->
+    <!--        app:layout_srlSpinnerStyle="FixedBehind"/>-->
+    <!--    <me.wizos.loread.view.slideback.SlideLayout-->
+    <!--        android:id="@+id/art_slide_layout"-->
+    <!--        android:layout_width="match_parent"-->
+    <!--        android:layout_height="match_parent"-->
+    <!--        android:background="?attr/root_view_bg">-->
+    <!--        <FrameLayout-->
+    <!--            android:id="@+id/slide_arrow_layout"-->
+    <!--            android:layout_width="match_parent"-->
+    <!--            android:layout_height="match_parent"-->
+    <!--            android:persistentDrawingCache="animation"-->
+    <!--            android:background="?attr/root_view_bg" />-->
+    <!--    </me.wizos.loread.view.slideback.SlideLayout>-->
+    <!--    <TextView-->
+    <!--        android:id="@+id/art_footer"-->
+    <!--        android:layout_width="match_parent"-->
+    <!--        android:layout_height="wrap_content"-->
+    <!--        android:lineSpacingExtra="5dp"-->
+    <!--        android:padding="20dp"-->
+    <!--        android:background="#555"-->
+    <!--        android:gravity="center_horizontal"-->
+    <!--        android:textColor="#aaa"-->
+    <!--        android:textSize="16sp"-->
+    <!--        android:text="@string/get_article_content"-->
+    <!--        app:layout_srlBackgroundColor="#555"-->
+    <!--        app:layout_srlSpinnerStyle="FixedBehind"/>-->
+    <!--</com.scwang.smart.refresh.layout.SmartRefreshLayout>-->
 
     <RelativeLayout
         android:id="@+id/art_bottombar"
@@ -118,32 +184,26 @@
             android:paddingEnd="20dp"
             android:gravity="center"
             android:orientation="horizontal">
-            <!--<me.wizos.loread.view.IconFontView-->
-            <!--android:id="@+id/article_bottombar_tag"-->
-            <!--style="@style/bottom_bar_iconfont"-->
-            <!--android:text="@string/font_label"-->
-            <!--android:onClick="onTagClick"/>-->
-            <me.wizos.loread.view.IconFontView
-                android:id="@+id/article_bottombar_open_link"
-                style="@style/bottom_bar_iconfont"
-                android:text="@string/font_chrome"
-                android:onClick="openOriginalArticle" />
             <me.wizos.loread.view.IconFontView
                 android:id="@+id/article_bottombar_readability"
                 style="@style/bottom_bar_iconfont"
                 android:text="@string/font_article_original"
                 android:onClick="switchReadabilityArticle" />
             <me.wizos.loread.view.IconFontView
-                android:id="@+id/article_bottombar_star"
+                android:id="@+id/article_bottombar_open_link"
                 style="@style/bottom_bar_iconfont"
-                android:text="@string/font_unstar"
-                android:onClick="onClickStarIcon" />
-
+                android:text="@string/font_chrome"
+                android:onClick="openOriginalArticle" />
             <me.wizos.loread.view.IconFontView
                 android:id="@+id/article_bottombar_read"
                 style="@style/bottom_bar_iconfont"
                 android:text="@string/font_readed"
                 android:onClick="onClickReadIcon" />
+            <me.wizos.loread.view.IconFontView
+                android:id="@+id/article_bottombar_star"
+                style="@style/bottom_bar_iconfont"
+                android:text="@string/font_unstar"
+                android:onClick="onClickStarIcon" />
         </LinearLayout>
     </RelativeLayout>
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

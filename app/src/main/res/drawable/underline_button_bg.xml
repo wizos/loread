@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- 边框颜色值 -->
+    <!--<item>-->
+    <!--    <shape>-->
+    <!--        <solid android:color="@color/colorPrimary"/>-->
+    <!--    </shape>-->
+    <!--</item>-->
+    <!--&lt;!&ndash; main color &ndash;&gt;-->
+    <!--<item android:bottom="2.5dp">-->
+    <!--    <shape android:shape="rectangle">-->
+    <!--        <solid android:color="@color/white" />-->
+    <!--        <padding-->
+    <!--            android:top="4dp"-->
+    <!--            android:bottom="4dp" />-->
+    <!--    </shape>-->
+    <!--</item>-->
+    <item android:gravity="bottom">
+        <shape>
+            <size android:height="2dp" />
+            <solid android:color="@color/main_day_info"/>
+        </shape>
+    </item>
+</layer-list>

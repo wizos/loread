@@ -20,6 +20,7 @@ import android.os.Handler;
 import android.os.Parcelable;
 import android.text.InputType;
 import android.text.TextUtils;
+import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -36,6 +37,7 @@ import android.webkit.WebViewClient;
 import android.widget.FrameLayout;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -52,7 +54,7 @@ import com.hjq.toast.ToastUtils;
 import com.lzy.okgo.OkGo;
 import com.lzy.okgo.callback.FileCallback;
 import com.lzy.okgo.model.Response;
-import com.lzy.okgo.request.base.Request;
+import com.lzy.okgo.request.GetRequest;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -73,12 +75,13 @@ import me.wizos.loread.BuildConfig;
 import me.wizos.loread.Contract;
 import me.wizos.loread.R;
 import me.wizos.loread.bridge.ArticleBridge;
-import me.wizos.loread.config.AdBlock;
 import me.wizos.loread.config.ArticleTags;
-import me.wizos.loread.config.LinkRewriteConfig;
-import me.wizos.loread.config.NetworkRefererConfig;
+import me.wizos.loread.config.HeaderRefererConfig;
+import me.wizos.loread.config.HostBlockConfig;
 import me.wizos.loread.config.NetworkUserAgentConfig;
 import me.wizos.loread.config.SaveDirectory;
+import me.wizos.loread.config.Test;
+import me.wizos.loread.config.url_rewrite.UrlRewriteConfig;
 import me.wizos.loread.db.Article;
 import me.wizos.loread.db.ArticleTag;
 import me.wizos.loread.db.Category;
@@ -88,26 +91,26 @@ import me.wizos.loread.db.Tag;
 import me.wizos.loread.extractor.Distill;
 import me.wizos.loread.network.HttpClientManager;
 import me.wizos.loread.network.callback.CallbackX;
-import me.wizos.loread.utils.ArticleUtil;
-import me.wizos.loread.utils.EncryptUtil;
-import me.wizos.loread.utils.FileUtil;
-import me.wizos.loread.utils.ImageUtil;
-import me.wizos.loread.utils.ScreenUtil;
-import me.wizos.loread.utils.SnackbarUtil;
+import me.wizos.loread.utils.ArticleUtils;
+import me.wizos.loread.utils.EncryptUtils;
+import me.wizos.loread.utils.FileUtils;
+import me.wizos.loread.utils.ImageUtils;
+import me.wizos.loread.utils.ScreenUtils;
+import me.wizos.loread.utils.SnackbarUtils;
 import me.wizos.loread.utils.StringUtils;
-import me.wizos.loread.utils.TimeUtil;
-import me.wizos.loread.utils.UriUtil;
+import me.wizos.loread.utils.TimeUtils;
+import me.wizos.loread.utils.UriUtils;
 import me.wizos.loread.view.IconFontView;
 import me.wizos.loread.view.SwipeRefreshLayoutS;
-import me.wizos.loread.view.WebViewS;
 import me.wizos.loread.view.colorful.Colorful;
 import me.wizos.loread.view.slideback.SlideBack;
 import me.wizos.loread.view.slideback.SlideLayout;
 import me.wizos.loread.view.slideback.callback.SlideCallBack;
 import me.wizos.loread.view.webview.DownloadListenerS;
-import me.wizos.loread.view.webview.LongClickPopWindow;
 import me.wizos.loread.view.webview.SlowlyProgressBar;
 import me.wizos.loread.view.webview.VideoHelper;
+import me.wizos.loread.view.webview.WebViewMenu;
+import me.wizos.loread.view.webview.WebViewS;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import top.zibin.luban.CompressionPredicate;
@@ -133,7 +136,6 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
     private IconFontView starView, readView, saveView, readabilityView;
     private WebViewS selectedWebView;
     private FrameLayout entryView;
-    private SlideLayout slideLayout;
     private Toolbar toolbar;
     private RelativeLayout bottomBar;
     private VideoHelper videoHelper;
@@ -240,7 +242,7 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
     @JavascriptInterface
     @Override
     public void readImage(String articleId, String imgId, String originalUrl) {
-        String cacheUrl = FileUtil.readCacheFilePath(EncryptUtil.MD5(articleId), originalUrl);
+        String cacheUrl = FileUtils.readCacheFilePath(EncryptUtils.MD5(articleId), originalUrl);
         XLog.d("加载图片 - 缓存地址：" + cacheUrl);
         articleHandler.post(new Runnable() {
             @Override
@@ -255,7 +257,7 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
                         downImage(articleId, imgId, originalUrl, false);
                     }
                 }else {
-                    if(ImageUtil.isImgOrSvg(new File(cacheUrl))){
+                    if(ImageUtils.isImgOrSvg(new File(cacheUrl))){
                         selectedWebView.loadUrl("javascript:setTimeout( onImageLoadSuccess('" + imgId + "','" + cacheUrl + "'),1)");
                     }else {
                         selectedWebView.loadUrl("javascript:setTimeout( onImageError('" + imgId + "'),1 )");
@@ -269,7 +271,7 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
     @JavascriptInterface
     @Override
     public String read(String articleId, String imgId, String originalUrl) {
-        String cacheUrl = FileUtil.readCacheFilePath(EncryptUtil.MD5(articleId), originalUrl);
+        String cacheUrl = FileUtils.readCacheFilePath(EncryptUtils.MD5(articleId), originalUrl);
         if (TextUtils.isEmpty(cacheUrl)) {
             if (!NetworkUtils.isAvailable()) {
                 return "IMAGE_HOLDER_LOAD_FAILED_URL";
@@ -280,7 +282,7 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
                 return "IMAGE_HOLDER_LOADING_URL";
             }
         }else {
-            if(ImageUtil.isImgOrSvg(new File(cacheUrl))){
+            if(ImageUtils.isImgOrSvg(new File(cacheUrl))){
                 return cacheUrl;
             }else {
                 XLog.e("加载图片", "缓存文件读取失败：不是图片");
@@ -349,6 +351,84 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
                 .start();
     }
 
+    @JavascriptInterface
+    @Override
+    public void openImageOrLink(String articleId, String src, String link) {
+        new WebViewMenu.Builder(this, selectedWebView, R.layout.webview_click_image_or_link_popwindow)
+                .setWidth(ScreenUtils.dp2px(this, 120))
+                .setHeight(ScreenUtils.dp2px(this, 170))
+                .setOffsetX(downX)
+                .setOffsetY(downY + 10)
+                .setOnClickListener(new WebViewMenu.ClickListener() {
+                    @Override
+                    public void setOnClickListener(WebViewMenu webViewMenu,View popWindow) {
+                        TextView openLinkMode = popWindow.findViewById(R.id.webview_open_mode);
+                        if( App.i().getUser().isOpenLinkBySysBrowser() && (link.startsWith(SCHEMA_HTTP) || link.startsWith(SCHEMA_HTTPS))){
+                            openLinkMode.setText(R.string.open_by_outer);
+                            openLinkMode.setOnClickListener(new View.OnClickListener() {
+                                @Override
+                                public void onClick(View v) {
+                                    webViewMenu.dismiss();
+                                    Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(link));
+                                    // 每次都要选择打开方式
+                                    startActivity(Intent.createChooser(intent, getString(R.string.open_by_outer)));
+                                    overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
+                                }
+                            });
+                        }else {
+                            openLinkMode.setText(R.string.open_by_inner);
+                            openLinkMode.setOnClickListener(new View.OnClickListener() {
+                                @Override
+                                public void onClick(View v) {
+                                    webViewMenu.dismiss();
+                                    Intent intent = new Intent(ArticleActivity.this, WebActivity.class);
+                                    intent.setData(Uri.parse(link));
+                                    intent.putExtra("theme", App.i().getUser().getThemeMode());
+                                    startActivity(intent);
+                                    overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
+                                }
+                            });
+                        }
+                        popWindow.findViewById(R.id.webview_copy_link)
+                                .setOnClickListener(new View.OnClickListener() {
+                                    @Override
+                                    public void onClick(View v) {
+                                        webViewMenu.dismiss();
+                                        //获取剪贴板管理器：
+                                        ClipboardManager cm = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+                                        // 创建普通字符型ClipData
+                                        ClipData mClipData = ClipData.newRawUri("url", Uri.parse(link));
+                                        // 将ClipData内容放到系统剪贴板里。
+                                        cm.setPrimaryClip(mClipData);
+                                        ToastUtils.show(getString(R.string.copy_success));
+                                    }
+                                });
+                        popWindow.findViewById(R.id.webview_share_link)
+                                .setOnClickListener(new View.OnClickListener() {
+                                    @Override
+                                    public void onClick(View v) {
+                                        webViewMenu.dismiss();
+                                        Intent sendIntent = new Intent(Intent.ACTION_SEND);
+                                        sendIntent.setType("text/plain");
+                                        sendIntent.putExtra(Intent.EXTRA_TEXT, link);
+                                        //sendIntent.setData(Uri.parse(status.getExtra()));
+                                        //sendIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                                        startActivity(Intent.createChooser(sendIntent, getString(R.string.share_to)));
+                                    }
+                                });
+                        popWindow.findViewById(R.id.webview_view_image)
+                                .setOnClickListener(new View.OnClickListener() {
+                                    @Override
+                                    public void onClick(View v) {
+                                        webViewMenu.dismiss();
+                                        openImage(articleId,src);
+                                    }
+                                });
+                    }
+                })
+                .show();
+    }
+
     private static class MyCompressionPredicate implements CompressionPredicate {
         @Override
         public boolean apply(String preCompressedPath, InputStreamProvider path) {
@@ -412,7 +492,7 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
                 renameToFileNameForSvg = true;
             }
             File tmpOriginalFile = response.body();
-            if(!ImageUtil.isImgOrSvg(tmpOriginalFile)){
+            if(!ImageUtils.isImgOrSvg(tmpOriginalFile)){
                 tmpOriginalFile.delete();
                 // tmpOriginalFile.renameTo(new File(originalFileDir + imgId + ".error"));
                 if (selectedWebView.get() != null && !selectedWebView.get().isDestroyed()) {
@@ -420,7 +500,7 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
                 }
                 return;
             }else if(guessReferer){ // 当是根据系统自动猜得的referer而成功下载到图片时，保存自动识别的refer而规则
-                NetworkRefererConfig.i().addReferer(imageUrl, articleUrl);
+                HeaderRefererConfig.i().addReferer(imageUrl, articleUrl);
             }
 
             if(renameToFileNameForSvg){
@@ -482,7 +562,7 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
 
                         @Override
                         public void onSuccess(final File file) {
-                            ImageUtil.mergeBitmap(weakReferenceContext, file, new ImageUtil.OnMergeListener() {
+                            ImageUtils.mergeBitmap(weakReferenceContext, file, new ImageUtils.OnMergeListener() {
                                 @Override
                                 public void onSuccess() {
                                     // XLog.d("图片合成成功" + Thread.currentThread());
@@ -514,8 +594,7 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
 
                         @Override
                         public void onError(Throwable e) {
-                            XLog.d("压缩图片报错" + Thread.currentThread() );
-                            // selectedWebView.loadUrl("javascript:onImageLoadSuccess('" + originalUrl + "','" + originalFileDir + fileNameExt + "')");
+                            XLog.w("压缩图片报错" + Thread.currentThread() );
                             articleHandler.post(new Runnable() {
                                 @Override
                                 public void run() {
@@ -532,7 +611,7 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
         @Override
         public void onError(Response<File> response) {
             new File(originalFileDir + imgId).delete();
-            XLog.d("下载图片失败：" + imageUrl + "','" + response.code() + "  " + response.getException());
+            XLog.w("下载图片失败：" + imageUrl + "','" + response.code() + "  " + response.getException());
             articleHandler.post(new Runnable() {
                 @Override
                 public void run() {
@@ -548,9 +627,9 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
     @JavascriptInterface
     @Override
     public void downImage(String articleId, String imgId, String originalUrl, boolean guessReferer) {
-        String articleIdInMD5 = EncryptUtil.MD5(articleId);
+        String articleIdInMD5 = EncryptUtils.MD5(articleId);
         String originalFileDir = App.i().getUserCachePath() + articleIdInMD5 + "/original/";
-        String fileNameExt = UriUtil.guessFileNameExt(originalUrl);
+        String fileNameExt = UriUtils.guessFileNameExt(originalUrl);
 
         // 下载时的过渡名称为 imgId
         if (new File(originalFileDir + imgId).exists() || new File(originalFileDir + fileNameExt).exists()) {
@@ -562,14 +641,14 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
         fileCallback.setParam(App.i(), selectedWebView, compressedFileDir, fileNameExt, guessReferer);
         fileCallback.setRefererParam(originalUrl, selectedArticle.getLink(), guessReferer);
 
-        Request request = OkGo.<File>get(originalUrl)
+        GetRequest<File> request = OkGo.<File>get(originalUrl)
                 .tag(articleId)
                 .client(imgHttpClient);
 
         if( guessReferer ){
             request.headers(Contract.REFERER, StringUtils.urlEncode(selectedArticle.getLink()));
         }else {
-            String referer = NetworkRefererConfig.i().guessRefererByUrl(originalUrl);
+            String referer = HeaderRefererConfig.i().guessRefererByUrl(originalUrl);
             // referer = StringUtils.urlEncode(referer);
             if (!StringUtils.isEmpty(referer)) {
                 request.headers(Contract.REFERER, referer);
@@ -585,10 +664,10 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
         StringBuilder stringBuilder = new StringBuilder();
         if(selectedArticle != null){
             Feed feed = CoreDB.i().feedDao().getById(App.i().getUser().getId(), selectedArticle.getFeedId());
-            stringBuilder.append(ArticleUtil.getOptimizedAuthor(feed, selectedArticle.getAuthor()));
+            stringBuilder.append(ArticleUtils.getOptimizedAuthor(feed, selectedArticle.getAuthor()));
             stringBuilder.append("_");
-            stringBuilder.append(TimeUtil.format(selectedArticle.getPubDate(), "yyMMdd-HHmm"));
-            String fileName = ArticleUtil.getExtractedTitle(selectedArticle.getSummary());
+            stringBuilder.append(TimeUtils.format(selectedArticle.getPubDate(), "yyMMdd-HHmm"));
+            String fileName = ArticleUtils.getExtractedTitle(selectedArticle.getSummary());
             if(!StringUtils.isEmpty(fileName)){
                 stringBuilder.append("_");
                 stringBuilder.append(fileName);
@@ -631,7 +710,7 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
             List<ResolveInfo> activitiesToHide = getPackageManager().queryIntentActivities(new Intent(Intent.ACTION_VIEW, Uri.parse("https://wizos.me")), PackageManager.MATCH_DEFAULT_ONLY);
             XLog.d("数量：" + activities.size() +" , " + activitiesToHide.size());
 
-            if( activities.size() != activitiesToHide.size()){
+            if(activities.size() != activitiesToHide.size()){
                 HashSet<String> hideApp = new HashSet<>();
                 hideApp.add("com.kingsoft.moffice_pro");
                 for (ResolveInfo currentInfo : activitiesToHide) {
@@ -689,8 +768,8 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
     private static boolean videoIsPortrait = false;
     @JavascriptInterface
     @Override
-    public void postVideoPortrait(boolean isPortrait) {
-        videoIsPortrait = isPortrait;
+    public void postVideoPortrait(boolean portrait) {
+        videoIsPortrait = portrait;
         articleHandler.postDelayed(new Runnable() {
             @Override
             public void run() {
@@ -698,7 +777,14 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
             }
         }, ViewConfiguration.getDoubleTapTimeout());
     }
-
+    // https://stackoverflow.com/questions/13233149/get-horizontal-scroll-event-in-js
+    @JavascriptInterface
+    @Override
+    public void requestDisallowInterceptTouchEvent(boolean disallow) {
+        if(selectedWebView !=null){
+            selectedWebView.requestDisallowInterceptTouchEvent(disallow);
+        }
+    }
 
     private void initView() {
         starView = findViewById(R.id.article_bottombar_star);
@@ -714,6 +800,31 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
         readabilityView = findViewById(R.id.article_bottombar_readability);
         swipeRefreshLayoutS = findViewById(R.id.art_swipe_refresh);
         swipeRefreshLayoutS.setEnabled(false);
+
+        // swipeRefreshLayoutS.setDragRate(0.6f);//显示下拉高度/手指真实下拉高度=阻尼效果
+        // swipeRefreshLayoutS.setReboundDuration(300);//回弹动画时长（毫秒）
+        // swipeRefreshLayoutS.setEnableRefresh(true);
+        // swipeRefreshLayoutS.setEnableLoadMore(false);
+        // swipeRefreshLayoutS.setEnableNestedScroll(true); //是否启用嵌套滚动
+        // swipeRefreshLayoutS.setEnableOverScrollBounce(true);//是否启用越界回弹
+        // swipeRefreshLayoutS.setOnRefreshListener(new OnRefreshListener() {
+        //     @Override
+        //     public void onRefresh(RefreshLayout refreshlayout) {
+        //         XLog.i("下拉刷新");
+        //         refreshlayout.closeHeaderOrFooter();
+        //         openLink(selectedArticle.getLink());
+        //     }
+        // });
+        // swipeRefreshLayoutS.setOnLoadMoreListener(new OnLoadMoreListener() {
+        //     @Override
+        //     public void onLoadMore(@NotNull RefreshLayout refreshlayout) {
+        //         XLog.i("上拉刷新");
+        //         refreshlayout.finishLoadMore();
+        //         refreshlayout.setEnableLoadMore(false);
+        //
+        //         readabilityArticle();
+        //     }
+        // });
         if (BuildConfig.DEBUG) {
             saveView.setVisibility(View.VISIBLE);
             saveView.setOnClickListener(new View.OnClickListener() {
@@ -724,9 +835,7 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
             });
         }
         entryView = findViewById(R.id.slide_arrow_layout);
-        slideLayout = findViewById(R.id.art_slide_layout);
-
-        // XLog.e("子数量" + slideLayout.getChildCount() );
+        SlideLayout slideLayout = findViewById(R.id.art_slide_layout);
 
         int color;
         if (App.i().getUser().getThemeMode() == App.THEME_DAY) {
@@ -803,9 +912,9 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
 
     public void initSelectedArticle(int position) {
         swipeRefreshLayoutS.setRefreshing(false);
+        // swipeRefreshLayoutS.finishRefresh();
         // 取消之前那篇文章的图片下载(但是如果回到之前那篇文章，怎么恢复下载呢？)
         OkGo.cancelTag(imgHttpClient, articleId);
-        // OkGo.cancelAll(imgHttpClient);
         // 取消之前的获取全文
         if(distill != null){
             distill.cancel();
@@ -814,11 +923,11 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
 
         if (App.i().articlesAdapter != null && position < App.i().articlesAdapter.getItemCount()) {
             //XLog.e("重置文章状态");
-            selectedArticle = App.i().articlesAdapter.get(position);
+            selectedArticle = App.i().articlesAdapter.getById(position);
             if(selectedArticle != null){
                 articleId = selectedArticle.getId();
             }else {
-                swipeRefreshLayoutS.postDelayed(new Runnable() {
+                toolbar.postDelayed(new Runnable() {
                     @Override
                     public void run() {
                         initSelectedArticle(position);
@@ -871,14 +980,118 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
                         return false;
                     }
                     int type = result.getType();
-                    if (type == WebView.HitTestResult.UNKNOWN_TYPE) {
-                        return false;
-                    }
+                    // if (type == WebView.HitTestResult.UNKNOWN_TYPE) {
+                    //     return false;
+                    // }
 
                     // 这里可以拦截很多类型，我们只处理超链接就可以了
-                    new LongClickPopWindow(ArticleActivity.this, (WebView) webView, ScreenUtil.dp2px(ArticleActivity.this, 120), ScreenUtil.dp2px(ArticleActivity.this, 130), downX, downY + 10);
-                    // webViewLongClickedPopWindow.showAtLocation(webView, Gravity.TOP|Gravity.LEFT, downX, downY + 10);
-                    return true;
+                    // new LongClickPopWindow(ArticleActivity.this, (WebView) webView, ScreenUtil.dp2px(ArticleActivity.this, 120), ScreenUtil.dp2px(ArticleActivity.this, 130), downX, downY + 10);
+                    switch (type) {
+                        // case FAVORITES_ITEM_POPUPWINDOW:
+                        // case FAVORITES_VIEW_POPUPWINDOW: //对于书签内容弹出菜单，未作处理
+                        // case HISTORY_ITEM_POPUPWINDOW:
+                        // case HISTORY_VIEW_POPUPWINDOW: //对于历史内容弹出菜单，未作处理
+                        // case WebView.HitTestResult.EDIT_TEXT_TYPE: // 选中的文字类型
+                        // case WebView.HitTestResult.PHONE_TYPE: // 处理拨号
+                        // case WebView.HitTestResult.EMAIL_TYPE: // 处理Email
+                        // case WebView.HitTestResult.GEO_TYPE: // 　地图类型
+                        // case WebView.HitTestResult.SRC_ANCHOR_TYPE: // 超链接
+                        // case WebView.HitTestResult.SRC_IMAGE_ANCHOR_TYPE: // 带有链接的图片类型
+                        // case WebView.HitTestResult.IMAGE_TYPE: // 处理长按图片的菜单项
+                        //     String url = result.getExtra();//获取图片
+                        //     break;
+                        // case WebView.HitTestResult.UNKNOWN_TYPE: //未知
+                        case WebView.HitTestResult.SRC_IMAGE_ANCHOR_TYPE: // 带有链接的图片类型
+                            String url1 = result.getExtra();
+                            if(TextUtils.isEmpty(url1)){
+                                return false;
+                            }
+                            XLog.d("有链接的图片类型：" + url1 );
+                            break;
+                        case WebView.HitTestResult.IMAGE_TYPE: // 处理长按图片的菜单项
+                            String url = result.getExtra();
+                            if(TextUtils.isEmpty(url)){
+                                return false;
+                            }
+                            XLog.d("图片网址：" + url );
+                            // TODO: 2019/5/1 重新下载 , 查看原图
+                            break;
+                        case WebView.HitTestResult.UNKNOWN_TYPE: //对于历史内容弹出菜单，未作处理
+                            break;
+                        case WebView.HitTestResult.SRC_ANCHOR_TYPE://超链接
+                            String link = result.getExtra();
+                            if(TextUtils.isEmpty(link)){
+                                return false;
+                            }
+                            XLog.d("超链接：" + link );
+                            new WebViewMenu.Builder(ArticleActivity.this, webView, R.layout.webview_long_click_link_popwindow)
+                                    .setWidth(ScreenUtils.dp2px(ArticleActivity.this, 120))
+                                    .setHeight(ScreenUtils.dp2px(ArticleActivity.this, 130))
+                                    .setOffsetX(downX)
+                                    .setOffsetY(downY + 10)
+                                    .setOnClickListener(new WebViewMenu.ClickListener() {
+                                        @Override
+                                        public void setOnClickListener(WebViewMenu webViewMenu,View popWindow) {
+                                            TextView openLinkMode = popWindow.findViewById(R.id.webview_open_mode);
+                                            if( App.i().getUser().isOpenLinkBySysBrowser() && (link.startsWith(SCHEMA_HTTP) || link.startsWith(SCHEMA_HTTPS))){
+                                                openLinkMode.setText(R.string.open_by_outer);
+                                                openLinkMode.setOnClickListener(new View.OnClickListener() {
+                                                    @Override
+                                                    public void onClick(View v) {
+                                                        webViewMenu.dismiss();
+                                                        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(link));
+                                                        // 每次都要选择打开方式
+                                                        startActivity(Intent.createChooser(intent, getString(R.string.open_by_outer)));
+                                                        overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
+                                                    }
+                                                });
+                                            }else {
+                                                openLinkMode.setText(R.string.open_by_inner);
+                                                openLinkMode.setOnClickListener(new View.OnClickListener() {
+                                                    @Override
+                                                    public void onClick(View v) {
+                                                        webViewMenu.dismiss();
+                                                        Intent intent = new Intent(ArticleActivity.this, WebActivity.class);
+                                                        intent.setData(Uri.parse(link));
+                                                        intent.putExtra("theme", App.i().getUser().getThemeMode());
+                                                        startActivity(intent);
+                                                        overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
+                                                    }
+                                                });
+                                            }
+                                            popWindow.findViewById(R.id.webview_copy_link)
+                                                    .setOnClickListener(new View.OnClickListener() {
+                                                        @Override
+                                                        public void onClick(View v) {
+                                                            webViewMenu.dismiss();
+                                                            //获取剪贴板管理器：
+                                                            ClipboardManager cm = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+                                                            // 创建普通字符型ClipData
+                                                            ClipData mClipData = ClipData.newRawUri("url", Uri.parse(link));
+                                                            // 将ClipData内容放到系统剪贴板里。
+                                                            cm.setPrimaryClip(mClipData);
+                                                            ToastUtils.show(getString(R.string.copy_success));
+                                                        }
+                                                    });
+                                            popWindow.findViewById(R.id.webview_share_link)
+                                                    .setOnClickListener(new View.OnClickListener() {
+                                                        @Override
+                                                        public void onClick(View v) {
+                                                            webViewMenu.dismiss();
+                                                            Intent sendIntent = new Intent(Intent.ACTION_SEND);
+                                                            sendIntent.setType("text/plain");
+                                                            sendIntent.putExtra(Intent.EXTRA_TEXT, link);
+                                                            //sendIntent.setData(Uri.parse(status.getExtra()));
+                                                            //sendIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                                                            startActivity(Intent.createChooser(sendIntent, getString(R.string.share_to)));
+                                                        }
+                                                    });
+                                        }
+                                    })
+                                    .show();
+                            return true;
+                    }
+                    return false;
                 }
             });
         }
@@ -896,7 +1109,7 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
                 AsyncTask.execute(new Runnable() {
                     @Override
                     public void run() {
-                        String content = ArticleUtil.getPageForDisplay(selectedArticle);
+                        String content = ArticleUtils.getPageForDisplay(selectedArticle);
                         articleHandler.post(new Runnable() {
                             @Override
                             public void run() {
@@ -911,7 +1124,7 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
             AsyncTask.execute(new Runnable() {
                 @Override
                 public void run() {
-                    String content = ArticleUtil.getPageForDisplay(selectedArticle);
+                    String content = ArticleUtils.getPageForDisplay(selectedArticle);
                     articleHandler.post(new Runnable() {
                         @Override
                         public void run() {
@@ -947,7 +1160,13 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
         @Override
         public void onShowCustomView(View view, CustomViewCallback callback) {
             super.onShowCustomView(view,callback);
-            // XLog.i("进入全屏" + videoIsPortrait + " , " + (System.currentTimeMillis() - time));
+            // XLog.i("进入全屏：" + videoIsPortrait + " , " + view + " , " + view.getRootView() + ", " + view.getClass() + " , " );
+            // FrameLayout frameLayout = (FrameLayout)view;
+            // XLog.i("进入全屏2：" + frameLayout.getChildCount() + " , " + view + " , " + view.getRootView() + ", " + view.getClass() + " , " );
+            // for (int i = 0, size = frameLayout.getChildCount(); i < size; i++ ){
+            //     // org.chromium.android_webview.FullScreenView。0 , 0 , 0 , 0
+            //     XLog.i("子view：" + frameLayout.getChildAt(i).getHeight() + " , " + frameLayout.getChildAt(i).getWidth() + " , " + frameLayout.getChildAt(i).getMeasuredHeight() + " , " + frameLayout.getChildAt(i).getMeasuredWidth() );
+            // }
             if (video.get() != null) {
                 video.get().onShowCustomView(view, videoIsPortrait, callback);
             }
@@ -969,19 +1188,19 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
         // 通过重写WebViewClient的onReceivedSslError方法来接受所有网站的证书，忽略SSL错误。
         @Override
         public void onReceivedSslError(WebView view, SslErrorHandler handler, SslError error) {
-            XLog.e("SSL错误");
+            XLog.i("SSL错误：已忽略，继续加载页面");
             handler.proceed(); // 忽略SSL证书错误，继续加载页面
         }
 
-        @Deprecated
         @SuppressLint("NewApi")
         @Override
         public WebResourceResponse shouldInterceptRequest(WebView view, final WebResourceRequest request) {
+            String url = request.getUrl().toString().toLowerCase();
+            // XLog.i("请求加载资源：" + url);
             // 有广告的请求数据，我们直接返回空数据，注：不能直接返回null
-            if ( AdBlock.i().isAd(request.getUrl().toString()) ) {
+            if ( HostBlockConfig.i().isAd(url) ) {
                 return new WebResourceResponse(null, null, null);
             }
-            // String url = request.getUrl().toString().toLowerCase();
             // 此处有2个方案来实现替换图片请求为本地下载好的图片
             // 【1】无法将 图片链接 通过重定向到 file:/storage/emulated/0 以及 content://me.wizos.loread
             // 【2】可以通过拦截 图片请求，直接返回本地图片流 WebResourceResponse。但是囿于以下2个问题，导致很复杂：
@@ -992,7 +1211,6 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
             //     return super.shouldInterceptRequest(view, request);
             // }
             // String cacheUrl = FileUtil.readCacheFilePath(EncryptUtil.MD5(selectedArticle.getId()), url);
-            // XLog.e("【请求加载资源】" + url  + " , " + cacheUrl);
             // try {
             //     if (cacheUrl != null) {
             //         return new WebResourceResponse("image/png", "UTF-8", new FileInputStream(cacheUrl));
@@ -1015,8 +1233,8 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
          */
         @Override
         public boolean shouldOverrideUrlLoading(WebView webView, String url) {
-            XLog.e("url为：" + url);
-            // 判断重定向的方式一
+            XLog.i("加载 url：" + url);
+
             // 作者：胡几手，链接：https://www.jianshu.com/p/7dfb8797f893
             // 解决在webView第一次加载的url重定向到了另一个地址时，也会走shouldOverrideUrlLoading回调的问题
             WebView.HitTestResult hitTestResult = webView.getHitTestResult();
@@ -1030,7 +1248,7 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
                 return true;
             }
 
-            String newUrl = LinkRewriteConfig.i().getRedirectUrl( url );
+            String newUrl = UrlRewriteConfig.i().getRedirectUrl( url );
             if (!TextUtils.isEmpty(newUrl)) {
                 url = newUrl;
             }
@@ -1067,15 +1285,15 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
             readView.setText(getString(R.string.font_readed));
             selectedArticle.setReadStatus(App.STATUS_READED);
             CoreDB.i().articleDao().update(selectedArticle);
-            App.i().getApi().markArticleReaded(selectedArticle.getId(), new CallbackX() {
+            App.i().getApi().markArticleReaded(selectedArticle.getId(), new CallbackX<String,String>() {
                 @Override
-                public void onSuccess(Object result) { }
+                public void onSuccess(String result) { }
 
                 @Override
-                public void onFailure(Object error) {
+                public void onFailure(String error) {
                     selectedArticle.setReadStatus(App.STATUS_UNREAD);
                     CoreDB.i().articleDao().update(selectedArticle);
-                    ToastUtils.show(getString(R.string.mask_fail));
+                    ToastUtils.show(getString(R.string.mask_fail_with_reason, error));
                 }
             });
         } else if (selectedArticle.getReadStatus() == App.STATUS_READED) {
@@ -1100,9 +1318,15 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
         }else {
             readabilityView.setText(R.string.font_article_original);
         }
+        // if(readabilityMenuItem != null){
+        //     if(App.i().oldArticles.containsKey(selectedArticle.getId())){
+        //         readabilityMenuItem.setVisible(true);
+        //     }else {
+        //         readabilityMenuItem.setVisible(false);
+        //     }
+        // }
 
         final Feed feed = CoreDB.i().feedDao().getById(App.i().getUser().getId(), selectedArticle.getFeedId());
-        //final View feedConfigView = findViewById(R.id.article_feed_config);
         if( feedMenuItem != null ){
             if (feed != null) {
                 feedMenuItem.setVisible(true);
@@ -1110,6 +1334,7 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
                 feedMenuItem.setVisible(false);
             }
         }
+        // swipeRefreshLayoutS.setEnableLoadMore(true);
     }
 
     public void onClickReadIcon(View view) {
@@ -1184,7 +1409,7 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
                 action = getString(R.string.edit_favorites);
             }
 
-            SnackbarUtil.Long(swipeRefreshLayoutS, bottomBar, msg).setAction(action, v -> editFavorites(uid)).show();
+            SnackbarUtils.Long(bottomBar, bottomBar, msg).setAction(action, v -> editFavorites(uid)).show();
         } else {
             starView.setText(getString(R.string.font_unstar));
             selectedArticle.setStarStatus(App.STATUS_UNSTAR);
@@ -1316,6 +1541,10 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
             ToastUtils.show(getString(R.string.is_filed_cannot_edit));
         }
         CoreDB.i().articleDao().update(selectedArticle);
+
+        if(Test.i().downloadNow){
+            ArticleUtils.saveArticle(App.i().getUserFilesDir() + File.separator + "tmp" + File.separator, selectedArticle);
+        }
     }
     private void clearDirectory(String uid){
         SaveDirectory.i().setArticleDirectory(selectedArticle.getId(),null);
@@ -1329,7 +1558,7 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
             msg = getString(R.string.saved_to_directory,dir);
         }
 
-        SnackbarUtil.Long(swipeRefreshLayoutS, bottomBar, msg)
+        SnackbarUtils.Long(bottomBar, bottomBar, msg)
                 .setAction(R.string.edit_directory, v -> editDirectory(uid)).show();
     }
     private void editDirectory(String uid){
@@ -1380,16 +1609,100 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
     // }
 
     public void openOriginalArticle(View view) {
-        //Intent intent = new Intent(ArticleActivity.this, WebActivity.class);
-        //intent.setData(Uri.parse(selectedArticle.getLink()));
-        //intent.putExtra("theme", App.i().getUser().getThemeMode());
-        //startActivity(intent);
-        //overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
         openLink(selectedArticle.getLink());
     }
 
 
     private Distill distill;
+    // public void readabilityArticle() {
+    //     saveArticleProgress();
+    //     ToastUtils.show(getString(R.string.get_readability_ing));
+    //     String keyword;
+    //     if( App.i().articleFirstKeyword.containsKey(selectedArticle.getId()) ){
+    //         keyword = App.i().articleFirstKeyword.get(selectedArticle.getId());
+    //     }else {
+    //         keyword = ArticleUtil.getKeyword(selectedArticle.getContent());
+    //         App.i().articleFirstKeyword.put(selectedArticle.getId(),keyword);
+    //     }
+    //
+    //     distill = new Distill(selectedArticle.getLink(), keyword, new Distill.Listener() {
+    //         @Override
+    //         public void onResponse(String content) {
+    //             App.i().oldArticles.put(selectedArticle.getId(),(Article)selectedArticle.clone());
+    //             selectedArticle.updateContent(content);
+    //
+    //             CoreDB.i().articleDao().update(selectedArticle);
+    //             articleHandler.post(new Runnable() {
+    //                 @Override
+    //                 public void run() {
+    //                     if (swipeRefreshLayoutS == null ||selectedWebView == null) {
+    //                         return;
+    //                     }
+    //
+    //                     ToastUtils.show(getString(R.string.get_readability_success));
+    //                     AsyncTask.execute(new Runnable() {
+    //                         @Override
+    //                         public void run() {
+    //                             String content = ArticleUtil.getPageForDisplay(selectedArticle);
+    //                             articleHandler.post(new Runnable() {
+    //                                 @Override
+    //                                 public void run() {
+    //                                     selectedWebView.loadData(content);
+    //                                     readabilityMenuItem.setVisible(true);
+    //                                     swipeRefreshLayoutS.setEnableLoadMore(true);
+    //                                 }
+    //                             });
+    //                         }
+    //                     });
+    //                 }
+    //             });
+    //         }
+    //
+    //         @Override
+    //         public void onFailure(String msg) {
+    //             articleHandler.post(new Runnable() {
+    //                 @Override
+    //                 public void run() {
+    //                     if (swipeRefreshLayoutS == null) {
+    //                         return;
+    //                     }
+    //                     swipeRefreshLayoutS.finishLoadMore();
+    //                     swipeRefreshLayoutS.setEnableLoadMore(true);
+    //                     ToastUtils.show(getString(R.string.get_readability_failure, msg));
+    //                 }
+    //             });
+    //         }
+    //     });
+    //     distill.getContent();
+    // }
+    // public void showRSSArticle(){
+    //         Article oldArticle = null;
+    //         if(App.i().oldArticles != null){
+    //             oldArticle = App.i().oldArticles.get(selectedArticle.getId());
+    //         }
+    //         if(oldArticle != null){
+    //             selectedArticle.setContent(oldArticle.getContent());
+    //             selectedArticle.setSummary(oldArticle.getSummary());
+    //             selectedArticle.setImage(oldArticle.getImage());
+    //             App.i().oldArticles.remove(selectedArticle.getId());
+    //             ToastUtils.show(getString(R.string.cancel_readability));
+    //             AsyncTask.execute(new Runnable() {
+    //                 @Override
+    //                 public void run() {
+    //                     String content = ArticleUtil.getPageForDisplay(selectedArticle);
+    //                     articleHandler.post(new Runnable() {
+    //                         @Override
+    //                         public void run() {
+    //                             selectedWebView.loadData(content);
+    //                             readabilityMenuItem.setVisible(false);
+    //                         }
+    //                     });
+    //                 }
+    //             });
+    //             CoreDB.i().articleDao().update(selectedArticle);
+    //         }
+    // }
+
     public void switchReadabilityArticle(View view) {
         if(swipeRefreshLayoutS.isRefreshing()){
             swipeRefreshLayoutS.setRefreshing(false);
@@ -1398,6 +1711,9 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
             }
             return;
         }
+        // if(distill != null){
+        //     distill.cancel();
+        // }
         saveArticleProgress();
 
         Article oldArticle = null;
@@ -1411,11 +1727,10 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
             selectedArticle.setImage(oldArticle.getImage());
             App.i().oldArticles.remove(selectedArticle.getId());
             ToastUtils.show(getString(R.string.cancel_readability));
-            // selectedWebView.loadData(ArticleUtil.getPageForDisplay(selectedArticle));
             AsyncTask.execute(new Runnable() {
                 @Override
                 public void run() {
-                    String content = ArticleUtil.getPageForDisplay(selectedArticle);
+                    String content = ArticleUtils.getPageForDisplay(selectedArticle);
                     articleHandler.post(new Runnable() {
                         @Override
                         public void run() {
@@ -1433,10 +1748,9 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
             if( App.i().articleFirstKeyword.containsKey(selectedArticle.getId()) ){
                 keyword = App.i().articleFirstKeyword.get(selectedArticle.getId());
             }else {
-                keyword = ArticleUtil.getKeyword(selectedArticle.getContent());
+                keyword = ArticleUtils.getKeyword(selectedArticle.getContent());
                 App.i().articleFirstKeyword.put(selectedArticle.getId(),keyword);
             }
-
             swipeRefreshLayoutS.setRefreshing(true);
             distill = new Distill(selectedArticle.getLink(), keyword, new Distill.Listener() {
                 @Override
@@ -1449,17 +1763,17 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
                     articleHandler.post(new Runnable() {
                         @Override
                         public void run() {
-                            if (swipeRefreshLayoutS == null ||selectedWebView == null) {
+                            if (swipeRefreshLayoutS == null ||selectedWebView == null) { //
                                 return;
                             }
                             swipeRefreshLayoutS.setRefreshing(false);
+                            // swipeRefreshLayoutS.finishRefresh();
                             ToastUtils.show(getString(R.string.get_readability_success));
                             readabilityView.setText(getString(R.string.font_article_readability));
-                            // selectedWebView.loadData(ArticleUtil.getPageForDisplay(selectedArticle));
                             AsyncTask.execute(new Runnable() {
                                 @Override
                                 public void run() {
-                                    String content = ArticleUtil.getPageForDisplay(selectedArticle);
+                                    String content = ArticleUtils.getPageForDisplay(selectedArticle);
                                     articleHandler.post(new Runnable() {
                                         @Override
                                         public void run() {
@@ -1481,6 +1795,7 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
                                 return;
                             }
                             swipeRefreshLayoutS.setRefreshing(false);
+                            // swipeRefreshLayoutS.finishRefresh();
                             ToastUtils.show(getString(R.string.get_readability_failure, msg));
                         }
                     });
@@ -1494,11 +1809,11 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
         if (!BuildConfig.DEBUG) {
             return;
         }
-        Document document = Jsoup.parseBodyFragment(ArticleUtil.getPageForDisplay(selectedArticle));
+        Document document = Jsoup.parseBodyFragment(ArticleUtils.getPageForDisplay(selectedArticle));
         document.outputSettings().prettyPrint(true);
         String info = selectedArticle.getTitle() + "\n" +
                 "ID=" + selectedArticle.getId() + "\n" +
-                "ID-MD5=" + EncryptUtil.MD5(selectedArticle.getId()) + "\n" +
+                "ID-MD5=" + EncryptUtils.MD5(selectedArticle.getId()) + "\n" +
                 "ReadState=" + selectedArticle.getReadStatus() + "\n" +
                 "ReadUpdated=" + selectedArticle.getReadUpdated() + "\n" +
                 "StarState=" + selectedArticle.getStarStatus() + "\n" +
@@ -1525,7 +1840,7 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
                         //获取剪贴板管理器：
                         ClipboardManager cm = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
                         // 创建普通字符型ClipData
-                        ClipData mClipData = ClipData.newPlainText("ArticleContent", ArticleUtil.getPageForDisplay(selectedArticle));
+                        ClipData mClipData = ClipData.newPlainText("ArticleContent", ArticleUtils.getPageForDisplay(selectedArticle));
                         // 将ClipData内容放到系统剪贴板里。
                         cm.setPrimaryClip(mClipData);
                         ToastUtils.show("已复制文章内容");
@@ -1601,6 +1916,12 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
         }else {
             feedMenuItem.setVisible(false);
         }
+        // readabilityMenuItem = menu.findItem(R.id.article_menu_readability);
+        // if(App.i().oldArticles.containsKey(selectedArticle.getId())){
+        //     readabilityMenuItem.setVisible(true);
+        // }else {
+        //     readabilityMenuItem.setVisible(false);
+        // }
         if(BuildConfig.DEBUG){
             MenuItem speak = menu.findItem(R.id.article_menu_speak);
             speak.setVisible(true);
@@ -1612,6 +1933,7 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
         return true;
     }
 
+    // MenuItem readabilityMenuItem;
     MenuItem feedMenuItem;
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
@@ -1632,6 +1954,9 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
                     ToastUtils.show(R.string.unable_to_edit_unsubscribed_feed);
                 }
                 break;
+            // case R.id.article_menu_readability:
+            //     showRSSArticle();
+            //     break;
             case R.id.article_menu_speak:
                 Intent intent = new Intent(ArticleActivity.this, TTSActivity.class);
                 intent.putExtra("articleNo", articleNo);
@@ -1643,11 +1968,12 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
             case R.id.article_menu_edit_content:
                 new MaterialDialog.Builder(ArticleActivity.this)
                         .title("修改文章内容")
-                        .inputType(InputType.TYPE_CLASS_TEXT)
+                        .inputType(InputType.TYPE_TEXT_FLAG_MULTI_LINE)
                         // .inputRange(1, 5600000)
                         .input(getString(R.string.site_remark), selectedArticle.getContent(), new MaterialDialog.InputCallback() {
                             @Override
                             public void onInput(@NonNull MaterialDialog dialog, CharSequence input) {
+                                dialog.getInputEditText().setGravity(Gravity.TOP);
                                 selectedArticle.setContent(input.toString());
                                 CoreDB.i().articleDao().update(selectedArticle);
                             }
@@ -1655,16 +1981,6 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
                         .positiveText(R.string.confirm)
                         .negativeText(android.R.string.cancel)
                         .show();
-                // new XPopup.Builder(this)
-                //         .asInputConfirm("修改文章内容",null,selectedArticle.getContent(),null,
-                //                 new OnInputConfirmListener() {
-                //                     @Override
-                //                     public void onConfirm(String text) {
-                //                         selectedArticle.setContent(text);
-                //                         CoreDB.i().articleDao().update(selectedArticle);
-                //                     }
-                //                 })
-                //         .show();
                 break;
         }
         return super.onOptionsItemSelected(item);

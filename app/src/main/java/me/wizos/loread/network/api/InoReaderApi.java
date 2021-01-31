@@ -15,6 +15,8 @@ import com.lzy.okgo.exception.HttpException;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
+import java.net.ConnectException;
+import java.net.SocketTimeoutException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -34,7 +36,6 @@ import me.wizos.loread.bean.inoreader.SubCategories;
 import me.wizos.loread.bean.inoreader.Subscription;
 import me.wizos.loread.bean.inoreader.UserInfo;
 import me.wizos.loread.bean.inoreader.itemContents.Item;
-import me.wizos.loread.config.ArticleActionConfig;
 import me.wizos.loread.db.Article;
 import me.wizos.loread.db.Category;
 import me.wizos.loread.db.CoreDB;
@@ -46,6 +47,7 @@ import me.wizos.loread.network.StringConverterFactory;
 import me.wizos.loread.network.SyncWorker;
 import me.wizos.loread.network.callback.CallbackX;
 import me.wizos.loread.utils.StringUtils;
+import me.wizos.loread.utils.TriggerRuleUtils;
 import okhttp3.FormBody;
 import okhttp3.RequestBody;
 import retrofit2.Call;
@@ -64,10 +66,10 @@ import static me.wizos.loread.utils.StringUtils.getString;
  * @author Wizos on 2019/2/15.
  */
 
-public class InoReaderApi extends OAuthApi<Feed, CategoryItem> implements ILogin {
+public class InoReaderApi extends OAuthApi implements ILogin {
     public static final String APP_ID = "1000001277";
     public static final String APP_KEY = "8dByWzO4AYi425yx5glICKntEY2g3uJo";
-    public static final String OFFICIAL_BASE_URL = "https://www.inoreader.com/";
+    public static final String OFFICIAL_BASE_URL = "https://www.innoreader.com/";
     public static final String REDIRECT_URI_SCHEMA = "loread://";
     public static final String REDIRECT_URI = "loread://oauth_inoreader";
 
@@ -136,8 +138,7 @@ public class InoReaderApi extends OAuthApi<Feed, CategoryItem> implements ILogin
                 if(response.isSuccessful()){
                     String result = response.body();
                     LoginResult loginResult = new LoginResult(result);
-                    XLog.i("登录结果：" + result + " , " + loginResult.getError() + loginResult.getAuth());
-
+                    XLog.i("登录结果：" + result + " , " + loginResult);
                     if (!loginResult.success) {
                         cb.onFailure(loginResult.getError());
                     }else {
@@ -353,7 +354,7 @@ public class InoReaderApi extends OAuthApi<Feed, CategoryItem> implements ILogin
             fetchArticle(allSize, 0, new ArrayList<>(refsList.get(0)), new ArticleChanger() {
                 @Override
                 public Article change(Article article) {
-                    article.setCrawlDate(System.currentTimeMillis());
+                    // article.setCrawlDate(0);
                     article.setReadStatus(App.STATUS_UNREAD);
                     article.setStarStatus(App.STATUS_UNSTAR);
                     article.setUid(uid);
@@ -364,7 +365,7 @@ public class InoReaderApi extends OAuthApi<Feed, CategoryItem> implements ILogin
             fetchArticle(allSize, refsList.get(0).size(), new ArrayList<>(refsList.get(1)), new ArticleChanger() {
                 @Override
                 public Article change(Article article) {
-                    article.setCrawlDate(System.currentTimeMillis());
+                    // article.setCrawlDate(0);
                     article.setReadStatus(App.STATUS_READED);
                     article.setStarStatus(App.STATUS_STARED);
                     article.setUid(uid);
@@ -376,7 +377,7 @@ public class InoReaderApi extends OAuthApi<Feed, CategoryItem> implements ILogin
             fetchArticle(allSize, refsList.get(0).size() + refsList.get(1).size(), new ArrayList<>(refsList.get(2)), new ArticleChanger() {
                 @Override
                 public Article change(Article article) {
-                    article.setCrawlDate(System.currentTimeMillis());
+                    // article.setCrawlDate(0);
                     article.setReadStatus(App.STATUS_UNSTAR);
                     article.setStarStatus(App.STATUS_STARED);
                     article.setUid(uid);
@@ -384,28 +385,29 @@ public class InoReaderApi extends OAuthApi<Feed, CategoryItem> implements ILogin
                 }
             });
 
-
             LiveEventBus.get(SyncWorker.SYNC_PROCESS_FOR_SUBTITLE).post(getString(R.string.clear_article));
             deleteExpiredArticles();
 
             // 获取文章全文
-            LiveEventBus.get(SyncWorker.SYNC_PROCESS_FOR_SUBTITLE).post( App.i().getString(R.string.fetch_article_full_content) );
+            LiveEventBus.get(SyncWorker.SYNC_PROCESS_FOR_SUBTITLE).post(getString(R.string.fetch_article_full_content));
             fetchReadability(uid, startSyncTimeMillis);
-
             // 执行文章自动处理脚本
-            ArticleActionConfig.i().exeRules(uid,startSyncTimeMillis);
-            // 清理无文章的tag
-            //clearNotArticleTags(uid);
+            TriggerRuleUtils.exeAllRules(uid,startSyncTimeMillis);
 
-            LiveEventBus.get(SyncWorker.SYNC_PROCESS_FOR_SUBTITLE).post( null );
             // 提示更新完成
             LiveEventBus.get(SyncWorker.NEW_ARTICLE_NUMBER).post(allSize);
+        }catch (IllegalStateException e){
+            handleException(e, e.getMessage());
+        }catch (HttpException e) {
+            handleException(e, e.message());
+        } catch (ConnectException e) {
+            handleException(e, "同步失败：Connect异常");
+        } catch (SocketTimeoutException e) {
+            handleException(e, "同步失败：Socket超时");
         } catch (IOException e) {
-            XLog.e("错误");
-            e.printStackTrace();
-            if (e.getMessage().equals("401")) {
-                ToastUtils.show("网络异常，请重新登录");
-            }
+            handleException(e, "同步失败：IO异常");
+        } catch (RuntimeException e) {
+            handleException(e, "同步失败：Runtime异常");
         }
 
         handleDuplicateArticles();
@@ -414,6 +416,15 @@ public class InoReaderApi extends OAuthApi<Feed, CategoryItem> implements ILogin
         LiveEventBus.get(SyncWorker.SYNC_PROCESS_FOR_SUBTITLE).post( null );
     }
 
+    private void handleException(Exception e, String msg) {
+        XLog.e("同步失败：" + e.getClass() + " = " + msg);
+        e.printStackTrace();
+        if("401".equalsIgnoreCase(msg)){
+            ToastUtils.show(getString(R.string.plz_login_again));
+        }else {
+            ToastUtils.show(msg);
+        }
+    }
 
     private void fetchArticle(int allSize, int syncedSize, List<String> subIds, ArticleChanger articleChanger) throws IOException{
         int needFetchCount = subIds.size();
@@ -721,7 +732,7 @@ public class InoReaderApi extends OAuthApi<Feed, CategoryItem> implements ILogin
         }
         service.markArticle(getAuthorization(), builder.build()).enqueue(new Callback<String>() {
             @Override
-            public void onResponse(Call<String> call, Response<String> response) {
+            public void onResponse(@NotNull Call<String> call, @NotNull Response<String> response) {
                 if (response.isSuccessful() ){
                     String msg = response.body();
                     if( !TextUtils.isEmpty(msg) && msg.equalsIgnoreCase("ok")){
@@ -730,12 +741,12 @@ public class InoReaderApi extends OAuthApi<Feed, CategoryItem> implements ILogin
                         cb.onFailure(msg);
                     }
                 }else {
-                    cb.onFailure("修改失败：原因未知");
+                    cb.onFailure(getString(R.string.response_fail));
                 }
             }
 
             @Override
-            public void onFailure(Call<String> call, Throwable t) {
+            public void onFailure(@NotNull Call<String> call, @NotNull Throwable t) {
                 cb.onFailure(t.getMessage());
             }
         });

@@ -37,16 +37,6 @@ public class LoggerInterceptor implements Interceptor {
         Response response = chain.proceed(request);
 
         if (BuildConfig.DEBUG) {
-//            long t1 = System.nanoTime();
-//            KLog.i(String.format("Sending request %s on %s%n%s", request.url(), chain.connection(), request.headers()));
-//            long t2 = System.nanoTime();
-//            KLog.i(String.format("Received response for %s in %.1fms%n%s", response.request().url(), (t2 - t1) / 1e6d, response.headers()));
-//
-//
-//            if (!HttpHeaders.hasBody(response)) {
-//                return response;
-//            }
-
             ResponseBody responseBody = response.body();
             if (responseBody == null) {
                 return response;
@@ -66,8 +56,10 @@ public class LoggerInterceptor implements Interceptor {
                 if (bodyString.length() > 88) {
                     XLog.d("body---------->" + bodyString.substring(0, 88));
                 } else {
-                    XLog.e("body---------->" + bodyString);
+                    XLog.d("body---------->" + bodyString);
                 }
+            }else {
+                XLog.d("body 为空----------> " + response.code() );
             }
         }
         return response;

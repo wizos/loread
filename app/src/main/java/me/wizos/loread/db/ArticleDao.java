@@ -32,6 +32,10 @@ public interface ArticleDao {
     @Query("SELECT * FROM article WHERE uid = :uid AND id = :id LIMIT 1")
     Article getById(String uid, String id);
 
+    @Query("SELECT * FROM article WHERE uid = :uid AND id = :id LIMIT 1")
+    LiveData<Article> get(String uid, String id);
+
+
     @Query("SELECT * FROM article WHERE uid = :uid")
     List<Article> getAll(String uid);
 
@@ -60,7 +64,7 @@ public interface ArticleDao {
             "AND crawlDate < :timeMillis " +
             "AND (article.starStatus = " + App.STATUS_STARED + "  OR (article.starStatus = " + App.STATUS_UNSTAR +" AND article.starUpdated > :timeMillis))" +
             "ORDER BY crawlDate DESC, pubDate DESC, link")
-    LiveData<List<String>> getStaredIds(String uid, long timeMillis);
+    LiveData<List<String>> getStaredArticleIds(String uid, long timeMillis);
 
     @Query("SELECT * FROM article " +
             "WHERE uid = :uid " +
@@ -95,7 +99,7 @@ public interface ArticleDao {
     @Query("SELECT article.* FROM article " +
             "LEFT JOIN FeedCategory ON (article.uid = FeedCategory.uid AND article.feedId = FeedCategory.feedId)" +
             "WHERE article.uid = :uid " +
-            "AND crawlDate < :timeMillis " +
+            "AND article.crawlDate < :timeMillis " +
             "AND FeedCategory.categoryId = :categoryId " +
             "AND (article.readStatus = " + App.STATUS_UNREAD  + " OR article.readStatus = " + App.STATUS_UNREADING + " OR (article.readStatus = " + App.STATUS_READED +" AND article.readUpdated > :timeMillis) ) " +
             "ORDER BY crawlDate DESC, pubDate DESC, link")
@@ -103,7 +107,7 @@ public interface ArticleDao {
     @Query("SELECT article.id FROM article " +
             "LEFT JOIN FeedCategory ON (article.uid = FeedCategory.uid AND article.feedId = FeedCategory.feedId)" +
             "WHERE article.uid = :uid " +
-            "AND crawlDate < :timeMillis " +
+            "AND article.crawlDate < :timeMillis " +
             "AND FeedCategory.categoryId = :categoryId " +
             "AND (article.readStatus = " + App.STATUS_UNREAD  + " OR article.readStatus = " + App.STATUS_UNREADING + " OR (article.readStatus = " + App.STATUS_READED +" AND article.readUpdated > :timeMillis) ) " +
             "ORDER BY crawlDate DESC, pubDate DESC, link")
@@ -278,26 +282,42 @@ public interface ArticleDao {
             "ORDER BY crawlDate DESC, pubDate DESC, link")
     List<Article> getStaredByFeedId(String uid, String feedId);
 
-    @Query("SELECT * FROM (" +
-            "SELECT * FROM article WHERE uid = :uid AND title LIKE '%' || :keyword || '%' UNION SELECT article.* FROM article JOIN articlefts ON article.uid == articleFts.uid AND article.id == articleFts.id WHERE article.uid = :uid AND articlefts.content MATCH :keyword" +
-            ") ORDER BY crawlDate DESC,pubDate DESC")
-    DataSource.Factory<Integer,Article> getAllByKeyword2(String uid, String keyword);
+    // @Query("SELECT * FROM (" +
+    //         "SELECT * FROM article WHERE uid = :uid AND title LIKE '%' || :keyword || '%' UNION SELECT article.* FROM article JOIN articlefts ON article.uid == articleFts.uid AND article.id == articleFts.id WHERE article.uid = :uid AND articlefts.content MATCH :keyword" +
+    //         ") ORDER BY crawlDate DESC,pubDate DESC")
+    // DataSource.Factory<Integer,Article> getAllByKeyword2(String uid, String keyword);
 
     @Query("SELECT * FROM (" +
-            "SELECT * FROM article WHERE uid = :uid AND title LIKE '%' || :keyword || '%' UNION SELECT * FROM article WHERE uid = :uid AND content LIKE '%' || :keyword || '%' " +
-            ") ORDER BY crawlDate DESC,pubDate DESC, link")
-    DataSource.Factory<Integer,Article> getAllByKeyword(String uid, String keyword);
+            "SELECT * FROM article " +
+            "WHERE uid = :uid " +
+            "AND crawlDate < :timeMillis " +
+            "AND title LIKE '%' || :keyword || '%' " +
+            "UNION " +
+            "SELECT * FROM article " +
+            "WHERE uid = :uid " +
+            "AND crawlDate < :timeMillis " +
+            "AND content LIKE '%' || :keyword || '%' " +
+            ") ORDER BY crawlDate DESC, pubDate DESC, link")
+    DataSource.Factory<Integer,Article> getAllByKeyword(String uid, String keyword, long timeMillis);
     @Query("SELECT id FROM (" +
-            "SELECT * FROM article WHERE uid = :uid AND title LIKE '%' || :keyword || '%' UNION SELECT * FROM article WHERE uid = :uid AND content LIKE '%' || :keyword || '%' " +
+            "SELECT * FROM article " +
+            "WHERE uid = :uid " +
+            "AND crawlDate < :timeMillis " +
+            "AND title LIKE '%' || :keyword || '%' " +
+            "UNION " +
+            "SELECT * FROM article " +
+            "WHERE uid = :uid " +
+            "AND crawlDate < :timeMillis " +
+            "AND content LIKE '%' || :keyword || '%' " +
             ") ORDER BY crawlDate DESC,pubDate DESC, link")
-    LiveData<List<String>> getAllIdsByKeyword(String uid, String keyword);
+    LiveData<List<String>> getAllIdsByKeyword(String uid, String keyword, long timeMillis);
 
 
     // 由于 FTS4 的分词器对中文并不友好，有些不能正确分词，导致无法匹配出来（例如罗永浩），所以 title 部分采用关键字匹配，content 部分才使用全文搜索
     // https://stackoverflow.com/questions/31891456/sqlite-fts-using-or-between-match-operators
     // https://stackoverflow.com/questions/4057254/how-do-you-match-multiple-column-in-a-table-with-sqlite-fts3
-    @Query("SELECT * FROM article WHERE uid = :uid AND title LIKE '%' || :keyword || '%' UNION SELECT article.* FROM article JOIN articlefts ON article.uid == articleFts.uid AND article.id == articleFts.id WHERE article.uid = :uid AND articlefts.content MATCH :keyword" )
-    List<Article> search(String uid, String keyword);
+    // @Query("SELECT * FROM article WHERE uid = :uid AND title LIKE '%' || :keyword || '%' UNION SELECT article.* FROM article JOIN articlefts ON article.uid == articleFts.uid AND article.id == articleFts.id WHERE article.uid = :uid AND articlefts.content MATCH :keyword" )
+    // List<Article> search(String uid, String keyword);
 
 
     //@Query("DELETE FROM article WHERE uid = :uid AND pubDate < :timeMillis")
@@ -325,34 +345,28 @@ public interface ArticleDao {
     //        "ORDER BY crawlDate DESC, pubDate DESC, link")
     //Cursor getValuableByCategoryId(String uid, String categoryId);
 
-
-    @Query("SELECT * FROM article WHERE uid = :uid")
-    List<Article> getAllNoOrder(String uid);
-
-
-    @Query("SELECT * FROM article WHERE uid = :uid AND article.starStatus = " + App.STATUS_UNSTAR)
-    List<Article> getUnStarNoOrder(String uid);
     @Query("SELECT id FROM article WHERE uid = :uid AND article.starStatus = " + App.STATUS_UNSTAR)
-    List<String> getUnStarIdSet(String uid);
+    List<String> getUnStarArticleIds(String uid);
+    @Query("SELECT id FROM article WHERE uid = :uid AND article.starStatus = " + App.STATUS_UNSTAR + " AND id in (:articleIds)")
+    List<String> getUnStarArticleIds(String uid, List<String> articleIds);
 
-    @Query("SELECT * FROM article WHERE uid = :uid AND article.starStatus = " + App.STATUS_STARED)
-    List<Article> getStaredNoOrder(String uid);
     @Query("SELECT id FROM article WHERE uid = :uid AND article.starStatus = " + App.STATUS_STARED)
-    List<String> getStaredIdSet(String uid);
+    List<String> getStaredArticleIds(String uid);
+    @Query("SELECT id FROM article WHERE uid = :uid AND article.starStatus = " + App.STATUS_STARED + " AND id in (:articleIds)")
+    List<String> getStaredArticleIds(String uid, List<String> articleIds);
 
-    @Query("SELECT * FROM article WHERE uid = :uid " +
-            "AND (article.readStatus = " + App.STATUS_UNREAD  + " OR article.readStatus = " + App.STATUS_UNREADING  + ") ")
-    List<Article>  getUnreadNoOrder(String uid);
     @Query("SELECT id FROM article WHERE uid = :uid " +
             "AND (article.readStatus = " + App.STATUS_UNREAD  + " OR article.readStatus = " + App.STATUS_UNREADING  + ") ")
-    List<String>  getUnreadIdSet(String uid);
+    List<String> getUnreadArticleIds(String uid);
+    @Query("SELECT id FROM article WHERE uid = :uid AND readStatus = " + App.STATUS_UNREAD + " AND id in (:articleIds)")
+    List<String> getUnreadArticleIds(String uid, List<String> articleIds);
+    @Query("SELECT id FROM article WHERE uid = :uid AND readStatus = " + App.STATUS_UNREADING + " AND id in (:articleIds)")
+    List<String> getUnreadingArticleIds(String uid, List<String> articleIds);
+    @Query("SELECT id FROM article WHERE uid = :uid AND readStatus != " + App.STATUS_READED + " AND id in (:articleIds)")
+    List<String> getUnreadOrUnreadingArticleIds(String uid, List<String> articleIds);
 
-    @Query("SELECT * FROM article " +
-            "WHERE uid = :uid " +
-            "AND article.readStatus = " + App.STATUS_READED)
-    List<Article>  getReadNoOrder(String uid);
     @Query("SELECT id FROM article WHERE uid = :uid AND article.readStatus = " + App.STATUS_READED)
-    List<String>  getReadIdSet(String uid);
+    List<String> getReadArticleIds(String uid);
 
 
     @Query("SELECT count(1) FROM article " +
@@ -429,8 +443,10 @@ public interface ArticleDao {
     List<Article> getActionRuleArticlesRaw(SupportSQLiteQuery query);
 
     @RawQuery
-    List<Entry> getActionRuleArticlesRaw2(SupportSQLiteQuery query);
+    List<Entry> getActionRuleArticlesEntry(SupportSQLiteQuery query);
 
+    @RawQuery
+    List<String> getActionRuleArticleIds(SupportSQLiteQuery query);
 
 
     // @Query("SELECT * FROM article WHERE uid = :uid AND feedId = :feedId " +
@@ -446,14 +462,22 @@ public interface ArticleDao {
 
     @Query("SELECT link FROM article " +
             "WHERE uid = :uid " +
+            "AND crawlDate is NULL " +
             "GROUP BY link HAVING COUNT(*) > 1") //,title
-    List<String> getDuplicatesLink(String uid);
+    List<String> getDuplicateLink2(String uid);
+
+    // SELECT link FROM article WHERE crawlDate = 0 AND link in (SELECT link FROM article GROUP BY link HAVING COUNT(*) > 1)
+    @Query("SELECT link FROM article " +
+            "WHERE uid = :uid " +
+            "AND crawlDate = 0 " +
+            "AND link IN (SELECT link FROM article WHERE uid = :uid GROUP BY link HAVING COUNT(*) > 1)") //,title
+    List<String> getDuplicateLink(String uid);
 
     @Query("SELECT * FROM article " +
             "WHERE uid = :uid " +
             "AND link = :link " +
             "ORDER BY crawlDate DESC")
-    List<Article> getDuplicates(String uid, String link);
+    List<Article> getDuplicateArticles(String uid, String link);
 
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
@@ -475,30 +499,23 @@ public interface ArticleDao {
     @Query("UPDATE Article SET crawlDate = pubDate WHERE uid = :uid")
     void updateCrawlDateToPubDate(String uid);
 
-    @Query("UPDATE Article SET readStatus = " + App.STATUS_READED + " WHERE uid = :uid AND id in (:articles)")
-    void markArticlesRead(String uid, List<String> articles);
+    @Query("UPDATE Article SET crawlDate = :timeMillis WHERE uid = :uid AND crawlDate = 0")
+    void updateLastSyncArticlesCrawlDate(String uid, long timeMillis);
 
-    @Query("UPDATE Article SET readStatus = " + App.STATUS_UNREAD + " WHERE uid = :uid AND id in (:articles)")
-    void markArticlesUnread(String uid, List<String> articles);
+    @Query("UPDATE Article SET readStatus = " + App.STATUS_READED + " WHERE uid = :uid AND id in (:articleIds)")
+    void markArticlesRead(String uid, List<String> articleIds);
 
-    @Query("UPDATE Article SET readStatus = " + App.STATUS_UNREADING + " WHERE uid = :uid AND id in (:articles)")
-    void markArticlesUnreading(String uid, List<String> articles);
+    @Query("UPDATE Article SET readStatus = " + App.STATUS_UNREAD + " WHERE uid = :uid AND id in (:articleIds)")
+    void markArticlesUnread(String uid, List<String> articleIds);
 
-    @Query("UPDATE Article SET starStatus = " + App.STATUS_STARED + " WHERE uid = :uid AND id in (:articles)")
-    void markArticlesStar(String uid, List<String> articles);
+    @Query("UPDATE Article SET readStatus = " + App.STATUS_UNREADING + " WHERE uid = :uid AND id in (:articleIds)")
+    void markArticlesUnreading(String uid, List<String> articleIds);
 
-    @Query("UPDATE Article SET starStatus = " + App.STATUS_UNSTAR + " WHERE uid = :uid AND id in (:articles)")
-    void markArticlesUnStar(String uid, List<String> articles);
+    @Query("UPDATE Article SET starStatus = " + App.STATUS_STARED + " WHERE uid = :uid AND id in (:articleIds)")
+    void markArticlesStar(String uid, List<String> articleIds);
 
-
-    @Query("SELECT id FROM article WHERE uid = :uid AND readStatus = " + App.STATUS_UNREAD + " AND id in (:articles)")
-    List<String> getUnreadArticles(String uid, List<String> articles);
-
-    @Query("SELECT id FROM article WHERE uid = :uid AND readStatus = " + App.STATUS_UNREADING + " AND id in (:articles)")
-    List<String> getUnreadingArticles(String uid, List<String> articles);
-
-    @Query("SELECT id FROM article WHERE uid = :uid AND readStatus != " + App.STATUS_READED + " AND id in (:articles)")
-    List<String> getUnreadAndUnreadingArticles(String uid, List<String> articles);
+    @Query("UPDATE Article SET starStatus = " + App.STATUS_UNSTAR + " WHERE uid = :uid AND id in (:articleIds)")
+    void markArticlesUnStar(String uid, List<String> articleIds);
 
     /**
      * 将上次操作之后所有新同步文章的爬取时间都重置

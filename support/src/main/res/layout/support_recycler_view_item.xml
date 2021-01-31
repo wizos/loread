@@ -14,7 +14,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 -->
-<com.yanzhenjie.recyclerview.SwipeMenuLayout
+<com.yanzhenjie.recyclerview.SwipeDragLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
@@ -28,14 +28,15 @@
         android:layout_width="wrap_content"
         android:layout_height="match_parent"/>
 
-    <FrameLayout
-        android:id="@+id/swipe_content"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"/>
-
     <com.yanzhenjie.recyclerview.SwipeMenuView
         android:id="@+id/swipe_right"
         android:layout_width="wrap_content"
         android:layout_height="match_parent"/>
 
-</com.yanzhenjie.recyclerview.SwipeMenuLayout>
+    <FrameLayout
+        android:id="@+id/swipe_content"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"/>
+
+
+</com.yanzhenjie.recyclerview.SwipeDragLayout>

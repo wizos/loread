@@ -73,37 +73,38 @@
                 android:src="@drawable/logo_inoreader"
                 android:layout_marginEnd="5dp"
                 android:layout_width="40dp"
-                android:layout_height="40dp" />
+                android:layout_height="40dp"
+                android:contentDescription="@string/inoreader_logo" />
             <Button
                 android:id="@+id/provider_inoreader_title"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:clickable="false"
                 android:textAllCaps="false"
-                android:text="@string/inoreader_oauth"/>
+                android:text="@string/inoreader"/>
         </LinearLayout>
 
-        <LinearLayout
-            android:onClick="oauthInoReader"
-            android:layout_margin="10dp"
-            android:orientation="horizontal"
-            android:gravity="center"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
-            <ImageView
-                android:id="@+id/provider_inoreader_login_logo"
-                android:src="@drawable/logo_inoreader"
-                android:layout_marginEnd="5dp"
-                android:layout_width="40dp"
-                android:layout_height="40dp" />
-            <Button
-                android:id="@+id/provider_inoreader_login_title"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:clickable="false"
-                android:textAllCaps="false"
-                android:text="@string/inoreader_login"/>
-        </LinearLayout>
+        <!--<LinearLayout-->
+        <!--    android:onClick="loginInoReader"-->
+        <!--    android:layout_margin="10dp"-->
+        <!--    android:orientation="horizontal"-->
+        <!--    android:gravity="center"-->
+        <!--    android:layout_width="match_parent"-->
+        <!--    android:layout_height="wrap_content">-->
+        <!--    <ImageView-->
+        <!--        android:id="@+id/provider_inoreader_login_logo"-->
+        <!--        android:src="@drawable/logo_inoreader"-->
+        <!--        android:layout_marginEnd="5dp"-->
+        <!--        android:layout_width="40dp"-->
+        <!--        android:layout_height="40dp" />-->
+        <!--    <Button-->
+        <!--        android:id="@+id/provider_inoreader_login_title"-->
+        <!--        android:layout_width="match_parent"-->
+        <!--        android:layout_height="wrap_content"-->
+        <!--        android:clickable="false"-->
+        <!--        android:textAllCaps="false"-->
+        <!--        android:text="@string/inoreader_login"/>-->
+        <!--</LinearLayout>-->
 
         <LinearLayout
             android:id="@+id/provider_feedly"
@@ -118,7 +119,8 @@
                 android:src="@drawable/logo_feedly"
                 android:layout_marginEnd="5dp"
                 android:layout_width="40dp"
-                android:layout_height="40dp" />
+                android:layout_height="40dp"
+                android:contentDescription="@string/feedly_logo" />
             <Button
                 android:id="@+id/provider_feedly_title"
                 android:layout_width="match_parent"
@@ -140,7 +142,8 @@
                 android:src="@drawable/logo_fever"
                 android:layout_marginEnd="5dp"
                 android:layout_width="40dp"
-                android:layout_height="40dp" />
+                android:layout_height="40dp"
+                android:contentDescription="@string/fever_logo" />
             <Button
                 android:id="@+id/provider_fever_title"
                 android:layout_width="match_parent"
@@ -162,7 +165,8 @@
                 android:src="@drawable/logo_tinytinyrss"
                 android:layout_marginEnd="5dp"
                 android:layout_width="40dp"
-                android:layout_height="40dp" />
+                android:layout_height="40dp"
+                android:contentDescription="@string/tiny_tiny_rss_logo" />
             <Button
                 android:id="@+id/provider_ttrss_title"
                 android:layout_width="match_parent"
@@ -173,38 +177,38 @@
         </LinearLayout>
 
 
-<!--        <RelativeLayout-->
-<!--            android:layout_margin="10dp"-->
-<!--            android:layout_width="match_parent"-->
-<!--            android:layout_height="wrap_content">-->
-<!--            <ImageView-->
-<!--                android:layout_alignParentStart="true"-->
-<!--                android:id="@+id/provider_localrss_logo"-->
-<!--                android:layout_width="40dp"-->
-<!--                android:layout_height="40dp" />-->
-<!--            <TextView-->
-<!--                android:layout_toEndOf="@id/provider_localrss_logo"-->
-<!--                android:id="@+id/provider_localrss_title"-->
-<!--                android:layout_width="match_parent"-->
-<!--                android:layout_height="wrap_content"-->
-<!--                android:maxLines="2"-->
-<!--                android:ellipsize="end"-->
-<!--                android:fontFamily="sans-serif"-->
-<!--                android:textSize="15sp"-->
-<!--                android:text="本地RSS"/>-->
-<!--            <TextView-->
-<!--                android:layout_below="@id/provider_localrss_title"-->
-<!--                android:id="@+id/provider_local-rss_summary"-->
-<!--                android:layout_toEndOf="@id/provider_localrss_logo"-->
-<!--                android:layout_marginTop="4dp"-->
-<!--                android:layout_width="wrap_content"-->
-<!--                android:layout_height="wrap_content"-->
-<!--                android:maxLines="2"-->
-<!--                android:ellipsize="end"-->
-<!--                android:fontFamily="sans-serif"-->
-<!--                android:textSize="13sp"-->
-<!--                android:text="在本地搭建RSS服务器，耗费流量较多"/>-->
-<!--        </RelativeLayout>-->
+        <!--<RelativeLayout-->
+        <!--    android:layout_margin="10dp"-->
+        <!--    android:layout_width="match_parent"-->
+        <!--    android:layout_height="wrap_content">-->
+        <!--    <ImageView-->
+        <!--        android:layout_alignParentStart="true"-->
+        <!--        android:id="@+id/provider_localrss_logo"-->
+        <!--        android:layout_width="40dp"-->
+        <!--        android:layout_height="40dp" />-->
+        <!--    <TextView-->
+        <!--        android:layout_toEndOf="@id/provider_localrss_logo"-->
+        <!--        android:id="@+id/provider_localrss_title"-->
+        <!--        android:layout_width="match_parent"-->
+        <!--        android:layout_height="wrap_content"-->
+        <!--        android:maxLines="2"-->
+        <!--        android:ellipsize="end"-->
+        <!--        android:fontFamily="sans-serif"-->
+        <!--        android:textSize="15sp"-->
+        <!--        android:text="本地RSS"/>-->
+        <!--    <TextView-->
+        <!--        android:layout_below="@id/provider_localrss_title"-->
+        <!--        android:id="@+id/provider_local-rss_summary"-->
+        <!--        android:layout_toEndOf="@id/provider_localrss_logo"-->
+        <!--        android:layout_marginTop="4dp"-->
+        <!--        android:layout_width="wrap_content"-->
+        <!--        android:layout_height="wrap_content"-->
+        <!--        android:maxLines="2"-->
+        <!--        android:ellipsize="end"-->
+        <!--        android:fontFamily="sans-serif"-->
+        <!--        android:textSize="13sp"-->
+        <!--        android:text="在本地搭建RSS服务器，耗费流量较多"/>-->
+        <!--</RelativeLayout>-->
 
     </LinearLayout>
 
@@ -214,6 +218,7 @@
         android:layout_gravity="center"
         android:layout_marginTop="20dp"
         android:layout_marginBottom="20dp"
+        android:onClick="clickAuthor"
         android:alpha="0.6"
         android:text="@string/developed_by_wizos" />
 

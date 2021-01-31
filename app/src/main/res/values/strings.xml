@@ -17,14 +17,14 @@
     <string name="custom_user_agent">Custom UserAgent</string>
     <string name="enter_user_agent">Enter UserAgent</string>
     <string name="remove_custom_user_agent">Remove custom UserAgent</string>
-    <string name="select_display_mode">Select the default display mode for articles</string>
+    <string name="select_display_mode">Display mode for articles</string>
 
     <string name="theme_switched_automatically">Themes have been switched automatically</string>
     <string name="feed_url_display">Feed URL: %s</string>
     <string name="site_url_display">Site URL: %s</string>
     <string name="site_remark">Site Remark</string>
     <string name="remark">Remark</string>
-    <string name="save_directory">Directory of articles saved</string>
+    <string name="article_saved_directory">Directory of articles saved</string>
     <string name="default_directory">Default directory</string>
     <string name="root_directory">Root_directory</string>
     <string name="edit_directory">Edit directory</string>
@@ -55,6 +55,7 @@
     <string name="please_input_account_pw">Please enter account password</string>
     <string name="no_account_register_now">No account?  Register now!</string>
     <string name="do_you_want_to_download_files">Do you want to download the file?</string>
+    <string name="use_tiny_tiny_rss_fever_api">Use TinyTinyRSS and Fever with same password</string>
 
     <string name="plz_grant_permission_tips">Please grant permission, otherwise the APP may not work properly!</string>
     <string name="authing">Authorizing</string>
@@ -116,13 +117,17 @@
     <string name="cancel">Cancel</string>
     <string name="ua_sign">UA</string>
 
+    <string name="override">Override</string>
+
     <string name="edit_success">Edit successful</string>
     <string name="edit_fail">Edit fail</string>
+    <string name="edit_fail_with_reason">Edit fail: %1$s</string>
     <string name="editing">Editing</string>
+    <string name="response_fail">Response fail</string>
 
     <string name="mask_success">Mask successful</string>
     <string name="mask_fail">Mask fail</string>
-
+    <string name="mask_fail_with_reason">Mask fail: %1$s</string>
     <string name="exit_positive">YES ^_^</string>
     <string name="exit_negative">NO ！</string>
 
@@ -130,9 +135,9 @@
     <string name="mark_the_above_articles_as_read">Mark the above articles as read?</string>
     <string name="mark_the_below_articles_as_read">Mark the below articles as read?</string>
     <string name="includes_forced_unread">Includes "forced unread"</string>
-    <string name="are_you_sure_you_want_to_exit_the_app">Are you sure you want to exit the app?</string>
+    <string name="are_you_sure_you_want_to_exit_the_app">Are you sure you want to exit the appUpdateModel?</string>
     <string name="sigh_with_emotion">Sigh with emotion</string>
-    <string name="sigh_with_emotion_content">路很长，纵然远望，却不知方向。\n抽支烟，思绪无常，奔跑着彷徨。\n逃不脱的苟且，到不了的远方…\n作于2016.10.07</string>
+    <string name="sigh_with_emotion_content">路很长，纵然远望，却不知方向。\n抽支烟，思绪无常，奔跑着彷徨。\n逃不脱的苟且，到不了的远方…</string>
 
 
     <string name="select_label">Select label</string>
@@ -146,12 +151,194 @@
 
     <string name="setting_down_img_title">Save traffic to download pictures</string>
     <string name="proxy">Proxy</string>
+    <string name="enable_proxy">Enable proxy</string>
+    <string name="socks5_proxy_settings">SOCKS5 proxy settings</string>
+    <string name="server">Server</string>
+    <string name="port">Port</string>
+    <string name="username">Username</string>
+
+    <string name="plz_set_and_save_proxy_first">Please set up and save the proxy first</string>
+
+    <string name="invalid_port_hint">The value range of the port is 1–65535</string>
+
+    <string name="empty_is_not_allowed">Empty is not allowed</string>
 
     <!--界面显示-->
     <string name="setting_auto_toggle_theme_title">Auto switch night theme</string>
 
     <string name="enable_logging">Enable logging</string>
+    <string name="check_app_update">Check App Update</string>
 
+    <string name="rules">Rules</string>
+    <string name="rules_target">Rules: %1$s</string>
+    <string name="rules_management">Rules management</string>
+    <string name="rules_update">Rules update</string>
+    <string name="rule_configuration">Rule configuration</string>
+    <string name="header_referer">Request header: Referer</string>
+    <string name="header_useragent">Request header: User Agent</string>
+
+    <string name="edit_sync_url">Edit sync url</string>
+
+
+    <string name="url_rewrite_configure_and_test">Url rewrite (configure and test)</string>
+    <string name="url_rewrite">Url rewrite</string>
+    <string name="ad_block">Ad block</string>
+    <string name="article_action">Article action</string>
+    <!--<string name="test_the_rule_for_url_rewrite">Test the rule for url rewrite</string>-->
+    <string name="any_url_with_host_x_the_host_will_be_rewritten_to_y">Rule: the url with host %1$s, the host will be rewritten to %2$s. \nExample: %3$s is changed to %4$s</string>
+    <string name="any_url_with_host_x_the_url_will_be_rewritten_to_y">Rule: the url contains host %1$s will be rewritten by JS script. \nExample: %2$s is changed to %3$s</string>
+    <!--<string name="enable_url_rewrite">Enable url rewrite</string>-->
+    <!--<string name="enable_max_image">Enable image url rewrite</string>-->
+    <!--<string name="small_image_convert_to_max">small image convert to max</string>-->
+
+    <string name="rule_already_exists">Rule already exists</string>
+
+    <string name="executed">Executed</string>
+    <string name="execute_for_existing_articles">Execute for existing articles</string>
+    <string name="explain">Explain</string>
+    <string name="url_rewrite_summary">Url rewrite can be used to convert small image into large image, remove jumps, etc.\nThere are 2 methods to rewrite:\n1. <u>Replace Host</u> \nwhen the url\'s host <u>is</u> key, host will be replaced with value.\n2. Rewrite Url \nWhen the url\'s host <u>contains</u> key, url will be modified by js script in value. \nThe system will pass in the \"url\", plz rewrite it. \nThe method \"call.valid(url)==true\" can be called to verify that the new url is valid.</string>
+    <string name="rewrite_method">Rewrite method</string>
+
+    <string name="url_for_testing">Url (for testing)</string>
+
+    <string name="key" translatable="false">Key</string>
+    <string name="value" translatable="false">Value</string>
+    <string name="example_1">Example 1</string>
+    <string name="example_2">Example 2</string>
+
+    <string name="the_url_to_be_rewrite">The url to be rewrite</string>
+    <!--<string name="the_url_after_rewrite">The url after rewrite</string>-->
+    <!--<string name="the_url_after_rewrite_is">The url after rewrite: %1$s</string>-->
+    <!--<string name="replace_host_of_the_url">Replace host of the url</string>-->
+    <string name="url_rewrite_host_summary">The host to be replace</string>
+    <string name="url_rewrite_js_summary">The following content must be a JS script. \nThe system will pass in the \"url\", plz rewrite it. \nThe \"call.valid(url)\ == true" method can be called to verify that the new url is valid. \nWhen the response code is in [200..300), the url is valid.</string>
+    
+    <string name="script_execution">Script execution: %1$s</string>
+    <string-array name="url_rewrite_method_title">
+        <item>Replace Host</item>
+        <item>Rewrite Url</item>
+    </string-array>
+
+    <string name="save_this_rule">Save this rule</string>
+    <string name="test">Test</string>
+    <string name="console">Console</string>
+
+    <string name="configure_marking_rule">Configure marking rule</string>
+
+    <string name="scope">Scope</string>
+    <string name="conditions">Conditions</string>
+    <string name="add_condition">+ Add condition</string>
+
+    <string name="create_rule">Create rule</string>
+    <string name="create_global_rule">Create global rule</string>
+    <string name="view_rule">View rules</string>
+
+    <string name="action">Action</string>
+    <string name="execute">execute</string>
+    <string name="mark_read">Mark read</string>
+    <string name="mark_star">Mark star</string>
+    <string name="action_summary">If the newly synchronized articles meet the following conditions, the checked action will be executed</string>
+
+    <string name="global">Global</string>
+    <string name="category_with_name">Category: %1$s</string>
+    <string name="feed_with_name">Feed: %1$s</string>
+
+    <string name="global_rule">Rules for global</string>
+    <string name="category_rule">Rules for this category</string>
+    <string name="feed_rule">Rules for this subscription</string>
+
+    <!--<string name="if_condition"><b>If</b>: %1$s</string>-->
+    <!--<string name="and_condition"><b>And</b>: %1$s</string>-->
+    <!--<string name="execute_action"><b>Action</b>: %1$s</string>-->
+
+    <!--<string name="action_view">%1$s %2$s</string>-->
+    <string name="condition_view" translatable="false">%1$s %2$s %3$s</string>
+
+    <string name="failed_condition_is_incomplete">Failed: Condition is incomplete</string>
+    <string name="failed_action_is_not_checked">Failed: Action is not checked</string>
+
+    <string-array name="action_attributes_key">
+        <item>title</item>
+        <item>content</item>
+        <item>author</item>
+        <item>pictures</item>
+    </string-array>
+    <string-array name="action_attributes">
+        <item>Title</item>
+        <item>Content</item>
+        <item>Author</item>
+        <item>Pictures</item>
+    </string-array>
+
+    <string-array name="action_judge_title_key">
+        <item>like</item>
+        <item>not like</item>
+        <item>is</item>
+        <item>is not</item>
+        <item>starts with</item>
+        <item>ends with</item>
+    </string-array>
+    <string-array name="action_judge_title">
+        <item>contain</item>
+        <item>not contain</item>
+        <item>is</item>
+        <item>not is</item>
+        <item>starts with</item>
+        <item>ends with</item>
+    </string-array>
+
+    <string-array name="action_judge_content_key">
+        <item>like</item>
+        <item>not like</item>
+        <item>starts with</item>
+        <item>ends with</item>
+    </string-array>
+    <string-array name="action_judge_content">
+        <item>contain</item>
+        <item>not contain</item>
+        <item>starts with</item>
+        <item>ends with</item>
+    </string-array>
+
+    <string-array name="action_judge_equals_key">
+        <item>is</item>
+        <item>is not</item>
+    </string-array>
+    <string-array name="action_judge_equals">
+        <item>is</item>
+        <item>is not</item>
+    </string-array>
+
+    <!--<string-array name="action_judge_number_key">-->
+    <!--    <item>&lt;</item>-->
+    <!--    <item>=</item>-->
+    <!--    <item>&gt;</item>-->
+    <!--</string-array>-->
+    <string-array name="action_judge_number">
+        <item>&lt;=</item>
+        <item>&gt;</item>
+    </string-array>
+    <!--<string-array name="action_judge_number">-->
+    <!--    <item>less than</item>-->
+    <!--    <item>equals</item>-->
+    <!--    <item>great than</item>-->
+    <!--</string-array>-->
+
+    <string name="if_x">if</string>
+    <string name="and">and</string>
+
+    <string name="keyword">Keywords</string>
+    <string name="text">Text</string>
+    <string name="number">Number</string>
+
+    <string name="input_number">Input number</string>
+    <string name="input_keyword">Input keyword</string>
+    <string name="multiple_keywords_are_separated_by_symbol_eg">Multiple keywords separated by |, for example: China|Chinese</string>
+    <string name="multiple_keywords_are_separated_by_symbol">Multiple keywords separated by |</string>
+    <string name="containing_any_keyword_is_eligible">Containing any keyword is eligible</string>
+    <string name="only_positive_integers_are_allowed">Only positive integers are allowed</string>
+
+    <string name="delete">Delete</string>
     <string name="other">Other</string>
     <!--操作-->
     <string name="open_link_by_builtin_browser">Open link by built-in browser</string>
@@ -210,8 +397,7 @@
     <string name="speak_article">Speak article</string>
 
 
-    <string name="save_readability_content">Save Readability content?</string>
-    <string name="get_readability_ing">Getting</string>
+    <string name="get_readability_ing">Getting full text</string>
     <string name="get_readability_success">Get Successful</string>
     <string name="get_readability_failure">Get failed: %1$s</string>
     <string name="cancel_readability">The full text obtained has been cancelled</string>
@@ -241,6 +427,7 @@
     <string name="unsubscribe_succeeded">Unsubscribe succeeded</string>
     <string name="unsubscribe_failed">Unsubscribe failed: %1$s</string>
     <string name="rename_failed">Rename failed, please try again</string>
+    <string name="rename_failed_reason">Rename failed: %1$s</string>
     <string name="unable_to_edit_unsubscribed_feed">Unable to edit unsubscribed feed</string>
 
     <string name="no_title">Untitled</string>
@@ -263,10 +450,9 @@
 
     <string name="rss">RSS</string>
     <string name="readability">Readability</string>
-    <string name="original">Original</string>
+    <string name="original">WebPage</string>
 
     <string name="view">View</string>
-    <string name="open_original_article">Open original article</string>
 
     <string name="refresh">Refresh</string>
     <string name="stop">Stop</string>
@@ -346,15 +532,19 @@
     <string name="title_activity_scrolling">ScrollingActivity</string>
 
     <string name="action_settings">Settings</string>
-    <string name="server_site_url">Server Host</string>
+    <string name="suggestion_use_fever_for_tiny_tiny_rss">Suggestion: Due to the limitation of TinyTinyRSS, for the articles that have been synced to APP, the latest status cannot be synced to APP after "read/unread/starred/unstar" operation on the website. We suggest you to install Fever plugin and use Fever to login.</string>
+    <string name="server_site_url">Server url</string>
     <string name="account">Account</string>
     <string name="password">Password</string>
     <string name="welcome">"Welcome!"</string>
     <string name="invalid_username">Invalid username</string>
-    <string name="invalid_site_url_hint">"Invalid Server'url, like https://example.com"</string>
+    <string name="invalid_url_hint">"Invalid url, like https://example.com"</string>
+    <string name="invalid_host_hint">"Invalid host, like example.com or 127.0.0.1"</string>
     <string name="empty_site_url_hint">Empty Server Host, please reset it</string>
 
     <string name="invalid_password">Password must be >5 characters</string>
+
+    <string name="not_allowed_to_be_empty">Not allowed to be empty</string>
 
     <string name="article_title_is">article title is: </string>
 
@@ -377,10 +567,11 @@
     <string name="select_login_account">Select the logged-in account</string>
 
     <string name="https_scheme" translatable="false">https://</string>
+    <string name="inoreader" translatable="false">InoReader</string>
     <string name="inoreader_oauth">InoReader (OAuth)</string>
     <string name="inoreader_login">InoReader (Login)</string>
     <string name="inoreader_site_url">"Inoreader's url"</string>
-    <string name="inoreader_url" translatable="false">https://inoreader.com</string>
+    <string name="inoreader_url" translatable="false">https://www.innoreader.com</string>
     <string name="feedly" translatable="false">Feedly</string>
     <string name="tinytinyrss" translatable="false">TinyTinyRSS</string>
     <string name="fever" translatable="false">Fever</string>
@@ -388,7 +579,7 @@
 
     <string name="need_to_access_inoreader_url_normally_hint">"This service requires you to have normal access to the Inoreader'url (see below)"</string>
 
-    <string name="everything_is_rssible">Everything is RSSible</string>
+    <string name="everything_is_rssible">Everything can be RSS</string>
 
     <string name="developed_by_wizos">Developed by Wizos</string>
 
@@ -421,9 +612,11 @@
     <string name="the_rule_of_full_text_extraction_has_expired">The rule of full-text extraction has expired: %1$s</string>
 
     <string name="not_logged_in">NOT LOGGED IN</string>
+    <string name="plz_login_again">Please login again</string>
 
     <string name="timeout">Timeout</string>
-    <string name="not_responding">Not responding</string>
+    <string name="not_responding_plz_try_again">Not responding, please try again</string>
+    <string name="original_text_exception_plz_check">Original text exception, please check</string>
     <string name="no_text_found">No full text found</string>
     <string name="no_text_found_by_rule">No full text found according to %1$s rule</string>
     <string name="no_text_found_by_rule_and_extractor">No full text found according to %1$s rule and extractor</string>
@@ -433,13 +626,36 @@
     <string name="play_the_audio">Play the audio</string>
 
     <string name="save">Save</string>
+    <string name="saved">Saved</string>
     <string name="search_feeds_enter_keywords_or_url">Search feeds (Enter keywords or url)</string>
     <string name="search_articles">Search articles</string>
+    <string name="exit_search">Exit search</string>
     <string name="subscription">Subscription</string>
 
-
-    <string name="exit_search">Exit search</string>
+    <string name="update_all">Update all</string>
 
     <string name="yesterday_time">Yesterday %1$s</string>
     <string name="today_time">%1$s</string>
+    <string name="opml_content_title">Subscriptions of %1$s from %2$s</string>
+    <string name="opml_content_sample_title">Subscriptions</string>
+
+    <string name="open_link">Open link</string>
+    <string name="view_image">View image</string>
+
+    <string name="open_original">Open the original</string>
+
+
+    <string name="download_fail">Download fail</string>
+    <string name="download_success">Download success</string>
+
+    <string name="success">Success</string>
+    <string name="failure">Failure</string>
+    <string name="server_127_0_0_1" translatable="false">127.0.0.1</string>
+    <string name="port_10808" translatable="false">10808</string>
+    <string name="lab">Lab</string>
+
+    <string name="inoreader_logo">Logo of InoReader</string>
+    <string name="feedly_logo">Logo of Feedly</string>
+    <string name="fever_logo">Logo of Fever</string>
+    <string name="tiny_tiny_rss_logo">Logo of Tiny Tiny RSS</string>
 </resources>

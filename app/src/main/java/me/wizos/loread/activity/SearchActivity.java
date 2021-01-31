@@ -50,7 +50,7 @@ import me.wizos.loread.bean.rssfinder.FindResponse;
 import me.wizos.loread.bean.rssfinder.RSSFinderFeed;
 import me.wizos.loread.bean.search.SearchFeedItem;
 import me.wizos.loread.bean.search.SearchFeeds;
-import me.wizos.loread.config.TestConfig;
+import me.wizos.loread.config.Test;
 import me.wizos.loread.db.Category;
 import me.wizos.loread.db.CoreDB;
 import me.wizos.loread.db.Feed;
@@ -60,7 +60,7 @@ import me.wizos.loread.network.api.FeedlyApi;
 import me.wizos.loread.network.api.FeedlyService;
 import me.wizos.loread.network.api.RSSFinderService;
 import me.wizos.loread.network.callback.CallbackX;
-import me.wizos.loread.utils.TimeUtil;
+import me.wizos.loread.utils.TimeUtils;
 import me.wizos.loread.view.SwipeRefreshLayoutS;
 import me.wizos.loread.view.colorful.Colorful;
 import me.wizos.loread.view.colorful.setter.ViewGroupSetter;
@@ -250,7 +250,7 @@ public class SearchActivity extends BaseActivity {
 
             if (item.getLastUpdated() != 0) {
                 cvh.feedLastUpdated.setVisibility(View.VISIBLE);
-                cvh.feedLastUpdated.setText(getString(R.string.search_result_last_update_time, TimeUtil.format(item.getLastUpdated(), "yyyy-MM-dd")));
+                cvh.feedLastUpdated.setText(getString(R.string.search_result_last_update_time, TimeUtils.format(item.getLastUpdated(), "yyyy-MM-dd")));
             } else {
                 cvh.feedLastUpdated.setVisibility(View.GONE);
                 cvh.feedLastUpdated.setText("");
@@ -323,7 +323,7 @@ public class SearchActivity extends BaseActivity {
                         App.i().getApi().unsubscribeFeed(feed.getId(), new CallbackX() {
                             @Override
                             public void onSuccess(Object result) {
-                                CoreDB.i().feedDao().deleteById(App.i().getUser().getId(), item.getFeedUrl());
+                                CoreDB.i().feedDao().deleteByFeedUrl(App.i().getUser().getId(), item.getFeedUrl());
                                 view.setEnabled(true);
                                 view.setChecked(false);
                             }
@@ -475,7 +475,7 @@ public class SearchActivity extends BaseActivity {
             RSSFinderService rssFinderService = retrofit.create(RSSFinderService.class);
 
             // String user = TestConfig.i().rssFinderUser;
-            Call<FindResponse> callSearchFeeds = rssFinderService.find(searchView.getText().toString(), TestConfig.i().rssFinderUser);
+            Call<FindResponse> callSearchFeeds = rssFinderService.find(searchView.getText().toString(), Test.i().rssFinderUser);
             callSearchFeeds.enqueue(new Callback<FindResponse>() {
                 @Override
                 public void onResponse(@NotNull Call<FindResponse> call, @NotNull Response<FindResponse> response) {

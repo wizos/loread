@@ -180,7 +180,7 @@ public class SwipeDragLayout extends FrameLayout implements Controller{
         mDragHelper.settleCapturedViewAt(originPos.x, originPos.y);
         isOpen = false;
         mCacheView = null;
-//        mListener.onClosed(SwipeDragLayout.this);
+        // mListener.onClosed(SwipeDragLayout.this);
     }
 
     public void closeLeft() {

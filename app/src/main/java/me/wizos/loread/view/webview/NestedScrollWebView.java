@@ -15,6 +15,7 @@
  */
 package me.wizos.loread.view.webview;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.view.MotionEvent;
 
@@ -22,26 +23,20 @@ import androidx.core.view.NestedScrollingChild;
 import androidx.core.view.NestedScrollingChildHelper;
 import androidx.core.view.ViewCompat;
 
-//import com.tencent.smtt.sdk.WebView;
-
 /**
  * 结合CoordinatorLayout可以与Toolbar联动的webview
- *
+ * https://github.com/fashare2015/NestedScrollWebView
  * @author LeonDevLifeLog
  * @since 4.0.0
  */
 
 public class NestedScrollWebView extends FastScrollWebView implements NestedScrollingChild {
-    /***
-     * 方法一
-     * https://github.com/fashare2015/NestedScrollWebView
-     */
     public NestedScrollWebView(Context context) {
         super(context);
         initView();
         // 判断用户在进行滑动操作的最小距离
-//        mTouchSlop = ViewConfiguration.get(context).getScaledTouchSlop() + 100;
-//        KLog.e("最小滑动距离：" + mTouchSlop );
+        // mTouchSlop = ViewConfiguration.get(context).getScaledTouchSlop() + 100;
+        // KLog.e("最小滑动距离：" + mTouchSlop );
     }
 
     private static final int INVALID_POINTER = -1;
@@ -72,31 +67,25 @@ public class NestedScrollWebView extends FastScrollWebView implements NestedScro
     boolean mIsBeingDragged;
 
 
+    @SuppressLint("ClickableViewAccessibility")
     @Override
     public boolean onTouchEvent(MotionEvent ev) {
         final int actionMasked = ev.getActionMasked();
 
         switch (actionMasked) {
             case MotionEvent.ACTION_DOWN:
-                mIsBeingDragged = false;
-
                 // Remember where the motion event started
                 mLastMotionY = (int) ev.getY();
-//                downY = (int) ev.getY();
 
                 mActivePointerId = ev.getPointerId(0);
                 startNestedScroll(ViewCompat.SCROLL_AXIS_VERTICAL);
                 break;
 
             case MotionEvent.ACTION_MOVE:
-//                KLog.e("移动开始：");
                 final int activePointerIndex = ev.findPointerIndex(mActivePointerId);
                 if (activePointerIndex == -1) {
                     break;
                 }
-//                if( !onlyVerticalMove(ev) ){
-//                    break;
-//                }
 
                 final int y = (int) ev.getY(activePointerIndex);
                 int deltaY = mLastMotionY - y;
@@ -112,15 +101,11 @@ public class NestedScrollWebView extends FastScrollWebView implements NestedScro
                 if (dispatchNestedScroll(0, scrolledDeltaY, 0, unconsumedY, mScrollOffset)) {
                     mLastMotionY -= mScrollOffset[1];
                 }
-//                KLog.e("移动结束：");
                 break;
             case MotionEvent.ACTION_UP:
-                mActivePointerId = INVALID_POINTER;
-                endDrag();
-                break;
             case MotionEvent.ACTION_CANCEL:
                 mActivePointerId = INVALID_POINTER;
-                endDrag();
+                stopNestedScroll();
                 break;
             case MotionEvent.ACTION_POINTER_DOWN: {
                 final int index = ev.getActionIndex();
@@ -136,11 +121,6 @@ public class NestedScrollWebView extends FastScrollWebView implements NestedScro
                 break;
         }
         return super.onTouchEvent(ev);
-    }
-
-    private void endDrag() {
-        mIsBeingDragged = false;
-        stopNestedScroll();
     }
 
     private void onSecondaryPointerUp(MotionEvent ev) {
@@ -184,7 +164,6 @@ public class NestedScrollWebView extends FastScrollWebView implements NestedScro
 
     @Override
     public boolean dispatchNestedScroll(int dxConsumed, int dyConsumed, int dxUnconsumed, int dyUnconsumed, int[] offsetInWindow) {
-//        KLog.e("分配滚动事件：" + dxConsumed + "  " + dyConsumed );
         return mChildHelper.dispatchNestedScroll(dxConsumed, dyConsumed, dxUnconsumed, dyUnconsumed, offsetInWindow);
     }
 
@@ -202,10 +181,4 @@ public class NestedScrollWebView extends FastScrollWebView implements NestedScro
     public boolean dispatchNestedPreFling(float velocityX, float velocityY) {
         return mChildHelper.dispatchNestedPreFling(velocityX, velocityY);
     }
-
-
-    /***
-     * 方法二：但是在滚动滑出/滑入toolbar时，会卡顿一下
-     * https://blog.csdn.net/m5314/article/details/68943869
-     */
 }

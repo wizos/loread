@@ -1,12 +1,14 @@
 package me.wizos.loread.bean.ttrss.result;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.List;
 
 import me.wizos.loread.App;
 import me.wizos.loread.bean.Enclosure;
 import me.wizos.loread.db.Article;
 import me.wizos.loread.network.api.BaseApi;
-import me.wizos.loread.utils.ArticleUtil;
+import me.wizos.loread.utils.ArticleUtils;
 
 public class ArticleItem {
     private int id;
@@ -47,14 +49,14 @@ public class ArticleItem {
         Article article = new Article();
         article.setId(String.valueOf(id));
 
-        String tmpContent = ArticleUtil.getOptimizedContent(link, content);
-        tmpContent = ArticleUtil.getOptimizedContentWithEnclosures(tmpContent, attachments);
+        String tmpContent = ArticleUtils.getOptimizedContent(link, content);
+        tmpContent = ArticleUtils.getOptimizedContentWithEnclosures(tmpContent, attachments);
         article.setContent(tmpContent);
 
-        String tmpSummary = ArticleUtil.getOptimizedSummary(tmpContent);
+        String tmpSummary = ArticleUtils.getOptimizedSummary(tmpContent);
         article.setSummary(tmpSummary);
 
-        title = ArticleUtil.getOptimizedTitle(title,tmpSummary);
+        title = ArticleUtils.getOptimizedTitle(title,tmpSummary);
         article.setTitle(title);
 
         article.setAuthor(author);
@@ -64,7 +66,7 @@ public class ArticleItem {
         article.setFeedId(feed_id);
         article.setFeedTitle(feed_title);
 
-        String coverUrl = ArticleUtil.getCoverUrl(link,tmpContent);
+        String coverUrl = ArticleUtils.getCoverUrl(link,tmpContent);
         article.setImage(coverUrl);
 
         // 自己设置的字段
@@ -86,9 +88,10 @@ public class ArticleItem {
         return article;
     }
 
+    @NotNull
     @Override
     public String toString() {
-        return "TTRSSArticleItem{" +
+        return "ArticleItem{" +
                 "id=" + id +
                 ", guid='" + guid + '\'' +
                 ", unread=" + unread +

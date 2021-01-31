@@ -17,7 +17,7 @@ import me.wizos.loread.R;
 import me.wizos.loread.db.Category;
 import me.wizos.loread.db.CoreDB;
 import me.wizos.loread.db.Feed;
-import me.wizos.loread.utils.FileUtil;
+import me.wizos.loread.utils.FileUtils;
 import me.wizos.loread.utils.StringUtils;
 
 /**
@@ -53,7 +53,7 @@ public class SaveDirectory {
             synchronized (SaveDirectory.class) {
                 if (instance == null) {
                     Gson gson = new Gson();
-                    String config = FileUtil.readFile(App.i().getUserConfigPath() + "article_save_directory.json");
+                    String config = FileUtils.readFile(App.i().getUserConfigPath() + "article_save_directory.json");
                     if (TextUtils.isEmpty(config)) {
                         instance = new SaveDirectory();
                         instance.settingByFeed = new ArrayMap<>();
@@ -72,7 +72,7 @@ public class SaveDirectory {
         instance = null;
     }
     public void save() {
-        FileUtil.save(App.i().getUserConfigPath() + "article_save_directory.json", new GsonBuilder().setPrettyPrinting().create().toJson(instance));
+        FileUtils.save(App.i().getUserConfigPath() + "article_save_directory.json", new GsonBuilder().setPrettyPrinting().create().toJson(instance));
     }
 
 
@@ -115,7 +115,7 @@ public class SaveDirectory {
         }else if("loread_feed_title".equalsIgnoreCase(value)){
             Feed feed = CoreDB.i().feedDao().getById(App.i().getUser().getId(), feedId);
             if(feed != null){
-                dir = feed.getTitle();
+                dir = FileUtils.getSaveableName(feed.getTitle());
             }
         }else if("loread_category_title".equalsIgnoreCase(value)){
             List<Category> categories = CoreDB.i().categoryDao().getByFeedId(App.i().getUser().getId(), feedId);
@@ -124,7 +124,7 @@ public class SaveDirectory {
                 for (Category category:categories) {
                     titles.add(category.getTitle());
                 }
-                dir = StringUtils.join("_",titles);
+                dir = FileUtils.getSaveableName(StringUtils.join("_",titles));
             }
         }else {
             dir = value;

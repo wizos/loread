@@ -8,11 +8,11 @@
     <string name="edit_category">修改分类</string>
     <string name="select_category">选择分类</string>
     <string name="approaching_the_world">走近世界</string>
-<!--    <string-array name="markArticleListItem">-->
-<!--        <item>向上标记为已读</item>-->
-<!--        <item>向下标记为已读</item>-->
-<!--        <item>保持未读</item>-->
-<!--    </string-array>-->
+    <!--<string-array name="markArticleListItem">-->
+    <!--    <item>向上标记为已读</item>-->
+    <!--    <item>向下标记为已读</item>-->
+    <!--    <item>保持未读</item>-->
+    <!--</string-array>-->
     <string name="custom">自定义</string>
 
     <string name="select_tag">选择标签</string>
@@ -27,7 +27,7 @@
     <string name="site_url_display">站点网址：%s</string>
     <string name="site_remark">站点备注</string>
     <string name="remark">备注</string>
-    <string name="save_directory">文章保存目录</string>
+    <string name="article_saved_directory">文章保存目录</string>
     <string name="default_directory">默认目录</string>
     <string name="root_directory">根目录</string>
     <string name="edit_directory">修改目录</string>
@@ -59,6 +59,7 @@
     <string name="please_input_account_pw">请输入密码</string>
     <string name="no_account_register_now">没有账户？现在注册</string>
     <string name="do_you_want_to_download_files">是否下载文件？</string>
+    <string name="use_tiny_tiny_rss_fever_api">使用 TinyTinyRSS 和 Fever, 且密码相同</string>
 
     <string name="plz_grant_permission_tips">请授予权限，否则 APP 可能无法正常运行！</string>
     <string name="authing">授权中……</string>
@@ -118,11 +119,16 @@
     <string name="confirm">确认</string>
     <string name="ua_sign">UA标识</string>
 
+    <string name="override">覆盖</string>
+
     <string name="edit_success">修改成功</string>
     <string name="edit_fail">修改失败</string>
+    <string name="edit_fail_with_reason">修改失败：%1$s</string>
+    <string name="response_fail">响应失败</string>
 
     <string name="mask_success">标记成功</string>
     <string name="mask_fail">标记失败</string>
+    <string name="mask_fail_with_reason">标记失败：%1$s</string>
 
     <string name="editing">正在修改</string>
     <string name="exit_positive">好滴 ^_^</string>
@@ -134,11 +140,11 @@
     <string name="includes_forced_unread">包含“强制未读”</string>
     <string name="are_you_sure_you_want_to_exit_the_app">确定退出app？</string>
     <string name="sigh_with_emotion">感慨</string>
-    <string name="sigh_with_emotion_content">路很长，纵然远望，却不知方向。\n抽支烟，思绪无常，奔跑着彷徨。\n逃不脱的苟且，到不了的远方…\n作于2016.10.07</string>
+    <string name="sigh_with_emotion_content">路很长，纵然远望，却不知方向。\n抽支烟，思绪无常，奔跑着彷徨。\n逃不脱的苟且，到不了的远方…</string>
+    <!--\n作于2016.10.07-->
 
 
     <string name="select_label">选择标签</string>
-
 
     <!--数据同步-->
     <string name="sync">同步</string>
@@ -147,11 +153,149 @@
     <string name="sync_frequency">同步的时间间隔</string>
     <string name="setting_down_img_title">省流量下载图片</string>
     <string name="proxy">代理</string>
+    <string name="enable_proxy">启用代理</string>
+    <string name="socks5_proxy_settings">SOCKS5 代理设置</string>
+    <string name="server">服务器</string>
+    <string name="port">端口</string>
+    <string name="username">用户名</string>
+
+    <string name="plz_set_and_save_proxy_first">请先设置并保存代理</string>
+
+    <string name="invalid_port_hint">端口的取值范围是：1–65535</string>
+
+    <string name="empty_is_not_allowed">不允许为空</string>
     <!--界面显示-->
     <string name="setting_auto_toggle_theme_title">自动切换夜间主题</string>
 
-    <string name="enable_logging">启用日志记录</string>
+    <string name="enable_logging">日志记录</string>
+    <string name="check_app_update">检查 App 更新</string>
 
+    <string name="rules">规则</string>
+    <string name="rules_target">规则：%1$s</string>
+    <string name="rules_management">规则管理</string>
+    <string name="rules_update">规则更新</string>
+    <string name="rule_configuration">规则配置</string>
+    <string name="header_referer">请求头：Referer</string>
+    <string name="header_useragent">请求头：User Agent</string>
+
+    <string name="edit_sync_url">修改同步网址</string>
+
+    <string name="url_rewrite_configure_and_test">链接覆写（配置与测试）</string>
+    <string name="url_rewrite">链接覆写</string>
+    <string name="ad_block">广告屏蔽</string>
+    <string name="article_action">文章规则</string>
+    <!--<string name="test_the_rule_for_url_rewrite">测试链接覆写规则</string>-->
+    <string name="any_url_with_host_x_the_host_will_be_rewritten_to_y">规则：host 是 %1$s 的 url，host 将被替换为 %2$s。\n例如：%3$s 被改为 %4$s</string>
+    <string name="any_url_with_host_x_the_url_will_be_rewritten_to_y">规则：host 含 %1$s 的 url 将被 JS 脚本修改。\n例如：%2$s 被改为 %3$s</string>
+    <!--<string name="enable_url_rewrite">覆写任意链接</string>-->
+    <!--<string name="enable_max_image">覆写图片链接</string>-->
+    <!--<string name="small_image_convert_to_max">将小图转为大图</string>-->
+
+    <string name="rule_already_exists">规则已存在</string>
+
+    <string name="executed">已执行</string>
+    <string name="execute_for_existing_articles">对已存在的文章执行该规则</string>
+    <string name="explain">说明</string>
+    <string name="url_rewrite_summary">链接覆写可用于将小图转为大图链接，去除跳转等。\n覆写的方式有2种：\n1、<u>替换 host</u>\n当 url 的 host <u>是</u> key 时，host 将被 value 替换。\n2、<u>修改 url</u>\n当 url 的 host <u>含</u> key 时，url 将被 value 中的 js 脚本修改。\n系统会传入 url（链接），请直接修改 url。\n调用 \"call.valid(url)==true\" 方法，可验证 url 是否有效。</string>
+    <string name="rewrite_method">覆写方式</string>
+    <string name="url_for_testing">链接（用于测试）</string>
+
+    <string name="example_1">例子 1</string>
+    <string name="example_2">例子 2</string>
+
+    <string name="the_url_to_be_rewrite">要覆写的链接</string>
+    <!--<string name="the_url_after_rewrite">覆写后的链接</string>-->
+    <!--<string name="the_url_after_rewrite_is">覆写后的链接为：%1$s</string>-->
+    <!--<string name="replace_host_of_the_url">替换链接的 host 部分</string>-->
+    <string name="url_rewrite_host_summary">替换 host 为</string>
+    <string name="url_rewrite_js_summary">以下内容必须是 JS 脚本。\n系统会传入 url（链接），请直接修改 url。\n可以调用 \"call.valid(url) == true\" 方法，验证 url 是否有效。\n响应码在 [200..300) 之间属于有效响应。</string>
+
+    <string name="script_execution">脚本异常: %1$s</string>
+    <string-array name="url_rewrite_method_title">
+        <item>替换 Host</item>
+        <item>修改 Url</item>
+    </string-array>
+
+    <string name="save_this_rule">保存本规则</string>
+    <string name="test">测试</string>
+    <string name="console">控制台</string>
+
+    <string name="configure_marking_rule">配置标记规则</string>
+
+    <string name="scope">范围</string>
+    <string name="conditions">条件</string>
+    <string name="add_condition">+ 新增条件</string>
+    <string name="create_rule">创建规则</string>
+    <string name="create_global_rule">创建全局规则</string>
+    <string name="view_rule">查看规则</string>
+    <string name="action">动作</string>
+    <string name="execute">执行</string>
+
+    <string name="mark_read">标为已读</string>
+    <string name="mark_star">添加星标</string>
+    <string name="action_summary">如果新同步的文章满足以下条件，将执行选中的动作</string>
+
+    <string name="global">全局</string>
+    <string name="category_with_name">分类：%1$s</string>
+    <string name="feed_with_name">订阅源：%1$s</string>
+
+    <string name="global_rule">全局的规则</string>
+    <string name="category_rule">本分类的规则</string>
+    <string name="feed_rule">本订阅的规则</string>
+
+    <!--<string name="execute_action"><b>执行</b>：%1$s</string>-->
+
+    <!--<string name="failed_condition_is_incomplete">失败：已有规则包含该条件""</string>-->
+    <string name="failed_condition_is_incomplete">失败：条件未填写完整</string>
+    <string name="failed_action_is_not_checked">失败：动作未勾选</string>
+
+    <string-array name="action_attributes">
+        <item>标题</item>
+        <item>内容</item>
+        <item>作者</item>
+        <item>图片数量</item>
+    </string-array>
+
+    <string-array name="action_judge_title">
+        <item>包含</item>
+        <item>不含</item>
+        <item>是</item>
+        <item>不是</item>
+        <item>开头是</item>
+        <item>结尾是</item>
+    </string-array>
+
+    <string-array name="action_judge_content">
+        <item>包含</item>
+        <item>不含</item>
+        <item>开头是</item>
+        <item>结尾是</item>
+    </string-array>
+
+    <string-array name="action_judge_equals">
+        <item>是</item>
+        <item>不是</item>
+    </string-array>
+
+    <!--<string-array name="action_judge_number">-->
+    <!--    <item>小于</item>-->
+    <!--    <item>等于</item>-->
+    <!--    <item>大于</item>-->
+    <!--</string-array>-->
+
+    <string name="if_x">如果</string>
+    <string name="and">并且</string>
+    <string name="keyword">关键词</string>
+    <string name="text">文本</string>
+    <string name="number">数字</string>
+    <string name="input_number">输入数字</string>
+    <string name="input_keyword">输入关键词</string>
+    <string name="multiple_keywords_are_separated_by_symbol_eg">多个关键字用|隔开，例如：中国|汉语</string>
+    <string name="multiple_keywords_are_separated_by_symbol">多个关键字用|隔开</string>
+    <string name="containing_any_keyword_is_eligible">包含一个关键字即符合本条件</string>
+    <string name="only_positive_integers_are_allowed">只允许正整数</string>
+
+    <string name="delete">删去</string>
     <string name="other">其他</string>
     <!--操作-->
     <string name="open_link_by_builtin_browser">仅用内置浏览器打开链接</string>
@@ -202,13 +346,12 @@
     <string name="share_img">分享图片</string>
     <string name="rename">重命名</string>
 
-    <string name="mark_above_as_read">向上标记已读</string>
-    <string name="mark_below_as_read">向下标记已读</string>
+    <string name="mark_above_as_read">以上标为已读</string>
+    <string name="mark_below_as_read">以下标为已读</string>
     <string name="mark_as_unread">标记为未读</string>
     <string name="speak_article">播报该文章</string>
 
-    <string name="save_readability_content">保存 Readability 内容？</string>
-    <string name="get_readability_ing">正在获取</string>
+    <string name="get_readability_ing">正在获取全文</string>
     <string name="get_readability_success">获取成功</string>
     <string name="get_readability_failure">获取失败：%1$s</string>
     <string name="cancel_readability">已取消展示获取的全文</string>
@@ -243,6 +386,7 @@
     <string name="unable_to_edit_unsubscribed_feed">无法编辑已退订的订阅源</string>
 
     <string name="rename_failed">重命名失败，请重试</string>
+    <string name="rename_failed_reason">重命名失败：%1$s</string>
 
     <string name="no_title">无题</string>
     <string name="no_thing">无</string>
@@ -263,10 +407,9 @@
 
     <string name="rss">RSS</string>
     <string name="readability">易读</string>
-    <string name="original">原文</string>
+    <string name="original">原网页</string>
 
     <string name="view">查看</string>
-    <string name="open_original_article">查看原文</string>
 
     <string name="refresh">刷新</string>
     <string name="stop">暂停</string>
@@ -283,15 +426,18 @@
 
     <string name="title_activity_scrolling">ScrollingActivity</string>
     <string name="action_settings">设置</string>
+    <string name="suggestion_use_fever_for_tiny_tiny_rss">建议：由于 TinyTinyRSS 的限制，针对已经同步到 APP 上的文章，在网站上对其进行“已读/未读/加星/去星”操作后，文章的最新状态无法同步到 APP 上。建议安装 Fever 插件，使用 Fever 方式登录。</string>
     <string name="server_site_url">服务器网址</string>
     <string name="account">账号</string>
     <string name="password">密码</string>
     <string name="welcome">"欢迎！"</string>
     <string name="invalid_username">用户名无效</string>
-    <string name="invalid_site_url_hint">网址无效，格式为 https://example.com</string>
+    <string name="invalid_url_hint">网址无效，格式为 https://example.com</string>
+    <string name="invalid_host_hint">"Host 无效，格式为 example.com 或  127.0.0.1"</string>
     <string name="empty_site_url_hint">网址为空，请重新设置</string>
 
     <string name="invalid_password">密码必须大于5个字符</string>
+    <string name="not_allowed_to_be_empty">不允许为空</string>
 
     <string name="article_title_is">文章标题为：</string>
 
@@ -353,9 +499,11 @@
 
 
     <string name="not_logged_in">未登录</string>
+    <string name="plz_login_again">请重新登录</string>
 
     <string name="timeout">超时</string>
-    <string name="not_responding">无响应</string>
+    <string name="not_responding_plz_try_again">无响应，请重试</string>
+    <string name="original_text_exception_plz_check">原文异常，请检查</string>
     <string name="no_text_found">未发现正文</string>
     <string name="no_text_found_by_rule">根据 %1$s 规则未发现正文</string>
     <string name="no_text_found_by_rule_and_extractor">根据识别算法与 %1$s 规则都未发现正文</string>
@@ -365,12 +513,33 @@
     <string name="play_the_audio">播放该音频</string>
 
     <string name="save">保存</string>
+    <string name="saved">已保存</string>
     <string name="search_feeds_enter_keywords_or_url">搜索源（输入关键词或url）</string>
     <string name="search_articles">搜索文章</string>
+    <string name="exit_search">退出搜索</string>
     <string name="subscription">订阅源</string>
 
-    <string name="exit_search">退出搜索</string>
+    <string name="update_all">更新所有</string>
 
     <string name="yesterday_time">昨天 %1$s</string>
     <string name="today_time">%1$s</string>
+    <string name="opml_content_title">%1$s 在 %2$s 平台内的订阅</string>
+    <string name="opml_content_sample_title">订阅源</string>
+
+    <string name="open_link">打开链接</string>
+    <string name="view_image">查看图片</string>
+
+    <string name="open_original">打开原文</string>
+
+    <string name="download_fail">下载失败</string>
+    <string name="download_success">下载成功</string>
+
+    <string name="success">成功</string>
+    <string name="failure">失败</string>
+    <string name="lab">实验室</string>
+
+    <string name="inoreader_logo">Inoreader 的标志</string>
+    <string name="feedly_logo">Feedly 的标志</string>
+    <string name="fever_logo">Fever 的标志</string>
+    <string name="tiny_tiny_rss_logo">Tiny Tiny RSS 的标志</string>
 </resources>

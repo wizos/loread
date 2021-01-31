@@ -47,7 +47,7 @@ public class SplashActivity extends BaseActivity {
         XLog.i("UID：" + uid);
         List<User> articles = CoreDB.i().userDao().loadAll();
         for (User user:articles) {
-            XLog.i(user );
+            XLog.i(user);
         }
 
         if ( TextUtils.isEmpty(uid) || App.i().getUser() == null ) {

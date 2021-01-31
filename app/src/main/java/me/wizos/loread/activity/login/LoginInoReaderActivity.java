@@ -21,9 +21,9 @@ import com.hjq.toast.ToastUtils;
 import me.wizos.loread.App;
 import me.wizos.loread.R;
 import me.wizos.loread.activity.BaseActivity;
+import me.wizos.loread.activity.viewmodel.InoReaderUserViewModel;
 import me.wizos.loread.network.api.InoReaderApi;
 import me.wizos.loread.view.colorful.Colorful;
-import me.wizos.loread.viewmodel.InoReaderUserViewModel;
 
 public class LoginInoReaderActivity extends BaseActivity {
     private InoReaderUserViewModel loginViewModel;
@@ -60,7 +60,7 @@ public class LoginInoReaderActivity extends BaseActivity {
 
             @Override
             public void afterTextChanged(Editable s) {
-                loginViewModel.loginDataChanged(
+                loginViewModel.loginFormChanged(
                         hostEditText.getText().toString(),
                         usernameEditText.getText().toString(),
                         passwordEditText.getText().toString()
@@ -125,7 +125,7 @@ public class LoginInoReaderActivity extends BaseActivity {
             }
         });
 
-        loginViewModel.getLoginResult().observe(this, new Observer<LoginResult>() {
+        loginViewModel.getLoginResultLiveData().observe(this, new Observer<LoginResult>() {
             @Override
             public void onChanged(@Nullable LoginResult loginResult) {
                 if (loginResult == null) {

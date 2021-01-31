@@ -2,9 +2,11 @@ package me.wizos.loread.bean.fever;
 
 import com.google.gson.annotations.SerializedName;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.List;
 
-public class Feeds extends BaseResponse {
+public class Feeds extends FeverResponse {
    @SerializedName("feeds")
    private List<Feed> feeds;
    @SerializedName("feeds_groups")
@@ -18,6 +20,7 @@ public class Feeds extends BaseResponse {
        return feedsGroups;
    }
 
+    @NotNull
     @Override
     public String toString() {
         return "Feeds{" +

@@ -40,12 +40,16 @@ public interface ArticleBridge {
 
     void downFile(String url);
 
-    void openImage(String articleId, String url);
+    void openImage(String articleId, String src);
 
-    void openLink(String link);
+    void openImageOrLink(String articleId, String src, String link);
 
-    void openAudio(String link);
+    void openLink(String url);
+
+    void openAudio(String url);
 
     void postVideoPortrait(boolean isPortrait);
+
+    void requestDisallowInterceptTouchEvent(boolean disallow);
     // String get(String url) throws IOException;
 }

@@ -6,9 +6,19 @@ function optimize() {
 	handleAudio();
 	handleFrame();
 	handleTable();
-	
+	handleSlidingConflicts();
 	hljs.initHighlightingOnLoad();
 	MathJax = { tex:{inlineMath: [['\\$', '\\$'], ['\\(', '\\)']]}, svg:{fontCache: 'global'} };
+
+}
+
+function handleSlidingConflicts() {
+	$("code,pre,table_wrap").on("scroll", function(e) {
+		horizontal = e.currentTarget.scrollLeft;
+		if(horizontal > 0){
+			ArticleBridge.requestDisallowInterceptTouchEvent(true);
+		}
+	});
 }
 
 
@@ -44,7 +54,11 @@ function handleImage() {
 			image.attr('src', IMAGE_HOLDER_LOADING_URL);
 			ArticleBridge.downImage(articleId, image.attr('id'), originalUrl, true);
 		}else if (displayUrl != IMAGE_HOLDER_LOADING_URL){ // 由于此时正在加载中所以不处理
-			ArticleBridge.openImage(articleId, displayUrl);
+			if(image.parent()[0].tagName.toLowerCase() === "a" &&image.parent().attr('href').toLowerCase() !== image.attr('original-src').toLowerCase()){
+				ArticleBridge.openImageOrLink(articleId, displayUrl, image.parent().attr('href'));
+			}else{
+				ArticleBridge.openImage(articleId, displayUrl);
+			}
 		}
 		// 阻止元素发生默认的行为（例如点击提交按钮时阻止对表单的提交）
 		event.preventDefault();
@@ -164,7 +178,7 @@ function bilibiliVideoHighQuality(el) {
 }
 
 function loadOnInner(url){
-	var flags = ["music.163.com/outchain/player","player.bilibili.com/player.html","bilibili.com/blackboard/html5mobileplayer.html","player.youku.com","open.iqiyi.com","letv.com","sohu.com","fpie1.com/#/video","fpie2.com/#/video","share.polyv.net","www.google.com/maps/embed","youtube.com/embed"];
+	var flags = ["anchor.fm","music.163.com/outchain/player","player.bilibili.com/player.html","bilibili.com/blackboard/html5mobileplayer.html","player.youku.com","open.iqiyi.com","letv.com","sohu.com","fpie1.com/#/video","fpie2.com/#/video","share.polyv.net","www.google.com/maps/embed","youtube.com/embed"];
   	for (var i = 0; i < flags.length; i++) {
 		if (url.indexOf(flags[i]) != -1 ){
 			return true;
@@ -210,8 +224,7 @@ function hashCode(str){
 	var h = 0;
 	var len = str.length;
 	for(var i = 0; i < len; i++){
-		var tmp=str.charCodeAt(i);
-		h = 31 * h + tmp;
+		h = 31 * h + str.charCodeAt(i);
 		if(h>0x7fffffff || h<0x80000000){
 			h=h & 0xffffffff;
 		}

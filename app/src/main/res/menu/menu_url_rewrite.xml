@@ -1,0 +1,15 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:appUpdateModel="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context=".activity.UrlRewriteActivity">
+
+    <item
+        android:id="@+id/rewrite_menu_example_1"
+        android:title="@string/example_1"
+        appUpdateModel:showAsAction="ifRoom" />
+
+    <item
+        android:id="@+id/rewrite_menu_example_2"
+        android:title="@string/example_2"
+        appUpdateModel:showAsAction="ifRoom" />
+</menu>

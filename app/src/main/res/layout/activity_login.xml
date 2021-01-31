@@ -1,5 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
-
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
@@ -31,6 +30,7 @@
     </com.google.android.material.appbar.AppBarLayout>
 
 
+
     <!--当ScrollView里的元素想填满ScrollView时，使用"fill_parent"是不管用的，必需为ScrollView设置：android:fillViewport="true"。-->
     <!--当ScrollView没有fillVeewport=“true”时, 里面的元素(比如LinearLayout)会按照wrap_content来计算(不论它是否设了"fill_parent")-->
     <!--而如果LinearLayout的元素设置了fill_parent,那么也是不管用的，因为LinearLayout依赖里面的元素，而里面的元素又依赖LinearLayout,这样自相矛盾-->
@@ -51,6 +51,14 @@
                 android:padding="10dp"
                 android:orientation="vertical">
 
+                <TextView
+                    android:id="@+id/login_suggestion"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="10dp"
+                    android:visibility="gone"
+                    tools:visibility="visible"
+                    android:text="@string/suggestion_use_fever_for_tiny_tiny_rss"/>
                 <me.zhanghai.android.materialedittext.MaterialTextInputLayout
                     android:id="@+id/login_baseurl_layout"
                     android:layout_width="match_parent"
@@ -86,7 +94,6 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     app:errorEnabled="true">
-
                     <me.zhanghai.android.materialedittext.MaterialEditText
                         android:id="@+id/login_password_edittext"
                         android:layout_width="match_parent"
@@ -99,7 +106,26 @@
                         android:maxLines="1"
                         tools:ignore="InvalidImeActionId" />
                 </me.zhanghai.android.materialedittext.MaterialTextInputLayout>
-
+                <!--<LinearLayout-->
+                <!--    android:id="@+id/login_use_tiny_fever_layout"-->
+                <!--    android:visibility="gone"-->
+                <!--    android:gravity="center_vertical"-->
+                <!--    android:layout_width="match_parent"-->
+                <!--    android:layout_height="wrap_content"-->
+                <!--    tools:visibility="visible">-->
+                <!--    <TextView-->
+                <!--        android:id="@+id/login_use_tiny_fever_title"-->
+                <!--        android:layout_width="0dp"-->
+                <!--        android:layout_weight="1"-->
+                <!--        android:layout_height="wrap_content"-->
+                <!--        android:textSize="12sp"-->
+                <!--        android:text="@string/use_tiny_tiny_rss_fever_api" />-->
+                <!--    <com.kyleduo.switchbutton.SwitchButton-->
+                <!--        android:id="@+id/login_use_tiny_fever_sb"-->
+                <!--        android:layout_width="wrap_content"-->
+                <!--        android:layout_height="wrap_content"-->
+                <!--        android:checked="false" />-->
+                <!--</LinearLayout>-->
                 <Button
                     android:id="@+id/login_login_button"
                     style="@style/Widget.AppCompat.Button.Colored"

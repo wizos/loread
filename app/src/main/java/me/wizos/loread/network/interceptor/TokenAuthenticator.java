@@ -52,7 +52,6 @@ public class TokenAuthenticator implements Authenticator {
         String authorization = App.i().getOAuthApi().refreshingAccessToken(refreshToken);
 
         //要用retrofit的同步方式
-        // String newToken = call.execute().body();
         XLog.e("TokenAuthenticator授权过期：授权码 " + authorization);
 
         return response.request().newBuilder()

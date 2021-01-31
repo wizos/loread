@@ -38,14 +38,13 @@ import java.util.concurrent.TimeUnit;
 import me.wizos.loread.App;
 import me.wizos.loread.Contract;
 import me.wizos.loread.R;
-import me.wizos.loread.config.AdBlock;
-import me.wizos.loread.config.ArticleActionConfig;
-import me.wizos.loread.config.ArticleExtractConfig;
-import me.wizos.loread.config.LinkRewriteConfig;
-import me.wizos.loread.config.NetworkRefererConfig;
+import me.wizos.loread.config.HeaderRefererConfig;
+import me.wizos.loread.config.HostBlockConfig;
 import me.wizos.loread.config.NetworkUserAgentConfig;
 import me.wizos.loread.config.SaveDirectory;
-import me.wizos.loread.config.TestConfig;
+import me.wizos.loread.config.Test;
+import me.wizos.loread.config.article_extract.ArticleExtractConfig;
+import me.wizos.loread.config.url_rewrite.UrlRewriteConfig;
 import me.wizos.loread.db.Article;
 import me.wizos.loread.db.ArticleTag;
 import me.wizos.loread.db.Category;
@@ -58,10 +57,11 @@ import me.wizos.loread.extractor.Distill;
 import me.wizos.loread.network.SyncWorker;
 import me.wizos.loread.network.api.FeverApi;
 import me.wizos.loread.network.api.TinyRSSApi;
-import me.wizos.loread.utils.BackupUtil;
-import me.wizos.loread.utils.EncryptUtil;
-import me.wizos.loread.utils.FileUtil;
+import me.wizos.loread.utils.BackupUtils;
+import me.wizos.loread.utils.EncryptUtils;
+import me.wizos.loread.utils.FileUtils;
 import me.wizos.loread.utils.StringUtils;
+import me.wizos.loread.utils.TriggerRuleUtils;
 
 import static androidx.work.ExistingPeriodicWorkPolicy.KEEP;
 import static me.wizos.loread.Contract.SCHEMA_HTTP;
@@ -76,6 +76,22 @@ public class LabActivity extends AppCompatActivity {
     }
 
     private MaterialDialog materialDialog;
+    public void onClickExportOPML(View view) {
+        materialDialog = new MaterialDialog.Builder(this)
+                .title("正在处理")
+                .content("请耐心等待下")
+                .progress(true, 0)
+                .canceledOnTouchOutside(false)
+                .progressIndeterminateStyle(false)
+                .show();
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                BackupUtils.backupOPML();
+                materialDialog.dismiss();
+            }
+        }).start();
+    }
     public void onClickBackup(View view) {
         materialDialog = new MaterialDialog.Builder(this)
                 .title("正在处理")
@@ -88,11 +104,10 @@ public class LabActivity extends AppCompatActivity {
             @Override
             public void run() {
                 //BackupUtil.backupFile();
-                BackupUtil.doInBackground(LabActivity.this,BackupUtil.COMMAND_BACKUP);
+                BackupUtils.db(LabActivity.this, BackupUtils.BACKUP);
                 materialDialog.dismiss();
             }
         }).start();
-
     }
 
     public void onClickRestore(View view) {
@@ -108,7 +123,7 @@ public class LabActivity extends AppCompatActivity {
             @Override
             public void run() {
                 // BackupUtil.restoreFile();
-                BackupUtil.doInBackground(LabActivity.this,BackupUtil.COMMAND_RESTORE);
+                BackupUtils.db(LabActivity.this, BackupUtils.RESTORE);
                 materialDialog.dismiss();
             }
         }).start();
@@ -122,13 +137,14 @@ public class LabActivity extends AppCompatActivity {
                 .canceledOnTouchOutside(false)
                 .progressIndeterminateStyle(false)
                 .show();
-        TestConfig.i().reset();
-        AdBlock.i().reset();
-        LinkRewriteConfig.i().reset();
-        NetworkRefererConfig.i().reset();
+        Test.i().reset();
+        HostBlockConfig.i().reset();
+        UrlRewriteConfig.i().reset();
+        // BigImageConfig.i().reset();
+        HeaderRefererConfig.i().reset();
         NetworkUserAgentConfig.i().reset();
         ArticleExtractConfig.i().reset();
-        ArticleActionConfig.i().reset();
+        // ArticleActionConfig.i().reset();
         SaveDirectory.i().reset();
         materialDialog.dismiss();
     }
@@ -179,23 +195,23 @@ public class LabActivity extends AppCompatActivity {
      */
     private void clearHtmlDir() {
         //List<Article> articles = WithDB.i().getArtsAllNoOrder();
-        List<Article> articles = CoreDB.i().articleDao().getAllNoOrder(App.i().getUser().getId());
+        List<Article> articles = CoreDB.i().articleDao().getAll(App.i().getUser().getId());
         ArrayMap<String, String> temp = new ArrayMap<>(articles.size());
 
         for (Article article : articles) {
-            temp.put(EncryptUtil.MD5(article.getId()), "1");
+            temp.put(EncryptUtils.MD5(article.getId()), "1");
         }
 
 
         File dir = new File(App.i().getUserCachePath());
         File[] arts = dir.listFiles();
         XLog.e("文件数量：" + arts.length);
-        String x = "";
+        String x;
         for (File sourceFile : arts) {
             x = temp.get(sourceFile.getName());
             if (null == x) {
                 XLog.e("移动文件名：" + "   " + sourceFile.getName());
-                FileUtil.moveDir(sourceFile.getAbsolutePath(), App.i().getUserFilesDir() + "/move/" + sourceFile.getName());
+                FileUtils.moveDir(sourceFile.getAbsolutePath(), App.i().getUserFilesDir() + "/move/" + sourceFile.getName());
             }
         }
     }
@@ -218,6 +234,32 @@ public class LabActivity extends AppCompatActivity {
         WorkManager.getInstance(this).cancelAllWorkByTag(SyncWorker.TAG);
     }
 
+
+    public void openLink(View view){
+        EditText editText = findViewById(R.id.lab_enter_edittext);
+        String url = editText.getText().toString();
+        if(StringUtils.isEmpty(url)){
+            ToastUtils.show("未输入网址，请检查");
+            return;
+        }
+        Intent intent;
+        intent = new Intent(this, WebActivity.class);
+        intent.setData(Uri.parse(url));
+        startActivity(intent);
+        overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
+    }
+
+    public void openActionActivity(View view) {
+        Intent intent = new Intent(LabActivity.this, TriggerRuleEditActivity.class);
+        intent.putExtra(Contract.RULE_ID, 1L);
+        startActivity(intent);
+        overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
+    }
+    public void openActionManagerActivity(View view) {
+        Intent intent = new Intent(LabActivity.this, TriggerRuleManagerActivity.class);
+        startActivity(intent);
+        overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
+    }
 
     public void openActivity2(View view){
         EditText editText = findViewById(R.id.lab_enter_edittext);
@@ -265,7 +307,7 @@ public class LabActivity extends AppCompatActivity {
                     hideApp.add(currentInfo.activityInfo.packageName);
                     XLog.e("内容1：" + currentInfo.activityInfo.packageName);
                 }
-                ArrayList<Intent> targetIntents = new ArrayList<Intent>();
+                ArrayList<Intent> targetIntents = new ArrayList<>();
                 for (ResolveInfo currentInfo : activities) {
                     String packageName = currentInfo.activityInfo.packageName;
                     if (!hideApp.contains(packageName)) {
@@ -287,20 +329,6 @@ public class LabActivity extends AppCompatActivity {
                 intent.putExtra("theme", App.i().getUser().getThemeMode());
             }
         }
-        startActivity(intent);
-        overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
-    }
-
-    public void openLink(View view){
-        EditText editText = findViewById(R.id.lab_enter_edittext);
-        String url = editText.getText().toString();
-        if(StringUtils.isEmpty(url)){
-            ToastUtils.show("未输入网址，请检查");
-            return;
-        }
-        Intent intent;
-        intent = new Intent(this, WebActivity.class);
-        intent.setData(Uri.parse(url));
         startActivity(intent);
         overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
     }
@@ -414,6 +442,19 @@ public class LabActivity extends AppCompatActivity {
             }
         });
     }
+    public void openLinkInNewPage(View view){
+        EditText editText = findViewById(R.id.lab_enter_edittext);
+        String url = editText.getText().toString();
+        if(StringUtils.isEmpty(url)){
+            ToastUtils.show("未输入网址，请检查");
+            return;
+        }
+        Intent intent;
+        intent = new Intent(this, Web2Activity.class);
+        intent.setData(Uri.parse(url));
+        startActivity(intent);
+        overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
+    }
 
     public void onClickClearTags(View view) {
         CoreDB.i().tagDao().clear(App.i().getUser().getId());
@@ -519,8 +560,6 @@ public class LabActivity extends AppCompatActivity {
                 }
             }
         });
-
-
     }
 
 
@@ -544,7 +583,7 @@ public class LabActivity extends AppCompatActivity {
             ToastUtils.show("当前用户不存在");
             return;
         }
-        ArticleActionConfig.i().exeRules(App.i().getUser().getId(), 0);
+        TriggerRuleUtils.exeAllRules(App.i().getUser().getId(), 0);
     }
 
 

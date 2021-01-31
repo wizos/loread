@@ -1,8 +1,31 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    tools:context=".activity.ArticleActivity">
+    tools:context=".activity.MainActivity">
 
+    <item
+        android:id="@+id/main_menu_proxy_disable"
+        android:icon="@drawable/ic_flight_land"
+        android:title="@string/proxy"
+        android:visible="false"
+        tools:visible="true"
+        app:showAsAction="ifRoom" />
+
+    <item
+        android:id="@+id/main_menu_proxy_enable"
+        android:icon="@drawable/ic_flight_takeoff"
+        android:title="@string/proxy"
+        android:visible="false"
+        app:showAsAction="ifRoom" />
+
+    <!--<item-->
+    <!--    android:id="@+id/main_menu_exit_search"-->
+    <!--    android:icon="@drawable/ic_exit_search"-->
+    <!--    android:title="@string/exit_search"-->
+    <!--    android:enabled="true"-->
+    <!--    android:visible="false"-->
+    <!--    tools:visible="true"-->
+    <!--    app:showAsAction="ifRoom" />-->
     <item
         android:id="@+id/main_menu_search_articles"
         android:icon="@drawable/ic_search"

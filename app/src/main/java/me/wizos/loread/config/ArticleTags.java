@@ -12,7 +12,7 @@ import java.util.Set;
 
 import me.wizos.loread.App;
 import me.wizos.loread.db.ArticleTag;
-import me.wizos.loread.utils.FileUtil;
+import me.wizos.loread.utils.FileUtils;
 
 /**
  * 文章保存目录：
@@ -32,7 +32,7 @@ public class ArticleTags {
             synchronized (ArticleTags.class) {
                 if (instance == null) {
                     Gson gson = new Gson();
-                    String config = FileUtil.readFile(App.i().getUserFilesDir() + "/config/article_tags.json");
+                    String config = FileUtils.readFile(App.i().getUserFilesDir() + "/config/article_tags.json");
                     if (TextUtils.isEmpty(config)) {
                         instance = new ArticleTags();
                         instance.articleTags = new ArrayMap<>();
@@ -49,7 +49,7 @@ public class ArticleTags {
         instance = null;
     }
     public void save() {
-        FileUtil.save(App.i().getUserFilesDir() + "/config/article_tags.json", new GsonBuilder().setPrettyPrinting().create().toJson(instance));
+        FileUtils.save(App.i().getUserFilesDir() + "/config/article_tags.json", new GsonBuilder().setPrettyPrinting().create().toJson(instance));
     }
 
 

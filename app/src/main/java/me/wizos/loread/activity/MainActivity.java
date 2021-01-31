@@ -5,10 +5,13 @@ import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Color;
+import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.text.InputType;
+import android.text.TextUtils;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -25,6 +28,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.content.FileProvider;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.paging.PagedList;
@@ -43,8 +47,11 @@ import com.afollestad.materialdialogs.DialogAction;
 import com.afollestad.materialdialogs.MaterialDialog;
 import com.afollestad.materialdialogs.simplelist.MaterialSimpleListAdapter;
 import com.afollestad.materialdialogs.simplelist.MaterialSimpleListItem;
+import com.cretin.www.cretinautoupdatelibrary.interfaces.AppDownloadListener;
+import com.cretin.www.cretinautoupdatelibrary.utils.AppUpdateUtils;
 import com.elvishew.xlog.XLog;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
+import com.google.gson.Gson;
 import com.hjq.permissions.OnPermissionCallback;
 import com.hjq.permissions.Permission;
 import com.hjq.permissions.XXPermissions;
@@ -67,6 +74,7 @@ import com.yanzhenjie.recyclerview.SwipeRecyclerView;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -75,23 +83,26 @@ import java.util.concurrent.TimeUnit;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 import me.wizos.loread.App;
+import me.wizos.loread.Contract;
 import me.wizos.loread.R;
+import me.wizos.loread.activity.viewmodel.ArticleViewModel;
+import me.wizos.loread.activity.viewmodel.CategoryViewModel;
 import me.wizos.loread.adapter.ArticlePagedListAdapter;
-import me.wizos.loread.adapter.ExpandedAdapter;
+import me.wizos.loread.adapter.CategoriesAdapter;
 import me.wizos.loread.db.Article;
 import me.wizos.loread.db.Collection;
 import me.wizos.loread.db.CoreDB;
+import me.wizos.loread.db.CorePref;
 import me.wizos.loread.db.User;
 import me.wizos.loread.network.SyncWorker;
 import me.wizos.loread.network.callback.CallbackX;
-import me.wizos.loread.utils.SnackbarUtil;
-import me.wizos.loread.utils.TimeUtil;
+import me.wizos.loread.network.proxy.ProxyNodeSocks5;
+import me.wizos.loread.utils.SnackbarUtils;
+import me.wizos.loread.utils.TimeUtils;
 import me.wizos.loread.view.IconFontView;
 import me.wizos.loread.view.SwipeRefreshLayoutS;
 import me.wizos.loread.view.colorful.Colorful;
 import me.wizos.loread.view.colorful.setter.ViewGroupSetter;
-import me.wizos.loread.viewmodel.ArticleViewModel;
-import me.wizos.loread.viewmodel.CategoryViewModel;
 
 
 /**
@@ -108,7 +119,7 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
 
     // 方案1
     private SwipeRecyclerView tagListView;
-    private ExpandedAdapter tagListAdapter;
+    private CategoriesAdapter tagListAdapter;
 
     // 方案2
     // private ExpandableRecyclerView tagListView;
@@ -121,7 +132,6 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
 
     private TextView countTips;
     private Integer[] scrollIndex;
-    // private int scrollPositionStart;
     private int scrollPositionEnd;
     private View articlesHeaderView;
 
@@ -145,11 +155,24 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
         showAutoSwitchThemeSnackBar();
         applyPermissions();
         super.onCreate(savedInstanceState);// 由于使用了自动换主题，所以要放在这里
+        checkProxy();
+
         loadArticlesData();  // 获取文章列表数据为 App.articleList
         loadCategoriesData();
         autoMarkReaded = App.i().getUser().isMarkReadOnScroll();
         initWorkRequest();
+        checkUpdate();
     }
+
+    private void checkProxy(){
+        if(CorePref.i().globalPref().getBoolean(Contract.ENABLE_PROXY,false)){
+            String json = CorePref.i().globalPref().getString(Contract.SOCKS5_PROXY,"");
+            if(!TextUtils.isEmpty(json)){
+                App.i().proxyNodeSocks5 = new Gson().fromJson(json, ProxyNodeSocks5.class);
+            }
+        }
+    }
+
 
     private void initWorkRequest(){
         Constraints.Builder builder = new Constraints.Builder();
@@ -220,7 +243,7 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
                         if(integer == 0){
                             return;
                         }
-                        SnackbarUtil.Long(articleListView, bottomBar, getResources().getQuantityString(R.plurals.has_new_articles,integer,integer) )
+                        SnackbarUtils.Long(articleListView, bottomBar, getResources().getQuantityString(R.plurals.has_new_articles,integer,integer) )
                                 .setAction(getString(R.string.view), new View.OnClickListener() {
                                     @Override
                                     public void onClick(View v) {
@@ -232,6 +255,65 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
                 });
     }
 
+    private void checkUpdate(){
+        if(!CorePref.i().globalPref().getBoolean(Contract.ENABLE_CHECK_UPDATE,true)){
+            return;
+        }
+        AppUpdateUtils.getInstance()
+                .addAppDownloadListener(new AppDownloadListener() {
+                    @Override
+                    public void downloading(int progress) {
+                    }
+
+                    @Override
+                    public void downloadFail(String msg) {
+                    }
+
+                    @Override
+                    public void downloadComplete(String path) {
+                        File apkFile = new File(path);
+                        if (!apkFile.exists()) {
+                            ToastUtils.show("apk不存在!");
+                            return;
+                        }
+
+                        Intent intent = new Intent(Intent.ACTION_VIEW);
+                        if (apkFile.getName().endsWith(".apk")) {
+                            try {
+                                //兼容7.0
+                                Uri uri;
+                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) { // 适配Android 7系统版本
+                                    intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION); //添加这一句表示对目标应用临时授权该Uri所代表的文件
+                                    uri = FileProvider.getUriForFile(App.i(), App.i().getPackageName() + ".fileprovider", apkFile);//通过FileProvider创建一个content类型的Uri
+                                } else {
+                                    uri = Uri.fromFile(apkFile);
+                                }
+                                intent.setDataAndType(uri, "application/vnd.android.package-archive"); // 对应apk类型
+                                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+                        } else {
+                            ToastUtils.show("不是apk文件!");
+                        }
+                        //弹出安装界面
+                        MainActivity.this.startActivity(intent);
+                    }
+
+                    @Override
+                    public void downloadStart() {
+                    }
+
+                    @Override
+                    public void reDownload() {
+                    }
+
+                    @Override
+                    public void pause() {
+                    }
+                });
+    }
 
     private void applyPermissions() {
         XXPermissions.with(this)
@@ -266,7 +348,7 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
         if (!App.i().getUser().isAutoToggleTheme()) {
             return;
         }
-        int hour = TimeUtil.getCurrentHour();
+        int hour = TimeUtils.getCurrentHour();
         int themeMode;
         if (hour >= 7 && hour < 20) {
             themeMode = App.THEME_DAY;
@@ -277,7 +359,7 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
             return;
         }
 
-        SnackbarUtil.Long(articleListView, bottomBar, getString(R.string.theme_switched_automatically))
+        SnackbarUtils.Long(articleListView, bottomBar, getString(R.string.theme_switched_automatically))
                 .setAction(getString(R.string.cancel), new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
@@ -334,7 +416,6 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
         // 参数为null，会将所有的Callbacks和Messages全部清除掉。
         // 这样做的好处是在Activity退出的时候，可以避免内存泄露。因为 handler 内可能引用 Activity
         maHandler.removeCallbacksAndMessages(null);
-        //EventBus.getDefault().unregister(this);
         super.onDestroy();
     }
 
@@ -343,7 +424,6 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
      * App.streamId 至少包含 1 个状态： Reading-list
      */
     protected void refreshArticlesData() { // 获取 App.articleList , 并且根据 App.articleList 的到未读数目
-        //XLog.e("refreshData：" + App.i().getUser().getStreamId() + " = " + App.i().getUser().getStreamStatus() + "   " + App.i().getUser().getUserId());
         loadArticlesData();
         refreshIcon.setVisibility(View.GONE);
     }
@@ -365,25 +445,17 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
             articleViewModel.articleIdsLiveData.removeObservers(this);
             articleViewModel.articleIdsLiveData = null;
         }
-        articleViewModel.getArticles(uid,streamId,streamType,streamStatus).observe(this, new Observer<PagedList<Article>>() {
-            @Override
-            public void onChanged(PagedList<Article> articles) {
-                if( articlesAdapter.getCurrentList() != null ){
-                    XLog.d("更新列表数据 A : " + articlesAdapter.getCurrentList().getLastKey()  + " == "+ articlesAdapter.getCurrentList().getLoadedCount() +  " , " + (linearLayoutManager.findLastVisibleItemPosition()-1) );
-                }else {
-                    XLog.d("更新列表数据 B");
-                }
-                renderViewByArticlesData(App.i().getUser().getStreamTitle(), articles.size() );
-                articlesAdapter.submitList(articles);
-                dismissLoadingPopupView();
-                // XLog.d("更新列表数据 ：");
-                // if( articlesAdapter.getCurrentList() != null ){  // (articlesAdapter.getCurrentList().get(44)==null)
-                //     XLog.e("更新列表数据 C : " + articlesAdapter.getCurrentList().getLastKey()  + " == "+ articlesAdapter.getCurrentList().getLoadedCount() +  " , " + (linearLayoutManager.findLastVisibleItemPosition()-1) );
-                // }else {
-                //     XLog.e("更新列表数据 D");
-                // }
+        articleViewModel.getArticles(uid,streamId,streamType,streamStatus).observe(this, articles -> {
+            if( articlesAdapter.getCurrentList() != null ){
+                XLog.d("更新列表数据 A : " + articlesAdapter.getCurrentList().getLastKey()  + " == "+ articlesAdapter.getCurrentList().getLoadedCount() +  " , " + (linearLayoutManager.findLastVisibleItemPosition()-1) );
+            }else {
+                XLog.d("更新列表数据 B");
             }
+            renderViewByArticlesData(App.i().getUser().getStreamTitle(), articles.size() );
+            articlesAdapter.submitList(articles);
+            dismissLoadingPopupView();
         });
+
         articleViewModel.articleIdsLiveData.observe(this, new Observer<List<String>>() {
             @Override
             public void onChanged(List<String> strings) {
@@ -392,9 +464,10 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
             }
         });
 
+
         articleListView.scrollToPosition(0);
-        articlesAdapter.setLastPos(0); // linearLayoutManager.findLastVisibleItemPosition()-1
-        XLog.d("【更新列表】"  );
+        articlesAdapter.setLastPos(0);
+        XLog.d("【更新列表】" );
     }
 
     private void renderViewByArticlesData(String toolBarTitle, int articleSize) {
@@ -422,13 +495,36 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
                             .positiveText(R.string.confirm)
                             .negativeText(android.R.string.cancel)
                             .show();
+                }else if(index == 1){
+                    Intent intent = new Intent(MainActivity.this, TriggerRuleEditActivity.class);
+                    intent.putExtra(Contract.TYPE, Contract.TYPE_CATEGORY);
+                    intent.putExtra(Contract.TARGET_ID, category.getId());
+                    // intent.putExtra(Contract.TARGET_NAME, category.getTitle());
+                    startActivity(intent);
+                    overridePendingTransition(R.anim.in_from_bottom, R.anim.fade_out);
+                }else if(index == 2){
+                    Intent intent = new Intent(MainActivity.this, TriggerRuleManagerActivity.class);
+                    intent.putExtra(Contract.TYPE, Contract.TYPE_CATEGORY);
+                    intent.putExtra(Contract.TARGET_ID, category.getId());
+                    startActivity(intent);
+                    overridePendingTransition(R.anim.in_from_bottom, R.anim.fade_out);
                 }
                 dialog.dismiss();
             }
         });
-        adapter.add(new com.afollestad.materialdialogs.simplelist.MaterialSimpleListItem.Builder(MainActivity.this)
+        adapter.add(new MaterialSimpleListItem.Builder(MainActivity.this)
                 .content(R.string.rename)
                 .icon(R.drawable.ic_rename)
+                .backgroundColor(Color.TRANSPARENT)
+                .build());
+        adapter.add(new MaterialSimpleListItem.Builder(MainActivity.this)
+                .content(R.string.configure_marking_rule)
+                .icon(R.drawable.ic_rule)
+                .backgroundColor(Color.TRANSPARENT)
+                .build());
+        adapter.add(new MaterialSimpleListItem.Builder(MainActivity.this)
+                .content(R.string.view_rule)
+                .icon(R.drawable.ic_rule)
                 .backgroundColor(Color.TRANSPARENT)
                 .build());
 
@@ -467,6 +563,7 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
         Intent intent = new Intent(MainActivity.this, FeedActivity.class);
         intent.putExtra("feedId", feed.getId());
         startActivity(intent);
+        overridePendingTransition(R.anim.in_from_bottom, R.anim.fade_out);
     }
 
 
@@ -505,11 +602,12 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
                                                 intent.putExtra("articleNo",position);
                                                 intent.putExtra("isQueue",true);
                                                 startActivity(intent);
+                                                overridePendingTransition(R.anim.in_from_bottom, R.anim.fade_out);
                                                 break;
                                             case 1:
-                                                Integer[] index = new Integer[2];
-                                                index[0] = position + 1;
-                                                index[1] = 0;
+                                                // Integer[] index = new Integer[2];
+                                                // index[0] = position + 1;
+                                                // index[1] = 0;
                                                 // new MarkListReadedAsyncTask().execute(index);
                                                 showConfirmDialog(position + 1,0);
                                                 break;
@@ -517,7 +615,7 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
                                                 showConfirmDialog(position,articlesAdapter.getItemCount());
                                                 break;
                                             case 3:
-                                                Article article = articlesAdapter.get(position);
+                                                Article article = articlesAdapter.getById(position);
                                                 if( article == null ){
                                                     return;
                                                 }
@@ -583,12 +681,11 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
         SwipeMenuCreator mSwipeMenuCreator = new SwipeMenuCreator() {
             @Override
             public void onCreateMenu(SwipeMenu leftMenu, SwipeMenu rightMenu, int position) {
-                Article article = articlesAdapter.get(position);
+                Article article = articlesAdapter.getById(position);
                 //XLog.e("创建菜单: " + position + ", " + (article==null) + ", " +  articlesAdapter.getCurrentList().getLastKey() + " , " + articlesAdapter.getCurrentList().getLoadedCount()  );
                 if(article==null){
                     return;
                 }
-
 
                 int width = getResources().getDimensionPixelSize(R.dimen.dp_80);
                 int margin = getResources().getDimensionPixelSize(R.dimen.dp_30);
@@ -675,7 +772,7 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
                 Intent intent = new Intent(MainActivity.this, ArticleActivity.class);
                 intent.putExtra("theme", App.i().getUser().getThemeMode());
 
-                String articleId = articlesAdapter.get(position).getId();
+                String articleId = articlesAdapter.getId(position);
 
                 XLog.i("点击文章，进入详情页" + "，位置：" + position + "，文章ID：" + articleId);
                 intent.putExtra("articleId", articleId);
@@ -684,7 +781,6 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
                 intent.putExtra("articleCount", articlesAdapter.getItemCount());
                 startActivityForResult(intent, 0);
                 overridePendingTransition(R.anim.in_from_bottom, R.anim.fade_out);
-
             }
         });
         articleViewModel = new ViewModelProvider(this).get(ArticleViewModel.class);
@@ -719,11 +815,6 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
                        rootCategory.setTitle(getString(R.string.all));
                        rootCategory.setId("user/" + uid + App.CATEGORY_ALL);
 
-                       boolean hasUnCategory = false;
-                       if(CoreDB.i().feedDao().getFeedsCountByUnCategory(App.i().getUser().getId()) != 0){
-                           hasUnCategory = true;
-                       }
-
                        // 未分类
                        Collection unCategory = new Collection();
                        unCategory.setTitle(getString(R.string.un_category));
@@ -731,17 +822,19 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
 
                        if( App.i().getUser().getStreamStatus() == App.STATUS_UNREAD ){
                            rootCategory.setCount(CoreDB.i().articleDao().getUnreadCount(App.i().getUser().getId()));
-                           if(hasUnCategory) unCategory.setCount(CoreDB.i().articleDao().getUncategoryUnreadCount(App.i().getUser().getId()));
+                           unCategory.setCount(CoreDB.i().articleDao().getUncategoryUnreadCount(App.i().getUser().getId()));
                        }else if( App.i().getUser().getStreamStatus() == App.STATUS_STARED ){
                            rootCategory.setCount(CoreDB.i().articleDao().getStarCount(App.i().getUser().getId()));
-                           if(hasUnCategory) unCategory.setCount(CoreDB.i().articleDao().getUncategoryStarCount(App.i().getUser().getId()));
+                           unCategory.setCount(CoreDB.i().articleDao().getUncategoryStarCount(App.i().getUser().getId()));
                        }else {
                            rootCategory.setCount(CoreDB.i().articleDao().getAllCount(App.i().getUser().getId()));
-                           if(hasUnCategory) unCategory.setCount(CoreDB.i().articleDao().getUncategoryAllCount(App.i().getUser().getId()));
+                           unCategory.setCount(CoreDB.i().articleDao().getUncategoryAllCount(App.i().getUser().getId()));
                        }
 
                        categories.add(0,rootCategory);
-                       if(hasUnCategory) categories.add(1,unCategory);
+                       if(CoreDB.i().feedDao().getFeedsCountByUnCategory(App.i().getUser().getId()) != 0 && unCategory.getCount() != 0){
+                           categories.add(1,unCategory);
+                       }
                        tagListAdapter.setGroups(categories);
 
                        runOnUiThread(new Runnable() {
@@ -757,6 +850,7 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
        });
    }
 
+    // StickyHeaderLayout stickyHeaderLayout;
     public void initTagListView() {
         tagBottomSheetDialog = new BottomSheetDialog(MainActivity.this);
         tagBottomSheetDialog.setContentView(R.layout.bottom_sheet_category);
@@ -775,7 +869,9 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
         // View headerView = getLayoutInflater().inflate(R.layout.tag_expandable_item_group, tagListView, false);
         // tagListView.addHeaderView(headerView);
 
-        tagListAdapter = new ExpandedAdapter(this);
+
+
+        tagListAdapter = new CategoriesAdapter(this);
         tagListView.setOnItemClickListener(new OnItemClickListener() {
             @Override
             public void onItemClick(View view, int adapterPosition) {
@@ -858,6 +954,9 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
         //     }
         // });
 
+        // 使用 GroupedRecyclerViewAdapter
+        // stickyHeaderLayout = tagBottomSheetDialog.findViewById(R.id.sheet_tag_sticky_header);
+        // stickyHeaderLayout.setSticky(true);
         // tagListAdapter = new GroupAdapter(this);
         // tagListAdapter.setOnHeaderClickListener(new GroupedRecyclerViewAdapter.OnHeaderClickListener() {
         //     @Override
@@ -975,14 +1074,14 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
             int num = 0;
 
             while (needCount > 0) {
-                num = Math.min(100, needCount);
+                num = Math.min(50, needCount);
                 List<String> subArticleIDs = articleIDs.subList(hadCount, hadCount + num);
                 hadCount = hadCount + num;
                 needCount = articleIDs.size() - hadCount;
 
-                markReadWithUnread(CoreDB.i().articleDao().getUnreadArticles(App.i().getUser().getId(), subArticleIDs));
+                markReadWithUnread(CoreDB.i().articleDao().getUnreadArticleIds(App.i().getUser().getId(), subArticleIDs));
                 if(includesForcedUnread){
-                    markReadWithUnreading(CoreDB.i().articleDao().getUnreadingArticles(App.i().getUser().getId(), subArticleIDs));
+                    markReadWithUnreading(CoreDB.i().articleDao().getUnreadingArticleIds(App.i().getUser().getId(), subArticleIDs));
                 }
             }
             //返回结果
@@ -1025,7 +1124,10 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
         // String articleId = articlesAdapter.getItem(position).getId();
         // Article article = CoreDB.i().articleDao().getById(App.i().getUser().getId(),articleId);
         XLog.i("切换已读状态" );
-        Article article = articlesAdapter.get(position);
+        Article article = articlesAdapter.getById(position);
+        if(article == null){
+            return;
+        }
         if (autoMarkReaded && article.getReadStatus() == App.STATUS_UNREAD) {
             article.setReadStatus(App.STATUS_UNREADING);
             CoreDB.i().articleDao().update(article);
@@ -1068,7 +1170,10 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
         }
 
         XLog.i("切换加星状态" );
-        Article article = articlesAdapter.get(position);
+        Article article = articlesAdapter.getById(position);
+        if(article == null){
+            return;
+        }
 
         if (article.getStarStatus() == App.STATUS_STARED) {
             article.setStarStatus(App.STATUS_UNSTAR);
@@ -1319,28 +1424,61 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
     private void dismissLoadingPopupView(){
         if(loadingPopupView != null) loadingPopupView.smartDismiss();
     }
+
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_main, menu);
+        MenuItem disableProxyMenuItem = menu.findItem(R.id.main_menu_proxy_disable);
+        MenuItem enableProxyMenuItem = menu.findItem(R.id.main_menu_proxy_enable);
+        if(CorePref.i().globalPref().getBoolean(Contract.ENABLE_PROXY,false)){
+            disableProxyMenuItem.setVisible(false);
+            enableProxyMenuItem.setVisible(true);
+        }else {
+            disableProxyMenuItem.setVisible(true);
+            enableProxyMenuItem.setVisible(false);
+        }
+        LiveEventBus.get(Contract.ENABLE_PROXY, Boolean.class)
+                .observeSticky(this, new Observer<Boolean>() {
+                    @Override
+                    public void onChanged(Boolean enable) {
+                        if(enable){
+                            disableProxyMenuItem.setVisible(false);
+                            enableProxyMenuItem.setVisible(true);
+                        }else {
+                            disableProxyMenuItem.setVisible(true);
+                            enableProxyMenuItem.setVisible(false);
+                        }
+                    }
+                });
         return true;
     }
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        //监听左上角的返回箭头
-        if (item.getItemId() == R.id.main_menu_search_articles) {
-            new MaterialDialog.Builder(this)
-                    .title(R.string.search_articles)
-                    .inputType(InputType.TYPE_CLASS_TEXT)
-                    .inputRange(2, 18)
-                    .input("", "", new MaterialDialog.InputCallback() {
-                        @Override
-                        public void onInput(@NonNull MaterialDialog dialog, CharSequence input) {
-                            showSearchResult(input.toString());
-                        }
-                    })
-                    .negativeText(android.R.string.cancel)
-                    .positiveText(R.string.confirm)
-                    .show();
+        // //监听左上角的返回箭头
+        switch (item.getItemId()) {
+            case R.id.main_menu_search_articles:
+                new MaterialDialog.Builder(this)
+                        .title(R.string.search_articles)
+                        .inputType(InputType.TYPE_CLASS_TEXT)
+                        .inputRange(2, 18)
+                        .input("", "", new MaterialDialog.InputCallback() {
+                            @Override
+                            public void onInput(@NonNull MaterialDialog dialog, CharSequence input) {
+                                showSearchResult(input.toString());
+                            }
+                        })
+                        .negativeText(android.R.string.cancel)
+                        .positiveText(R.string.confirm)
+                        .show();
+                break;
+            case R.id.main_menu_proxy_enable:
+            case R.id.main_menu_proxy_disable:
+                Intent intent = new Intent(this, ProxyActivity.class);
+                startActivity(intent);
+                overridePendingTransition(R.anim.in_from_bottom, R.anim.fade_out);
+                break;
+            default:
+                break;
         }
         return super.onOptionsItemSelected(item);
     }

@@ -1,7 +1,5 @@
 package me.wizos.loread.db;
 
-import me.wizos.loread.bean.feedly.CategoryItem;
-
 // Category 和 Feed 的抽象
 public class Collection {
     private String id;
@@ -33,13 +31,6 @@ public class Collection {
 
     public void setCount(int count) {
         this.count = count;
-    }
-
-    public CategoryItem convert2CategoryItem() {
-        CategoryItem category = new CategoryItem();
-        category.setId(id);
-        category.setLabel(title);
-        return category;
     }
 
     @Override

@@ -26,9 +26,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import me.wizos.loread.R;
-import me.wizos.loread.utils.FileUtil;
+import me.wizos.loread.utils.FileUtils;
 import me.wizos.loread.utils.StringUtils;
-import me.wizos.loread.utils.UriUtil;
+import me.wizos.loread.utils.UriUtils;
 
 import static android.content.Context.DOWNLOAD_SERVICE;
 
@@ -72,9 +72,9 @@ public class DownloadListenerS implements DownloadListener {
         // XLog.i("下载2：" + mimeType); //  application/vnd.android.package-archive
         // XLog.i("下载3：" + contentLength);
 
-        com.afollestad.materialdialogs.MaterialDialog downloadDialog = new com.afollestad.materialdialogs.MaterialDialog.Builder(context)
+        MaterialDialog downloadDialog = new com.afollestad.materialdialogs.MaterialDialog.Builder(context)
                 .title(R.string.do_you_want_to_download_files)
-                .customView(R.layout.config_download_view, true)
+                .customView(R.layout.download_dialog_view, true)
                 // .neutralText(neutralText)
                 // .onNeutral(new MaterialDialog.SingleButtonCallback() {
                 //     @Override
@@ -113,13 +113,13 @@ public class DownloadListenerS implements DownloadListener {
 
         fileNameEditor = (EditSpinner) downloadDialog.findViewById(R.id.file_name_edit);
 
-        String fileName = UriUtil.guessFileNameExt(url, contentDisposition, mimeType);
+        String fileName = UriUtils.guessFileNameExt(url, contentDisposition, mimeType);
         fileNameEditor.setText(fileName);
 
         List<String> items = new ArrayList<>();
         items.add(fileName);
         if(!StringUtils.isEmpty(suggestedName)){
-            suggestedName = suggestedName + UriUtil.guessFileSuffix(fileName);
+            suggestedName = suggestedName + UriUtils.guessFileSuffix(fileName);
             items.add(suggestedName);
         }
 
@@ -127,7 +127,7 @@ public class DownloadListenerS implements DownloadListener {
         fileNameEditor.setAdapter(adapter);
 
         TextView fileSizeView = (TextView) downloadDialog.findViewById(R.id.file_size);
-        String fileSize = FileUtil.getFileSizeDescription(context, contentLength);
+        String fileSize = FileUtils.getFileSizeDescription(context, contentLength);
         fileSizeView.setText(context.getString(R.string.file_size, fileSize));
     }
 
@@ -164,10 +164,11 @@ public class DownloadListenerS implements DownloadListener {
         // 设置下载文件保存的路径和文件名。
         // Content-disposition 是 MIME 协议的扩展，MIME 协议指示 MIME 用户代理如何显示附加的文件。当 Internet Explorer 接收到头时，它会激活文件下载对话框，它的文件名框自动填充了头中指定的文件名。（请注意，这是设计导致的；无法使用此功能将文档保存到用户的计算机上，而不向用户询问保存位置。）
         // XLog.i("下载", "文件名：" + fileName);
-        request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, FileUtil.getSaveableName(fileName));
+        request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, FileUtils.getSaveableName(fileName));
         // 另外可选一下方法，自定义下载路径
         // request.setDestinationUri();
         // request.setDestinationInExternalFilesDir();
+
         DownloadManager downloadManager = (DownloadManager) context.getSystemService(DOWNLOAD_SERVICE);
         // 添加一个下载任务
         downloadManager.enqueue(request);

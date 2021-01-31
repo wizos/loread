@@ -6,6 +6,7 @@ import androidx.annotation.NonNull;
 import androidx.room.Database;
 import androidx.room.Room;
 import androidx.room.RoomDatabase;
+import androidx.room.migration.Migration;
 import androidx.sqlite.db.SupportSQLiteDatabase;
 
 import java.util.ArrayList;
@@ -17,22 +18,57 @@ import me.wizos.loread.App;
 import me.wizos.loread.bean.feedly.CategoryItem;
 import me.wizos.loread.bean.feedly.input.EditFeed;
 import me.wizos.loread.config.ArticleTags;
+import me.wizos.loread.db.rule.Action;
+import me.wizos.loread.db.rule.Condition;
+import me.wizos.loread.db.rule.Scope;
 
 /**
- * @Database标签用于告诉系统这是Room数据库对象。
- * entities属性用于指定该数据库有哪些表，若需建立多张表，以逗号相隔开。
- * version属性用于指定数据库版本号，后续数据库的升级正是依据版本号来判断的。
+ * Database 标签用于告诉系统这是Room数据库对象。
+ * entities 属性用于指定该数据库有哪些表，若需建立多张表，以逗号相隔开。
+ * version 属性用于指定数据库版本号，后续数据库的升级正是依据版本号来判断的。
  * 该类需要继承自RoomDatabase，在类中，通过Room.databaseBuilder()结合单例设计模式，完成数据库的创建工作。
  */
 @Database(
-        entities = {User.class,Article.class,Feed.class,Category.class, FeedCategory.class, Tag.class, ArticleTag.class, ArticleFts.class},
+        entities = {User.class,Article.class,Feed.class,Category.class, FeedCategory.class, Tag.class, ArticleTag.class, Scope.class, Condition.class, Action.class},
         views = {FeedView.class,CategoryView.class},
-        version = 1,
-        exportSchema = false
+        version = 3
 )
 public abstract class CoreDB extends RoomDatabase {
     public static final String DATABASE_NAME = "loread.db";
     private static CoreDB databaseInstance;
+    private static final Migration MIGRATION_1_2 = new Migration(1, 2) {
+        @Override
+        public void migrate(SupportSQLiteDatabase database) {
+            database.execSQL("DROP TABLE ArticleFts");
+            // database.execSQL("ALTER TABLE Article RENAME TO Article_old");
+            // database.execSQL("CREATE TABLE IF NOT EXISTS `Article` (`id` TEXT NOT NULL, `uid` TEXT NOT NULL, `title` TEXT, `content` TEXT, `summary` TEXT, `image` TEXT, `enclosure` TEXT, `feedId` TEXT, `feedTitle` TEXT, `author` TEXT, `link` TEXT, `pubDate` INTEGER NOT NULL, `crawlDate` INTEGER, `readStatus` INTEGER NOT NULL, `starStatus` INTEGER NOT NULL, `saveStatus` INTEGER NOT NULL, `readUpdated` INTEGER NOT NULL, `starUpdated` INTEGER NOT NULL, PRIMARY KEY(`id`, `uid`), FOREIGN KEY(`uid`) REFERENCES `User`(`id`) ON UPDATE NO ACTION ON DELETE NO ACTION )");
+            // database.execSQL("INSERT INTO Article (id,uid,title,content,summary,image,enclosure,feedId,feedTitle,author,link,pubDate,crawlDate,readStatus,starStatus,saveStatus,readUpdated,starUpdated) select id,uid,title,content,summary,image,enclosure,feedId,feedTitle,author,link,pubDate,crawlDate,readStatus,starStatus,saveStatus,readUpdated,starUpdated from Article_old");
+            // database.execSQL("DROP TABLE Article_old;");
+        }
+    };
+    private static final Migration MIGRATION_2_3 = new Migration(2, 3) {
+        @Override
+        public void migrate(SupportSQLiteDatabase database) {
+            database.execSQL("CREATE TABLE IF NOT EXISTS `Scope` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `uid` TEXT, `type` TEXT, `target` TEXT, FOREIGN KEY(`uid`) REFERENCES `User`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )");
+            database.execSQL("CREATE INDEX IF NOT EXISTS `index_Target_uid` ON `Scope` (`uid`)");
+
+            database.execSQL("CREATE TABLE IF NOT EXISTS `Condition` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `uid` TEXT, `scopeId` INTEGER NOT NULL, `attr` TEXT, `judge` TEXT, `value` TEXT, FOREIGN KEY(`scopeId`) REFERENCES `Scope`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )");
+            database.execSQL("CREATE INDEX IF NOT EXISTS `index_Condition_ruleId` ON `Condition` (`scopeId`)");
+
+            database.execSQL("CREATE TABLE IF NOT EXISTS `Action` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `uid` TEXT, `scopeId` INTEGER NOT NULL, `action` TEXT, FOREIGN KEY(`scopeId`) REFERENCES `Scope`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )");
+            database.execSQL("CREATE INDEX IF NOT EXISTS `index_Action_ruleId` ON `Action` (`scopeId`)");
+        }
+    };
+    // 设置爬取时间可以为null，但是实际验证是不允许为null的
+    // private static final Migration MIGRATION_2_3 = new Migration(2, 3) {
+    //     @Override
+    //     public void migrate(SupportSQLiteDatabase database) {
+    //         database.execSQL("ALTER TABLE Article RENAME TO Article_old");
+    //         database.execSQL("CREATE TABLE IF NOT EXISTS `Article` (`id` TEXT NOT NULL, `uid` TEXT NOT NULL, `title` TEXT, `content` TEXT, `summary` TEXT, `image` TEXT, `enclosure` TEXT, `feedId` TEXT, `feedTitle` TEXT, `author` TEXT, `link` TEXT, `pubDate` INTEGER NOT NULL, `crawlDate` INTEGER, `readStatus` INTEGER NOT NULL, `starStatus` INTEGER NOT NULL, `saveStatus` INTEGER NOT NULL, `readUpdated` INTEGER NOT NULL, `starUpdated` INTEGER NOT NULL, PRIMARY KEY(`id`, `uid`), FOREIGN KEY(`uid`) REFERENCES `User`(`id`) ON UPDATE NO ACTION ON DELETE NO ACTION )");
+    //         database.execSQL("INSERT INTO Article (id,uid,title,content,summary,image,enclosure,feedId,feedTitle,author,link,pubDate,crawlDate,readStatus,starStatus,saveStatus,readUpdated,starUpdated) select id,uid,title,content,summary,image,enclosure,feedId,feedTitle,author,link,pubDate,crawlDate,readStatus,starStatus,saveStatus,readUpdated,starUpdated from Article_old");
+    //         database.execSQL("DROP TABLE Article_old;");
+    //     }
+    // };
 
     public static synchronized void init(Context context) {
         if(databaseInstance == null) {
@@ -46,7 +82,8 @@ public abstract class CoreDB extends RoomDatabase {
                                     createTriggers(db);
                                 }
                             })
-                            //.addMigrations(MIGRATION_1_2)
+                            .addMigrations(MIGRATION_1_2)
+                            .addMigrations(MIGRATION_2_3)
                             .addMigrations()
                             .allowMainThreadQueries()
                             .build();
@@ -69,7 +106,6 @@ public abstract class CoreDB extends RoomDatabase {
      * 在 DELETE 型触发器中，只有 OLD 才合法，OLD 用来表示将要或已经被删除的原数据；
      * 使用方法： NEW.columnName （columnName 为相应数据表某一列名）
      * 另外，OLD 是只读的，而 NEW 则可以在触发器中使用 SET 赋值，这样不会再次触发触发器，造成循环调用（如每插入一个学生前，都在其学号前加“2013”）。
-     * @param db
      */
     private static void createTriggers(SupportSQLiteDatabase db) {
         //【当插入文章时】
@@ -123,16 +159,44 @@ public abstract class CoreDB extends RoomDatabase {
                         "      END";
         db.execSQL(updateFeedStarCountWhenDeleteArticle);
 
-//        // 当 READSTATUS 状态更新时，标注其更新时间
-//        String updatedWhenArticleChange =
-//                "CREATE TEMP TRIGGER IF NOT EXISTS updatedWhenArticleChange" +
-//                        " AFTER UPDATE OF READSTATUS,STARSTATUS ON ARTICLE" +
-//                        " WHEN old.READSTATUS != new.READSTATUS OR old.STARSTATUS != new.STARSTATUS" +
-//                        " BEGIN" +
-//                        "  UPDATE ARTICLE SET updateTime = (strftime('%s','now') || substr(strftime('%f','now'),4))" +
-//                        "  WHERE UID IS old.UID AND ID IS old.ID;" +
-//                        " END";
-//        db.execSQL(updatedWhenArticleChange);
+        String updateTagAllCountWhenDeleteFeed =
+                "CREATE TEMP TRIGGER IF NOT EXISTS updateTagAllCountWhenDeleteFeed" +
+                        " AFTER DELETE ON FEED" +
+                        "      BEGIN" +
+                        "        UPDATE CATEGORY" +
+                        "        SET ALLCOUNT = ALLCOUNT - old.ALLCOUNT" +
+                        "        WHERE ID = (select CATEGORYID from FEEDCATEGORY where FEEDID = old.ID AND UID IS old.UID);" +
+                        "      END";
+        db.execSQL(updateTagAllCountWhenDeleteFeed);
+        String updateTagUnreadCountWhenDeleteFeed =
+                "CREATE TEMP TRIGGER IF NOT EXISTS updateTagUnreadCountWhenDeleteFeed" +
+                        " AFTER DELETE ON FEED" +
+                        "      BEGIN" +
+                        "        UPDATE CATEGORY" +
+                        "        SET UNREADCOUNT = UNREADCOUNT - old.UNREADCOUNT" +
+                        "        WHERE ID = (select CATEGORYID from FEEDCATEGORY where FEEDID = old.ID AND UID IS old.UID);" +
+                        "      END";
+        db.execSQL(updateTagUnreadCountWhenDeleteFeed);
+        String updateTagStarCountWhenDeleteFeed =
+                "CREATE TEMP TRIGGER IF NOT EXISTS updateTagStarCountWhenDeleteFeed" +
+                        " AFTER DELETE ON FEED" +
+                        "      BEGIN" +
+                        "        UPDATE CATEGORY" +
+                        "        SET STARCOUNT = STARCOUNT - old.STARCOUNT" +
+                        "        WHERE ID = (select CATEGORYID from FEEDCATEGORY where FEEDID = old.ID AND UID IS old.UID);" +
+                        "      END";
+        db.execSQL(updateTagStarCountWhenDeleteFeed);
+
+        // // 当 READSTATUS 状态更新时，标注其更新时间
+        // String updatedWhenArticleChange =
+        //         "CREATE TEMP TRIGGER IF NOT EXISTS updatedWhenArticleChange" +
+        //                 " AFTER UPDATE OF READSTATUS,STARSTATUS ON ARTICLE" +
+        //                 " WHEN old.READSTATUS != new.READSTATUS OR old.STARSTATUS != new.STARSTATUS" +
+        //                 " BEGIN" +
+        //                 "  UPDATE ARTICLE SET updateTime = (strftime('%s','now') || substr(strftime('%f','now'),4))" +
+        //                 "  WHERE UID IS old.UID AND ID IS old.ID;" +
+        //                 " END";
+        // db.execSQL(updatedWhenArticleChange);
 
         // 当 READSTATUS 状态更新时，标注其更新时间
         String updatedWhenReadStatusChange =
@@ -288,6 +352,22 @@ public abstract class CoreDB extends RoomDatabase {
                         "        WHERE ID IN (select CATEGORYID from FEEDCATEGORY where FEEDID = old.ID AND UID IS old.UID);" +
                         "      END";
         db.execSQL(updateTagStarCountWhenMinus);
+
+        String onCascadeWhenDeleteCategory =
+                "CREATE TEMP TRIGGER IF NOT EXISTS onCascadeWhenDeleteCategory" +
+                        "  AFTER DELETE ON CATEGORY" +
+                        "    BEGIN" +
+                        "        DELETE FROM Scope WHERE UID IS old.UID AND type IS 'category' AND target IS old.id;" +
+                        "    END";
+        db.execSQL(onCascadeWhenDeleteCategory);
+
+        String onCascadeWhenDeleteFeed =
+                "CREATE TEMP TRIGGER IF NOT EXISTS onCascadeWhenDeleteFeed" +
+                        "  AFTER DELETE ON FEED" +
+                        "    BEGIN" +
+                        "        DELETE FROM Scope WHERE UID IS old.UID AND type IS 'feed' AND target IS old.id;" +
+                        "    END";
+        db.execSQL(onCascadeWhenDeleteFeed);
     }
 
 
@@ -300,6 +380,8 @@ public abstract class CoreDB extends RoomDatabase {
     public abstract CategoryDao categoryDao();
     public abstract FeedCategoryDao feedCategoryDao();
 
+    public abstract TriggerRuleDao triggerRuleDao();
+    // public abstract ArticleActionRuleDao articleActionRuleDao();
     public abstract TagDao tagDao();
     public abstract ArticleTagDao articleTagDao();
 

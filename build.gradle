@@ -1,27 +1,28 @@
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
-
+apply plugin: 'com.github.ben-manes.versions'
 
 buildscript {
     repositories {
-        maven { url 'https://dl.bintray.com/umsdk/release' }
         maven { url 'https://maven.google.com/' }
         maven { url "https://jitpack.io" }
         google()
         jcenter()
+        maven { url 'https://dl.bintray.com/umsdk/release' }
     }
     dependencies {
         classpath 'com.android.tools.build:gradle:4.0.2'
+        classpath 'com.github.ben-manes:gradle-versions-plugin:0.36.0'
         classpath fileTree(dir: 'plugin', include: ['*.jar'])
     }
 }
 
 allprojects {
     repositories {
-        maven { url 'https://dl.bintray.com/umsdk/release' }
         google()
         maven {url 'https://maven.google.com/'}
         jcenter()
         maven { url "https://jitpack.io" }
+        maven { url 'https://dl.bintray.com/umsdk/release' }
         // maven { url 'https://maven.aliyun.com/repository/google'}
         // maven { url 'https://maven.aliyun.com/repository/jcenter'}
         // maven { url 'http://maven.aliyun.com/nexus/content/groups/public/' }
@@ -30,7 +31,13 @@ allprojects {
         // maven { url 'http://maven.aliyun.com/nexus/content/repositories/gradle-plugin' }
     }
 }
-
+ext {
+    compileSdkVersion = 29
+    buildToolsVersion = "29.0.3"
+    minSdkVersion = 22
+    targetSdkVersion = 29
+    DEBUG_LOG = "false"
+}
 task clean(type: Delete) {
     delete rootProject.buildDir
 }

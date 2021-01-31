@@ -2,8 +2,8 @@ package me.wizos.loread.network.api;
 
 import androidx.annotation.NonNull;
 
-import me.wizos.loread.bean.fever.BaseResponse;
 import me.wizos.loread.bean.fever.Feeds;
+import me.wizos.loread.bean.fever.FeverResponse;
 import me.wizos.loread.bean.fever.Groups;
 import me.wizos.loread.bean.fever.Items;
 import me.wizos.loread.bean.fever.SavedItemIds;
@@ -22,7 +22,7 @@ public interface FeverService {
    // Post请求的文本参数则用注解@Field来声明，同时还必须给方法添加注解@FormUrlEncoded来告知Retrofit参数为表单参数，如果只为参数增加@Field注解，而不给方法添加@FormUrlEncoded注解运行时会抛异常。
    @FormUrlEncoded
    @POST("?api")
-   Call<BaseResponse> login(
+   Call<FeverResponse> login(
            @NonNull @Field("api_key") String apiKey
    );
 
@@ -95,7 +95,7 @@ public interface FeverService {
     * @return
     */
    @POST("?api&mark=item")
-   Call<BaseResponse> markItemsByIds(
+   Call<FeverResponse> markItemsByIds(
            @NonNull @Query("api_key") String apiKey,
            @Query("id") String ids,
            @Query("as") String as

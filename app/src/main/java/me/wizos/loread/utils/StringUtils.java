@@ -17,61 +17,16 @@ import java.util.regex.Pattern;
 import me.wizos.loread.App;
 
 
-@SuppressWarnings({"unused", "WeakerAccess"})
+@SuppressWarnings({"WeakerAccess"})
 public class StringUtils {
-    private static final String TAG = "StringUtils";
     private final static HashMap<Character, Integer> ChnMap = getChnMap();
 
     public static boolean isEmpty(List list) {
-        return list == null || list.isEmpty() || list.size() == 0;
+        return list == null || list.isEmpty();
     }
     public static boolean isEmpty(CharSequence str) {
         return str == null || str.length() == 0;
     }
-
-//    public static String readable(String source, String pattern) {
-//        @SuppressLint("SimpleDateFormat") DateFormat format = new SimpleDateFormat(pattern);
-//        Calendar calendar = Calendar.getInstance();
-//        try {
-//            Date date = format.parse(source);
-//            long curTime = calendar.getTimeInMillis();
-//            calendar.setTime(date);
-//            //将MISC 转换成 sec
-//            long difSec = Math.abs((curTime - date.getTime()) / 1000);
-//            long difMin = difSec / 60;
-//            long difHour = difMin / 60;
-//            long difDate = difHour / 60;
-//            int oldHour = calendar.get(Calendar.HOUR);
-//            //如果没有时间
-//            if (oldHour == 0) {
-//                //比日期:昨天今天和明天
-//                if (difDate == 0) {
-//                    return "今天";
-//                } else if (difDate < DAY_OF_YESTERDAY) {
-//                    return "昨天";
-//                } else {
-//                    @SuppressLint("SimpleDateFormat") DateFormat convertFormat = new SimpleDateFormat("yyyy-MM-dd");
-//                    return convertFormat.format(date);
-//                }
-//            }
-//
-//            if (difSec < TIME_UNIT) {
-//                return difSec + "秒前";
-//            } else if (difMin < TIME_UNIT) {
-//                return difMin + "分钟前";
-//            } else if (difHour < HOUR_OF_DAY) {
-//                return difHour + "小时前";
-//            } else if (difDate < DAY_OF_YESTERDAY) {
-//                return "昨天";
-//            } else {
-//                @SuppressLint("SimpleDateFormat") DateFormat convertFormat = new SimpleDateFormat("yyyy-MM-dd");
-//                return convertFormat.format(date);
-//            }
-//        } catch (ParseException e) {
-//            e.printStackTrace();
-//        }
-//        return "";
-//    }
 
     public static String toFirstCapital(String str) {
         return str.substring(0, 1).toUpperCase() + str.substring(1);
@@ -343,6 +298,15 @@ public class StringUtils {
         StringJoiner joiner = new StringJoiner(delimiter);
         for (CharSequence cs : elements) {
             joiner.add(cs);
+        }
+        return joiner.toString();
+    }
+    public static String joinLong(CharSequence delimiter, Iterable<? extends Long> elements) {
+        if (elements == null) return null;
+        if (delimiter == null) delimiter = ",";
+        StringJoiner joiner = new StringJoiner(delimiter);
+        for (Long cs : elements) {
+            joiner.add(String.valueOf(cs));
         }
         return joiner.toString();
     }

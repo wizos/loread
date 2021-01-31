@@ -16,7 +16,10 @@ public interface FeedCategoryDao {
     List<FeedCategory> getAll(String uid);
 
     @Query("SELECT * FROM feedcategory WHERE uid = :uid AND categoryId = :categoryId")
-    List<FeedCategory> getByCategoryId(String uid,String categoryId);
+    List<FeedCategory> getByCategory(String uid,String categoryId);
+
+    @Query("SELECT categoryId FROM feedcategory WHERE uid = :uid AND feedId = :feedId")
+    List<String> getCategoryId(String uid,String feedId);
 
     @Query("SELECT count(*) FROM feedcategory WHERE uid = :uid AND categoryId = :categoryId")
     int getCountByCategoryId(String uid,String categoryId);

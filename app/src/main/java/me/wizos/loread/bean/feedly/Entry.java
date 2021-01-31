@@ -10,7 +10,7 @@ import me.wizos.loread.App;
 import me.wizos.loread.bean.Enclosure;
 import me.wizos.loread.db.Article;
 import me.wizos.loread.network.api.BaseApi;
-import me.wizos.loread.utils.ArticleUtil;
+import me.wizos.loread.utils.ArticleUtils;
 
 /**
  * @author Wizos on 2019/2/8.
@@ -318,20 +318,20 @@ public class Entry {
 
         String tmpContent = "";
         if (content != null && !TextUtils.isEmpty(content.getContent())) {
-            tmpContent = ArticleUtil.getOptimizedContent(article.getLink(), content.getContent());
+            tmpContent = ArticleUtils.getOptimizedContent(article.getLink(), content.getContent());
         } else if (summary != null && !TextUtils.isEmpty(summary.getContent())) {
-            tmpContent = ArticleUtil.getOptimizedContent(article.getLink(), summary.getContent());
+            tmpContent = ArticleUtils.getOptimizedContent(article.getLink(), summary.getContent());
         }
-        tmpContent = ArticleUtil.getOptimizedContentWithEnclosures(tmpContent,enclosure);
+        tmpContent = ArticleUtils.getOptimizedContentWithEnclosures(tmpContent,enclosure);
         article.setContent(tmpContent);
 
-        String tmpSummary = ArticleUtil.getOptimizedSummary(tmpContent);
+        String tmpSummary = ArticleUtils.getOptimizedSummary(tmpContent);
         article.setSummary(tmpSummary);
 
-        title = ArticleUtil.getOptimizedTitle(title, tmpSummary);
+        title = ArticleUtils.getOptimizedTitle(title, tmpSummary);
         article.setTitle(title);
 
-        String coverUrl = ArticleUtil.getCoverUrl(article.getLink(),tmpContent);
+        String coverUrl = ArticleUtils.getCoverUrl(article.getLink(),tmpContent);
         article.setImage(coverUrl);
 
         // 自己设置的字段

@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical">
+    <TextView
+        android:id="@+id/hint"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:textSize="14sp"
+        android:padding="5dp"
+        android:text="@string/containing_any_keyword_is_eligible" />
+
+    <EditText
+        android:id="@+id/input_value"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="start|top"
+        android:textSize="14sp"
+        android:minLines="1"
+        android:hint="@string/multiple_keywords_are_separated_by_symbol"
+        android:autofillHints=""
+        android:inputType="textMultiLine" />
+</LinearLayout>

@@ -27,6 +27,7 @@ import java.net.URL;
 import java.util.List;
 
 import me.wizos.loread.App;
+import me.wizos.loread.BuildConfig;
 import me.wizos.loread.Contract;
 import me.wizos.loread.R;
 import me.wizos.loread.activity.login.LoginActivity;
@@ -51,6 +52,8 @@ public class ProviderActivity extends BaseActivity {
         }else {
             setContentView(R.layout.activity_provider);
         }
+
+        // setContentView(R.layout.activity_provider);
 
         View selectLoginAccountView = findViewById(R.id.select_login_account);
         if(CoreDB.i().userDao().size() > 0){
@@ -84,6 +87,7 @@ public class ProviderActivity extends BaseActivity {
                 case Contract.PROVIDER_TINYRSS:
                     iconRefs = R.drawable.logo_tinytinyrss;
                     break;
+                case Contract.PROVIDER_FEVER_TINYRSS:
                 case Contract.PROVIDER_FEVER:
                     iconRefs = R.drawable.logo_fever;
                     break;
@@ -114,7 +118,7 @@ public class ProviderActivity extends BaseActivity {
                             String inoReaderUrl = input.toString();
                             XLog.e("输入的url" + inoReaderUrl);
                             if(StringUtils.isEmpty(inoReaderUrl)){
-                                ToastUtils.show(R.string.invalid_site_url_hint);
+                                ToastUtils.show(R.string.invalid_url_hint);
                                 return;
                             }
                             Intent intent = new Intent(ProviderActivity.this, WebActivity.class);
@@ -123,7 +127,7 @@ public class ProviderActivity extends BaseActivity {
                             startActivity(intent);
                             overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
                         } catch (MalformedURLException e) {
-                            ToastUtils.show(R.string.invalid_site_url_hint);
+                            ToastUtils.show(R.string.invalid_url_hint);
                             e.printStackTrace();
                         }
                     }
@@ -173,21 +177,17 @@ public class ProviderActivity extends BaseActivity {
         api.getAccessToken(code, new CallbackX<Token,String>() {
             @Override
             public void onSuccess(Token token) {
-                XLog.e("授权为：" + token);
+                XLog.i("token：" + token);
                 dialog.setTitle(getString(R.string.fetch_user_info));
                 api.setAuthorization(token.getAuth());
                 api.fetchUserInfo(new CallbackX<User,String>() {
                     @Override
                     public void onSuccess(User user) {
-                        XLog.e("用户资料：" + user + token.getAuth());
+                        XLog.i("用户：" + user + token.getAuth());
                         user.setToken(token);
                         if(api instanceof InoReaderApi){
                             user.setHost( ((InoReaderApi)api).getTempBaseUrl() );
-                            XLog.e("用户资料aaa："  + user.getHost());
                         }
-                        // if(api instanceof InoReaderApi && !TextUtils.isEmpty(InoReaderApi.tempBaseUrl)){
-                        //     user.setHost( InoReaderApi.tempBaseUrl );
-                        // }
 
                         CorePref.i().globalPref().putString(Contract.UID, user.getId());
                         App.i().setApi(api);
@@ -216,9 +216,8 @@ public class ProviderActivity extends BaseActivity {
     protected void onNewIntent(Intent paramIntent) {
         super.onNewIntent(paramIntent);
         String url = paramIntent.getDataString();
-        XLog.e("获取到数据：" + url + " , " + paramIntent );
+        XLog.i("获取到数据：" + url + " , " + paramIntent );
         if (TextUtils.isEmpty(url)) {
-            // ToastUtils.show(getString(R.string.auth_failure_please_try_again));
             return;
         }
         Uri uri = Uri.parse(url);
@@ -226,7 +225,7 @@ public class ProviderActivity extends BaseActivity {
         String host = uri.getHost();
         String code = uri.getQueryParameter("code");
 
-        XLog.e("获取：" + schema + " , " + host + " , " + code);
+        XLog.i("获取：" + schema + " , " + host + " , " + code);
         if (StringUtils.isEmpty(schema) || TextUtils.isEmpty(host) || TextUtils.isEmpty(code)) {
             ToastUtils.show(getString(R.string.auth_failure_please_try_again));
             return;
@@ -239,10 +238,19 @@ public class ProviderActivity extends BaseActivity {
         }
     }
 
+
+    public void clickAuthor(View view){
+        if(!BuildConfig.DEBUG){
+           return;
+        }
+        Intent intent = new Intent(this, LabActivity.class);
+        startActivity(intent);
+        overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
+
+    }
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
         super.onActivityResult(requestCode, resultCode, intent);
-        XLog.e("---------" + resultCode + requestCode);
         if (resultCode == App.ActivityResult_LoginPageToProvider) {
             App.i().restartApp();
         }

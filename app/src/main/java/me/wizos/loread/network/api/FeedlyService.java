@@ -133,5 +133,4 @@ public interface FeedlyService {
             @Header("authorization") String authorization,
             @NonNull @Body MarkerAction markerAction
     );
-
 }

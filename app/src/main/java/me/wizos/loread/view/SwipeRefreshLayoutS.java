@@ -1,5 +1,6 @@
 package me.wizos.loread.view;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
@@ -8,6 +9,7 @@ import android.view.ViewConfiguration;
 import android.widget.AbsListView;
 
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
+
 
 /**
  * 下拉刷新控件的包装。解决下拉和左右滑动冲突的问题
@@ -80,6 +82,7 @@ public class SwipeRefreshLayoutS extends SwipeRefreshLayout {
      * 就是SwipeRefreshLayout对于Y 轴的处理容差值很小，如果不是水平滑动，很轻易就会触发下拉刷新。
      * 为了解决该问题，需要重写SwipeRefreshLayout的onInterceptTouchEvent(MotionEvent ev)事件，在这里面进行处理，当X距离滑动大于某个值时，就认为是左右滑动，不执行下拉刷新操作。
      */
+    @SuppressLint("Recycle")
     @Override
     public boolean onInterceptTouchEvent(MotionEvent ev) {
         switch (ev.getAction()) {
@@ -101,9 +104,10 @@ public class SwipeRefreshLayoutS extends SwipeRefreshLayout {
         return super.onInterceptTouchEvent(ev);
     }
 
+    @SuppressLint("ClickableViewAccessibility")
     @Override
     public boolean onTouchEvent(MotionEvent ev) {
-//        KLog.e("事件传递到了 下拉控件的 onTouchEvent");
+        // XLog.d("事件传递到了 下拉控件的 onTouchEvent");
         return super.onTouchEvent(ev);
     }
 }

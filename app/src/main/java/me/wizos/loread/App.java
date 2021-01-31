@@ -2,18 +2,24 @@ package me.wizos.loread;
 
 import android.app.Application;
 import android.content.Intent;
+import android.content.pm.PackageInfo;
 import android.content.res.Configuration;
 import android.os.AsyncTask;
 import android.text.TextUtils;
 import android.util.DisplayMetrics;
+import android.webkit.WebSettings;
 import android.webkit.WebView;
 
+import androidx.webkit.WebViewCompat;
 import androidx.work.WorkManager;
 
 import com.bumptech.glide.Glide;
 import com.carlt.networklibs.NetType;
 import com.carlt.networklibs.NetworkManager;
 import com.carlt.networklibs.annotation.NetWork;
+import com.cretin.www.cretinautoupdatelibrary.model.TypeConfig;
+import com.cretin.www.cretinautoupdatelibrary.model.UpdateConfig;
+import com.cretin.www.cretinautoupdatelibrary.utils.AppUpdateUtils;
 import com.didichuxing.doraemonkit.DoraemonKit;
 import com.elvishew.xlog.XLog;
 import com.hjq.toast.ToastUtils;
@@ -21,43 +27,49 @@ import com.hjq.toast.style.ToastAliPayStyle;
 import com.just.agentweb.AgentWebConfig;
 import com.lzy.okgo.OkGo;
 import com.oasisfeng.condom.CondomProcess;
-import com.tencent.bugly.crashreport.CrashReport;
 import com.tencent.mmkv.MMKV;
 import com.umeng.analytics.MobclickAgent;
 import com.umeng.commonsdk.UMConfigure;
+import com.umeng.umcrash.UMCrash;
+import com.umeng.umcrash.UMCrashCallback;
 import com.yhao.floatwindow.view.FloatWindow;
 
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
 import me.wizos.loread.activity.SplashActivity;
 import me.wizos.loread.adapter.ArticlePagedListAdapter;
+import me.wizos.loread.config.Test;
+import me.wizos.loread.config.update.AppUpdateModel;
 import me.wizos.loread.db.Article;
 import me.wizos.loread.db.CoreDB;
 import me.wizos.loread.db.CorePref;
 import me.wizos.loread.db.User;
-import me.wizos.loread.log.CoreLog;
+import me.wizos.loread.log.LogHelper;
 import me.wizos.loread.network.api.AuthApi;
 import me.wizos.loread.network.api.BaseApi;
 import me.wizos.loread.network.api.FeedlyApi;
 import me.wizos.loread.network.api.FeverApi;
+import me.wizos.loread.network.api.FeverTinyRSSApi;
 import me.wizos.loread.network.api.InoReaderApi;
 import me.wizos.loread.network.api.LoreadApi;
 import me.wizos.loread.network.api.OAuthApi;
 import me.wizos.loread.network.api.TinyRSSApi;
+import me.wizos.loread.network.proxy.ProxyNodeSocks5;
 import me.wizos.loread.service.TimeHandler;
-import me.wizos.loread.utils.FileUtil;
-import me.wizos.loread.utils.NetworkUtil;
-import me.wizos.loread.utils.ScriptUtil;
-import me.wizos.loread.utils.Tool;
-import me.wizos.loread.view.WebViewS;
+import me.wizos.loread.utils.FileUtils;
+import me.wizos.loread.utils.NetworkUtils;
+import me.wizos.loread.utils.ScriptUtils;
+import me.wizos.loread.view.webview.WebViewS;
 
-import static me.wizos.loread.utils.NetworkUtil.NETWORK_MOBILE;
-import static me.wizos.loread.utils.NetworkUtil.NETWORK_NONE;
-import static me.wizos.loread.utils.NetworkUtil.NETWORK_WIFI;
+import static me.wizos.loread.utils.NetworkUtils.NETWORK_MOBILE;
+import static me.wizos.loread.utils.NetworkUtils.NETWORK_NONE;
+import static me.wizos.loread.utils.NetworkUtils.NETWORK_WIFI;
+
 
 /**
  * 在Android中，可以通过继承Application类来实现应用程序级的全局变量，这种全局变量方法相对静态类更有保障，直到应用的所有Activity全部被destory掉之后才会被释放掉。
@@ -75,9 +87,6 @@ public class App extends Application implements Thread.UncaughtExceptionHandler 
     public static final String CATEGORY_STARED = "/tag/global.saved";
     public static final String CATEGORY_MUST = "/category/global.must";
 
-    // public static final String DISPLAY_RSS = "rss";
-    // public static final String DISPLAY_LINK = "webpage";
-    // public static final String DISPLAY_READABILITY = "readability";
     public static final int OPEN_MODE_RSS = 0;
     public static final int OPEN_MODE_READABILITY = 1;
     public static final int OPEN_MODE_LINK = 2;
@@ -106,13 +115,14 @@ public class App extends Application implements Thread.UncaughtExceptionHandler 
     public static final int STATUS_UNSTAR = 5;
 
     public static final int MSG_DOUBLE_TAP = -1;
-    // public static final int MSG_SCROLL_TIMEOUT = 6;
+
+    public final static int THEME_DAY = 0;
+    public final static int THEME_NIGHT = 1;
 
     public int screenWidth;
     public int screenHeight;
 
-    public final static int THEME_DAY = 0;
-    public final static int THEME_NIGHT = 1;
+    public ProxyNodeSocks5 proxyNodeSocks5;
 
     public ArticlePagedListAdapter articlesAdapter;
 
@@ -156,7 +166,7 @@ public class App extends Application implements Thread.UncaughtExceptionHandler 
         instance = this;
         MMKV.initialize(this);
         CoreDB.init(this);
-        CoreLog.init(this, CorePref.i().globalPref().getBoolean(Contract.ENABLE_LOGGING, false));
+        LogHelper.init(this, CorePref.i().globalPref().getBoolean(Contract.ENABLE_LOGGING, false));
 
 
         initVar();
@@ -166,29 +176,33 @@ public class App extends Application implements Thread.UncaughtExceptionHandler 
         DoraemonKit.install(this, "1a9100642569bfed39d6b82032950e1f");
 
         UMConfigure.init(this, "5fe169310b4a4938464e0332", "CoolApk", UMConfigure.DEVICE_TYPE_PHONE, null);
-        UMConfigure.setLogEnabled(true);
-        /*
-         * 子进程是否支持自定义事件统计。
-         * 参数：boolean 默认不使用
-         */
+        // 打开统计SDK调试模式
+        UMConfigure.setLogEnabled(BuildConfig.DEBUG);
+        // 子进程是否支持自定义事件统计。参数：boolean 默认不使用
         UMConfigure. setProcessEvent(false);
-        // 选用AUTO页面采集模式
-        MobclickAgent.setPageCollectionMode(MobclickAgent.PageMode.AUTO);
+        XLog.i("测试设备信息：" + Arrays.toString(UMConfigure.getTestDeviceInfo(this)));
+        if(BuildConfig.DEBUG){
+            MobclickAgent.setPageCollectionMode(MobclickAgent.PageMode.MANUAL);
+        }else {
+            // 选用AUTO页面采集模式
+            MobclickAgent.setPageCollectionMode(MobclickAgent.PageMode.AUTO);
+        }
 
         // 【提前初始化 WebView 内核】由于其内部会调用 Looper ，不能放在子线程中
         // 链接：https://www.jianshu.com/p/fc7909e24178
         // 经过测试，采用Application要比采用Activity的context要少用20~30M左右的内存。但采用Application会影响在 webview 中打开对话框。
-        WebViewS articleWebView = new WebViewS(this);
-        CorePref.i().globalPref().putString(Contract.USER_AGENT, articleWebView.getSettings().getUserAgentString());
-        articleWebView.destroy();
+        new WebViewS(this).destroy();
+        CorePref.i().globalPref().putString(Contract.USER_AGENT, WebSettings.getDefaultUserAgent(this));
+
+        PackageInfo webViewPackageInfo = WebViewCompat.getCurrentWebViewPackage(this);
+        XLog.i("WebView 版本: " + webViewPackageInfo.versionName);
 
         WebView.setWebContentsDebuggingEnabled(BuildConfig.DEBUG);
-        if(BuildConfig.DEBUG){
-            AgentWebConfig.debug();
-        }
+        if(BuildConfig.DEBUG) AgentWebConfig.debug();
 
-
-        initCrashReport();
+        // OrbotHelper是一个单例，用于管理在app与Orbot之间的大量的异步通信。
+        // 它旨在app生命周期的早期进行初始化。 一种可能的选择是拥有一个自定义的Application子类，您可以在其中重写onCreate（）并设置OrbotHelper。
+        // OrbotHelper.get(this).init();
 
         AsyncTask.THREAD_POOL_EXECUTOR.execute(new Runnable() {
             @Override
@@ -199,12 +213,12 @@ public class App extends Application implements Thread.UncaughtExceptionHandler 
                 // 监听子线程的报错
                 Thread.setDefaultUncaughtExceptionHandler(instance);
 
-                // 初始化统计&监控服务
+                initAppUpdate();
 
-                ScriptUtil.init();
+                ScriptUtils.init();
 
                 // 初始化网络状态
-                NetworkUtil.getNetWorkState();
+                NetworkUtils.getNetWorkState();
 
                 // 尽可能早的进行这一步操作, 建议在 Application 中完成初始化操作
                 NetworkManager.getInstance().init(instance);
@@ -233,19 +247,19 @@ public class App extends Application implements Thread.UncaughtExceptionHandler 
         switch (netType) {
             case WIFI:
                 XLog.i("wifi");
-                NetworkUtil.setTheNetwork(NETWORK_WIFI);
+                NetworkUtils.setTheNetwork(NETWORK_WIFI);
                 break;
             case CMNET:
             case CMWAP:
                 XLog.i("4G");
-                NetworkUtil.setTheNetwork(NETWORK_MOBILE);
+                NetworkUtils.setTheNetwork(NETWORK_MOBILE);
                 break;
             case AUTO:
                 XLog.i("自动");
                 break;
             case NONE:
                 XLog.i("无网络");
-                NetworkUtil.setTheNetwork(NETWORK_NONE);
+                NetworkUtils.setTheNetwork(NETWORK_NONE);
                 break;
             default:
                 break;
@@ -254,7 +268,14 @@ public class App extends Application implements Thread.UncaughtExceptionHandler 
 
     @Override
     public void uncaughtException(@NotNull Thread thread, @NotNull Throwable ex) {
-        XLog.e("线程意外报错：" + ex);
+        XLog.e("线程意外报错：" + Arrays.toString(ex.getStackTrace()));
+        ex.printStackTrace();
+        UMCrash.registerUMCrashCallback(new UMCrashCallback() {
+            @Override
+            public String onCallback() {
+                return "崩溃：" + ex.getLocalizedMessage();
+            }
+        });
     }
 
 
@@ -298,12 +319,12 @@ public class App extends Application implements Thread.UncaughtExceptionHandler 
     }
 
 
-    private void initCrashReport() {
-        // 为了保证运营数据的准确性，建议不要在异步线程初始化 Bugly。
-        CrashReport.initCrashReport(getApplicationContext(), "900044326", BuildConfig.DEBUG);
-        // 在开发测试阶段，可以在初始化Bugly之前通过以下接口把调试设备设置成“开发设备”。
-        CrashReport.setIsDevelopmentDevice(instance, BuildConfig.DEBUG);
-    }
+    // private void initCrashReport() {
+    //     // 为了保证运营数据的准确性，建议不要在异步线程初始化 Bugly。
+    //     CrashReport.initCrashReport(getApplicationContext(), "900044326", BuildConfig.DEBUG);
+    //     // 在开发测试阶段，可以在初始化Bugly之前通过以下接口把调试设备设置成“开发设备”。
+    //     CrashReport.setIsDevelopmentDevice(instance, BuildConfig.DEBUG);
+    // }
 
     public String getWebViewBaseUrl() {
         if (TextUtils.isEmpty(webViewBaseUrl)) {
@@ -320,7 +341,25 @@ public class App extends Application implements Thread.UncaughtExceptionHandler 
         deviceIsNight = (getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES;
     }
 
-
+    private void initAppUpdate(){
+        //当你希望使用配置请求链接的方式，让插件自己解析并实现更新
+        UpdateConfig updateConfig = new UpdateConfig()
+                .setDebug(BuildConfig.DEBUG)//是否是Debug模式
+                .setBaseUrl("https://raw.githubusercontent.com/wizos/loread/master/config.json")//当dataSourceType为DATA_SOURCE_TYPE_URL时，配置此接口用于获取更新信息
+                .setMethodType(TypeConfig.METHOD_GET)//当dataSourceType为DATA_SOURCE_TYPE_URL时，设置请求的方法
+                .setDataSourceType(TypeConfig.DATA_SOURCE_TYPE_URL)//设置获取更新信息的方式
+                .setShowNotification(true)//配置更新的过程中是否在通知栏显示进度
+                .setNotificationIconRes(R.mipmap.ic_launcher)//配置通知栏显示的图标
+                .setUiThemeType(TypeConfig.UI_THEME_G)//配置UI的样式，一种有12种样式可供选择
+                .setRequestHeaders(null)//当dataSourceType为DATA_SOURCE_TYPE_URL时，设置请求的请求头
+                .setRequestParams(null)//当dataSourceType为DATA_SOURCE_TYPE_URL时，设置请求的请求参数
+                .setAutoDownloadBackground(false)//是否需要后台静默下载，如果设置为true，则调用checkUpdate方法之后会直接下载安装，不会弹出更新页面。当你选择UI样式为TypeConfig.UI_THEME_CUSTOM，静默安装失效，您需要在自定义的Activity中自主实现静默下载，使用这种方式的时候建议setShowNotification(false)，这样基本上用户就会对下载无感知了
+                // .setCustomActivityClass(CustomActivity.class)//如果你选择的UI样式为TypeConfig.UI_THEME_CUSTOM，那么你需要自定义一个Activity继承自RootActivity，并参照demo实现功能，在此处填写自定义Activity的class
+                .setNeedFileMD5Check(false)//是否需要进行文件的MD5检验，如果开启需要提供文件本身正确的MD5校验码，DEMO中提供了获取文件MD5检验码的工具页面，也提供了加密工具类Md5Utils
+                // .setCustomDownloadConnectionCreator(new OkHttp3Connection.Creator(builder))//如果你想使用okhttp作为下载的载体，可以使用如下代码创建一个OkHttpClient，并使用demo中提供的OkHttp3Connection构建一个ConnectionCreator传入，在这里可以配置信任所有的证书，可解决根证书不被信任导致无法下载apk的问题
+                .setModelClass(new AppUpdateModel());
+        AppUpdateUtils.init(this, updateConfig);
+    }
 
     public String getGlobalAssetsFilesDir() {
         return getExternalFilesDir(null) + File.separator + "assets" + File.separator;
@@ -339,10 +378,10 @@ public class App extends Application implements Thread.UncaughtExceptionHandler 
     public String getUserFilesDir() {
         if (user == null) {
             XLog.e("用户为空");
-            Tool.printCallStatck();
-            return getExternalFilesDir(null) + "/";
+            return getExternalFilesDir(null) + File.separator;
+        }else {
+            return getExternalFilesDir(null) + File.separator + user.getId();
         }
-        return getExternalFilesDir(null) + File.separator + user.getId();
     }
     public String getUserConfigPath() {
         return getUserFilesDir() + File.separator + "config" + File.separator;
@@ -373,7 +412,7 @@ public class App extends Application implements Thread.UncaughtExceptionHandler 
         CoreDB.i().categoryDao().clear(uid);
         CoreDB.i().feedCategoryDao().clear(uid);
         CoreDB.i().userDao().delete(uid);
-        FileUtil.deleteHtmlDir(new File(App.i().getUserFilesDir()));
+        FileUtils.deleteHtmlDir(new File(App.i().getUserFilesDir()));
     }
 
     private BaseApi api;
@@ -394,22 +433,33 @@ public class App extends Application implements Thread.UncaughtExceptionHandler 
     public AuthApi getAuthApi() {
         return (AuthApi) getApi();
     }
-
     public OAuthApi getOAuthApi() {
         return (OAuthApi) getApi();
     }
-
     public void setApi(BaseApi baseApi) {
         this.api = baseApi;
     }
-
+    public void resetApi(){
+        api = null;
+    }
     public BaseApi getApi() {
         if (api == null) {
-            switch (getUser().getSource()) {
+            String source;
+            if(Test.i().useLoread){
+                source = Contract.PROVIDER_FEVER_TINYRSS;
+            }else {
+                source = getUser().getSource();
+            }
+            switch (source) {
                 case Contract.PROVIDER_TINYRSS:
                     TinyRSSApi tinyRSSApi = new TinyRSSApi(getUser().getHost());
                     tinyRSSApi.setAuthorization(getUser().getAuth());
                     api = tinyRSSApi;
+                    break;
+                case Contract.PROVIDER_FEVER_TINYRSS:
+                    FeverTinyRSSApi feverTinyRSSApi = new FeverTinyRSSApi(getUser().getHost());
+                    feverTinyRSSApi.setAuthorization(getUser().getAuth());
+                    api = feverTinyRSSApi;
                     break;
                 case Contract.PROVIDER_FEVER:
                     FeverApi feverApi = new FeverApi(getUser().getHost());

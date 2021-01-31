@@ -2,6 +2,8 @@ package me.wizos.loread.bean.ttrss.result;
 
 import com.google.gson.annotations.SerializedName;
 
+import org.jetbrains.annotations.NotNull;
+
 public class TinyResponse<T> {
     private int seq;
     private int status;
@@ -46,13 +48,14 @@ public class TinyResponse<T> {
     }
 
 
+    @NotNull
     @Override
     public String toString() {
-        return "TTRSSResponse{" +
+        return "TinyResponse{" +
                 "seq=" + seq +
                 ", status=" + status +
                 ", msg='" + msg + '\'' +
-                ", content=" + content +
+                ", content=" + content.toString() +
                 '}';
     }
 }

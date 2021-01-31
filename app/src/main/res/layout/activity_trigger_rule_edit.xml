@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/action_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fitsSystemWindows="true"
+    android:addStatesFromChildren="true"
+    android:windowDrawsSystemBarBackgrounds="true">
+
+    <com.google.android.material.appbar.AppBarLayout
+        android:id="@+id/action_appBarLayout"
+        android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        <androidx.appcompat.widget.Toolbar
+            android:id="@+id/action_toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            android:background="?attr/topbar_bg"
+            app:navigationIcon="@drawable/ic_close"
+            app:contentInsetStartWithNavigation="0dp"
+            app:subtitleTextAppearance="@style/MyToolbar.SubTitle"
+            app:popupTheme="@style/OverflowMenuStyle"
+            app:layout_scrollFlags="enterAlways|snap"
+            app:title="@string/rules" />
+    </com.google.android.material.appbar.AppBarLayout>
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:paddingStart="10dp"
+        android:paddingEnd="10dp"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior">
+        <LinearLayout
+            android:orientation="vertical"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_marginTop="10dp"
+            android:layout_marginBottom="10dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:layout_marginBottom="10dp"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:text="@string/explain" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="14sp"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="10dp"
+                android:text="@string/action_summary" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:layout_marginBottom="10dp"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:text="@string/scope" />
+
+            <TextView
+                android:id="@+id/action_target"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="14sp"
+                android:layout_marginStart="6dp"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="10dp"
+                android:text="@string/global" />
+
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:layout_marginBottom="10dp"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:text="@string/conditions" />
+
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/action_conditions_recycler_view"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:choiceMode="singleChoice"
+                android:layout_marginStart="6dp"
+                tools:listitem="@layout/item_trigger_rule_edit"
+                tools:itemCount="2"
+                android:headerDividersEnabled="false"
+                app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"  />
+
+            <TextView
+                android:id="@+id/action_add_condition"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_marginTop="5dp"
+                android:layout_marginBottom="5dp"
+                android:padding="5dp"
+                android:textSize="14sp"
+                android:textColor="@color/bluePrimary"
+                android:gravity="center"
+                android:text="@string/add_condition"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:layout_marginBottom="10dp"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:text="@string/action"/>
+
+            <CheckBox
+                android:id="@+id/action_mark_read"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/mark_read"/>
+
+            <CheckBox
+                android:id="@+id/action_mark_star"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/mark_star"/>
+
+            <androidx.appcompat.widget.AppCompatButton
+                android:id="@+id/action_save_rule_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:layout_marginBottom="10dp"
+                android:paddingTop="10dp"
+                android:paddingBottom="10dp"
+                android:paddingStart="20dp"
+                android:paddingEnd="20dp"
+                android:layout_gravity="center_horizontal"
+                android:background="@color/bluePrimary"
+                android:visibility="visible"
+                android:textColor="@color/white"
+                app:bl_corners_radius="30dp"
+                app:bl_ripple_enable="true"
+                tools:visibility="visible"
+                android:text="@string/save_this_rule"/>
+
+
+        </LinearLayout>
+
+    </androidx.core.widget.NestedScrollView>
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

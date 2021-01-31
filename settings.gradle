@@ -1,1 +1,1 @@
-include ':app', ":support",':floatwindow',':agentweb-core', ':luban', ':networklibs'//, ':sniffer'
+include ':app', ":support",':floatwindow',':editspinner',':agentweb-core',':luban',':networklibs',':sniffing'//, 'netcipher-webkit'

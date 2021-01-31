@@ -5,7 +5,7 @@ import androidx.annotation.NonNull;
 import java.io.IOException;
 
 import me.wizos.loread.Contract;
-import me.wizos.loread.config.NetworkRefererConfig;
+import me.wizos.loread.config.HeaderRefererConfig;
 import me.wizos.loread.utils.StringUtils;
 import okhttp3.Interceptor;
 import okhttp3.Request;
@@ -25,11 +25,11 @@ public class RefererInterceptor implements Interceptor {
     @NonNull
     public Response intercept(Chain chain) throws IOException {
         Request request = chain.request();
-        String referer = NetworkRefererConfig.i().guessRefererByUrl(request.url().toString());
+        String referer = HeaderRefererConfig.i().guessRefererByUrl(request.url().toString());
         if (!StringUtils.isEmpty(referer)) {
             request = request.newBuilder().header(Contract.REFERER, referer).build();
         }
-        //KLog.i("拦截到的referer：" + request.url().toString() + " , " + referer );
+        //XLog.i("拦截到的referer：" + request.url().toString() + " , " + referer );
         return chain.proceed(request);
     }
 }

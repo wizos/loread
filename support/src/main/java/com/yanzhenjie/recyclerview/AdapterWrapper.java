@@ -147,7 +147,7 @@ class AdapterWrapper extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
         if (mSwipeMenuCreator == null) return viewHolder;
 
-        contentView = mInflater.inflate(R.layout.support_recycler_view_item2, parent, false);
+        contentView = mInflater.inflate(R.layout.support_recycler_view_item, parent, false);
         ViewGroup viewGroup = contentView.findViewById(R.id.swipe_content);
         viewGroup.addView(viewHolder.itemView);
 

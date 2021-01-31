@@ -2,10 +2,12 @@ package me.wizos.loread.bean.fever;
 
 import com.google.gson.annotations.SerializedName;
 
+import org.jetbrains.annotations.NotNull;
+
 import me.wizos.loread.App;
 import me.wizos.loread.db.Article;
 import me.wizos.loread.network.api.BaseApi;
-import me.wizos.loread.utils.ArticleUtil;
+import me.wizos.loread.utils.ArticleUtils;
 
 public class Item {
     @SerializedName("id")
@@ -76,16 +78,16 @@ public class Item {
         article.setFeedId(String.valueOf(feedId));
         article.setFeedTitle(title);
 
-        String tmpContent = ArticleUtil.getOptimizedContent(url, html);
+        String tmpContent = ArticleUtils.getOptimizedContent(url, html);
         article.setContent(tmpContent);
 
-        String tmpSummary = ArticleUtil.getOptimizedSummary(tmpContent);
+        String tmpSummary = ArticleUtils.getOptimizedSummary(tmpContent);
         article.setSummary(tmpSummary);
 
-        title = ArticleUtil.getOptimizedTitle(title,tmpSummary);
+        title = ArticleUtils.getOptimizedTitle(title,tmpSummary);
         article.setTitle(title);
 
-        String coverUrl = ArticleUtil.getCoverUrl(article.getLink(),tmpContent);
+        String coverUrl = ArticleUtils.getCoverUrl(article.getLink(),tmpContent);
         article.setImage(coverUrl);
 
         // 自己设置的字段
@@ -108,6 +110,7 @@ public class Item {
         return article;
     }
 
+    @NotNull
     @Override
     public String toString() {
         return "Item{" +

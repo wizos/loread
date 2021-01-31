@@ -40,8 +40,8 @@ import me.wizos.loread.R;
 import me.wizos.loread.db.CoreDB;
 import me.wizos.loread.db.User;
 import me.wizos.loread.service.MusicService;
-import me.wizos.loread.utils.ScreenUtil;
-import me.wizos.loread.utils.TimeUtil;
+import me.wizos.loread.utils.ScreenUtils;
+import me.wizos.loread.utils.TimeUtils;
 import me.wizos.loread.view.colorful.Colorful;
 
 public class MusicActivity extends BaseActivity {
@@ -132,8 +132,8 @@ public class MusicActivity extends BaseActivity {
                 seekBar.setMax(duration);
             }
             if (currTimeView != null && !isChangeProgress) {
-                currTimeView.setText(TimeUtil.getTime(currentPosition));
-                totalTimeView.setText(TimeUtil.getTime(duration));
+                currTimeView.setText(TimeUtils.getTime(currentPosition));
+                totalTimeView.setText(TimeUtils.getTime(duration));
             }
             //XLog.e("进度：" + seekBar + ", " + currTimeView + " , " + duration + " = "  + TimeUtil.getTime(duration));
             maHandler.postDelayed(progressTask, 1000);
@@ -189,8 +189,8 @@ public class MusicActivity extends BaseActivity {
             maHandler.post(progressTask);
         } else {
             playPauseView.pause();
-            currTimeView.setText(TimeUtil.getTime(musicControl.getCurrentPosition()));
-            totalTimeView.setText(TimeUtil.getTime(musicControl.getDuration()));
+            currTimeView.setText(TimeUtils.getTime(musicControl.getCurrentPosition()));
+            totalTimeView.setText(TimeUtils.getTime(musicControl.getDuration()));
             seekBar.setProgress(musicControl.getCurrentPosition());
         }
 
@@ -244,7 +244,7 @@ public class MusicActivity extends BaseActivity {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 if (fromUser && currTimeView != null) {
-                    currTimeView.setText(TimeUtil.getTime(progress));
+                    currTimeView.setText(TimeUtils.getTime(progress));
                 }
             }
 
@@ -314,7 +314,7 @@ public class MusicActivity extends BaseActivity {
     private void initFloatWindow() {
         ImageView imageView = new ImageView(this);
         imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
-        imageView.setPadding(ScreenUtil.dp2px(10), ScreenUtil.dp2px(10), ScreenUtil.dp2px(10), ScreenUtil.dp2px(10));
+        imageView.setPadding(ScreenUtils.dp2px(10), ScreenUtils.dp2px(10), ScreenUtils.dp2px(10), ScreenUtils.dp2px(10));
         imageView.setImageDrawable(getDrawable(R.drawable.ic_music));
 
         //imageView.setBackground(getDrawable(R.drawable.shape_corners));
@@ -323,7 +323,7 @@ public class MusicActivity extends BaseActivity {
                 .setRipple(true, getResources().getColor(R.color.primary))
                 .setPressedSolidColor(getResources().getColor(R.color.primary), getResources().getColor(R.color.bluePrimary))
                 .setSolidColor(getResources().getColor(R.color.bluePrimary))
-                .setCornersRadius(ScreenUtil.dp2px(30))
+                .setCornersRadius(ScreenUtils.dp2px(30))
                 .build();
         imageView.setBackground(drawable);
         imageView.setOnClickListener(new View.OnClickListener() {

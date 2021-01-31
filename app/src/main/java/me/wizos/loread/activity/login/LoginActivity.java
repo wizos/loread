@@ -23,11 +23,12 @@ import me.wizos.loread.App;
 import me.wizos.loread.Contract;
 import me.wizos.loread.R;
 import me.wizos.loread.activity.BaseActivity;
+import me.wizos.loread.activity.viewmodel.FeverUserViewModel;
+import me.wizos.loread.activity.viewmodel.InoReaderUserViewModel;
+import me.wizos.loread.activity.viewmodel.LoginViewModel;
+import me.wizos.loread.activity.viewmodel.TinyRSSUserViewModel;
+import me.wizos.loread.network.api.InoReaderApi;
 import me.wizos.loread.view.colorful.Colorful;
-import me.wizos.loread.viewmodel.FeverUserViewModel;
-import me.wizos.loread.viewmodel.InoReaderUserViewModel;
-import me.wizos.loread.viewmodel.LoginViewModel;
-import me.wizos.loread.viewmodel.TinyRSSUserViewModel;
 
 public class LoginActivity extends BaseActivity {
     private LoginViewModel loginViewModel;
@@ -51,12 +52,22 @@ public class LoginActivity extends BaseActivity {
         final Button loginButton = findViewById(R.id.login_login_button);
         final ProgressBar loadingProgressBar = findViewById(R.id.login_loading);
 
+        // final LinearLayout linearLayout = findViewById(R.id.login_use_tiny_fever_layout);
+        // final SwitchButton switchButton = findViewById(R.id.login_use_tiny_fever_sb);
+        // switchButton.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+        //     @Override
+        //     public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+        //     }
+        // });
+
         String provider = getIntent().getAction();
         if(Contract.PROVIDER_INOREADER.equals(provider)){
             loginViewModel = new ViewModelProvider(this).get(InoReaderUserViewModel.class);
-            baseUrlEditText.setText(R.string.inoreader_url);
+            baseUrlEditText.setText(InoReaderApi.OFFICIAL_BASE_URL);
         }else if(Contract.PROVIDER_TINYRSS.equals(provider)){
             loginViewModel = new ViewModelProvider(this).get(TinyRSSUserViewModel.class);
+            TextView noteView = findViewById(R.id.login_suggestion);
+            noteView.setVisibility(View.VISIBLE);
         }else if(Contract.PROVIDER_FEVER.equals(provider)){
             loginViewModel = new ViewModelProvider(this).get(FeverUserViewModel.class);
         }else {
@@ -74,7 +85,7 @@ public class LoginActivity extends BaseActivity {
 
             @Override
             public void afterTextChanged(Editable s) {
-                loginViewModel.loginDataChanged(
+                loginViewModel.loginFormChanged(
                         baseUrlEditText.getText().toString(),
                         accountEditText.getText().toString(),
                         passwordEditText.getText().toString()
@@ -85,7 +96,7 @@ public class LoginActivity extends BaseActivity {
         accountEditText.addTextChangedListener(afterTextChangedListener);
         passwordEditText.addTextChangedListener(afterTextChangedListener);
 
-        /**
+        /*
          * 需要注意的是 setOnEditorActionListener这个方法，并不是在我们点击EditText的时候触发，
          * 也不是在我们对EditText进行编辑时触发，而是在我们编辑完之后点击软键盘上的各种键才会触发。
          * 因为通过布局文件中的imeOptions可以控制软件盘右下角的按钮显示为不同按钮。所以和EditorInfo搭配起来可以实现各种软键盘的功能。
@@ -94,6 +105,10 @@ public class LoginActivity extends BaseActivity {
             @Override
             public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
                 if (actionId == EditorInfo.IME_ACTION_DONE) {
+                    loginButton.setEnabled(false);
+                    baseUrlEditText.setEnabled(false);
+                    accountEditText.setEnabled(false);
+                    passwordEditText.setEnabled(false);
                     loadingProgressBar.setVisibility(View.VISIBLE);
                     loginViewModel.login(
                             baseUrlEditText.getText().toString(),
@@ -141,7 +156,7 @@ public class LoginActivity extends BaseActivity {
             }
         });
 
-        loginViewModel.getLoginResult().observe(this, new Observer<LoginResult>() {
+        loginViewModel.getLoginResultLiveData().observe(this, new Observer<LoginResult>() {
             @Override
             public void onChanged(@Nullable LoginResult loginResult) {
                 loginButton.setEnabled(true);

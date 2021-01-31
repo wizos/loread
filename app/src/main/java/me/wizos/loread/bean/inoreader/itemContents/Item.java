@@ -6,7 +6,7 @@ import me.wizos.loread.App;
 import me.wizos.loread.bean.Enclosure;
 import me.wizos.loread.db.Article;
 import me.wizos.loread.network.api.BaseApi;
-import me.wizos.loread.utils.ArticleUtil;
+import me.wizos.loread.utils.ArticleUtils;
 
 /**
  * Stream content 和 Item content （貌似已被官方弃用）两个api返回指内的文章项
@@ -164,17 +164,17 @@ public class Item {
             article.setFeedTitle(origin.getTitle());
         }
 
-        String tmpContent = ArticleUtil.getOptimizedContent(article.getLink(), summary.getContent());
-        tmpContent = ArticleUtil.getOptimizedContentWithEnclosures(tmpContent,enclosure);
+        String tmpContent = ArticleUtils.getOptimizedContent(article.getLink(), summary.getContent());
+        tmpContent = ArticleUtils.getOptimizedContentWithEnclosures(tmpContent,enclosure);
         article.setContent(tmpContent);
 
-        String tmpSummary = ArticleUtil.getOptimizedSummary(tmpContent);
+        String tmpSummary = ArticleUtils.getOptimizedSummary(tmpContent);
         article.setSummary(tmpSummary);
 
-        title = ArticleUtil.getOptimizedTitle(title,tmpSummary);
+        title = ArticleUtils.getOptimizedTitle(title,tmpSummary);
         article.setTitle(title);
 
-        String coverUrl = ArticleUtil.getCoverUrl(article.getLink(),tmpContent);
+        String coverUrl = ArticleUtils.getCoverUrl(article.getLink(),tmpContent);
         article.setImage(coverUrl);
 
         // 自己设置的字段

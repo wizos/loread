@@ -15,12 +15,14 @@ import android.widget.FrameLayout;
 
 import androidx.annotation.ColorInt;
 
+import com.elvishew.xlog.XLog;
+
 import java.lang.ref.WeakReference;
 
 import me.wizos.loread.view.slideback.callback.SlideCallBack;
 import me.wizos.loread.view.slideback.widget.SlideBackIconView;
 
-import static me.wizos.loread.utils.ScreenUtil.dp2px;
+import static me.wizos.loread.utils.ScreenUtils.dp2px;
 import static me.wizos.loread.view.slideback.SlideBack.EDGE_BOTH;
 import static me.wizos.loread.view.slideback.SlideBack.EDGE_LEFT;
 import static me.wizos.loread.view.slideback.SlideBack.EDGE_RIGHT;
@@ -87,41 +89,46 @@ public class SlideLayout extends FrameLayout {
         isAllowEdgeRight = true;
 
         leftViewTriggerStart = sideSlideLength / 2;
-        leftViewTriggerEnd = maxSlideLength * 2;
-        rightViewTriggerStart = screenWidth - maxSlideLength * 2;
+        leftViewTriggerEnd = maxSlideLength * 6;
+        // leftViewTriggerEnd = maxSlideLength * 2;
+
+        // rightViewTriggerStart = screenWidth - maxSlideLength * 2;
+        rightViewTriggerStart = screenWidth - maxSlideLength * 6;
         rightViewTriggerEnd = screenWidth - sideSlideLength / 2;
+
+        XLog.i("左侧：" + leftViewTriggerStart + " , " + leftViewTriggerEnd);
+        XLog.i("右侧：" + rightViewTriggerStart + " , " + rightViewTriggerEnd);
 
         mAnimation = ValueAnimator.ofFloat(0f, 1f);
         mAnimation.setDuration(mDuration);
         mAnimation.setInterpolator(new DecelerateInterpolator());
-        mAnimUpdateListener = new AnimUpdateListener(this);
-        mAnimListenerAdapter = new AnimListenerAdapter(this);
+        // mAnimUpdateListener = new AnimUpdateListener(this);
+        // mAnimListenerAdapter = new AnimListenerAdapter(this);
     }
 
-
-//    public SlideLayout setAllowEdgeLeft(boolean allowEdgeLeft) {
-//        isAllowEdgeLeft = allowEdgeLeft;
-//        slideBackIconViewLeft = new SlideBackIconView(context);
-//        slideBackIconViewLeft.setBackViewHeight(backViewHeight);
-//        slideBackIconViewLeft.setArrowSize(arrowSize);
-//        slideBackIconViewLeft.setArrowColor(arrowColor);
-//        slideBackIconViewLeft.setMaxSlideLength(maxSlideLength);
-//        addView(slideBackIconViewLeft);
-//        return this;
-//    }
-//
-//    public SlideLayout setAllowEdgeRight(boolean allowEdgeRight) {
-//        isAllowEdgeRight = allowEdgeRight;
-//        slideBackIconViewRight = new SlideBackIconView(context);
-//        slideBackIconViewRight.setBackViewHeight(backViewHeight);
-//        slideBackIconViewRight.setArrowSize(arrowSize);
-//        slideBackIconViewRight.setArrowColor(arrowColor);
-//        slideBackIconViewRight.setMaxSlideLength(maxSlideLength);
-//        // 右侧侧滑 需要旋转180°
-//        slideBackIconViewRight.setRotationY(180);
-//        addView(slideBackIconViewRight);
-//        return this;
-//    }
+    // public SlideLayout setAllowEdgeLeft(boolean allowEdgeLeft) {
+    //     isAllowEdgeLeft = allowEdgeLeft;
+    //     slideBackIconViewLeft = new SlideBackIconView(context);
+    //     slideBackIconViewLeft.setBackViewHeight(backViewHeight);
+    //     slideBackIconViewLeft.setArrowSize(arrowSize);
+    //     slideBackIconViewLeft.setArrowColor(arrowColor);
+    //     slideBackIconViewLeft.setMaxSlideLength(maxSlideLength);
+    //     addView(slideBackIconViewLeft);
+    //     return this;
+    // }
+    //
+    // public SlideLayout setAllowEdgeRight(boolean allowEdgeRight) {
+    //     isAllowEdgeRight = allowEdgeRight;
+    //     slideBackIconViewRight = new SlideBackIconView(context);
+    //     slideBackIconViewRight.setBackViewHeight(backViewHeight);
+    //     slideBackIconViewRight.setArrowSize(arrowSize);
+    //     slideBackIconViewRight.setArrowColor(arrowColor);
+    //     slideBackIconViewRight.setMaxSlideLength(maxSlideLength);
+    //     // 右侧侧滑 需要旋转180°
+    //     slideBackIconViewRight.setRotationY(180);
+    //     addView(slideBackIconViewRight);
+    //     return this;
+    // }
 
     /**
      * 回调 适用于新的左右模式
@@ -237,6 +244,7 @@ public class SlideLayout extends FrameLayout {
     private boolean isSideSlideLeft = false;  // 是否从左边边缘开始滑动
     private boolean isSideSlideRight = false;  // 是否从右边边缘开始滑动
     private float moveXLength = 0; // 位移的X轴距离
+    private boolean anode = true; // 是否大于0
 
     @Override
     public boolean onTouchEvent(MotionEvent ev) {
@@ -248,15 +256,18 @@ public class SlideLayout extends FrameLayout {
                 if (isSideSlideLeft || isSideSlideRight) {
                     // 从边缘开始滑动
                     // 获取X轴位移距离
-                    moveXLength = Math.abs(ev.getRawX() - mDownX);
-                    //KLog.e("响应手势，移动B：" + moveXLength+ " ,  " +  mDownX );
+                    // moveXLength = Math.abs(ev.getRawX() - mDownX);
+                    moveXLength = ev.getRawX() - mDownX;
+                    anode = moveXLength > 0;
+                    // XLog.d("响应手势，移动B：" + moveXLength+ " ,  " +  mDownX );
+                    moveXLength = Math.abs(moveXLength);
                     if (moveXLength / dragRate <= maxSlideLength) {
                         // 如果位移距离在可拉动距离内，更新SlideBackIconView的当前拉动距离并重绘，区分左右
-                        if (isAllowEdgeLeft && isSideSlideLeft) {
+                        if (isAllowEdgeLeft && isSideSlideLeft && anode) {
                             slideBackIconViewLeft.updateSlideLength(moveXLength / dragRate);
                             //KLog.e("响应手势，移动B：" + slideBackIconViewLeft.getHeight()+ " ,  " +  slideBackIconViewLeft.getVisibility() );
                             callBack.onViewSlide(EDGE_LEFT, (int) (moveXLength / dragRate));
-                        } else if (isAllowEdgeRight && isSideSlideRight) {
+                        } else if (isAllowEdgeRight && isSideSlideRight && !anode) {
                             slideBackIconViewRight.updateSlideLength(moveXLength / dragRate);
                             callBack.onViewSlide(EDGE_RIGHT, (int) (moveXLength / dragRate));
                         }
@@ -342,8 +353,8 @@ public class SlideLayout extends FrameLayout {
 
 
     private ValueAnimator mAnimation;
-    private AnimUpdateListener mAnimUpdateListener;
-    private AnimListenerAdapter mAnimListenerAdapter;
+    // private AnimUpdateListener mAnimUpdateListener;
+    // private AnimListenerAdapter mAnimListenerAdapter;
     private float mFactor; // 进度因子:0-1
     private boolean mIsRunning;
     private int mCurX, mCurY, mDst;

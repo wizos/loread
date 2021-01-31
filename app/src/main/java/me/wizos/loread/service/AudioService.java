@@ -24,9 +24,9 @@ import java.io.IOException;
 import java.util.Locale;
 
 import me.wizos.loread.App;
-import me.wizos.loread.config.TestConfig;
+import me.wizos.loread.config.Test;
 import me.wizos.loread.db.Article;
-import me.wizos.loread.utils.ArticleUtil;
+import me.wizos.loread.utils.ArticleUtils;
 
 import static android.media.AudioAttributes.USAGE_MEDIA;
 import static android.media.AudioManager.AUDIOFOCUS_GAIN;
@@ -77,7 +77,7 @@ public class AudioService extends Service {
 
 //    @SuppressLint("SdCardPath")
     public void speak(){
-        Article article = App.i().articlesAdapter.get(articleNo);
+        Article article = App.i().articlesAdapter.getById(articleNo);
 
         XLog.e("准备播放" + article.getId() + " , " + utteranceId + " , " + textToSpeech.isSpeaking());
         if ( textToSpeech.isSpeaking() && article.getId().equalsIgnoreCase(utteranceId) ){
@@ -85,9 +85,9 @@ public class AudioService extends Service {
         }
         utteranceId = article.getId();
 
-        String content = ArticleUtil.getContentForSpeak(article);
+        String content = ArticleUtils.getContentForSpeak(article);
 
-        if(TestConfig.i().ttsFile){
+        if(Test.i().ttsFile){
             File file = new File(App.i().getExternalCacheDir() + "/" + utteranceId + ".wav");
             textToSpeech.synthesizeToFile(content,null,file,utteranceId);
             //textToSpeech.synthesizeToFile(content,null,new File("/mnt/sdcard/speak.wav"),"test");

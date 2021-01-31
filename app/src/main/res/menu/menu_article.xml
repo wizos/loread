@@ -10,6 +10,14 @@
         android:enabled="true"
         android:visible="true"
         app:showAsAction="ifRoom" />
+    <!--<item-->
+    <!--    android:id="@+id/article_menu_readability"-->
+    <!--    android:icon="@drawable/ic_chrome_reader"-->
+    <!--    android:title="@string/readability"-->
+    <!--    android:enabled="true"-->
+    <!--    android:visible="false"-->
+    <!--    tools:visible="true"-->
+    <!--    app:showAsAction="ifRoom" />-->
     <item
         android:id="@+id/article_menu_speak"
         android:title="朗读"

@@ -19,7 +19,6 @@ import me.wizos.loread.view.fastscroll.FastScrollDelegate.FastScrollable;
  * @author Mixiaoxiao 2016-08-31
  */
 public class FastScrollWebView extends WebView implements FastScrollable {
-
     private FastScrollDelegate mFastScrollDelegate;
 
     // ===========================================================
@@ -53,6 +52,7 @@ public class FastScrollWebView extends WebView implements FastScrollable {
 
     private void createFastScrollDelegate(Context context) {
         mFastScrollDelegate = new FastScrollDelegate.Builder(this).build();
+        DENSITY = context.getResources().getDisplayMetrics().density;
     }
 
     // ===========================================================
@@ -61,12 +61,9 @@ public class FastScrollWebView extends WebView implements FastScrollable {
 
     @Override
     public boolean onInterceptTouchEvent(MotionEvent ev) {
-//        KLog.e("拦截手势操作："  );
         if (mFastScrollDelegate.onInterceptTouchEvent(ev)) {
-//            KLog.e("拦截手势操作结果为 true"  );
             return true;
         }
-//        KLog.e("拦截手势操作结果为 false"  );
         return super.onInterceptTouchEvent(ev);
     }
 
@@ -74,10 +71,8 @@ public class FastScrollWebView extends WebView implements FastScrollable {
     @Override
     public boolean onTouchEvent(MotionEvent event) {
         if (mFastScrollDelegate.onTouchEvent(event)) {
-//            KLog.e("执行父onTouchEventInternal为   true"  );
             return true;
         }
-//        KLog.e("执行父onTouchEventInternal为    false"  );
         return super.onTouchEvent(event);
     }
 
@@ -163,4 +158,18 @@ public class FastScrollWebView extends WebView implements FastScrollable {
         newDelegate.onAttachedToWindow();
     }
 
+
+    private int lastContentHeight = 0;
+    public float DENSITY = 1f;
+    @Override
+    protected void onDraw(Canvas canvas) {
+        super.onDraw(canvas);
+        if (getContentHeight() != lastContentHeight) {
+            lastContentHeight = getContentHeight();
+        }
+    }
+
+    public int getActualContentHeight(){
+        return (int)(lastContentHeight * DENSITY);
+    }
 }

@@ -1,0 +1,18 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context=".activity.TriggerRuleManagerActivity">
+
+    <item
+        android:id="@+id/action_manager_menu_create_rule_global"
+        android:icon="@drawable/ic_edit"
+        android:title="@string/create_global_rule"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/action_manager_menu_create_rule"
+        android:icon="@drawable/ic_edit"
+        android:title="@string/create_rule"
+        app:showAsAction="never" />
+
+</menu>

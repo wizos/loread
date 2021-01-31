@@ -7,8 +7,8 @@ import androidx.annotation.NonNull;
 import java.io.IOException;
 
 import me.wizos.loread.Contract;
-import me.wizos.loread.config.LinkRewriteConfig;
 import me.wizos.loread.config.NetworkUserAgentConfig;
+import me.wizos.loread.config.url_rewrite.UrlRewriteConfig;
 import me.wizos.loread.utils.StringUtils;
 import okhttp3.Interceptor;
 import okhttp3.Request;
@@ -31,7 +31,7 @@ public class RelyInterceptor implements Interceptor {
         Request.Builder builder = request.newBuilder();
         String url = request.url().toString();
         boolean hasNew = false;
-        String newUrl = LinkRewriteConfig.i().getRedirectUrl(url).trim();
+        String newUrl = UrlRewriteConfig.i().getRedirectUrl(url);
         if (!StringUtils.isEmpty(newUrl)) {
             // 创建一个新请求，并相应地修改它
             builder.url(newUrl);

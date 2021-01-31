@@ -15,7 +15,8 @@ import java.util.List;
 public interface CategoryDao {
     @Query("SELECT * FROM category WHERE uid = :uid ORDER BY title COLLATE NOCASE ASC")
     List<Category> getAll(String uid);
-
+    @Query("SELECT * FROM category WHERE uid = :uid ORDER BY title COLLATE NOCASE ASC")
+    LiveData<List<Category>> getAllLiveData(String uid);
 
 
     @Query("SELECT id,title,unreadCount as count FROM category WHERE uid = :uid ORDER BY title COLLATE NOCASE ASC")
@@ -32,10 +33,6 @@ public interface CategoryDao {
     List<Collection> getCategoriesAllCount(String uid);
     @Query("SELECT id,title,allCount as count FROM category WHERE uid = :uid ORDER BY title COLLATE NOCASE ASC")
     LiveData<List<Collection>> getCategoriesAllCountLiveData(String uid);
-
-
-    @Query("SELECT * FROM category WHERE uid = :uid ORDER BY title COLLATE NOCASE ASC")
-    LiveData<List<Category>> getAllLiveData(String uid);
 
 
     @Query("SELECT category.* FROM category " +

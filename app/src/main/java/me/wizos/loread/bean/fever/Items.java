@@ -2,9 +2,11 @@ package me.wizos.loread.bean.fever;
 
 import com.google.gson.annotations.SerializedName;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.List;
 
-public class Items extends BaseResponse {
+public class Items extends FeverResponse {
     // 获取数据库中所有的项
     @SerializedName("total_items")
     private String totalItems;
@@ -21,6 +23,7 @@ public class Items extends BaseResponse {
         return items;
     }
 
+    @NotNull
     @Override
     public String toString() {
         return "Items{" +

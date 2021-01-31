@@ -21,6 +21,23 @@
     <!--</LinearLayout>-->
 
     <Button
+        android:id="@+id/setting_export_opml"
+        android:textSize="18sp"
+        android:textColor="@color/material_red_400"
+        style="@style/SettingItem"
+        android:layout_gravity="center"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingTop="5dp"
+        android:paddingBottom="5dp"
+        android:gravity="center"
+        android:onClick="onClickExportOPML"
+        android:text="导出 OPML"
+        android:background="?android:attr/selectableItemBackground"
+        android:clickable="true"
+        android:focusable="true" />
+
+    <Button
         android:id="@+id/setting_backup"
         android:textSize="18sp"
         android:textColor="@color/material_red_400"
@@ -32,7 +49,7 @@
         android:paddingBottom="5dp"
         android:gravity="center"
         android:onClick="onClickBackup"
-        android:text="备份数据"
+        android:text="备份数据库"
         android:background="?android:attr/selectableItemBackground"
         android:clickable="true"
         android:focusable="true" />
@@ -49,7 +66,7 @@
         android:paddingBottom="5dp"
         android:gravity="center"
         android:onClick="onClickRestore"
-        android:text="恢复数据"
+        android:text="恢复数据库"
         android:background="?android:attr/selectableItemBackground"
         android:clickable="true"
         android:focusable="true" />
@@ -84,13 +101,15 @@
         style="@style/SettingItem"
         android:padding="15dp"/>
 
+
     <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="match_parent">
         <LinearLayout
             android:orientation="vertical"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            android:layout_height="wrap_content"
+            tools:ignore="WebViewLayout">
 
             <Button
                 android:text="打开 URL"
@@ -100,6 +119,15 @@
                 style="@style/SettingItem"
                 android:gravity="center_vertical"
                 android:layout_gravity="center_vertical"/>
+            <Button
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                style="@style/SettingItem"
+                android:onClick="openLinkInNewPage"
+                android:gravity="center_vertical"
+                android:layout_gravity="center_vertical"
+                android:text="打开 URL(WEB2)"/>
+
             <Button
                 android:text="打印相应 Activity"
                 android:textAllCaps="false"
@@ -123,6 +151,7 @@
                 style="@style/SettingItem"
                 android:gravity="center_vertical"
                 android:layout_gravity="center_vertical"/>
+
             <!--<Button-->
             <!--    android:text="全文搜索"-->
             <!--    android:onClick="onClickSearch"-->
@@ -170,15 +199,6 @@
                 style="@style/SettingItem"
                 android:text="更新文章的爬取时间为发布时间"/>
 
-            <Button
-                android:text="根据action处理文章"
-                android:textAllCaps="false"
-                android:onClick="actionArticle"
-                android:layout_height="50dp"
-                style="@style/SettingItem"
-                android:gravity="center_vertical"
-                android:layout_gravity="center_vertical"/>
-
             <Space
                 android:layout_width="match_parent"
                 android:layout_height="20dp"/>
@@ -220,6 +240,40 @@
                 android:gravity="center_vertical"
                 android:layout_gravity="center_vertical"
                 android:text="关闭 同步任务"/>
+
+
+            <Space
+                android:layout_width="match_parent"
+                android:layout_height="20dp"/>
+
+            <!--<Button-->
+            <!--    android:layout_width="match_parent"-->
+            <!--    android:layout_height="50dp"-->
+            <!--    style="@style/SettingItem"-->
+            <!--    android:onClick="openActionActivity"-->
+            <!--    android:gravity="center_vertical"-->
+            <!--    android:layout_gravity="center_vertical"-->
+            <!--    android:text="打开文章规则配置页面"/>-->
+
+            <!--<Button-->
+            <!--    android:layout_width="match_parent"-->
+            <!--    android:layout_height="50dp"-->
+            <!--    style="@style/SettingItem"-->
+            <!--    android:onClick="openActionManagerActivity"-->
+            <!--    android:gravity="center_vertical"-->
+            <!--    android:layout_gravity="center_vertical"-->
+            <!--    android:text="打开文章规则管理页面"/>-->
+
+            <!--<Button-->
+            <!--    android:text="根据action处理文章"-->
+            <!--    android:textAllCaps="false"-->
+            <!--    android:onClick="actionArticle"-->
+            <!--    android:layout_height="50dp"-->
+            <!--    style="@style/SettingItem"-->
+            <!--    android:gravity="center_vertical"-->
+            <!--    android:layout_gravity="center_vertical"/>-->
+
+
         </LinearLayout>
     </ScrollView>
 

@@ -32,6 +32,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -42,7 +43,7 @@ import me.wizos.loread.R;
 import me.wizos.loread.db.CoreDB;
 import me.wizos.loread.db.CorePref;
 import me.wizos.loread.db.User;
-import me.wizos.loread.log.CoreLog;
+import me.wizos.loread.log.LogHelper;
 import me.wizos.loread.view.colorful.Colorful;
 
 /**
@@ -100,7 +101,7 @@ public class SettingActivity extends BaseActivity {
     }
 
     private void initView() {
-        SwitchButton downImgWifi, openLinkMode, autoToggleTheme, enableLogging;
+        SwitchButton openLinkMode, autoToggleTheme, enableLogging, enableUpdate;
         // autoSyncSB = findViewById(R.id.setting_auto_sync_sb);
         // autoSyncOnWifi.findViewById(R.id.setting_auto_sync_on_wifi_sb);
         // autoSyncFrequency.findViewById(R.id.setting_auto_sync_on_wifi_sb);
@@ -114,10 +115,6 @@ public class SettingActivity extends BaseActivity {
                 toggleAutoSyncItem();
             }
         });
-
-
-        downImgWifi = findViewById(R.id.setting_down_img_sb);
-        downImgWifi.setChecked(App.i().getUser().isDownloadImgOnlyWifi());
 
         clearBeforeDaySummary = findViewById(R.id.setting_clear_day_summary);
         clearBeforeDaySummary.setText(getResources().getString(R.string.clear_day_summary, String.valueOf(App.i().getUser().getCachePeriod())));
@@ -137,6 +134,9 @@ public class SettingActivity extends BaseActivity {
 
         enableLogging = findViewById(R.id.setting_enable_log_sb);
         enableLogging.setChecked(CorePref.i().globalPref().getBoolean(Contract.ENABLE_LOGGING, false));
+
+        enableUpdate = findViewById(R.id.setting_enable_check_app_update_sb);
+        enableUpdate.setChecked(CorePref.i().globalPref().getBoolean(Contract.ENABLE_CHECK_UPDATE, false));
 
         TextView versionSummary = findViewById(R.id.setting_about_summary);
         PackageManager manager = this.getPackageManager();
@@ -174,13 +174,16 @@ public class SettingActivity extends BaseActivity {
             case R.id.setting_auto_toggle_theme_sb:
                 user.setAutoToggleTheme(v.isChecked());
                 break;
-            case R.id.setting_down_img_sb:
-                user.setDownloadImgOnlyWifi(v.isChecked());
-                break;
+            // case R.id.setting_down_img_sb:
+            //     user.setDownloadImgOnlyWifi(v.isChecked());
+            //     break;
             case R.id.setting_enable_log_sb:
                 CorePref.i().globalPref().putBoolean(Contract.ENABLE_LOGGING, v.isChecked()).commit();
                 // XLog.i("日志：" + MMKV.defaultMMKV().putBoolean(Contract.ENABLE_LOGGING, v.isChecked()).commit());
-                CoreLog.init(this, v.isChecked());
+                LogHelper.init(this, v.isChecked());
+                break;
+            case R.id.setting_enable_check_app_update_sb:
+                CorePref.i().globalPref().putBoolean(Contract.ENABLE_CHECK_UPDATE, v.isChecked()).commit();
                 break;
             default:
                 break;
@@ -264,7 +267,22 @@ public class SettingActivity extends BaseActivity {
                 })
                 .show();
     }
+    public void openRuleUpdate(View view){
+        Intent intent = new Intent(this, RuleUpdateActivity.class);
+        startActivity(intent);
+        overridePendingTransition(R.anim.in_from_bottom, R.anim.fade_out);
+    }
 
+    public void openActionManager(View view) {
+        Intent intent = new Intent(this, TriggerRuleManagerActivity.class);
+        startActivity(intent);
+        overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
+    }
+    public void openTestUrlRewrite(View view){
+        Intent intent = new Intent(this, UrlRewriteActivity.class);
+        startActivity(intent);
+        overridePendingTransition(R.anim.in_from_bottom, R.anim.fade_out);
+    }
 
     public void showAbout(View view) {
         new MaterialDialog.Builder(this)
@@ -293,7 +311,7 @@ public class SettingActivity extends BaseActivity {
      * 调用 joinQQGroup(XPc8IGwXCDTPXItxM33eog5QLpLFdDrf) 即可发起手Q客户端申请加群 知微(106211435)
      *
      * @param view 对应的控件
-     * @return 返回true表示呼起手Q成功，返回fals表示呼起失败
+     * 返回true表示呼起手Q成功，返回fals表示呼起失败
      ******************/
     public void joinQQGroup(View view) {
         Intent intent = new Intent();
@@ -317,7 +335,7 @@ public class SettingActivity extends BaseActivity {
         Intent intent = new Intent(this, ProviderActivity.class);
         startActivity(intent);
         finish();
-        overridePendingTransition(R.anim.fade_in, R.anim.out_from_bottom);
+        overridePendingTransition(R.anim.in_from_bottom, R.anim.fade_out);
     }
 
     public void escAccount() {
@@ -396,6 +414,7 @@ public class SettingActivity extends BaseActivity {
                 case Contract.PROVIDER_TINYRSS:
                     iconRefs = R.drawable.logo_tinytinyrss;
                     break;
+                case Contract.PROVIDER_FEVER_TINYRSS:
                 case Contract.PROVIDER_FEVER:
                     iconRefs = R.drawable.logo_fever;
                     break;
@@ -423,16 +442,6 @@ public class SettingActivity extends BaseActivity {
                 .show();
     }
 
-    private void initToolbar() {
-        Toolbar toolbar = findViewById(R.id.setting_toolbar);
-        setSupportActionBar(toolbar);
-        getSupportActionBar().setHomeButtonEnabled(true); // 这个小于4.0版本是默认为true，在4.0及其以上是false。该方法的作用：决定左上角的图标是否可以点击(没有向左的小图标)，true 可点
-        getSupportActionBar().setDisplayHomeAsUpEnabled(true); // 决定左上角图标的左侧是否有向左的小箭头，true 有小箭头
-        getSupportActionBar().setDisplayShowTitleEnabled(true);
-        // setDisplayShowHomeEnabled(true)   //使左上角图标是否显示，如果设成false，则没有程序图标，仅仅就个标题，否则，显示应用程序图标，对应id为android.R.id.home，对应ActionBar.DISPLAY_SHOW_HOME
-        // setDisplayShowCustomEnabled(true)  // 使自定义的普通View能在title栏显示，即actionBar.setCustomView能起作用，对应ActionBar.DISPLAY_SHOW_CUSTOM
-    }
-
     public void onClickSendLogFile(View view) {
         String fileName = new SimpleDateFormat("yyyy-MM-dd", Locale.US).format(new Date());
         File logFile = new File(getExternalCacheDir()  +"/log/" + fileName);
@@ -455,6 +464,16 @@ public class SettingActivity extends BaseActivity {
     }
 
 
+    private void initToolbar() {
+        Toolbar toolbar = findViewById(R.id.setting_toolbar);
+        setSupportActionBar(toolbar);
+        Objects.requireNonNull(getSupportActionBar()).setHomeButtonEnabled(true); // 这个小于4.0版本是默认为true，在4.0及其以上是false。该方法的作用：决定左上角的图标是否可以点击(没有向左的小图标)，true 可点
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true); // 决定左上角图标的左侧是否有向左的小箭头，true 有小箭头
+        getSupportActionBar().setDisplayShowTitleEnabled(true);
+        // setDisplayShowHomeEnabled(true)   //使左上角图标是否显示，如果设成false，则没有程序图标，仅仅就个标题，否则，显示应用程序图标，对应id为android.R.id.home，对应ActionBar.DISPLAY_SHOW_HOME
+        // setDisplayShowCustomEnabled(true)  // 使自定义的普通View能在title栏显示，即actionBar.setCustomView能起作用，对应ActionBar.DISPLAY_SHOW_CUSTOM
+    }
+
     @Override
     protected Colorful.Builder buildColorful(Colorful.Builder mColorfulBuilder) {
         mColorfulBuilder
@@ -471,7 +490,7 @@ public class SettingActivity extends BaseActivity {
                 // .textColor(R.id.setting_sync_frequency_summary, R.attr.setting_tips)
                 .textColor(R.id.setting_clear_day_title, R.attr.setting_title)
                 .textColor(R.id.setting_clear_day_summary, R.attr.setting_tips)
-                .textColor(R.id.setting_down_img_title, R.attr.setting_title)
+                // .textColor(R.id.setting_down_img_title, R.attr.setting_title)
 
                 // .textColor(R.id.setting_scroll_mark_title, R.attr.setting_title)
                 // .textColor(R.id.setting_scroll_mark_tips, R.attr.setting_tips)

@@ -27,8 +27,8 @@ import me.wizos.loread.R;
 import me.wizos.loread.activity.login.LoginResult;
 import me.wizos.loread.bean.feedly.CategoryItem;
 import me.wizos.loread.bean.feedly.input.EditFeed;
-import me.wizos.loread.bean.fever.BaseResponse;
 import me.wizos.loread.bean.fever.Feeds;
+import me.wizos.loread.bean.fever.FeverResponse;
 import me.wizos.loread.bean.fever.Group;
 import me.wizos.loread.bean.fever.GroupFeeds;
 import me.wizos.loread.bean.fever.Groups;
@@ -38,7 +38,6 @@ import me.wizos.loread.bean.fever.MarkAction;
 import me.wizos.loread.bean.fever.SavedItemIds;
 import me.wizos.loread.bean.fever.UnreadItemIds;
 import me.wizos.loread.bean.ttrss.request.Login;
-import me.wizos.loread.config.ArticleActionConfig;
 import me.wizos.loread.db.Article;
 import me.wizos.loread.db.Category;
 import me.wizos.loread.db.CoreDB;
@@ -47,8 +46,9 @@ import me.wizos.loread.db.FeedCategory;
 import me.wizos.loread.network.HttpClientManager;
 import me.wizos.loread.network.SyncWorker;
 import me.wizos.loread.network.callback.CallbackX;
-import me.wizos.loread.utils.EncryptUtil;
+import me.wizos.loread.utils.EncryptUtils;
 import me.wizos.loread.utils.StringUtils;
+import me.wizos.loread.utils.TriggerRuleUtils;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -60,13 +60,9 @@ import static me.wizos.loread.utils.StringUtils.getString;
 /**
  * Created by Wizos on 2019/2/8.
  */
-public class FeverApi extends AuthApi<Feed, CategoryItem> implements ILogin {
+public class FeverApi extends AuthApi implements ILogin {
     private FeverService service;
     int fetchContentCntForEach = 50; // 每次获取内容的数量
-
-    // public FeverApi() {
-    //     this(App.i().getUser().getHost());
-    // }
 
     public FeverApi(@NotNull String baseUrl) {
         String tempBaseUrl;
@@ -90,16 +86,13 @@ public class FeverApi extends AuthApi<Feed, CategoryItem> implements ILogin {
     }
 
     public LoginResult login(String accountId, String accountPd) throws IOException {
-        Login loginParam = new Login();
-        loginParam.setUser(accountId);
-        loginParam.setPassword(accountPd);
-        String auth = EncryptUtil.MD5(accountId + ":" + accountPd);
-        BaseResponse loginResultResponse = service.login(auth).execute().body();
+        String auth = EncryptUtils.MD5(accountId + ":" + accountPd);
+        FeverResponse loginResultResponse = service.login(auth).execute().body();
         LoginResult loginResult = new LoginResult();
-        if (loginResultResponse != null && loginResultResponse.getAuth() == 1) {
+        if (loginResultResponse != null && loginResultResponse.isSuccessful()) {
             return loginResult.setSuccess(true).setData(auth);
         } else {
-            return loginResult.setSuccess(false).setData("登录失败");
+            return loginResult.setSuccess(false).setData(getString(R.string.login_failure_please_check_account));
         }
     }
 
@@ -107,12 +100,12 @@ public class FeverApi extends AuthApi<Feed, CategoryItem> implements ILogin {
         Login loginParam = new Login();
         loginParam.setUser(account);
         loginParam.setPassword(password);
-        String auth = EncryptUtil.MD5(account + ":" + password);
-        service.login(auth).enqueue(new retrofit2.Callback<BaseResponse>() {
+        String auth = EncryptUtils.MD5(account + ":" + password);
+        service.login(auth).enqueue(new retrofit2.Callback<FeverResponse>() {
             @Override
-            public void onResponse(retrofit2.Call<BaseResponse> call, Response<BaseResponse> response) {
+            public void onResponse(retrofit2.Call<FeverResponse> call, Response<FeverResponse> response) {
                 if (response.isSuccessful()) {
-                    BaseResponse loginResponse = response.body();
+                    FeverResponse loginResponse = response.body();
                     if (loginResponse != null && loginResponse.isSuccessful()) {
                         cb.onSuccess(auth);
                         return;
@@ -124,7 +117,7 @@ public class FeverApi extends AuthApi<Feed, CategoryItem> implements ILogin {
             }
 
             @Override
-            public void onFailure(retrofit2.Call<BaseResponse> call, Throwable t) {
+            public void onFailure(retrofit2.Call<FeverResponse> call, Throwable t) {
                 cb.onFailure(App.i().getString(R.string.login_failed_reason, t.getMessage()));
             }
         });
@@ -164,22 +157,6 @@ public class FeverApi extends AuthApi<Feed, CategoryItem> implements ILogin {
                 }
                 category = group.convert();
                 categories.add(category);
-
-                // if(!groupFeedsMap.containsKey(group.getId())){
-                //     continue;
-                // }
-                // tmp = groupFeedsMap.get(group.getId());
-                // if(TextUtils.isEmpty(tmp)){
-                //     continue;
-                // }
-                // feedIds = tmp.split(",");
-                // if (feedIds.length == 0) {
-                //     continue;
-                // }
-                // for (String feedId : feedIds) {
-                //     feedCategoryTmp = new FeedCategory(uid, feedId, category.getId());
-                //     feedCategories.add(feedCategoryTmp);
-                // }
             }
 
             Iterator<GroupFeeds> groupFeedsIterator = groupsResponse.getFeedsGroups().iterator();
@@ -264,12 +241,11 @@ public class FeverApi extends AuthApi<Feed, CategoryItem> implements ILogin {
                 }
                 List<Item> itemList = items.getItems();
                 articles = new ArrayList<>(itemList.size());
-                long syncTimeMillis = System.currentTimeMillis();
                 for (Item item : itemList) {
                     articles.add(item.convert(new ArticleChanger() {
                         @Override
                         public Article change(Article article) {
-                            article.setCrawlDate(syncTimeMillis);
+                            // article.setCrawlDate(0);
                             article.setUid(uid);
                             return article;
                         }
@@ -282,19 +258,15 @@ public class FeverApi extends AuthApi<Feed, CategoryItem> implements ILogin {
 
             LiveEventBus.get(SyncWorker.SYNC_PROCESS_FOR_SUBTITLE).post(getString(R.string.clear_article));
             deleteExpiredArticles();
-            handleDuplicateArticles();
-            handleCrawlDate();
-            updateCollectionCount();
 
             // 获取文章全文
             LiveEventBus.get(SyncWorker.SYNC_PROCESS_FOR_SUBTITLE).post(getString(R.string.fetch_article_full_content));
             fetchReadability(uid, startSyncTimeMillis);
             // 执行文章自动处理脚本
-            ArticleActionConfig.i().exeRules(uid, startSyncTimeMillis);
+            TriggerRuleUtils.exeAllRules(uid, startSyncTimeMillis);
             // 清理无文章的tag
             //clearNotArticleTags(uid);
 
-            LiveEventBus.get(SyncWorker.SYNC_PROCESS_FOR_SUBTITLE).post(null);
             // 提示更新完成
             LiveEventBus.get(SyncWorker.NEW_ARTICLE_NUMBER).post(hadFetchCount);
         } catch (NullPointerException | IllegalStateException e) {
@@ -311,6 +283,10 @@ public class FeverApi extends AuthApi<Feed, CategoryItem> implements ILogin {
             handleException(e, "同步失败：Runtime异常");
         }
         App.i().isSyncing = false;
+        handleDuplicateArticles();
+        handleCrawlDate();
+        updateCollectionCount();
+        LiveEventBus.get(SyncWorker.SYNC_PROCESS_FOR_SUBTITLE).post(null);
     }
 
     private void handleException(Exception e, String msg) {
@@ -321,8 +297,6 @@ public class FeverApi extends AuthApi<Feed, CategoryItem> implements ILogin {
         } else {
             ToastUtils.show(msg);
         }
-        updateCollectionCount();
-        LiveEventBus.get(SyncWorker.SYNC_PROCESS_FOR_SUBTITLE).post(null);
     }
 
     @Override
@@ -350,9 +324,9 @@ public class FeverApi extends AuthApi<Feed, CategoryItem> implements ILogin {
 
 
     private void markArticles(String ids, String action, CallbackX cb) {
-        service.markItemsByIds(getAuthorization(), ids, action).enqueue(new Callback<BaseResponse>() {
+        service.markItemsByIds(getAuthorization(), ids, action).enqueue(new Callback<FeverResponse>() {
             @Override
-            public void onResponse(@NotNull Call<BaseResponse> call, @NotNull Response<BaseResponse> response) {
+            public void onResponse(@NotNull Call<FeverResponse> call, @NotNull Response<FeverResponse> response) {
                 if (response.isSuccessful()) {
                     cb.onSuccess(null);
                 } else {
@@ -361,7 +335,7 @@ public class FeverApi extends AuthApi<Feed, CategoryItem> implements ILogin {
             }
 
             @Override
-            public void onFailure(@NotNull Call<BaseResponse> call, @NotNull Throwable t) {
+            public void onFailure(@NotNull Call<FeverResponse> call, @NotNull Throwable t) {
                 cb.onFailure("修改失败，原因未知");
             }
         });
@@ -387,106 +361,4 @@ public class FeverApi extends AuthApi<Feed, CategoryItem> implements ILogin {
     public void markArticleUnstar(String articleId, CallbackX cb) {
         markArticles(articleId, MarkAction.UNSAVED, cb);
     }
-
-    // private HashSet<String> handleUnreadRefs(String[] ids) {
-    //     XLog.i("处理未读资源：" + ids.length);
-    //     String uid = App.i().getUser().getId();
-    //
-    //     List<Article> localUnreadArticles = CoreDB.i().articleDao().getUnreadNoOrder(uid);
-    //     Map<String, Article> localUnreadMap = new ArrayMap<>(localUnreadArticles.size());
-    //     for (Article article : localUnreadArticles) {
-    //         localUnreadMap.put(article.getId(), article);
-    //     }
-    //
-    //     List<Article> localReadArticles = CoreDB.i().articleDao().getReadNoOrder(uid);
-    //     Map<String, Article> localReadMap = new ArrayMap<>(localReadArticles.size());
-    //     for (Article article : localReadArticles) {
-    //         localReadMap.put(article.getId(), article);
-    //     }
-    //
-    //     List<Article> changedArticles = new ArrayList<>();
-    //     // 筛选下来，最终要去云端获取内容的未读Refs的集合
-    //     HashSet<String> tempUnreadIds = new HashSet<>(ids.length);
-    //     // 数据量小的一方
-    //     Article article;
-    //     ArraySet<String> articleIds = new ArraySet<>(Arrays.asList(ids));
-    //     for (String articleId : articleIds) {
-    //         article = localUnreadMap.get(articleId);
-    //         if (article == null) {
-    //             article = localReadMap.get(articleId);
-    //             if (article == null) {
-    //                 // 本地无，而云端有，加入要请求的未读资源
-    //                 tempUnreadIds.add(articleId);
-    //             } else {
-    //                 article.setReadStatus(App.STATUS_UNREAD);
-    //                 changedArticles.add(article);
-    //                 localReadMap.remove(articleId);
-    //             }
-    //         } else {
-    //             localUnreadMap.remove(articleId);
-    //         }
-    //     }
-    //     for (Map.Entry<String, Article> entry : localUnreadMap.entrySet()) {
-    //         if (entry.getKey() != null) {
-    //             article = localUnreadMap.get(entry.getKey());
-    //             // 本地未读设为已读
-    //             article.setReadStatus(App.STATUS_READED);
-    //             changedArticles.add(article);
-    //         }
-    //     }
-    //
-    //     CoreDB.i().articleDao().update(changedArticles);
-    //     return tempUnreadIds;
-    // }
-    //
-    //
-    // private HashSet<String> handleStaredRefs(String[] ids) {
-    //     String uid = App.i().getUser().getId();
-    //
-    //     List<Article> localStarArticles = CoreDB.i().articleDao().getStaredNoOrder(uid);
-    //     ArrayMap<String, Article> localStarMap = new ArrayMap<>(localStarArticles.size());
-    //     // 第1步，遍历数据量大的一方A，将其比对项目放入Map中
-    //     for (Article article : localStarArticles) {
-    //         localStarMap.put(article.getId(), article);
-    //     }
-    //
-    //     List<Article> localUnstarArticles = CoreDB.i().articleDao().getUnStarNoOrder(uid);
-    //     ArrayMap<String, Article> localUnstarMap = new ArrayMap<>(localUnstarArticles.size());
-    //     for (Article article : localUnstarArticles) {
-    //         localUnstarMap.put(article.getId(), article);
-    //     }
-    //
-    //     List<Article> changedArticles = new ArrayList<>();
-    //     HashSet<String> tempStarredIds = new HashSet<>(ids.length);
-    //     // 第2步，遍历数据量小的一方B。到Map中找，是否含有b中的比对项。有则XX，无则YY
-    //     Article article;
-    //     ArraySet<String> articleIds = new ArraySet<>(Arrays.asList(ids));
-    //     for (String articleId : articleIds) {
-    //         article = localStarMap.get(articleId);
-    //         if (article == null) {
-    //             article = localUnstarMap.get(articleId);
-    //             if (article == null) {
-    //                 // 本地无，而云远端有，加入要请求的加星资源
-    //                 tempStarredIds.add(articleId);
-    //             } else {
-    //                 article.setStarStatus(App.STATUS_STARED);
-    //                 changedArticles.add(article);
-    //                 localUnstarMap.remove(articleId);
-    //             }
-    //         } else {
-    //             localStarMap.remove(articleId);
-    //         }
-    //     }
-    //
-    //     for (Map.Entry<String, Article> entry : localStarMap.entrySet()) {
-    //         if (entry.getKey() != null) {
-    //             article = localStarMap.get(entry.getKey());
-    //             article.setStarStatus(App.STATUS_UNSTAR);
-    //             changedArticles.add(article);// 取消加星
-    //         }
-    //     }
-    //
-    //     CoreDB.i().articleDao().update(changedArticles);
-    //     return tempStarredIds;
-    // }
 }

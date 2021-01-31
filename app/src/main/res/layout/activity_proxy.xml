@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/proxy_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fitsSystemWindows="true"
+    android:addStatesFromChildren="true"
+    android:windowDrawsSystemBarBackgrounds="true">
+
+    <com.google.android.material.appbar.AppBarLayout
+        android:id="@+id/proxy_appBarLayout"
+        android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        <androidx.appcompat.widget.Toolbar
+            android:id="@+id/proxy_toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            android:background="?attr/topbar_bg"
+            app:navigationIcon="@drawable/ic_close"
+            app:contentInsetStartWithNavigation="0dp"
+            app:subtitleTextAppearance="@style/MyToolbar.SubTitle"
+            app:popupTheme="@style/OverflowMenuStyle"
+            app:layout_scrollFlags="enterAlways|snap"
+            app:title="@string/proxy" />
+    </com.google.android.material.appbar.AppBarLayout>
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:paddingStart="10dp"
+        android:paddingEnd="10dp"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior">
+        <LinearLayout
+            android:orientation="vertical"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_marginTop="10dp"
+            android:layout_marginBottom="10dp">
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical">
+                <TextView
+                    android:id="@+id/proxy_enable_title"
+                    style="@style/SettingItemTitle2"
+                    android:text="@string/enable_proxy" />
+                <com.kyleduo.switchbutton.SwitchButton
+                    android:id="@+id/proxy_enable_sb"
+                    style="@style/SwitchButtonStyle"
+                    android:checked="false" />
+            </LinearLayout>
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="10dp"/>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="12sp"
+                android:textColor="?attr/lv_item_desc_color"
+                android:gravity="center|start"
+                android:paddingTop="10dp"
+                android:paddingBottom="10dp"
+                android:text="@string/socks5_proxy_settings" />
+
+            <me.zhanghai.android.materialedittext.MaterialTextInputLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:errorEnabled="true">
+                <me.zhanghai.android.materialedittext.MaterialEditText
+                    android:id="@+id/proxy_server_edittext"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="@string/server"
+                    android:text="@string/server_127_0_0_1"
+                    android:textColor="?attr/lv_item_title_color"
+                    android:inputType="textUri"
+                    android:maxLines="1" />
+            </me.zhanghai.android.materialedittext.MaterialTextInputLayout>
+
+            <me.zhanghai.android.materialedittext.MaterialTextInputLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:errorEnabled="true">
+                <!--android:text="@string/port_10808"-->
+                <me.zhanghai.android.materialedittext.MaterialEditText
+                    android:id="@+id/proxy_port_edittext"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textColor="?attr/lv_item_title_color"
+                    android:hint="@string/port"
+                    android:inputType="numberDecimal"
+                    android:maxLines="1" />
+            </me.zhanghai.android.materialedittext.MaterialTextInputLayout>
+
+            <me.zhanghai.android.materialedittext.MaterialTextInputLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:errorEnabled="true">
+                <me.zhanghai.android.materialedittext.MaterialEditText
+                    android:id="@+id/proxy_username_edittext"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="@string/username"
+                    android:textColor="?attr/lv_item_title_color"
+                    android:inputType="text"
+                    android:maxLines="1" />
+            </me.zhanghai.android.materialedittext.MaterialTextInputLayout>
+
+            <me.zhanghai.android.materialedittext.MaterialTextInputLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:errorEnabled="true">
+                <me.zhanghai.android.materialedittext.MaterialEditText
+                    android:id="@+id/proxy_password_edittext"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="@string/password"
+                    android:textColor="?attr/lv_item_title_color"
+                    android:inputType="textVisiblePassword"
+                    android:maxLines="1" />
+            </me.zhanghai.android.materialedittext.MaterialTextInputLayout>
+
+            <Button
+                android:id="@+id/proxy_save_button"
+                style="@style/Widget.AppCompat.Button.Colored"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="end"
+                android:enabled="false"
+                android:text="@string/save" />
+        </LinearLayout>
+
+    </androidx.core.widget.NestedScrollView>
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

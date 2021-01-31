@@ -24,7 +24,7 @@ import java.util.regex.Pattern;
 import me.wizos.loread.App;
 import me.wizos.loread.R;
 import me.wizos.loread.network.HttpClientManager;
-import me.wizos.loread.utils.DataUtil;
+import me.wizos.loread.utils.DataUtils;
 import me.wizos.loread.utils.StringUtils;
 import okhttp3.Call;
 import okhttp3.Callback;
@@ -103,7 +103,7 @@ public class RSSSeeker {
                     return;
                 }
                 XLog.d("OkHttp 获取失败");
-                dispatcher.onFailure(App.i().getString(R.string.not_responding));
+                dispatcher.onFailure(App.i().getString(R.string.not_responding_plz_try_again));
             }
             @Override
             public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
@@ -116,12 +116,12 @@ public class RSSSeeker {
                     MediaType mediaType  = responseBody.contentType();
                     String charset = null;
                     if( mediaType != null ){
-                        charset = DataUtil.getCharsetFromContentType(mediaType.toString());
+                        charset = DataUtils.getCharsetFromContentType(mediaType.toString());
                     }
                     document = Jsoup.parse(responseBody.byteStream(), charset, url);
                     find(document);
                 }else {
-                    dispatcher.onFailure(App.i().getString(R.string.not_responding));
+                    dispatcher.onFailure(App.i().getString(R.string.not_responding_plz_try_again));
                 }
                 response.close();
             }

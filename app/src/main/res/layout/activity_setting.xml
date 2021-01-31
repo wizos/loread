@@ -21,11 +21,11 @@
             android:layout_height="?attr/actionBarSize"
             android:background="?attr/topbar_bg"
             app:contentInsetStartWithNavigation="0dp"
-            app:layout_scrollFlags="scroll|enterAlways|snap"
+            app:layout_scrollFlags="enterAlways|snap"
             app:subtitleTextAppearance="@style/MyToolbar.SubTitle"
             app:popupTheme="@style/OverflowMenuStyle"
             tools:navigationIcon="@drawable/ic_close"
-            tools:title="源标题" />
+            app:title="@string/settings" />
     </com.google.android.material.appbar.AppBarLayout>
 
     <androidx.core.widget.NestedScrollView
@@ -47,7 +47,6 @@
                 style="@style/SettingItemHeader"
                 android:text="@string/sync" />
             <LinearLayout style="@style/SettingItem">
-
                 <TextView
                     android:id="@+id/setting_auto_sync_title"
                     style="@style/SettingItemTitle2"
@@ -94,29 +93,25 @@
                     tools:text="30 分钟" />
             </LinearLayout>
 
-            <LinearLayout
-                android:id="@+id/setting_down_img"
-                style="@style/SettingItem"
-                android:gravity="center_vertical">
-
-                <TextView
-                    android:id="@+id/setting_down_img_title"
-                    style="@style/SettingItemTitle2"
-                    android:text="@string/setting_down_img_title" />
-                <com.kyleduo.switchbutton.SwitchButton
-                    android:id="@+id/setting_down_img_sb"
-                    style="@style/SwitchButtonStyle"
-                    android:allowUndo="false"
-                    android:checked="false"
-                    android:onClick="onSBClick" />
-            </LinearLayout>
+            <!--<LinearLayout-->
+            <!--    android:id="@+id/setting_down_img"-->
+            <!--    style="@style/SettingItem"-->
+            <!--    android:gravity="center_vertical">-->
+            <!--    <TextView-->
+            <!--        android:id="@+id/setting_down_img_title"-->
+            <!--        style="@style/SettingItemTitle2"-->
+            <!--        android:text="@string/setting_down_img_title" />-->
+            <!--    <com.kyleduo.switchbutton.SwitchButton-->
+            <!--        android:id="@+id/setting_down_img_sb"-->
+            <!--        style="@style/SwitchButtonStyle"-->
+            <!--        android:allowUndo="false"-->
+            <!--        android:checked="false"-->
+            <!--        android:onClick="onSBClick" />-->
+            <!--</LinearLayout>-->
 
             <TextView
-                android:id="@+id/setting_display_icon"
                 style="@style/SettingItemHeader"
-                tools:text="界面样式"
                 android:text="@string/other" />
-
 
             <LinearLayout
                 android:id="@+id/setting_auto_toggle_theme"
@@ -138,7 +133,6 @@
             <LinearLayout
                 android:id="@+id/setting_link_open_mode"
                 style="@style/SettingItem">
-
                 <TextView
                     android:id="@+id/setting_link_open_mode_title"
                     style="@style/SettingItemTitle2"
@@ -164,6 +158,60 @@
                     tools:text="10 天" />
             </LinearLayout>
 
+
+            <TextView
+                style="@style/SettingItemHeader"
+                android:text="@string/rules" />
+
+            <LinearLayout
+                android:id="@+id/setting_rule_update"
+                style="@style/SettingItem"
+                android:onClick="openActionManager">
+                <TextView
+                    android:id="@+id/setting_rule_update_title"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    style="@style/SettingItemTitle2"
+                    android:text="@string/rules_management" />
+                <TextView
+                    android:id="@+id/setting_rule_update_summary"
+                    style="@style/SettingItemSummary"
+                    tools:text="" />
+            </LinearLayout>
+
+
+            <LinearLayout
+                android:id="@+id/setting_enable_url_rewrite"
+                style="@style/SettingItem"
+                android:onClick="openTestUrlRewrite">
+                <TextView
+                    android:id="@+id/setting_enable_url_rewrite_title"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    style="@style/SettingItemTitle2"
+                    android:text="@string/url_rewrite_configure_and_test" />
+                <TextView
+                    android:id="@+id/setting_url_rewrite_summary"
+                    style="@style/SettingItemSummary"
+                    tools:text="" />
+            </LinearLayout>
+
+            <!--<LinearLayout-->
+            <!--    android:id="@+id/setting_enable_enable_max_image"-->
+            <!--    style="@style/SettingItem"-->
+            <!--    android:gravity="center_vertical">-->
+            <!--    <TextView-->
+            <!--        android:id="@+id/setting_enable_enable_max_image_title"-->
+            <!--        android:layout_width="0dp"-->
+            <!--        android:layout_weight="1"-->
+            <!--        style="@style/SettingItemTitle2"-->
+            <!--        android:text="@string/enable_max_image" />-->
+            <!--    <TextView-->
+            <!--        android:id="@+id/setting_enable_max_image_summary"-->
+            <!--        style="@style/SettingItemSummary"-->
+            <!--        tools:text="" />-->
+            <!--</LinearLayout>-->
+
             <TextView
                 style="@style/SettingItemHeader"
                 android:text="@string/about" />
@@ -183,6 +231,22 @@
             <!--        android:text="More" />-->
             <!--</LinearLayout>-->
 
+            <LinearLayout
+                android:id="@+id/setting_enable_check_app_update"
+                style="@style/SettingItem"
+                android:gravity="center_vertical">
+                <TextView
+                    android:id="@+id/setting_enable_check_app_update_title"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    style="@style/SettingItemTitle2"
+                    android:text="@string/check_app_update" />
+                <com.kyleduo.switchbutton.SwitchButton
+                    android:id="@+id/setting_enable_check_app_update_sb"
+                    style="@style/SwitchButtonStyle"
+                    android:onClick="onSBClick"
+                    android:checked="true" />
+            </LinearLayout>
 
             <LinearLayout
                 android:id="@+id/setting_enable_log"
@@ -272,7 +336,7 @@
                 android:paddingTop="5dp"
                 android:paddingBottom="5dp"
                 android:gravity="center"
-                android:text="实验室"
+                android:text="@string/lab"
                 android:background="?android:attr/selectableItemBackground"
                 android:clickable="true"
                 android:focusable="true" />

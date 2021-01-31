@@ -36,16 +36,18 @@ import javax.script.SimpleBindings;
 
 import me.wizos.loread.App;
 import me.wizos.loread.R;
-import me.wizos.loread.config.AdBlock;
-import me.wizos.loread.config.ArticleExtractConfig;
-import me.wizos.loread.config.LinkRewriteConfig;
-import me.wizos.loread.config.article_extract_rule.ArticleExtractRule;
+import me.wizos.loread.config.HostBlockConfig;
+import me.wizos.loread.config.article_extract.ArticleExtractConfig;
+import me.wizos.loread.config.article_extract.ArticleExtractRule;
+import me.wizos.loread.config.url_rewrite.UrlRewriteConfig;
+import me.wizos.loread.log.JSLog;
 import me.wizos.loread.network.HttpClientManager;
-import me.wizos.loread.utils.ArticleUtil;
-import me.wizos.loread.utils.DataUtil;
-import me.wizos.loread.utils.ScriptUtil;
+import me.wizos.loread.utils.ArticleUtils;
+import me.wizos.loread.utils.DataUtils;
+import me.wizos.loread.utils.HttpCall;
+import me.wizos.loread.utils.ScriptUtils;
 import me.wizos.loread.utils.StringUtils;
-import me.wizos.loread.view.WebViewS;
+import me.wizos.loread.view.webview.WebViewS;
 import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.MediaType;
@@ -69,6 +71,7 @@ public class Distill {
     private Document document;
 
     private boolean isCancel = false;
+    private boolean isRunning = false;
 
     public Distill(@NotNull String url, @Nullable String keyword, @NotNull Listener callback) {
         this.url = url;
@@ -91,7 +94,7 @@ public class Distill {
         this.handler = new Handler(Looper.getMainLooper(), new Handler.Callback() {
             @Override
             public boolean handleMessage(@NonNull Message msg) {
-                XLog.e("处理超时：" + msg.what);
+                XLog.w("处理超时：" + msg.what);
                 if(msg.what != TIMEOUT){
                     return false; //返回true 不对msg进行进一步处理
                 }
@@ -111,9 +114,10 @@ public class Distill {
 
 
     public void getContent(){
+        isRunning = true;
         handler.sendEmptyMessageDelayed(TIMEOUT, TIMEOUT);
         Request request = new Request.Builder().url(url).tag(TAG).build();
-        call = HttpClientManager.i().simpleClient().newCall(request);
+        call = HttpClientManager.i().searchClient().newCall(request);
 
         XLog.d("开始用 OkHttp 获取全文");
         call.enqueue(new Callback() {
@@ -123,7 +127,7 @@ public class Distill {
                 if(call.isCanceled()){
                     return;
                 }
-                dispatcher.onFailure(App.i().getString(R.string.not_responding));
+                dispatcher.onFailure(App.i().getString(R.string.not_responding_plz_try_again));
             }
             @Override
             public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
@@ -131,11 +135,11 @@ public class Distill {
                     return;
                 }
                 ResponseBody responseBody = response.body();
-                if( response.isSuccessful() && responseBody != null){
+                if(response.isSuccessful() && responseBody != null){
                     MediaType mediaType  = responseBody.contentType();
                     String charset = null;
                     if( mediaType != null ){
-                        charset = DataUtil.getCharsetFromContentType(mediaType.toString());
+                        charset = DataUtils.getCharsetFromContentType(mediaType.toString());
                     }
                     document = Jsoup.parse(responseBody.byteStream(), charset, url);
                     // document.getElementsByTag("script").remove();
@@ -146,7 +150,7 @@ public class Distill {
                         readability(document);
                     }
                 }else {
-                    dispatcher.onFailure(App.i().getString(R.string.not_responding));
+                    dispatcher.onFailure(App.i().getString(R.string.original_text_exception_plz_check));
                 }
                 response.close();
             }
@@ -170,7 +174,7 @@ public class Distill {
                         if(!StringUtils.isEmpty(html)){
                             readability(Jsoup.parse(html, url));
                         }else {
-                            dispatcher.onFailure(App.i().getString(R.string.not_responding));
+                            dispatcher.onFailure(App.i().getString(R.string.not_responding_plz_try_again));
                         }
                     }
                 }, Bridge.TAG);
@@ -190,7 +194,7 @@ public class Distill {
         }else if(StringUtils.isEmpty(extractPage.getContent())){
             dispatcher.onFailure( App.i().getString(R.string.no_text_found) );
         }else {
-            dispatcher.onResponse( ArticleUtil.getOptimizedContent(url, extractPage.getContent()) );
+            dispatcher.onResponse( ArticleUtils.getOptimizedContent(url, extractPage.getContent()) );
         }
     }
     /*输入Jsoup的Document，获取正文文本*/
@@ -211,7 +215,7 @@ public class Distill {
                     extractPage.setMsg(App.i().getString(R.string.no_text_found));
                 }else {
                     try {
-                        ArticleExtractConfig.i().saveRuleByDomain(doc, uri, newDoc.cssSelector());
+                        ArticleExtractConfig.i().saveRuleByHost(doc, uri, newDoc.cssSelector());
                     }catch (Selector.SelectorParseException | NullPointerException e){
                         e.printStackTrace();
                     }
@@ -230,7 +234,7 @@ public class Distill {
                         extractPage.setMsg(App.i().getString(R.string.no_text_found_by_rule_and_extractor, uri.getHost()));
                     }else {
                         try {
-                            ArticleExtractConfig.i().saveRuleByDomain(doc, uri, newDoc.cssSelector());
+                            ArticleExtractConfig.i().saveRuleByHost(doc, uri, newDoc.cssSelector());
                         }catch (Selector.SelectorParseException | NullPointerException e){
                             e.printStackTrace();
                         }
@@ -248,7 +252,9 @@ public class Distill {
             Bindings bindings = new SimpleBindings();
             bindings.put("document", doc);
             bindings.put("uri", uri);
-            ScriptUtil.i().eval(rule.getDocumentTrim(), bindings);
+            bindings.put("call", HttpCall.i());
+            bindings.put("log", JSLog.i());
+            ScriptUtils.i().eval(rule.getDocumentTrim(), bindings);
         }
 
         if( !StringUtils.isEmpty(rule.getContent()) ){
@@ -262,8 +268,12 @@ public class Distill {
 
             if( !StringUtils.isEmpty(rule.getContentTrim()) ){
                 Bindings bindings = new SimpleBindings();
+                bindings.put("document", doc);
+                bindings.put("uri", uri);
                 bindings.put("content", contentElements.html());
-                ScriptUtil.i().eval(rule.getContentTrim(), bindings);
+                bindings.put("call", HttpCall.i());
+                bindings.put("log", JSLog.i());
+                ScriptUtils.i().eval(rule.getContentTrim(), bindings);
                 XLog.d("提取规则 - 正文处理：" + rule.getContentTrim() );
                 return (String)bindings.get("content");
             }
@@ -283,11 +293,11 @@ public class Distill {
                 String url = request.getUrl().toString().toLowerCase();
                 // XLog.e("重定向地址：" + url );
                 // 有广告的请求数据，我们直接返回空数据，注：不能直接返回null
-                if (AdBlock.i().isAd(url) || url.endsWith(".css")) { //
+                if (HostBlockConfig.i().isAd(url) || url.endsWith(".css")) { //
                     return new WebResourceResponse(null, null, null);
                 }
 
-                String newUrl = LinkRewriteConfig.i().getRedirectUrl(url);
+                String newUrl = UrlRewriteConfig.i().getRedirectUrl(url);
                 // XLog.i("重定向地址：" + url + " -> " + newUrl);
                 if(!TextUtils.isEmpty(newUrl) && !url.equalsIgnoreCase(newUrl)){
                     return super.shouldInterceptRequest(view, new WebResourceRequest() {
@@ -341,8 +351,12 @@ public class Distill {
         destroy();
     }
 
+    public boolean isRunning() {
+        return isRunning;
+    }
 
     public void destroy(){
+        isRunning = false;
         if(handler != null){
             handler.removeMessages(TIMEOUT);
         }

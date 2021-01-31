@@ -60,16 +60,16 @@
             android:minWidth="150dp"
             android:onClick="oauthInoReader"
             android:textAllCaps="false"
-            android:text="@string/inoreader_oauth" />
+            android:text="@string/inoreader" />
 
-        <Button
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:drawableStart="@drawable/logo_inoreader_icon"
-            android:minWidth="150dp"
-            android:onClick="loginInoReader"
-            android:textAllCaps="false"
-            android:text="@string/inoreader_login" />
+        <!--<Button-->
+        <!--    android:layout_width="match_parent"-->
+        <!--    android:layout_height="wrap_content"-->
+        <!--    android:drawableStart="@drawable/logo_inoreader_icon"-->
+        <!--    android:minWidth="150dp"-->
+        <!--    android:onClick="loginInoReader"-->
+        <!--    android:textAllCaps="false"-->
+        <!--    android:text="@string/inoreader_login" />-->
 
         <Button
             android:layout_width="match_parent"
@@ -100,7 +100,6 @@
 
     </LinearLayout>
 
-<!--    android:textColor="?attr/lv_item_title_color"-->
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -108,6 +107,7 @@
         android:layout_marginTop="20dp"
         android:layout_marginBottom="20dp"
         android:alpha="0.6"
+        android:onClick="clickAuthor"
         android:text="@string/developed_by_wizos" />
 
 </LinearLayout>

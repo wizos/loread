@@ -29,7 +29,7 @@ import static me.wizos.loread.Contract.SCHEMA_HTTPS;
  */
 
 public class LongClickPopWindow extends PopupWindow {
-    private View webViewLongClickedPopWindow;
+    private View popWindow;
     private Activity context;
     private WebView.HitTestResult result;
     private WebView webView;
@@ -60,46 +60,44 @@ public class LongClickPopWindow extends PopupWindow {
         this.x = x;
         this.y = y;
         LayoutInflater itemLongClickedPopWindowInflater = LayoutInflater.from(this.context);
-        this.webViewLongClickedPopWindow = itemLongClickedPopWindowInflater.inflate(R.layout.webview_long_clicked_popwindow, null);
+        this.popWindow = itemLongClickedPopWindowInflater.inflate(R.layout.webview_long_click_link_popwindow, null);
 
         //设置默认选项
         setWidth(width);
         setHeight(height);
-        setContentView(this.webViewLongClickedPopWindow);
+        setContentView(this.popWindow);
         setOutsideTouchable(true);
         setFocusable(true);
 
         //创建
         initTab();
-//        showAtLocation(webView, Gravity.TOP|Gravity.LEFT, downX, downY + 10);
+        // showAtLocation(webView, Gravity.TOP|Gravity.LEFT, downX, downY + 10);
     }
 
     //实例化
     private void initTab() {
-
         switch (result.getType()) {
-//            case FAVORITES_ITEM_POPUPWINDOW:
-//                this.itemLongClickedPopWindowView = this.itemLongClickedPopWindowInflater.inflate(R.layout.list_item_longclicked_favorites, null);
-//                break;
-//            case FAVORITES_VIEW_POPUPWINDOW: //对于书签内容弹出菜单，未作处理
-//                break;
-//            case HISTORY_ITEM_POPUPWINDOW:
-//                this.itemLongClickedPopWindowView = this.itemLongClickedPopWindowInflater.inflate(R.layout.list_item_longclicked_history, null);
-//                break;
-//            case HISTORY_VIEW_POPUPWINDOW: //对于历史内容弹出菜单，未作处理
-//                break;
-
-//            case WebView.HitTestResult.EDIT_TEXT_TYPE: // 选中的文字类型
-//            case WebView.HitTestResult.PHONE_TYPE: // 处理拨号
-//            case WebView.HitTestResult.EMAIL_TYPE: // 处理Email
-//            case WebView.HitTestResult.GEO_TYPE: // 　地图类型
-//            case WebView.HitTestResult.SRC_ANCHOR_TYPE: // 超链接
-//            case WebView.HitTestResult.SRC_IMAGE_ANCHOR_TYPE: // 带有链接的图片类型
-//            case WebView.HitTestResult.IMAGE_TYPE: // 处理长按图片的菜单项
-//                String url = result.getExtra();//获取图片
-//                break;
-//            case WebView.HitTestResult.UNKNOWN_TYPE: //未知
-
+            // case FAVORITES_ITEM_POPUPWINDOW:
+            //     this.itemLongClickedPopWindowView = this.itemLongClickedPopWindowInflater.inflate(R.layout.list_item_longclicked_favorites, null);
+            //     break;
+            // case FAVORITES_VIEW_POPUPWINDOW: //对于书签内容弹出菜单，未作处理
+            //     break;
+            // case HISTORY_ITEM_POPUPWINDOW:
+            //     this.itemLongClickedPopWindowView = this.itemLongClickedPopWindowInflater.inflate(R.layout.list_item_longclicked_history, null);
+            //     break;
+            // case HISTORY_VIEW_POPUPWINDOW: //对于历史内容弹出菜单，未作处理
+            //     break;
+            //
+            // case WebView.HitTestResult.EDIT_TEXT_TYPE: // 选中的文字类型
+            // case WebView.HitTestResult.PHONE_TYPE: // 处理拨号
+            // case WebView.HitTestResult.EMAIL_TYPE: // 处理Email
+            // case WebView.HitTestResult.GEO_TYPE: // 　地图类型
+            // case WebView.HitTestResult.SRC_ANCHOR_TYPE: // 超链接
+            // case WebView.HitTestResult.SRC_IMAGE_ANCHOR_TYPE: // 带有链接的图片类型
+            // case WebView.HitTestResult.IMAGE_TYPE: // 处理长按图片的菜单项
+            //     String url = result.getExtra();//获取图片
+            //     break;
+            // case WebView.HitTestResult.UNKNOWN_TYPE: //未知
 
             case WebView.HitTestResult.SRC_ANCHOR_TYPE://超链接
                 String uri = result.getExtra();
@@ -107,37 +105,7 @@ public class LongClickPopWindow extends PopupWindow {
                     return;
                 }
                 XLog.d("超链接：" + uri );
-                this.webViewLongClickedPopWindow.findViewById(R.id.webview_copy_link)
-                        .setOnClickListener(new View.OnClickListener() {
-                            @Override
-                            public void onClick(View v) {
-                                LongClickPopWindow.this.dismiss();
-                                //获取剪贴板管理器：
-                                ClipboardManager cm = (ClipboardManager) context.getSystemService(Context.CLIPBOARD_SERVICE);
-                                // 创建普通字符型ClipData
-                                ClipData mClipData = ClipData.newRawUri("url", Uri.parse(uri));
-                                // 将ClipData内容放到系统剪贴板里。
-                                cm.setPrimaryClip(mClipData);
-                                ToastUtils.show(context.getString(R.string.copy_success));
-                            }
-                        });
-
-                this.webViewLongClickedPopWindow.findViewById(R.id.webview_share_link)
-                        .setOnClickListener(new View.OnClickListener() {
-                            @Override
-                            public void onClick(View v) {
-                                LongClickPopWindow.this.dismiss();
-                                Intent sendIntent = new Intent(Intent.ACTION_SEND);
-                                sendIntent.setType("text/plain");
-                                sendIntent.putExtra(Intent.EXTRA_TEXT, uri);
-                                //sendIntent.setData(Uri.parse(status.getExtra()));
-                                //sendIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                                context.startActivity(Intent.createChooser(sendIntent, context.getString(R.string.share_to)));
-                            }
-                        });
-
-                TextView openLinkMode = (TextView)this.webViewLongClickedPopWindow.findViewById(R.id.webview_open_mode);
-
+                TextView openLinkMode = (TextView)this.popWindow.findViewById(R.id.webview_open_mode);
                 if( App.i().getUser().isOpenLinkBySysBrowser() && (uri.startsWith(SCHEMA_HTTP) || uri.startsWith(SCHEMA_HTTPS))){
                     openLinkMode.setText(R.string.open_by_outer);
                     openLinkMode.setOnClickListener(new View.OnClickListener() {
@@ -164,6 +132,33 @@ public class LongClickPopWindow extends PopupWindow {
                         }
                     });
                 }
+                this.popWindow.findViewById(R.id.webview_copy_link)
+                        .setOnClickListener(new View.OnClickListener() {
+                            @Override
+                            public void onClick(View v) {
+                                LongClickPopWindow.this.dismiss();
+                                //获取剪贴板管理器：
+                                ClipboardManager cm = (ClipboardManager) context.getSystemService(Context.CLIPBOARD_SERVICE);
+                                // 创建普通字符型ClipData
+                                ClipData mClipData = ClipData.newRawUri("url", Uri.parse(uri));
+                                // 将ClipData内容放到系统剪贴板里。
+                                cm.setPrimaryClip(mClipData);
+                                ToastUtils.show(context.getString(R.string.copy_success));
+                            }
+                        });
+                this.popWindow.findViewById(R.id.webview_share_link)
+                        .setOnClickListener(new View.OnClickListener() {
+                            @Override
+                            public void onClick(View v) {
+                                LongClickPopWindow.this.dismiss();
+                                Intent sendIntent = new Intent(Intent.ACTION_SEND);
+                                sendIntent.setType("text/plain");
+                                sendIntent.putExtra(Intent.EXTRA_TEXT, uri);
+                                //sendIntent.setData(Uri.parse(status.getExtra()));
+                                //sendIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                                context.startActivity(Intent.createChooser(sendIntent, context.getString(R.string.share_to)));
+                            }
+                        });
                 showAtLocation(webView, Gravity.TOP | Gravity.START, x, y);
                 break;
             case WebView.HitTestResult.IMAGE_TYPE: //图片

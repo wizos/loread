@@ -4,6 +4,7 @@ html, body, div, span, applet, object, iframe, h1, h2, h3, h4, h5, h6, p, blockq
 	padding: 0;
 	border: 0;
 }
+
 :focus,summary{outline:none;}
 
 @font-face {
@@ -22,7 +23,6 @@ body,p,font {
 	line-height: 160% !important;
 	letter-spacing:1px;
 }
-
 body > *:first-child {
 	margin-top: 0 !important;
 }
@@ -47,15 +47,14 @@ table pre{
 
 /*
  * 设置最大宽度，防止超出屏幕
+ */
+/*
 body * {
 	max-width: 100% !important;
 }
-div,p,tbody,textarea,ins,input{
-	max-width: 100% !important;
-}
- */
+*/
 
-div:not(.plyr__menu__container):not(.plyr__progress), p, tbody, textarea, ins{
+body, div:not(.plyr__menu__container):not(.plyr__progress), p, tbody, textarea, ins{
 	max-width: 100% !important;
 }
 /* 
@@ -116,7 +115,6 @@ h6 {
 	font-size: 16px;
 	color: #32b9a8;
 }
-
 
 /* LINKS // !important*/
 a > svg{
@@ -233,10 +231,6 @@ caption, th {
 caption {
 	margin: 5px 0 !important;
 }
-td pre, td code,pre code, pre tt {
-	border: 0 !important;
-	background: transparent  !important;
-}
 
 /* CODE */
 pre code, pre, code, tt {
@@ -264,6 +258,11 @@ code {
 	margin: 0 3px;
 	word-break: break-all;
 	letter-spacing:normal;
+}
+td pre, td code,pre code, pre tt, h1 code, h2 code, h3 code, h4 code, h5 code, h6 code {
+	border: 0 !important;
+	background: transparent  !important;
+	color: inherit;
 }
 tt {
 	margin: 0 0px;
@@ -356,17 +355,14 @@ hr {
 #title {
 	font-family:roboto_light,sans-serif !important;
 	font-size: 1.4em;
-	margin-bottom: 5px;
+	margin-bottom: 10px;
 }
 #author,#pubDate {
 	font-size: .8em !important;
 	margin: 0 !important;
-	opacity: 0.4;
+	opacity: 0.6;
 }
-#readability-button{
-	font-size:12px;
-	margin-top: 10px
-}
+
 #content{
 	margin-top: 10px
 }

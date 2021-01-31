@@ -15,6 +15,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.text.InputType;
 import android.text.TextUtils;
+import android.util.ArrayMap;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -33,6 +34,9 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.widget.Toolbar;
 import androidx.coordinatorlayout.widget.CoordinatorLayout;
+import androidx.webkit.ProxyConfig;
+import androidx.webkit.ProxyController;
+import androidx.webkit.WebViewFeature;
 
 import com.afollestad.materialdialogs.DialogAction;
 import com.afollestad.materialdialogs.MaterialDialog;
@@ -50,23 +54,24 @@ import org.jetbrains.annotations.NotNull;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Map;
+import java.util.concurrent.Executor;
 
 import me.wizos.loread.App;
 import me.wizos.loread.BuildConfig;
 import me.wizos.loread.Contract;
 import me.wizos.loread.R;
 import me.wizos.loread.bridge.WebBridge;
-import me.wizos.loread.config.AdBlock;
-import me.wizos.loread.config.LinkRewriteConfig;
+import me.wizos.loread.config.HostBlockConfig;
 import me.wizos.loread.config.NetworkUserAgentConfig;
-import me.wizos.loread.utils.ScreenUtil;
+import me.wizos.loread.config.header_useragent.UserAgentsConfig;
+import me.wizos.loread.config.url_rewrite.UrlRewriteConfig;
+import me.wizos.loread.network.proxy.ProxyWebkit;
+import me.wizos.loread.utils.ScreenUtils;
 import me.wizos.loread.utils.StringUtils;
 import me.wizos.loread.view.colorful.Colorful;
 import me.wizos.loread.view.webview.DownloadListenerS;
 import me.wizos.loread.view.webview.LongClickPopWindow;
 
-import static me.wizos.loread.Contract.HTTP;
-import static me.wizos.loread.Contract.HTTPS;
 import static me.wizos.loread.Contract.SCHEMA_FEEDME;
 import static me.wizos.loread.Contract.SCHEMA_HTTP;
 import static me.wizos.loread.Contract.SCHEMA_HTTPS;
@@ -118,7 +123,7 @@ public class WebActivity extends BaseActivity implements WebBridge {
         if(StringUtils.isEmpty(originalUrl)){
             finish();
         }
-        String newUrl = LinkRewriteConfig.i().getRedirectUrl(originalUrl);
+        String newUrl = UrlRewriteConfig.i().getRedirectUrl(originalUrl);
         //XLog.i("获取到链接，准备跳转B：" + originalUrl + ", newUrl = " + newUrl);
         if (!TextUtils.isEmpty(newUrl)) {
             originalUrl =  newUrl;
@@ -180,7 +185,7 @@ public class WebActivity extends BaseActivity implements WebBridge {
         // 缩放至屏幕的大小：如果webview内容宽度大于显示区域的宽度,那么将内容缩小,以适应显示区域的宽度, 默认是false
         webSettings.setLoadWithOverviewMode(true);
         // NARROW_COLUMNS 适应内容大小 ， SINGLE_COLUMN 自适应屏幕
-        webSettings.setLayoutAlgorithm(WebSettings.LayoutAlgorithm.SINGLE_COLUMN);
+        webSettings.setLayoutAlgorithm(WebSettings.LayoutAlgorithm.NORMAL);
 
         //缩放操作
         webSettings.setSupportZoom(true); //支持缩放，默认为true。是下面那个的前提。
@@ -221,7 +226,7 @@ public class WebActivity extends BaseActivity implements WebBridge {
 
         webSettings.setMediaPlaybackRequiresUserGesture(true);
 
-        /**
+        /*
          * https://www.jianshu.com/p/6e38e1ef203a
          * 让 WebView 支持文件下载，主要思路有：1、跳转浏览器下载；2、使用系统的下载服务；3、自定义下载任务
          */
@@ -255,15 +260,60 @@ public class WebActivity extends BaseActivity implements WebBridge {
                 }
 
                 // 这里可以拦截很多类型，我们只处理超链接就可以了
-                // final LongClickPopWindow webViewLongClickedPopWindow =
-                //         new LongClickPopWindow(WebActivity.this, status, ScreenUtil.dp2px(WebActivity.this,120), ScreenUtil.dp2px(WebActivity.this,90));
-                // webViewLongClickedPopWindow.showAtLocation(webView, Gravity.TOP|Gravity.LEFT, downX, downY + 10);
-                new LongClickPopWindow(WebActivity.this, (WebView) webView, ScreenUtil.dp2px(WebActivity.this, 120), ScreenUtil.dp2px(WebActivity.this, 130), downX, downY + 10);
+                new LongClickPopWindow(WebActivity.this, (WebView) webView, ScreenUtils.dp2px(WebActivity.this, 120), ScreenUtils.dp2px(WebActivity.this, 130), downX, downY + 10);
                 return true;
             }
         });
+        // setProxy();
     }
 
+    private void setProxy(){
+        if(App.i().proxyNodeSocks5 != null){
+            try {
+                // 此处设置对全局有效
+                boolean success = ProxyWebkit.setSocksProxy(this.getApplicationContext(),  App.i().proxyNodeSocks5.getServer(), App.i().proxyNodeSocks5.getPort());;
+                // if(Test.i().proxy){
+                //     success = WebkitProxyNew.setHttpProxy(this.getApplicationContext(),  "localhost", Test.i().httpPort);
+                // }else {
+                //
+                // }
+                XLog.d("设置全局代理是否成功：" + success);
+            } catch (Exception e) {
+                XLog.e("无法启动 WebkitProxy：" + e.getLocalizedMessage());
+            }
+        }
+    }
+
+    /**
+     * 添加一个代理，用于所有的URL。本方法可以多次调用，添加多个规则。附加规则的优先级递减。
+     * Proxy是一个格式为[scheme://]host[:port]的字符串。scheme是可选的，如果存在必须是HTTP、HTTPS或SOCKS，默认为HTTP。Host是带括号的IPv6文字、IPv4文字或一个或多个用句号分隔的标签中的一个。端口号是可选的，HTTP默认为80，HTTPS默认为443，SOCKS默认为1080。
+     * 主机的正确语法由RFC 3986定义。
+     */
+    private void setProxyRule() {
+        if (WebViewFeature.isFeatureSupported(WebViewFeature.PROXY_OVERRIDE)) {
+            XLog.i("WebView 支持代理");
+
+            ProxyConfig proxyConfig = new ProxyConfig.Builder()
+                    // .addProxyRule("111.123.321.121:1234")
+                    .addProxyRule("127.0.0.1:10808")
+                    .addBypassRule("www.excluded.*")
+                    .addDirect().build();
+
+            ProxyController.getInstance().setProxyOverride(proxyConfig, new Executor() {
+                @Override
+                public void execute(Runnable command) {
+                    //do nothing
+                }
+            }, new Runnable() {
+                @Override
+                public void run() {
+                    XLog.w( "WebView 代理改变");
+                }
+            });
+        }else {
+            XLog.i("WebView 不支持代理");
+        }
+    }
 
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
@@ -384,6 +434,7 @@ public class WebActivity extends BaseActivity implements WebBridge {
 
     @Override
     public void toggleScreenOrientation() {
+        XLog.d("切换屏幕方向");
         if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT) {
             landscape();
         } else {
@@ -404,52 +455,205 @@ public class WebActivity extends BaseActivity implements WebBridge {
     };
 
 
+    /**
+     * webview socks5 代理
+     * https://github.com/guardianproject/NetCipher/blob/master/sample-webviewclient/src/sample/netcipher/webviewclient/GenericWebViewClient.java
+     *
+     * 注意 WebResourceResponse.setStatusCodeAndReasonPhrase() 的方法（设置资源响应的状态代码和原因短语）会校验返回码
+     * https://github.com/Ryan-Shz/FastWebView/blob/817bb89f7fbca2b3ec790f1f633aeb3f50ac53fa/fastwebview/src/main/java/com/ryan/github/view/loader/OkHttpResourceLoader.java
+     */
     protected WebViewClient mWebViewClient = new WebViewClient() {
+        // @Override
+        // public void onReceivedHttpAuthRequest(WebView view, HttpAuthHandler handler, String host, String realm){
+        //     //身份验证（账号密码）
+        //     handler.proceed("userName", "password");
+        // }
+
+        // @Override
+        // public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
+        //     String scheme = request.getUrl().getScheme().trim();
+        //     if (scheme.equalsIgnoreCase(HTTP) || scheme.equalsIgnoreCase(HTTPS)) {
+        //         String url = request.getUrl().toString();
+        //         if (HostBlockConfig.i().isAd(url)) {
+        //             // 有广告的请求数据，我们直接返回空数据，注：不能直接返回null
+        //             return new WebResourceResponse(null, null, null);
+        //         }
+        //
+        //         String newUrl = UrlRewriteConfig.i().getRedirectUrl(url);
+        //         // XLog.i("重定向地址：" + url + " -> " + newUrl);
+        //
+        //         if(App.i().socks5ProxyNode == null){
+        //             XLog.i("webview 不走代理");
+        //             if(!TextUtils.isEmpty(newUrl) && !url.equalsIgnoreCase(newUrl)){
+        //                 return super.shouldInterceptRequest(view, new WebResourceRequest() {
+        //                     @Override
+        //                     public Uri getUrl() {
+        //                         return Uri.parse(newUrl);
+        //                     }
+        //                     @SuppressLint("NewApi")
+        //                     @Override
+        //                     public boolean isRedirect(){
+        //                         return true;
+        //                     }
+        //                     @SuppressLint("NewApi")
+        //                     @Override
+        //                     public boolean isForMainFrame() {
+        //                         return request.isForMainFrame();
+        //                     }
+        //                     @SuppressLint("NewApi")
+        //                     @Override
+        //                     public boolean hasGesture() {
+        //                         return request.hasGesture();
+        //                     }
+        //                     @SuppressLint("NewApi")
+        //                     @Override
+        //                     public String getMethod() {
+        //                         return request.getMethod();
+        //                     }
+        //                     @SuppressLint("NewApi")
+        //                     @Override
+        //                     public Map<String, String> getRequestHeaders() {
+        //                         return request.getRequestHeaders();
+        //                     }
+        //                 });
+        //             }
+        //             return super.shouldInterceptRequest(view, request);
+        //         }else {
+        //             XLog.i("webview 走代理：" + HttpClientManager.i().simpleClient().proxy() + url);
+        //             if(!TextUtils.isEmpty(newUrl) && !url.equalsIgnoreCase(newUrl)){
+        //                 url = newUrl;
+        //             }
+        //             try {
+        //                 // Request.Builder builder = new Request.Builder().url(url).tag(TAG).method(request.getMethod(), null);
+        //                 // for (Map.Entry<String, String> requestHeader : request.getRequestHeaders().entrySet()) {
+        //                 //     builder.header(requestHeader.getKey(), requestHeader.getValue());
+        //                 // }
+        //                 //
+        //                 // Response response = HttpClientManager.i().simpleClient().newCall(builder.build()).execute();
+        //                 // ResponseBody responseBody = response.body();
+        //                 // if(!response.isSuccessful()){
+        //                 //     XLog.i("webview 走代理失败， 返回体为null: " +  response.code() + " ," + response.message());
+        //                 //     return super.shouldInterceptRequest(view, request);
+        //                 // }
+        //                 //
+        //                 // MediaType mediaType  = responseBody.contentType();
+        //                 // String charset = null;
+        //                 // String mimeType = "text/plain";
+        //                 // if( mediaType != null ){
+        //                 //     charset = DataUtil.getCharsetFromContentType(mediaType.toString());
+        //                 //     mimeType = mediaType.toString();
+        //                 // }
+        //                 // XLog.i("webview 走代理， 内容编码：" + mimeType + " , " + charset + " , " + response.message() );
+        //                 //
+        //                 // InputStream in = new BufferedInputStream(responseBody.byteStream());
+        //                 //
+        //                 // Map<String, String> responseHeaders = new HashMap<>();
+        //                 // for (Pair<? extends String, ? extends String> header: response.headers()) {
+        //                 //     responseHeaders.put(header.getFirst(), header.getSecond());
+        //                 // }
+        //                 // if(TextUtils.isEmpty(charset)){
+        //                 //     charset = responseHeaders.get("content-encoding");
+        //                 //     XLog.i("webview 走代理，编码：" + mimeType + " , " + charset + " , " + response.message() );
+        //                 // }
+        //                 // if(isInterceptorThisRequest(response.code())){
+        //                 //     XLog.i("webview 代理，由于响应码为，所以跳过：" + response.code() );
+        //                 //     return super.shouldInterceptRequest(view, request);
+        //                 // }
+        //                 // return new WebResourceResponse(mimeType, charset, response.code(), "ok", responseHeaders, in);
+        //
+        //                 String urlString = url.split("#")[0];
+        //                 Proxy proxy = new Proxy(Proxy.Type.SOCKS, new InetSocketAddress(App.i().socks5ProxyNode.getServer(), App.i().socks5ProxyNode.getPort()));
+        //                 HttpURLConnection connection = (HttpURLConnection) new URL(urlString).openConnection(proxy);
+        //                 connection.setRequestMethod(request.getMethod());
+        //                 for (Map.Entry<String, String> requestHeader : request.getRequestHeaders().entrySet()) {
+        //                     connection.setRequestProperty(requestHeader.getKey(), requestHeader.getValue());
+        //                 }
+        //
+        //                 // 将响应转换为网络资源响应参数所需的格式
+        //                 // transform response to required format for WebResourceResponse parameters
+        //                 InputStream in = new BufferedInputStream(connection.getInputStream());
+        //                 String encoding = connection.getContentEncoding();
+        //                 // connection.getHeaderFields();
+        //                 Map<String, String> responseHeaders = new HashMap<>();
+        //                 for (String key : connection.getHeaderFields().keySet()) {
+        //                     responseHeaders.put(key, connection.getHeaderField(key));
+        //                 }
+        //
+        //                 String mimeType = "text/plain";
+        //                 if (connection.getContentType() != null && !connection.getContentType().isEmpty()) {
+        //                     mimeType = connection.getContentType().split("; ")[0];
+        //                 }
+        //                 XLog.i("webview 走代理， 内容编码：" + mimeType + " , " + encoding + " , " + connection.getResponseMessage());
+        //                 if(isInterceptorThisRequest(connection.getResponseCode())){
+        //                     XLog.i("webview 代理，由于响应码为，所以跳过：" + connection.getResponseCode() );
+        //                     return super.shouldInterceptRequest(view, request);
+        //                 }
+        //                 return new WebResourceResponse(mimeType, encoding, connection.getResponseCode(), connection.getResponseMessage(), responseHeaders, in);
+        //                 // return new WebResourceResponse(mimeType, "binary", in);
+        //             } catch (IOException e) {
+        //                 e.printStackTrace();
+        //                 XLog.e("无法加载：" + e.getMessage());
+        //             }
+        //             // failed doing proxied http request: return empty response
+        //             XLog.i("webview 走代理失败");
+        //             return super.shouldInterceptRequest(view, request);
+        //             // return new WebResourceResponse("text/plain", "UTF-8", 204, "No Content", new HashMap<String, String>(), new ByteArrayInputStream(new byte[]{}));
+        //         }
+        //     }
+        //
+        //     return super.shouldInterceptRequest(view, request);
+        // }
+        // /**
+        //  * references {@link android.webkit.WebResourceResponse} setStatusCodeAndReasonPhrase
+        //  */
+        // private boolean isInterceptorThisRequest(int code) {
+        //     return (code < 100 || code > 599 || (code > 299 && code < 400));
+        // }
+
         @Override
         public WebResourceResponse shouldInterceptRequest(WebView view, final WebResourceRequest request) {
-            String scheme = request.getUrl().getScheme().trim();
-            if (scheme.equalsIgnoreCase(HTTP) || scheme.equalsIgnoreCase(HTTPS)) {
-                String url = request.getUrl().toString();
-                if (AdBlock.i().isAd(url)) {
+            String url = request.getUrl().toString();
+            if (url.toLowerCase().startsWith(SCHEMA_HTTP) || url.toLowerCase().startsWith(SCHEMA_HTTPS)) {
+                if (HostBlockConfig.i().isAd(url)) {
                     // 有广告的请求数据，我们直接返回空数据，注：不能直接返回null
                     return new WebResourceResponse(null, null, null);
                 }
-
-                String newUrl = LinkRewriteConfig.i().getRedirectUrl(url);
-                // XLog.i("重定向地址：" + url + " -> " + newUrl);
-                if(!TextUtils.isEmpty(newUrl) && !url.equalsIgnoreCase(newUrl)){
-                    return super.shouldInterceptRequest(view, new WebResourceRequest() {
-                        @Override
-                        public Uri getUrl() {
-                            return Uri.parse(newUrl);
-                        }
-                        @SuppressLint("NewApi")
-                        @Override
-                        public boolean isRedirect(){
-                            return true;
-                        }
-                        @SuppressLint("NewApi")
-                        @Override
-                        public boolean isForMainFrame() {
-                            return request.isForMainFrame();
-                        }
-                        @SuppressLint("NewApi")
-                        @Override
-                        public boolean hasGesture() {
-                            return request.hasGesture();
-                        }
-                        @SuppressLint("NewApi")
-                        @Override
-                        public String getMethod() {
-                            return request.getMethod();
-                        }
-                        @SuppressLint("NewApi")
-                        @Override
-                        public Map<String, String> getRequestHeaders() {
-                            return request.getRequestHeaders();
-                        }
-                    });
-                }
+                // NOTE: 2021/1/24  由于会将小图转为大图，造成问题，所以不重定向。
+                // String newUrl = UrlRewriteConfig.i().getRedirectUrl(url);
+                // XLog.i("网页重定向：" + url + " -> " + newUrl);
+                // if(!TextUtils.isEmpty(newUrl) && !url.equalsIgnoreCase(newUrl)){
+                //     return super.shouldInterceptRequest(view, new WebResourceRequest() {
+                //         @Override
+                //         public Uri getUrl() {
+                //             return Uri.parse(newUrl);
+                //         }
+                //         @SuppressLint("NewApi")
+                //         @Override
+                //         public boolean isRedirect(){
+                //             return true;
+                //         }
+                //         @SuppressLint("NewApi")
+                //         @Override
+                //         public boolean isForMainFrame() {
+                //             return request.isForMainFrame();
+                //         }
+                //         @SuppressLint("NewApi")
+                //         @Override
+                //         public boolean hasGesture() {
+                //             return request.hasGesture();
+                //         }
+                //         @SuppressLint("NewApi")
+                //         @Override
+                //         public String getMethod() {
+                //             return request.getMethod();
+                //         }
+                //         @SuppressLint("NewApi")
+                //         @Override
+                //         public Map<String, String> getRequestHeaders() {
+                //             return request.getRequestHeaders();
+                //         }
+                //     });
+                // }
             }
             return super.shouldInterceptRequest(view, request);
         }
@@ -462,11 +666,11 @@ public class WebActivity extends BaseActivity implements WebBridge {
             String url = request.getUrl().toString();
 
             XLog.i("地址：" + url);
-            if (url.startsWith(SCHEMA_HTTP) || url.startsWith(SCHEMA_HTTPS)) {
+            if (url.toLowerCase().startsWith(SCHEMA_HTTP) || url.startsWith(SCHEMA_HTTPS)) {
                 return false;
             }
 
-            String newUrl = LinkRewriteConfig.i().getRedirectUrl( url );
+            String newUrl = UrlRewriteConfig.i().getRedirectUrl( url );
             if (!TextUtils.isEmpty(newUrl)) {
                 // 创建一个新请求，并相应地修改它
                 url = newUrl;
@@ -570,6 +774,7 @@ public class WebActivity extends BaseActivity implements WebBridge {
         return true;
     }
 
+    int selected = 0;
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
@@ -578,37 +783,33 @@ public class WebActivity extends BaseActivity implements WebBridge {
                 exit();
                 break;
             case R.id.web_menu_user_agent:
-                final ArrayList<String> uaTitle = new ArrayList<>();
-                String holdUA = NetworkUserAgentConfig.i().getHoldUserAgent();
-                uaTitle.add(getString(R.string.default_x));
-                int i = 0;
-                int selected = 0;
-                for (Map.Entry<String, String> entry : NetworkUserAgentConfig.i().getUserAgents().entrySet()) {
-                    uaTitle.add(entry.getKey());
-                    if(entry.getKey().equals(holdUA)){
-                        selected = i;
-                    }
-                    i++;
-                    XLog.i("标题：" + entry.getKey());
-                }
+                ArrayList<String> userAgentsTitle = new ArrayList<>();
+                ArrayMap<String, String> userAgents = new ArrayMap<>();
 
-                int finalSelected = selected;
+                userAgents.put(getString(R.string.default_x),WebSettings.getDefaultUserAgent(this));
+                userAgentsTitle.add(getString(R.string.default_x));
+
+                userAgents.put("iPhone iOS 11", "Mozilla/5.0 (iPhone; CPU iPhone OS 11_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/11.0 Mobile/15E148 Safari/604.1");
+                userAgentsTitle.add("iPhone iOS 11");
+
+                userAgents.put("Win Chrome 87", "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.198 Safari/537.36");
+                userAgentsTitle.add("Win Chrome 87");
+
+                for (Map.Entry<String, String> entry : UserAgentsConfig.i().getUserAgents().entrySet()) {
+                    userAgentsTitle.add(entry.getKey());
+                }
+                userAgents.putAll(UserAgentsConfig.i().getUserAgents());
+
+                if(selected >= userAgentsTitle.size()){
+                    selected = 0;
+                }
                 new MaterialDialog.Builder(WebActivity.this)
                         .title(R.string.select_user_agent)
-                        .items(uaTitle)
-                        .itemsCallbackSingleChoice(selected + 1, new MaterialDialog.ListCallbackSingleChoice() {
+                        .items(userAgentsTitle)
+                        .itemsCallbackSingleChoice(selected, new MaterialDialog.ListCallbackSingleChoice() {
                             @Override
                             public boolean onSelection(MaterialDialog dialog, View view, final int which, CharSequence text) {
-                                // 默认
-                                if (which == 0) {
-                                    NetworkUserAgentConfig.i().setHoldUserAgent(null);
-                                }
-                                // 手动选择项
-                                else if (which - 1 != finalSelected) {
-                                    NetworkUserAgentConfig.i().setHoldUserAgent(text.toString());
-
-                                }
-                                NetworkUserAgentConfig.i().save();
+                                selected = which;
                                 agentWeb.getWebCreator().getWebView().getSettings().setUserAgentString(NetworkUserAgentConfig.i().guessUserAgentByUrl(receivedUrl));
                                 agentWeb.getWebCreator().getWebView().reload();
                                 // XLog.i("默认的UA是：" + agentWeb.getWebCreator().getWebView().getSettings().getUserAgentString() );
@@ -627,9 +828,11 @@ public class WebActivity extends BaseActivity implements WebBridge {
                                         .input(null, agentWeb.getWebCreator().getWebView().getSettings().getUserAgentString(), new MaterialDialog.InputCallback() {
                                             @Override
                                             public void onInput(@NotNull MaterialDialog dialog, CharSequence input) {
-                                                NetworkUserAgentConfig.i().setHoldUserAgent(getString(R.string.custom));
-                                                NetworkUserAgentConfig.i().getUserAgents().put(getString(R.string.custom),input.toString());
-                                                NetworkUserAgentConfig.i().save();
+                                                if(!UserAgentsConfig.i().getUserAgents().containsKey(getString(R.string.custom))){
+                                                    userAgentsTitle.add(getString(R.string.custom));
+                                                }
+                                                UserAgentsConfig.i().putCustomUserAgent(getString(R.string.custom), input.toString());
+                                                selected = userAgentsTitle.size() -1;
                                                 XLog.i("当前输入的是：" + input.toString());
                                                 agentWeb.getWebCreator().getWebView().getSettings().setUserAgentString(NetworkUserAgentConfig.i().guessUserAgentByUrl(receivedUrl));
                                                 agentWeb.getWebCreator().getWebView().reload();
@@ -652,6 +855,81 @@ public class WebActivity extends BaseActivity implements WebBridge {
                         })
                         .show();
                 break;
+
+                //
+                // final ArrayList<String> uaTitle = new ArrayList<>();
+                // String holdUA = NetworkUserAgentConfig.i().getHoldUserAgent();
+                // uaTitle.add(getString(R.string.default_x));
+                // int i = 0;
+                // for (Map.Entry<String, String> entry : NetworkUserAgentConfig.i().getUserAgents().entrySet()) {
+                //     uaTitle.add(entry.getKey());
+                //     if(entry.getKey().equals(holdUA)){
+                //         selected = i;
+                //     }
+                //     i++;
+                //     XLog.i("被选UA：" + entry.getKey());
+                // }
+                //
+                // int finalSelected = selected;
+                // new MaterialDialog.Builder(WebActivity.this)
+                //         .title(R.string.select_user_agent)
+                //         .items(uaTitle)
+                //         .itemsCallbackSingleChoice(selected + 1, new MaterialDialog.ListCallbackSingleChoice() {
+                //             @Override
+                //             public boolean onSelection(MaterialDialog dialog, View view, final int which, CharSequence text) {
+                //                 // 默认
+                //                 if (which == 0) {
+                //                     NetworkUserAgentConfig.i().setHoldUserAgent(null);
+                //                 }
+                //                 // 手动选择项
+                //                 else if (which - 1 != finalSelected) {
+                //                     NetworkUserAgentConfig.i().setHoldUserAgent(text.toString());
+                //
+                //                 }
+                //                 NetworkUserAgentConfig.i().save();
+                //                 agentWeb.getWebCreator().getWebView().getSettings().setUserAgentString(NetworkUserAgentConfig.i().guessUserAgentByUrl(receivedUrl));
+                //                 agentWeb.getWebCreator().getWebView().reload();
+                //                 // XLog.i("默认的UA是：" + agentWeb.getWebCreator().getWebView().getSettings().getUserAgentString() );
+                //                 dialog.dismiss();
+                //                 return true;
+                //             }
+                //         })
+                //         .neutralText(R.string.custom_user_agent)
+                //         .onNeutral(new MaterialDialog.SingleButtonCallback() {
+                //             @Override
+                //             public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
+                //                 new MaterialDialog.Builder(WebActivity.this)
+                //                         .title(R.string.enter_user_agent)
+                //                         .inputType(InputType.TYPE_CLASS_TEXT)
+                //                         .inputRange(12, 200)
+                //                         .input(null, agentWeb.getWebCreator().getWebView().getSettings().getUserAgentString(), new MaterialDialog.InputCallback() {
+                //                             @Override
+                //                             public void onInput(@NotNull MaterialDialog dialog, CharSequence input) {
+                //                                 NetworkUserAgentConfig.i().setHoldUserAgent(getString(R.string.custom));
+                //                                 NetworkUserAgentConfig.i().getUserAgents().put(getString(R.string.custom),input.toString());
+                //                                 NetworkUserAgentConfig.i().save();
+                //                                 XLog.i("当前输入的是：" + input.toString());
+                //                                 agentWeb.getWebCreator().getWebView().getSettings().setUserAgentString(NetworkUserAgentConfig.i().guessUserAgentByUrl(receivedUrl));
+                //                                 agentWeb.getWebCreator().getWebView().reload();
+                //                             }
+                //                         })
+                //                         .positiveText(R.string.confirm)
+                //                         .negativeText(android.R.string.cancel)
+                //                         .neutralText(R.string.remove_custom_user_agent)
+                //                         .neutralColor(WebActivity.this.getResources().getColor(R.color.material_red_400))
+                //                         .onNeutral(new MaterialDialog.SingleButtonCallback() {
+                //                             @Override
+                //                             public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
+                //                                 NetworkUserAgentConfig.i().setHoldUserAgent(getString(R.string.custom));
+                //                                 NetworkUserAgentConfig.i().getUserAgents().remove(getString(R.string.custom));
+                //                                 NetworkUserAgentConfig.i().save();
+                //                             }
+                //                         })
+                //                         .show();
+                //             }
+                //         })
+                //         .show();
+                // break;
             case R.id.web_menu_open_by_sys:
                 Intent intent = new Intent(Intent.ACTION_VIEW);
                 if (!TextUtils.isEmpty(receivedUrl)) {
@@ -704,7 +982,6 @@ public class WebActivity extends BaseActivity implements WebBridge {
     }
     String COMMEND_PRINT_HTML = "javascript: function(){ console.log(document.documentElement.outerHTML); window.WebBridge.log(document.documentElement.outerHTML);} ";
     // String COMMEND = "javascript:window.onload = function(){ReadabilityBridge.getHtml(document.documentElement.outerHTML);void(0);}";
-
 
     private void exit() {
         this.finish();

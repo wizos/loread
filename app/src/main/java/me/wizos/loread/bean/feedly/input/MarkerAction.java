@@ -41,12 +41,12 @@ public class MarkerAction {
     @SerializedName("categoryIds")
     private Collection<String> categoryIds;
 
-//    @SerializedName("lastReadEntryId")
-//    private String lastReadEntryId;
-//
-//    // 时间戳替代(不太准确)
-//    @SerializedName("asOf")
-//    private long asOf;
+   // @SerializedName("lastReadEntryId")
+   // private String lastReadEntryId;
+   //
+   // // 时间戳替代(不太准确)
+   // @SerializedName("asOf")
+   // private long asOf;
 
     public String getAction() {
         return action;
@@ -86,5 +86,16 @@ public class MarkerAction {
 
     public void setCategoryIds(List<String> categoryIds) {
         this.categoryIds = categoryIds;
+    }
+
+    @Override
+    public String toString() {
+        return "MarkerAction{" +
+                "action='" + action + '\'' +
+                ", type='" + type + '\'' +
+                ", entryIds=" + entryIds +
+                ", feedIds=" + feedIds +
+                ", categoryIds=" + categoryIds +
+                '}';
     }
 }

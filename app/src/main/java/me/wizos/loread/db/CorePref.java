@@ -11,20 +11,9 @@ import com.tencent.mmkv.MMKV;
  * 内部设置
  */
 public class CorePref {
-    // private static final String TAG = "CorePref";
     private static CorePref corePref;
-    // private static SharedPreferences mySharedPreferences;
-    // private static SharedPreferences.Editor editor;
-
     private static MMKV globalPref = MMKV.defaultMMKV();
     private static MMKV userPref;
-
-    // 迁移旧数据
-    // {
-    //     SharedPreferences old_man = App.i().getSharedPreferences(App.i().getString(R.string.app_id), Activity.MODE_PRIVATE);
-    //     globalPref.importFromSharedPreferences(old_man);
-    //     old_man.edit().clear().apply();
-    // }
 
     private CorePref() {}
 
@@ -44,9 +33,12 @@ public class CorePref {
     public MMKV globalPref(){
         return globalPref;
     }
-    // public MMKV userPref(){
-    //     return userPref;
-    // }
+    public MMKV userPref(){
+        if(userPref == null){
+            throw new RuntimeException("必须先初始化 UserPref");
+        }
+        return userPref;
+    }
     public static void init(Context context){
         MMKV.initialize(context);
     }

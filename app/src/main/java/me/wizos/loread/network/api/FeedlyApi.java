@@ -12,6 +12,8 @@ import com.hjq.toast.ToastUtils;
 import com.jeremyliao.liveeventbus.LiveEventBus;
 import com.lzy.okgo.exception.HttpException;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.io.IOException;
 import java.net.ConnectException;
 import java.net.SocketTimeoutException;
@@ -20,6 +22,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import me.wizos.loread.App;
+import me.wizos.loread.Contract;
 import me.wizos.loread.R;
 import me.wizos.loread.bean.Token;
 import me.wizos.loread.bean.feedly.CategoryItem;
@@ -31,19 +34,22 @@ import me.wizos.loread.bean.feedly.StreamIds;
 import me.wizos.loread.bean.feedly.input.EditCollection;
 import me.wizos.loread.bean.feedly.input.EditFeed;
 import me.wizos.loread.bean.feedly.input.MarkerAction;
-import me.wizos.loread.config.ArticleActionConfig;
-import me.wizos.loread.config.LinkRewriteConfig;
+import me.wizos.loread.config.url_rewrite.UrlRewriteConfig;
 import me.wizos.loread.db.Article;
 import me.wizos.loread.db.Category;
 import me.wizos.loread.db.CoreDB;
 import me.wizos.loread.db.Feed;
 import me.wizos.loread.db.FeedCategory;
 import me.wizos.loread.db.User;
+import me.wizos.loread.gson.NullOnEmptyConverterFactory;
 import me.wizos.loread.network.HttpClientManager;
 import me.wizos.loread.network.SyncWorker;
 import me.wizos.loread.network.callback.CallbackX;
 import me.wizos.loread.utils.StringUtils;
+import me.wizos.loread.utils.TriggerRuleUtils;
 import okhttp3.FormBody;
+import retrofit2.Call;
+import retrofit2.Callback;
 import retrofit2.Response;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
@@ -54,7 +60,7 @@ import static me.wizos.loread.utils.StringUtils.getString;
  * Created by Wizos on 2019/2/8.
  */
 
-public class FeedlyApi extends OAuthApi<Feed, CategoryItem> {
+public class FeedlyApi extends OAuthApi {
     private static final String APP_ID = "palabre";
     private static final String APP_KEY = "FE01H48LRK62325VQVGYOZ24YFZL";
     public static final String OFFICIAL_BASE_URL = "https://feedly.com/v3";
@@ -72,13 +78,14 @@ public class FeedlyApi extends OAuthApi<Feed, CategoryItem> {
     private FeedlyService service;
 
     public FeedlyApi() {
-        String baseUrl = LinkRewriteConfig.i().getRedirectUrl(FeedlyApi.OFFICIAL_BASE_URL);
+        String baseUrl = UrlRewriteConfig.i().getRedirectUrl(FeedlyApi.OFFICIAL_BASE_URL);
         if(StringUtils.isEmpty(baseUrl)){
             baseUrl = FeedlyApi.OFFICIAL_BASE_URL;
         }
         retrofit = new Retrofit.Builder()
                 .baseUrl(baseUrl + "/") // 设置网络请求的Url地址, 必须以/结尾
-                .addConverterFactory(GsonConverterFactory.create(new GsonBuilder().setLenient().create()))  // 设置数据解析器
+                .addConverterFactory(new NullOnEmptyConverterFactory()) // 必须在第一个
+                .addConverterFactory(GsonConverterFactory.create(new GsonBuilder().setLenient().create()))  // 设置数据解析器。lenient 为忽略格式错误
                 .client(HttpClientManager.i().feedlyHttpClient())
                 .build();
         service = retrofit.create(FeedlyService.class);
@@ -90,7 +97,7 @@ public class FeedlyApi extends OAuthApi<Feed, CategoryItem> {
     }
 
     public String getOAuthUrl() {
-        String baseUrl = LinkRewriteConfig.i().getRedirectUrl(OFFICIAL_BASE_URL);
+        String baseUrl = UrlRewriteConfig.i().getRedirectUrl(OFFICIAL_BASE_URL);
         if(StringUtils.isEmpty(baseUrl)){
             baseUrl = OFFICIAL_BASE_URL;
         }
@@ -99,9 +106,9 @@ public class FeedlyApi extends OAuthApi<Feed, CategoryItem> {
             baseUrl = baseUrl + "/";
         }
         return baseUrl + "auth/auth?response_type=code&client_id=palabre&scope=https://cloud.feedly.com/subscriptions&redirect_uri=palabre://feedlyauth&state=/profile";
-//        String redirectUri = "loread://oauth";
-//        String url = "https://cloud.feedly.com/v3/auth/auth?response_type=code&client_id=" + clientId + "&scope=https://cloud.feedly.com/subscriptions&redirect_uri=" + redirectUri + "&state=/profile";
-//        return HOST + "/auth/auth?response_type=code&client_id=" + APP_ID + "&redirect_uri=" + redirectUri + "&state=loread&scope=https://cloud.feedly.com/subscriptions";
+        // String redirectUri = "loread://oauth";
+        // String url = "https://cloud.feedly.com/v3/auth/auth?response_type=code&client_id=" + clientId + "&scope=https://cloud.feedly.com/subscriptions&redirect_uri=" + redirectUri + "&state=/profile";
+        // return HOST + "/auth/auth?response_type=code&client_id=" + APP_ID + "&redirect_uri=" + redirectUri + "&state=loread&scope=https://cloud.feedly.com/subscriptions";
     }
     public void getAccessToken(String authorizationCode,CallbackX cb) {
         FormBody.Builder builder = new FormBody.Builder();
@@ -194,11 +201,11 @@ public class FeedlyApi extends OAuthApi<Feed, CategoryItem> {
     @Override
     public void sync() {
         try {
-            long syncTimeMillis = System.currentTimeMillis();
+            long syncTimeMillis = System.currentTimeMillis() + 3600_000;
             String uid = App.i().getUser().getId();
 
             XLog.e("3 - 同步订阅源信息");
-            LiveEventBus.get(SyncWorker.SYNC_PROCESS_FOR_SUBTITLE).post(getString(R.string.sync_feed_info, "1."));
+            LiveEventBus.get(SyncWorker.SYNC_PROCESS_FOR_SUBTITLE).post(getString(R.string.sync_feed_info, "3."));
 
             // 获取分类&feed
             List<Collection> collectionList = service.getCollections(getAuthorization()).execute().body();
@@ -273,7 +280,7 @@ public class FeedlyApi extends OAuthApi<Feed, CategoryItem> {
             fetchArticle(allSize, 0, new ArrayList<>(refsList.get(0)), new ArticleChanger() {
                 @Override
                 public Article change(Article article) {
-                    article.setCrawlDate(System.currentTimeMillis());
+                    article.setCrawlDate(syncTimeMillis);
                     article.setReadStatus(App.STATUS_UNREAD);
                     article.setStarStatus(App.STATUS_UNSTAR);
                     article.setUid(uid);
@@ -284,7 +291,7 @@ public class FeedlyApi extends OAuthApi<Feed, CategoryItem> {
             fetchArticle(allSize, refsList.get(0).size(), new ArrayList<>(refsList.get(1)), new ArticleChanger() {
                 @Override
                 public Article change(Article article) {
-                    article.setCrawlDate(System.currentTimeMillis());
+                    article.setCrawlDate(syncTimeMillis);
                     article.setReadStatus(App.STATUS_READED);
                     article.setStarStatus(App.STATUS_STARED);
                     article.setUid(uid);
@@ -296,7 +303,7 @@ public class FeedlyApi extends OAuthApi<Feed, CategoryItem> {
             fetchArticle(allSize, refsList.get(0).size() + refsList.get(1).size(), new ArrayList<>(refsList.get(2)), new ArticleChanger() {
                 @Override
                 public Article change(Article article) {
-                    article.setCrawlDate(System.currentTimeMillis());
+                    article.setCrawlDate(syncTimeMillis);
                     article.setReadStatus(App.STATUS_UNSTAR);
                     article.setStarStatus(App.STATUS_STARED);
                     article.setUid(uid);
@@ -306,53 +313,46 @@ public class FeedlyApi extends OAuthApi<Feed, CategoryItem> {
 
             LiveEventBus.get(SyncWorker.SYNC_PROCESS_FOR_SUBTITLE).post(getString(R.string.clear_article));
             deleteExpiredArticles();
-            handleDuplicateArticles();
-            handleCrawlDate();
-            updateCollectionCount();
 
             // 获取文章全文
             LiveEventBus.get(SyncWorker.SYNC_PROCESS_FOR_SUBTITLE).post(getString(R.string.fetch_article_full_content));
             fetchReadability(uid, syncTimeMillis);
 
             // 执行文章自动处理脚本
-            ArticleActionConfig.i().exeRules(uid, syncTimeMillis);
+            TriggerRuleUtils.exeAllRules(uid, syncTimeMillis);
             // 清理无文章的tag
             // clearNotArticleTags(uid);
 
-            LiveEventBus.get(SyncWorker.SYNC_PROCESS_FOR_SUBTITLE).post( null );
             // 提示更新完成
             LiveEventBus.get(SyncWorker.NEW_ARTICLE_NUMBER).post(allSize);
-        } catch (HttpException e) {
-            XLog.e("同步时产生HttpException：" + e.message());
-            e.printStackTrace();
-            handleException(e);
+        }catch (IllegalStateException e){
+            handleException(e, e.getMessage());
+        }catch (HttpException e) {
+            handleException(e, e.message());
         } catch (ConnectException e) {
-            XLog.e("同步时产生异常ConnectException");
-            e.printStackTrace();
-            handleException(e);
+            handleException(e, "同步失败：Connect异常");
         } catch (SocketTimeoutException e) {
-            XLog.e("同步时产生异常SocketTimeoutException");
-            e.printStackTrace();
-            handleException(e);
+            handleException(e, "同步失败：Socket超时");
         } catch (IOException e) {
-            XLog.e("同步时产生异常IOException");
-            e.printStackTrace();
-            handleException(e);
+            handleException(e, "同步失败：IO异常");
         } catch (RuntimeException e) {
-            XLog.e("同步时产生异常RuntimeException");
-            e.printStackTrace();
-            handleException(e);
+            handleException(e, "同步失败：Runtime异常");
         }
+
+        handleDuplicateArticles();
+        handleCrawlDate2();
+        updateCollectionCount();
+        LiveEventBus.get(SyncWorker.SYNC_PROCESS_FOR_SUBTITLE).post( null );
     }
 
-    private void handleException(Exception e) {
-        if (e instanceof HttpException) {
-            ToastUtils.show("网络异常：" + e.getMessage());
-        } else {
-            updateCollectionCount();
+    private void handleException(Exception e, String msg) {
+        XLog.e("同步失败：" + e.getClass() + " = " + msg);
+        e.printStackTrace();
+        if(Contract.NOT_LOGGED_IN.equalsIgnoreCase(msg)){
+            ToastUtils.show(getString(R.string.not_logged_in));
+        }else {
+            ToastUtils.show(msg);
         }
-
-        LiveEventBus.get(SyncWorker.SYNC_PROCESS_FOR_SUBTITLE).post( null );
     }
 
     public void renameTag(String tagId, String targetName, CallbackX cb) {
@@ -483,19 +483,20 @@ public class FeedlyApi extends OAuthApi<Feed, CategoryItem> {
         markerAction.setType(MarkerAction.TYPE_ENTRIES);
         markerAction.setEntryIds(ids);
         // 成功不返回信息
-        service.markers(getAuthorization(),markerAction).enqueue(new retrofit2.Callback<String>() {
+        service.markers(getAuthorization(), markerAction).enqueue(new Callback<String>() {
             @Override
-            public void onResponse(retrofit2.Call<String> call, retrofit2.Response<String> response) {
+            public void onResponse(@NotNull Call<String> call, @NotNull Response<String> response) {
                 if (response.isSuccessful() ){
                     cb.onSuccess(null);
                 }else {
-                    cb.onFailure("修改失败：原因未知");
+                    cb.onFailure(getString(R.string.response_fail));
                 }
             }
 
             @Override
-            public void onFailure(retrofit2.Call<String> call, Throwable t) {
-                cb.onFailure("修改失败：原因未知");
+            public void onFailure(@NotNull Call<String> call, @NotNull Throwable t) {
+                cb.onFailure(t.getMessage());
+                XLog.i("标记失败：" + t.getMessage());
             }
         });
     }
@@ -512,7 +513,7 @@ public class FeedlyApi extends OAuthApi<Feed, CategoryItem> {
 
 
     public void markArticleReaded(String articleId,CallbackX cb) {
-        XLog.e("标记已读F：" );
+        XLog.d("标记已读：" + articleId);
         markArticle(MarkerAction.MARK_AS_READ, articleId, cb);
     }
 

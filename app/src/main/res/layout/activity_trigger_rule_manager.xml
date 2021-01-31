@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/action_manager_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fitsSystemWindows="true"
+    android:addStatesFromChildren="true"
+    android:windowDrawsSystemBarBackgrounds="true">
+
+    <com.google.android.material.appbar.AppBarLayout
+        android:id="@+id/action_manager_appBarLayout"
+        android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        <androidx.appcompat.widget.Toolbar
+            android:id="@+id/action_manager_toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            android:background="?attr/topbar_bg"
+            app:navigationIcon="@drawable/ic_close"
+            app:contentInsetStartWithNavigation="0dp"
+            app:subtitleTextAppearance="@style/MyToolbar.SubTitle"
+            app:menu="@menu/menu_trigger_rule_manager"
+            app:popupTheme="@style/OverflowMenuStyle"
+            app:layout_scrollFlags="enterAlways|snap"
+            app:title="@string/rules_management" />
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:paddingStart="10dp"
+        android:paddingEnd="10dp"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior">
+
+        <!--<androidx.recyclerview.widget.RecyclerView-->
+        <!--    android:id="@+id/action_manager_recycler_view"-->
+        <!--    android:layout_width="match_parent"-->
+        <!--    android:layout_height="wrap_content"-->
+        <!--    tools:listitem="@layout/item_trigger_rule_view"-->
+        <!--    tools:itemCount="3"-->
+        <!--    app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"/>-->
+
+        <pokercc.android.expandablerecyclerview.StickyHeader
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+            <pokercc.android.expandablerecyclerview.ExpandableRecyclerView
+                android:id="@+id/action_manager_recycler_view"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                tools:listitem="@layout/item_trigger_rule_view"
+                tools:itemCount="3"
+                app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"/>
+        </pokercc.android.expandablerecyclerview.StickyHeader>
+
+        <!--<LinearLayout-->
+        <!--    android:gravity="center_horizontal"-->
+        <!--    android:orientation="vertical"-->
+        <!--    android:layout_width="match_parent"-->
+        <!--    android:layout_height="wrap_content">-->
+
+        <!--    <TextView-->
+        <!--        android:id="@+id/action_manager_create_rule"-->
+        <!--        android:layout_width="match_parent"-->
+        <!--        android:layout_height="wrap_content"-->
+        <!--        android:layout_marginTop="5dp"-->
+        <!--        android:layout_marginBottom="5dp"-->
+        <!--        android:padding="5dp"-->
+        <!--        android:textSize="14sp"-->
+        <!--        android:textColor="@color/bluePrimary"-->
+        <!--        android:gravity="center"-->
+        <!--        android:text="@string/create_rule"/>-->
+        <!--</LinearLayout>-->
+    </androidx.core.widget.NestedScrollView>
+
+    <!--<com.google.android.material.floatingactionbutton.FloatingActionButton-->
+    <!--    android:onClick="createGlobalRule"-->
+    <!--    android:layout_gravity="end|bottom"-->
+    <!--    android:layout_margin="20dp"-->
+    <!--    android:src="@drawable/ic_rule"-->
+    <!--    android:layout_width="wrap_content"-->
+    <!--    android:layout_height="wrap_content"/>-->
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

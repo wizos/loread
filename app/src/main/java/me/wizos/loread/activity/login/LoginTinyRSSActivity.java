@@ -18,11 +18,13 @@ import androidx.lifecycle.ViewModelProvider;
 
 import com.hjq.toast.ToastUtils;
 
+import java.util.Objects;
+
 import me.wizos.loread.App;
 import me.wizos.loread.R;
 import me.wizos.loread.activity.BaseActivity;
+import me.wizos.loread.activity.viewmodel.TinyRSSUserViewModel;
 import me.wizos.loread.view.colorful.Colorful;
-import me.wizos.loread.viewmodel.TinyRSSUserViewModel;
 
 public class LoginTinyRSSActivity extends BaseActivity {
     private TinyRSSUserViewModel loginViewModel;
@@ -34,7 +36,7 @@ public class LoginTinyRSSActivity extends BaseActivity {
         Toolbar mToolbar = findViewById(R.id.ttrss_toolbar);
         setSupportActionBar(mToolbar);
         // 这个小于4.0版本是默认为true，在4.0及其以上是false。该方法的作用：决定左上角的图标是否可以点击(没有向左的小图标)，true 可点
-        getSupportActionBar().setHomeButtonEnabled(true);
+        Objects.requireNonNull(getSupportActionBar()).setHomeButtonEnabled(true);
         // 决定左上角图标的左侧是否有向左的小箭头，true 有小箭头
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setDisplayShowTitleEnabled(true);
@@ -59,7 +61,7 @@ public class LoginTinyRSSActivity extends BaseActivity {
 
             @Override
             public void afterTextChanged(Editable s) {
-                loginViewModel.loginDataChanged(
+                loginViewModel.loginFormChanged(
                         baseUrlEditText.getText().toString(),
                         accountEditText.getText().toString(),
                         passwordEditText.getText().toString()
@@ -70,7 +72,7 @@ public class LoginTinyRSSActivity extends BaseActivity {
         accountEditText.addTextChangedListener(afterTextChangedListener);
         passwordEditText.addTextChangedListener(afterTextChangedListener);
 
-        /**
+        /*
          * 需要注意的是 setOnEditorActionListener这个方法，并不是在我们点击EditText的时候触发，
          * 也不是在我们对EditText进行编辑时触发，而是在我们编辑完之后点击软键盘上的各种键才会触发。
          * 因为通过布局文件中的imeOptions可以控制软件盘右下角的按钮显示为不同按钮。所以和EditorInfo搭配起来可以实现各种软键盘的功能。
@@ -126,7 +128,7 @@ public class LoginTinyRSSActivity extends BaseActivity {
             }
         });
 
-        loginViewModel.getLoginResult().observe(this, new Observer<LoginResult>() {
+        loginViewModel.getLoginResultLiveData().observe(this, new Observer<LoginResult>() {
             @Override
             public void onChanged(@Nullable LoginResult loginResult) {
                 loginButton.setEnabled(true);

@@ -34,7 +34,7 @@ import java.util.List;
 import me.wizos.loread.App;
 import me.wizos.loread.Contract;
 import me.wizos.loread.R;
-import me.wizos.loread.config.NetworkRefererConfig;
+import me.wizos.loread.config.HeaderRefererConfig;
 import me.wizos.loread.db.Article;
 import me.wizos.loread.db.CoreDB;
 import me.wizos.loread.db.Feed;
@@ -57,7 +57,7 @@ public class ArticlePagedListAdapter extends PagedListAdapter<Article, ArticlePa
                 if(msg.what != TIMEOUT){
                     return false; //返回true 不对msg进行进一步处理
                 }
-                XLog.e("重置位置：" + lastPos + " , " + getCurrentList().getLastKey());
+                XLog.d("重置位置：" + lastPos + " , " + getCurrentList().getLastKey());
                 if(lastPos >=0 && lastPos < getItemCount()){
                     ArticlePagedListAdapter.super.getItem(lastPos);
                 }else {
@@ -87,7 +87,7 @@ public class ArticlePagedListAdapter extends PagedListAdapter<Article, ArticlePa
         if(handler.hasMessages(TIMEOUT)){
             handler.removeMessages(TIMEOUT);
         }
-        Article article = getItem(position);
+        Article article = super.getItem(position);
         // XLog.d("创建onBindViewHolder，LastKey = " + Objects.requireNonNull(getCurrentList()).getLastKey() + " , " + getCurrentList().getPositionOffset() + "  " + (article == null) + "  " + position);
         // 如果article是null，在此处不停循环的获取getItem得到的还是null
         if (article != null) {
@@ -181,7 +181,7 @@ public class ArticlePagedListAdapter extends PagedListAdapter<Article, ArticlePa
                 articleImg.setVisibility(View.VISIBLE);
                 if ( NetworkUtils.isAvailable() && (!App.i().getUser().isDownloadImgOnlyWifi() || NetworkUtils.getNetType().equals(NetType.WIFI)) ) {
                     // KLog.e( "数据：" + article.getTitle() + "   "  +  App.Referer+ "   "  +  article.getLink() );
-                    String referer = NetworkRefererConfig.i().guessRefererByUrl(article.getImage());
+                    String referer = HeaderRefererConfig.i().guessRefererByUrl(article.getImage());
                     if (StringUtils.isEmpty(referer) && !TextUtils.isEmpty(article.getLink())){
                         referer = StringUtils.urlEncode(article.getLink());
                     }
@@ -227,9 +227,12 @@ public class ArticlePagedListAdapter extends PagedListAdapter<Article, ArticlePa
         }
     }
 
-    public Article get(int position){
+    public Article getById(int position){
         return CoreDB.i().articleDao().getById(App.i().getUser().getId(), getId(position));
     }
+    // public Article getItem(int position){
+    //     return super.getItem(position);
+    // }
 
     private List<String> articleIds = new ArrayList<>();
     public void setArticleIds(List<String> articleIds){
@@ -239,7 +242,7 @@ public class ArticlePagedListAdapter extends PagedListAdapter<Article, ArticlePa
         if(articleIds != null && position < articleIds.size()){
             return articleIds.get(position);
         }else {
-            XLog.d("articleIds 为空 或 索引超出下标");
+            XLog.e("articleIds 为空 或 索引超出下标。position = " + position + ", articleIds size = " + (articleIds!=null ? articleIds.size():-1));
             return "";
         }
     }
@@ -269,7 +272,7 @@ public class ArticlePagedListAdapter extends PagedListAdapter<Article, ArticlePa
         if(pagedList == null){
             lastPos = 0;
         }else if(lastPos >= 0 && lastPos < pagedList.size() && lastPos < getItemCount()){
-            getItem(lastPos);
+            super.getItem(lastPos);
         }else {
             lastPos = pagedList.size();
         }

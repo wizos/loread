@@ -20,8 +20,6 @@ public class LoginResult {
             return;
         }
 
-        error = App.i().getString(R.string.wrong_unknown);
-
         String[] info = result.split("\n");
         if (info.length == 0) {
             return;
@@ -32,6 +30,9 @@ public class LoginResult {
             if (error.toLowerCase().equals("wrong_username_or_password")) {
                 error = App.i().getString(R.string.wrong_username_or_password);
             }
+            // else {
+            //     error = App.i().getString(R.string.wrong_unknown);
+            // }
         } else {
             for (String tmp : info) {
                 if (tmp.startsWith("Auth=")) {
@@ -61,7 +62,8 @@ public class LoginResult {
     @Override
     public String toString() {
         return "LoginResult{" +
-                "error='" + error + '\'' +
+                "success=" + success +
+                ", error='" + error + '\'' +
                 ", auth='" + auth + '\'' +
                 '}';
     }

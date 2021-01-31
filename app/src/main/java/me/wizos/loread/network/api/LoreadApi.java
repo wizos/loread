@@ -10,7 +10,6 @@ import com.elvishew.xlog.XLog;
 import com.google.gson.GsonBuilder;
 import com.hjq.toast.ToastUtils;
 import com.jeremyliao.liveeventbus.LiveEventBus;
-import com.lzy.okgo.callback.StringCallback;
 import com.lzy.okgo.exception.HttpException;
 
 import org.jetbrains.annotations.NotNull;
@@ -47,7 +46,6 @@ import me.wizos.loread.bean.ttrss.result.SubscribeToFeedResult;
 import me.wizos.loread.bean.ttrss.result.TTRSSLoginResult;
 import me.wizos.loread.bean.ttrss.result.TinyResponse;
 import me.wizos.loread.bean.ttrss.result.UpdateArticleResult;
-import me.wizos.loread.config.ArticleActionConfig;
 import me.wizos.loread.db.Article;
 import me.wizos.loread.db.Category;
 import me.wizos.loread.db.CoreDB;
@@ -57,6 +55,9 @@ import me.wizos.loread.network.HttpClientManager;
 import me.wizos.loread.network.SyncWorker;
 import me.wizos.loread.network.callback.CallbackX;
 import me.wizos.loread.utils.StringUtils;
+import me.wizos.loread.utils.TriggerRuleUtils;
+import retrofit2.Call;
+import retrofit2.Callback;
 import retrofit2.Response;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
@@ -67,16 +68,15 @@ import static me.wizos.loread.utils.StringUtils.getString;
  * Created by Wizos on 2019/2/8.
  */
 
-public class LoreadApi extends AuthApi<Feed, me.wizos.loread.bean.feedly.CategoryItem> implements ILogin {
+public class LoreadApi extends AuthApi implements ILogin {
     private LoreadService service;
-    private static final String EXAMPLE_BASE_URL = "https://example.com";
-    private String tempBaseUrl;
 
     public LoreadApi(String baseUrl) {
+        String tempBaseUrl;
         if (!TextUtils.isEmpty(baseUrl)) {
             tempBaseUrl = baseUrl;
         }else {
-            tempBaseUrl = EXAMPLE_BASE_URL;
+            tempBaseUrl = "https://example.com";
             ToastUtils.show(R.string.empty_site_url_hint);
         }
 
@@ -145,8 +145,8 @@ public class LoreadApi extends AuthApi<Feed, me.wizos.loread.bean.feedly.Categor
             LiveEventBus.get(SyncWorker.SYNC_PROCESS_FOR_SUBTITLE).post(getString(R.string.sync_feed_info, "3."));
 
             // 获取分类
-            TinyResponse<List<CategoryItem>> categoryItemsTTRSSResponse = service.getCategories(getAuthorization(),new GetCategories(getAuthorization())).execute().body();
-            // XLog.d("分类请求响应：" + categoryItemsTTRSSResponse);
+            TinyResponse<List<CategoryItem>> categoryItemsTTRSSResponse = service.getCategories( new GetCategories(getAuthorization()) ).execute().body();
+            // XLog.v("分类请求响应：" + categoryItemsTTRSSResponse);
             if (!categoryItemsTTRSSResponse.isSuccessful()) {
                 throw new HttpException("获取分类失败 - " + categoryItemsTTRSSResponse.getMsg());
             }
@@ -164,7 +164,7 @@ public class LoreadApi extends AuthApi<Feed, me.wizos.loread.bean.feedly.Categor
 
             // 获取feed
             XLog.i("同步 - 获取订阅源");
-            TinyResponse<List<FeedItem>> feedItemsTTRSSResponse = service.getFeeds(getAuthorization(),new GetFeeds(getAuthorization())).execute().body();
+            TinyResponse<List<FeedItem>> feedItemsTTRSSResponse = service.getFeeds(new GetFeeds(getAuthorization())).execute().body();
             if (!feedItemsTTRSSResponse.isSuccessful()) {
                 throw new HttpException(feedItemsTTRSSResponse.getMsg());
             }
@@ -194,7 +194,7 @@ public class LoreadApi extends AuthApi<Feed, me.wizos.loread.bean.feedly.Categor
             LiveEventBus.get(SyncWorker.SYNC_PROCESS_FOR_SUBTITLE).post(getString(R.string.sync_article_refs, "2."));
             TinyResponse<String> idsResponse;
             // 获取未读资源
-            idsResponse = service.getUnreadItemIds(getAuthorization(), new GetUnreadItemIds(getAuthorization()) ).execute().body();
+            idsResponse = service.getUnreadItemIds(new GetUnreadItemIds(getAuthorization()) ).execute().body();
             XLog.v("未读文章ids响应：" + idsResponse);
             if (!idsResponse.isSuccessful()) {
                 throw new HttpException("获取未读资源失败 - " + idsResponse.getMsg());
@@ -202,7 +202,7 @@ public class LoreadApi extends AuthApi<Feed, me.wizos.loread.bean.feedly.Categor
             ArraySet<String> unreadRefsSet = handleUnreadRefs( Arrays.asList(idsResponse.getContent().split(",")) );
             // 获取加星资源
             XLog.i("同步 - 获取加星文章ids");
-            idsResponse = service.getSavedItemIds(getAuthorization(), new GetSavedItemIds(getAuthorization())).execute().body();
+            idsResponse = service.getSavedItemIds(new GetSavedItemIds(getAuthorization())).execute().body();
             assert idsResponse != null;
             if (!idsResponse.isSuccessful()) {
                 throw new HttpException("获取加星资源 - " + idsResponse.getMsg());
@@ -227,18 +227,18 @@ public class LoreadApi extends AuthApi<Feed, me.wizos.loread.bean.feedly.Categor
                 num = Math.min(needFetchCount, fetchContentCntForEach);
                 getArticles.setArticleIds( ids.subList(hadFetchCount, hadFetchCount = hadFetchCount + num) );
                 needFetchCount = ids.size() - hadFetchCount;
-                articleItemsResponse = service.getArticles(getAuthorization(), getArticles).execute().body();
+                articleItemsResponse = service.getArticles(getArticles).execute().body();
                 if (!articleItemsResponse.isSuccessful()) {
                     throw new HttpException("获取文章失败 - " + articleItemsResponse.getMsg());
                 }
                 List<ArticleItem> items = articleItemsResponse.getContent();
                 articles = new ArrayList<>(items.size());
-                long syncTimeMillis = System.currentTimeMillis();
+                // long syncTimeMillis = System.currentTimeMillis();
                 for (ArticleItem item : items) {
                     articles.add(item.convert(new ArticleChanger() {
                         @Override
                         public Article change(Article article) {
-                            article.setCrawlDate(syncTimeMillis);
+                            // article.setCrawlDate(0);
                             article.setUid(uid);
                             return article;
                         }
@@ -249,95 +249,17 @@ public class LoreadApi extends AuthApi<Feed, me.wizos.loread.bean.feedly.Categor
                 LiveEventBus.get(SyncWorker.SYNC_PROCESS_FOR_SUBTITLE).post( App.i().getString(R.string.sync_article_content, "1.", hadFetchCount, ids.size()) );
             }
 
-
-            // 直接获取所有文章
-            //
-            // 方法二
-            // GetHeadlines getHeadlines = new GetHeadlines();
-            // getHeadlines.setSid(getAuthorization());
-            // Article article = CoreDB.i().articleDao().getLastArticle(uid);
-            // if (null != article) {
-            //     getHeadlines.setSince_id(article.getId());
-            // }
-            //
-            // TinyResponse<String> idsResponse;
-            // // 获取未读资源
-            // idsResponse = service.getUnreadItemIds(getAuthorization(),new GetUnreadItemIds(getAuthorization())).execute().body();
-            // if (!idsResponse.isSuccessful()) {
-            //     throw new HttpException("获取失败");
-            // }
-            // XLog.e("未读" + idsResponse.getContent());
-            // ArraySet<String> unreadRefsSet = handleUnreadRefs( Arrays.asList(idsResponse.getContent().split(",")) );
-            //
-            // // 获取加星资源
-            // GetSavedItemIds getSavedItemIds = new GetSavedItemIds(getAuthorization());
-            // idsResponse = service.getSavedItemIds(getAuthorization(),getSavedItemIds).execute().body();
-            // if (!idsResponse.isSuccessful()) {
-            //     throw new HttpException("获取失败");
-            // }
-            // ArraySet<String> staredRefsSet = handleStaredRefs( Arrays.asList(idsResponse.getContent().split(",")) );
-            //
-            //
-            // ArraySet<String> idRefsSet = new ArraySet<>();
-            // idRefsSet.addAll(unreadRefsSet);
-            // idRefsSet.addAll(staredRefsSet);
-            //
-            // XLog.i("文章id资源：" + idRefsSet );
-            // ArrayList<String> ids = new ArrayList<>(idRefsSet);
-            //
-            // int hadFetchCount, needFetchCount, num;
-            // ArrayMap<String, ArrayList<Article>> classArticlesMap = new ArrayMap<String, ArrayList<Article>>();
-            //
-            // needFetchCount = ids.size();
-            // hadFetchCount = 0;
-            //
-            // GetArticles getArticles = new GetArticles(getAuthorization());
-            // XLog.e("1 - 同步文章内容" + needFetchCount + "   " );
-            //
-            // TinyResponse<List<ArticleItem>> ttrssArticleItemsResponse;
-            // ArrayList<Article> articles;
-            //
-            // while (needFetchCount > 0) {
-            //     num = Math.min(needFetchCount, fetchContentCntForEach);
-            //     getArticles.setArticleIds( ids.subList(hadFetchCount, hadFetchCount = hadFetchCount + num) );
-            //     ttrssArticleItemsResponse = service.getArticles(getAuthorization(),getArticles).execute().body();
-            //     if (!ttrssArticleItemsResponse.isSuccessful()) {
-            //         throw new HttpException("获取失败");
-            //     }
-            //     List<ArticleItem> items = ttrssArticleItemsResponse.getContent();
-            //     articles = new ArrayList<>(items.size());
-            //     long syncTimeMillis = System.currentTimeMillis();
-            //     for (ArticleItem item : items) {
-            //         articles.add(item.convert(new ArticleChanger() {
-            //             @Override
-            //             public Article change(Article article) {
-            //                 article.setCrawlDate(syncTimeMillis);
-            //                 article.setUid(uid);
-            //                 return article;
-            //             }
-            //         }));
-            //     }
-            //
-            //     CoreDB.i().articleDao().insert(articles);
-            //     needFetchCount = ids.size() - hadFetchCount;
-            //     LiveEventBus.get(SyncWorker.SYNC_PROCESS_FOR_SUBTITLE).post( App.i().getString(R.string.sync_article_content, hadFetchCount, ids.size()) );
-            // }
-
             LiveEventBus.get(SyncWorker.SYNC_PROCESS_FOR_SUBTITLE).post(getString(R.string.clear_article));
             deleteExpiredArticles();
-            handleDuplicateArticles();
-            handleCrawlDate();
-            updateCollectionCount();
 
             // 获取文章全文
             LiveEventBus.get(SyncWorker.SYNC_PROCESS_FOR_SUBTITLE).post(getString(R.string.fetch_article_full_content));
             fetchReadability(uid, startSyncTimeMillis);
             // 执行文章自动处理脚本
-            ArticleActionConfig.i().exeRules(uid,startSyncTimeMillis);
+            TriggerRuleUtils.exeAllRules(uid,startSyncTimeMillis);
             // 清理无文章的tag
             //clearNotArticleTags(uid);
 
-            LiveEventBus.get(SyncWorker.SYNC_PROCESS_FOR_SUBTITLE).post( null );
             // 提示更新完成
             LiveEventBus.get(SyncWorker.NEW_ARTICLE_NUMBER).post(hadFetchCount);
         }catch (IllegalStateException e){
@@ -353,6 +275,11 @@ public class LoreadApi extends AuthApi<Feed, me.wizos.loread.bean.feedly.Categor
         } catch (RuntimeException e) {
             handleException(e, "同步失败：Runtime异常");
         }
+
+        handleDuplicateArticles();
+        handleCrawlDate();
+        updateCollectionCount();
+        LiveEventBus.get(SyncWorker.SYNC_PROCESS_FOR_SUBTITLE).post( null );
     }
 
     private void handleException(Exception e, String msg) {
@@ -363,8 +290,6 @@ public class LoreadApi extends AuthApi<Feed, me.wizos.loread.bean.feedly.Categor
         }else {
             ToastUtils.show(msg);
         }
-        updateCollectionCount();
-        LiveEventBus.get(SyncWorker.SYNC_PROCESS_FOR_SUBTITLE).post( null );
     }
 
     @Override
@@ -378,7 +303,7 @@ public class LoreadApi extends AuthApi<Feed, me.wizos.loread.bean.feedly.Categor
         if (editFeed.getCategoryItems() != null && editFeed.getCategoryItems().size() != 0) {
             subscribeToFeed.setCategory_id(editFeed.getCategoryItems().get(0).getId());
         }
-        service.subscribeToFeed(getAuthorization(),subscribeToFeed).enqueue(new retrofit2.Callback<TinyResponse<SubscribeToFeedResult>>() {
+        service.subscribeToFeed(subscribeToFeed).enqueue(new retrofit2.Callback<TinyResponse<SubscribeToFeedResult>>() {
             @Override
             public void onResponse(@NotNull retrofit2.Call<TinyResponse<SubscribeToFeedResult>> call, @NotNull Response<TinyResponse<SubscribeToFeedResult>> response) {
                 if (response.isSuccessful() && response.body().isSuccessful()) {
@@ -410,7 +335,8 @@ public class LoreadApi extends AuthApi<Feed, me.wizos.loread.bean.feedly.Categor
      * @param categoryItems
      * @param cb
      */
-    public void editFeed(@NonNull String feedId, @Nullable String feedTitle, @Nullable ArrayList<me.wizos.loread.bean.feedly.CategoryItem> categoryItems, StringCallback cb) {
+    public void editFeed(@NonNull String feedId, @Nullable String feedTitle, @Nullable ArrayList<me.wizos.loread.bean.feedly.CategoryItem> categoryItems, CallbackX cb) {
+        cb.onFailure(App.i().getString(R.string.server_api_not_supported, Contract.PROVIDER_LOREAD));
     }
 
 
@@ -422,7 +348,7 @@ public class LoreadApi extends AuthApi<Feed, me.wizos.loread.bean.feedly.Categor
     public void unsubscribeFeed(String feedId, CallbackX cb) {
         UnsubscribeFeed unsubscribeFeed = new UnsubscribeFeed(getAuthorization());
         unsubscribeFeed.setFeedId(Integer.parseInt(feedId));
-        service.unsubscribeFeed(getAuthorization(),unsubscribeFeed).enqueue(new retrofit2.Callback<TinyResponse<Map>>() {
+        service.unsubscribeFeed(unsubscribeFeed).enqueue(new retrofit2.Callback<TinyResponse<Map>>() {
             @Override
             public void onResponse(@NotNull retrofit2.Call<TinyResponse<Map>> call, @NotNull Response<TinyResponse<Map>> response) {
                 if(response.isSuccessful() && null != response.body() && null != response.body().getContent() && "OK".equals(response.body().getContent().get("status"))){
@@ -449,27 +375,25 @@ public class LoreadApi extends AuthApi<Feed, me.wizos.loread.bean.feedly.Categor
         updateArticle.setArticle_ids(articleIds);
         updateArticle.setField(field);
         updateArticle.setMode(mode);
-        service.updateArticle(getAuthorization(),updateArticle).enqueue(new retrofit2.Callback<TinyResponse<UpdateArticleResult>>() {
+        service.updateArticle(updateArticle).enqueue(new Callback<TinyResponse<UpdateArticleResult>>() {
             @Override
-            public void onResponse(@NotNull retrofit2.Call<TinyResponse<UpdateArticleResult>> call, @NotNull Response<TinyResponse<UpdateArticleResult>> response) {
+            public void onResponse(@NotNull Call<TinyResponse<UpdateArticleResult>> call, @NotNull Response<TinyResponse<UpdateArticleResult>> response) {
                 if (response.isSuccessful() ){
                     if(cb!=null){
                         cb.onSuccess(null);
                     }
                 }else {
                     if(cb!=null){
-                        cb.onFailure(response.body());
+                        cb.onFailure(getString(R.string.response_fail));
                     }
                 }
             }
 
             @Override
-            public void onFailure(retrofit2.Call<TinyResponse<UpdateArticleResult>> call, Throwable t) {
-
+            public void onFailure(@NotNull Call<TinyResponse<UpdateArticleResult>> call, @NotNull Throwable t) {
                 if(cb!=null){
                     cb.onFailure(t.getMessage());
                 }
-
             }
         });
     }
@@ -495,79 +419,4 @@ public class LoreadApi extends AuthApi<Feed, me.wizos.loread.bean.feedly.Categor
         markArticles(0, 0, articleId, cb);
     }
 
-    // private ArraySet<String> handleUnreadRefs(String[] ids) {
-    //     XLog.i("处理未读资源：" + ids.length );
-    //     String uid = App.i().getUser().getId();
-    //
-    //     // 第1步，遍历数据量大的一方A，将其比对项目放入Map中
-    //     ArraySet<String> localUnReadIdSet = CoreDB.i().articleDao().getUnreadIdSet(uid);
-    //     ArraySet<String> localReadIdSet = CoreDB.i().articleDao().getReadIdSet(uid);
-    //
-    //     ArrayList<String> needMarkReadIds = new ArrayList<>();
-    //     ArrayList<String> needMarkUnReadIds = new ArrayList<>();
-    //     ArraySet<String> needRequestIds = new ArraySet<>(ids.length);
-    //
-    //
-    //     // 第2步，遍历数据量小的一方B。到Map中找，是否含有b中的比对项。有则XX，无则YY
-    //     ArraySet<String> articleIds = new ArraySet<>(Arrays.asList(ids));
-    //     for (String articleId : articleIds) {
-    //         if(localUnReadIdSet.contains(articleId)){
-    //             localUnReadIdSet.remove(articleId);
-    //         }else if(localReadIdSet.contains(articleId)){
-    //             localReadIdSet.remove(articleId);
-    //             needMarkReadIds.add(articleId);
-    //         }else {
-    //             needRequestIds.add(articleId);
-    //         }
-    //     }
-    //
-    //     // 取消加星
-    //     for (String entry : localUnReadIdSet) {
-    //         if (entry != null) {
-    //             needMarkReadIds.add(entry);
-    //         }
-    //     }
-    //
-    //     CoreDB.i().articleDao().markArticlesUnread(uid, needMarkUnReadIds);
-    //     CoreDB.i().articleDao().markArticlesRead(uid, needMarkReadIds);
-    //     return needRequestIds;
-    // }
-    //
-    //
-    // private ArraySet<String> handleStaredRefs(String[] ids) {
-    //     XLog.i("处理加薪资源：" + ids.length);
-    //     String uid = App.i().getUser().getId();
-    //
-    //     // 第1步，遍历数据量大的一方A，将其比对项目放入Map中
-    //     ArraySet<String> localStarIdSet = CoreDB.i().articleDao().getStaredIdSet(uid);
-    //     ArraySet<String> localUnStarIdSet = CoreDB.i().articleDao().getUnStarIdSet(uid);
-    //
-    //     ArrayList<String> needMarkStarIds = new ArrayList<>();
-    //     ArrayList<String> needMarkUnStarIds = new ArrayList<>();
-    //     ArraySet<String> needRequestIds = new ArraySet<>(ids.length);
-    //
-    //     // 第2步，遍历数据量小的一方B。到Map中找，是否含有b中的比对项。有则XX，无则YY
-    //     ArraySet<String> articleIds = new ArraySet<>(Arrays.asList(ids));
-    //     for (String articleId : articleIds) {
-    //         if(localStarIdSet.contains(articleId)){
-    //             localStarIdSet.remove(articleId);
-    //         }else if(localUnStarIdSet.contains(articleId)){
-    //             localUnStarIdSet.remove(articleId);
-    //             needMarkStarIds.add(articleId);
-    //         }else {
-    //             needRequestIds.add(articleId);
-    //         }
-    //     }
-    //
-    //     // 取消加星
-    //     for (String entry : localStarIdSet) {
-    //         if (entry != null) {
-    //             needMarkUnStarIds.add(entry);
-    //         }
-    //     }
-    //
-    //     CoreDB.i().articleDao().markArticlesStar(uid, needMarkStarIds);
-    //     CoreDB.i().articleDao().markArticlesUnStar(uid, needMarkUnStarIds);
-    //     return needRequestIds;
-    // }
 }

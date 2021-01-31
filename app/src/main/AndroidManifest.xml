@@ -25,6 +25,9 @@
     <uses-permission android:name="android.permission.CHANGE_WIFI_STATE"/>
     <!-- 访问电话状态 -->
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
+
+    <!--安装app，用于更新-->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
     <!-- 允许读写系统设置项 -->
     <!-- <uses-permission android:name="android.permission.WRITE_SETTINGS" /> -->
     <!-- 挂载、反挂载外部文件系统 -->
@@ -45,6 +48,7 @@
     <uses-permission android:name="android.permission.WAKE_LOCK" />
 
 
+
     <application
         android:name=".App"
         android:allowBackup="true"
@@ -52,7 +56,6 @@
         android:extractNativeLibs="true"
         android:fullBackupContent="@xml/backup_descriptor"
         android:fullBackupOnly="true"
-
         android:appComponentFactory="me.wizos.loread"
         android:requestLegacyExternalStorage="true"
         android:icon="@mipmap/ic_launcher"
@@ -63,10 +66,17 @@
         android:theme="@style/AppTheme.Day"
         tools:replace="android:networkSecurityConfig,android:appComponentFactory"
         tools:targetApi="q">
+        <!--<meta-data-->
+        <!--    android:name="me.wizos.loread.network.glide.OkHttpAppGlideModule"-->
+        <!--    android:value="AppGlideModule" />-->
+        <!--停用安全浏览检查-->
         <meta-data
-            android:name="me.wizos.loread.network.glide.OkHttpAppGlideModule"
-            android:value="AppGlideModule" />
-
+            android:name="android.webkit.WebView.EnableSafeBrowsing"
+            android:value="false" />
+        <!--停止google收集数据-->
+        <meta-data
+            android:name="android.webkit.WebView.MetricsOptOut"
+            android:value="true" />
         <activity
             android:name=".activity.SplashActivity"
             android:label="@string/app_name"
@@ -175,7 +185,12 @@
             android:hardwareAccelerated="true"
             android:launchMode="singleTop"
             android:theme="@style/AppBaseTheme.SplashTranslucentTheme" />
-
+        <activity
+            android:name=".activity.Web2Activity"
+            android:configChanges="uiMode|orientation|screenSize|keyboardHidden"
+            android:hardwareAccelerated="true"
+            android:launchMode="singleTop"
+            android:theme="@style/AppBaseTheme.SplashTranslucentTheme" />
         <activity
             android:name=".activity.SearchActivity"
             android:configChanges="uiMode|orientation|screenSize|keyboardHidden"
@@ -195,15 +210,44 @@
         <activity
             android:name=".activity.LabActivity"
             android:configChanges="uiMode|orientation|screenSize|keyboardHidden"
-            android:hardwareAccelerated="true"
             android:launchMode="singleTop" />
         <activity android:name=".activity.RuleGenerateActivity" />
         <activity
             android:name=".activity.FeedActivity"
             android:configChanges="uiMode|orientation|screenSize|keyboardHidden"
             android:label="@string/title_activity_scrolling"
+            android:launchMode="singleTop"
             android:theme="@style/AppTheme.Day.NoActionBar" />
-
+        <activity
+            android:name=".activity.UrlRewriteActivity"
+            android:configChanges="uiMode|orientation|screenSize|keyboardHidden"
+            android:label="@string/url_rewrite"
+            android:launchMode="singleTop"
+            android:theme="@style/AppTheme.Day.NoActionBar"  />
+        <activity
+            android:name=".activity.ProxyActivity"
+            android:configChanges="uiMode|orientation|screenSize|keyboardHidden"
+            android:label="@string/proxy"
+            android:launchMode="singleTop"
+            android:theme="@style/AppTheme.Day.NoActionBar"  />
+        <activity
+            android:name=".activity.RuleUpdateActivity"
+            android:configChanges="uiMode|orientation|screenSize|keyboardHidden"
+            android:label="@string/rules_update"
+            android:launchMode="singleTop"
+            android:theme="@style/AppTheme.Day.NoActionBar"  />
+        <activity
+            android:name=".activity.TriggerRuleEditActivity"
+            android:configChanges="uiMode|orientation|screenSize|keyboardHidden"
+            android:label="@string/rule_configuration"
+            android:launchMode="singleTop"
+            android:theme="@style/AppTheme.Day.NoActionBar"  />
+        <activity
+            android:name=".activity.TriggerRuleManagerActivity"
+            android:configChanges="uiMode|orientation|screenSize|keyboardHidden"
+            android:label="@string/rules_management"
+            android:launchMode="singleTop"
+            android:theme="@style/AppTheme.Day.NoActionBar"  />
         <service
             android:name=".service.MusicService"
             android:exported="false"
