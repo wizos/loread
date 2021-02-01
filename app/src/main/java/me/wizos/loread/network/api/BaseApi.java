@@ -39,8 +39,6 @@ public abstract class BaseApi {
     // 同步所有数据，此处应该传入一个进度监听器，或者直接用EventBus发消息
     abstract public void sync();
 
-    abstract public void fetchUserInfo(CallbackX cb);
-
     abstract public void renameTag(String sourceTagId, String destTagId, CallbackX cb);
 
     abstract public void editFeedCategories(List<CategoryItem> lastCategoryItems, EditFeed editFeed, CallbackX cb);

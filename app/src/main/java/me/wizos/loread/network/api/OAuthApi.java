@@ -5,7 +5,6 @@ import java.io.IOException;
 import me.wizos.loread.network.callback.CallbackX;
 
 public abstract class OAuthApi extends AuthApi {
-
     abstract public String getOAuthUrl();
 
     /**

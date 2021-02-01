@@ -58,7 +58,6 @@ import retrofit2.converter.gson.GsonConverterFactory;
 
 import static me.wizos.loread.utils.StringUtils.getString;
 
-//import okhttp3.Call;
 
 /**
  * 本接口对接 InoReader 服务，从他那获取数据
@@ -70,7 +69,6 @@ public class InoReaderApi extends OAuthApi implements ILogin {
     public static final String APP_ID = "1000001277";
     public static final String APP_KEY = "8dByWzO4AYi425yx5glICKntEY2g3uJo";
     public static final String OFFICIAL_BASE_URL = "https://www.innoreader.com/";
-    public static final String REDIRECT_URI_SCHEMA = "loread://";
     public static final String REDIRECT_URI = "loread://oauth_inoreader";
 
     // public static final String CLIENTLOGIN = "/accounts/ClientLogin";
@@ -171,9 +169,7 @@ public class InoReaderApi extends OAuthApi implements ILogin {
         return baseUrl + "oauth2/auth?response_type=code&client_id=" + APP_ID + "&redirect_uri=" + REDIRECT_URI +  "&state=loread&lang=" + Locale.getDefault();
     }
 
-    // public String getOAuthUrl2() {
-    //     return OFFICIAL_BASE_URL + "oauth2/auth?response_type=code&client_id=" + APP_ID + "&redirect_uri=" + REDIRECT_URI + "&state=loread&lang=" + Locale.getDefault();
-    // }
+    @Override
     public String getOAuthUrl() {
         String baseUrl;
         if(!StringUtils.isEmpty(tempBaseUrl)){
@@ -184,7 +180,8 @@ public class InoReaderApi extends OAuthApi implements ILogin {
         return baseUrl + "oauth2/auth?response_type=code&client_id=" + APP_ID + "&redirect_uri=" + REDIRECT_URI + "&state=loread&lang=" + Locale.getDefault();
     }
 
-    public void getAccessToken(String authorizationCode,CallbackX cb) {
+    @Override
+    public void getAccessToken(String authorizationCode, CallbackX cb) {
         String redirectUri;
         if(!StringUtils.isEmpty(tempBaseUrl)){
             redirectUri = Uri.parse(tempBaseUrl).getHost();
@@ -215,6 +212,7 @@ public class InoReaderApi extends OAuthApi implements ILogin {
         });
     }
 
+    @Override
     public void refreshingAccessToken(String refreshToken, CallbackX cb) {
         service.refreshingAccessToken("refresh_token",refreshToken,APP_ID,APP_KEY).enqueue(new Callback<Token>() {
             @Override
@@ -244,6 +242,7 @@ public class InoReaderApi extends OAuthApi implements ILogin {
         });
     }
 
+    @Override
     public String refreshingAccessToken(String refreshToken) throws IOException {
         Token token = service.refreshingAccessToken("refresh_token",refreshToken,APP_ID,APP_KEY).execute().body();
         if (TextUtils.isEmpty(token.getRefresh_token())) {
@@ -261,10 +260,8 @@ public class InoReaderApi extends OAuthApi implements ILogin {
 
     /**
      * 一般用在首次登录的时候，去获取用户基本资料
-     *
-     * @return
-     * @throws IOException
      */
+    @Override
     public void fetchUserInfo( CallbackX cb){
         service.getUserInfo(getAuthorization()).enqueue(new Callback<UserInfo>() {
             @Override
@@ -508,7 +505,6 @@ public class InoReaderApi extends OAuthApi implements ILogin {
 
     private ArraySet<String> fetchStaredRefs() throws HttpException, IOException {
         List<ItemRefs> itemRefs = new ArrayList<>();
-        String info;
         ItemIds tempItemIds = new ItemIds();
         int i = 0;
         do {
@@ -656,7 +652,7 @@ public class InoReaderApi extends OAuthApi implements ILogin {
 
     public void renameFeed(String feedId, String renamedTitle, CallbackX cb) {
         FormBody.Builder builder = new FormBody.Builder();
-//        builder.add("ac", "edit"); // 可省略
+        // builder.add("ac", "edit"); // 可省略
         builder.add("s", feedId);
         builder.add("t", renamedTitle);
         service.editFeed(getAuthorization(), builder.build()).enqueue(new Callback<String>() {
@@ -861,10 +857,6 @@ public class InoReaderApi extends OAuthApi implements ILogin {
 
     /**
      * 将 未读资源 和 加星资源，去重分为3组
-     *
-     * @param tempUnreadIds
-     * @param tempStarredIds
-     * @return
      */
     public ArrayList<ArraySet<String>> splitRefs(ArraySet<String> tempUnreadIds, ArraySet<String> tempStarredIds) {
         // XLog.i("【reRefs1】云端未读" + tempUnreadIds.size() + "，云端加星" + tempStarredIds.size());

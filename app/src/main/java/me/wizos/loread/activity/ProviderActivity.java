@@ -233,7 +233,7 @@ public class ProviderActivity extends BaseActivity {
 
         if (FeedlyApi.REDIRECT_URI.contains(host)) {
             getAccessToken(code, new FeedlyApi());
-        } else if (InoReaderApi.REDIRECT_URI_SCHEMA.contains(schema)) {
+        } else if (Contract.SCHEMA_LOREAD.contains(schema)) {
             getAccessToken(code, new InoReaderApi(InoReaderApi.tempBaseUrl));
         }
     }
