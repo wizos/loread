@@ -123,6 +123,7 @@
                     android:id="@+id/feed_site_link_label"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:layout_marginEnd="10dp"
                     android:lines="1"
                     android:textSize="14sp"
                     android:textStyle="bold"
@@ -130,12 +131,22 @@
                     android:text="@string/site_url" />
                 <TextView
                     android:id="@+id/feed_site_link"
-                    android:layout_width="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
+                    android:layout_marginEnd="10dp"
                     android:onClick="copyHtmlUrl"
+                    android:maxLines="1"
+                    android:ellipsize="end"
                     android:textSize="14sp"
                     android:textColor="?attr/lv_item_title_color"
                     tools:text="http://blog.wizos.me" />
+                <ImageView
+                    android:id="@+id/feed_site_link_copy"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:onClick="copyHtmlUrl"
+                    android:src="@drawable/ic_copy" />
             </LinearLayout>
 
 
@@ -149,6 +160,7 @@
                     android:id="@+id/feed_rss_link_label"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:layout_marginEnd="10dp"
                     android:lines="1"
                     android:textSize="14sp"
                     android:textStyle="bold"
@@ -156,12 +168,31 @@
                     android:text="@string/feed_url" />
                 <TextView
                     android:id="@+id/feed_rss_link"
-                    android:layout_width="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
+                    android:layout_marginEnd="10dp"
                     android:onClick="copyFeedUrl"
+                    android:maxLines="1"
+                    android:ellipsize="end"
                     android:textSize="14sp"
                     android:textColor="?attr/lv_item_title_color"
-                    tools:text="http://blog.wizos.me/feed" />
+                    tools:text="http://blog.wizos.me/feedfffffffffddddddddnn" />
+
+                <ImageView
+                    android:id="@+id/feed_rss_link_qr"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:layout_marginEnd="10dp"
+                    android:onClick="createFeedUrlQRCode"
+                    android:src="@drawable/ic_qr_code" />
+
+                <ImageView
+                    android:id="@+id/feed_rss_link_copy"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:onClick="copyFeedUrl"
+                    android:src="@drawable/ic_copy" />
             </LinearLayout>
 
 
@@ -178,10 +209,10 @@
                     android:id="@+id/feed_remark"
                     tools:visibility="visible"
                     android:visibility="visible"
+                    android:background="?android:attr/selectableItemBackground"
                     style="@style/SettingItem">
                     <TextView
                         style="@style/SettingItemTitle2"
-                        android:background="?android:attr/selectableItemBackground"
                         android:text="@string/remark" />
                     <TextView
                         android:id="@+id/feed_remark_value"
@@ -193,10 +224,10 @@
                     android:id="@+id/feed_category"
                     tools:visibility="visible"
                     android:visibility="visible"
+                    android:background="?android:attr/selectableItemBackground"
                     style="@style/SettingItem">
                     <TextView
                         style="@style/SettingItemTitle2"
-                        android:background="?android:attr/selectableItemBackground"
                         android:text="@string/category" />
                     <TextView
                         android:id="@+id/feed_category_value"
@@ -207,11 +238,11 @@
                 <LinearLayout
                     android:id="@+id/feed_display_mode"
                     android:visibility="visible"
+                    android:background="?android:attr/selectableItemBackground"
                     style="@style/SettingItem">
                     <TextView
                         style="@style/SettingItemTitle2"
-                        android:background="?android:attr/selectableItemBackground"
-                        android:text="@string/select_display_mode" />
+                        android:text="@string/display_mode_for_article" />
                     <TextView
                         android:id="@+id/feed_display_mode_value"
                         style="@style/SettingItemSummary"
@@ -222,10 +253,10 @@
                     android:id="@+id/feed_save_folder"
                     tools:visibility="visible"
                     android:visibility="gone"
+                    android:background="?android:attr/selectableItemBackground"
                     style="@style/SettingItem">
                     <TextView
                         style="@style/SettingItemTitle2"
-                        android:background="?android:attr/selectableItemBackground"
                         android:text="@string/article_saved_directory" />
                     <TextView
                         android:id="@+id/feed_save_folder_value"
@@ -273,25 +304,25 @@
                     android:id="@+id/feed_view_rules"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="5dp"
-                    android:layout_marginBottom="5dp"
-                    android:padding="5dp"
+                    android:layout_marginTop="10dp"
+                    android:layout_marginBottom="10dp"
+                    android:padding="10dp"
                     android:textSize="14sp"
                     android:textColor="@color/bluePrimary"
                     android:gravity="center"
                     android:text="@string/view_rule"/>
 
-                <TextView
-                    android:id="@+id/feed_create_rule"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="5dp"
-                    android:layout_marginBottom="5dp"
-                    android:padding="5dp"
-                    android:textSize="14sp"
-                    android:textColor="@color/bluePrimary"
-                    android:gravity="center"
-                    android:text="@string/create_rule"/>
+                <!--<TextView-->
+                <!--    android:id="@+id/feed_create_rule"-->
+                <!--    android:layout_width="match_parent"-->
+                <!--    android:layout_height="wrap_content"-->
+                <!--    android:layout_marginTop="5dp"-->
+                <!--    android:layout_marginBottom="5dp"-->
+                <!--    android:padding="5dp"-->
+                <!--    android:textSize="14sp"-->
+                <!--    android:textColor="@color/bluePrimary"-->
+                <!--    android:gravity="center"-->
+                <!--    android:text="@string/create_rule"/>-->
 
                 <androidx.appcompat.widget.AppCompatButton
                     android:layout_width="wrap_content"
@@ -317,16 +348,15 @@
 
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/fab"
+        android:id="@+id/feed_fab"
         android:onClick="copyIconUrl"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_margin="@dimen/fab_margin"
+        android:background="@color/bluePrimary"
         android:padding="0dp"
+        android:src="@drawable/logo"
         app:layout_anchor="@id/feed_app_bar"
         app:layout_anchorGravity="bottom|end"
         app:srcCompat="@drawable/logo" />
-
-
-
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

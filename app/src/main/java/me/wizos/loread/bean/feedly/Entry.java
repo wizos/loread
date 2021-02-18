@@ -1,16 +1,10 @@
 package me.wizos.loread.bean.feedly;
 
-import android.text.TextUtils;
-
 import com.google.gson.annotations.SerializedName;
 
 import java.util.ArrayList;
 
-import me.wizos.loread.App;
 import me.wizos.loread.bean.Enclosure;
-import me.wizos.loread.db.Article;
-import me.wizos.loread.network.api.BaseApi;
-import me.wizos.loread.utils.ArticleUtils;
 
 /**
  * @author Wizos on 2019/2/8.
@@ -299,47 +293,5 @@ public class Entry {
 
     public void setUnread(boolean unread) {
         this.unread = unread;
-    }
-
-    public Article convert(BaseApi.ArticleChanger articleChanger) {
-        Article article = new Article();
-        article.setId(id);
-
-        article.setAuthor(author);
-        article.setPubDate(published);
-
-        if (alternate != null && alternate.size() > 0) {
-            article.setLink(alternate.get(0).getHref());
-        }
-        if (origin != null) {
-            article.setFeedId(origin.getStreamId());
-            article.setFeedTitle(origin.getTitle());
-        }
-
-        String tmpContent = "";
-        if (content != null && !TextUtils.isEmpty(content.getContent())) {
-            tmpContent = ArticleUtils.getOptimizedContent(article.getLink(), content.getContent());
-        } else if (summary != null && !TextUtils.isEmpty(summary.getContent())) {
-            tmpContent = ArticleUtils.getOptimizedContent(article.getLink(), summary.getContent());
-        }
-        tmpContent = ArticleUtils.getOptimizedContentWithEnclosures(tmpContent,enclosure);
-        article.setContent(tmpContent);
-
-        String tmpSummary = ArticleUtils.getOptimizedSummary(tmpContent);
-        article.setSummary(tmpSummary);
-
-        title = ArticleUtils.getOptimizedTitle(title, tmpSummary);
-        article.setTitle(title);
-
-        String coverUrl = ArticleUtils.getCoverUrl(article.getLink(),tmpContent);
-        article.setImage(coverUrl);
-
-        // 自己设置的字段
-        // KLog.i("【增加文章】" + article.getId());
-        article.setSaveStatus(App.STATUS_NOT_FILED);
-        if (articleChanger != null) {
-            articleChanger.change(article);
-        }
-        return article;
     }
 }

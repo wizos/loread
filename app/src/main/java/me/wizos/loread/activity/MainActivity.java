@@ -18,11 +18,15 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewConfiguration;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.CompoundButton;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.RelativeLayout;
+import android.widget.Spinner;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -31,12 +35,12 @@ import androidx.appcompat.widget.Toolbar;
 import androidx.core.content.FileProvider;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
-import androidx.paging.PagedList;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.LinearSmoothScroller;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.recyclerview.widget.SimpleItemAnimator;
 import androidx.work.Constraints;
+import androidx.work.Data;
 import androidx.work.ExistingPeriodicWorkPolicy;
 import androidx.work.NetworkType;
 import androidx.work.OneTimeWorkRequest;
@@ -64,10 +68,8 @@ import com.lxj.xpopup.enums.PopupAnimation;
 import com.lxj.xpopup.interfaces.OnSelectListener;
 import com.yanzhenjie.recyclerview.OnItemClickListener;
 import com.yanzhenjie.recyclerview.OnItemLongClickListener;
-import com.yanzhenjie.recyclerview.OnItemMenuClickListener;
 import com.yanzhenjie.recyclerview.OnItemSwipeListener;
 import com.yanzhenjie.recyclerview.SwipeMenu;
-import com.yanzhenjie.recyclerview.SwipeMenuBridge;
 import com.yanzhenjie.recyclerview.SwipeMenuCreator;
 import com.yanzhenjie.recyclerview.SwipeMenuItem;
 import com.yanzhenjie.recyclerview.SwipeRecyclerView;
@@ -75,6 +77,7 @@ import com.yanzhenjie.recyclerview.SwipeRecyclerView;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -85,24 +88,37 @@ import butterknife.OnClick;
 import me.wizos.loread.App;
 import me.wizos.loread.Contract;
 import me.wizos.loread.R;
-import me.wizos.loread.activity.viewmodel.ArticleViewModel;
+import me.wizos.loread.activity.viewmodel.ArticleListViewModel;
 import me.wizos.loread.activity.viewmodel.CategoryViewModel;
 import me.wizos.loread.adapter.ArticlePagedListAdapter;
 import me.wizos.loread.adapter.CategoriesAdapter;
+import me.wizos.loread.bean.CategoryFeeds;
+import me.wizos.loread.bean.FeedEntries;
 import me.wizos.loread.db.Article;
+import me.wizos.loread.db.Category;
 import me.wizos.loread.db.Collection;
 import me.wizos.loread.db.CoreDB;
 import me.wizos.loread.db.CorePref;
+import me.wizos.loread.db.Feed;
+import me.wizos.loread.db.FeedCategory;
 import me.wizos.loread.db.User;
 import me.wizos.loread.network.SyncWorker;
+import me.wizos.loread.network.api.LocalApi;
 import me.wizos.loread.network.callback.CallbackX;
 import me.wizos.loread.network.proxy.ProxyNodeSocks5;
+import me.wizos.loread.utils.EncryptUtils;
+import me.wizos.loread.utils.FeedParserUtils;
+import me.wizos.loread.utils.HttpCall;
 import me.wizos.loread.utils.SnackbarUtils;
 import me.wizos.loread.utils.TimeUtils;
+import me.wizos.loread.utils.UriUtils;
 import me.wizos.loread.view.IconFontView;
 import me.wizos.loread.view.SwipeRefreshLayoutS;
 import me.wizos.loread.view.colorful.Colorful;
 import me.wizos.loread.view.colorful.setter.ViewGroupSetter;
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.Response;
 
 
 /**
@@ -118,8 +134,9 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
     private IconFontView refreshIcon;
 
     // 方案1
-    private SwipeRecyclerView tagListView;
-    private CategoriesAdapter tagListAdapter;
+    private SwipeRecyclerView categoryListView;
+    private CategoriesAdapter categoryListAdapter;
+    private TextView createCategoryButton;
 
     // 方案2
     // private ExpandableRecyclerView tagListView;
@@ -142,6 +159,7 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
     private static Handler maHandler = new Handler();
 
     private BasePopupView loadingPopupView;
+    private ArticleListViewModel articleListViewModel;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -158,7 +176,8 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
         checkProxy();
 
         loadArticlesData();  // 获取文章列表数据为 App.articleList
-        loadCategoriesData();
+        // loadCategoriesData();
+        initCategoriesData();
         autoMarkReaded = App.i().getUser().isMarkReadOnScroll();
         initWorkRequest();
         checkUpdate();
@@ -175,28 +194,65 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
 
 
     private void initWorkRequest(){
-        Constraints.Builder builder = new Constraints.Builder();
-        if(App.i().getUser().isAutoSync()){
-            if( App.i().getUser().isAutoSyncOnlyWifi() ){
-                builder.setRequiredNetworkType(NetworkType.UNMETERED);
-            }else {
-                builder.setRequiredNetworkType(NetworkType.CONNECTED);
-            }
-            PeriodicWorkRequest syncRequest = new PeriodicWorkRequest.Builder(SyncWorker.class, App.i().getUser().getAutoSyncFrequency(), TimeUnit.MINUTES)
-                    .setConstraints(builder.build())
-                    .addTag(SyncWorker.TAG)
-                    .build();
-            WorkManager.getInstance(this).enqueueUniquePeriodicWork(SyncWorker.TAG, ExistingPeriodicWorkPolicy.KEEP,syncRequest);
-            XLog.i("SyncWorker Id: " + syncRequest.getId());
-        }
+        // Constraints.Builder builder = new Constraints.Builder();
+        // if(App.i().getUser().isAutoSync()){
+        //     if( App.i().getUser().isAutoSyncOnlyWifi() ){
+        //         builder.setRequiredNetworkType(NetworkType.UNMETERED);
+        //     }else {
+        //         builder.setRequiredNetworkType(NetworkType.CONNECTED);
+        //     }
+        //     PeriodicWorkRequest syncRequest = new PeriodicWorkRequest.Builder(SyncWorker.class, App.i().getUser().getAutoSyncFrequency(), TimeUnit.MINUTES)
+        //             .setConstraints(builder.build())
+        //             .addTag(SyncWorker.TAG)
+        //             .build();
+        //     WorkManager.getInstance(this).enqueueUniquePeriodicWork(SyncWorker.TAG, ExistingPeriodicWorkPolicy.KEEP, syncRequest);
+        //     XLog.i("SyncWorker Id: " + syncRequest.getId());
+        // }
 
-        //Constraints.Builder builder = new Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED);
-        //PeriodicWorkRequest syncRequest = new PeriodicWorkRequest.Builder(SyncWorker.class, App.i().getUser().getAutoSyncFrequency(), TimeUnit.MINUTES)
-        //        .setConstraints(builder.build())
-        //        .addTag(SyncWorker.TAG)
-        //        .build();
-        //WorkManager.getInstance(this).enqueueUniquePeriodicWork(SyncWorker.TAG, ExistingPeriodicWorkPolicy.KEEP,syncRequest);
-        //XLog.i("SyncWorker Id: " + syncRequest.getId());
+        WorkManager.getInstance(this).cancelAllWorkByTag(SyncWorker.TAG);
+
+        Constraints.Builder builder = new Constraints.Builder();
+        builder.setRequiredNetworkType(NetworkType.CONNECTED);
+        builder.setRequiresStorageNotLow(true);
+
+        Data inputData = new Data.Builder().putBoolean(SyncWorker.IS_AUTO_SYNC, true).build();
+        PeriodicWorkRequest syncRequest = new PeriodicWorkRequest.Builder(SyncWorker.class, 15, TimeUnit.MINUTES)
+                .setInputData(inputData)
+                .setConstraints(builder.build())
+                .addTag(SyncWorker.TAG)
+                .build();
+        WorkManager.getInstance(this).enqueueUniquePeriodicWork(SyncWorker.TAG, ExistingPeriodicWorkPolicy.KEEP, syncRequest);
+        XLog.i("SyncWorker Id: " + syncRequest.getId());
+        WorkManager.getInstance(this).getWorkInfoByIdLiveData(syncRequest.getId())
+                .observe(this, workInfo -> {
+                    XLog.i("周期任务 workInfos 数量：" );
+                    // for(WorkInfo workInfo: workInfos){
+                        switch (workInfo.getState()){
+                            case FAILED:
+                                XLog.i("周期任务：FAILED");
+                                break;
+                            case RUNNING:
+                                XLog.i("周期任务：RUNNING");
+                                break;
+                            case BLOCKED:
+                                XLog.i("周期任务：BLOCKED");
+                                break;
+                            case CANCELLED:
+                                XLog.i("周期任务：CANCELLED");
+                                break;
+                            case ENQUEUED:
+                                XLog.i("周期任务：ENQUEUED");
+                                break;
+                            case SUCCEEDED:
+                                XLog.i("周期任务：SUCCEEDED");
+                                break;
+                        }
+                        Data progress = workInfo.getProgress();
+                        String value = progress.getString(SyncWorker.TAG);
+                        XLog.i("周期任务进度：" + value);
+                        // Do something with progress
+                    // }
+                });
 
         LiveEventBus.get(SyncWorker.SYNC_TASK_START, Boolean.class)
                 .observeSticky(this, new Observer<Boolean>() {
@@ -233,6 +289,9 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
                 .observe(this, new Observer<String>() {
                     @Override
                     public void onChanged(@Nullable String tips) {
+                        if(tips == null){
+                            tips = "";
+                        }
                         toolbar.setSubtitle( tips );
                     }
                 });
@@ -401,12 +460,43 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
             return;
         }
         XLog.i("下拉刷新");
+        Data inputData = new Data.Builder().putBoolean(SyncWorker.IS_AUTO_SYNC, false).build();
         Constraints.Builder builder = new Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED);
         OneTimeWorkRequest oneTimeWorkRequest = new OneTimeWorkRequest.Builder(SyncWorker.class)
+                .setInputData(inputData)
                 .setConstraints(builder.build())
                 .addTag(SyncWorker.TAG)
                 .build();
+        // WorkManager.getInstance(this).enqueueUniqueWork(SyncWorker.TAG, ExistingWorkPolicy.KEEP, oneTimeWorkRequest);
+        XLog.i("单期SyncWorker Id: " + oneTimeWorkRequest.getId());
         WorkManager.getInstance(this).enqueue(oneTimeWorkRequest);
+        WorkManager.getInstance(this).getWorkInfoByIdLiveData(oneTimeWorkRequest.getId())
+                .observe(this, workInfo -> {
+                    XLog.i("单次任务" );
+                    switch (workInfo.getState()){
+                        case FAILED:
+                            XLog.i("单次任务：FAILED");
+                            break;
+                        case RUNNING:
+                            XLog.i("单次任务：RUNNING");
+                            break;
+                        case BLOCKED:
+                            XLog.i("单次任务：BLOCKED");
+                            break;
+                        case CANCELLED:
+                            XLog.i("单次任务：CANCELLED");
+                            break;
+                        case ENQUEUED:
+                            XLog.i("单次任务：ENQUEUED");
+                            break;
+                        case SUCCEEDED:
+                            XLog.i("单次任务：SUCCEEDED");
+                            break;
+                    }
+                    Data progress = workInfo.getProgress();
+                    String value = progress.getString(SyncWorker.TAG);
+                    XLog.i("周期任务进度：" + value);
+                });
     }
 
     // 按下back键时会调用onDestroy()销毁当前的activity，重新启动此activity时会调用onCreate()重建；
@@ -429,7 +519,8 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
     }
 
 
-    private ArticleViewModel articleViewModel;
+
+
     private void loadArticlesData() {
         openLoadingPopupView();
         String uid = App.i().getUser().getId();
@@ -437,46 +528,53 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
         int streamType = App.i().getUser().getStreamType();
         String streamId = App.i().getUser().getStreamId();
 
-        if(articleViewModel.articles != null && articleViewModel.articles.hasObservers()){
-            articleViewModel.articles.removeObservers(this);
-            articleViewModel.articles = null;
-        }
-        if(articleViewModel.articleIdsLiveData != null && articleViewModel.articleIdsLiveData.hasObservers()){
-            articleViewModel.articleIdsLiveData.removeObservers(this);
-            articleViewModel.articleIdsLiveData = null;
-        }
-        articleViewModel.getArticles(uid,streamId,streamType,streamStatus).observe(this, articles -> {
-            if( articlesAdapter.getCurrentList() != null ){
-                XLog.d("更新列表数据 A : " + articlesAdapter.getCurrentList().getLastKey()  + " == "+ articlesAdapter.getCurrentList().getLoadedCount() +  " , " + (linearLayoutManager.findLastVisibleItemPosition()-1) );
-            }else {
-                XLog.d("更新列表数据 B");
-            }
-            renderViewByArticlesData(App.i().getUser().getStreamTitle(), articles.size() );
-            articlesAdapter.submitList(articles);
-            dismissLoadingPopupView();
-        });
-
-        articleViewModel.articleIdsLiveData.observe(this, new Observer<List<String>>() {
-            @Override
-            public void onChanged(List<String> strings) {
-                articlesAdapter.setArticleIds(strings);
-                // XLog.d("更新ids数据 ：");
-            }
-        });
-
+        articleListViewModel.loadArticles(uid, streamId, streamType, streamStatus, this,
+                articles -> {
+                    if( articlesAdapter.getCurrentList() != null ){
+                        XLog.d("获得文章列表，LoadedCount = " + articlesAdapter.getCurrentList().getLoadedCount() +  "，LastKey = " + articlesAdapter.getCurrentList().getLastKey()  + "，LastVisibleItem = " + (linearLayoutManager.findLastVisibleItemPosition()-1) );
+                    }else {
+                        XLog.d("获得文章列表，CurrentList 为 null");
+                    }
+                    // XLog.i("更新列表数据 c");
+                    renderViewByArticlesData(App.i().getUser().getStreamTitle(), articles.size() );
+                    articlesAdapter.submitList(articles);
+                    dismissLoadingPopupView();
+                },
+                articleIds -> {
+                    XLog.d("获得文章Ids");
+                    articlesAdapter.setArticleIds(articleIds);
+                    App.i().setArticleIds(articleIds);
+                });
 
         articleListView.scrollToPosition(0);
         articlesAdapter.setLastPos(0);
-        XLog.d("【更新列表】" );
+        XLog.d("加载文章数据" );
+    }
+
+    private void loadSearchedArticles(String keyword) {
+        openLoadingPopupView();
+        articleListViewModel.loadArticles(App.i().getUser().getId(), keyword, this,
+                articles -> {
+                    renderViewByArticlesData( getString(R.string.title_search,keyword), articles.size() );
+                    articlesAdapter.submitList(articles);
+                    dismissLoadingPopupView();
+                },
+                articleIds -> {
+                    articlesAdapter.setArticleIds(articleIds);
+                    App.i().setArticleIds(articleIds);
+                });
+        articleListView.scrollToPosition(0);
+        articlesAdapter.setLastPos(0);
     }
 
     private void renderViewByArticlesData(String toolBarTitle, int articleSize) {
+        // XLog.w("更新列表数据 R");
         // 在setSupportActionBar(toolbar)之后调用toolbar.setTitle()的话。 在onCreate()中调用无效。在onStart()中调用无效。 在onResume()中调用有效。
         getSupportActionBar().setTitle(toolBarTitle);
         countTips.setText( getResources().getQuantityString(R.plurals.articles_count, articleSize, articleSize) );
     }
 
-    public void showTagMenuDialog(final Collection category) {
+    public void showCategoryMenuDialog(final CategoryFeeds category) {
         // 重命名弹窗的适配器
         MaterialSimpleListAdapter adapter = new MaterialSimpleListAdapter(new MaterialSimpleListAdapter.Callback() {
             @Override
@@ -486,26 +584,24 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
                             .title(R.string.edit_name)
                             .inputType(InputType.TYPE_CLASS_TEXT)
                             .inputRange(1, 22)
-                            .input(null, category.getTitle(), new MaterialDialog.InputCallback() {
+                            .input(null, category.getCategoryName(), new MaterialDialog.InputCallback() {
                                 @Override
                                 public void onInput(@NotNull MaterialDialog dialog, CharSequence input) {
-                                    renameTag(input.toString(), category);
+                                    String renamed = input.toString();
+                                    XLog.i("分类重命名为：" + renamed);
+                                    if (category.getCategoryName().equals(renamed)) {
+                                        return;
+                                    }
+                                    renameCategory(renamed, category);
                                 }
                             })
                             .positiveText(R.string.confirm)
                             .negativeText(android.R.string.cancel)
                             .show();
                 }else if(index == 1){
-                    Intent intent = new Intent(MainActivity.this, TriggerRuleEditActivity.class);
-                    intent.putExtra(Contract.TYPE, Contract.TYPE_CATEGORY);
-                    intent.putExtra(Contract.TARGET_ID, category.getId());
-                    // intent.putExtra(Contract.TARGET_NAME, category.getTitle());
-                    startActivity(intent);
-                    overridePendingTransition(R.anim.in_from_bottom, R.anim.fade_out);
-                }else if(index == 2){
                     Intent intent = new Intent(MainActivity.this, TriggerRuleManagerActivity.class);
                     intent.putExtra(Contract.TYPE, Contract.TYPE_CATEGORY);
-                    intent.putExtra(Contract.TARGET_ID, category.getId());
+                    intent.putExtra(Contract.TARGET_ID, category.getCategoryId());
                     startActivity(intent);
                     overridePendingTransition(R.anim.in_from_bottom, R.anim.fade_out);
                 }
@@ -515,11 +611,6 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
         adapter.add(new MaterialSimpleListItem.Builder(MainActivity.this)
                 .content(R.string.rename)
                 .icon(R.drawable.ic_rename)
-                .backgroundColor(Color.TRANSPARENT)
-                .build());
-        adapter.add(new MaterialSimpleListItem.Builder(MainActivity.this)
-                .content(R.string.configure_marking_rule)
-                .icon(R.drawable.ic_rule)
                 .backgroundColor(Color.TRANSPARENT)
                 .build());
         adapter.add(new MaterialSimpleListItem.Builder(MainActivity.this)
@@ -533,30 +624,23 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
                 .show();
     }
 
-    public void renameTag(final String renamedTagTitle, Collection category) {
-        XLog.i("renameTag", renamedTagTitle);
-        if (renamedTagTitle.equals("") || category.getTitle().equals(renamedTagTitle)) {
-            return;
-        }
-        final String newCategoryId = "user/" + App.i().getUser().getUserId() + "/" + renamedTagTitle;
-        final String oldCategoryId = category.getId();
-        App.i().getApi().renameTag(oldCategoryId, renamedTagTitle, new CallbackX<String,String>() {
+    public void renameCategory(final String renamed, CategoryFeeds category) {
+        App.i().getApi().renameCategory(category.getCategoryId(), renamed, new CallbackX<String,String>() {
             @Override
             public void onSuccess(String result) {
-                CoreDB.i().categoryDao().updateId(App.i().getUser().getId(),oldCategoryId,newCategoryId);
-                CoreDB.i().feedCategoryDao().updateCategoryId(App.i().getUser().getId(),oldCategoryId,newCategoryId);
-                tagListAdapter.notifyDataSetChanged();
+                categoryListAdapter.notifyDataSetChanged();
+                ToastUtils.show(getString(R.string.edit_success));
             }
 
             @Override
             public void onFailure(String error) {
-                ToastUtils.show(getString(R.string.rename_failed));
+                ToastUtils.show(getString(R.string.edit_fail_with_reason, error));
             }
         });
     }
 
     public void showFeedActivity(final int parentPosition, final int childPosition) {
-        Collection feed = tagListAdapter.getChild(parentPosition, childPosition);
+        Collection feed = categoryListAdapter.getChild(parentPosition, childPosition);
         if (feed == null) {
             return;
         }
@@ -615,7 +699,7 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
                                                 showConfirmDialog(position,articlesAdapter.getItemCount());
                                                 break;
                                             case 3:
-                                                Article article = articlesAdapter.getById(position);
+                                                Article article = articlesAdapter.getArticle(position);
                                                 if( article == null ){
                                                     return;
                                                 }
@@ -681,7 +765,7 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
         SwipeMenuCreator mSwipeMenuCreator = new SwipeMenuCreator() {
             @Override
             public void onCreateMenu(SwipeMenu leftMenu, SwipeMenu rightMenu, int position) {
-                Article article = articlesAdapter.getById(position);
+                Article article = articlesAdapter.getArticle(position);
                 //XLog.e("创建菜单: " + position + ", " + (article==null) + ", " +  articlesAdapter.getCurrentList().getLastKey() + " , " + articlesAdapter.getCurrentList().getLoadedCount()  );
                 if(article==null){
                     return;
@@ -722,8 +806,7 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
 
         articleListView.setOnItemSwipeListener(new OnItemSwipeListener() {
             @Override
-            public void onClose(View swipeMenu, int direction, int adapterPosition) {
-            }
+            public void onClose(View swipeMenu, int direction, int adapterPosition) { }
 
             @Override
             public void onCloseLeft(int position) {
@@ -738,30 +821,30 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
             }
         });
 
-        OnItemMenuClickListener mItemMenuClickListener = new OnItemMenuClickListener() {
-            @Override
-            public void onItemClick(SwipeMenuBridge menuBridge, int position) {
-                // 任何操作必须先关闭菜单，否则可能出现Item菜单打开状态错乱。
-                menuBridge.closeMenu();
-
-                // 左侧还是右侧菜单：
-                int direction = menuBridge.getDirection();
-
-                if (direction == SwipeRecyclerView.RIGHT_DIRECTION) {
-                    XLog.i("onItemClick  onCloseRight：" + position + "  ");
-                    if (position > -1) {
-                        toggleReadState(position);
-                    }
-                } else if (direction == SwipeRecyclerView.LEFT_DIRECTION) {
-                    XLog.i("onItemClick  onCloseLeft：" + position + "  ");
-                    if (position > -1) {
-                        toggleStarState(position);
-                    }
-                }
-            }
-        };
-        // 菜单点击监听。
-        articleListView.setOnItemMenuClickListener(mItemMenuClickListener);
+        // OnItemMenuClickListener mItemMenuClickListener = new OnItemMenuClickListener() {
+        //     @Override
+        //     public void onItemClick(SwipeMenuBridge menuBridge, int position) {
+        //         // 任何操作必须先关闭菜单，否则可能出现Item菜单打开状态错乱。
+        //         menuBridge.closeMenu();
+        //
+        //         // 左侧还是右侧菜单：
+        //         int direction = menuBridge.getDirection();
+        //
+        //         if (direction == SwipeRecyclerView.RIGHT_DIRECTION) {
+        //             XLog.i("onItemClick  onCloseRight：" + position + "  ");
+        //             if (position > -1) {
+        //                 toggleReadState(position);
+        //             }
+        //         } else if (direction == SwipeRecyclerView.LEFT_DIRECTION) {
+        //             XLog.i("onItemClick  onCloseLeft：" + position + "  ");
+        //             if (position > -1) {
+        //                 toggleStarState(position);
+        //             }
+        //         }
+        //     }
+        // };
+        // // 菜单点击监听。
+        // articleListView.setOnItemMenuClickListener(mItemMenuClickListener);
 
         articleListView.setOnItemClickListener(new OnItemClickListener() {
             @Override
@@ -772,22 +855,20 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
                 Intent intent = new Intent(MainActivity.this, ArticleActivity.class);
                 intent.putExtra("theme", App.i().getUser().getThemeMode());
 
-                String articleId = articlesAdapter.getId(position);
+                String articleId = articlesAdapter.getArticleId(position);
 
                 XLog.i("点击文章，进入详情页" + "，位置：" + position + "，文章ID：" + articleId);
                 intent.putExtra("articleId", articleId);
-                // 下标从 0 开始
-                intent.putExtra("articleNo", position);
+                intent.putExtra("articleNo", position); // 下标从 0 开始
                 intent.putExtra("articleCount", articlesAdapter.getItemCount());
-                startActivityForResult(intent, 0);
+                startActivityForResult(intent, App.ActivityResult_ArtToMain);
                 overridePendingTransition(R.anim.in_from_bottom, R.anim.fade_out);
             }
         });
-        articleViewModel = new ViewModelProvider(this).get(ArticleViewModel.class);
+        articleListViewModel = new ViewModelProvider(this).get(ArticleListViewModel.class);
         articlesAdapter = new ArticlePagedListAdapter();
-        // articlesAdapter.setLinearLayoutManager(linearLayoutManager);
         articleListView.setAdapter(articlesAdapter);
-        App.i().articlesAdapter = articlesAdapter;
+        // App.i().articlesAdapter = articlesAdapter;
     }
 
 
@@ -797,58 +878,27 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
        tagBottomSheetDialog.show();
    }
 
-   private void loadCategoriesData(){
-       if(categoryViewModel.categoriesLiveData != null && categoryViewModel.categoriesLiveData.hasObservers()){
-           categoryViewModel.categoriesLiveData.removeObservers(this);
-           categoryViewModel.categoriesLiveData = null;
-       }
-       categoryViewModel.loadCategories().observe(this, new Observer<List<Collection>>() {
-           @Override
-           public void onChanged(List<Collection> categories) {
-               AsyncTask.THREAD_POOL_EXECUTOR.execute(new Runnable() {
-                   @Override
-                   public void run() {
-                       String uid = App.i().getUser().getUserId();
-
-                       // 总分类
-                       Collection rootCategory = new Collection();
-                       rootCategory.setTitle(getString(R.string.all));
-                       rootCategory.setId("user/" + uid + App.CATEGORY_ALL);
-
-                       // 未分类
-                       Collection unCategory = new Collection();
-                       unCategory.setTitle(getString(R.string.un_category));
-                       unCategory.setId("user/" + uid + App.CATEGORY_UNCATEGORIZED);
-
-                       if( App.i().getUser().getStreamStatus() == App.STATUS_UNREAD ){
-                           rootCategory.setCount(CoreDB.i().articleDao().getUnreadCount(App.i().getUser().getId()));
-                           unCategory.setCount(CoreDB.i().articleDao().getUncategoryUnreadCount(App.i().getUser().getId()));
-                       }else if( App.i().getUser().getStreamStatus() == App.STATUS_STARED ){
-                           rootCategory.setCount(CoreDB.i().articleDao().getStarCount(App.i().getUser().getId()));
-                           unCategory.setCount(CoreDB.i().articleDao().getUncategoryStarCount(App.i().getUser().getId()));
-                       }else {
-                           rootCategory.setCount(CoreDB.i().articleDao().getAllCount(App.i().getUser().getId()));
-                           unCategory.setCount(CoreDB.i().articleDao().getUncategoryAllCount(App.i().getUser().getId()));
-                       }
-
-                       categories.add(0,rootCategory);
-                       if(CoreDB.i().feedDao().getFeedsCountByUnCategory(App.i().getUser().getId()) != 0 && unCategory.getCount() != 0){
-                           categories.add(1,unCategory);
-                       }
-                       tagListAdapter.setGroups(categories);
-
-                       runOnUiThread(new Runnable() {
-                           @Override
-                           public void run() {
-                               tagListAdapter.notifyDataChanged();
-                               // tagListView.setAdapter(tagListAdapter);
-                           }
-                       });
-                   }
-               });
-           }
-       });
-   }
+    private void initCategoriesData(){
+        categoryViewModel.observeCategoriesAndFeeds(this, new Observer<Integer>() {
+            @Override
+            public void onChanged(Integer integer) {
+                AsyncTask.SERIAL_EXECUTOR.execute(new Runnable() {
+                    @Override
+                    public void run() {
+                        long time = System.currentTimeMillis();
+                        categoryListAdapter.setGroups(categoryViewModel.getCategoryFeeds());
+                        XLog.i("重新加载 分类树 耗时：" + (System.currentTimeMillis() - time));
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                categoryListAdapter.notifyDataChanged();
+                            }
+                        });
+                    }
+                });
+            }
+        });
+    }
 
     // StickyHeaderLayout stickyHeaderLayout;
     public void initTagListView() {
@@ -856,13 +906,12 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
         tagBottomSheetDialog.setContentView(R.layout.bottom_sheet_category);
         tagBottomSheetLayout = tagBottomSheetDialog.findViewById(R.id.sheet_tag);
 
-        tagListView = tagBottomSheetDialog.findViewById(R.id.main_tag_list_view);
-
-        tagListView.setLayoutManager(new LinearLayoutManager(this));
+        categoryListView = tagBottomSheetDialog.findViewById(R.id.main_tag_list_view);
+        categoryListView.setLayoutManager(new LinearLayoutManager(this));
         // 还有另外一种方案，通过设置动画执行时间为0来解决问题：
-        tagListView.getItemAnimator().setChangeDuration(0);
+        categoryListView.getItemAnimator().setChangeDuration(0);
         // 关闭默认的动画
-        ((SimpleItemAnimator) tagListView.getItemAnimator()).setSupportsChangeAnimations(false);
+        ((SimpleItemAnimator) categoryListView.getItemAnimator()).setSupportsChangeAnimations(false);
         // 设置悬浮头部VIEW
         // tagListView.setHeaderView(getLayoutInflater().inflate(R.layout.main_expandable_item_group_header, tagListView, false));
 
@@ -870,45 +919,58 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
         // tagListView.addHeaderView(headerView);
 
 
-
-        tagListAdapter = new CategoriesAdapter(this);
-        tagListView.setOnItemClickListener(new OnItemClickListener() {
+        categoryListAdapter = new CategoriesAdapter(this);
+        categoryListAdapter.setGroups(new ArrayList<>());
+        categoryListView.setOnItemClickListener(new OnItemClickListener() {
             @Override
             public void onItemClick(View view, int adapterPosition) {
                 tagBottomSheetDialog.dismiss();
                 // 根据原position判断该item是否是parent item
-                int groupPosition = tagListAdapter.parentItemPosition(adapterPosition);
+                int groupPosition = categoryListAdapter.parentItemPosition(adapterPosition);
                 User user = App.i().getUser();
-                if (tagListAdapter.isParentItem(adapterPosition)) {
-                    user.setStreamId( tagListAdapter.getGroup(groupPosition).getId().replace("\"", "")  );
-                    user.setStreamTitle( tagListAdapter.getGroup(groupPosition).getTitle() );
+                // if (tagListAdapter.isParentItem(adapterPosition)) {
+                //     user.setStreamId( tagListAdapter.getGroup(groupPosition).getId().replace("\"", "")  );
+                //     user.setStreamTitle( tagListAdapter.getGroup(groupPosition).getTitle() );
+                //     user.setStreamType( App.TYPE_GROUP );
+                //     //XLog.i("【 TagList 被点击】" + user.toString());
+                //     refreshArticlesData();
+                // } else {
+                //     int childPosition = tagListAdapter.childItemPosition(adapterPosition);
+                //     Collection feed = tagListAdapter.getChild(groupPosition, childPosition);
+                //     user.setStreamId( feed.getId() );
+                //     user.setStreamTitle( feed.getTitle() );
+                //     user.setStreamType( App.TYPE_FEED );
+                //     refreshArticlesData();
+                // }
+
+                if (categoryListAdapter.isParentItem(adapterPosition)) {
+                    user.setStreamId( categoryListAdapter.getGroup(groupPosition).getCategoryId().replace("\"", "")  );
+                    user.setStreamTitle( categoryListAdapter.getGroup(groupPosition).getCategoryName() );
                     user.setStreamType( App.TYPE_GROUP );
-                    //XLog.i("【 TagList 被点击】" + user.toString());
-                    refreshArticlesData();
                 } else {
-                    int childPosition = tagListAdapter.childItemPosition(adapterPosition);
-                    Collection feed = tagListAdapter.getChild(groupPosition, childPosition);
+                    int childPosition = categoryListAdapter.childItemPosition(adapterPosition);
+                    Collection feed = categoryListAdapter.getChild(groupPosition, childPosition);
                     user.setStreamId( feed.getId() );
                     user.setStreamTitle( feed.getTitle() );
                     user.setStreamType( App.TYPE_FEED );
-                    refreshArticlesData();
                 }
+                refreshArticlesData();
                 CoreDB.i().userDao().update(user);
             }
         });
 
-        tagListView.setOnItemLongClickListener(new OnItemLongClickListener() {
+        categoryListView.setOnItemLongClickListener(new OnItemLongClickListener() {
             @Override
             public void onItemLongClick(View view, int adapterPosition) {
                 // XLog.e("被长安，view的id是" + allArticleHeaderView.getId() + "，parent的id" + parent.getId() + "，Tag是" + allArticleHeaderView.getCategoryById() + "，位置是" + tagListView.getPositionForView(allArticleHeaderView));
                 // 根据原position判断该item是否是parent item
-                if (tagListAdapter.isParentItem(adapterPosition)) {
-                    int parentPosition = tagListAdapter.parentItemPosition(adapterPosition);
-                    showTagMenuDialog(tagListAdapter.getGroup(parentPosition));
+                if (categoryListAdapter.isParentItem(adapterPosition)) {
+                    int parentPosition = categoryListAdapter.parentItemPosition(adapterPosition);
+                    showCategoryMenuDialog(categoryListAdapter.getGroup(parentPosition));
                 } else {
                     // 换取child position
-                    int parentPosition = tagListAdapter.parentItemPosition(adapterPosition);
-                    int childPosition = tagListAdapter.childItemPosition(adapterPosition);
+                    int parentPosition = categoryListAdapter.parentItemPosition(adapterPosition);
+                    int childPosition = categoryListAdapter.childItemPosition(adapterPosition);
                     showFeedActivity(parentPosition, childPosition);
                 }
             }
@@ -997,8 +1059,36 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
         //     }
         // });
 
-        tagListView.setAdapter(tagListAdapter);
+        categoryListView.setAdapter(categoryListAdapter);
         categoryViewModel = new ViewModelProvider(this).get(CategoryViewModel.class);
+
+
+        createCategoryButton = tagBottomSheetDialog.findViewById(R.id.main_tag_create_category);
+        if(App.i().getApi() instanceof LocalApi){
+            createCategoryButton.setVisibility(View.VISIBLE);
+        }
+        createCategoryButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                new MaterialDialog.Builder(MainActivity.this)
+                        .title(R.string.edit_name)
+                        .inputType(InputType.TYPE_CLASS_TEXT)
+                        .inputRange(1, 22)
+                        .input(null, null, new MaterialDialog.InputCallback() {
+                            @Override
+                            public void onInput(@NotNull MaterialDialog dialog, CharSequence input) {
+                                Category category = new Category();
+                                category.setUid(App.i().getUser().getId());
+                                category.setTitle(input.toString());
+                                category.setId(EncryptUtils.MD5(input.toString()));
+                                CoreDB.i().categoryDao().insert(category);
+                            }
+                        })
+                        .positiveText(R.string.confirm)
+                        .negativeText(android.R.string.cancel)
+                        .show();
+            }
+        });
     }
 
     private void showConfirmDialog(final int start, final int end) {
@@ -1056,12 +1146,12 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
             if( desc ){
                 articleIDs = new ArrayList<>(startIndex - endIndex);
                 for (int i = startIndex - 1; i >= endIndex; i--){
-                    articleIDs.add(articlesAdapter.getId(i));
+                    articleIDs.add(articlesAdapter.getArticleId(i));
                 }
             }else {
                 articleIDs = new ArrayList<>(endIndex - startIndex);
                 for (int i = startIndex; i < endIndex; i++){
-                    articleIDs.add(articlesAdapter.getId(i));
+                    articleIDs.add(articlesAdapter.getArticleId(i));
                 }
             }
 
@@ -1124,7 +1214,7 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
         // String articleId = articlesAdapter.getItem(position).getId();
         // Article article = CoreDB.i().articleDao().getById(App.i().getUser().getId(),articleId);
         XLog.i("切换已读状态" );
-        Article article = articlesAdapter.getById(position);
+        Article article = articlesAdapter.getArticle(position);
         if(article == null){
             return;
         }
@@ -1170,7 +1260,7 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
         }
 
         XLog.i("切换加星状态" );
-        Article article = articlesAdapter.getById(position);
+        Article article = articlesAdapter.getArticle(position);
         if(article == null){
             return;
         }
@@ -1330,7 +1420,7 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
                 }
                 CoreDB.i().userDao().update(user);
                 refreshArticlesData();
-                loadCategoriesData();
+                // loadCategoriesData();
                 quickSettingDialog.dismiss();
             }
         });
@@ -1464,7 +1554,7 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
                         .input("", "", new MaterialDialog.InputCallback() {
                             @Override
                             public void onInput(@NonNull MaterialDialog dialog, CharSequence input) {
-                                showSearchResult(input.toString());
+                                loadSearchedArticles(input.toString());
                             }
                         })
                         .negativeText(android.R.string.cancel)
@@ -1477,42 +1567,146 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
                 startActivity(intent);
                 overridePendingTransition(R.anim.in_from_bottom, R.anim.fade_out);
                 break;
+            case R.id.main_menu_add_feed:
+                new MaterialDialog.Builder(MainActivity.this)
+                        .title(R.string.input_feed_url)
+                        .inputType(InputType.TYPE_TEXT_VARIATION_URI)
+                        .inputRange(1, 88)
+                        .input(Contract.SCHEMA_HTTPS, null, new MaterialDialog.InputCallback() {
+                            @Override
+                            public void onInput(@NotNull MaterialDialog dialog, CharSequence input) {
+                                if(!UriUtils.isHttpOrHttpsUrl(input.toString())){
+                                    ToastUtils.show(R.string.invalid_url_hint);
+                                }else {
+                                    MaterialDialog materialDialog = new MaterialDialog.Builder(MainActivity.this)
+                                            .canceledOnTouchOutside(false)
+                                            .content(R.string.loading).build();
+                                    materialDialog.show();
+
+                                    HttpCall.get(input.toString(), new Callback() {
+                                        @Override
+                                        public void onFailure(@NotNull Call call, @NotNull IOException e) {
+                                            materialDialog.dismiss();
+                                            ToastUtils.show(getString(R.string.edit_fail_with_reason, e.getLocalizedMessage()));
+                                        }
+
+                                        @Override
+                                        public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
+                                            materialDialog.dismiss();
+                                            if(!response.isSuccessful()){
+                                                return;
+                                            }
+
+                                            Feed feed = new Feed();
+                                            feed.setUid(App.i().getUser().getId());
+                                            feed.setId(EncryptUtils.MD5(input.toString()));
+                                            feed.setFeedUrl(input.toString());
+                                            FeedEntries feedEntries = FeedParserUtils.parseResponseBody(MainActivity.this, feed, response.body());
+                                            if(feedEntries == null){
+                                                return;
+                                            }
+                                            if(!feedEntries.isSuccess()){
+                                                ToastUtils.show(feedEntries.getFeed().getLastSyncError());
+                                            }else {
+                                                runOnUiThread(new Runnable() {
+                                                    @Override
+                                                    public void run() {
+                                                        MaterialDialog feedSettingDialog = new MaterialDialog.Builder(MainActivity.this)
+                                                                .title(R.string.add_subscription)
+                                                                .customView(R.layout.dialog_add_feed, true)
+                                                                .negativeText(android.R.string.cancel)
+                                                                .onNegative(new MaterialDialog.SingleButtonCallback() {
+                                                                    @Override
+                                                                    public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
+                                                                        // InputMethodManager imm = (InputMethodManager) MainActivity.this.getSystemService(Context.INPUT_METHOD_SERVICE);
+                                                                        // if(imm != null) imm.hideSoftInputFromWindow(categoryNameSpinner.getWindowToken(), 0);
+                                                                        dialog.dismiss();
+                                                                    }
+                                                                })
+                                                                .positiveText(R.string.agree)
+                                                                .onPositive(new MaterialDialog.SingleButtonCallback() {
+                                                                    @Override
+                                                                    public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
+                                                                        // InputMethodManager imm = (InputMethodManager) MainActivity.this.getSystemService(Context.INPUT_METHOD_SERVICE);
+                                                                        // if(imm != null) imm.hideSoftInputFromWindow(categoryNameSpinner.getWindowToken(), 0);
+                                                                        EditText feedNameEditText = (EditText) dialog.findViewById(R.id.dialog_feed_name_edittext);
+                                                                        feedEntries.getFeed().setTitle(feedNameEditText.getText().toString());
+                                                                        feedEntries.getFeed().setSyncInterval(-1);
+                                                                        CoreDB.i().feedDao().insert(feedEntries.getFeed());
+                                                                        List<Article> entries = feedEntries.getArticles();
+                                                                        if( entries!= null && entries.size() > 0){
+                                                                            CoreDB.i().articleDao().insert(entries);
+                                                                        }
+                                                                        CoreDB.i().feedCategoryDao().insert(feedEntries.getFeedCategories());
+
+                                                                        // if(feedEntries.getFeedCategories() !=  null){
+                                                                        //     for (FeedCategory feedCategory: feedEntries.getFeedCategories()){
+                                                                        //         feedCategory.setFeedId(feedEntries.getFeed().getId());
+                                                                        //     }
+                                                                        //     CoreDB.i().feedCategoryDao().insert(feedEntries.getFeedCategories());
+                                                                        // }else {
+                                                                        //     FeedCategory feedCategory = new FeedCategory();
+                                                                        //     feedCategory.setFeedId(feedEntries.getFeed().getId());
+                                                                        //     CoreDB.i().feedCategoryDao().insert(feedEntries.getFeedCategories());
+                                                                        // }
+                                                                    }
+                                                                })
+                                                                .show();
+                                                        EditText feedUrlEditText = (EditText) feedSettingDialog.findViewById(R.id.dialog_feed_url_edittext);
+                                                        feedUrlEditText.setText(input.toString());
+
+
+                                                        EditText feedNameEditText = (EditText) feedSettingDialog.findViewById(R.id.dialog_feed_name_edittext);
+                                                        feedNameEditText.setText(feedEntries.getFeed().getTitle());
+
+                                                        categoryNameSpinner = (Spinner) feedSettingDialog.findViewById(R.id.category_name_editspinner);
+                                                        List<Category> categories = CoreDB.i().categoryDao().getAll(App.i().getUser().getId());
+                                                        List<String> items = new ArrayList<>();
+                                                        items.add(getString(R.string.un_category));
+                                                        if(categories != null){
+                                                            for (Category category:categories){
+                                                                items.add(category.getTitle());
+                                                            }
+                                                        }
+                                                        ArrayAdapter<String> adapter = new ArrayAdapter<>(MainActivity.this, android.R.layout.simple_spinner_dropdown_item, items);
+                                                        categoryNameSpinner.setAdapter(adapter);
+                                                        categoryNameSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+                                                            @Override
+                                                            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                                                                position = position - 1;
+                                                                if(position >= 0 && categories != null){
+                                                                    FeedCategory feedCategory = new FeedCategory();
+                                                                    feedCategory.setUid(App.i().getUser().getId());
+                                                                    feedCategory.setCategoryId(categories.get(position).getId());
+                                                                    List<FeedCategory> feedCategories = new ArrayList<>();
+                                                                    feedCategories.add(feedCategory);
+                                                                    feedEntries.setFeedCategories(feedCategories);
+                                                                }
+                                                            }
+
+                                                            @Override
+                                                            public void onNothingSelected(AdapterView<?> parent) {
+                                                            }
+                                                        });
+                                                    }
+                                                });
+                                            }
+                                        }
+                                    });
+                                }
+                            }
+                        })
+                        .positiveText(R.string.confirm)
+                        .negativeText(android.R.string.cancel)
+                        .show();
+                break;
             default:
                 break;
         }
         return super.onOptionsItemSelected(item);
     }
 
-
-    private void showSearchResult(String keyword) {
-        openLoadingPopupView();
-
-        if(articleViewModel.articles != null && articleViewModel.articles.hasObservers()){
-            articleViewModel.articles.removeObservers(this);
-            articleViewModel.articles = null;
-        }
-        if(articleViewModel.articleIdsLiveData != null && articleViewModel.articleIdsLiveData.hasObservers()){
-            articleViewModel.articleIdsLiveData.removeObservers(this);
-            articleViewModel.articleIdsLiveData = null;
-        }
-        articleViewModel.getAllByKeyword(App.i().getUser().getId(), keyword).observe(this, new Observer<PagedList<Article>>() {
-            @Override
-            public void onChanged(PagedList<Article> articles) {
-                renderViewByArticlesData( getString(R.string.title_search,keyword), articles.size() );
-                articlesAdapter.submitList(articles);
-                dismissLoadingPopupView();
-            }
-        });
-        articleViewModel.articleIdsLiveData.observe(this, new Observer<List<String>>() {
-            @Override
-            public void onChanged(List<String> strings) {
-                articlesAdapter.setArticleIds(strings);
-                XLog.d("更新ids数据 ：");
-            }
-        });
-        articleListView.scrollToPosition(0);
-        articlesAdapter.setLastPos(0);
-    }
+    private Spinner categoryNameSpinner;
 
 
     /**
@@ -1542,10 +1736,11 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
         relative.childViewBgColor(R.id.sheet_tag, R.attr.root_view_bg);
         // relative.childViewBgColor(R.id.sheet_tag_sticky_header,R.attr.root_view_bg);
         relative.childViewBgColor(R.id.main_tag_list_view, R.attr.root_view_bg);
+        relative.childViewBgColor(R.id.main_tag_create_category, R.attr.root_view_bg);
 
         // 绑定ListView的Item View中的news_title视图，在换肤时修改它的text_color属性
-        ViewGroupSetter tagListViewSetter = new ViewGroupSetter(tagListView);
-        tagListViewSetter.childViewBgColor(R.id.group_item, R.attr.root_view_bg);  // 这个不生效，反而会影响底色修改
+        ViewGroupSetter tagListViewSetter = new ViewGroupSetter(categoryListView);
+        tagListViewSetter.childViewBgColor(R.id.group_item, R.attr.root_view_bg);  // 这个不能生效，不然反而会影响底色修改
         tagListViewSetter.childViewTextColor(R.id.group_item_icon, R.attr.tag_slv_item_icon);
         tagListViewSetter.childViewTextColor(R.id.group_item_title, R.attr.lv_item_title_color);
         tagListViewSetter.childViewTextColor(R.id.group_item_count, R.attr.lv_item_desc_color);
@@ -1561,7 +1756,7 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
                 .backgroundColor(R.id.main_toolbar, R.attr.topbar_bg)
                 //.textColor(R.id.main_toolbar_hint, R.attr.topbar_fg)
 
-                .backgroundColor(R.id.sheet_tag, R.attr.root_view_bg)
+                // .backgroundColor(R.id.sheet_tag, R.attr.root_view_bg)
 
                 // 设置 bottombar
                 .backgroundColor(R.id.main_bottombar, R.attr.bottombar_bg)

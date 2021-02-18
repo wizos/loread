@@ -3,6 +3,7 @@ package me.wizos.loread.db;
 import androidx.annotation.NonNull;
 import androidx.room.Entity;
 import androidx.room.ForeignKey;
+import androidx.room.Ignore;
 import androidx.room.Index;
 
 import static androidx.room.ForeignKey.CASCADE;
@@ -14,8 +15,8 @@ import static androidx.room.ForeignKey.CASCADE;
         indices = {@Index({"uid"}),@Index({"categoryId","uid"}),@Index({"feedId","uid"})},
         foreignKeys = {
                 @ForeignKey(entity = User.class, parentColumns = "id", childColumns = "uid", onDelete = CASCADE)
-//                @ForeignKey(entity = Feed.class, parentColumns = {"id","uid"}, childColumns = {"feedId","uid"}, onDelete = CASCADE),
-//                @ForeignKey(entity = Category.class, parentColumns = {"id","uid"}, childColumns = {"categoryId","uid"}, onDelete = CASCADE)
+                // @ForeignKey(entity = Feed.class, parentColumns = {"id","uid"}, childColumns = {"feedId","uid"}, onDelete = CASCADE),
+                // @ForeignKey(entity = Category.class, parentColumns = {"id","uid"}, childColumns = {"categoryId","uid"}, onDelete = CASCADE)
         }
 )
 public class FeedCategory {
@@ -25,6 +26,9 @@ public class FeedCategory {
     private String feedId;
     @NonNull
     private String categoryId;
+
+    @Ignore
+    public FeedCategory() {}
 
     public FeedCategory(@NonNull String uid, @NonNull String feedId, @NonNull String categoryId){
         this.uid = uid;
@@ -41,15 +45,13 @@ public class FeedCategory {
         this.uid = uid;
     }
 
-    public String getId() {
-        return this.uid;
+    public void setFeedId(@NonNull String feedId) {
+        this.feedId = feedId;
     }
 
-
-    public void setId(String uid) {
-        this.uid = uid;
+    public void setCategoryId(@NonNull String categoryId) {
+        this.categoryId = categoryId;
     }
-
 
     public String getCategoryId() {
         return this.categoryId;

@@ -29,10 +29,9 @@ public class LoginResult {
             error = info[0].replace("Error=", "");
             if (error.toLowerCase().equals("wrong_username_or_password")) {
                 error = App.i().getString(R.string.wrong_username_or_password);
+            } else {
+                error = App.i().getString(R.string.wrong_unknown);
             }
-            // else {
-            //     error = App.i().getString(R.string.wrong_unknown);
-            // }
         } else {
             for (String tmp : info) {
                 if (tmp.startsWith("Auth=")) {

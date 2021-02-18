@@ -4,7 +4,6 @@ package me.wizos.loread.utils;
  * Created by jiangzeyin on 2017/3/15.
  */
 public enum ImgFileType {
-
     /**
      * JPEG,JPG
      */

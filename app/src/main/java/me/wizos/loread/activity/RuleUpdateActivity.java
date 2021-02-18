@@ -32,7 +32,7 @@ import me.wizos.loread.Contract;
 import me.wizos.loread.R;
 import me.wizos.loread.config.HeaderRefererConfig;
 import me.wizos.loread.config.HostBlockConfig;
-import me.wizos.loread.config.header_useragent.UserAgentsConfig;
+import me.wizos.loread.config.header_useragent.UserAgentConfig;
 import me.wizos.loread.config.url_rewrite.UrlRewriteConfig;
 import me.wizos.loread.db.CorePref;
 import me.wizos.loread.network.HttpClientManager;
@@ -242,8 +242,8 @@ public class RuleUpdateActivity extends BaseActivity {
 
         userAgentSyncButton.setEnabled(!TextUtils.isEmpty(CorePref.i().globalPref().getString(Contract.HEADER_USER_AGENT_URL,null)));
         userAgentSyncButton.setOnClickListener(v -> {
-            download(CorePref.i().globalPref().getString(Contract.HEADER_USER_AGENT_URL,null), UserAgentsConfig.FILE_NAME);
-            UserAgentsConfig.i().reset();
+            download(CorePref.i().globalPref().getString(Contract.HEADER_USER_AGENT_URL,null), UserAgentConfig.FILE_NAME);
+            UserAgentConfig.i().reset();
             CorePref.i().globalPref().putLong(Contract.HEADER_USER_AGENT_UPDATE, System.currentTimeMillis());
         });
 
@@ -337,8 +337,8 @@ public class RuleUpdateActivity extends BaseActivity {
                 download(CorePref.i().globalPref().getString(Contract.HEADER_REFERER_URL,null), HeaderRefererConfig.FILE_NAME);
                 HeaderRefererConfig.i().reset();
 
-                download(CorePref.i().globalPref().getString(Contract.HEADER_USER_AGENT_URL,null), UserAgentsConfig.FILE_NAME);
-                UserAgentsConfig.i().reset();
+                download(CorePref.i().globalPref().getString(Contract.HEADER_USER_AGENT_URL,null), UserAgentConfig.FILE_NAME);
+                UserAgentConfig.i().reset();
                 break;
             default:
                 break;

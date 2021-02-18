@@ -8,6 +8,8 @@ import android.webkit.URLUtil;
 import com.elvishew.xlog.XLog;
 
 import java.io.UnsupportedEncodingException;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -24,6 +26,9 @@ public class UriUtils {
 
     // https://www.hao123.com/favicon.ico
     public static String getFaviconUrl(String url){
+        if(StringUtils.isEmpty(url)){
+            return null;
+        }
         Uri uri = Uri.parse(url);
         return uri.getScheme() + "://" + uri.getHost() + "/favicon.ico";
     }
@@ -46,6 +51,21 @@ public class UriUtils {
         return !TextUtils.isEmpty(url) && Patterns.WEB_URL.matcher(url).matches();
     }
 
+
+    public static String getAbsolute(String baseUrl, String url) {
+        if(StringUtils.isEmpty(url)){
+            return url;
+        }
+        try {
+            return new URL(url).toString();
+        }catch (MalformedURLException e){
+            try {
+                return new URL(new URL(baseUrl),url).toString();
+            }catch (MalformedURLException e2){
+                return url;
+            }
+        }
+    }
 
     public static List<String> reduceSlice(String host){
         String[] slices = host.split("\\.");

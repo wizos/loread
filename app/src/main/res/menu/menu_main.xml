@@ -5,7 +5,7 @@
 
     <item
         android:id="@+id/main_menu_proxy_disable"
-        android:icon="@drawable/ic_flight_land"
+        android:icon="@drawable/ic_flight_land2"
         android:title="@string/proxy"
         android:visible="false"
         tools:visible="true"
@@ -31,6 +31,32 @@
         android:icon="@drawable/ic_search"
         android:title="@string/search_articles"
         android:enabled="true"
-        android:visible="true"
         app:showAsAction="ifRoom" />
+    <item
+        android:title="@string/add_subscription"
+        android:icon="@drawable/ic_add"
+        android:visible="false"
+        app:showAsAction="ifRoom">
+        <menu>
+            <item
+                android:id="@+id/main_menu_add_feed"
+                android:title="@string/add_subscription"
+                android:icon="@drawable/ic_add"/>
+            <item
+                android:id="@+id/main_menu_paste_feed"
+                android:title="@string/paste_subscription"
+                android:icon="@drawable/ic_copy"
+                android:visible="false"/>
+            <item
+                android:id="@+id/main_menu_qr"
+                android:title="@string/scan_subscription"
+                android:icon="@drawable/ic_qr_scan"
+                android:visible="false"/>
+            <item
+                android:id="@+id/main_menu_import_opml"
+                android:title="@string/import_opml"
+                android:icon="@drawable/ic_file"
+                android:visible="false"/>
+        </menu>
+    </item>
 </menu>

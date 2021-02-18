@@ -1,6 +1,6 @@
 package me.wizos.loread.bean.ttrss.result;
 
-public class TTRSSVersion {
+public class Version {
     private String version;
 
     public String getVersion() {

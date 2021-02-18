@@ -5,6 +5,8 @@ import androidx.room.Entity;
 import androidx.room.Index;
 import androidx.room.PrimaryKey;
 
+import org.jetbrains.annotations.NotNull;
+
 import me.wizos.loread.App;
 import me.wizos.loread.R;
 import me.wizos.loread.bean.Token;
@@ -19,8 +21,8 @@ public class User {
     @NonNull
     @PrimaryKey
     private String id;
-    // 账户信息
     // TODO: 2020/12/4 以下的 userId, userName, userEmail 有歧义，无法区分哪个才是登录账号。应该用 account, password. name,email,gid（供应商内部的唯一标识id）
+    // 账户信息
     private String source;
     private String userId; // 该用户在服务商那的id
     private String userName; // 该用户在服务商那的name
@@ -45,6 +47,9 @@ public class User {
 
     // 自动同步的时间间隔，单位为分钟
     private int autoSyncFrequency = 30;
+    // 最近同步的时间
+    private long lastSyncTime;
+
     private boolean autoSyncOnlyWifi = false;
 
     private boolean downloadImgOnlyWifi = false;
@@ -58,14 +63,19 @@ public class User {
     private float audioSpeed = 1.0f;
     private String host;
 
+
+
+    // private String host_block_url;
+
+
     public void setToken(Token token) {
         if (null == token) {
             return;
         }
-        accessToken = token.getAccess_token();
-        refreshToken = token.getRefresh_token();
-        tokenType = token.getToken_type();
-        expiresTimestamp = token.getExpires_in() + (System.currentTimeMillis() / 1000);
+        accessToken = token.getAccessToken();
+        refreshToken = token.getRefreshToken();
+        tokenType = token.getTokenType();
+        expiresTimestamp = token.getExpiresIn() + (System.currentTimeMillis() / 1000);
         auth = token.getAuth();
     }
 
@@ -196,6 +206,7 @@ public class User {
         this.autoSync = autoSync;
     }
 
+    // 单位为秒？
     public int getAutoSyncFrequency() {
         return autoSyncFrequency;
     }
@@ -279,6 +290,15 @@ public class User {
         this.host = host;
     }
 
+    public long getLastSyncTime() {
+        return lastSyncTime;
+    }
+
+    public void setLastSyncTime(long lastSyncTime) {
+        this.lastSyncTime = lastSyncTime;
+    }
+
+    @NotNull
     @Override
     public String toString() {
         return "User{" +
@@ -295,6 +315,7 @@ public class User {
                 ", expiresTimestamp=" + expiresTimestamp +
                 ", streamId='" + streamId + '\'' +
                 ", streamTitle='" + streamTitle + '\'' +
+                ", streamType=" + streamType +
                 ", streamStatus=" + streamStatus +
                 ", autoSync=" + autoSync +
                 ", autoSyncFrequency=" + autoSyncFrequency +
@@ -306,6 +327,8 @@ public class User {
                 ", autoToggleTheme=" + autoToggleTheme +
                 ", themeMode=" + themeMode +
                 ", audioSpeed=" + audioSpeed +
+                ", host='" + host + '\'' +
+                ", lastSyncTime=" + lastSyncTime +
                 '}';
     }
 }

@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:focusable="true"
+    android:focusableInTouchMode="true">
+
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        android:text="@string/feed_url" />
+    <EditText
+        android:id="@+id/dialog_feed_url_edittext"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="10dp"
+        android:enabled="false"
+        android:hint=""
+        android:autofillHints=""
+        android:inputType="textUri"
+        tools:ignore="LabelFor" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        android:text="@string/feed_name" />
+    <EditText
+        android:id="@+id/dialog_feed_name_edittext"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="10dp"
+        android:hint=""
+        android:autofillHints=""
+        android:inputType="text"
+        tools:ignore="LabelFor" />
+
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        android:text="@string/category" />
+
+    <Spinner
+        android:id="@+id/category_name_editspinner"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:textSize="14sp"
+        android:ellipsize="end"
+        android:singleLine="true"
+        android:inputType="text"
+        android:paddingTop="10dp"
+        android:paddingBottom="10dp"
+        tools:entries="@array/action_attributes" />
+
+    <!--app:dropDownDrawable="@drawable/ic_arrow_down_black"-->
+    <!--app:dropDownDrawableSpacing="15dp"-->
+    <!--app:dropDownDrawableWidth="25dp"-->
+    <!--app:dropDownDrawableHeight="25dp"-->
+</LinearLayout>

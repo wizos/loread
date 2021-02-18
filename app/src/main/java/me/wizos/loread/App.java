@@ -39,10 +39,10 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 import me.wizos.loread.activity.SplashActivity;
-import me.wizos.loread.adapter.ArticlePagedListAdapter;
 import me.wizos.loread.config.Test;
 import me.wizos.loread.config.update.AppUpdateModel;
 import me.wizos.loread.db.Article;
@@ -56,7 +56,7 @@ import me.wizos.loread.network.api.FeedlyApi;
 import me.wizos.loread.network.api.FeverApi;
 import me.wizos.loread.network.api.FeverTinyRSSApi;
 import me.wizos.loread.network.api.InoReaderApi;
-import me.wizos.loread.network.api.LoreadApi;
+import me.wizos.loread.network.api.LocalApi;
 import me.wizos.loread.network.api.OAuthApi;
 import me.wizos.loread.network.api.TinyRSSApi;
 import me.wizos.loread.network.proxy.ProxyNodeSocks5;
@@ -95,7 +95,7 @@ public class App extends Application implements Thread.UncaughtExceptionHandler 
     public static final int STATUS_TO_BE_FILED = 1;
     public static final int STATUS_IS_FILED = 2;
 
-    public static final int ActivityResult_LoginPageToProvider = 1;
+    // public static final int ActivityResult_LoginPageToProvider = 1;
     public static final int ActivityResult_ArtToMain = 2;
 
     public static final int TYPE_GROUP = 0;
@@ -124,27 +124,46 @@ public class App extends Application implements Thread.UncaughtExceptionHandler 
 
     public ProxyNodeSocks5 proxyNodeSocks5;
 
-    public ArticlePagedListAdapter articlesAdapter;
+    // public ArticlePagedListAdapter articlesAdapter;
+
+    private List<String> articleIds;
+
+    public List<String> getArticleIds() {
+        return articleIds;
+    }
+
+    public void setArticleIds(List<String> articleIds) {
+        this.articleIds = articleIds;
+    }
 
     public boolean isSyncing = false;
     public static String webViewBaseUrl;
 
+    // 保存文章进度
     public LinkedHashMap<String, Integer> articleProgress = new LinkedHashMap<String, Integer>() {
         @Override
         protected boolean removeEldestEntry(Map.Entry<String, Integer> eldest) {
             return size() > 8;
         }
     };
-
+    // 保存文章内容的收个关键词，用于提取全文时，给相似区域增加权重
     public LinkedHashMap<String, String> articleFirstKeyword = new LinkedHashMap<String, String>() {
         @Override
         protected boolean removeEldestEntry(Map.Entry<String, String> eldest) {
             return size() > 8;
         }
     };
+    // 保存提取全文后，之前的文章信息
     public LinkedHashMap<String, Article> oldArticles = new LinkedHashMap<String, Article>() {
         @Override
         protected boolean removeEldestEntry(Map.Entry<String, Article> eldest) {
+            return size() > 8;
+        }
+    };
+    // 保存最近打开的文章中的iframe的src，用于拦截webview的请求时，只拦截iframe的数据
+    public LinkedHashMap<String, String> iFrames = new LinkedHashMap<String, String>() {
+        @Override
+        protected boolean removeEldestEntry(Map.Entry<String, String> eldest) {
             return size() > 8;
         }
     };
@@ -466,11 +485,11 @@ public class App extends Application implements Thread.UncaughtExceptionHandler 
                     feverApi.setAuthorization(getUser().getAuth());
                     api = feverApi;
                     break;
-                case Contract.PROVIDER_LOREAD:
-                    LoreadApi loreadApi = new LoreadApi(getUser().getHost());
-                    loreadApi.setAuthorization(getUser().getAuth());
-                    api = loreadApi;
-                    break;
+                // case Contract.PROVIDER_LOREAD:
+                //     LoreadApi loreadApi = new LoreadApi(getUser().getHost());
+                //     loreadApi.setAuthorization(getUser().getAuth());
+                //     api = loreadApi;
+                //     break;
                 case Contract.PROVIDER_INOREADER:
                     InoReaderApi inoReaderApi = new InoReaderApi(getUser().getHost());
                     inoReaderApi.setAuthorization(getUser().getAuth());
@@ -482,9 +501,10 @@ public class App extends Application implements Thread.UncaughtExceptionHandler 
                     api = feedlyApi;
                     break;
                 case Contract.PROVIDER_LOCALRSS:
+                    api = new LocalApi();
                     break;
             }
-            XLog.i("getApi = " + getUser().getSource() + " - " + App.i().getUser().getAuth());
+            // XLog.i("getApi = " + getUser().getSource() + " - " + App.i().getUser().getAuth());
         }
         return api;
     }

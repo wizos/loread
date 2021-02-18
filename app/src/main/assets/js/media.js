@@ -9,7 +9,6 @@ function optimize() {
 	handleSlidingConflicts();
 	hljs.initHighlightingOnLoad();
 	MathJax = { tex:{inlineMath: [['\\$', '\\$'], ['\\(', '\\)']]}, svg:{fontCache: 'global'} };
-
 }
 
 function handleSlidingConflicts() {

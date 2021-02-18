@@ -1,5 +1,7 @@
 package me.wizos.loread.bean.ttrss.request;
 
+import com.google.gson.annotations.SerializedName;
+
 public class GetHeadlines {
     private String op = "getHeadlines";
     private String sid;
@@ -7,7 +9,8 @@ public class GetHeadlines {
     /**
      * all_articles, unread, adaptive, marked, updated
      */
-    private String view_mode = "unread, marked";
+    @SerializedName("view_mode")
+    private String viewMode = "unread, marked";
 
     /**
      * -1 starred
@@ -17,22 +20,29 @@ public class GetHeadlines {
      * 0 - archived
      * IDs < -10 labels
      */
-    private String feed_id = "-4";
+    @SerializedName("feed_id")
+    private String feedId = "-4";
     /**
      * date_reverse - oldest first
      * feed_dates - newest first, goes by feed date
      * (nothing) - default
      */
-    private String order_by = "date_reverse";
+    @SerializedName("order_by")
+    private String orderBy = "date_reverse";
 
     private int limit = 20;
     private int skip;
-    private String since_id;
-    private boolean is_cat = false;
+    @SerializedName("since_id")
+    private String sinceId;
+    @SerializedName("is_cat")
+    private boolean isCat = false;
 
-    private boolean show_content = true;
-    private boolean include_attachments = true;
-    private boolean has_sandbox = true;
+    @SerializedName("show_content")
+    private boolean showContent = true;
+    @SerializedName("include_attachments")
+    private boolean includeAttachments = true;
+    @SerializedName("has_sandbox")
+    private boolean hasSandbox = true;
 
 
 
@@ -52,28 +62,28 @@ public class GetHeadlines {
         this.sid = sid;
     }
 
-    public String getView_mode() {
-        return view_mode;
+    public String getViewMode() {
+        return viewMode;
     }
 
-    public void setView_mode(String view_mode) {
-        this.view_mode = view_mode;
+    public void setViewMode(String viewMode) {
+        this.viewMode = viewMode;
     }
 
-    public String getFeed_id() {
-        return feed_id;
+    public String getFeedId() {
+        return feedId;
     }
 
-    public void setFeed_id(String feed_id) {
-        this.feed_id = feed_id;
+    public void setFeedId(String feedId) {
+        this.feedId = feedId;
     }
 
-    public String getOrder_by() {
-        return order_by;
+    public String getOrderBy() {
+        return orderBy;
     }
 
-    public void setOrder_by(String order_by) {
-        this.order_by = order_by;
+    public void setOrderBy(String orderBy) {
+        this.orderBy = orderBy;
     }
 
     public int getLimit() {
@@ -92,43 +102,61 @@ public class GetHeadlines {
         this.skip = skip;
     }
 
-    public String getSince_id() {
-        return since_id;
+    public String getSinceId() {
+        return sinceId;
     }
 
-    public void setSince_id(String since_id) {
-        this.since_id = since_id;
+    public void setSinceId(String sinceId) {
+        this.sinceId = sinceId;
     }
 
-    public boolean isIs_cat() {
-        return is_cat;
+    public boolean isCat() {
+        return isCat;
     }
 
-    public void setIs_cat(boolean is_cat) {
-        this.is_cat = is_cat;
+    public void setCat(boolean cat) {
+        this.isCat = cat;
     }
 
-    public boolean isShow_content() {
-        return show_content;
+    public boolean isShowContent() {
+        return showContent;
     }
 
-    public void setShow_content(boolean show_content) {
-        this.show_content = show_content;
+    public void setShowContent(boolean showContent) {
+        this.showContent = showContent;
     }
 
-    public boolean isInclude_attachments() {
-        return include_attachments;
+    public boolean isIncludeAttachments() {
+        return includeAttachments;
     }
 
-    public void setInclude_attachments(boolean include_attachments) {
-        this.include_attachments = include_attachments;
+    public void setIncludeAttachments(boolean includeAttachments) {
+        this.includeAttachments = includeAttachments;
     }
 
-    public boolean isHas_sandbox() {
-        return has_sandbox;
+    public boolean isHasSandbox() {
+        return hasSandbox;
     }
 
-    public void setHas_sandbox(boolean has_sandbox) {
-        this.has_sandbox = has_sandbox;
+    public void setHasSandbox(boolean hasSandbox) {
+        this.hasSandbox = hasSandbox;
+    }
+
+    @Override
+    public String toString() {
+        return "GetHeadlines{" +
+                "op='" + op + '\'' +
+                ", sid='" + sid + '\'' +
+                ", viewMode='" + viewMode + '\'' +
+                ", feedId='" + feedId + '\'' +
+                ", orderBy='" + orderBy + '\'' +
+                ", limit=" + limit +
+                ", skip=" + skip +
+                ", sinceId='" + sinceId + '\'' +
+                ", isCat=" + isCat +
+                ", showContent=" + showContent +
+                ", includeAttachments=" + includeAttachments +
+                ", hasSandbox=" + hasSandbox +
+                '}';
     }
 }

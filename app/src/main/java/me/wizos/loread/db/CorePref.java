@@ -1,7 +1,6 @@
 package me.wizos.loread.db;
 
 import android.annotation.SuppressLint;
-import android.content.Context;
 
 import com.tencent.mmkv.MMKV;
 
@@ -13,7 +12,6 @@ import com.tencent.mmkv.MMKV;
 public class CorePref {
     private static CorePref corePref;
     private static MMKV globalPref = MMKV.defaultMMKV();
-    private static MMKV userPref;
 
     private CorePref() {}
 
@@ -33,18 +31,5 @@ public class CorePref {
     public MMKV globalPref(){
         return globalPref;
     }
-    public MMKV userPref(){
-        if(userPref == null){
-            throw new RuntimeException("必须先初始化 UserPref");
-        }
-        return userPref;
-    }
-    public static void init(Context context){
-        MMKV.initialize(context);
-    }
 
-    public MMKV initUserPref(String userId){
-        userPref = MMKV.mmkvWithID(userId);
-        return userPref;
-    }
 }

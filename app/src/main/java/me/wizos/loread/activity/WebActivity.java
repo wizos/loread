@@ -15,7 +15,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.text.InputType;
 import android.text.TextUtils;
-import android.util.ArrayMap;
+import android.util.Pair;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -34,9 +34,6 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.widget.Toolbar;
 import androidx.coordinatorlayout.widget.CoordinatorLayout;
-import androidx.webkit.ProxyConfig;
-import androidx.webkit.ProxyController;
-import androidx.webkit.WebViewFeature;
 
 import com.afollestad.materialdialogs.DialogAction;
 import com.afollestad.materialdialogs.MaterialDialog;
@@ -54,7 +51,6 @@ import org.jetbrains.annotations.NotNull;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Map;
-import java.util.concurrent.Executor;
 
 import me.wizos.loread.App;
 import me.wizos.loread.BuildConfig;
@@ -62,10 +58,8 @@ import me.wizos.loread.Contract;
 import me.wizos.loread.R;
 import me.wizos.loread.bridge.WebBridge;
 import me.wizos.loread.config.HostBlockConfig;
-import me.wizos.loread.config.NetworkUserAgentConfig;
-import me.wizos.loread.config.header_useragent.UserAgentsConfig;
+import me.wizos.loread.config.header_useragent.UserAgentConfig;
 import me.wizos.loread.config.url_rewrite.UrlRewriteConfig;
-import me.wizos.loread.network.proxy.ProxyWebkit;
 import me.wizos.loread.utils.ScreenUtils;
 import me.wizos.loread.utils.StringUtils;
 import me.wizos.loread.view.colorful.Colorful;
@@ -234,10 +228,10 @@ public class WebActivity extends BaseActivity implements WebBridge {
                 new DownloadListenerS(WebActivity.this).setWebView(agentWeb.getWebCreator().getWebView())
         );
 
-        String guessUserAgent = NetworkUserAgentConfig.i().guessUserAgentByUrl(link);
-        if (!TextUtils.isEmpty(guessUserAgent)) {
-            webSettings.setUserAgentString(guessUserAgent);
-        }
+        // String guessUserAgent = NetworkUserAgentConfig.i().guessUserAgentByUrl(link);
+        // if (!TextUtils.isEmpty(guessUserAgent)) {
+        //     webSettings.setUserAgentString(guessUserAgent);
+        // }
 
         agentWeb.getWebCreator().getWebView().setOnTouchListener(new View.OnTouchListener() {
             @Override
@@ -264,56 +258,39 @@ public class WebActivity extends BaseActivity implements WebBridge {
                 return true;
             }
         });
-        // setProxy();
     }
 
-    private void setProxy(){
-        if(App.i().proxyNodeSocks5 != null){
-            try {
-                // 此处设置对全局有效
-                boolean success = ProxyWebkit.setSocksProxy(this.getApplicationContext(),  App.i().proxyNodeSocks5.getServer(), App.i().proxyNodeSocks5.getPort());;
-                // if(Test.i().proxy){
-                //     success = WebkitProxyNew.setHttpProxy(this.getApplicationContext(),  "localhost", Test.i().httpPort);
-                // }else {
-                //
-                // }
-                XLog.d("设置全局代理是否成功：" + success);
-            } catch (Exception e) {
-                XLog.e("无法启动 WebkitProxy：" + e.getLocalizedMessage());
-            }
-        }
-    }
 
-    /**
-     * 添加一个代理，用于所有的URL。本方法可以多次调用，添加多个规则。附加规则的优先级递减。
-     * Proxy是一个格式为[scheme://]host[:port]的字符串。scheme是可选的，如果存在必须是HTTP、HTTPS或SOCKS，默认为HTTP。Host是带括号的IPv6文字、IPv4文字或一个或多个用句号分隔的标签中的一个。端口号是可选的，HTTP默认为80，HTTPS默认为443，SOCKS默认为1080。
-     * 主机的正确语法由RFC 3986定义。
-     */
-    private void setProxyRule() {
-        if (WebViewFeature.isFeatureSupported(WebViewFeature.PROXY_OVERRIDE)) {
-            XLog.i("WebView 支持代理");
-
-            ProxyConfig proxyConfig = new ProxyConfig.Builder()
-                    // .addProxyRule("111.123.321.121:1234")
-                    .addProxyRule("127.0.0.1:10808")
-                    .addBypassRule("www.excluded.*")
-                    .addDirect().build();
-
-            ProxyController.getInstance().setProxyOverride(proxyConfig, new Executor() {
-                @Override
-                public void execute(Runnable command) {
-                    //do nothing
-                }
-            }, new Runnable() {
-                @Override
-                public void run() {
-                    XLog.w( "WebView 代理改变");
-                }
-            });
-        }else {
-            XLog.i("WebView 不支持代理");
-        }
-    }
+    // /**
+    //  * 添加一个代理，用于所有的URL。本方法可以多次调用，添加多个规则。附加规则的优先级递减。
+    //  * Proxy是一个格式为[scheme://]host[:port]的字符串。scheme是可选的，如果存在必须是HTTP、HTTPS或SOCKS，默认为HTTP。Host是带括号的IPv6文字、IPv4文字或一个或多个用句号分隔的标签中的一个。端口号是可选的，HTTP默认为80，HTTPS默认为443，SOCKS默认为1080。
+    //  * 主机的正确语法由RFC 3986定义。
+    //  */
+    // private void setProxyRule() {
+    //     if (WebViewFeature.isFeatureSupported(WebViewFeature.PROXY_OVERRIDE)) {
+    //         XLog.i("WebView 支持代理");
+    //
+    //         ProxyConfig proxyConfig = new ProxyConfig.Builder()
+    //                 // .addProxyRule("111.123.321.121:1234")
+    //                 .addProxyRule("127.0.0.1:10808")
+    //                 .addBypassRule("www.excluded.*")
+    //                 .addDirect().build();
+    //
+    //         ProxyController.getInstance().setProxyOverride(proxyConfig, new Executor() {
+    //             @Override
+    //             public void execute(Runnable command) {
+    //                 //do nothing
+    //             }
+    //         }, new Runnable() {
+    //             @Override
+    //             public void run() {
+    //                 XLog.w( "WebView 代理改变");
+    //             }
+    //         });
+    //     }else {
+    //         XLog.i("WebView 不支持代理");
+    //     }
+    // }
 
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
@@ -619,41 +596,41 @@ public class WebActivity extends BaseActivity implements WebBridge {
                     return new WebResourceResponse(null, null, null);
                 }
                 // NOTE: 2021/1/24  由于会将小图转为大图，造成问题，所以不重定向。
-                // String newUrl = UrlRewriteConfig.i().getRedirectUrl(url);
-                // XLog.i("网页重定向：" + url + " -> " + newUrl);
-                // if(!TextUtils.isEmpty(newUrl) && !url.equalsIgnoreCase(newUrl)){
-                //     return super.shouldInterceptRequest(view, new WebResourceRequest() {
-                //         @Override
-                //         public Uri getUrl() {
-                //             return Uri.parse(newUrl);
-                //         }
-                //         @SuppressLint("NewApi")
-                //         @Override
-                //         public boolean isRedirect(){
-                //             return true;
-                //         }
-                //         @SuppressLint("NewApi")
-                //         @Override
-                //         public boolean isForMainFrame() {
-                //             return request.isForMainFrame();
-                //         }
-                //         @SuppressLint("NewApi")
-                //         @Override
-                //         public boolean hasGesture() {
-                //             return request.hasGesture();
-                //         }
-                //         @SuppressLint("NewApi")
-                //         @Override
-                //         public String getMethod() {
-                //             return request.getMethod();
-                //         }
-                //         @SuppressLint("NewApi")
-                //         @Override
-                //         public Map<String, String> getRequestHeaders() {
-                //             return request.getRequestHeaders();
-                //         }
-                //     });
-                // }
+                String newUrl = UrlRewriteConfig.i().getRedirectUrl(url);
+                XLog.i("网页重定向：" + url + " -> " + newUrl);
+                if(!TextUtils.isEmpty(newUrl) && !url.equalsIgnoreCase(newUrl)){
+                    return super.shouldInterceptRequest(view, new WebResourceRequest() {
+                        @Override
+                        public Uri getUrl() {
+                            return Uri.parse(newUrl);
+                        }
+                        @SuppressLint("NewApi")
+                        @Override
+                        public boolean isRedirect(){
+                            return true;
+                        }
+                        @SuppressLint("NewApi")
+                        @Override
+                        public boolean isForMainFrame() {
+                            return request.isForMainFrame();
+                        }
+                        @SuppressLint("NewApi")
+                        @Override
+                        public boolean hasGesture() {
+                            return request.hasGesture();
+                        }
+                        @SuppressLint("NewApi")
+                        @Override
+                        public String getMethod() {
+                            return request.getMethod();
+                        }
+                        @SuppressLint("NewApi")
+                        @Override
+                        public Map<String, String> getRequestHeaders() {
+                            return request.getRequestHeaders();
+                        }
+                    });
+                }
             }
             return super.shouldInterceptRequest(view, request);
         }
@@ -784,21 +761,15 @@ public class WebActivity extends BaseActivity implements WebBridge {
                 break;
             case R.id.web_menu_user_agent:
                 ArrayList<String> userAgentsTitle = new ArrayList<>();
-                ArrayMap<String, String> userAgents = new ArrayMap<>();
-
-                userAgents.put(getString(R.string.default_x),WebSettings.getDefaultUserAgent(this));
+                ArrayList<Pair<String, String>> userAgents = new ArrayList<>();
+                //
+                userAgents.add(new Pair<>(getString(R.string.default_x), WebSettings.getDefaultUserAgent(this)));
                 userAgentsTitle.add(getString(R.string.default_x));
 
-                userAgents.put("iPhone iOS 11", "Mozilla/5.0 (iPhone; CPU iPhone OS 11_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/11.0 Mobile/15E148 Safari/604.1");
-                userAgentsTitle.add("iPhone iOS 11");
-
-                userAgents.put("Win Chrome 87", "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.198 Safari/537.36");
-                userAgentsTitle.add("Win Chrome 87");
-
-                for (Map.Entry<String, String> entry : UserAgentsConfig.i().getUserAgents().entrySet()) {
+                for (Map.Entry<String, String> entry : UserAgentConfig.i().getUserAgents().entrySet()) {
                     userAgentsTitle.add(entry.getKey());
+                    userAgents.add(new Pair<>(entry.getKey(), entry.getValue()));
                 }
-                userAgents.putAll(UserAgentsConfig.i().getUserAgents());
 
                 if(selected >= userAgentsTitle.size()){
                     selected = 0;
@@ -810,7 +781,8 @@ public class WebActivity extends BaseActivity implements WebBridge {
                             @Override
                             public boolean onSelection(MaterialDialog dialog, View view, final int which, CharSequence text) {
                                 selected = which;
-                                agentWeb.getWebCreator().getWebView().getSettings().setUserAgentString(NetworkUserAgentConfig.i().guessUserAgentByUrl(receivedUrl));
+                                // agentWeb.getWebCreator().getWebView().getSettings().setUserAgentString(NetworkUserAgentConfig.i().guessUserAgentByUrl(receivedUrl));
+                                agentWeb.getWebCreator().getWebView().getSettings().setUserAgentString(userAgents.get(which).second);
                                 agentWeb.getWebCreator().getWebView().reload();
                                 // XLog.i("默认的UA是：" + agentWeb.getWebCreator().getWebView().getSettings().getUserAgentString() );
                                 dialog.dismiss();
@@ -828,13 +800,14 @@ public class WebActivity extends BaseActivity implements WebBridge {
                                         .input(null, agentWeb.getWebCreator().getWebView().getSettings().getUserAgentString(), new MaterialDialog.InputCallback() {
                                             @Override
                                             public void onInput(@NotNull MaterialDialog dialog, CharSequence input) {
-                                                if(!UserAgentsConfig.i().getUserAgents().containsKey(getString(R.string.custom))){
+                                                if(!UserAgentConfig.i().getUserAgents().containsKey(getString(R.string.custom))){
                                                     userAgentsTitle.add(getString(R.string.custom));
                                                 }
-                                                UserAgentsConfig.i().putCustomUserAgent(getString(R.string.custom), input.toString());
+                                                UserAgentConfig.i().putCustomUserAgent(getString(R.string.custom), input.toString());
+                                                UserAgentConfig.i().save();
                                                 selected = userAgentsTitle.size() -1;
                                                 XLog.i("当前输入的是：" + input.toString());
-                                                agentWeb.getWebCreator().getWebView().getSettings().setUserAgentString(NetworkUserAgentConfig.i().guessUserAgentByUrl(receivedUrl));
+                                                agentWeb.getWebCreator().getWebView().getSettings().setUserAgentString(input.toString());
                                                 agentWeb.getWebCreator().getWebView().reload();
                                             }
                                         })
@@ -845,9 +818,8 @@ public class WebActivity extends BaseActivity implements WebBridge {
                                         .onNeutral(new MaterialDialog.SingleButtonCallback() {
                                             @Override
                                             public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
-                                                NetworkUserAgentConfig.i().setHoldUserAgent(getString(R.string.custom));
-                                                NetworkUserAgentConfig.i().getUserAgents().remove(getString(R.string.custom));
-                                                NetworkUserAgentConfig.i().save();
+                                                UserAgentConfig.i().getUserAgents().remove(getString(R.string.custom));
+                                                UserAgentConfig.i().save();
                                             }
                                         })
                                         .show();

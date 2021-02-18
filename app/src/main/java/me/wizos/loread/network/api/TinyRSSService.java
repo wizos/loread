@@ -14,18 +14,18 @@ import me.wizos.loread.bean.ttrss.request.GetSavedItemIds;
 import me.wizos.loread.bean.ttrss.request.GetUnreadItemIds;
 import me.wizos.loread.bean.ttrss.request.GetVersion;
 import me.wizos.loread.bean.ttrss.request.Login;
-import me.wizos.loread.bean.ttrss.request.SubscribeToFeed;
+import me.wizos.loread.bean.ttrss.request.SubscribeFeed;
 import me.wizos.loread.bean.ttrss.request.UnsubscribeFeed;
 import me.wizos.loread.bean.ttrss.request.UpdateArticle;
 import me.wizos.loread.bean.ttrss.result.ApiLevel;
 import me.wizos.loread.bean.ttrss.result.ArticleItem;
 import me.wizos.loread.bean.ttrss.result.CategoryItem;
 import me.wizos.loread.bean.ttrss.result.FeedItem;
-import me.wizos.loread.bean.ttrss.result.SubscribeToFeedResult;
-import me.wizos.loread.bean.ttrss.result.TTRSSLoginResult;
-import me.wizos.loread.bean.ttrss.result.TTRSSVersion;
+import me.wizos.loread.bean.ttrss.result.LoginResult;
+import me.wizos.loread.bean.ttrss.result.SubscribeFeedResult;
 import me.wizos.loread.bean.ttrss.result.TinyResponse;
 import me.wizos.loread.bean.ttrss.result.UpdateArticleResult;
+import me.wizos.loread.bean.ttrss.result.Version;
 import retrofit2.Call;
 import retrofit2.http.Body;
 import retrofit2.http.Headers;
@@ -39,19 +39,19 @@ public interface TinyRSSService {
     // Post请求的文本参数则用注解@Field来声明，同时还必须给方法添加注解@FormUrlEncoded来告知Retrofit参数为表单参数，如果只为参数增加@Field注解，而不给方法添加@FormUrlEncoded注解运行时会抛异常。
     @Headers("Accept: application/json")
     @POST("api/")
-    Call<TinyResponse<TTRSSLoginResult>> login(
+    Call<TinyResponse<LoginResult>> login(
             @NonNull @Body Login loginParam
     );
 
     @Headers("Accept: application/json")
     @POST("api/")
-    Call<TinyResponse<TTRSSLoginResult>> isLoginIn(
+    Call<TinyResponse<LoginResult>> isLoginIn(
             @NonNull @Body Login loginParam
     );
 
     @Headers("Accept: application/json")
     @POST("api/")
-    Call<TinyResponse<TTRSSVersion>> getVersion(
+    Call<TinyResponse<Version>> getVersion(
             @NonNull @Body GetVersion getVersion
     );
 
@@ -103,8 +103,8 @@ public interface TinyRSSService {
 
     @Headers("Accept: application/json")
     @POST("api/")
-    Call<TinyResponse<SubscribeToFeedResult>> subscribeToFeed(
-            @NonNull @Body SubscribeToFeed subscribeToFeed
+    Call<TinyResponse<SubscribeFeedResult>> subscribeToFeed(
+            @NonNull @Body SubscribeFeed subscribeToFeed
     );
 
     @Headers("Accept: application/json")

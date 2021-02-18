@@ -26,6 +26,7 @@ import java.util.Locale;
 import me.wizos.loread.App;
 import me.wizos.loread.config.Test;
 import me.wizos.loread.db.Article;
+import me.wizos.loread.db.CoreDB;
 import me.wizos.loread.utils.ArticleUtils;
 
 import static android.media.AudioAttributes.USAGE_MEDIA;
@@ -37,19 +38,18 @@ import static android.media.AudioManager.AUDIOFOCUS_GAIN;
  */
 
 public class AudioService extends Service {
-    private static String TAG = "TTSService";
     private TextToSpeech textToSpeech;
     private MediaPlayer player;
     private String title = "";
     private int articleNo;
     private String utteranceId;
     private boolean isQueue;
-    private boolean isSpeark = false;
+    private int bufferedPercent = 0;
 
     @Override
     public void onCreate() {
         super.onCreate();
-        XLog.e(TAG, "onCreate");
+        XLog.i("onCreate");
 
         createTextToSpeech();
         //这里只执行一次，用于准备播放器
@@ -58,7 +58,7 @@ public class AudioService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        XLog.e(TAG, "onStartCommand");
+        XLog.i("onStartCommand");
         if (intent != null) {
             articleNo = intent.getIntExtra("articleNo", 0);
             isQueue = intent.getBooleanExtra("isQueue",false);
@@ -70,14 +70,14 @@ public class AudioService extends Service {
     @Override
     public IBinder onBind(Intent intent) {
         //当执行完了onCreate后，就会执行onBind把操作歌曲的方法返回
-        XLog.e(TAG, "onBind");
+        XLog.i("onBind");
         return new AudioControlBinder();
     }
 
 
-//    @SuppressLint("SdCardPath")
     public void speak(){
-        Article article = App.i().articlesAdapter.getById(articleNo);
+        String articleId = App.i().getArticleIds().get(articleNo);
+        Article article = CoreDB.i().articleDao().getById(App.i().getUser().getId(), articleId);
 
         XLog.e("准备播放" + article.getId() + " , " + utteranceId + " , " + textToSpeech.isSpeaking());
         if ( textToSpeech.isSpeaking() && article.getId().equalsIgnoreCase(utteranceId) ){
@@ -105,7 +105,7 @@ public class AudioService extends Service {
                 public void onDone(String utteranceId) {
                     XLog.e("textToSpeech UtteranceProgressListener", "播放完毕  " + file.exists());
                     if(file.exists()){
-//                        file.delete();
+                        // file.delete();
                     }
                     //playMusic(file.getAbsolutePath());
                 }
@@ -145,7 +145,7 @@ public class AudioService extends Service {
 
 
     public void playMusic(final String playUrl) {
-        XLog.i(TAG,"播放音乐");
+        XLog.i("播放音乐");
         try {
             if (player == null) {
                 player = createMediaPlayer();
@@ -165,7 +165,7 @@ public class AudioService extends Service {
         }
     }
     public void playMusic(File file) {
-        XLog.i(TAG,"播放音乐");
+        XLog.i("播放音乐");
         try {
             if (player == null) {
                 player = createMediaPlayer();
@@ -185,10 +185,6 @@ public class AudioService extends Service {
             XLog.e("设置播放地址失败B");
         }
     }
-
-//    @Override
-//    public void onUtteranceCompleted(String utteranceId){
-//    }
 
     //该方法包含关于歌曲的操作
     public class AudioControlBinder extends Binder {
@@ -215,51 +211,51 @@ public class AudioService extends Service {
             XLog.i("服务", "暂停音乐");
         }
 
-//        public boolean isPrepared() {
-//            return prepared;
-//        }
-//
-//        public int getBufferedPercent() {
-//            return bufferedPercent;
-//        }
-//
-        //判断是否处于播放状态
+        // public boolean isPrepared() {
+        //     return prepared;
+        // }
+        //
+        // public int getBufferedPercent() {
+        //     return bufferedPercent;
+        // }
+
+        // 判断是否处于播放状态
         public boolean isPlaying() {
             return textToSpeech.isSpeaking();
         }
-//
-//        //返回歌曲的长度，单位为毫秒
-//        public int getDuration() {
-//            return player.getDuration();
-//        }
-//
-//        //返回歌曲目前的进度，单位为毫秒
-//        public int getCurrentPosition() {
-//            return player.getCurrentPosition();
-//        }
-//
-//        //设置歌曲播放的进度，单位为毫秒
-//        public void seekTo(int mesc) {
-//            player.seekTo(mesc);
-//        }
-//
-//        public void setSpeed(float speed) {
-//            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-//                if (player.isPlaying()) {
-//                    player.setPlaybackParams(player.getPlaybackParams().setSpeed(speed));
-//                } else {
-//                    player.setPlaybackParams(player.getPlaybackParams().setSpeed(speed));
-//                    player.pause(); // 会自动播放，所以要暂停？
-//                }
-//            }
-//        }
-//
-//        public String getSpeed() {
-//            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-//                return player.getPlaybackParams().getSpeed() + "";
-//            }
-//            return getString(R.string.music_speed);
-//        }
+
+        // 返回歌曲的长度，单位为毫秒
+        //        public int getDuration() {
+        //            return player.getDuration();
+        //        }
+        //
+        //        //返回歌曲目前的进度，单位为毫秒
+        //        public int getCurrentPosition() {
+        //            return player.getCurrentPosition();
+        //        }
+        //
+        //        //设置歌曲播放的进度，单位为毫秒
+        //        public void seekTo(int mesc) {
+        //            player.seekTo(mesc);
+        //        }
+        //
+        //        public void setSpeed(float speed) {
+        //            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+        //                if (player.isPlaying()) {
+        //                    player.setPlaybackParams(player.getPlaybackParams().setSpeed(speed));
+        //                } else {
+        //                    player.setPlaybackParams(player.getPlaybackParams().setSpeed(speed));
+        //                    player.pause(); // 会自动播放，所以要暂停？
+        //                }
+        //            }
+        //        }
+        //
+        //        public String getSpeed() {
+        //            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+        //                return player.getPlaybackParams().getSpeed() + "";
+        //            }
+        //            return getString(R.string.music_speed);
+        //        }
 
         public String getTitle() {
             return title;
@@ -285,7 +281,6 @@ public class AudioService extends Service {
         }
     }
 
-    private int bufferedPercent = 0;
 
 
     public void createTextToSpeech(){
@@ -293,7 +288,7 @@ public class AudioService extends Service {
             textToSpeech = new TextToSpeech(this, new TextToSpeech.OnInitListener() {
                 @Override
                 public void onInit(int status) {
-                    XLog.e(TAG, "onInit   "  + status);
+                    XLog.i("onInit   "  + status);
                     if (status == TextToSpeech.SUCCESS) {
                         //初始化tts引擎
                         int result = textToSpeech.setLanguage(Locale.CHINA);
@@ -434,9 +429,6 @@ public class AudioService extends Service {
         }
     }
 
-//    private void abandonAudioFocus() {
-//        audioManager.abandonAudioFocus(null);
-//    }
 
     private boolean lastAudioFocusIsLossTransient = false;
     AudioManager.OnAudioFocusChangeListener afChangeListener = new AudioManager.OnAudioFocusChangeListener() {
@@ -479,5 +471,4 @@ public class AudioService extends Service {
 
         }
     };
-
 }

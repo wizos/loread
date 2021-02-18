@@ -1,5 +1,6 @@
 package me.wizos.loread.network.api;
 
+import android.net.Uri;
 import android.text.TextUtils;
 import android.util.ArrayMap;
 
@@ -14,6 +15,7 @@ import java.util.List;
 import java.util.Map;
 
 import me.wizos.loread.App;
+import me.wizos.loread.bean.FeedEntries;
 import me.wizos.loread.bean.feedly.CategoryItem;
 import me.wizos.loread.bean.feedly.input.EditFeed;
 import me.wizos.loread.config.SaveDirectory;
@@ -39,15 +41,16 @@ public abstract class BaseApi {
     // 同步所有数据，此处应该传入一个进度监听器，或者直接用EventBus发消息
     abstract public void sync();
 
-    abstract public void renameTag(String sourceTagId, String destTagId, CallbackX cb);
+    // NOTE: 2021/2/10 要禁止修改特殊分类（例如全部，未分类），但由于数据库中并未实际存在该分类，所以当下无影响
+    abstract public void renameCategory(String categoryId, String targetName, CallbackX cb);
 
     abstract public void editFeedCategories(List<CategoryItem> lastCategoryItems, EditFeed editFeed, CallbackX cb);
 
-    abstract public void addFeed(EditFeed editFeed, CallbackX cb);
+    abstract public void addFeed(FeedEntries feedEntries, CallbackX cb);
 
     abstract public void unsubscribeFeed(String feedId, CallbackX cb);
 
-    abstract public void renameFeed(String feedId, String renamedTitle, CallbackX cb);
+    abstract public void renameFeed(String feedId, String targetName, CallbackX cb);
 
     abstract public void markArticleReaded(String articleId, CallbackX cb);
 
@@ -59,9 +62,7 @@ public abstract class BaseApi {
 
     abstract public void markArticleListReaded(Collection<String> articleIds, CallbackX cb);
 
-    public interface ArticleChanger {
-        Article change(Article article);
-    }
+    abstract public void importOPML(Uri uri, CallbackX cb);
 
     void coverSaveCategories(List<Category> cloudyCategories) {
         String uid = App.i().getUser().getId();
@@ -129,7 +130,7 @@ public abstract class BaseApi {
 
         CoreDB.i().feedDao().update(localFeeds);
         CoreDB.i().feedDao().insert(cloudyFeeds);
-        BackupUtils.backupUnsubscribeFeed(App.i().getUser(), deleteFeeds);
+        BackupUtils.exportUserUnsubscribeOPML(App.i().getUser(), deleteFeeds);
     }
 
     void coverFeedCategory(List<FeedCategory> cloudyFeedCategories) {
@@ -229,9 +230,9 @@ public abstract class BaseApi {
     /**
      * 处理重复的文章，将最新的重复文章与最老的放在一起
      */
-    void handleDuplicateArticles() {
+    void handleDuplicateArticles(long timeMillis) {
         Article articleSample;
-        List<String> links = CoreDB.i().articleDao().getDuplicateLink(App.i().getUser().getId());
+        List<String> links = CoreDB.i().articleDao().getDuplicateLink(App.i().getUser().getId(), timeMillis);
         List<Article> articleList;
         for (String link : links) {
             articleList = CoreDB.i().articleDao().getDuplicateArticles(App.i().getUser().getId(), link);
@@ -249,6 +250,7 @@ public abstract class BaseApi {
                 article.setPubDate(articleSample.getPubDate());
                 articles.add(article);
             }
+            XLog.w("需要更新的文章数量A：" + articles);
             CoreDB.i().articleDao().update(articles);
         }
     }
@@ -258,19 +260,12 @@ public abstract class BaseApi {
         String uid = App.i().getUser().getId();
         long lastReadMarkTimeMillis = CoreDB.i().articleDao().getLastReadTimeMillis(uid);
         long lastStarMaskTimeMillis = CoreDB.i().articleDao().getLastStarTimeMillis(uid);
-        long lastMarkTimeMillis = Math.max(lastReadMarkTimeMillis, lastStarMaskTimeMillis);
-        CoreDB.i().articleDao().updateIdleCrawlDate(uid, lastMarkTimeMillis, System.currentTimeMillis());
-    }
-    void handleCrawlDate() {
-        String uid = App.i().getUser().getId();
-        long time = System.currentTimeMillis();
-        CoreDB.i().articleDao().updateLastSyncArticlesCrawlDate(uid, time);
 
-        long lastReadMarkTimeMillis = CoreDB.i().articleDao().getLastReadTimeMillis(uid);
-        long lastStarMaskTimeMillis = CoreDB.i().articleDao().getLastStarTimeMillis(uid);
         long lastMarkTimeMillis = Math.max(lastReadMarkTimeMillis, lastStarMaskTimeMillis);
-        CoreDB.i().articleDao().updateIdleCrawlDate(uid, lastMarkTimeMillis, time);
+        // long lastCrawTimeMillis = CoreDB.i().articleDao().getLastCrawlTimeMillis(uid);
+        CoreDB.i().articleDao().updateIdleCrawlDateTimes(uid, lastMarkTimeMillis);
     }
+
     void updateCollectionCount() {
         String uid = App.i().getUser().getId();
         CoreDB.i().feedDao().update(CoreDB.i().feedDao().getFeedsRealTimeCount(uid));
@@ -305,14 +300,24 @@ public abstract class BaseApi {
         }
         CoreDB.i().articleDao().update(storeReadArts);
 
-        List<Article> expiredArticles = CoreDB.i().articleDao().getReadedUnstarLtTime(uid, time);
+        // List<Article> expiredArticles = CoreDB.i().articleDao().getReadedUnstarLtTime(uid, time);
+        // ArrayList<String> idListMD5 = new ArrayList<>(expiredArticles.size());
+        // for (Article article : expiredArticles) {
+        //     idListMD5.add(EncryptUtils.MD5(article.getId()));
+        // }
+        // XLog.i("清除A：" + time + "--" + expiredArticles);
+        // FileUtils.deleteHtmlDirList(idListMD5);
+        // CoreDB.i().articleDao().delete(expiredArticles);
+
+
+        List<String> expiredArticles = CoreDB.i().articleDao().getReadedUnstarIdsLtTime(uid, time);
         ArrayList<String> idListMD5 = new ArrayList<>(expiredArticles.size());
-        for (Article article : expiredArticles) {
-            idListMD5.add(EncryptUtils.MD5(article.getId()));
+        for (String articleId : expiredArticles) {
+            idListMD5.add(EncryptUtils.MD5(articleId));
         }
-        //XLog.i("清除A：" + time + "--" + expiredArticles.size());
+        // XLog.i("清除A：" + time + "--" + expiredArticles);
         FileUtils.deleteHtmlDirList(idListMD5);
-        CoreDB.i().articleDao().delete(expiredArticles);
+        CoreDB.i().articleDao().delete(uid, expiredArticles);
     }
 
     void fetchReadability(String uid, long syncTimeMillis) {

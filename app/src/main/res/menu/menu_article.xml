@@ -36,4 +36,11 @@
         android:enabled="true"
         android:visible="false"
         app:showAsAction="never" />
+
+    <item
+        android:id="@+id/article_menu_show_sniffer"
+        android:title="显示嗅探数据"
+        android:enabled="true"
+        android:visible="false"
+        app:showAsAction="never" />
 </menu>

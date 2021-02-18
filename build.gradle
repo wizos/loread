@@ -3,11 +3,12 @@ apply plugin: 'com.github.ben-manes.versions'
 
 buildscript {
     repositories {
-        maven { url 'https://maven.google.com/' }
-        maven { url "https://jitpack.io" }
         google()
         jcenter()
+        maven { url 'https://maven.google.com/' }
+        maven { url "https://jitpack.io" }
         maven { url 'https://dl.bintray.com/umsdk/release' }
+        maven { url 'https://maven.icosillion.com/artifactory/open-source/'}
     }
     dependencies {
         classpath 'com.android.tools.build:gradle:4.0.2'
@@ -19,16 +20,11 @@ buildscript {
 allprojects {
     repositories {
         google()
-        maven {url 'https://maven.google.com/'}
         jcenter()
+        maven { url 'https://maven.google.com/' }
         maven { url "https://jitpack.io" }
         maven { url 'https://dl.bintray.com/umsdk/release' }
-        // maven { url 'https://maven.aliyun.com/repository/google'}
-        // maven { url 'https://maven.aliyun.com/repository/jcenter'}
-        // maven { url 'http://maven.aliyun.com/nexus/content/groups/public/' }
-        // maven { url 'http://maven.aliyun.com/nexus/content/repositories/jcenter' }
-        // maven { url 'http://maven.aliyun.com/nexus/content/repositories/google' }
-        // maven { url 'http://maven.aliyun.com/nexus/content/repositories/gradle-plugin' }
+        maven { url 'https://maven.icosillion.com/artifactory/open-source/'}
     }
 }
 ext {
@@ -36,6 +32,7 @@ ext {
     buildToolsVersion = "29.0.3"
     minSdkVersion = 22
     targetSdkVersion = 29
+    rome_version = "1.15.0"
     DEBUG_LOG = "false"
 }
 task clean(type: Delete) {

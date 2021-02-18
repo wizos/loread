@@ -5,10 +5,10 @@
     android:id="@+id/search_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:fitsSystemWindows="true"
-    android:addStatesFromChildren="true"
     android:focusable="true"
     android:focusableInTouchMode="true"
+    android:fitsSystemWindows="true"
+    android:addStatesFromChildren="true"
     android:windowDrawsSystemBarBackgrounds="true">
 
     <com.google.android.material.appbar.AppBarLayout
@@ -19,12 +19,14 @@
 
         <androidx.appcompat.widget.Toolbar
             android:id="@+id/search_toolbar"
-            app:layout_scrollFlags="scroll|enterAlways"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
             android:background="?attr/topbar_bg"
+            app:menu="@menu/menu_search"
             app:contentInsetStartWithNavigation="0dp"
-            app:subtitleTextAppearance="@style/MyToolbar.SubTitle">
+            app:subtitleTextAppearance="@style/MyToolbar.SubTitle"
+            app:popupTheme="@style/OverflowMenuStyle"
+            app:layout_scrollFlags="scroll|enterAlways">
 
             <com.xw.repo.XEditText
                 android:id="@+id/search_toolbar_edittext"
@@ -59,6 +61,6 @@
             android:fadingEdgeLength="4dp"
             android:background="?attr/bottombar_bg"
             tools:listheader="@layout/activity_search_list_header_result_count"
-            tools:listitem="@layout/activity_search_list_item_feed"/>
+            tools:listitem="@layout/activity_search_list_item_feed" />
     </me.wizos.loread.view.SwipeRefreshLayoutS>
 </RelativeLayout>

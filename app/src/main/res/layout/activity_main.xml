@@ -23,8 +23,10 @@
             android:background="?attr/topbar_bg"
             tools:title="博谈"
             tools:navigationIcon="@drawable/ic_state_star"
+            app:menu="@menu/menu_main"
             app:contentInsetStartWithNavigation="0dp"
             app:subtitleTextAppearance="@style/MyToolbar.SubTitle"
+            app:popupTheme="@style/OverflowMenuStyle"
             app:layout_scrollFlags="scroll|enterAlways">
 
             <androidx.appcompat.widget.AppCompatImageView

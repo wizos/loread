@@ -5,6 +5,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.content.res.AssetManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
@@ -19,6 +20,7 @@ import com.google.gson.reflect.TypeToken;
 import com.vdurmont.emoji.EmojiParser;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -265,7 +267,7 @@ public class FileUtils {
         StringBuilder fileContent = new StringBuilder();
         String temp = "";
         if (!file.exists()) {
-            return fileContent.toString();
+            return temp;
         }
         try {
             FileReader fileReader = new FileReader(file);
@@ -291,6 +293,7 @@ public class FileUtils {
         if (new File(filePath).exists()) {
             return filePath;
         }
+        
 
         filePath = App.i().getUserFilesDir() + "/cache/" + articleIdInMD5 + "/original/" + imgId;
         if (new File(filePath).exists()) {
@@ -539,8 +542,8 @@ public class FileUtils {
 
     private static String getImageSuffix(InputStream in) {
         try {
-//            in.skip(9);//跳过前9个字节
-//            byte[] b = getBytes(in, 10);
+            // in.skip(9);//跳过前9个字节
+            // byte[] b = getBytes(in, 10);
             byte[] b = new byte[10];
             in.read(b, 0, 10); //读取文件中的内容到b[]数组,//读取 nums 个字节赋值给 b
             in.close();
@@ -610,5 +613,20 @@ public class FileUtils {
             }
         }
         return bytes.toString();
+    }
+
+    public static String readFileFromAssets(Context context, String fileName) throws IOException {
+        if (null == context || null == fileName) return null;
+        AssetManager am = context.getAssets();
+        InputStream input = am.open(fileName);
+        ByteArrayOutputStream output = new ByteArrayOutputStream();
+        byte[] buffer = new byte[1024];
+        int len = 0;
+        while ((len = input.read(buffer)) != -1) {
+            output.write(buffer, 0, len);
+        }
+        output.close();
+        input.close();
+        return output.toString();
     }
 }

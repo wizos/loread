@@ -50,10 +50,8 @@ public class ProviderActivity extends BaseActivity {
         if(Build.VERSION.SDK_INT < 23){
             setContentView(R.layout.activity_provider_low_version);
         }else {
-            setContentView(R.layout.activity_provider);
+            setContentView(R.layout.activity_provider2);
         }
-
-        // setContentView(R.layout.activity_provider);
 
         View selectLoginAccountView = findViewById(R.id.select_login_account);
         if(CoreDB.i().userDao().size() > 0){
@@ -90,6 +88,9 @@ public class ProviderActivity extends BaseActivity {
                 case Contract.PROVIDER_FEVER_TINYRSS:
                 case Contract.PROVIDER_FEVER:
                     iconRefs = R.drawable.logo_fever;
+                    break;
+                case Contract.PROVIDER_LOCALRSS:
+                    iconRefs = R.drawable.logo_rss;
                     break;
             }
             adapter.add(new MaterialSimpleListItem.Builder(this)
@@ -142,36 +143,41 @@ public class ProviderActivity extends BaseActivity {
         overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
     }
 
-    public void loginInoReader(View view){
-        // Intent intent = new Intent(this, LoginInoReaderActivity.class);
-        Intent intent = new Intent(this, LoginActivity.class);
-        intent.setAction(Contract.PROVIDER_INOREADER);
-        startActivityForResult(intent, App.ActivityResult_LoginPageToProvider);
-        overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
-    }
+    public static final int LOGIN_CODE = 1;
     public void loginTinyRSS(View view) {
         // Intent intent = new Intent(this, LoginTinyRSSActivity.class);
         Intent intent = new Intent(this, LoginActivity.class);
         intent.setAction(Contract.PROVIDER_TINYRSS);
-        startActivityForResult(intent, App.ActivityResult_LoginPageToProvider);
+        startActivityForResult(intent, LOGIN_CODE);
         overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
     }
 
     public void loginFever(View view) {
         Intent intent = new Intent(this, LoginActivity.class);
         intent.setAction(Contract.PROVIDER_FEVER);
-        startActivityForResult(intent, App.ActivityResult_LoginPageToProvider);
+        startActivityForResult(intent, LOGIN_CODE);
         overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
     }
-    // TODO: 2019/2/16  跳转到自建RSS页（导入OPML，热门RSS）
-    // public void selectLocalRSS(View view) {
-    // }
+
+    public void selectLocalRSS(View view) {
+        User user = CoreDB.i().userDao().getById(Contract.LOCAL);
+        if( user == null){
+            user = new User();
+            user.setId(Contract.LOCAL);
+            user.setUserName(getString(R.string.local_rss));
+            user.setSource(Contract.PROVIDER_LOCALRSS);
+            CoreDB.i().userDao().insert(user);
+        }
+
+        CorePref.i().globalPref().putString(Contract.UID, user.getId());
+        App.i().restartApp();
+    }
 
 
     private void getAccessToken(final String code, OAuthApi api) {
         final LoadingPopupView dialog = new XPopup.Builder(this)
                 .dismissOnTouchOutside(false)
-                .asLoading(getString(R.string.authing));
+                .asLoading(getString(R.string.authorizing));
         dialog.show();
 
         api.getAccessToken(code, new CallbackX<Token,String>() {
@@ -195,12 +201,12 @@ public class ProviderActivity extends BaseActivity {
                         dialog.dismiss();
                         XLog.e(token);
                         App.i().restartApp();
-                        LiveEventBus.get(SyncWorker.SYNC_TASK_STATUS).post(true);
+                        LiveEventBus.get(SyncWorker.SYNC_TASK_START).post(true);
                     }
 
                     @Override
                     public void onFailure(String error) {
-                        ToastUtils.show(getString(R.string.login_failure_please_try_again) + error);
+                        ToastUtils.show(getString(R.string.login_failed_with_reason, error));
                         dialog.dismiss();
                     }
                 });
@@ -246,12 +252,13 @@ public class ProviderActivity extends BaseActivity {
         Intent intent = new Intent(this, LabActivity.class);
         startActivity(intent);
         overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
-
     }
+
+
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
         super.onActivityResult(requestCode, resultCode, intent);
-        if (resultCode == App.ActivityResult_LoginPageToProvider) {
+        if (resultCode == LOGIN_CODE) {
             App.i().restartApp();
         }
     }

@@ -168,16 +168,6 @@ public class ArticleExtractConfig {
         return cssQuery;
     }
 
-    // private static void saveSiteRule2(URL uri, String cssSelector) {
-    //     ArticleExtractRule articleExtractRule = new ArticleExtractRule();
-    //     articleExtractRule.setContent(cssSelector);
-    //
-    //     Gson gson = new GsonBuilder()
-    //             .setPrettyPrinting() //对结果进行格式化，增加换行
-    //             .disableHtmlEscaping() //避免Gson使用时将一些字符自动转换为Unicode转义字符
-    //             .create();
-    //     FileUtil.save(App.i().getUserConfigPath() + CONFIG_FOLDER  + "/" + uri.getHost() + ".new", gson.toJson(articleExtractRule, ArticleExtractRule.class));
-    // }
 
     private static void saveSiteRule(URL uri, String cssSelector) {
         Gson gson = new GsonBuilder()

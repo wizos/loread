@@ -127,11 +127,12 @@ public class ArticleUtils {
         String author = getOptimizedAuthor(feed, article.getAuthor());
 
         String initImageHolderUrl =
+                "const MEDIA_PLAY_RATE = 2;" +
                 "var IMAGE_HOLDER_CLICK_TO_LOAD_URL = placeholder.getData({text: '" + App.i().getString(R.string.click_to_load_this_picture) + "'});" +
                 "var IMAGE_HOLDER_LOADING_URL = placeholder.getData({text: '" + App.i().getString(R.string.loading) + "'});" +
                 "var IMAGE_HOLDER_LOAD_FAILED_URL = placeholder.getData({text: '" + App.i().getString(R.string.loading_failed_click_here_to_retry) + "'});" +
                 "var IMAGE_HOLDER_IMAGE_ERROR_URL = placeholder.getData({text: '" + App.i().getString(R.string.picture_error_click_here_to_retry) + "'});";
-        String content = getFormatContentForDisplay2(article);
+        String content = getFormatContentForDisplay(article);
 
         String plyrI18n = ",i18n:{speed:'"+ App.i().getString(R.string.speed) +"',normal:'"+ App.i().getString(R.string.normal) +"'}";
 
@@ -244,8 +245,9 @@ public class ArticleUtils {
             if(endPosition > 0){
                 title = title.substring(0, endPosition).trim();
             }
+            return title;
         }
-        return title;
+        return "";
     }
 
     public static String getExtractedTitle(String content) {
@@ -302,7 +304,7 @@ public class ArticleUtils {
      */
     public static String getOptimizedContent(String articleUrl, String content) {
         if (StringUtils.isEmpty(content)) {
-            return content;
+            return "";
         }
         Pattern pattern;
         Matcher matcher;
@@ -378,11 +380,14 @@ public class ArticleUtils {
         // 将以下存放的原始src转为src的路径 (发现某些RSS源中是有data-src属性的，但是TTRSS服务商会删掉它，例如：https://pewae.com/2020/10/e6b7bb-e4b881.html)
         String[] oriSrcAttr = {"data-src", "data-original", "data-lazy-src", "zoomfile", "file"};
         for (String attr : oriSrcAttr) {
-            elements = documentBody.select("img[" + attr + "],audio[" + attr + "],video[" + attr + "],embed[" + attr + "],iframe[" + attr + "]");
+            elements = documentBody.select( "img[" + attr + "],audio[" + attr + "],video[" + attr + "],embed[" + attr + "],iframe[" + attr + "]");
             for (int i = 0, size = elements.size(); i < size; i++) {
                 element = elements.get(i);
                 tmp = element.attr(attr);
                 element.removeAttr(attr).attr("src", tmp);
+            }
+            if(elements.size() > 0){
+                break;
             }
         }
 
@@ -672,7 +677,7 @@ public class ArticleUtils {
      */
     public static String getOptimizedSummary(String html) {
         if (StringUtils.isEmpty(html)) {
-            return html;
+            return "";
         }
         Pattern pattern;
 
@@ -732,11 +737,8 @@ public class ArticleUtils {
      * 这里没有直接将原始的文章内容给到 webView 加载，再去 webView 中初始化占位图并懒加载。
      * 是因为这样 WebView 刚启动时，有的图片因为还没有被 js 替换为占位图，而展示一个错误图。
      * 这里直接将内容初始化好，再让 WebView 执行懒加载的 js 去给没有加载本地图的 src 执行下载任务。
-     *
-     * @param article
-     * @return
      */
-    private static String getFormatContentForDisplay2(Article article) {
+    private static String getFormatContentForDisplay(Article article) {
         if (StringUtils.isEmpty(article.getContent())) {
             return "";
         }
@@ -754,21 +756,49 @@ public class ArticleUtils {
 
         // 预加载，提前将图片的真实地址替换出来
         elements = document.getElementsByTag("img");
-        for (int i = 0, size = elements.size(); i < size; i++) {
-            element = elements.get(i);
-            // 抽取图片的绝对连接
-            originalUrl = element.attr("abs:src");
-            element.attr("original-src", originalUrl);
+        int count = elements.size();
+        if(!App.i().articleProgress.containsKey(article.getId()) && count >= 5){
+            for (int i = 0; i < 5; i++) {
+                element = elements.get(i);
+                // 抽取图片的绝对连接
+                originalUrl = element.attr("abs:src");
+                element.attr("original-src", originalUrl);
 
-            cacheUrl = FileUtils.readCacheFilePath(idInMD5, originalUrl);
+                cacheUrl = FileUtils.readCacheFilePath(idInMD5, originalUrl);
 
-            if (cacheUrl != null) {
-                element.attr("src", cacheUrl);
-            } else {
+                if (cacheUrl != null) {
+                    element.attr("src", cacheUrl);
+                } else {
+                    element.attr("src", imgHolder);
+                    element.addClass("img-lozad");
+                }
+            }
+            for (int i = 5; i < count; i++) {
+                element = elements.get(i);
+                // 抽取图片的绝对连接
+                originalUrl = element.attr("abs:src");
+                element.attr("original-src", originalUrl);
                 element.attr("src", imgHolder);
                 element.addClass("img-lozad");
             }
+        }else {
+            for (int i = 0; i < count; i++) {
+                element = elements.get(i);
+                // 抽取图片的绝对连接
+                originalUrl = element.attr("abs:src");
+                element.attr("original-src", originalUrl);
+
+                cacheUrl = FileUtils.readCacheFilePath(idInMD5, originalUrl);
+
+                if (cacheUrl != null) {
+                    element.attr("src", cacheUrl);
+                } else {
+                    element.attr("src", imgHolder);
+                    element.addClass("img-lozad");
+                }
+            }
         }
+
 
         elements = document.getElementsByTag("input");
         for (int i = 0, size = elements.size(); i < size; i++) {
@@ -795,6 +825,7 @@ public class ArticleUtils {
                             .replaceAll("/(width|height)=\\d+/ig","")
                             .replaceAll("/(&(amp;)*){2,}/ig","&")
             );
+            App.i().iFrames.put(element.attr("src"), element.attr("src"));
         }
 
         elements = document.getElementsByTag("embed");

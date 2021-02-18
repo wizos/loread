@@ -23,11 +23,11 @@ import me.wizos.loread.Contract;
 import me.wizos.loread.R;
 import me.wizos.loread.activity.viewmodel.ActionManagerViewModel;
 import me.wizos.loread.adapter.TriggerRulesGroupedAdapter;
-import me.wizos.loread.bean.GroupedTriggerRules;
 import me.wizos.loread.db.Category;
 import me.wizos.loread.db.CoreDB;
 import me.wizos.loread.db.Feed;
 import me.wizos.loread.db.rule.TriggerRule;
+import me.wizos.loread.utils.Classifier;
 import pokercc.android.expandablerecyclerview.ExpandableRecyclerView;
 
 
@@ -112,7 +112,7 @@ public class TriggerRuleManagerActivity extends AppCompatActivity {
                 actionManagerViewModel.loadAboveCategoryGroupedTriggerRules(App.i().getUser().getId(), targetId).observe(this, new Observer<List<TriggerRule>>() {
                     @Override
                     public void onChanged(List<TriggerRule> triggerRules) {
-                        rulesAdapter.setGroupedTriggerRules(GroupedTriggerRules.group(triggerRules));
+                        rulesAdapter.setGroupedTriggerRules(Classifier.group(triggerRules));
                         rulesAdapter.expandAllGroup();
                         rulesAdapter.notifyDataSetChanged();
                     }
@@ -121,7 +121,7 @@ public class TriggerRuleManagerActivity extends AppCompatActivity {
                 actionManagerViewModel.loadAboveFeedGroupedTriggerRules(App.i().getUser().getId(), targetId).observe(this, new Observer<List<TriggerRule>>() {
                     @Override
                     public void onChanged(List<TriggerRule> triggerRules) {
-                        rulesAdapter.setGroupedTriggerRules(GroupedTriggerRules.group(triggerRules));
+                        rulesAdapter.setGroupedTriggerRules(Classifier.group(triggerRules));
                         rulesAdapter.expandAllGroup();
                         rulesAdapter.notifyDataSetChanged();
                     }
@@ -131,7 +131,7 @@ public class TriggerRuleManagerActivity extends AppCompatActivity {
             actionManagerViewModel.loadGroupedTriggerRules(App.i().getUser().getId()).observe(this, new Observer<List<TriggerRule>>() {
                 @Override
                 public void onChanged(List<TriggerRule> triggerRules) {
-                    rulesAdapter.setGroupedTriggerRules(GroupedTriggerRules.group(triggerRules));
+                    rulesAdapter.setGroupedTriggerRules(Classifier.group(triggerRules));
                     rulesAdapter.expandAllGroup();
                     rulesAdapter.notifyDataSetChanged();
                 }

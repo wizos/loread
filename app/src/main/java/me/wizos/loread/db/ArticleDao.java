@@ -30,10 +30,13 @@ import me.wizos.loread.App;
 @Dao
 public interface ArticleDao {
     @Query("SELECT * FROM article WHERE uid = :uid AND id = :id LIMIT 1")
-    Article getById(String uid, String id);
+    LiveData<Article> get(String uid, String id);
 
     @Query("SELECT * FROM article WHERE uid = :uid AND id = :id LIMIT 1")
-    LiveData<Article> get(String uid, String id);
+    Article getById(String uid, String id);
+
+    @Query("SELECT count(*) FROM article WHERE uid = :uid AND id = :id LIMIT 1")
+    int getCountById(String uid, String id);
 
 
     @Query("SELECT * FROM article WHERE uid = :uid")
@@ -413,6 +416,18 @@ public interface ArticleDao {
             "ORDER BY starUpdated DESC LIMIT 1")
     long getLastStarTimeMillis(String uid);
 
+    @Query("SELECT crawlDate FROM article " +
+            "WHERE uid = :uid " +
+            "ORDER BY crawlDate DESC LIMIT 1")
+    long getLastCrawlTimeMillis(String uid);
+
+    @Query("SELECT count(*) FROM article " +
+            "WHERE uid = :uid " +
+            "AND crawlDate > :lastMarkTimeMillis " +
+            "GROUP BY crawlDate ORDER BY crawlDate DESC")
+    long getLastCrawlTimes(String uid, long lastMarkTimeMillis);
+
+
     @Query("SELECT * FROM article " +
             "WHERE uid = :uid " +
             "AND (article.readStatus = " + App.STATUS_UNREADING  + " OR article.saveStatus !=" + App.STATUS_NOT_FILED + ")")
@@ -438,6 +453,7 @@ public interface ArticleDao {
             "WHERE uid = :uid " +
             "AND id in (:ids)")
     List<Article> getArticles(String uid, List<String> ids);
+
 
     @RawQuery
     List<Article> getActionRuleArticlesRaw(SupportSQLiteQuery query);
@@ -469,9 +485,9 @@ public interface ArticleDao {
     // SELECT link FROM article WHERE crawlDate = 0 AND link in (SELECT link FROM article GROUP BY link HAVING COUNT(*) > 1)
     @Query("SELECT link FROM article " +
             "WHERE uid = :uid " +
-            "AND crawlDate = 0 " +
+            "AND crawlDate = :timeMillis " +
             "AND link IN (SELECT link FROM article WHERE uid = :uid GROUP BY link HAVING COUNT(*) > 1)") //,title
-    List<String> getDuplicateLink(String uid);
+    List<String> getDuplicateLink(String uid, long timeMillis);
 
     @Query("SELECT * FROM article " +
             "WHERE uid = :uid " +
@@ -499,8 +515,8 @@ public interface ArticleDao {
     @Query("UPDATE Article SET crawlDate = pubDate WHERE uid = :uid")
     void updateCrawlDateToPubDate(String uid);
 
-    @Query("UPDATE Article SET crawlDate = :timeMillis WHERE uid = :uid AND crawlDate = 0")
-    void updateLastSyncArticlesCrawlDate(String uid, long timeMillis);
+    // @Query("UPDATE Article SET crawlDate = :timeMillis WHERE uid = :uid AND crawlDate = 0")
+    // void updateLastSyncArticlesCrawlDate(String uid, long timeMillis);
 
     @Query("UPDATE Article SET readStatus = " + App.STATUS_READED + " WHERE uid = :uid AND id in (:articleIds)")
     void markArticlesRead(String uid, List<String> articleIds);
@@ -526,6 +542,11 @@ public interface ArticleDao {
     @Query("UPDATE Article SET crawlDate = :targetTimeMillis WHERE uid = :uid AND crawlDate > :lastMarkTimeMillis ")
     void updateIdleCrawlDate(String uid, long lastMarkTimeMillis, long targetTimeMillis);
 
+
+    @Query("UPDATE Article SET crawlDate = :lastMarkTimeMillis WHERE uid = :uid AND crawlDate > :lastMarkTimeMillis AND (SELECT count(DISTINCT crawlDate) FROM article WHERE uid = :uid AND crawlDate > :lastMarkTimeMillis ORDER BY crawlDate DESC) >= 1")
+    void updateIdleCrawlDateTimes(String uid, long lastMarkTimeMillis);
+
+
     @Query("DELETE FROM article WHERE uid = :uid AND feedId = :feedId AND starStatus = " + App.STATUS_UNSTAR)
     void deleteUnStarByFeedId(String uid, String feedId);
 
@@ -537,6 +558,9 @@ public interface ArticleDao {
     @Transaction
     void delete(List<Article> articles);
 
+    @Query("DELETE FROM article WHERE uid = (:uid) AND id in (:ids)")
+    void delete(String uid, List<String> ids);
+
     @Query("SELECT * FROM article WHERE uid = :uid AND readStatus = " + App.STATUS_READED + " AND starStatus = " + App.STATUS_UNSTAR + " AND saveStatus = " + App.STATUS_TO_BE_FILED + " AND crawlDate < :time" )
     List<Article> getReadedUnstarBeFiledLtTime(String uid, long time);
 
@@ -545,6 +569,10 @@ public interface ArticleDao {
 
     @Query("SELECT * FROM article WHERE uid = :uid AND readStatus = " + App.STATUS_READED + " AND starStatus = " + App.STATUS_UNSTAR + " AND crawlDate < :time" )
     List<Article> getReadedUnstarLtTime(String uid, long time);
+
+
+    @Query("SELECT id FROM article WHERE uid = :uid AND readStatus = " + App.STATUS_READED + " AND starStatus = " + App.STATUS_UNSTAR + " AND crawlDate < :time" )
+    List<String> getReadedUnstarIdsLtTime(String uid, long time);
 
     @Query("DELETE FROM article WHERE uid = :uid")
     void clear(String uid);

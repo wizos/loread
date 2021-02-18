@@ -1,26 +1,23 @@
 package me.wizos.loread.bean;
 
-import android.text.TextUtils;
-
 import com.google.gson.annotations.SerializedName;
+
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Created by Wizos on 2019/2/17.
  */
 
 public class Token {
-    /*
-    1、refresh_token也有过期时间，如百度云平台会提供有效期为1个月的Access Token和有效期为10年的Refresh Token，
-    2、当refresh_token过期的时候，则需要用户重新授权登录。 
-    3、每次登录后，会产生新token，原来的access_token与refresh_token自然失效。
-    4、refresh_token 仅能使用一次，使用一次后，将被废弃。
-    原文：https://blog.csdn.net/lvxiangan/article/details/78020674
-     */
-    private String access_token;
-    private String refresh_token;
-    private String token_type;
+    @SerializedName("access_token")
+    private String accessToken;
+    @SerializedName("refresh_token")
+    private String refreshToken;
+    @SerializedName("token_type")
+    private String tokenType;
     // 秒
-    private long expires_in;
+    @SerializedName("expires_in")
+    private long expiresIn;
 
     @SerializedName("error")
     private String error;
@@ -28,64 +25,67 @@ public class Token {
     private String auth;
 
 
-//    {
-//        "access_token": "[ACCESS_TOKEN]",
-//            "token_type": "Bearer",
-//            "expires_in": [EXPIRATION_IN_SECONDS],
-//        "refresh_token": "[REFRESH_TOKEN]",
-//            "scope": "read"
-//    }
-//    {
-//        "id": "c805fcbf-3acf-4302-a97e-d82f9d7c897f",
-//            "refresh_token": "AQAA7rJ7InAiOjEsImEiOiJmZWVk...",
-//            "access_token": "AQAAF4iTvPam_M4_dWheV_5NUL8E...",
-//            "expires_in": 3920,
-//            "token_type": "Bearer",
-//            "plan": "standard",
-//            "state": "..."
-//    }
+    /*
+     * 1、refresh_token也有过期时间，如百度云平台会提供有效期为1个月的Access Token和有效期为10年的Refresh Token。
+     * 2、当refresh_token过期的时候，则需要用户重新授权登录。
+     * 3、每次登录后，会产生新token，原来的access_token与refresh_token自
+     * 原文：https://blog.csdn.net/lvxiangan/article/details/78020674
+     */
+    // {
+    //     "access_token": "[ACCESS_TOKEN]",
+    //         "token_type": "Bearer",
+    //         "expires_in": [EXPIRATION_IN_SECONDS],
+    //     "refresh_token": "[REFRESH_TOKEN]",
+    //         "scope": "read"
+    // }
+    // {
+    //     "id": "c805fcbf-3acf-4302-a97e-d82f9d7c897f",
+    //         "refresh_token": "AQAA7rJ7InAiOjEsImEiOiJmZWVk...",
+    //         "access_token": "AQAAF4iTvPam_M4_dWheV_5NUL8E...",
+    //         "expires_in": 3920,
+    //         "token_type": "Bearer",
+    //         "plan": "standard",
+    //         "state": "..."
+    // }
 
 
-    public String getAccess_token() {
-        return access_token;
+    public String getAccessToken() {
+        return accessToken;
     }
 
-    public void setAccess_token(String access_token) {
-        this.access_token = access_token;
+    public void setAccessToken(String accessToken) {
+        this.accessToken = accessToken;
     }
 
-    public String getRefresh_token() {
-        return refresh_token;
+    public String getRefreshToken() {
+        return refreshToken;
     }
 
-    public void setRefresh_token(String refresh_token) {
-        this.refresh_token = refresh_token;
+    public void setRefreshToken(String refreshToken) {
+        this.refreshToken = refreshToken;
     }
 
-    public String getToken_type() {
-//        if(!TextUtils.isEmpty(token_type)){
-//            token_type = token_type.substring(0, 1).toUpperCase() + token_type.substring(1);
-//        }
-        return token_type;
+    public String getTokenType() {
+        return tokenType;
     }
 
-    public void setToken_type(String token_type) {
-        if (!TextUtils.isEmpty(token_type)) {
-            token_type = token_type.substring(0, 1).toUpperCase() + token_type.substring(1);
-        }
-        this.token_type = token_type;
+    public void setTokenType(String tokenType) {
+        // if (!TextUtils.isEmpty(tokenType)) {
+        //     tokenType = tokenType.substring(0, 1).toUpperCase() + tokenType.substring(1);
+        // }
+        this.tokenType = tokenType;
     }
 
-    public long getExpires_in() {
-        return expires_in;
+    public long getExpiresIn() {
+        return expiresIn;
     }
 
-    public void setExpires_in(long refresh_token) {
-        this.expires_in = expires_in;
+    public void setExpiresIn(long expiresIn) {
+        this.expiresIn = expiresIn;
     }
 
     public String getAuth() {
-        return token_type + " " + access_token;
+        return tokenType + " " + accessToken;
     }
 
     public void setAuth(String auth) {
@@ -93,15 +93,16 @@ public class Token {
     }
 
 
+    @NotNull
     @Override
     public String toString() {
         return "Token{" +
-                "access_token='" + access_token + '\'' +
-                ", refresh_token='" + refresh_token + '\'' +
-                ", token_type='" + token_type + '\'' +
-                ", Auth='" + getAuth() + '\'' +
-                ", expires_in=" + expires_in +
+                "accessToken='" + accessToken + '\'' +
+                ", refreshToken='" + refreshToken + '\'' +
+                ", tokenType='" + tokenType + '\'' +
+                ", expiresIn=" + expiresIn +
                 ", error='" + error + '\'' +
+                ", auth='" + auth + '\'' +
                 '}';
     }
 }

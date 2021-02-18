@@ -27,6 +27,7 @@ public class HeaderRefererConfig {
                     instance = new HeaderRefererConfig();
                     rule = new ArrayMap<String,String>();
                     Gson gson = new Gson();
+
                     String remoteConfig = FileUtils.readFile(App.i().getGlobalConfigPath() + FILE_NAME);
                     if (!TextUtils.isEmpty(remoteConfig)) {
                         ArrayMap<String,String> remoteRule = gson.fromJson(remoteConfig, new TypeToken<ArrayMap<String,String>>() {}.getType());
@@ -58,15 +59,15 @@ public class HeaderRefererConfig {
      * 2.根据文章url，推断出referer。
      * 2.根据图片url，猜测出referer，配置繁琐、低效，但是适应性较强。（可解决图片用的是第三方服务）
      *
-     * @param imgUrl
+     * @param url
      * @return
      */
-    public String guessRefererByUrl(String imgUrl) {
-        if (TextUtils.isEmpty(imgUrl)) {
+    public String guessRefererByUrl(String url) {
+        if (TextUtils.isEmpty(url)) {
             return null;
         }
 
-        String host = Uri.parse(imgUrl).getHost();
+        String host = Uri.parse(url).getHost();
         if (TextUtils.isEmpty(host)) {
             return null;
         }

@@ -8,6 +8,7 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.CompoundButton;
@@ -40,10 +41,19 @@ import me.wizos.loread.App;
 import me.wizos.loread.BuildConfig;
 import me.wizos.loread.Contract;
 import me.wizos.loread.R;
+import me.wizos.loread.bean.ProcessResult;
 import me.wizos.loread.db.CoreDB;
 import me.wizos.loread.db.CorePref;
 import me.wizos.loread.db.User;
 import me.wizos.loread.log.LogHelper;
+import me.wizos.loread.network.api.FeedlyApi;
+import me.wizos.loread.network.api.FeverApi;
+import me.wizos.loread.network.api.FeverTinyRSSApi;
+import me.wizos.loread.network.api.InoReaderApi;
+import me.wizos.loread.network.api.LocalApi;
+import me.wizos.loread.network.api.TinyRSSApi;
+import me.wizos.loread.network.callback.CallbackX;
+import me.wizos.loread.utils.BackupUtils;
 import me.wizos.loread.view.colorful.Colorful;
 
 /**
@@ -51,7 +61,7 @@ import me.wizos.loread.view.colorful.Colorful;
  */
 
 public class SettingActivity extends BaseActivity {
-    protected static final String TAG = "SettingActivity";
+    private static final int IMPORT_OPML_CODE = 1;
 
     private TextView clearBeforeDaySummary;
 
@@ -284,6 +294,49 @@ public class SettingActivity extends BaseActivity {
         overridePendingTransition(R.anim.in_from_bottom, R.anim.fade_out);
     }
 
+
+    public void importOPML(View view) {
+        if(App.i().getApi() == null){
+            ToastUtils.show(getString(R.string.please_login_to_rss_service_first));
+        }else if(App.i().getApi() instanceof FeedlyApi){
+            ToastUtils.show(getString(R.string.server_api_not_supported, Contract.PROVIDER_FEEDLY));
+        }else if(App.i().getApi() instanceof FeverApi){
+            ToastUtils.show(getString(R.string.server_api_not_supported, Contract.PROVIDER_FEVER));
+        }else if(App.i().getApi() instanceof FeverTinyRSSApi){
+            ToastUtils.show(getString(R.string.server_api_not_supported, Contract.PROVIDER_FEVER));
+        }else if(App.i().getApi() instanceof InoReaderApi){
+            ToastUtils.show(getString(R.string.server_api_not_supported, Contract.PROVIDER_INOREADER));
+        }else if(App.i().getApi() instanceof TinyRSSApi){
+            ToastUtils.show(getString(R.string.server_api_not_supported, Contract.PROVIDER_TINYRSS));
+        }else {
+            Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+            intent.addCategory(Intent.CATEGORY_OPENABLE);
+            intent.setType("*/*");
+            intent.putExtra(Intent.EXTRA_MIME_TYPES, new String[]{"text/plain", "text/xml", "text/opml", "*/*"});
+            startActivityForResult(intent, IMPORT_OPML_CODE);
+        }
+    }
+
+    public void exportOPML(View view) {
+        if(App.i().getApi() == null){
+            ToastUtils.show(getString(R.string.please_login_to_rss_service_first));
+        }else {
+            MaterialDialog materialDialog = new MaterialDialog.Builder(this)
+                    .content(R.string.processing)
+                    .progress(true, 0)
+                    .canceledOnTouchOutside(false)
+                    .progressIndeterminateStyle(false)
+                    .show();
+            AsyncTask.execute(new Runnable() {
+                @Override
+                public void run() {
+                    materialDialog.dismiss();
+                    ProcessResult<String> result = BackupUtils.exportUserAllOPML(App.i().getUser());
+                    ToastUtils.show(result.getMsg());
+                }
+            });
+        }
+    }
     public void showAbout(View view) {
         new MaterialDialog.Builder(this)
                 .title(R.string.sigh_with_emotion)
@@ -418,6 +471,9 @@ public class SettingActivity extends BaseActivity {
                 case Contract.PROVIDER_FEVER:
                     iconRefs = R.drawable.logo_fever;
                     break;
+                case Contract.PROVIDER_LOCALRSS:
+                    iconRefs = R.drawable.logo_rss;
+                    break;
             }
             adapter.add(new MaterialSimpleListItem.Builder(SettingActivity.this)
                     .content( user.getUserName())
@@ -472,6 +528,29 @@ public class SettingActivity extends BaseActivity {
         getSupportActionBar().setDisplayShowTitleEnabled(true);
         // setDisplayShowHomeEnabled(true)   //使左上角图标是否显示，如果设成false，则没有程序图标，仅仅就个标题，否则，显示应用程序图标，对应id为android.R.id.home，对应ActionBar.DISPLAY_SHOW_HOME
         // setDisplayShowCustomEnabled(true)  // 使自定义的普通View能在title栏显示，即actionBar.setCustomView能起作用，对应ActionBar.DISPLAY_SHOW_CUSTOM
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
+        super.onActivityResult(requestCode, resultCode, intent);
+        XLog.i("返回：" + intent.getData());
+        if (requestCode == IMPORT_OPML_CODE) {
+            Uri uri = intent.getData();
+            if(uri!=null && App.i().getApi() instanceof LocalApi){
+                App.i().getApi().importOPML(uri, new CallbackX() {
+                    @Override
+                    public void onSuccess(Object result) {
+                        ToastUtils.show(R.string.success);
+                    }
+
+                    @Override
+                    public void onFailure(Object error) {
+                        ToastUtils.show(R.string.failure);
+                    }
+                });
+            }
+
+        }
     }
 
     @Override

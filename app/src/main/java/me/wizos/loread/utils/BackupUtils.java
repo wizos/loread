@@ -17,6 +17,7 @@ import java.util.List;
 import me.wizos.loread.App;
 import me.wizos.loread.Contract;
 import me.wizos.loread.R;
+import me.wizos.loread.bean.ProcessResult;
 import me.wizos.loread.db.Article;
 import me.wizos.loread.db.ArticleTag;
 import me.wizos.loread.db.CoreDB;
@@ -71,10 +72,62 @@ public class BackupUtils {
         CoreDB.i().articleTagDao().update(articleTags);
     }
 
-    public static void restoreOPML() {
+
+    public static ProcessResult<String> exportUserAllOPML(User user) {
+        return exportOPML(user, CoreDB.i().feedDao().getAll(user.getId()), new File(getExternalStorageBackupDir(), user.getId() + ".opml"));
+    }
+    public static ProcessResult<String> exportUserUnsubscribeOPML(User user, List<Feed> feeds) {
+        return exportOPML(user, feeds, new File(getExternalStorageBackupDir(), user.getId() + "_unsubscribe.opml"));
     }
 
-    public static void backupOPML() {
+    public static ProcessResult<String> exportOPML(User user, List<Feed> feeds, File file) {
+        ProcessResult<String> processResult = new ProcessResult<>();
+        if(user == null){
+            processResult.setSuccess(false);
+            processResult.setMsg(App.i().getString(R.string.please_login_to_rss_service_first));
+            return processResult;
+        }
+        if (!Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
+            processResult.setSuccess(false);
+            processResult.setMsg(App.i().getString(R.string.external_storage_device_is_not_available));
+            XLog.w("外置存储设备不可用");
+            return processResult;
+        }
+
+        String parentPath = file.getParent();
+        if(StringUtils.isEmpty(parentPath)){
+            processResult.setSuccess(false);
+            processResult.setMsg("父目录为空");
+            XLog.w("父目录为空");
+            return processResult;
+        }
+
+        File dir = new File(parentPath);
+        if (!dir.exists() && !dir.mkdirs()){
+            processResult.setSuccess(false);
+            processResult.setMsg(App.i().getString(R.string.unable_to_create_folder_with_path, dir.getName()));
+            XLog.w("无法创建 Backup 文件夹");
+            return processResult;
+        }
+
+        if (feeds == null || feeds.size() == 0) {
+            processResult.setSuccess(false);
+            processResult.setMsg(App.i().getString(R.string.no_feeds_no_need_to_export));
+            XLog.w("需要导出的feeds为空");
+            return processResult;
+        }
+
+        String title = App.i().getString(R.string.opml_content_title, user.getUserName(), user.getSource());
+        OPMLUtils.export(title, file, feeds);
+        processResult.setSuccess(true);
+        processResult.setMsg(App.i().getString(R.string.exported_as_file_with_path, file.getPath()));
+        return processResult;
+    }
+
+
+
+
+    public static void exportOPML2() {
         User user = App.i().getUser();
         if(user == null){
             return;
@@ -89,7 +142,37 @@ public class BackupUtils {
         String title = StringUtils.getString(R.string.opml_content_title, user.getUserName(), user.getSource());
         OPMLUtils.export(title, file, feeds);
     }
+    public static ProcessResult<String> exportOPML() {
+        User user = App.i().getUser();
+        ProcessResult<String> processResult = new ProcessResult<>();
+        if(user == null){
+            processResult.setSuccess(false);
+            processResult.setMsg(App.i().getString(R.string.please_login_to_rss_service_first));
+            return processResult;
+        }
+        if (!Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
+            processResult.setSuccess(false);
+            processResult.setMsg(App.i().getString(R.string.external_storage_device_is_not_available));
+            XLog.w("外置存储设备不可用");
+            return processResult;
+        }
 
+        List<Feed> feeds = CoreDB.i().feedDao().getAll(user.getId());
+
+        if (feeds == null || feeds.size() == 0) {
+            processResult.setSuccess(false);
+            processResult.setMsg(App.i().getString(R.string.no_feeds_no_need_to_export));
+            XLog.w("需要导出的feeds为空");
+            return processResult;
+        }
+
+        File file = new File(getExternalStorageBackupDir(), user.getId() + ".opml");
+        String title = App.i().getString(R.string.opml_content_title, user.getUserName(), user.getSource());
+        OPMLUtils.export(title, file, feeds);
+        processResult.setSuccess(true);
+        processResult.setMsg(App.i().getString(R.string.exported_as_file_with_path, file.getPath()));
+        return processResult;
+    }
     public static void backupUnsubscribeFeed(User user, List<Feed> feeds) {
         if (!Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
             XLog.w("外置存储设备不可用");

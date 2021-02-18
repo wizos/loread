@@ -42,14 +42,14 @@ public class TriggerRuleUtils {
      */
     public static void exeAllRules(String uid, long minCrawlTimeMillis){
         List<TriggerRule> triggerRules = CoreDB.i().triggerRuleDao().getRules(uid);
-        XLog.i("执行 triggerRules 规则："+ triggerRules);
+        XLog.i("执行 triggerRules 规则：");
         for (TriggerRule triggerRule:triggerRules){
             exeRule(uid, minCrawlTimeMillis, triggerRule);
         }
     }
 
     public static void exeRules(String uid, long minCrawlTimeMillis, List<TriggerRule> triggerRules){
-        XLog.i("执行 triggerRules 规则："+ triggerRules);
+        XLog.i("执行 triggerRules 规则：");
         for (TriggerRule triggerRule:triggerRules){
             exeRule(uid, minCrawlTimeMillis, triggerRule);
         }
@@ -57,55 +57,27 @@ public class TriggerRuleUtils {
 
     /**
      * 执行规则
+     * TODO: 2021/1/30 还有正则没有支持
      */
     public static void exeRule(String uid, long crawlTimeMillis, TriggerRule triggerRule){
-        XLog.i("执行Action规则："+ triggerRule);
+        Set<String> txtSet = new HashSet<>();
+        txtSet.add("title");
+        txtSet.add("content");
+        txtSet.add("author");
+
+        Set<String> numberSet = new HashSet<>();
+        numberSet.add("pictures");
+        numberSet.add("audios");
+        numberSet.add("videos");
+
         if(Contract.TYPE_GLOBAL.equals(triggerRule.getScope().getType())){
             List<Condition> conditions = triggerRule.getConditions();
             Set<String> conditionSet = new HashSet<>();
             for (Condition condition:conditions) {
-                // Set<String> subConditionSet = new HashSet<>();
-                // String[] keywords = condition.getValue().split("\\|");
-                // // TODO: 2021/1/30 检查 attr 和 judge 是否匹配
-                // if("like".equals(condition.getJudge())){
-                //     for (String keyword:keywords) {
-                //         subConditionSet.add( condition.getAttr() + " like '%" + keyword + "%'");
-                //     }
-                //     conditionSet.add( "(" + StringUtils.join(" or ", subConditionSet) + ")" );
-                // }else if("not like".equals(condition.getJudge())){
-                //     for (String keyword:keywords) {
-                //         subConditionSet.add( condition.getAttr() + " not like '%" + keyword + "%'");
-                //     }
-                //     conditionSet.add( "(" + StringUtils.join(" or ", subConditionSet) + ")");
-                // }else if("is".equals(condition.getJudge())){
-                //     for (String keyword:keywords) {
-                //         subConditionSet.add( condition.getAttr() + " is '" + keyword + "'");
-                //     }
-                //     conditionSet.add( "(" + StringUtils.join(" or ", subConditionSet) + ")");
-                //     // conditionSet.add( "(" +condition.getAttr() + "is '" + condition.getValue() + "')");
-                // }else if("is not".equals(condition.getJudge())){
-                //     for (String keyword:keywords) {
-                //         subConditionSet.add( condition.getAttr() + " is not '" + keyword + "'");
-                //     }
-                //     conditionSet.add( "(" + StringUtils.join(" or ", subConditionSet) + ")");
-                //     // conditionSet.add( "(" +condition.getAttr() + "is not '" + condition.getValue() + "')");
-                // }else if("starts with".equals(condition.getJudge())){
-                //     for (String keyword:keywords) {
-                //         subConditionSet.add( condition.getAttr() + " like '" + keyword + "%'");
-                //     }
-                //     conditionSet.add( "(" + StringUtils.join(" or ", subConditionSet) + ")");
-                //     // conditionSet.add( "(" +condition.getAttr() + "like '" + condition.getValue() + "%')");
-                // }else if("ends with".equals(condition.getJudge())){
-                //     for (String keyword:keywords) {
-                //         subConditionSet.add( condition.getAttr() + " like '%" + keyword + "'");
-                //     }
-                //     conditionSet.add( "(" + StringUtils.join(" or ", subConditionSet) + ")");
-                //     // conditionSet.add( "(" +condition.getAttr() + "like '%" + condition.getValue() + "')");
-                // }
-                // TODO: 2021/1/30 还有正则没有支持
-                joinTextConditions(condition, conditionSet);
+                joinTextConditions(txtSet, numberSet, condition, conditionSet);
             }
-            XLog.i("条件 为：" + conditionSet);
+
+            // XLog.i("条件 为：" + conditionSet);
             if(conditionSet.size() == 0){
                 return;
             }
@@ -113,59 +85,52 @@ public class TriggerRuleUtils {
             SimpleSQLiteQuery query = new SimpleSQLiteQuery("SELECT article.id FROM article WHERE uid = '" + uid + "' AND crawlDate >= " + crawlTimeMillis + " AND " + StringUtils.join(" and ", conditionSet));
             List<String> articleIds = CoreDB.i().articleDao().getActionRuleArticleIds(query);
 
-            // for (Condition condition:conditions){
-            //     if("match".equals(condition.getJudge())){
-            //         articleIds = filterArticleIdsWithRegexp(uid, articleIds, condition, true);
-            //     }else if("not match".equals(condition.getJudge())){
-            //         articleIds = filterArticleIdsWithRegexp(uid, articleIds, condition, false);
-            //     }
-            // }
-
             doActionWithArticles(articleIds, triggerRule.getActions());
-            XLog.i("文章结果 为：" + query.getSql() + " == " + articleIds.size());
+            // XLog.i("文章结果 为：" + query.getSql() + " == " + articleIds.size());
         }else if(Contract.TYPE_CATEGORY.equals(triggerRule.getScope().getType())){
-            String categoryId = triggerRule.getScope().getTarget();
             List<Condition> conditions = triggerRule.getConditions();
             Set<String> conditionSet = new HashSet<>();
             for (Condition condition:conditions) {
-                joinTextConditions(condition, conditionSet);
+                joinTextConditions(txtSet, numberSet, condition, conditionSet);
             }
 
-            XLog.i("条件 为：" + conditionSet);
+            // XLog.i("条件 为：" + conditionSet);
             if(conditionSet.size() == 0){
                 return;
             }
 
+            String categoryId = triggerRule.getScope().getTarget();
             SimpleSQLiteQuery query = new SimpleSQLiteQuery("SELECT article.id FROM article LEFT JOIN FeedCategory ON (article.uid = FeedCategory.uid AND article.feedId = FeedCategory.feedId) WHERE article.uid = '" + uid + "' AND article.crawlDate >= " + crawlTimeMillis + " AND FeedCategory.categoryId = '" + categoryId + "' AND " + StringUtils.join(" AND ", conditionSet));
             List<String> articleIds = CoreDB.i().articleDao().getActionRuleArticleIds(query);
 
             doActionWithArticles(articleIds, triggerRule.getActions());
-            XLog.i("文章结果 为：" + query.getSql() + " == " + articleIds.size());
+            // XLog.i("文章结果 为：" + query.getSql() + " == " + articleIds.size());
         }else if(Contract.TYPE_FEED.equals(triggerRule.getScope().getType())){
-            String feedId = triggerRule.getScope().getTarget();
             List<Condition> conditions = triggerRule.getConditions();
             Set<String> conditionSet = new HashSet<>();
             for (Condition condition:conditions) {
-                joinTextConditions(condition, conditionSet);
+                joinTextConditions(txtSet, numberSet, condition, conditionSet);
             }
 
-            XLog.i("条件 为：" + conditionSet);
+            // XLog.i("条件 为：" + conditionSet);
             if(conditionSet.size() == 0){
                 return;
             }
 
+            String feedId = triggerRule.getScope().getTarget();
             SimpleSQLiteQuery query = new SimpleSQLiteQuery("SELECT article.id FROM article LEFT JOIN Feed ON (article.uid = Feed.uid AND article.feedId = Feed.id) WHERE article.uid = '" + uid + "' AND article.crawlDate >= " + crawlTimeMillis + " AND Feed.id = '" + feedId + "' AND " + StringUtils.join(" AND ", conditionSet));
             List<String> articleIds = CoreDB.i().articleDao().getActionRuleArticleIds(query);
 
             doActionWithArticles(articleIds, triggerRule.getActions());
-            XLog.i("文章结果 为：" + query.getSql() + " == " + articleIds.size());
+            // XLog.i("文章结果 为：" + query.getSql() + " == " + articleIds.size());
         }
     }
 
 
-    private static void joinTextConditions(Condition condition, Set<String> conditionSet){
+    private static void joinTextConditions(Set<String> txtSet, Set<String> numberSet, Condition condition, Set<String> conditionSet){
         String[] keywords = condition.getValue().split("\\|");
         Set<String> subConditionSet = new HashSet<>();
+
         if("like".equals(condition.getJudge())){
             for (String keyword:keywords) {
                 subConditionSet.add( "article." + condition.getAttr() + " like '%" + keyword + "%'");
@@ -196,39 +161,41 @@ public class TriggerRuleUtils {
                 subConditionSet.add( "article." + condition.getAttr() + " like '%" + keyword + "'");
             }
             conditionSet.add( "(" + StringUtils.join(" or ", subConditionSet) + ")");
-        }else if(">".equals(condition.getJudge())){
-            ArrayList<String> slice = new ArrayList<>();
+        }else {
+            String keyword = "pictures";
+            switch (condition.getAttr()) {
+                case "pictures":
+                    keyword = "<img";
+                    break;
+                case "audios":
+                    keyword = "<audio";
+                    break;
+                case "videos":
+                    keyword = "<video";
+                    break;
+            }
+            ArrayList<String> slices = new ArrayList<>();
             for(int i=0, size=Integer.parseInt(condition.getValue()) + 1; i<size; i++){
-                slice.add("<img");
+                slices.add(keyword);
             }
-            if(slice.size() == 0){
-                slice.add("<img");
+            // if(slices.size() == 0){
+            //     slices.add(keyword);
+            // }
+            if(">".equals(condition.getJudge())){
+                conditionSet.add( "( article.content like '%" + StringUtils.join("%", slices) + "%')");
+            }else if("<=".equals(condition.getJudge())){
+                // ArrayList<String> slice = new ArrayList<>();
+                // for(int i=0, size=Integer.parseInt(condition.getValue()) + 1; i<size; i++){
+                //     slice.add(keyword);
+                // }
+                // if(slice.size() == 0){
+                //     slice.add(keyword);
+                // }
+                conditionSet.add( "( article.content not like '%" + StringUtils.join("%", slices) + "%')");
             }
-            conditionSet.add( "( article.content like '%" + StringUtils.join("%", slice) + "%')");
-        }else if("<=".equals(condition.getJudge())){
-            ArrayList<String> slice = new ArrayList<>();
-            for(int i=0, size=Integer.parseInt(condition.getValue()) + 1; i<size; i++){
-                slice.add("<img");
-            }
-            if(slice.size() == 0){
-                slice.add("<img");
-            }
-            conditionSet.add( "( article.content not like '%" + StringUtils.join("%", slice) + "%')");
         }
     }
 
-
-    private static void doTextJudgeForGlobal(String uid, List<Action> actions, String sqlSlice, long timeMillis){
-        SimpleSQLiteQuery query = new SimpleSQLiteQuery("SELECT article.id FROM article WHERE uid = '" + uid + "' AND crawlDate >= " + timeMillis + " AND " + sqlSlice);
-        List<String> articles = CoreDB.i().articleDao().getActionRuleArticleIds(query);
-        doActionWithArticles(articles, actions);
-        XLog.d("文章结果 为：" + query.getSql() + " == " + articles.size());
-    }
-    private static void doTextJudgeForFeed(String uid, String feedId, List<Action> actions, String sqlSlice, long timeMillis){
-        SimpleSQLiteQuery query = new SimpleSQLiteQuery("SELECT article.id FROM article LEFT JOIN Feed ON (article.uid = Feed.uid AND article.feedId = Feed.id) WHERE article.uid = '" + uid + "' AND article.crawlDate >= " + timeMillis + " AND Feed.id = '" + feedId + "' AND " + sqlSlice);
-        List<String> articles = CoreDB.i().articleDao().getActionRuleArticleIds(query);
-        doActionWithArticles(articles, actions);
-    }
 
     private static List<String> filterArticleIdsWithRegexp(String uid, List<String> articleIds, Condition condition, boolean match){
         // int needCount = articleIds.size();
@@ -261,7 +228,7 @@ public class TriggerRuleUtils {
         List<String> needActionArticleIds = new ArrayList<>();
         List<String> subArticleIds;
         SimpleSQLiteQuery query;
-        boolean result = false;
+        boolean result;
         List<Entry> entries;
         Iterator<Entry> iterator;
         Pattern pattern;
@@ -332,7 +299,7 @@ public class TriggerRuleUtils {
         if(actions==null ||actions.size() == 0 || articleIds == null || articleIds.size() == 0){
             return;
         }
-        XLog.d("预计有" + articleIds.size() + "份文章被处理为：" + actions);
+        XLog.i("预计有 " + articleIds.size() + " 份文章被处理为：" + actions);
         int needCount = articleIds.size();
         int hadCount = 0;
         int num = 0;
@@ -361,10 +328,6 @@ public class TriggerRuleUtils {
                         XLog.d("以下文章被处理为：mark read "  + handlingArticleIds);
                     }
                 }
-
-                // if(articleActionRule.getActions().contains("mark unreading")){
-                //     CoreDB.i().articleDao().markArticlesUnreading(uid, subArticleIds);
-                // }
 
                 if(action.getAction().equals(Contract.MARK_STAR)){
                     handlingArticleIds = CoreDB.i().articleDao().getUnStarArticleIds(uid,subArticleIds);

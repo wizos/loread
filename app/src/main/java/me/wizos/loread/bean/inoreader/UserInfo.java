@@ -85,7 +85,7 @@ public class UserInfo {
         this.isMultiLoginEnabled = isMultiLoginEnabled;
     }
 
-    public User getUser() {
+    public User convert() {
         User user = new User();
         user.setSource(Contract.PROVIDER_INOREADER);
         user.setId(Contract.PROVIDER_INOREADER + "_" + userId);

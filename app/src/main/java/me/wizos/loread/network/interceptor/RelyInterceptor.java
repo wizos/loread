@@ -7,7 +7,7 @@ import androidx.annotation.NonNull;
 import java.io.IOException;
 
 import me.wizos.loread.Contract;
-import me.wizos.loread.config.NetworkUserAgentConfig;
+import me.wizos.loread.config.header_useragent.HeaderUserAgentConfig;
 import me.wizos.loread.config.url_rewrite.UrlRewriteConfig;
 import me.wizos.loread.utils.StringUtils;
 import okhttp3.Interceptor;
@@ -52,7 +52,7 @@ public class RelyInterceptor implements Interceptor {
         //    hasNew = true;
         //}
 
-        String ua = NetworkUserAgentConfig.i().guessUserAgentByUrl(url);
+        String ua = HeaderUserAgentConfig.i().guessUserAgentByUrl(url);
         if (!StringUtils.isEmpty(ua)) {
             builder.header(Contract.USER_AGENT, ua );
             hasNew = true;

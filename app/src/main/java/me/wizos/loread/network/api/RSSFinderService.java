@@ -1,6 +1,6 @@
 package me.wizos.loread.network.api;
 
-import me.wizos.loread.bean.rssfinder.FindResponse;
+import me.wizos.loread.bean.rssfinder.RSSFinderResponse;
 import retrofit2.Call;
 import retrofit2.http.Field;
 import retrofit2.http.FormUrlEncoded;
@@ -11,10 +11,11 @@ import retrofit2.http.POST;
  */
 
 public interface RSSFinderService {
-    public static String BASE_URL = "http://api.wizos.me/";
+    // String BASE_URL = "http://api.wizos.me/";
+    String BASE_URL = "https://rssfinder.vercel.app/";
     @FormUrlEncoded
     @POST("find.php")
-    Call<FindResponse> find(
+    Call<RSSFinderResponse> find(
             @Field("url") String url,
             @Field("user") String user
     );

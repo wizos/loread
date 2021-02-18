@@ -18,9 +18,9 @@ import androidx.lifecycle.ViewModelProvider;
 
 import com.hjq.toast.ToastUtils;
 
-import me.wizos.loread.App;
 import me.wizos.loread.R;
 import me.wizos.loread.activity.BaseActivity;
+import me.wizos.loread.activity.ProviderActivity;
 import me.wizos.loread.activity.viewmodel.InoReaderUserViewModel;
 import me.wizos.loread.network.api.InoReaderApi;
 import me.wizos.loread.view.colorful.Colorful;
@@ -136,7 +136,7 @@ public class LoginInoReaderActivity extends BaseActivity {
                 String tips = getString(R.string.welcome);
                 if (loginResult.isSuccess()) {
                     ToastUtils.show(tips);
-                    setResult(App.ActivityResult_LoginPageToProvider);
+                    setResult(ProviderActivity.LOGIN_CODE);
                     finish();
                     overridePendingTransition(R.anim.fade_in, R.anim.out_from_bottom);
                 } else {

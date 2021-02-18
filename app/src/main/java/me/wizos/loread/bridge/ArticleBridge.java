@@ -34,7 +34,7 @@ public interface ArticleBridge {
      */
     void readImage(String articleId, String imgHashCode, String originalUrl);
 
-    String read(String articleId, String imgHashCode, String originalUrl);
+    void loadImage(String articleId, String imgHashCode, String originalUrl);
 
     void downImage(String articleId, String imgHashCode, String originalUrl, boolean guessReferer);
 
@@ -51,5 +51,11 @@ public interface ArticleBridge {
     void postVideoPortrait(boolean isPortrait);
 
     void requestDisallowInterceptTouchEvent(boolean disallow);
+
+    void foundAudio(String src, long duration);
+
+    void foundVideo(String src, long duration);
+
+    void frameSrcChange(String oldSrc, String newSrc);
     // String get(String url) throws IOException;
 }

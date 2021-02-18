@@ -41,7 +41,6 @@
         android:layout_gravity="center"
         android:gravity="center"
         android:orientation="vertical">
-
         <Button
             android:id="@+id/select_login_account"
             android:visibility="gone"
@@ -52,29 +51,20 @@
             android:onClick="selectLoginAccount"
             android:textAllCaps="false"
             android:text="@string/select_login_account" />
-
         <Button
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:drawableStart="@drawable/logo_inoreader_icon"
+            android:gravity="center_vertical|start"
             android:minWidth="150dp"
             android:onClick="oauthInoReader"
             android:textAllCaps="false"
             android:text="@string/inoreader" />
-
-        <!--<Button-->
-        <!--    android:layout_width="match_parent"-->
-        <!--    android:layout_height="wrap_content"-->
-        <!--    android:drawableStart="@drawable/logo_inoreader_icon"-->
-        <!--    android:minWidth="150dp"-->
-        <!--    android:onClick="loginInoReader"-->
-        <!--    android:textAllCaps="false"-->
-        <!--    android:text="@string/inoreader_login" />-->
-
         <Button
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:drawableStart="@drawable/logo_feedly_icon"
+            android:gravity="center_vertical|start"
             android:minWidth="150dp"
             android:onClick="oauthFeedly"
             android:textAllCaps="false"
@@ -84,6 +74,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:drawableStart="@drawable/logo_fever_icon"
+            android:gravity="center_vertical|start"
             android:minWidth="150dp"
             android:onClick="loginFever"
             android:textAllCaps="false"
@@ -93,11 +84,20 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:drawableStart="@drawable/logo_tinytinyrss_icon"
+            android:gravity="center_vertical|start"
             android:minWidth="150dp"
             android:onClick="loginTinyRSS"
             android:textAllCaps="false"
             android:text="@string/tinytinyrss" />
-
+        <Button
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:drawableStart="@drawable/logo_rss_icon"
+            android:gravity="center_vertical|start"
+            android:minWidth="150dp"
+            android:onClick="selectLocalRSS"
+            android:textAllCaps="false"
+            android:text="@string/local_rss" />
     </LinearLayout>
 
     <TextView

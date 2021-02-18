@@ -20,5 +20,4 @@ android {
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
-    testImplementation 'org.junit.jupiter:junit-jupiter'
 }

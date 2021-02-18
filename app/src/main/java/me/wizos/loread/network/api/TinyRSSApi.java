@@ -1,5 +1,6 @@
 package me.wizos.loread.network.api;
 
+import android.net.Uri;
 import android.text.TextUtils;
 
 import com.elvishew.xlog.XLog;
@@ -22,20 +23,20 @@ import java.util.Map;
 import me.wizos.loread.App;
 import me.wizos.loread.Contract;
 import me.wizos.loread.R;
-import me.wizos.loread.activity.login.LoginResult;
+import me.wizos.loread.bean.FeedEntries;
 import me.wizos.loread.bean.feedly.input.EditFeed;
 import me.wizos.loread.bean.ttrss.request.GetCategories;
 import me.wizos.loread.bean.ttrss.request.GetFeeds;
 import me.wizos.loread.bean.ttrss.request.GetHeadlines;
 import me.wizos.loread.bean.ttrss.request.Login;
-import me.wizos.loread.bean.ttrss.request.SubscribeToFeed;
+import me.wizos.loread.bean.ttrss.request.SubscribeFeed;
 import me.wizos.loread.bean.ttrss.request.UnsubscribeFeed;
 import me.wizos.loread.bean.ttrss.request.UpdateArticle;
 import me.wizos.loread.bean.ttrss.result.ArticleItem;
 import me.wizos.loread.bean.ttrss.result.CategoryItem;
 import me.wizos.loread.bean.ttrss.result.FeedItem;
-import me.wizos.loread.bean.ttrss.result.SubscribeToFeedResult;
-import me.wizos.loread.bean.ttrss.result.TTRSSLoginResult;
+import me.wizos.loread.bean.ttrss.result.LoginResult;
+import me.wizos.loread.bean.ttrss.result.SubscribeFeedResult;
 import me.wizos.loread.bean.ttrss.result.TinyResponse;
 import me.wizos.loread.bean.ttrss.result.UpdateArticleResult;
 import me.wizos.loread.db.Article;
@@ -46,6 +47,7 @@ import me.wizos.loread.db.FeedCategory;
 import me.wizos.loread.network.HttpClientManager;
 import me.wizos.loread.network.SyncWorker;
 import me.wizos.loread.network.callback.CallbackX;
+import me.wizos.loread.utils.Converter;
 import me.wizos.loread.utils.StringUtils;
 import me.wizos.loread.utils.TriggerRuleUtils;
 import retrofit2.Call;
@@ -84,41 +86,60 @@ public class TinyRSSApi extends AuthApi implements ILogin {
         service = retrofit.create(TinyRSSService.class);
     }
 
-    public LoginResult login(String account, String password) throws IOException {
-        Login loginParam = new Login();
-        loginParam.setUser(account);
-        loginParam.setPassword(password);
-        TinyResponse<TTRSSLoginResult> loginResultResponse = service.login(loginParam).execute().body();
-        LoginResult loginResult = new LoginResult();
-        if (loginResultResponse.isSuccessful()) {
-            return loginResult.setSuccess(true).setData(loginResultResponse.getContent().getSession_id());
-        } else {
-            return loginResult.setSuccess(false).setData(loginResultResponse.getContent().getSession_id());
+    public me.wizos.loread.activity.login.LoginResult login(String account, String password) throws IOException {
+        me.wizos.loread.activity.login.LoginResult loginResult = new me.wizos.loread.activity.login.LoginResult();
+
+        Login param = new Login();
+        param.setUser(account);
+        param.setPassword(password);
+
+        Response<TinyResponse<LoginResult>> tinyResponse = service.login(param).execute();
+        if(!tinyResponse.isSuccessful()){
+            return loginResult.setSuccess(false).setData(getString(R.string.response_code, tinyResponse.code()));
         }
+
+        TinyResponse<LoginResult> tinyLoginResult = tinyResponse.body();
+        if (tinyLoginResult == null) {
+            return loginResult.setSuccess(false).setData(getString(R.string.return_data_exception));
+        }
+
+        if (!tinyLoginResult.isSuccessful()) {
+            XLog.w("TinyRSS登录失败返回信息：" + tinyLoginResult.getMsg());
+            return loginResult.setSuccess(false).setData(tinyLoginResult.getMsg());
+        }
+
+        return loginResult.setSuccess(true).setData(tinyLoginResult.getContent().getSessionId());
     }
 
     public void login(String account, String password, CallbackX cb){
         Login loginParam = new Login();
         loginParam.setUser(account);
         loginParam.setPassword(password);
-        service.login(loginParam).enqueue(new retrofit2.Callback<TinyResponse<TTRSSLoginResult>>() {
+        service.login(loginParam).enqueue(new Callback<TinyResponse<LoginResult>>() {
             @Override
-            public void onResponse(retrofit2.Call<TinyResponse<TTRSSLoginResult>> call, Response<TinyResponse<TTRSSLoginResult>> response) {
-                if(response.isSuccessful()){
-                    TinyResponse<TTRSSLoginResult> loginResultResponse = response.body();
-                    if(loginResultResponse != null &&  loginResultResponse.isSuccessful()){
-                        cb.onSuccess(loginResultResponse.getContent().getSession_id());
-                        return;
-                    }
-                    cb.onFailure(App.i().getString(R.string.login_failed_reason, loginResultResponse.toString()));
-                }else {
-                    cb.onFailure(App.i().getString(R.string.login_failed_reason, response.message()));
+            public void onResponse(@NotNull Call<TinyResponse<LoginResult>> call, @NotNull Response<TinyResponse<LoginResult>> response) {
+                if(!response.isSuccessful()){
+                    cb.onFailure(App.i().getString(R.string.response_code, response.code()));
+                    return;
                 }
+
+                TinyResponse<LoginResult> loginResultResponse = response.body();
+                if(loginResultResponse == null ){
+                    cb.onFailure(App.i().getString(R.string.return_data_exception));
+                    return;
+                }
+
+                if(!loginResultResponse.isSuccessful()){
+                    cb.onFailure(loginResultResponse.getMsg());
+                    return;
+                }
+
+                cb.onSuccess(loginResultResponse.getContent().getSessionId());
             }
 
             @Override
-            public void onFailure(retrofit2.Call<TinyResponse<TTRSSLoginResult>> call, Throwable t) {
-                cb.onFailure(App.i().getString(R.string.login_failed_reason, t.getMessage()));
+            public void onFailure(@NotNull Call<TinyResponse<LoginResult>> call, @NotNull Throwable t) {
+                cb.onFailure(t.getLocalizedMessage());
             }
         });
     }
@@ -129,18 +150,18 @@ public class TinyRSSApi extends AuthApi implements ILogin {
 
     @Override
     public void sync() {
+        long startSyncTimeMillis = System.currentTimeMillis() + 3600_000;
+        String uid = App.i().getUser().getId();
         try {
-            long startSyncTimeMillis = System.currentTimeMillis() + 3600_000;
             // TinyResponse<ApiLevel> apiLevelTinyResponse = service.getApiLevel(new GetApiLevel(getAuthorization())).execute().body();
             // if (!apiLevelTinyResponse.isSuccessful()) {
             //     throw new HttpException(apiLevelTinyResponse.getMsg());
             // }
             // int apiVersion = apiLevelTinyResponse.getContent().getLevel();
             // XLog.i("同步 - 获取服务器api等级：" + apiVersion);
-            String uid = App.i().getUser().getId();
 
             XLog.i("同步 - 获取分类");
-            LiveEventBus.get(SyncWorker.SYNC_PROCESS_FOR_SUBTITLE).post(getString(R.string.sync_feed_info, "2."));
+            LiveEventBus.get(SyncWorker.SYNC_PROCESS_FOR_SUBTITLE).post(getString(R.string.step_sync_feed_info, "2."));
 
             // 获取分类
             TinyResponse<List<CategoryItem>> categoryItemsResponse = service.getCategories( new GetCategories(getAuthorization()) ).execute().body();
@@ -189,14 +210,14 @@ public class TinyRSSApi extends AuthApi implements ILogin {
 
             int hadFetchCount = 0;
 
-            LiveEventBus.get(SyncWorker.SYNC_PROCESS_FOR_SUBTITLE).post( App.i().getString(R.string.sync_article_start, "1.") );
+            LiveEventBus.get(SyncWorker.SYNC_PROCESS_FOR_SUBTITLE).post( App.i().getString(R.string.step_sync_article_start, "1.") );
             GetHeadlines getHeadlines = new GetHeadlines();
             getHeadlines.setSid(getAuthorization());
             int sinceId = CoreDB.i().articleDao().getLastArticleId(uid);
-            getHeadlines.setSince_id(sinceId + "");
+            getHeadlines.setSinceId(sinceId + "");
 
             TinyResponse<List<ArticleItem>> articleItemsResponse;
-            ArrayList<Article> articleList;
+            ArrayList<Article> articles;
             int fetchArticlesUnit;
             do{
                 XLog.i("1 - 同步文章 " + uid + " , Since_id = " + sinceId);
@@ -206,22 +227,22 @@ public class TinyRSSApi extends AuthApi implements ILogin {
                     throw new HttpException("获取文章失败 - " + articleItemsResponse.getMsg());
                 }
                 List<ArticleItem> items = articleItemsResponse.getContent();
-                articleList = new ArrayList<>(items.size());
+                articles = new ArrayList<>(items.size());
                 // long syncTimeMillis = System.currentTimeMillis();
                 for (ArticleItem item : items) {
-                    articleList.add(item.convert(new ArticleChanger() {
+                    articles.add(Converter.from(item, new Converter.ArticleConvertListener() {
                         @Override
-                        public Article change(Article article) {
+                        public Article onEnd(Article article) {
                             article.setCrawlDate(startSyncTimeMillis);
                             article.setUid(uid);
                             return article;
                         }
                     }));
                 }
-                fetchArticlesUnit = articleList.size();
+                fetchArticlesUnit = articles.size();
                 hadFetchCount = hadFetchCount + fetchArticlesUnit;
-                CoreDB.i().articleDao().insert(articleList);
-                LiveEventBus.get(SyncWorker.SYNC_PROCESS_FOR_SUBTITLE).post( App.i().getString(R.string.sync_article_size, "1.", hadFetchCount) );
+                CoreDB.i().articleDao().insert(articles);
+                LiveEventBus.get(SyncWorker.SYNC_PROCESS_FOR_SUBTITLE).post( App.i().getString(R.string.step_sync_article_size, "1.", hadFetchCount) );
             }while (fetchArticlesUnit == fetchContentCntForEach);
 
             LiveEventBus.get(SyncWorker.SYNC_PROCESS_FOR_SUBTITLE).post(getString(R.string.clear_article));
@@ -249,14 +270,14 @@ public class TinyRSSApi extends AuthApi implements ILogin {
             handleException(e, "同步失败：Runtime异常");
         }
 
-        handleDuplicateArticles();
+        handleDuplicateArticles(startSyncTimeMillis);
         handleCrawlDate2();
         updateCollectionCount();
         LiveEventBus.get(SyncWorker.SYNC_PROCESS_FOR_SUBTITLE).post( null );
     }
 
     private void handleException(Exception e, String msg) {
-        XLog.e("同步失败：" + e.getClass() + " = " + msg);
+        XLog.w("同步失败：" + e.getClass() + " = " + msg);
         e.printStackTrace();
         if(Contract.NOT_LOGGED_IN.equalsIgnoreCase(msg)){
             ToastUtils.show(getString(R.string.not_logged_in));
@@ -266,37 +287,41 @@ public class TinyRSSApi extends AuthApi implements ILogin {
     }
 
     @Override
-    public void renameTag(String tagId, String targetName, CallbackX cb) {
+    public void renameCategory(String categoryId, String targetName, CallbackX cb) {
         cb.onFailure(App.i().getString(R.string.server_api_not_supported, Contract.PROVIDER_TINYRSS));
     }
 
-    public void addFeed(EditFeed editFeed, CallbackX cb) {
-        SubscribeToFeed subscribeToFeed = new SubscribeToFeed(getAuthorization());
-        subscribeToFeed.setFeed_url(editFeed.getId());
-        if (editFeed.getCategoryItems() != null && editFeed.getCategoryItems().size() != 0) {
-            subscribeToFeed.setCategory_id(editFeed.getCategoryItems().get(0).getId());
+    @Override
+    public void addFeed(FeedEntries feedEntries, CallbackX cb) {
+        SubscribeFeed subscribeToFeed = new SubscribeFeed(getAuthorization());
+        subscribeToFeed.setFeedUrl(feedEntries.getFeed().getId());
+
+        List<FeedCategory> feedCategories = feedEntries.getFeedCategories();
+        if (feedCategories != null && feedCategories.size() != 0) {
+            subscribeToFeed.setCategoryId(feedCategories.get(0).getCategoryId());
         }
-        service.subscribeToFeed(subscribeToFeed).enqueue(new retrofit2.Callback<TinyResponse<SubscribeToFeedResult>>() {
+
+        service.subscribeToFeed(subscribeToFeed).enqueue(new Callback<TinyResponse<SubscribeFeedResult>>() {
             @Override
-            public void onResponse(@NotNull retrofit2.Call<TinyResponse<SubscribeToFeedResult>> call, @NotNull Response<TinyResponse<SubscribeToFeedResult>> response) {
+            public void onResponse(@NotNull Call<TinyResponse<SubscribeFeedResult>> call, @NotNull Response<TinyResponse<SubscribeFeedResult>> response) {
                 if (response.isSuccessful() && response.body().isSuccessful()) {
                     XLog.v("添加成功" + response.body().toString());
-                    cb.onSuccess("添加成功");
+                    cb.onSuccess(App.i().getString(R.string.subscribe_success_plz_sync));
                 } else {
-                    cb.onFailure("响应失败");
+                    cb.onFailure(App.i().getString(R.string.response_fail));
                 }
             }
 
             @Override
-            public void onFailure(@NotNull retrofit2.Call<TinyResponse<SubscribeToFeedResult>> call, @NotNull Throwable t) {
-                cb.onFailure("添加失败");
+            public void onFailure(@NotNull Call<TinyResponse<SubscribeFeedResult>> call, @NotNull Throwable t) {
+                cb.onFailure(t.getMessage());
                 XLog.v("添加失败");
             }
         });
     }
 
     @Override
-    public void renameFeed(String feedId, String renamedTitle, CallbackX cb) {
+    public void renameFeed(String feedId, String targetName, CallbackX cb) {
         cb.onFailure(App.i().getString(R.string.server_api_not_supported, Contract.PROVIDER_TINYRSS));
     }
 
@@ -313,6 +338,11 @@ public class TinyRSSApi extends AuthApi implements ILogin {
 
 
     @Override
+    public void importOPML(Uri uri, CallbackX cb) {
+        cb.onFailure(App.i().getString(R.string.server_api_not_supported, Contract.PROVIDER_TINYRSS));
+    }
+
+    @Override
     public void editFeedCategories(List<me.wizos.loread.bean.feedly.CategoryItem> lastCategoryItems, EditFeed editFeed, CallbackX cb) {
         cb.onFailure(App.i().getString(R.string.server_api_not_supported, Contract.PROVIDER_TINYRSS));
     }
@@ -320,9 +350,9 @@ public class TinyRSSApi extends AuthApi implements ILogin {
     public void unsubscribeFeed(String feedId, CallbackX cb) {
         UnsubscribeFeed unsubscribeFeed = new UnsubscribeFeed(getAuthorization());
         unsubscribeFeed.setFeedId(Integer.parseInt(feedId));
-        service.unsubscribeFeed(unsubscribeFeed).enqueue(new retrofit2.Callback<TinyResponse<Map>>() {
+        service.unsubscribeFeed(unsubscribeFeed).enqueue(new Callback<TinyResponse<Map>>() {
             @Override
-            public void onResponse(@NotNull retrofit2.Call<TinyResponse<Map>> call, @NotNull Response<TinyResponse<Map>> response) {
+            public void onResponse(@NotNull Call<TinyResponse<Map>> call, @NotNull Response<TinyResponse<Map>> response) {
                 if(response.isSuccessful() && null != response.body() && null != response.body().getContent() && "OK".equals(response.body().getContent().get("status"))){
                     if(cb!=null){
                         cb.onSuccess(null);
@@ -335,7 +365,7 @@ public class TinyRSSApi extends AuthApi implements ILogin {
             }
 
             @Override
-            public void onFailure(@NotNull retrofit2.Call<TinyResponse<Map>> call, @NotNull Throwable t) {
+            public void onFailure(@NotNull Call<TinyResponse<Map>> call, @NotNull Throwable t) {
                 cb.onFailure(t.getMessage());
             }
         });
@@ -344,7 +374,7 @@ public class TinyRSSApi extends AuthApi implements ILogin {
 
     private void markArticles(int field, int mode, String articleIds, CallbackX cb) {
         UpdateArticle updateArticle = new UpdateArticle(getAuthorization());
-        updateArticle.setArticle_ids(articleIds);
+        updateArticle.setArticleIds(articleIds);
         updateArticle.setField(field);
         updateArticle.setMode(mode);
         service.updateArticle(updateArticle).enqueue(new Callback<TinyResponse<UpdateArticleResult>>() {

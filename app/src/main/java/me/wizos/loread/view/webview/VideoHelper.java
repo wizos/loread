@@ -90,17 +90,16 @@ public class VideoHelper {
         }
     }
 
-    private final int DATA_X = 0;
-    private final int DATA_Y = 1;
-    private final int DATA_Z = 2;
-    private final int ORIENTATION_UNKNOWN = -1;
     private class OrientationSensorListener implements SensorEventListener {
         @Override
         public void onSensorChanged(SensorEvent event) {
             float[] values = event.values;
-            long orientation = ORIENTATION_UNKNOWN;
+            long orientation = -1L;
+            int DATA_X = 0;
             float x = -values[DATA_X];
+            int DATA_Y = 1;
             float y = -values[DATA_Y];
+            int DATA_Z = 2;
             float z = -values[DATA_Z];
             float magnitude = x * x + y * y;
             // Don't trust the angle if the magnitude is small compared to the y

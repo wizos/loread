@@ -1,5 +1,7 @@
 package me.wizos.loread.utils;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -14,13 +16,14 @@ public class EncryptUtils {
      * @param string 字符串
      * @return MD5 后的字符串
      */
+    @NotNull
     public static String MD5(String string) {
         byte[] hash;
         try {
             hash = MessageDigest.getInstance("MD5").digest(string.getBytes(StandardCharsets.UTF_8));
         } catch (NoSuchAlgorithmException e) {
             e.printStackTrace();
-            return null;
+            return "";
         }
         StringBuilder hex = new StringBuilder(hash.length * 2);
         for (byte b : hash) {

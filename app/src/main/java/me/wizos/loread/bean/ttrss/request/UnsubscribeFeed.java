@@ -35,4 +35,13 @@ public class UnsubscribeFeed {
     public void setFeedId(int feedId) {
         this.feedId = feedId;
     }
+
+    @Override
+    public String toString() {
+        return "UnsubscribeFeed{" +
+                "sid='" + sid + '\'' +
+                ", op='" + op + '\'' +
+                ", feedId=" + feedId +
+                '}';
+    }
 }

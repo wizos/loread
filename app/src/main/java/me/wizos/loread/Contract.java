@@ -7,6 +7,7 @@ package me.wizos.loread;
 public class Contract {
     public static final String PACKAGE_NAME = "me.wizos.loread";
     public static final String LOREAD = "loread";
+    public static final String LOCAL = "local";
     public static final String USER_AGENT = "User-Agent";
     public static final String COOKIE = "Cookie";
     public static final String REFERER = "Referer";

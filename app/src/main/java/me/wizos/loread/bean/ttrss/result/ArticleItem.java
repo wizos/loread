@@ -4,11 +4,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-import me.wizos.loread.App;
 import me.wizos.loread.bean.Enclosure;
-import me.wizos.loread.db.Article;
-import me.wizos.loread.network.api.BaseApi;
-import me.wizos.loread.utils.ArticleUtils;
 
 public class ArticleItem {
     private int id;
@@ -44,80 +40,6 @@ public class ArticleItem {
     private int score;
     private boolean always_display_attachments;
 
-
-    public Article convert(BaseApi.ArticleChanger articleChanger) {
-        Article article = new Article();
-        article.setId(String.valueOf(id));
-
-        String tmpContent = ArticleUtils.getOptimizedContent(link, content);
-        tmpContent = ArticleUtils.getOptimizedContentWithEnclosures(tmpContent, attachments);
-        article.setContent(tmpContent);
-
-        String tmpSummary = ArticleUtils.getOptimizedSummary(tmpContent);
-        article.setSummary(tmpSummary);
-
-        title = ArticleUtils.getOptimizedTitle(title,tmpSummary);
-        article.setTitle(title);
-
-        article.setAuthor(author);
-        article.setPubDate(updated * 1000);
-
-        article.setLink(link);
-        article.setFeedId(feed_id);
-        article.setFeedTitle(feed_title);
-
-        String coverUrl = ArticleUtils.getCoverUrl(link,tmpContent);
-        article.setImage(coverUrl);
-
-        // 自己设置的字段
-        article.setSaveStatus(App.STATUS_NOT_FILED);
-        if (unread) {
-            article.setReadStatus(App.STATUS_UNREAD);
-        } else {
-            article.setReadStatus(App.STATUS_READED);
-        }
-        if (marked) {
-            article.setStarStatus(App.STATUS_STARED);
-        } else {
-            article.setStarStatus(App.STATUS_UNSTAR);
-        }
-
-        if (articleChanger != null) {
-            articleChanger.change(article);
-        }
-        return article;
-    }
-
-    @NotNull
-    @Override
-    public String toString() {
-        return "ArticleItem{" +
-                "id=" + id +
-                ", guid='" + guid + '\'' +
-                ", unread=" + unread +
-                ", marked=" + marked +
-                ", published=" + published +
-                ", updated=" + updated +
-                ", is_updated=" + is_updated +
-                ", title='" + title + '\'' +
-                ", link='" + link + '\'' +
-                ", author='" + author + '\'' +
-                ", content='" + content + '\'' +
-                ", attachments=" + attachments +
-                ", tags=" + tags +
-                ", labels=" + labels +
-                ", comments_link='" + comments_link + '\'' +
-                ", comments_count=" + comments_count +
-                ", feed_id='" + feed_id + '\'' +
-                ", feed_title='" + feed_title + '\'' +
-                ", flavor_image='" + flavor_image + '\'' +
-                ", flavor_stream='" + flavor_stream + '\'' +
-                ", lang='" + lang + '\'' +
-                ", note='" + note + '\'' +
-                ", score=" + score +
-                ", always_display_attachments=" + always_display_attachments +
-                '}';
-    }
 
     public int getId() {
         return id;
@@ -213,5 +135,37 @@ public class ArticleItem {
 
     public boolean isAlways_display_attachments() {
         return always_display_attachments;
+    }
+
+
+    @NotNull
+    @Override
+    public String toString() {
+        return "ArticleItem{" +
+                "id=" + id +
+                ", guid='" + guid + '\'' +
+                ", unread=" + unread +
+                ", marked=" + marked +
+                ", published=" + published +
+                ", updated=" + updated +
+                ", is_updated=" + is_updated +
+                ", title='" + title + '\'' +
+                ", link='" + link + '\'' +
+                ", author='" + author + '\'' +
+                ", content='" + content + '\'' +
+                ", attachments=" + attachments +
+                ", tags=" + tags +
+                ", labels=" + labels +
+                ", comments_link='" + comments_link + '\'' +
+                ", comments_count=" + comments_count +
+                ", feed_id='" + feed_id + '\'' +
+                ", feed_title='" + feed_title + '\'' +
+                ", flavor_image='" + flavor_image + '\'' +
+                ", flavor_stream='" + flavor_stream + '\'' +
+                ", lang='" + lang + '\'' +
+                ", note='" + note + '\'' +
+                ", score=" + score +
+                ", always_display_attachments=" + always_display_attachments +
+                '}';
     }
 }

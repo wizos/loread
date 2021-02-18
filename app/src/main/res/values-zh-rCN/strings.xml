@@ -4,7 +4,8 @@
     <string name="settings">设置</string>
     <string name="un_category">未分类</string>
     <string name="category">分类</string>
-    <string name="tag">Tag</string>
+    <string name="tag">标签</string>
+    <string name="create_category">创建分类</string>
     <string name="edit_category">修改分类</string>
     <string name="select_category">选择分类</string>
     <string name="approaching_the_world">走近世界</string>
@@ -20,7 +21,6 @@
     <string name="custom_user_agent">自定义 UserAgent 标识</string>
     <string name="enter_user_agent">输入 UserAgent 标识</string>
     <string name="remove_custom_user_agent">删除自定义UA</string>
-    <string name="select_display_mode">文章默认展示</string>
 
     <string name="theme_switched_automatically">已自动切换主题</string>
     <string name="feed_url_display">订阅网址：%s</string>
@@ -62,16 +62,21 @@
     <string name="use_tiny_tiny_rss_fever_api">使用 TinyTinyRSS 和 Fever, 且密码相同</string>
 
     <string name="plz_grant_permission_tips">请授予权限，否则 APP 可能无法正常运行！</string>
-    <string name="authing">授权中……</string>
+    <string name="authorizing">授权中……</string>
     <string name="fetch_user_info">获取基本资料中……</string>
     <string name="auth_failure_please_try_again">授权失败，请重新尝试</string>
     <string name="login_please_wait">登录中，请稍等……</string>
     <string name="login_failed_reason">登录失败，原因：%1$s</string>
+
+    <string name="login_failed_with_reason">登录失败：%1$s</string>
+
     <string name="login_failure_please_try_again">登录失败，请重新尝试</string>
     <string name="login_failure_please_check_account">登录失败，请检查账户与密码是否正确</string>
     <string name="temporarily_not_supported">暂时不支持</string>
     <string name="server_api_not_supported">%1$s 不支持此功能</string>
-    
+
+    <string name="not_support_this_function">不支持此功能</string>
+
     <!-- Strings related to Settings -->
     <string name="title_search">搜索：%1$s</string>
 
@@ -93,12 +98,13 @@
     <string name="unable_to_find_app">没有找到对应的应用</string>
 
 
-    <!--下面这个还没有用到-->
-    <string name="sync_article_content">%1$s 同步文章内容[%2$d / %3$d]</string>
-    <string name="sync_article_start">%1$s 同步文章</string>
-    <string name="sync_article_size">%1$s 同步文章 [%2$d]</string>
-    <string name="sync_article_refs">%1$s 同步文章信息</string>
-    <string name="sync_feed_info">%1$s 同步订阅源信息</string>
+    <string name="sync_feed">同步订阅源[%1$s / %2$d]</string>
+    <string name="step_sync_feed_info">%1$s 同步订阅源信息</string>
+
+    <string name="step_sync_article_content">%1$s 同步文章内容[%2$d / %3$d]</string>
+    <string name="step_sync_article_start">%1$s 同步文章</string>
+    <string name="step_sync_article_size">%1$s 同步文章 [%2$d]</string>
+    <string name="step_sync_article_refs">%1$s 同步文章信息</string>
     <string name="fetch_article_full_content">抓取文章全文</string>
 
     <plurals name="articles_count">
@@ -107,8 +113,6 @@
     <plurals name="has_new_articles">
         <item quantity="other">有 %1$d 篇新文章</item>
     </plurals>
-
-<!--    <string name="has_new_articles">有新文章</string>-->
 
     <string name="share">分享</string>
     <string name="share_to">分享到</string>
@@ -124,7 +128,19 @@
     <string name="edit_success">修改成功</string>
     <string name="edit_fail">修改失败</string>
     <string name="edit_fail_with_reason">修改失败：%1$s</string>
+    <string name="edit_fail_with_tag_not_found">修改失败：分类不存在</string>
+    <string name="edit_fail_with_unknown_cause">修改失败：原因不明</string>
     <string name="response_fail">响应失败</string>
+
+    <string name="provider_response_code">%1$s 响应码 %2$d</string>
+    <string name="response_code">响应码 %1$d</string>
+
+    <string name="return_data_exception">返回数据异常</string>
+
+    <string name="provider_return_data_exception">%1$s 返回数据异常</string>
+
+    <string name="tag_not_found">分类不存在</string>
+    <string name="unknown_cause">原因不明</string>
 
     <string name="mask_success">标记成功</string>
     <string name="mask_fail">标记失败</string>
@@ -169,6 +185,18 @@
 
     <string name="enable_logging">日志记录</string>
     <string name="check_app_update">检查 App 更新</string>
+
+    <string name="data">数据</string>
+    <string name="import_opml">导入 OPML</string>
+    <string name="export_opml">导出 OPML</string>
+    <string name="please_login_to_rss_service_first">请先登录RSS服务</string>
+
+    <string name="processing">处理中…</string>
+    <string name="external_storage_device_is_not_available">外置存储设备不可用</string>
+    <string name="exported_as_file_with_path">已导出为文件：%1$s</string>
+    <string name="no_feeds_no_need_to_export">没有订阅源，无需导出</string>
+    <string name="unable_to_create_folder_with_path">无法创建文件夹：%1$s</string>
+    <string name="unable_to_create_backup_folder">无法创建 Backup 文件夹</string>
 
     <string name="rules">规则</string>
     <string name="rules_target">规则：%1$s</string>
@@ -249,11 +277,14 @@
     <string name="failed_condition_is_incomplete">失败：条件未填写完整</string>
     <string name="failed_action_is_not_checked">失败：动作未勾选</string>
 
+    <!--修改这里，记得要修改的 ConditionEditAdapter 文件中 attrSpinner.setOnItemSelectedListener -> onItemSelected 函数-->
     <string-array name="action_attributes">
         <item>标题</item>
         <item>内容</item>
         <item>作者</item>
         <item>图片数量</item>
+        <item>音频数量</item>
+        <item>视频数量</item>
     </string-array>
 
     <string-array name="action_judge_title">
@@ -351,19 +382,28 @@
     <string name="mark_as_unread">标记为未读</string>
     <string name="speak_article">播报该文章</string>
 
-    <string name="get_readability_ing">正在获取全文</string>
-    <string name="get_readability_success">获取成功</string>
-    <string name="get_readability_failure">获取失败：%1$s</string>
-    <string name="cancel_readability">已取消展示获取的全文</string>
+    <string name="display_mode_for_article">文章默认展示</string>
+    <string name="rss">RSS 输出的正文</string>
+    <string name="readability">同步时抓取的全文</string>
+    <string name="original">浏览器打开的网页</string>
+
+    <string name="get_readability_ing">正在抓取全文</string>
+    <string name="get_readability_success">抓取成功</string>
+    <string name="get_readability_failure">抓取失败：%1$s</string>
+    <string name="cancel_readability">已取消展示抓取的全文</string>
+
+
 
     <string name="music_time">0:00</string>
     <string name="music_speed">1.0</string>
 
     <string name="edit_name">编辑名称</string>
     <string name="search">搜索</string>
-    <string name="search_key">输入关键词</string>
     <string name="bag_network_please_check_it">网络不好，请重试一下</string>
     <string name="failed_please_try_again">失败，请重试一下</string>
+
+    <string name="input_feed_url">输入订阅源网址</string>
+
 
     <string name="search_cloudy_feeds_result_count">已搜到 %1$d 个订阅源</string>
     <string name="search_header_search_cloudy_feeds">搜索订阅源</string>
@@ -376,10 +416,10 @@
 
     <string name="copy_success">复制成功</string>
 
-    <string name="please_input_keyword">请输入要搜索的词</string>
 
     <string name="subscribe">订阅</string>
-    <string name="subscribe_success">订阅成功，请刷新同步</string>
+    <string name="subscribe_success">订阅成功</string>
+    <string name="subscribe_success_plz_sync">订阅成功，请刷新同步</string>
     <string name="subscribe_fail">订阅失败: %1$s</string>
     <string name="unsubscribe_succeeded">退订成功</string>
     <string name="unsubscribe_failed">退订失败: %1$s</string>
@@ -404,10 +444,6 @@
     <string name="all">所有</string>
     <string name="unread">未读</string>
     <string name="starred">收藏</string>
-
-    <string name="rss">RSS</string>
-    <string name="readability">易读</string>
-    <string name="original">原网页</string>
 
     <string name="view">查看</string>
 
@@ -460,29 +496,26 @@
 
     <string name="inoreader_oauth">InoReader (OAuth)</string>
     <string name="inoreader_login">InoReader (登录)</string>
-    <string name="inoreader_site_url">Inoreader 网址</string>
+    <string name="inoreader_site_url">InoReader 网址</string>
     <string name="intro">简介</string>
 
-    <string name="need_to_access_inoreader_url_normally_hint">该服务需要您能正常访问 Inoreader 官网(如下)</string>
+    <string name="need_to_access_inoreader_url_normally_hint">请确保您能访问 InoReader 官网</string>
 
     <string name="everything_is_rssible">万物皆可 RSS</string>
-    <string name="developed_by_wizos">行亘 · 作</string>
+    <string name="developed_by_wizos">之行\n作亘</string>
 
     <string name="do_you_want_to_delete_data_of_this_account_after_logout">退出登录后，是否删除该账号的所有数据？</string>
     <string name="loread_plugin_must_be_installed">注：须提前在 plugins.local 目录中安装 Loread 插件</string>
     <string name="the_server_site_url_like">服务器网址格式为“https://example.com”</string>
 
-    <string name="rss_summary">
-        通俗得说，RSS 是一种订阅资讯的方式。\n\n
-        就像在微博上关注张三、在B站上关注李四，你可以在『RSS 阅读器』中添加对应的订阅网址来关注他们。\n\n
-        由此可实现订阅微博、知乎、优酷、公众号、博客、论坛……</string>
-    <string name="authorizing">授权中……</string>
+    <string name="rss_summary">通俗得说，RSS 是一种订阅资讯的方式。\n\n就像在微博上关注张三、在B站上关注李四，你可以在『RSS 阅读器』中添加对应的订阅网址来关注他们。\n\n由此可实现订阅微博、知乎、优酷、公众号、博客、论坛……</string>
 
     <string name="open_with">打开方式</string>
 
-    <string name="feed_desc">简介：</string>
-    <string name="site_url">站点网址：</string>
-    <string name="feed_url">订阅网址：</string>
+    <string name="feed_desc">简介</string>
+    <string name="site_url">站点网址</string>
+    <string name="feed_url">订阅源网址</string>
+    <string name="feed_name">订阅源名称</string>
     <string name="unsubscribe">退订</string>
 
     <string name="display_filter_is_under_development">展示筛选器，功能开发中</string>
@@ -514,7 +547,8 @@
 
     <string name="save">保存</string>
     <string name="saved">已保存</string>
-    <string name="search_feeds_enter_keywords_or_url">搜索源（输入关键词或url）</string>
+    <string name="search_feeds_enter_keywords_or_url">搜索源（输入关键词或网址）</string>
+    <string name="enter_keyword_or_url">输入关键词或网址</string>
     <string name="search_articles">搜索文章</string>
     <string name="exit_search">退出搜索</string>
     <string name="subscription">订阅源</string>
@@ -538,8 +572,28 @@
     <string name="failure">失败</string>
     <string name="lab">实验室</string>
 
-    <string name="inoreader_logo">Inoreader 的标志</string>
+    <string name="inoreader_logo">InoReader 的标志</string>
     <string name="feedly_logo">Feedly 的标志</string>
     <string name="fever_logo">Fever 的标志</string>
     <string name="tiny_tiny_rss_logo">Tiny Tiny RSS 的标志</string>
+    <string name="rss_logo">RSS 的标志</string>
+
+
+    <string name="content_of_feed_is_empty">Feed 内容为空</string>
+
+    <string name="add_subscription">添加订阅</string>
+    <string name="paste_subscription">从剪切板导入</string>
+    <string name="scan_subscription">扫描二维码</string>
+
+    <string name="local_rss">本地 RSS</string>
+
+    <string name="please_add_a_feed_first">请先添加订阅源</string>
+
+    <string name="getting_data_for_feed">正在获取订阅源数据</string>
+
+
+    <string name="url_is_not_accessible_with_reason">网址无法访问：%1$s</string>
+
+    <string name="no_search_results_found">未搜索到任何结果</string>
+    <string name="no_articles">没有文章了</string>
 </resources>

@@ -86,12 +86,12 @@ public class ImageUtils {
      * 合成图片
      */
     public static Bitmap mergeBitmap(Bitmap bgBitmap, Bitmap fgBitmap) {
-//        BitmapFactory.Options options = new BitmapFactory.Options();
-//        //只读取图片，不加载到内存中
-//        options.inJustDecodeBounds = true;
-//        // isSampleSize是表示对图片的缩放程度，比如值为2图片的宽度和高度都变为以前的1/2
-//        // inSampleSize只能是2的次方，如计算结果是7会按4进行压缩，计算结果是15会按8进行压缩。
-//        options.inSampleSize = 1;
+        // BitmapFactory.Options options = new BitmapFactory.Options();
+        // //只读取图片，不加载到内存中
+        // options.inJustDecodeBounds = true;
+        // // isSampleSize是表示对图片的缩放程度，比如值为2图片的宽度和高度都变为以前的1/2
+        // // inSampleSize只能是2的次方，如计算结果是7会按4进行压缩，计算结果是15会按8进行压缩。
+        // options.inSampleSize = 1;
 
         //以其中一张图片的大小作为画布的大小，或者也可以自己自定义
         Bitmap newBitmap = Bitmap.createBitmap(bgBitmap);
@@ -113,10 +113,10 @@ public class ImageUtils {
         // 设置第二张图片的位置
         canvas.drawBitmap(fgBitmap, (w - fgBitmap.getWidth()) / 2, (h - fgBitmap.getHeight()) / 2, paint);
         canvas.save(); // Canvas.ALL_SAVE_FLAG
-//        bgBitmap.recycle();
-//        bgBitmap = null;
-//        fgBitmap.recycle();
-//        fgBitmap = null;
+        // bgBitmap.recycle();
+        // bgBitmap = null;
+        // fgBitmap.recycle();
+        // fgBitmap = null;
         // 存储新合成的图片
         canvas.restore();
         return newBitmap;
@@ -128,10 +128,9 @@ public class ImageUtils {
             @Override
             public void run() {
                 try {
-//                    FileInputStream fileInputStream = new FileInputStream(App.i().getExUserFilesDir() + "/compressed/pic.jpg");
+                    // FileInputStream fileInputStream = new FileInputStream(App.i().getExUserFilesDir() + "/compressed/pic.jpg");
 
                     Bitmap newBitmap = getThumbnail(file, 1080);
-
                     //将合并后的bitmap3保存为png图片到本地
                     FileOutputStream out = new FileOutputStream(fileNew);
                     newBitmap.compress(Bitmap.CompressFormat.JPEG, 100, out);
@@ -250,10 +249,86 @@ public class ImageUtils {
         }
     }
 
+
+    /**
+     * 常见的图片格式以及SVG
+     * 图片返回true
+     * svg返回false
+     * 都不是则返回null
+     */
+    public static Boolean isImgOrSvg(File file) {
+        try {
+            FileInputStream is = new FileInputStream(file);
+            byte[] src = new byte[28];
+            is.read(src, 0, 28);
+            StringBuilder stringBuilder = new StringBuilder("");
+            for (byte b : src) {
+                int v = b & 0xFF;
+                String hv = Integer.toHexString(v).toUpperCase();
+                if (hv.length() < 2) {
+                    stringBuilder.append(0);
+                }
+                stringBuilder.append(hv);
+            }
+            String fileHeader = stringBuilder.toString();
+
+            FileTypeIMG[] imgTypes = FileTypeIMG.values();
+            for (FileTypeIMG imgType : imgTypes) {
+                if (fileHeader.startsWith(imgType.getValue())) {
+                    return true;
+                }
+            }
+            FileTypeSVG[] svgTypes = FileTypeSVG.values();
+            for (FileTypeSVG svgType : svgTypes) {
+                if (fileHeader.startsWith(svgType.getValue())) {
+                    return false;
+                }
+            }
+            return null;
+        }catch (IOException e){
+            return null;
+        }
+    }
+
+    public static boolean isImgOrSvg2(File file) {
+        try {
+            FileInputStream is = new FileInputStream(file);
+            byte[] src = new byte[28];
+            is.read(src, 0, 28);
+            StringBuilder stringBuilder = new StringBuilder("");
+            for (byte b : src) {
+                int v = b & 0xFF;
+                String hv = Integer.toHexString(v).toUpperCase();
+                if (hv.length() < 2) {
+                    stringBuilder.append(0);
+                }
+                stringBuilder.append(hv);
+            }
+            String fileHeader = stringBuilder.toString();
+
+            FileTypeIMG[] imgTypes = FileTypeIMG.values();
+            for (FileTypeIMG imgType : imgTypes) {
+                if (fileHeader.startsWith(imgType.getValue())) {
+                    return true;
+                }
+            }
+            FileTypeSVG[] svgTypes = FileTypeSVG.values();
+            for (FileTypeSVG svgType : svgTypes) {
+                if (fileHeader.startsWith(svgType.getValue())) {
+                    return true;
+                }
+            }
+        }catch (IOException e){
+            return false;
+        }
+        return false;
+    }
+
+
     /**
      * 常见的图片格式以及SVG
      */
-    public static boolean isImgOrSvg(File file) {
+    public static boolean isImgOrSvg3(File file) {
         try {
             FileInputStream is = new FileInputStream(file);
             byte[] src = new byte[28];
@@ -278,4 +353,5 @@ public class ImageUtils {
         }
         return false;
     }
+
 }

@@ -149,9 +149,6 @@ public class ArticlePagedListAdapter extends PagedListAdapter<Article, ArticlePa
             articleImg.setVisibility(View.GONE);
 
             articleSummary.setText("");
-            //articleFeed.setVisibility(View.GONE);
-            //articleFeed.setText(App.i().getString(R.string.loading));
-            //articlePublished.setText("");
             articleSave.setVisibility(View.GONE);
             articleReading.setVisibility(View.GONE);
             articleStar.setVisibility(View.GONE);
@@ -227,24 +224,20 @@ public class ArticlePagedListAdapter extends PagedListAdapter<Article, ArticlePa
         }
     }
 
-    public Article getById(int position){
-        return CoreDB.i().articleDao().getById(App.i().getUser().getId(), getId(position));
-    }
-    // public Article getItem(int position){
-    //     return super.getItem(position);
-    // }
-
     private List<String> articleIds = new ArrayList<>();
     public void setArticleIds(List<String> articleIds){
         this.articleIds = articleIds;
     }
-    public String getId(int position){
+    public String getArticleId(int position){
         if(articleIds != null && position < articleIds.size()){
             return articleIds.get(position);
         }else {
             XLog.e("articleIds 为空 或 索引超出下标。position = " + position + ", articleIds size = " + (articleIds!=null ? articleIds.size():-1));
             return "";
         }
+    }
+    public Article getArticle(int position){
+        return CoreDB.i().articleDao().getById(App.i().getUser().getId(), getArticleId(position));
     }
 
     /**
@@ -260,6 +253,9 @@ public class ArticlePagedListAdapter extends PagedListAdapter<Article, ArticlePa
     //    return super.getItem(position);
     // }
 
+    // public Article getItem(int position){
+    //     return super.getItem(position);
+    // }
     public void setLastPos(int position){
         lastPos = position;
     }

@@ -57,6 +57,13 @@ public interface FeedlyService {
             @Header("authorization") String authorization
     );
 
+    // 仅获取到分类
+    @GET("categories")
+    Call<List<Collection>> getCategories(
+            @Header("authorization") String authorization
+    );
+
+    // 获取到分类及其下面的feed
     @GET("collections")
     Call<List<Collection>> getCollections(
             @Header("authorization") String authorization

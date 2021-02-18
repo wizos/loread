@@ -40,7 +40,7 @@ import me.wizos.loread.config.HostBlockConfig;
 import me.wizos.loread.config.article_extract.ArticleExtractConfig;
 import me.wizos.loread.config.article_extract.ArticleExtractRule;
 import me.wizos.loread.config.url_rewrite.UrlRewriteConfig;
-import me.wizos.loread.log.JSLog;
+import me.wizos.loread.log.Console;
 import me.wizos.loread.network.HttpClientManager;
 import me.wizos.loread.utils.ArticleUtils;
 import me.wizos.loread.utils.DataUtils;
@@ -170,7 +170,7 @@ public class Distill {
                     @JavascriptInterface
                     @Override
                     public void getHtml(String html) throws IOException {
-                        XLog.d("WebView 获取全文成功：" + html );
+                        XLog.d("WebView 获取全文成功：" + StringUtils.isEmpty(html) );
                         if(!StringUtils.isEmpty(html)){
                             readability(Jsoup.parse(html, url));
                         }else {
@@ -253,7 +253,7 @@ public class Distill {
             bindings.put("document", doc);
             bindings.put("uri", uri);
             bindings.put("call", HttpCall.i());
-            bindings.put("log", JSLog.i());
+            bindings.put("console", new Console());
             ScriptUtils.i().eval(rule.getDocumentTrim(), bindings);
         }
 
@@ -272,7 +272,7 @@ public class Distill {
                 bindings.put("uri", uri);
                 bindings.put("content", contentElements.html());
                 bindings.put("call", HttpCall.i());
-                bindings.put("log", JSLog.i());
+                bindings.put("console", new Console());
                 ScriptUtils.i().eval(rule.getContentTrim(), bindings);
                 XLog.d("提取规则 - 正文处理：" + rule.getContentTrim() );
                 return (String)bindings.get("content");

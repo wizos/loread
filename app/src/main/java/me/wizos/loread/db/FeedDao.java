@@ -13,6 +13,9 @@ import java.util.List;
 
 @Dao
 public interface FeedDao {
+    @Query("SELECT count(*) FROM feed WHERE uid = :uid")
+    int getCount(String uid);
+
     @Query("SELECT * FROM feed WHERE uid = :uid")
     List<Feed> getAll(String uid);
 
@@ -20,22 +23,67 @@ public interface FeedDao {
     LiveData<List<Feed>> getAllLiveData(String uid);
 
     @Query("SELECT * FROM feed WHERE uid = :uid AND id = :id LIMIT 1")
-    Feed getById(String uid,String id);
+    LiveData<Feed> get(String uid, String id);
+
+    @Query("SELECT * FROM feed WHERE uid = :uid AND id = :id LIMIT 1")
+    Feed getById(String uid, String id);
 
     @Query("SELECT * FROM feed WHERE uid = :uid AND feedUrl = :feedUrl LIMIT 1")
-    Feed getByFeedUrl(String uid,String feedUrl);
+    Feed getByFeedUrl(String uid, String feedUrl);
 
-    // @Query("SELECT feed.* FROM feed " +
-    //         "LEFT JOIN feedcategory ON (feed.uid = feedcategory.uid AND feed.id = feedcategory.feedId) " +
-    //         "WHERE feed.uid = :uid " +
-    //         "AND feedcategory.categoryId = :categoryId " +
-    //         "ORDER BY case when feed.unreadCount > 0 then 0 else 1 end, feed.title ASC")
+    // 包含上次同步时是正常的，以及不正常的
+    @Query("SELECT * FROM feed " +
+            "WHERE feed.uid = :uid " +
+            "AND feed.lastErrorCount < 16 " +
+            "AND ( " +
+            "      (syncInterval = -1 AND (lastSyncTime + :globalSyncInterval * 60000 + lastErrorCount * lastErrorCount * lastErrorCount * 15) < :currentTimeMillis) " +
+            "      OR " +
+            "      (syncInterval > 0 AND (lastSyncTime + syncInterval * 60000 + lastErrorCount * lastErrorCount * lastErrorCount * 15) < :currentTimeMillis) " +
+            "    ) " +
+            "ORDER BY lastSyncTime ASC")
+    List<Feed> getFeedsNeedSync(String uid, int globalSyncInterval, long currentTimeMillis);
+
 
     @Query("SELECT * FROM feed " +
             "WHERE feed.uid = :uid " +
             "AND id IN ( SELECT feedid FROM feedcategory WHERE categoryId = :categoryId) " +
             "ORDER BY CASE WHEN feed.unreadCount > 0 THEN 0 ELSE 1 END, feed.title COLLATE NOCASE ASC")
     List<Feed> getByCategoryId(String uid,String categoryId);
+
+
+
+    @Query("SELECT id,title,unreadCount as count FROM feed " +
+            "WHERE feed.uid = :uid " +
+            "ORDER BY CASE WHEN feed.unreadCount > 0 THEN 0 ELSE 1 END, feed.title COLLATE NOCASE ASC")
+    LiveData<List<Collection>> getFeedsLiveDataUnreadCount(String uid);
+
+    @Query("SELECT id,title,starCount as count FROM feed " +
+            "WHERE feed.uid = :uid " +
+            "ORDER BY CASE WHEN feed.starCount > 0 THEN 0 ELSE 1 END, feed.title COLLATE NOCASE ASC")
+    LiveData<List<Collection>> getFeedsLiveDataStaredCount(String uid);
+
+    @Query("SELECT id,title,allCount as count FROM feed " +
+            "WHERE feed.uid = :uid " +
+            "ORDER BY CASE WHEN feed.allCount > 0 THEN 0 ELSE 1 END, feed.title COLLATE NOCASE ASC")
+    LiveData<List<Collection>> getFeedsLiveDataAllCount(String uid);
+
+
+
+    @Query("SELECT id,title,unreadCount as count FROM feed " +
+            "WHERE feed.uid = :uid " +
+            "ORDER BY CASE WHEN feed.unreadCount > 0 THEN 0 ELSE 1 END, feed.title COLLATE NOCASE ASC")
+    List<Collection> getFeedsUnreadCount(String uid);
+
+    @Query("SELECT id,title,starCount as count FROM feed " +
+            "WHERE feed.uid = :uid " +
+            "ORDER BY CASE WHEN feed.starCount > 0 THEN 0 ELSE 1 END, feed.title COLLATE NOCASE ASC")
+    List<Collection> getFeedsStaredCount(String uid);
+
+    @Query("SELECT id,title,allCount as count FROM feed " +
+            "WHERE feed.uid = :uid " +
+            "ORDER BY CASE WHEN feed.allCount > 0 THEN 0 ELSE 1 END, feed.title COLLATE NOCASE ASC")
+    List<Collection> getFeedsAllCount(String uid);
+
 
     @Query("SELECT id,title,unreadCount as count FROM feed " +
             "WHERE feed.uid = :uid " +
@@ -126,16 +174,18 @@ public interface FeedDao {
     int getFeedsCountByUnCategory(String uid);
 
 
-
     @Query("SELECT * FROM FeedView WHERE uid = :uid" )
     List<Feed> getFeedsRealTimeCount(String uid);
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    @Transaction
-    void insert(Feed... feeds);
+    void insert(Feed feed);
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     @Transaction
     void insert(List<Feed> feeds);
+
+    @Query("UPDATE feed SET title = :newName where uid = :uid AND id = :id")
+    void updateName(String uid, String id, String newName);
 
     @Update
     @Transaction

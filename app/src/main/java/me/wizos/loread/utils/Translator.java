@@ -9,24 +9,12 @@ import androidx.annotation.ArrayRes;
 import me.wizos.loread.R;
 
 public class Translator {
-    // private static Translator instance;
     private ArrayMap<String, String> dict;
     private Context context;
     public Translator(Context context){
         this.dict = new ArrayMap<>();
         this.context = context;
     }
-
-    // public static Translator i() {
-    //     if (instance == null) {
-    //         synchronized (Translator.class) {
-    //             if (instance == null) {
-    //                 instance = new Translator();
-    //             }
-    //         }
-    //     }
-    //     return instance;
-    // }
 
     public void mergeRuleResources(){
         merge(context, R.array.action_attributes_key, R.array.action_attributes);

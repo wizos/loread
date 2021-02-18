@@ -26,9 +26,28 @@ public class FeverResponse {
         return lastRefreshedOnTime;
     }
 
-
     public boolean isSuccessful(){
         return auth == 1;
+    }
+
+    public void setApiVersion(int apiVersion) {
+        this.apiVersion = apiVersion;
+    }
+
+    public void setAuth(int auth) {
+        this.auth = auth;
+    }
+
+    public void setLastRefreshedOnTime(long lastRefreshedOnTime) {
+        this.lastRefreshedOnTime = lastRefreshedOnTime;
+    }
+
+    public String getError() {
+        return error;
+    }
+
+    public void setError(String error) {
+        this.error = error;
     }
 
     @NotNull

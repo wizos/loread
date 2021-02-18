@@ -2,11 +2,7 @@ package me.wizos.loread.bean.inoreader.itemContents;
 
 import java.util.ArrayList;
 
-import me.wizos.loread.App;
 import me.wizos.loread.bean.Enclosure;
-import me.wizos.loread.db.Article;
-import me.wizos.loread.network.api.BaseApi;
-import me.wizos.loread.utils.ArticleUtils;
 
 /**
  * Stream content 和 Item content （貌似已被官方弃用）两个api返回指内的文章项
@@ -146,43 +142,5 @@ public class Item {
 
     public void setOrigin(Origin origin) {
         this.origin = origin;
-    }
-
-
-    public Article convert(BaseApi.ArticleChanger articleChanger) {
-        Article article = new Article();
-        // 返回的字段
-        article.setId(id);
-        article.setAuthor(author);
-        article.setPubDate(published * 1000);
-
-        if (canonical != null && canonical.size() > 0) {
-            article.setLink(canonical.get(0).getHref());
-        }
-        if (origin != null) {
-            article.setFeedId(origin.getStreamId());
-            article.setFeedTitle(origin.getTitle());
-        }
-
-        String tmpContent = ArticleUtils.getOptimizedContent(article.getLink(), summary.getContent());
-        tmpContent = ArticleUtils.getOptimizedContentWithEnclosures(tmpContent,enclosure);
-        article.setContent(tmpContent);
-
-        String tmpSummary = ArticleUtils.getOptimizedSummary(tmpContent);
-        article.setSummary(tmpSummary);
-
-        title = ArticleUtils.getOptimizedTitle(title,tmpSummary);
-        article.setTitle(title);
-
-        String coverUrl = ArticleUtils.getCoverUrl(article.getLink(),tmpContent);
-        article.setImage(coverUrl);
-
-        // 自己设置的字段
-        // KLog.i("【增加文章】" + article.getId());
-        article.setSaveStatus(App.STATUS_NOT_FILED);
-        if (articleChanger != null) {
-            articleChanger.change(article);
-        }
-        return article;
     }
 }

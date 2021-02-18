@@ -1,5 +1,6 @@
 package me.wizos.loread.network.api;
 
+import android.net.Uri;
 import android.text.TextUtils;
 
 import androidx.collection.ArraySet;
@@ -25,6 +26,7 @@ import me.wizos.loread.App;
 import me.wizos.loread.Contract;
 import me.wizos.loread.R;
 import me.wizos.loread.activity.login.LoginResult;
+import me.wizos.loread.bean.FeedEntries;
 import me.wizos.loread.bean.feedly.CategoryItem;
 import me.wizos.loread.bean.feedly.input.EditFeed;
 import me.wizos.loread.bean.fever.Feeds;
@@ -46,6 +48,7 @@ import me.wizos.loread.db.FeedCategory;
 import me.wizos.loread.network.HttpClientManager;
 import me.wizos.loread.network.SyncWorker;
 import me.wizos.loread.network.callback.CallbackX;
+import me.wizos.loread.utils.Converter;
 import me.wizos.loread.utils.EncryptUtils;
 import me.wizos.loread.utils.StringUtils;
 import me.wizos.loread.utils.TriggerRuleUtils;
@@ -86,14 +89,25 @@ public class FeverApi extends AuthApi implements ILogin {
     }
 
     public LoginResult login(String accountId, String accountPd) throws IOException {
-        String auth = EncryptUtils.MD5(accountId + ":" + accountPd);
-        FeverResponse loginResultResponse = service.login(auth).execute().body();
         LoginResult loginResult = new LoginResult();
-        if (loginResultResponse != null && loginResultResponse.isSuccessful()) {
-            return loginResult.setSuccess(true).setData(auth);
-        } else {
-            return loginResult.setSuccess(false).setData(getString(R.string.login_failure_please_check_account));
+
+        String auth = EncryptUtils.MD5(accountId + ":" + accountPd);
+
+        Response<FeverResponse> response = service.login(auth).execute();
+
+        if(!response.isSuccessful()){
+            return loginResult.setSuccess(false).setData(getString(R.string.response_code, response.code()));
         }
+
+        FeverResponse loginResultResponse = response.body();
+        if (loginResultResponse == null) {
+            return loginResult.setSuccess(false).setData(getString(R.string.response_code, response.code()));
+        }
+        if(!loginResultResponse.isSuccessful()){
+            XLog.w("Fever登录失败返回信息：" + loginResultResponse.getError());
+            return loginResult.setSuccess(false).setData(loginResultResponse.getError());
+        }
+        return loginResult.setSuccess(true).setData(auth);
     }
 
     public void login(String account, String password, CallbackX cb) {
@@ -103,22 +117,26 @@ public class FeverApi extends AuthApi implements ILogin {
         String auth = EncryptUtils.MD5(account + ":" + password);
         service.login(auth).enqueue(new retrofit2.Callback<FeverResponse>() {
             @Override
-            public void onResponse(retrofit2.Call<FeverResponse> call, Response<FeverResponse> response) {
-                if (response.isSuccessful()) {
-                    FeverResponse loginResponse = response.body();
-                    if (loginResponse != null && loginResponse.isSuccessful()) {
-                        cb.onSuccess(auth);
-                        return;
-                    }
-                    cb.onFailure(App.i().getString(R.string.login_failed_reason, loginResponse.toString()));
-                } else {
-                    cb.onFailure(App.i().getString(R.string.login_failed_reason, response.message()));
+            public void onResponse(@NotNull retrofit2.Call<FeverResponse> call, @NotNull Response<FeverResponse> response) {
+                if (!response.isSuccessful()) {
+                    cb.onFailure(App.i().getString(R.string.response_code, response.code()));
+                    return;
                 }
+                FeverResponse loginResponse = response.body();
+                if (loginResponse == null) {
+                    cb.onFailure(getString(R.string.response_code, response.code()));
+                    return;
+                }
+                if(!loginResponse.isSuccessful()){
+                    cb.onFailure(loginResponse.getError());
+                    return;
+                }
+                cb.onSuccess(auth);
             }
 
             @Override
             public void onFailure(retrofit2.Call<FeverResponse> call, Throwable t) {
-                cb.onFailure(App.i().getString(R.string.login_failed_reason, t.getMessage()));
+                cb.onFailure(t.getLocalizedMessage());
             }
         });
     }
@@ -129,19 +147,17 @@ public class FeverApi extends AuthApi implements ILogin {
 
     @Override
     public void sync() {
+        long startSyncTimeMillis = System.currentTimeMillis() + 3600_000;
+        String uid = App.i().getUser().getId();
         try {
-            long startSyncTimeMillis = System.currentTimeMillis();
-            String uid = App.i().getUser().getId();
 
             XLog.i("同步 - 获取分类");
-            LiveEventBus.get(SyncWorker.SYNC_PROCESS_FOR_SUBTITLE).post(getString(R.string.sync_feed_info,"3."));
+            LiveEventBus.get(SyncWorker.SYNC_PROCESS_FOR_SUBTITLE).post(getString(R.string.step_sync_feed_info,"3."));
 
             Groups groupsResponse = service.getGroups(getAuthorization()).execute().body();
             if (groupsResponse == null || !groupsResponse.isSuccessful()) {
                 throw new HttpException("获取失败");
             }
-
-            // Map<Integer,String> groupFeedsMap = groupsResponse.getFeedsGroupsMap();
 
             Iterator<Group> groupsIterator = groupsResponse.getGroups().iterator();
             Group group;
@@ -192,11 +208,9 @@ public class FeverApi extends AuthApi implements ILogin {
             coverSaveCategories(categories);
             coverFeedCategory(feedCategories);
 
-            // updateFeedUnreadCount();
-
             // 获取所有未读的资源
             XLog.i("2 - 同步文章信息");
-            LiveEventBus.get(SyncWorker.SYNC_PROCESS_FOR_SUBTITLE).post(getString(R.string.sync_article_refs,"2."));
+            LiveEventBus.get(SyncWorker.SYNC_PROCESS_FOR_SUBTITLE).post(getString(R.string.step_sync_article_refs,"2."));
 
             // 获取未读资源
             UnreadItemIds unreadItemIdsRes = service.getUnreadItemIds(getAuthorization()).execute().body();
@@ -242,10 +256,10 @@ public class FeverApi extends AuthApi implements ILogin {
                 List<Item> itemList = items.getItems();
                 articles = new ArrayList<>(itemList.size());
                 for (Item item : itemList) {
-                    articles.add(item.convert(new ArticleChanger() {
+                    articles.add(Converter.from(item, new Converter.ArticleConvertListener() {
                         @Override
-                        public Article change(Article article) {
-                            // article.setCrawlDate(0);
+                        public Article onEnd(Article article) {
+                            article.setCrawlDate(startSyncTimeMillis);
                             article.setUid(uid);
                             return article;
                         }
@@ -253,7 +267,7 @@ public class FeverApi extends AuthApi implements ILogin {
                 }
 
                 CoreDB.i().articleDao().insert(articles);
-                LiveEventBus.get(SyncWorker.SYNC_PROCESS_FOR_SUBTITLE).post(App.i().getString(R.string.sync_article_content,"1.", hadFetchCount, ids.size()));
+                LiveEventBus.get(SyncWorker.SYNC_PROCESS_FOR_SUBTITLE).post(App.i().getString(R.string.step_sync_article_content,"1.", hadFetchCount, ids.size()));
             }
 
             LiveEventBus.get(SyncWorker.SYNC_PROCESS_FOR_SUBTITLE).post(getString(R.string.clear_article));
@@ -283,14 +297,14 @@ public class FeverApi extends AuthApi implements ILogin {
             handleException(e, "同步失败：Runtime异常");
         }
         App.i().isSyncing = false;
-        handleDuplicateArticles();
-        handleCrawlDate();
+        handleDuplicateArticles(startSyncTimeMillis);
+        handleCrawlDate2();
         updateCollectionCount();
         LiveEventBus.get(SyncWorker.SYNC_PROCESS_FOR_SUBTITLE).post(null);
     }
 
     private void handleException(Exception e, String msg) {
-        XLog.e("同步失败：" + e.getClass() + " = " + msg);
+        XLog.e("同步失败：" + e.getLocalizedMessage() + " = " + msg);
         e.printStackTrace();
         if (Contract.NOT_LOGGED_IN.equalsIgnoreCase(msg)) {
             ToastUtils.show(getString(R.string.not_logged_in));
@@ -300,16 +314,22 @@ public class FeverApi extends AuthApi implements ILogin {
     }
 
     @Override
-    public void renameTag(String tagId, String targetName, CallbackX cb) {
-        cb.onFailure(App.i().getString(R.string.server_api_not_supported, Contract.PROVIDER_FEVER));
-    }
-
-    public void addFeed(EditFeed editFeed, CallbackX cb) {
+    public void renameCategory(String categoryId, String targetName, CallbackX cb) {
         cb.onFailure(App.i().getString(R.string.server_api_not_supported, Contract.PROVIDER_FEVER));
     }
 
     @Override
-    public void renameFeed(String feedId, String renamedTitle, CallbackX cb) {
+    public void addFeed(FeedEntries feedEntries, CallbackX cb) {
+        cb.onFailure(App.i().getString(R.string.server_api_not_supported, Contract.PROVIDER_FEVER));
+    }
+
+    @Override
+    public void renameFeed(String feedId, String targetName, CallbackX cb) {
+        cb.onFailure(App.i().getString(R.string.server_api_not_supported, Contract.PROVIDER_FEVER));
+    }
+
+    @Override
+    public void importOPML(Uri uri, CallbackX cb) {
         cb.onFailure(App.i().getString(R.string.server_api_not_supported, Contract.PROVIDER_FEVER));
     }
 
@@ -330,13 +350,13 @@ public class FeverApi extends AuthApi implements ILogin {
                 if (response.isSuccessful()) {
                     cb.onSuccess(null);
                 } else {
-                    cb.onFailure("修改失败，原因未知");
+                    cb.onFailure(App.i().getString(R.string.response_code, response.code()));
                 }
             }
 
             @Override
             public void onFailure(@NotNull Call<FeverResponse> call, @NotNull Throwable t) {
-                cb.onFailure("修改失败，原因未知");
+                cb.onFailure(t.getLocalizedMessage());
             }
         });
     }

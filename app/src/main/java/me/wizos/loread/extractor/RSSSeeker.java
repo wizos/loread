@@ -36,7 +36,7 @@ import okhttp3.ResponseBody;
 
 public class RSSSeeker {
     private static final String TAG = "RSSSeeker";
-    private static final int TIMEOUT = 5_000; // 30 秒 30_000
+    private static final int TIMEOUT = 10_000; // 30 秒 30_000
     private String url;
     private Listener dispatcher;
 
@@ -71,7 +71,7 @@ public class RSSSeeker {
         this.handler = new Handler(Looper.getMainLooper(), new Handler.Callback() {
             @Override
             public boolean handleMessage(@NonNull Message msg) {
-                XLog.i("处理超时：" + msg.what + (msg.what != TIMEOUT));
+                XLog.i("处理超时：" + msg.what + "  " + (msg.what != TIMEOUT));
                 if(msg.what != TIMEOUT){
                     return false; //返回true 不对msg进行进一步处理
                 }

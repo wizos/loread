@@ -1,7 +1,5 @@
 package me.wizos.loread.utils;
 
-import com.elvishew.xlog.XLog;
-
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -19,11 +17,6 @@ import me.wizos.loread.db.Feed;
 
 public class OPMLUtils {
     public static void export(String title, File file, List<Feed> feeds) {
-        if (feeds == null || feeds.size() == 0) {
-            XLog.w("需要导出的feeds为空");
-            return;
-        }
-
         Document doc;
         Element bodyNode;
         Element categoryNode;

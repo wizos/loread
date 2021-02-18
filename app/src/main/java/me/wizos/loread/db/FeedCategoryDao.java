@@ -1,5 +1,6 @@
 package me.wizos.loread.db;
 
+import androidx.lifecycle.LiveData;
 import androidx.room.Dao;
 import androidx.room.Delete;
 import androidx.room.Insert;
@@ -12,6 +13,9 @@ import java.util.List;
 
 @Dao
 public interface FeedCategoryDao {
+    @Query("SELECT count(*) FROM feedcategory WHERE uid = :uid")
+    LiveData<Integer> getSize(String uid);
+
     @Query("SELECT * FROM feedcategory WHERE uid = :uid")
     List<FeedCategory> getAll(String uid);
 

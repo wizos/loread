@@ -13,11 +13,13 @@ import java.util.List;
 
 @Dao
 public interface CategoryDao {
+    @Query("SELECT count(*) FROM category WHERE uid = :uid")
+    LiveData<Integer> getSize(String uid);
+
     @Query("SELECT * FROM category WHERE uid = :uid ORDER BY title COLLATE NOCASE ASC")
     List<Category> getAll(String uid);
     @Query("SELECT * FROM category WHERE uid = :uid ORDER BY title COLLATE NOCASE ASC")
     LiveData<List<Category>> getAllLiveData(String uid);
-
 
     @Query("SELECT id,title,unreadCount as count FROM category WHERE uid = :uid ORDER BY title COLLATE NOCASE ASC")
     List<Collection> getCategoriesUnreadCount(String uid);
@@ -59,6 +61,9 @@ public interface CategoryDao {
 
     @Query("UPDATE category SET id = :newId where uid = :uid AND id = :oldId")
     void updateId(String uid, String oldId, String newId);
+
+    @Query("UPDATE category SET title = :newName where uid = :uid AND id = :id")
+    void updateName(String uid, String id, String newName);
 
     @Update
     @Transaction

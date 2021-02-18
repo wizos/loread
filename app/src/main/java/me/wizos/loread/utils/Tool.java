@@ -32,7 +32,7 @@ public class Tool {
         }
     }
 
-    public static void printCallStatck() {
+    public static void printCallStack() {
         if (!BuildConfig.DEBUG) {
             return;
         }
@@ -45,6 +45,18 @@ public class Tool {
         XLog.e("-----------------------------------");
     }
 
+    public static void printCallStack(StackTraceElement[] stackElements) {
+        for (StackTraceElement stackElement : stackElements) {
+            XLog.e(stackElement.getClassName() + "_" + stackElement.getFileName() + "_" + stackElement.getLineNumber() + "_" + stackElement.getMethodName());
+        }
+    }
+
+    public static void printCallStack(Exception e) {
+        StackTraceElement[] stackElements = e.getStackTrace();
+        for (StackTraceElement stackElement : stackElements) {
+            System.out.println(stackElement.getClassName() + "_" + stackElement.getFileName() + "_" + stackElement.getLineNumber() + "_" + stackElement.getMethodName());
+        }
+    }
     public static void setBackgroundColor(View object) {
         if (App.i().getUser().getThemeMode() == App.THEME_NIGHT) {
             object.setBackgroundColor(App.i().getResources().getColor(R.color.dark_background));

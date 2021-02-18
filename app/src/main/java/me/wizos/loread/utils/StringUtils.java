@@ -5,6 +5,9 @@ import android.util.Base64;
 
 import androidx.annotation.StringRes;
 
+import com.elvishew.xlog.XLog;
+
+import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -376,4 +379,65 @@ public class StringUtils {
                 .replaceAll("^[\\n\\s]+", "　　")//移除开头空行,并增加段前缩进2个汉字
                 .replaceAll("[\\n\\s]+$", "");//移除尾部空行
     }
+
+
+    public static String getSuffix(InputStream in) {
+        byte[] b = new byte[10];
+        int l = -1;
+        try {
+            l = in.read(b);
+            in.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+        if (l == 10) {
+            byte b0 = b[0];
+            byte b1 = b[1];
+            byte b2 = b[2];
+            byte b3 = b[3];
+            byte b6 = b[6];
+            byte b7 = b[7];
+            byte b8 = b[8];
+            byte b9 = b[9];
+            XLog.i("得到头：" + b);
+            if (b0 == (byte) 'G' && b1 == (byte) 'I' && b2 == (byte) 'F') {
+                return "gif";
+            } else if (b1 == (byte) 'P' && b2 == (byte) 'N' && b3 == (byte) 'G') {
+                return "png";
+            } else if (b6 == (byte) 'J' && b7 == (byte) 'F' && b8 == (byte) 'I' && b9 == (byte) 'F') {
+                return "jpg";
+            } else {
+                return null;
+            }
+        } else {
+            return null;
+        }
+    }
+
+
+
+
+    // https://blog.csdn.net/yan3013216087/article/details/81450658
+    // 保留合法字符
+    public static String keepValidXMLChars(String str) {
+        if (StringUtils.isEmpty(str)) return str; // vacancy test.
+        StringBuilder out = new StringBuilder(); // Used to hold the output.
+        char current; // Used to reference the current character.
+        for (int i = 0; i < str.length(); i++) {
+            current = str.charAt(i); // NOTE: No IndexOutOfBoundsException caught here; it should not happen.
+            if (current == 0x9 || current == 0xA || current == 0xD || current >= 0x20 && current <= 0xD7FF || current >= 0xE000 && current <= 0xFFFD)
+                out.append(current);
+        }
+        return out.toString();
+    }
+    //过滤非法字符
+    //注意，以下正则表达式过滤不全面，过滤范围为：0x00 - 0x08, 0x0b - 0x0c, 0x0e - 0x1f
+    public static String stripInvalidXMLChars(String str) {
+        if (StringUtils.isEmpty(str)) {
+            return str;
+        }
+        return str.replaceAll("[\\x00-\\x08\\x0b-\\x0c\\x0e-\\x1f]", "");
+    }
+
 }

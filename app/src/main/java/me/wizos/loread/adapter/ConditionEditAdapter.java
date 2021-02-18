@@ -130,6 +130,12 @@ public class ConditionEditAdapter extends RecyclerView.Adapter<ConditionEditAdap
                     }else if(position == 3){
                         judgeSpinner.setAdapter(judgeNumberAdapter);
                         valueTextView.setHint(R.string.number);
+                    }else if(position == 4){
+                        judgeSpinner.setAdapter(judgeNumberAdapter);
+                        valueTextView.setHint(R.string.number);
+                    }else if(position == 5){
+                        judgeSpinner.setAdapter(judgeNumberAdapter);
+                        valueTextView.setHint(R.string.number);
                     }
 
                     condition.setAttr(translator.get(attrAdapter.getItem(position)));

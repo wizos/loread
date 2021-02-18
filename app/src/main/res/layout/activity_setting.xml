@@ -158,6 +158,40 @@
                     tools:text="10 天" />
             </LinearLayout>
 
+            <TextView
+                style="@style/SettingItemHeader"
+                android:text="@string/data" />
+            <LinearLayout
+                android:id="@+id/setting_import_opml"
+                style="@style/SettingItem"
+                android:onClick="importOPML">
+                <TextView
+                    android:id="@+id/setting_import_opml_title"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    style="@style/SettingItemTitle2"
+                    android:text="@string/import_opml" />
+                <TextView
+                    android:id="@+id/setting_import_opml_summary"
+                    style="@style/SettingItemSummary"
+                    tools:text="" />
+            </LinearLayout>
+            <LinearLayout
+                android:id="@+id/setting_export_opml"
+                style="@style/SettingItem"
+                android:onClick="exportOPML">
+                <TextView
+                    android:id="@+id/setting_export_opml_title"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    style="@style/SettingItemTitle2"
+                    android:text="@string/export_opml" />
+                <TextView
+                    android:id="@+id/setting_export_opml_summary"
+                    style="@style/SettingItemSummary"
+                    tools:text="" />
+            </LinearLayout>
+
 
             <TextView
                 style="@style/SettingItemHeader"

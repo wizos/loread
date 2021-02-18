@@ -189,6 +189,7 @@ public class Article implements Cloneable{
     public void setStarUpdated(long starUpdated) {
         this.starUpdated = starUpdated;
     }
+
     public void updateContent(String content) {
         this.content = ArticleUtils.getOptimizedContent(link, content);;
         this.summary = ArticleUtils.getOptimizedSummary(content);

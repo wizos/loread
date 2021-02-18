@@ -32,7 +32,7 @@ public class Collection {
     private ArrayList<FeedItem> feedItems;
 
     // 可选，大部分时候没有
-//    String description;
+    // String description;
 
     public String getId() {
         return id;

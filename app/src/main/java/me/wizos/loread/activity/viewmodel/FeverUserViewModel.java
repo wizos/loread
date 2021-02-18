@@ -6,9 +6,7 @@ import androidx.annotation.NonNull;
 
 import com.elvishew.xlog.XLog;
 
-import me.wizos.loread.App;
 import me.wizos.loread.Contract;
-import me.wizos.loread.R;
 import me.wizos.loread.activity.login.LoginResult;
 import me.wizos.loread.db.CoreDB;
 import me.wizos.loread.db.CorePref;
@@ -58,7 +56,7 @@ public class FeverUserViewModel extends LoginViewModel {
 
             @Override
             public void onFailure(String error) {
-                LoginResult loginResult = new LoginResult().setSuccess(false).setData(App.i().getString(R.string.login_failed_reason, error));
+                LoginResult loginResult = new LoginResult().setSuccess(false).setData(error);
                 loginResultLiveData.postValue(loginResult);
             }
         });

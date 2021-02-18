@@ -5,8 +5,10 @@
     <string name="category">Category</string>
     <string name="un_category">UnCategory</string>
     <string name="tag">Tag</string>
-    <string name="edit_category">Edit Category</string>
-    <string name="select_category">Select Category</string>
+
+    <string name="create_category">Create category</string>
+    <string name="edit_category">Edit category</string>
+    <string name="select_category">Select category</string>
     <string name="approaching_the_world">Approaching the World</string>
 
     <string name="select_tag">Select tag</string>
@@ -17,7 +19,6 @@
     <string name="custom_user_agent">Custom UserAgent</string>
     <string name="enter_user_agent">Enter UserAgent</string>
     <string name="remove_custom_user_agent">Remove custom UserAgent</string>
-    <string name="select_display_mode">Display mode for articles</string>
 
     <string name="theme_switched_automatically">Themes have been switched automatically</string>
     <string name="feed_url_display">Feed URL: %s</string>
@@ -58,15 +59,20 @@
     <string name="use_tiny_tiny_rss_fever_api">Use TinyTinyRSS and Fever with same password</string>
 
     <string name="plz_grant_permission_tips">Please grant permission, otherwise the APP may not work properly!</string>
-    <string name="authing">Authorizing</string>
+    <string name="authorizing">Authorizing…</string>
     <string name="fetch_user_info">Getting Basic Information</string>
     <string name="auth_failure_please_try_again">Authorization failed, please try again.</string>
-    <string name="login_please_wait">Signing in</string>
+    <string name="login_please_wait">Login</string>
     <string name="login_failed_reason">Login failed, reason: %1$s</string>
+
+    <string name="login_failed_with_reason">Login failed: %1$s</string>
+
     <string name="login_failure_please_try_again">Login failed, please try again</string>
     <string name="login_failure_please_check_account">Login failed, please check account and password</string>
     <string name="temporarily_not_supported">Temporarily not supported</string>
     <string name="server_api_not_supported">%1$s does not support this function</string>
+
+    <string name="not_support_this_function">Not support this function</string>
 
     <!-- Strings related to Settings -->
     <string name="title_search">Search: %1$s</string>
@@ -90,11 +96,13 @@
     <string name="unable_to_find_app">No corresponding application found</string>
 
 
-    <string name="sync_article_content">%1$s Sync article content [%2$d / %3$d]</string>
-    <string name="sync_article_start">%1$s Sync article</string>
-    <string name="sync_article_size">%1$s Sync article [%2$d]</string>
-    <string name="sync_article_refs">%1$s Sync Article Info</string>
-    <string name="sync_feed_info">%1$s Sync feed info</string>
+    <string name="sync_feed">Sync feed[%1$s / %2$d]</string>
+    <string name="step_sync_feed_info">%1$s Sync feed info</string>
+
+    <string name="step_sync_article_content">%1$s Sync article content [%2$d / %3$d]</string>
+    <string name="step_sync_article_start">%1$s Sync article</string>
+    <string name="step_sync_article_size">%1$s Sync article [%2$d]</string>
+    <string name="step_sync_article_refs">%1$s Sync Article Info</string>
 
     <string name="fetch_article_full_content">Fetch article full content</string>
 
@@ -122,8 +130,18 @@
     <string name="edit_success">Edit successful</string>
     <string name="edit_fail">Edit fail</string>
     <string name="edit_fail_with_reason">Edit fail: %1$s</string>
+    <string name="edit_fail_with_tag_not_found">Edit fail: Tag not found</string>
+    <string name="edit_fail_with_unknown_cause">Edit fail: Unknown cause</string>
     <string name="editing">Editing</string>
     <string name="response_fail">Response fail</string>
+    <string name="provider_response_code">%1$s response code %2$d</string>
+    <string name="response_code">Response code %1$d</string>
+    <string name="return_data_exception">Return data exception</string>
+
+    <string name="provider_return_data_exception">%1$s return data exception</string>
+
+    <string name="tag_not_found">Tag not found</string>
+    <string name="unknown_cause">Unknown cause</string>
 
     <string name="mask_success">Mask successful</string>
     <string name="mask_fail">Mask fail</string>
@@ -135,7 +153,7 @@
     <string name="mark_the_above_articles_as_read">Mark the above articles as read?</string>
     <string name="mark_the_below_articles_as_read">Mark the below articles as read?</string>
     <string name="includes_forced_unread">Includes "forced unread"</string>
-    <string name="are_you_sure_you_want_to_exit_the_app">Are you sure you want to exit the appUpdateModel?</string>
+    <string name="are_you_sure_you_want_to_exit_the_app">Are you sure you want to exit the app?</string>
     <string name="sigh_with_emotion">Sigh with emotion</string>
     <string name="sigh_with_emotion_content">路很长，纵然远望，却不知方向。\n抽支烟，思绪无常，奔跑着彷徨。\n逃不脱的苟且，到不了的远方…</string>
 
@@ -168,6 +186,18 @@
 
     <string name="enable_logging">Enable logging</string>
     <string name="check_app_update">Check App Update</string>
+
+    <string name="data">Data</string>
+    <string name="import_opml">Import OPML</string>
+    <string name="export_opml">Export OPML</string>
+    <string name="please_login_to_rss_service_first">Please login to RSS service first</string>
+
+    <string name="processing">Processing…</string>
+    <string name="external_storage_device_is_not_available">External storage device is not available</string>
+    <string name="exported_as_file_with_path">Exported as file: %1$s</string>
+    <string name="no_feeds_no_need_to_export">No feed, no need to export</string>
+    <string name="unable_to_create_folder_with_path">Unable to create folder: %1$s</string>
+    <string name="unable_to_create_backup_folder">Unable to create Backup folder</string>
 
     <string name="rules">Rules</string>
     <string name="rules_target">Rules: %1$s</string>
@@ -212,7 +242,7 @@
     <!--<string name="replace_host_of_the_url">Replace host of the url</string>-->
     <string name="url_rewrite_host_summary">The host to be replace</string>
     <string name="url_rewrite_js_summary">The following content must be a JS script. \nThe system will pass in the \"url\", plz rewrite it. \nThe \"call.valid(url)\ == true" method can be called to verify that the new url is valid. \nWhen the response code is in [200..300), the url is valid.</string>
-    
+
     <string name="script_execution">Script execution: %1$s</string>
     <string-array name="url_rewrite_method_title">
         <item>Replace Host</item>
@@ -262,12 +292,16 @@
         <item>content</item>
         <item>author</item>
         <item>pictures</item>
+        <item>audios</item>
+        <item>videos</item>
     </string-array>
     <string-array name="action_attributes">
         <item>Title</item>
         <item>Content</item>
         <item>Author</item>
         <item>Pictures</item>
+        <item>Audios</item>
+        <item>Videos</item>
     </string-array>
 
     <string-array name="action_judge_title_key">
@@ -381,7 +415,7 @@
     <string name="bag_network_please_check_it">Network is\'t good, please try again</string>
     <string name="failed_please_try_again">Failed, please try again</string>
 
-    <!--<string name="tag_choose_tips">想看哪个分类？</string>-->
+    <string name="input_feed_url">Enter the feed URL</string>
 
     <string name="xx_minute">%1$s minutes</string>
     <string name="xx_hour">%1$s hours</string>
@@ -396,18 +430,21 @@
     <string name="mark_as_unread">Mark as unread</string>
     <string name="speak_article">Speak article</string>
 
+    <string name="display_mode_for_article">Display mode for article</string>
+    <string name="rss">Text of RSS output</string>
+    <string name="readability">Full text crawled when synchronizing</string>
+    <string name="original">Web page opened by browser</string>
 
     <string name="get_readability_ing">Getting full text</string>
     <string name="get_readability_success">Get Successful</string>
     <string name="get_readability_failure">Get failed: %1$s</string>
-    <string name="cancel_readability">The full text obtained has been cancelled</string>
+    <string name="cancel_readability">Unshow the crawled full text</string>
 
     <string name="music_time">0:00</string>
     <string name="music_speed">1.0</string>
 
     <string name="edit_name">Edit name</string>
     <string name="search">Search</string>
-    <string name="search_key">Input key words</string>
 
     <string name="search_cloudy_feeds_result_count">%1$d feeds found</string>
     <string name="search_header_search_cloudy_feeds">Search feeds</string>
@@ -417,12 +454,12 @@
     <string name="copy_link">Share link</string>
     <string name="open_by_outer">Open by outer</string>
     <string name="open_by_inner">Open by inner</string>
+
     <string name="copy_success">Copy succeeded</string>
 
-    <string name="please_input_keyword">please enter keyword</string>
-
     <string name="subscribe">Subscribe</string>
-    <string name="subscribe_success">Subscription succeeded, please sync manually</string>
+    <string name="subscribe_success">Subscription succeeded</string>
+    <string name="subscribe_success_plz_sync">Subscription succeeded, please sync manually</string>
     <string name="subscribe_fail">Subscription failed: %1$s</string>
     <string name="unsubscribe_succeeded">Unsubscribe succeeded</string>
     <string name="unsubscribe_failed">Unsubscribe failed: %1$s</string>
@@ -447,10 +484,6 @@
     <string name="all">All</string>
     <string name="unread">Unread</string>
     <string name="starred">Star</string>
-
-    <string name="rss">RSS</string>
-    <string name="readability">Readability</string>
-    <string name="original">WebPage</string>
 
     <string name="view">View</string>
 
@@ -586,18 +619,16 @@
     <string name="do_you_want_to_delete_data_of_this_account_after_logout">Do you want to delete all data of this account after logout?</string>
     <string name="loread_plugin_must_be_installed">Note: Loread plugin must be installed in \'plugins.local\' directory</string>
     <string name="the_server_site_url_like">The server host like "https://example.com"</string>
-    <string name="rss_summary">
-        In layman\'s terms, RSS is a way to subscribe to information.\n\n
-        Just as you follow John Doe on Twitter or Jane Doe on TikTok, you can follow them by adding their FEED URLs in the "RSS Reader".\n\n
-        This allows you to subscribe to Youtube, Instagram, Quora, Blog, Forum …</string>
-    <string name="authorizing">Authorizing…</string>
+    <string name="rss_summary">In layman\'s terms, RSS is a way to subscribe to information.\n\nJust as you follow John Doe on Twitter or Jane Doe on TikTok, you can follow them by adding their FEED URLs in the "RSS Reader".\n\nThis allows you to subscribe to Youtube, Instagram, Quora, Blog, Forum …</string>
+
 
     <string name="open_with">Open with</string>
 
 
-    <string name="feed_desc">Description: </string>
-    <string name="site_url">Site url: </string>
-    <string name="feed_url">Feed url: </string>
+    <string name="feed_desc">Description</string>
+    <string name="site_url">Site url</string>
+    <string name="feed_url">Feed url</string>
+    <string name="feed_name">Feed name</string>
     <string name="unsubscribe">Unsubscribe</string>
 
     <string name="display_filter_is_under_development">Display filter function is still under development</string>
@@ -608,7 +639,7 @@
     <string name="copied">Copied</string>
     <string name="speed">Speed</string>
     <string name="normal">Normal</string>
-    
+
     <string name="the_rule_of_full_text_extraction_has_expired">The rule of full-text extraction has expired: %1$s</string>
 
     <string name="not_logged_in">NOT LOGGED IN</string>
@@ -627,7 +658,8 @@
 
     <string name="save">Save</string>
     <string name="saved">Saved</string>
-    <string name="search_feeds_enter_keywords_or_url">Search feeds (Enter keywords or url)</string>
+    <string name="search_feeds_enter_keywords_or_url">Search feeds (Enter keyword or url)</string>
+    <string name="enter_keyword_or_url">Enter keyword or url</string>
     <string name="search_articles">Search articles</string>
     <string name="exit_search">Exit search</string>
     <string name="subscription">Subscription</string>
@@ -658,4 +690,25 @@
     <string name="feedly_logo">Logo of Feedly</string>
     <string name="fever_logo">Logo of Fever</string>
     <string name="tiny_tiny_rss_logo">Logo of Tiny Tiny RSS</string>
+    <string name="rss_logo">Logo of RSS</string>
+
+    <string name="content_of_feed_is_empty">The content of feed is empty</string>
+
+
+    <string name="add_subscription">Add feed</string>
+    <string name="paste_subscription">Paste to add feed</string>
+    <string name="scan_subscription">Scan to add feed</string>
+
+    <string name="local_rss">Local RSS</string>
+
+    <string name="please_add_a_feed_first">Please add a feed first</string>
+
+
+    <string name="getting_data_for_feed">Getting data for feed</string>
+
+
+    <string name="url_is_not_accessible_with_reason">URL is not accessible: %1$s</string>
+
+    <string name="no_search_results_found">No search results found</string>
+    <string name="no_articles">No articles</string>
 </resources>

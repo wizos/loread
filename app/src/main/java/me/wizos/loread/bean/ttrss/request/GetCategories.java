@@ -1,10 +1,14 @@
 package me.wizos.loread.bean.ttrss.request;
 
+import com.google.gson.annotations.SerializedName;
+
 public class GetCategories {
     private String sid;
     private String op = "getCategories";
-    private boolean unread_only = false;
-    private boolean include_empty = true;
+    @SerializedName("unread_only")
+    private boolean unreadOnly = false;
+    @SerializedName("include_empty")
+    private boolean includeEmpty = true;
 
     public GetCategories(String sid) {
         this.sid = sid;
@@ -18,19 +22,19 @@ public class GetCategories {
         this.sid = sid;
     }
 
-    public boolean isUnread_only() {
-        return unread_only;
+    public boolean isUnreadOnly() {
+        return unreadOnly;
     }
 
-    public void setUnread_only(boolean unread_only) {
-        this.unread_only = unread_only;
+    public void setUnreadOnly(boolean unreadOnly) {
+        this.unreadOnly = unreadOnly;
     }
 
-    public boolean isInclude_empty() {
-        return include_empty;
+    public boolean isIncludeEmpty() {
+        return includeEmpty;
     }
 
-    public void setInclude_empty(boolean include_empty) {
-        this.include_empty = include_empty;
+    public void setIncludeEmpty(boolean includeEmpty) {
+        this.includeEmpty = includeEmpty;
     }
 }

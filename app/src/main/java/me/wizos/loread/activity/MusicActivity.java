@@ -18,6 +18,7 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.content.ContextCompat;
 
 import com.elvishew.xlog.XLog;
 import com.freedom.lauzy.playpauseviewlib.PlayPauseView;
@@ -315,11 +316,11 @@ public class MusicActivity extends BaseActivity {
         ImageView imageView = new ImageView(this);
         imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
         imageView.setPadding(ScreenUtils.dp2px(10), ScreenUtils.dp2px(10), ScreenUtils.dp2px(10), ScreenUtils.dp2px(10));
-        imageView.setImageDrawable(getDrawable(R.drawable.ic_music));
+        imageView.setImageDrawable(ContextCompat.getDrawable(this, R.drawable.ic_music));
 
-        //imageView.setBackground(getDrawable(R.drawable.shape_corners));
+        // imageView.setBackground(getDrawable(R.drawable.shape_corners));
         Drawable drawable = new DrawableCreator.Builder()
-//                .setUnPressedDrawable( getDrawable(R.color.bluePrimary) )
+                // .setUnPressedDrawable( getDrawable(R.color.bluePrimary) )
                 .setRipple(true, getResources().getColor(R.color.primary))
                 .setPressedSolidColor(getResources().getColor(R.color.primary), getResources().getColor(R.color.bluePrimary))
                 .setSolidColor(getResources().getColor(R.color.bluePrimary))
@@ -334,7 +335,6 @@ public class MusicActivity extends BaseActivity {
                 startActivity(intent);
             }
         });
-
 
         FloatWindow
                 .with(getApplicationContext())

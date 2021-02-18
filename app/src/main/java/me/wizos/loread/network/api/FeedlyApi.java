@@ -1,9 +1,9 @@
 package me.wizos.loread.network.api;
 
+import android.net.Uri;
 import android.text.TextUtils;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.collection.ArraySet;
 
 import com.elvishew.xlog.XLog;
@@ -24,6 +24,7 @@ import java.util.List;
 import me.wizos.loread.App;
 import me.wizos.loread.Contract;
 import me.wizos.loread.R;
+import me.wizos.loread.bean.FeedEntries;
 import me.wizos.loread.bean.Token;
 import me.wizos.loread.bean.feedly.CategoryItem;
 import me.wizos.loread.bean.feedly.Collection;
@@ -45,6 +46,7 @@ import me.wizos.loread.gson.NullOnEmptyConverterFactory;
 import me.wizos.loread.network.HttpClientManager;
 import me.wizos.loread.network.SyncWorker;
 import me.wizos.loread.network.callback.CallbackX;
+import me.wizos.loread.utils.Converter;
 import me.wizos.loread.utils.StringUtils;
 import me.wizos.loread.utils.TriggerRuleUtils;
 import okhttp3.FormBody;
@@ -110,7 +112,9 @@ public class FeedlyApi extends OAuthApi {
         // String url = "https://cloud.feedly.com/v3/auth/auth?response_type=code&client_id=" + clientId + "&scope=https://cloud.feedly.com/subscriptions&redirect_uri=" + redirectUri + "&state=/profile";
         // return HOST + "/auth/auth?response_type=code&client_id=" + APP_ID + "&redirect_uri=" + redirectUri + "&state=loread&scope=https://cloud.feedly.com/subscriptions";
     }
-    public void getAccessToken(String authorizationCode,CallbackX cb) {
+
+    @Override
+    public void getAccessToken(String authorizationCode, CallbackX cb) {
         FormBody.Builder builder = new FormBody.Builder();
         builder.add("grant_type", "authorization_code");
         builder.add("code", authorizationCode);
@@ -118,56 +122,67 @@ public class FeedlyApi extends OAuthApi {
         builder.add("client_id", APP_ID);
         builder.add("client_secret", APP_KEY);
 
-        service.getAccessToken("authorization_code", REDIRECT_URI,APP_ID,APP_KEY,authorizationCode).enqueue(new retrofit2.Callback<Token>() {
+        service.getAccessToken("authorization_code", REDIRECT_URI,APP_ID,APP_KEY,authorizationCode).enqueue(new Callback<Token>() {
             @Override
-            public void onResponse(retrofit2.Call<Token> call, Response<Token> response) {
-                if(response.isSuccessful()){
-                    cb.onSuccess(response.body());
-                }else {
-                    cb.onFailure("失败：" + response.message());
+            public void onResponse(@NotNull Call<Token> call, @NotNull Response<Token> response) {
+                if(!response.isSuccessful()){
+                    cb.onFailure(App.i().getString(R.string.response_code, response.code()));
+                    return;
                 }
+                Token token = response.body();
+                if(token == null){
+                    cb.onFailure(App.i().getString(R.string.return_data_exception));
+                    return;
+                }
+                cb.onSuccess(token);
             }
 
             @Override
-            public void onFailure(retrofit2.Call<Token> call, Throwable t) {
-                cb.onFailure("失败：" + t.getMessage());
+            public void onFailure(@NotNull Call<Token> call, @NotNull Throwable t) {
+                cb.onFailure(t.getLocalizedMessage());
             }
         });
     }
 
 
+    @Override
     public void refreshingAccessToken(String refreshToken, CallbackX cb) {
-        service.refreshingAccessToken("refresh_token",refreshToken,APP_ID,APP_KEY).enqueue(new retrofit2.Callback<Token>() {
+        service.refreshingAccessToken("refresh_token",refreshToken,APP_ID,APP_KEY).enqueue(new Callback<Token>() {
             @Override
-            public void onResponse(retrofit2.Call<Token> call, Response<Token> response) {
-                if(response.isSuccessful() && response.body()!=null){
-                    if (TextUtils.isEmpty(response.body().getRefresh_token())) {
-                        response.body().setRefresh_token(refreshToken);
-                    }
-                    User user = App.i().getUser();
-                    if (user != null) {
-                        user.setToken(response.body());
-                        CoreDB.i().userDao().insert(user);
-                    }
-                    // 更新缓存中的授权
-                    ((FeedlyApi) App.i().getApi()).setAuthorization(App.i().getUser().getAuth());
-
-                    cb.onSuccess(response.body());
-                }else {
-                    cb.onFailure("失败：" + response.message());
+            public void onResponse(@NotNull Call<Token> call, @NotNull Response<Token> response) {
+                if(!response.isSuccessful()){
+                    cb.onFailure(App.i().getString(R.string.response_code, response.code()));
+                    return;
                 }
+                Token token = response.body();
+                if(token == null){
+                    cb.onFailure(App.i().getString(R.string.return_data_exception));
+                    return;
+                }
+
+                // if(TextUtils.isEmpty(token.getRefresh_token())){
+                //     token.setRefresh_token(refreshToken);
+                // }
+                // User user = App.i().getUser();
+                // if (user != null) {
+                //     user.setToken(token);
+                //     CoreDB.i().userDao().insert(user);
+                // }
+                // // 更新缓存中的授权
+                // ((OAuthApi) App.i().getApi()).setAuthorization(App.i().getUser().getAuth());
+                cb.onSuccess(token);
             }
 
             @Override
-            public void onFailure(retrofit2.Call<Token> call, Throwable t) {
-                cb.onFailure("失败：" + t.getMessage());
+            public void onFailure(@NotNull Call<Token> call, @NotNull Throwable t) {
+                cb.onFailure(t.getLocalizedMessage());
             }
         });
     }
     public String refreshingAccessToken(String refreshToken) throws IOException {
         Token token = service.refreshingAccessToken("refresh_token",refreshToken,APP_ID,APP_KEY).execute().body();
-        if (TextUtils.isEmpty(token.getRefresh_token())) {
-            token.setRefresh_token(refreshToken);
+        if (TextUtils.isEmpty(token.getRefreshToken())) {
+            token.setRefreshToken(refreshToken);
         }
         User user = App.i().getUser();
         if (user != null) {
@@ -175,37 +190,40 @@ public class FeedlyApi extends OAuthApi {
             CoreDB.i().userDao().insert(user);
         }
         // 更新缓存中的授权
-        ((FeedlyApi) App.i().getApi()).setAuthorization(App.i().getUser().getAuth());
+        ((OAuthApi) App.i().getApi()).setAuthorization(App.i().getUser().getAuth());
         return token.getAuth();
     }
 
     public void fetchUserInfo(CallbackX cb){
-        service.getUserInfo(getAuthorization()).enqueue(new retrofit2.Callback<Profile>() {
+        service.getUserInfo(getAuthorization()).enqueue(new Callback<Profile>() {
             @Override
-            public void onResponse(@NonNull retrofit2.Call<Profile> call,@NonNull Response<Profile> response) {
+            public void onResponse(@NonNull Call<Profile> call,@NonNull Response<Profile> response) {
                 XLog.e("获取资料：" + response.isSuccessful() );
-                if( response.isSuccessful()){
-                    cb.onSuccess(response.body().getUser());
-                }else {
-                    cb.onFailure("获取失败：" + response.message());
+                if(!response.isSuccessful()){
+                    cb.onFailure(App.i().getString(R.string.response_code, response.code()));
+                    return;
                 }
+                Profile profile = response.body();
+                if(profile == null){
+                    cb.onFailure(App.i().getString(R.string.return_data_exception));
+                    return;
+                }
+                cb.onSuccess(response.body().getUser());
             }
-
             @Override
-            public void onFailure(@NonNull retrofit2.Call<Profile> call,@NonNull Throwable t) {
-                cb.onFailure("获取失败：" + t.getMessage());
+            public void onFailure(@NotNull Call<Profile> call, @NotNull Throwable t) {
+                cb.onFailure(t.getLocalizedMessage());
             }
         });
     }
 
     @Override
     public void sync() {
+        long startSyncTimeMillis = System.currentTimeMillis() + 3600_000;
+        String uid = App.i().getUser().getId();
         try {
-            long syncTimeMillis = System.currentTimeMillis() + 3600_000;
-            String uid = App.i().getUser().getId();
-
             XLog.e("3 - 同步订阅源信息");
-            LiveEventBus.get(SyncWorker.SYNC_PROCESS_FOR_SUBTITLE).post(getString(R.string.sync_feed_info, "3."));
+            LiveEventBus.get(SyncWorker.SYNC_PROCESS_FOR_SUBTITLE).post(getString(R.string.step_sync_feed_info, "3."));
 
             // 获取分类&feed
             List<Collection> collectionList = service.getCollections(getAuthorization()).execute().body();
@@ -248,7 +266,7 @@ public class FeedlyApi extends OAuthApi {
             coverFeedCategory(feedCategories);
 
             XLog.e(" 2 - 同步未读，加星文章的ids");
-            LiveEventBus.get(SyncWorker.SYNC_PROCESS_FOR_SUBTITLE).post(getString(R.string.sync_article_refs, "2."));
+            LiveEventBus.get(SyncWorker.SYNC_PROCESS_FOR_SUBTITLE).post(getString(R.string.step_sync_article_refs, "2."));
 
             StreamIds tempStreamIds;
             List<String> cloudyRefs;
@@ -277,10 +295,10 @@ public class FeedlyApi extends OAuthApi {
             XLog.e("1 - 同步文章内容");
 
             // 抓取【未读、未加星】文章
-            fetchArticle(allSize, 0, new ArrayList<>(refsList.get(0)), new ArticleChanger() {
+            fetchArticle(allSize, 0, new ArrayList<>(refsList.get(0)), new Converter.ArticleConvertListener() {
                 @Override
-                public Article change(Article article) {
-                    article.setCrawlDate(syncTimeMillis);
+                public Article onEnd(Article article) {
+                    article.setCrawlDate(startSyncTimeMillis);
                     article.setReadStatus(App.STATUS_UNREAD);
                     article.setStarStatus(App.STATUS_UNSTAR);
                     article.setUid(uid);
@@ -288,10 +306,10 @@ public class FeedlyApi extends OAuthApi {
                 }
             });
             // 抓取【已读、已加星】文章
-            fetchArticle(allSize, refsList.get(0).size(), new ArrayList<>(refsList.get(1)), new ArticleChanger() {
+            fetchArticle(allSize, refsList.get(0).size(), new ArrayList<>(refsList.get(1)), new Converter.ArticleConvertListener() {
                 @Override
-                public Article change(Article article) {
-                    article.setCrawlDate(syncTimeMillis);
+                public Article onEnd(Article article) {
+                    article.setCrawlDate(startSyncTimeMillis);
                     article.setReadStatus(App.STATUS_READED);
                     article.setStarStatus(App.STATUS_STARED);
                     article.setUid(uid);
@@ -300,10 +318,10 @@ public class FeedlyApi extends OAuthApi {
             });
 
             // 抓取【未读、已加星】文章
-            fetchArticle(allSize, refsList.get(0).size() + refsList.get(1).size(), new ArrayList<>(refsList.get(2)), new ArticleChanger() {
+            fetchArticle(allSize, refsList.get(0).size() + refsList.get(1).size(), new ArrayList<>(refsList.get(2)), new Converter.ArticleConvertListener() {
                 @Override
-                public Article change(Article article) {
-                    article.setCrawlDate(syncTimeMillis);
+                public Article onEnd(Article article) {
+                    article.setCrawlDate(startSyncTimeMillis);
                     article.setReadStatus(App.STATUS_UNSTAR);
                     article.setStarStatus(App.STATUS_STARED);
                     article.setUid(uid);
@@ -316,10 +334,10 @@ public class FeedlyApi extends OAuthApi {
 
             // 获取文章全文
             LiveEventBus.get(SyncWorker.SYNC_PROCESS_FOR_SUBTITLE).post(getString(R.string.fetch_article_full_content));
-            fetchReadability(uid, syncTimeMillis);
+            fetchReadability(uid, startSyncTimeMillis);
 
             // 执行文章自动处理脚本
-            TriggerRuleUtils.exeAllRules(uid, syncTimeMillis);
+            TriggerRuleUtils.exeAllRules(uid, startSyncTimeMillis);
             // 清理无文章的tag
             // clearNotArticleTags(uid);
 
@@ -339,7 +357,7 @@ public class FeedlyApi extends OAuthApi {
             handleException(e, "同步失败：Runtime异常");
         }
 
-        handleDuplicateArticles();
+        handleDuplicateArticles(startSyncTimeMillis);
         handleCrawlDate2();
         updateCollectionCount();
         LiveEventBus.get(SyncWorker.SYNC_PROCESS_FOR_SUBTITLE).post( null );
@@ -355,99 +373,109 @@ public class FeedlyApi extends OAuthApi {
         }
     }
 
-    public void renameTag(String tagId, String targetName, CallbackX cb) {
-        editTag(tagId, targetName,  cb);
+    public void renameCategory(String categoryId, String targetName, CallbackX cb) {
+        editTag(categoryId, targetName,  cb);
     }
 
-    private void editTag(@Nullable String tagId, @Nullable String targetName, CallbackX cb) {
-        EditCollection editCollection = new EditCollection(tagId);
-        if (!TextUtils.isEmpty(tagId)) {
-            editCollection.setId(tagId);
+    private void editTag(@NotNull String categoryId, @NotNull String targetName, CallbackX cb) {
+        EditCollection editCollection = new EditCollection(categoryId);
+        if (!TextUtils.isEmpty(categoryId)) {
+            editCollection.setId(categoryId);
         }
         if (!TextUtils.isEmpty(targetName)) {
             editCollection.setLabel(targetName);
         }
 
-        service.editCollections(getAuthorization(),editCollection).enqueue(new retrofit2.Callback<List<Collection>>() {
+        service.editCollections(getAuthorization(), editCollection).enqueue(new Callback<List<Collection>>() {
             @Override
-            public void onResponse(retrofit2.Call<List<Collection>> call, retrofit2.Response<List<Collection>> response) {
+            public void onResponse(Call<List<Collection>> call, Response<List<Collection>> response) {
                 if (response.isSuccessful()) {
-                    XLog.e("修改成功" + response.body().toString());
+                    final String newCategoryId = "user/" + App.i().getUser().getUserId() + "/" + targetName;
+                    CoreDB.i().categoryDao().updateId(App.i().getUser().getId(), categoryId, newCategoryId);
+                    CoreDB.i().feedCategoryDao().updateCategoryId(App.i().getUser().getId(), categoryId, newCategoryId);
+
+                    XLog.i("修改成功：" + response.body().toString());
                     cb.onSuccess(null);
                 } else {
-                    cb.onFailure(null);
+                    cb.onFailure(App.i().getString(R.string.response_code, response.code()));
+                    XLog.w("修改失败");
                 }
             }
 
             @Override
-            public void onFailure(retrofit2.Call<List<Collection>> call, Throwable t) {
-                cb.onFailure("修改失败" + t.getMessage());
-                XLog.e("修改失败");
+            public void onFailure(@NotNull Call<List<Collection>> call, @NotNull Throwable t) {
+                cb.onFailure(t.getLocalizedMessage());
+                XLog.w("修改失败");
             }
         });
     }
 
     @Override
-    public void addFeed(EditFeed editFeed, CallbackX cb) {
-        service.editFeed(getAuthorization(),editFeed).enqueue(new retrofit2.Callback<List<EditFeed>>() {
+    public void addFeed(FeedEntries feedEntries, CallbackX cb) {
+        service.editFeed(getAuthorization(), Converter.from(feedEntries)).enqueue(new Callback<List<EditFeed>>() {
             @Override
-            public void onResponse(retrofit2.Call<List<EditFeed>> call, retrofit2.Response<List<EditFeed>> response) {
+            public void onResponse(@NotNull Call<List<EditFeed>> call, @NotNull Response<List<EditFeed>> response) {
                 if (response.isSuccessful()) {
                     XLog.e("添加成功" + response.body().toString());
-                    cb.onSuccess(null);
+                    cb.onSuccess(App.i().getString(R.string.subscribe_success_plz_sync));
                 } else {
-                    cb.onFailure(null);
+                    cb.onFailure(App.i().getString(R.string.response_code, response.code()));
                 }
             }
 
             @Override
-            public void onFailure(retrofit2.Call<List<EditFeed>> call, Throwable t) {
-                cb.onFailure(t.getMessage());
+            public void onFailure(@NotNull Call<List<EditFeed>> call, @NotNull Throwable t) {
+                cb.onFailure(t.getLocalizedMessage());
                 XLog.e("添加失败");
             }
         });
     }
 
     @Override
-    public void renameFeed(String feedId, String feedTitle, CallbackX cb) {
+    public void renameFeed(String feedId, String targetName, CallbackX cb) {
         //editFeed(feedId, renamedTitle, null, cb);
         EditFeed editFeed = new EditFeed(feedId);
-        if (!TextUtils.isEmpty(feedTitle)) {
-            editFeed.setTitle(feedTitle);
+        if (!TextUtils.isEmpty(targetName)) {
+            editFeed.setTitle(targetName);
         }
 
-        service.editFeed(getAuthorization(),editFeed).enqueue(new retrofit2.Callback<List<EditFeed>>() {
+        service.editFeed(getAuthorization(),editFeed).enqueue(new Callback<List<EditFeed>>() {
             @Override
-            public void onResponse(retrofit2.Call<List<EditFeed>> call, retrofit2.Response<List<EditFeed>> response) {
+            public void onResponse(Call<List<EditFeed>> call, Response<List<EditFeed>> response) {
                 if(!response.isSuccessful()){
-                    cb.onFailure("修改失败");
+                    cb.onFailure(App.i().getString(R.string.response_code, response.code()));
                 }else {
                     cb.onSuccess(response);
                 }
             }
 
             @Override
-            public void onFailure(retrofit2.Call<List<EditFeed>> call, Throwable t) {
+            public void onFailure(Call<List<EditFeed>> call, Throwable t) {
                 cb.onFailure(t.getMessage());
             }
         });
     }
 
     @Override
+    public void importOPML(Uri uri, CallbackX cb) {
+        cb.onFailure(App.i().getString(R.string.server_api_not_supported, Contract.PROVIDER_FEEDLY));
+    }
+
+    @Override
     public void editFeedCategories(List<CategoryItem> lastCategoryItems, EditFeed editFeed, CallbackX cb) {
-        service.editFeed(getAuthorization(),editFeed).enqueue(new retrofit2.Callback<List<EditFeed>>() {
+        service.editFeed(getAuthorization(),editFeed).enqueue(new Callback<List<EditFeed>>() {
             @Override
-            public void onResponse(retrofit2.Call<List<EditFeed>> call, retrofit2.Response<List<EditFeed>> response) {
+            public void onResponse(Call<List<EditFeed>> call, Response<List<EditFeed>> response) {
                 if(!response.isSuccessful()){
-                    cb.onFailure("修改失败");
+                    cb.onFailure(App.i().getString(R.string.response_code, response.code()));
                 }else {
                     cb.onSuccess(null);
                 }
             }
 
             @Override
-            public void onFailure(retrofit2.Call<List<EditFeed>> call, Throwable t) {
-                cb.onFailure(t.getMessage());
+            public void onFailure(Call<List<EditFeed>> call, Throwable t) {
+                cb.onFailure(t.getLocalizedMessage());
             }
         });
     }
@@ -455,24 +483,25 @@ public class FeedlyApi extends OAuthApi {
     public void unsubscribeFeed(String feedId, CallbackX cb) {
         ArrayList<String> feedIds = new ArrayList<>();
         feedIds.add(feedId);
-        service.delFeed(getAuthorization(),feedIds).enqueue(new retrofit2.Callback<String>() {
+        service.delFeed(getAuthorization(),feedIds).enqueue(new Callback<String>() {
             @Override
-            public void onResponse(retrofit2.Call<String> call, retrofit2.Response<String> response) {
+            public void onResponse(Call<String> call, Response<String> response) {
                 if (response.isSuccessful() ){
                     String msg = response.body();
                     if( "[]".equals(msg) ){
                         cb.onSuccess(null);
                     }else {
-                        cb.onFailure(msg);
+                        cb.onFailure(App.i().getString(R.string.return_data_exception));
+                        XLog.w(msg);
                     }
                 }else {
-                    cb.onFailure("修改失败：原因未知");
+                    cb.onFailure(App.i().getString(R.string.response_code, response.code()));
                 }
             }
 
             @Override
-            public void onFailure(retrofit2.Call<String> call, Throwable t) {
-
+            public void onFailure(Call<String> call, Throwable t) {
+                cb.onFailure(t.getLocalizedMessage());
             }
         });
     }
@@ -489,14 +518,14 @@ public class FeedlyApi extends OAuthApi {
                 if (response.isSuccessful() ){
                     cb.onSuccess(null);
                 }else {
-                    cb.onFailure(getString(R.string.response_fail));
+                    cb.onFailure(App.i().getString(R.string.response_code, response.code()));
                 }
             }
 
             @Override
             public void onFailure(@NotNull Call<String> call, @NotNull Throwable t) {
-                cb.onFailure(t.getMessage());
-                XLog.i("标记失败：" + t.getMessage());
+                cb.onFailure(t.getLocalizedMessage());
+                XLog.i("标记失败：" + t.getLocalizedMessage());
             }
         });
     }
@@ -530,111 +559,28 @@ public class FeedlyApi extends OAuthApi {
     }
 
 
-    private void fetchArticle(int allSize, int syncedSize, List<String> subIds, ArticleChanger articleChanger) throws IOException{
+    private void fetchArticle(int allSize, int syncedSize, List<String> subIds, Converter.ArticleConvertListener articleConverter) throws IOException{
         int needFetchCount = subIds.size();
         int hadFetchCount = 0;
 
         while (needFetchCount > 0) {
             int fetchUnit = Math.min(needFetchCount, fetchContentCntForEach);
             List<Entry> items = service.getItemContents(getAuthorization(), subIds.subList(hadFetchCount, hadFetchCount = hadFetchCount + fetchUnit)).execute().body();
+            if(items == null){
+                break;
+            }
             List<Article> tempArticleList = new ArrayList<>(fetchUnit);
             for (Entry item : items) {
-                tempArticleList.add(item.convert(articleChanger));
+                tempArticleList.add(Converter.from(item, articleConverter));
             }
             CoreDB.i().articleDao().insert(tempArticleList);
-            LiveEventBus.get(SyncWorker.SYNC_PROCESS_FOR_SUBTITLE).post( App.i().getString(R.string.sync_article_content, "1.", syncedSize = syncedSize + fetchUnit, allSize) );
+            LiveEventBus.get(SyncWorker.SYNC_PROCESS_FOR_SUBTITLE).post( App.i().getString(R.string.step_sync_article_content, "1.", syncedSize = syncedSize + fetchUnit, allSize) );
             needFetchCount = subIds.size() - hadFetchCount;
         }
     }
 
-    // private HashSet<String> handleUnreadRefs(List<String> ids) {
-    //     //List<Article> localUnreadArticles = WithDB.i().getArtsUnreadNoOrder();
-    //     List<Article> localUnreadArticles = CoreDB.i().articleDao().getUnreadNoOrder(App.i().getUser().getId());
-    //     Map<String, Article> localUnreadArticlesMap = new ArrayMap<>(localUnreadArticles.size());
-    //     List<Article> changedArticles = new ArrayList<>();
-    //     // 筛选下来，最终要去云端获取内容的未读Refs的集合
-    //     HashSet<String> tempUnreadIds = new HashSet<>(ids.size());
-    //     // 数据量大的一方
-    //     for (Article article : localUnreadArticles) {
-    //         localUnreadArticlesMap.put(article.getId(), article);
-    //     }
-    //     // 数据量小的一方
-    //     Article article;
-    //     for (String articleId : ids) {
-    //         article = localUnreadArticlesMap.get(articleId);
-    //         if (article != null) {
-    //             localUnreadArticlesMap.remove(articleId);
-    //         } else {
-    //             article = CoreDB.i().articleDao().getById(App.i().getUser().getId(), articleId);
-    //             if (article != null && article.getReadStatus() == App.STATUS_READED) {
-    //                 article.setReadStatus(App.STATUS_UNREAD);
-    //                 changedArticles.add(article);
-    //             } else {
-    //                 // 本地无，而云端有，加入要请求的未读资源
-    //                 tempUnreadIds.add(articleId);
-    //             }
-    //         }
-    //     }
-    //     for (Map.Entry<String, Article> entry : localUnreadArticlesMap.entrySet()) {
-    //         if (entry.getKey() != null) {
-    //             article = localUnreadArticlesMap.get(entry.getKey());
-    //             // 本地未读设为已读
-    //             article.setReadStatus(App.STATUS_READED);
-    //             changedArticles.add(article);
-    //         }
-    //     }
-    //
-    //     CoreDB.i().articleDao().update(changedArticles);
-    //     return tempUnreadIds;
-    // }
-
-    // private HashSet<String> handleStaredRefs(List<String> streamIds) {
-    //     List<Article> localStarredArticles = CoreDB.i().articleDao().getStaredNoOrder(App.i().getUser().getId());
-    //     Map<String, Article> localStarredArticlesMap = new ArrayMap<>(localStarredArticles.size());
-    //     List<Article> changedArticles = new ArrayList<>();
-    //     HashSet<String> tempStarredIds = new HashSet<>(streamIds.size());
-    //
-    //     // 第1步，遍历数据量大的一方A，将其比对项目放入Map中
-    //     for (Article article : localStarredArticles) {
-    //         localStarredArticlesMap.put(article.getId(), article);
-    //     }
-    //
-    //     // 第2步，遍历数据量小的一方B。到Map中找，是否含有b中的比对项。有则XX，无则YY
-    //     Article article;
-    //     for (String articleId : streamIds) {
-    //         article = localStarredArticlesMap.get(articleId);
-    //         if (article != null) {
-    //             localStarredArticlesMap.remove(articleId);
-    //         } else {
-    //             article = CoreDB.i().articleDao().getById(App.i().getUser().getId(), articleId);
-    //             if (article != null) {
-    //                 article.setStarStatus(App.STATUS_STARED);
-    //                 changedArticles.add(article);
-    //             } else {
-    //                 // 本地无，而云远端有，加入要请求的未读资源
-    //                 tempStarredIds.add(articleId);
-    //             }
-    //         }
-    //     }
-    //
-    //     for (Map.Entry<String, Article> entry : localStarredArticlesMap.entrySet()) {
-    //         if (entry.getKey() != null) {
-    //             article = localStarredArticlesMap.get(entry.getKey());
-    //             article.setStarStatus(App.STATUS_UNSTAR);
-    //             changedArticles.add(article);// 取消加星
-    //         }
-    //     }
-    //
-    //     CoreDB.i().articleDao().update(changedArticles);
-    //     return tempStarredIds;
-    // }
-
     /**
      * 将 未读资源 和 加星资源，去重分为3组
-     *
-     * @param tempUnreadIds
-     * @param tempStarredIds
-     * @return
      */
     private ArrayList<ArraySet<String>> splitRefs(ArraySet<String> tempUnreadIds, ArraySet<String> tempStarredIds) {
         // XLog.d("【reRefs1】云端未读" + tempUnreadIds.size() + "，云端加星" + tempStarredIds.size());

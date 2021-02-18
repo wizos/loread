@@ -23,6 +23,7 @@ import me.wizos.loread.App;
 import me.wizos.loread.Contract;
 import me.wizos.loread.R;
 import me.wizos.loread.activity.BaseActivity;
+import me.wizos.loread.activity.ProviderActivity;
 import me.wizos.loread.activity.viewmodel.FeverUserViewModel;
 import me.wizos.loread.activity.viewmodel.InoReaderUserViewModel;
 import me.wizos.loread.activity.viewmodel.LoginViewModel;
@@ -169,11 +170,11 @@ public class LoginActivity extends BaseActivity {
                     MobclickAgent.onProfileSignIn(App.i().getUser().getSource(), App.i().getUser().getUserId());
                     String tips = getString(R.string.welcome);
                     ToastUtils.show(tips);
-                    setResult(App.ActivityResult_LoginPageToProvider);
+                    setResult(ProviderActivity.LOGIN_CODE);
                     finish();
                     overridePendingTransition(R.anim.fade_in, R.anim.out_from_bottom);
                 } else {
-                    ToastUtils.show(loginResult.getData());
+                    ToastUtils.show(getString(R.string.login_failed_with_reason, loginResult.getData()));
                 }
             }
         });

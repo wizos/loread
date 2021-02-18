@@ -28,7 +28,10 @@ import com.elvishew.xlog.XLog;
 import com.hjq.toast.ToastUtils;
 import com.lzy.okgo.OkGo;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -38,12 +41,14 @@ import java.util.concurrent.TimeUnit;
 import me.wizos.loread.App;
 import me.wizos.loread.Contract;
 import me.wizos.loread.R;
+import me.wizos.loread.bean.FeedEntries;
 import me.wizos.loread.config.HeaderRefererConfig;
 import me.wizos.loread.config.HostBlockConfig;
-import me.wizos.loread.config.NetworkUserAgentConfig;
 import me.wizos.loread.config.SaveDirectory;
 import me.wizos.loread.config.Test;
 import me.wizos.loread.config.article_extract.ArticleExtractConfig;
+import me.wizos.loread.config.header_useragent.HeaderUserAgentConfig;
+import me.wizos.loread.config.header_useragent.UserAgentConfig;
 import me.wizos.loread.config.url_rewrite.UrlRewriteConfig;
 import me.wizos.loread.db.Article;
 import me.wizos.loread.db.ArticleTag;
@@ -59,9 +64,16 @@ import me.wizos.loread.network.api.FeverApi;
 import me.wizos.loread.network.api.TinyRSSApi;
 import me.wizos.loread.utils.BackupUtils;
 import me.wizos.loread.utils.EncryptUtils;
+import me.wizos.loread.utils.FeedParserUtils;
 import me.wizos.loread.utils.FileUtils;
+import me.wizos.loread.utils.HttpsUtils;
 import me.wizos.loread.utils.StringUtils;
 import me.wizos.loread.utils.TriggerRuleUtils;
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
 
 import static androidx.work.ExistingPeriodicWorkPolicy.KEEP;
 import static me.wizos.loread.Contract.SCHEMA_HTTP;
@@ -87,7 +99,7 @@ public class LabActivity extends AppCompatActivity {
         new Thread(new Runnable() {
             @Override
             public void run() {
-                BackupUtils.backupOPML();
+                BackupUtils.exportUserAllOPML(App.i().getUser());
                 materialDialog.dismiss();
             }
         }).start();
@@ -142,7 +154,8 @@ public class LabActivity extends AppCompatActivity {
         UrlRewriteConfig.i().reset();
         // BigImageConfig.i().reset();
         HeaderRefererConfig.i().reset();
-        NetworkUserAgentConfig.i().reset();
+        HeaderUserAgentConfig.i().reset();
+        UserAgentConfig.i().reset();
         ArticleExtractConfig.i().reset();
         // ArticleActionConfig.i().reset();
         SaveDirectory.i().reset();
@@ -234,6 +247,12 @@ public class LabActivity extends AppCompatActivity {
         WorkManager.getInstance(this).cancelAllWorkByTag(SyncWorker.TAG);
     }
 
+    public void reverseproxy(View view) {
+        Intent intent;
+        intent = new Intent(this, ReverseProxyActivity.class);
+        startActivity(intent);
+        overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
+    }
 
     public void openLink(View view){
         EditText editText = findViewById(R.id.lab_enter_edittext);
@@ -454,6 +473,45 @@ public class LabActivity extends AppCompatActivity {
         intent.setData(Uri.parse(url));
         startActivity(intent);
         overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
+    }
+
+    public void getFeed(View view){
+        EditText editText = findViewById(R.id.lab_enter_edittext);
+        String url = editText.getText().toString();
+        if(StringUtils.isEmpty(url)){
+            ToastUtils.show("未输入网址，请检查");
+            return;
+        }
+        Request.Builder requestBuilder = new Request.Builder();
+        requestBuilder.url(url);
+        Call call = new OkHttpClient.Builder()
+                .readTimeout(30, TimeUnit.SECONDS)
+                .writeTimeout(30, TimeUnit.SECONDS)
+                .connectTimeout(30, TimeUnit.SECONDS)
+                .sslSocketFactory(HttpsUtils.getSslSocketFactory().sSLSocketFactory, HttpsUtils.getSslSocketFactory().trustManager)
+                .hostnameVerifier(HttpsUtils.UnSafeHostnameVerifier)
+                .followRedirects(true)
+                .followSslRedirects(true)
+                .build().newCall(requestBuilder.build());
+        call.enqueue(new Callback() {
+            @Override
+            public void onFailure(@NotNull Call call, @NotNull IOException e) {
+
+            }
+
+            @Override
+            public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
+                if(response.isSuccessful()){
+
+                    Feed feed = new Feed();
+                    feed.setUid(App.i().getUser().getId());
+                    feed.setId(EncryptUtils.MD5(url));
+                    feed.setFeedUrl(url);
+                    FeedEntries feedEntries = FeedParserUtils.parseResponseBody(LabActivity.this, feed, response.body());
+                    XLog.i("返回结果为：" + feedEntries);
+                }
+            }
+        });
     }
 
     public void onClickClearTags(View view) {

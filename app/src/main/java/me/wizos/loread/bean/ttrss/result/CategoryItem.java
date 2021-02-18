@@ -11,7 +11,8 @@ public class CategoryItem {
     private String title;
 
     private int unread;
-    private int order_id;
+    @SerializedName("order_id")
+    private int orderId;
 
     public String getId() {
         return id;
@@ -37,12 +38,12 @@ public class CategoryItem {
         this.unread = unread;
     }
 
-    public int getOrder_id() {
-        return order_id;
+    public int getOrderId() {
+        return orderId;
     }
 
-    public void setOrder_id(int order_id) {
-        this.order_id = order_id;
+    public void setOrderId(int orderId) {
+        this.orderId = orderId;
     }
 
 
@@ -60,7 +61,7 @@ public class CategoryItem {
                 "id='" + id + '\'' +
                 ", title='" + title + '\'' +
                 ", unread=" + unread +
-                ", order_id=" + order_id +
+                ", orderId=" + orderId +
                 '}';
     }
 }

@@ -14,7 +14,7 @@ import javax.script.Bindings;
 import javax.script.SimpleBindings;
 
 import me.wizos.loread.App;
-import me.wizos.loread.log.JSLog;
+import me.wizos.loread.log.Console;
 import me.wizos.loread.utils.FileUtils;
 import me.wizos.loread.utils.HttpCall;
 import me.wizos.loread.utils.ScriptUtils;
@@ -137,7 +137,7 @@ public class UrlRewriteConfig {
             Bindings bindings = new SimpleBindings();
             bindings.put("url", url);
             bindings.put("call", HttpCall.i());
-            bindings.put("log", JSLog.i());
+            bindings.put("console", new Console());
             ScriptUtils.i().eval(rule.urlRewrite.get(schemeHost), bindings);
             // XLog.d("重定向JS：" + bindings.get("url"));
             return (String) bindings.get("url");
@@ -153,7 +153,7 @@ public class UrlRewriteConfig {
                     Bindings bindings = new SimpleBindings();
                     bindings.put("url", url);
                     bindings.put("call", HttpCall.i());
-                    bindings.put("log", JSLog.i());
+                    bindings.put("console", new Console());
                     ScriptUtils.i().eval(rule.urlRewrite.get(host), bindings);
                     // XLog.d("重定向JS：" + bindings.get("url"));
                     return (String) bindings.get("url");
@@ -164,7 +164,7 @@ public class UrlRewriteConfig {
             Bindings bindings = new SimpleBindings();
             bindings.put("url", url);
             bindings.put("call", HttpCall.i());
-            bindings.put("log", JSLog.i());
+            bindings.put("console", new Console());
             ScriptUtils.i().eval(rule.urlRewrite.get(host), bindings);
             // XLog.d("重定向JS：" + bindings.get("url"));
             return (String) bindings.get("url");

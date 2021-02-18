@@ -2,6 +2,8 @@ package me.wizos.loread.bean.ttrss.result;
 
 import com.google.gson.annotations.SerializedName;
 
+import org.jetbrains.annotations.NotNull;
+
 import me.wizos.loread.App;
 import me.wizos.loread.db.Feed;
 
@@ -93,18 +95,19 @@ public class FeedItem {
         return feed;
     }
 
+    @NotNull
     @Override
     public String toString() {
-        return "TTRSSFeedItem{" +
-                "feed_url='" + feedUrl + '\'' +
-                ", site_url='" + siteUrl + '\'' +
+        return "FeedItem{" +
+                "id=" + id +
                 ", title='" + title + '\'' +
-                ", id=" + id +
+                ", feedUrl='" + feedUrl + '\'' +
+                ", siteUrl='" + siteUrl + '\'' +
                 ", unread=" + unread +
-                ", cat_id=" + catId +
-                ", order_id=" + orderId +
-                ", last_updated=" + lastUpdated +
-                ", has_icon=" + hasIcon +
+                ", catId=" + catId +
+                ", orderId=" + orderId +
+                ", lastUpdated=" + lastUpdated +
+                ", hasIcon=" + hasIcon +
                 '}';
     }
 }

@@ -220,6 +220,14 @@
                 android:layout_gravity="center_vertical"
                 android:text="删除所有 Tag"/>
 
+            <Button
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                style="@style/SettingItem"
+                android:onClick="getFeed"
+                android:gravity="center_vertical"
+                android:layout_gravity="center_vertical"
+                android:text="获取feed"/>
             <Space
                 android:layout_width="match_parent"
                 android:layout_height="20dp"/>
@@ -241,6 +249,14 @@
                 android:layout_gravity="center_vertical"
                 android:text="关闭 同步任务"/>
 
+            <Button
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                style="@style/SettingItem"
+                android:onClick="reverseproxy"
+                android:gravity="center_vertical"
+                android:layout_gravity="center_vertical"
+                android:text="反向代理"/>
 
             <Space
                 android:layout_width="match_parent"

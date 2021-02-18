@@ -31,7 +31,7 @@ import me.wizos.loread.db.rule.Scope;
 @Database(
         entities = {User.class,Article.class,Feed.class,Category.class, FeedCategory.class, Tag.class, ArticleTag.class, Scope.class, Condition.class, Action.class},
         views = {FeedView.class,CategoryView.class},
-        version = 3
+        version = 4
 )
 public abstract class CoreDB extends RoomDatabase {
     public static final String DATABASE_NAME = "loread.db";
@@ -59,16 +59,22 @@ public abstract class CoreDB extends RoomDatabase {
             database.execSQL("CREATE INDEX IF NOT EXISTS `index_Action_ruleId` ON `Action` (`scopeId`)");
         }
     };
+    private static final Migration MIGRATION_3_4 = new Migration(3, 4) {
+        @Override
+        public void migrate(SupportSQLiteDatabase database) {
+            database.execSQL("ALTER TABLE Feed ADD syncInterval INTEGER NOT NULL DEFAULT -1");
+            database.execSQL("ALTER TABLE Feed ADD lastSyncTime INTEGER NOT NULL DEFAULT 0");
+            database.execSQL("ALTER TABLE Feed ADD lastSyncError TEXT");
+            database.execSQL("ALTER TABLE Feed ADD lastErrorCount INTEGER NOT NULL DEFAULT 0");
+
+            // database.execSQL("ALTER TABLE User ADD syncInterval INTEGER NOT NULL DEFAULT 0");
+            database.execSQL("ALTER TABLE User ADD lastSyncTime INTEGER NOT NULL DEFAULT 0");
+
+            database.execSQL("DROP VIEW IF EXISTS FeedView;");
+            database.execSQL("CREATE VIEW `FeedView` AS SELECT uid,id,title,feedUrl,htmlUrl,iconUrl,displayMode,UNREAD_SUM AS unreadCount,STAR_SUM AS starCount,ALL_SUM AS allCount,state,syncInterval, lastSyncTime, lastSyncError, lastErrorCount FROM FEED LEFT JOIN (SELECT uid AS article_uid, feedId, COUNT(1) AS UNREAD_SUM FROM article WHERE readStatus != 2 GROUP BY uid,feedId) A ON FEED.uid = A.article_uid AND FEED.id = A.feedId LEFT JOIN (SELECT uid AS article_uid, feedId, COUNT(1) AS STAR_SUM FROM article WHERE starStatus = 4 GROUP BY uid,feedId) B ON FEED.uid = B.article_uid AND FEED.id = B.feedId LEFT JOIN (SELECT uid AS article_uid, feedId, COUNT(1) AS ALL_SUM FROM article GROUP BY uid,feedId) C ON FEED.uid = c.article_uid AND FEED.id = C.feedId");
+        }
+    };
     // 设置爬取时间可以为null，但是实际验证是不允许为null的
-    // private static final Migration MIGRATION_2_3 = new Migration(2, 3) {
-    //     @Override
-    //     public void migrate(SupportSQLiteDatabase database) {
-    //         database.execSQL("ALTER TABLE Article RENAME TO Article_old");
-    //         database.execSQL("CREATE TABLE IF NOT EXISTS `Article` (`id` TEXT NOT NULL, `uid` TEXT NOT NULL, `title` TEXT, `content` TEXT, `summary` TEXT, `image` TEXT, `enclosure` TEXT, `feedId` TEXT, `feedTitle` TEXT, `author` TEXT, `link` TEXT, `pubDate` INTEGER NOT NULL, `crawlDate` INTEGER, `readStatus` INTEGER NOT NULL, `starStatus` INTEGER NOT NULL, `saveStatus` INTEGER NOT NULL, `readUpdated` INTEGER NOT NULL, `starUpdated` INTEGER NOT NULL, PRIMARY KEY(`id`, `uid`), FOREIGN KEY(`uid`) REFERENCES `User`(`id`) ON UPDATE NO ACTION ON DELETE NO ACTION )");
-    //         database.execSQL("INSERT INTO Article (id,uid,title,content,summary,image,enclosure,feedId,feedTitle,author,link,pubDate,crawlDate,readStatus,starStatus,saveStatus,readUpdated,starUpdated) select id,uid,title,content,summary,image,enclosure,feedId,feedTitle,author,link,pubDate,crawlDate,readStatus,starStatus,saveStatus,readUpdated,starUpdated from Article_old");
-    //         database.execSQL("DROP TABLE Article_old;");
-    //     }
-    // };
 
     public static synchronized void init(Context context) {
         if(databaseInstance == null) {
@@ -84,6 +90,7 @@ public abstract class CoreDB extends RoomDatabase {
                             })
                             .addMigrations(MIGRATION_1_2)
                             .addMigrations(MIGRATION_2_3)
+                            .addMigrations(MIGRATION_3_4)
                             .addMigrations()
                             .allowMainThreadQueries()
                             .build();
@@ -187,61 +194,6 @@ public abstract class CoreDB extends RoomDatabase {
                         "      END";
         db.execSQL(updateTagStarCountWhenDeleteFeed);
 
-        // // 当 READSTATUS 状态更新时，标注其更新时间
-        // String updatedWhenArticleChange =
-        //         "CREATE TEMP TRIGGER IF NOT EXISTS updatedWhenArticleChange" +
-        //                 " AFTER UPDATE OF READSTATUS,STARSTATUS ON ARTICLE" +
-        //                 " WHEN old.READSTATUS != new.READSTATUS OR old.STARSTATUS != new.STARSTATUS" +
-        //                 " BEGIN" +
-        //                 "  UPDATE ARTICLE SET updateTime = (strftime('%s','now') || substr(strftime('%f','now'),4))" +
-        //                 "  WHERE UID IS old.UID AND ID IS old.ID;" +
-        //                 " END";
-        // db.execSQL(updatedWhenArticleChange);
-
-        // 当 READSTATUS 状态更新时，标注其更新时间
-        String updatedWhenReadStatusChange =
-                "CREATE TEMP TRIGGER IF NOT EXISTS updatedWhenReadStatusChange" +
-                        " AFTER UPDATE OF READSTATUS ON ARTICLE" +
-                        " WHEN old.READSTATUS != new.READSTATUS" +
-                        " BEGIN" +
-                        "  UPDATE ARTICLE SET readUpdated = (strftime('%s','now') || substr(strftime('%f','now'),4))" +
-                        "  WHERE ID IS old.ID AND UID IS old.UID;" +
-                        " END";
-        db.execSQL(updatedWhenReadStatusChange);
-        // 当 STARSTATUS 状态更新时，标注其更新时间
-        String updatedWhenStarStatusChange =
-                "CREATE TEMP TRIGGER IF NOT EXISTS updatedWhenStarStatusChange" +
-                        " AFTER UPDATE OF STARSTATUS ON ARTICLE" +
-                        " WHEN old.STARSTATUS != new.STARSTATUS" +
-                        " BEGIN" +
-                        "  UPDATE ARTICLE SET starUpdated = (strftime('%s','now') || substr(strftime('%f','now'),4))" +
-                        "  WHERE ID IS old.ID AND UID IS old.UID;" +
-                        " END";
-        db.execSQL(updatedWhenStarStatusChange);
-
-
-        // 当updateTime因为
-        String readUpdatedNoChange =
-                "CREATE TEMP TRIGGER IF NOT EXISTS readUpdatedNoChange" +
-                        " AFTER UPDATE OF readUpdated ON ARTICLE" +
-                        " WHEN old.readUpdated > new.readUpdated" +
-                        " BEGIN" +
-                        "  UPDATE ARTICLE SET readUpdated = old.readUpdated" +
-                        "  WHERE UID IS old.UID AND ID IS old.ID;" +
-                        " END";
-        db.execSQL(readUpdatedNoChange);
-
-        // 当updateTime因为
-        String starUpdatedNoChange =
-                "CREATE TEMP TRIGGER IF NOT EXISTS starUpdatedNoChange" +
-                        " AFTER UPDATE OF starUpdated ON ARTICLE" +
-                        " WHEN old.starUpdated > new.starUpdated" +
-                        " BEGIN" +
-                        "  UPDATE ARTICLE SET starUpdated = old.starUpdated" +
-                        "  WHERE UID IS old.UID AND ID IS old.ID;" +
-                        " END";
-        db.execSQL(starUpdatedNoChange);
-
 
         // 标记文章为已读时，更新feed的未读计数
         String updateFeedUnreadCountWhenReadArticle =
@@ -342,7 +294,7 @@ public abstract class CoreDB extends RoomDatabase {
                         "        WHERE ID IN (select CATEGORYID from FEEDCATEGORY where FEEDID = old.ID AND UID IS old.UID);" +
                         "      END";
         db.execSQL(updateTagStarCountWhenAdd);
-
+        // 当feed的星标计数减一时，更新tag的未读计数
         String updateTagStarCountWhenMinus =
                 "    CREATE TEMP TRIGGER IF NOT EXISTS updateTagStarCountWhenMinus" +
                         " AFTER UPDATE OF STARCOUNT ON FEED" +
@@ -352,6 +304,55 @@ public abstract class CoreDB extends RoomDatabase {
                         "        WHERE ID IN (select CATEGORYID from FEEDCATEGORY where FEEDID = old.ID AND UID IS old.UID);" +
                         "      END";
         db.execSQL(updateTagStarCountWhenMinus);
+
+
+
+        // 当 READSTATUS 状态更新时，标注其更新时间
+        String updatedWhenReadStatusChange =
+                "CREATE TEMP TRIGGER IF NOT EXISTS updatedWhenReadStatusChange" +
+                        " AFTER UPDATE OF READSTATUS ON ARTICLE" +
+                        " WHEN old.READSTATUS != new.READSTATUS" +
+                        " BEGIN" +
+                        "  UPDATE ARTICLE SET readUpdated = (strftime('%s','now') || substr(strftime('%f','now'),4))" +
+                        "  WHERE ID IS old.ID AND UID IS old.UID;" +
+                        " END";
+        db.execSQL(updatedWhenReadStatusChange);
+        // 当 STARSTATUS 状态更新时，标注其更新时间
+        String updatedWhenStarStatusChange =
+                "CREATE TEMP TRIGGER IF NOT EXISTS updatedWhenStarStatusChange" +
+                        " AFTER UPDATE OF STARSTATUS ON ARTICLE" +
+                        " WHEN old.STARSTATUS != new.STARSTATUS" +
+                        " BEGIN" +
+                        "  UPDATE ARTICLE SET starUpdated = (strftime('%s','now') || substr(strftime('%f','now'),4))" +
+                        "  WHERE ID IS old.ID AND UID IS old.UID;" +
+                        " END";
+        db.execSQL(updatedWhenStarStatusChange);
+
+
+        // 增加该触发器是因为当我在未读模式下，进入文章页时，是先从数据中获取到 article（此时 readUpdated 是0），再修改 readStatus 状态。
+        // 此时因修改 readStatus 触发的修改 readUpdated 规则，是无法同步到在文章页中的 article（除非使用LiveData）。
+        // 如果此时我去获取全文，因为会复制一份 article ，并将全文数据注入，并保存到数据库，从而导致数据库中，readUpdated 被覆盖为 0 （由于获取全文时 readStatus 没有更新，不会触发更新 readUpdated）
+        // String readUpdatedNoChange =
+        //         "CREATE TEMP TRIGGER IF NOT EXISTS readUpdatedNoChange" +
+        //                 " AFTER UPDATE OF readUpdated ON ARTICLE" +
+        //                 " WHEN old.readUpdated > new.readUpdated" +
+        //                 " BEGIN" +
+        //                 "  UPDATE ARTICLE SET readUpdated = old.readUpdated" +
+        //                 "  WHERE UID IS old.UID AND ID IS old.ID;" +
+        //                 " END";
+        // db.execSQL(readUpdatedNoChange);
+        //
+        // // 当updateTime因为
+        // String starUpdatedNoChange =
+        //         "CREATE TEMP TRIGGER IF NOT EXISTS starUpdatedNoChange" +
+        //                 " AFTER UPDATE OF starUpdated ON ARTICLE" +
+        //                 " WHEN old.starUpdated > new.starUpdated" +
+        //                 " BEGIN" +
+        //                 "  UPDATE ARTICLE SET starUpdated = old.starUpdated" +
+        //                 "  WHERE UID IS old.UID AND ID IS old.ID;" +
+        //                 " END";
+        // db.execSQL(starUpdatedNoChange);
+
 
         String onCascadeWhenDeleteCategory =
                 "CREATE TEMP TRIGGER IF NOT EXISTS onCascadeWhenDeleteCategory" +
@@ -368,6 +369,11 @@ public abstract class CoreDB extends RoomDatabase {
                         "        DELETE FROM Scope WHERE UID IS old.UID AND type IS 'feed' AND target IS old.id;" +
                         "    END";
         db.execSQL(onCascadeWhenDeleteFeed);
+
+        // TODO: 2021/2/10 当订阅源删除时，自动删除关联的feedCategory记录
+        // TODO: 2021/2/10 当分类删除时，自动删除关联的feedCategory记录
+
+        // TODO: 2021/2/10 当分类修改id（通常是由改名引起的）时，自动更新关联的feedCategory记录
     }
 
 

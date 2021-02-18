@@ -4,11 +4,6 @@ import com.google.gson.annotations.SerializedName;
 
 import org.jetbrains.annotations.NotNull;
 
-import me.wizos.loread.App;
-import me.wizos.loread.db.Article;
-import me.wizos.loread.network.api.BaseApi;
-import me.wizos.loread.utils.ArticleUtils;
-
 public class Item {
     @SerializedName("id")
     private int id;
@@ -66,48 +61,6 @@ public class Item {
 
     public long getCreatedOnTime() {
         return createdOnTime;
-    }
-
-    public Article convert(BaseApi.ArticleChanger articleChanger) {
-        Article article = new Article();
-        article.setId(String.valueOf(id));
-        article.setAuthor(author);
-        article.setPubDate(createdOnTime * 1000);
-
-        article.setLink(url);
-        article.setFeedId(String.valueOf(feedId));
-        article.setFeedTitle(title);
-
-        String tmpContent = ArticleUtils.getOptimizedContent(url, html);
-        article.setContent(tmpContent);
-
-        String tmpSummary = ArticleUtils.getOptimizedSummary(tmpContent);
-        article.setSummary(tmpSummary);
-
-        title = ArticleUtils.getOptimizedTitle(title,tmpSummary);
-        article.setTitle(title);
-
-        String coverUrl = ArticleUtils.getCoverUrl(article.getLink(),tmpContent);
-        article.setImage(coverUrl);
-
-        // 自己设置的字段
-        //  KLog.i("【增加文章】" + article.getId());
-        article.setSaveStatus(App.STATUS_NOT_FILED);
-        if (isRead == 0) {
-            article.setReadStatus(App.STATUS_UNREAD);
-        } else {
-            article.setReadStatus(App.STATUS_READED);
-        }
-        if (isSaved == 1) {
-            article.setStarStatus(App.STATUS_STARED);
-        } else {
-            article.setStarStatus(App.STATUS_UNSTAR);
-        }
-
-        if (articleChanger != null) {
-            articleChanger.change(article);
-        }
-        return article;
     }
 
     @NotNull

@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.util.Objects;
 
 import me.wizos.loread.network.HttpClientManager;
+import okhttp3.Call;
+import okhttp3.Callback;
 import okhttp3.Headers;
 import okhttp3.Request;
 import okhttp3.RequestBody;
@@ -27,6 +29,11 @@ public class HttpCall {
     }
 
 
+    public static void get(String feedUrl, Callback callback){
+        Request request = new Request.Builder().url(feedUrl).build();
+        Call call = HttpClientManager.i().searchClient().newCall(request);
+        call.enqueue(callback);
+    }
     public String get(String url){
         try {
             return Objects.requireNonNull(HttpClientManager.i().smallClient().newCall(new Request.Builder().url(url).get().build()).execute().body()).string();

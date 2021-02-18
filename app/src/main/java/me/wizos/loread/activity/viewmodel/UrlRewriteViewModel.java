@@ -97,9 +97,9 @@ public class UrlRewriteViewModel extends AndroidViewModel {
             AsyncTask.SERIAL_EXECUTOR.execute(new Runnable() {
                 @Override
                 public void run() {
-                    Console console = new Console(new Console.Listener() {
+                    Console console = new Console().setListener(new Console.Listener() {
                         @Override
-                        public void log(Object object) {
+                        public void onLog(Object object) {
                             testResult.result = 0;
                             testResult.msg = (String) object;
                             testResultLD.postValue(testResult);

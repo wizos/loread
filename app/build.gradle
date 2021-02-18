@@ -9,8 +9,8 @@ android {
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         applicationId "me.wizos.loread"
-        versionCode 12
-        versionName "2.2.0"
+        versionCode 14
+        versionName "2.3.0"
         ndk {
             abiFilters 'armeabi-v7a', 'arm64-v8a'
         }
@@ -36,6 +36,7 @@ android {
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
+        coreLibraryDesugaringEnabled true
     }
     lintOptions {
         checkReleaseBuilds false
@@ -43,6 +44,7 @@ android {
         // but continue the build even when errors are found:
         abortOnError false
     }
+
 }
 repositories{
     flatDir{
@@ -61,8 +63,8 @@ dependencies {
     implementation 'androidx.recyclerview:recyclerview:1.1.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.0.4'
     implementation "androidx.paging:paging-runtime:2.1.2"
-    implementation "androidx.work:work-runtime:2.4.0"
-    implementation 'com.google.android.material:material:1.2.1'
+    implementation "androidx.work:work-runtime:2.5.0" // 2.4.0
+    implementation 'com.google.android.material:material:1.3.0'
 
     debugImplementation 'com.didichuxing.doraemonkit:dokitx:3.3.5'
     releaseImplementation 'com.didichuxing.doraemonkit:dokitx-no-op:3.3.5'
@@ -107,12 +109,16 @@ dependencies {
     // implementation 'com.readystatesoftware.systembartint:systembartint:1.0.3'
 
     // popup [https://github.com/li-xiaojun/XPopup]
-    implementation 'com.lxj:xpopup:2.2.6'
+    implementation 'com.lxj:xpopup:2.2.19'
     // toast [https://github.com/getActivity/ToastUtils]
     implementation 'com.hjq:toast:8.8'
 
     // 开关按钮
     implementation 'com.kyleduo.switchbutton:library:2.0.2'
+
+    // 音频部件 [https://github.com/yhaolpz/FloatWindow]
+    implementation project(path: ':floatwindow')
+    // https://github.com/SDKers/FloatWindow, https://github.com/fenggit/FloatWindow
 
     // 让播放、暂停按钮优雅的过渡 [https://github.com/Lauzy/PlayPauseView]
     implementation 'com.github.Lauzy:PlayPauseView:1.0.7'
@@ -134,9 +140,6 @@ dependencies {
     // https://github.com/codyer/ElegantBus
     // implementation "com.github.codyer.ElegantBus:core:2.0.0" // 不需要跨进程时使用
 
-    // JS Bridge
-    // implementation 'com.github.wendux:DSBridge-Android:3.0-SNAPSHOT'
-
     implementation "androidx.room:room-runtime:2.2.6"
     annotationProcessor "androidx.room:room-compiler:2.2.6"
 
@@ -149,14 +152,11 @@ dependencies {
 
     // 日志
     // [https://github.com/elvishew/xLog]
-    implementation 'com.elvishew:xlog:1.7.2'
+    implementation 'com.elvishew:xlog:1.8.0'
 
     // 权限申请 [https://github.com/getActivity/XXPermissions]
     implementation 'com.hjq:xxpermissions:9.5'
 
-    // implementation "com.umeng.umsdk:common:9.3.3"// （必选）
-    // implementation "com.umeng.umsdk:asms:1.1.4" // asms包依赖(必选)
-    // implementation 'com.umeng.umsdk:apm:1.1.0' // 可选，对应产品中稳定性模块（错误捕获），该功能已经独立成为新的应用性能监控产品U-APM
     implementation files('libs/umeng-common-9.3.3.jar')
     implementation (name:'umeng-asms-armeabi-v1.1.4', ext:'aar')
     implementation (name:'umeng-apm-armeabi-v1.1.0', ext:'aar')
@@ -181,11 +181,22 @@ dependencies {
     // 使用xpath解析提取html数据 [https://github.com/zhegexiaohuozi/JsoupXpath]
     implementation 'cn.wanghaomiao:JsoupXpath:2.4.3'
 
-    // HTML 解析
-    // implementation ('com.virjar:sipsoup:1.7'){ transitive = false }
 
-    // JSON 选择库 [https://github.com/json-path/JsonPath]
-    // implementation 'com.jayway.jsonpath:json-path:2.5.0'
+    // // 创建和解析JSONFeed提要 [https://github.com/fschiettecatte/jsonfeed] 无法使用，JSONObject 使用呃类找不到
+
+    // [https://github.com/rometools/rome]
+    // RSS 解析与生成
+    implementation "com.rometools:rome:$rome_version"
+    // 诸如MediaRSS，GeoRSS等扩展的生成器和解析器
+    implementation "com.rometools:rome-modules:$rome_version"
+    // OPML 解析与工具
+    implementation "com.rometools:rome-opml:$rome_version"
+
+    // 解析播客源 [https://github.com/MarkusLewis/Podcast-Feed-Library] rome 已支持该功能
+    // implementation 'com.icosillion.podengine:podengine:2.3'
+
+    // implementation 'com.prof.rssparser:rssparser:3.1.3'
+    // implementation files('libs/feedparser-0.1.jar')
 
     // JS 库 [https://github.com/APISENSE/rhino-android]
     implementation 'io.apisense:rhino-android:1.1.1'
@@ -198,9 +209,7 @@ dependencies {
     // 查看大图 [https://github.com/SherlockGougou/BigImageViewPager]
     implementation 'com.github.SherlockGougou:BigImageViewPager:androidx-6.0.1' // 6.0.1,6.1.3
 
-    // 音频部件 [https://github.com/yhaolpz/FloatWindow]
-    implementation project(path: ':floatwindow')
-    // https://github.com/SDKers/FloatWindow, https://github.com/fenggit/FloatWindow
+    implementation 'com.king.zxing:zxing-lite:2.0.2'
 
     // retrofit2
     implementation('com.squareup.retrofit2:retrofit:2.8.1') { transitive = false }
@@ -210,18 +219,10 @@ dependencies {
     implementation 'com.squareup.okio:okio:2.9.0' // 2.6.0
     implementation files('libs/okgo-3.0.4.jar')
 
-    // 视频嗅探 (https://github.com/fanchen001/Sniffing)
-    // implementation ('com.github.fanchen001:Sniffing:1.0.1')
-    implementation project(path: ':sniffing')
-
     // NetCipher是适用于Android的库，它提供了多种改进方法移动应用程序中的网络安全。
     // 它提供了TLS最佳做法使用标准Android HTTP方法，HttpURLConnection和Apache HTTP Client，提供了简单的Tor集成，
     // 使其易于实现配置HTTP连接和WebView实例的代理。
     // (https://github.com/guardianproject/NetCipher)
-    // implementation 'info.guardianproject.netcipher:netcipher:2.1.0'
-    // implementation project(path: ':netcipher-webkit')
-    // implementation 'info.guardianproject.netcipher:netcipher-okhttp3:2.1.0'
-    // implementation 'info.guardianproject.netcipher:netcipher-webkit:2.0.0-alpha1'
 
     // 在 Android 5 及更高版本上使用新式 WebView API。
     implementation "androidx.webkit:webkit:1.4.0"
@@ -229,6 +230,13 @@ dependencies {
     // implementation 'com.github.allenlzhang:NetworkState:v1.0.0'
     // 本地版本修复部分手机出现空指针问题，并升级到androidx
     implementation project(path: ':networklibs')
+
+    // 反向代理
+    // implementation project(path: ':reverseproxy')
+
+    // 视频嗅探 (https://github.com/fanchen001/Sniffing)
+    // implementation project(path: ':sniffing') // 1.0.1
+
     // 图片压缩 [https://github.com/Curzibn/Luban]
     implementation project(path: ':luban')
 
@@ -236,5 +244,9 @@ dependencies {
     implementation 'com.oasisfeng.condom:library:2.5.0'
 
     // 生成/扫描二维码 https://github.com/bingoogolapple/BGAQRCode-Androidc
-    implementation 'cn.bingoogolapple:bga-qrcode-zxing:1.3.7'
+    // implementation 'cn.bingoogolapple:bga-qrcode-zxing:1.3.7'
+
+    // 允许在 API 26 之下使用 java.time.Instant
+    // https://stackoverflow.com/questions/55550936/call-requires-api-level-26-current-min-is-23-java-time-instantnow
+    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:1.1.1'
 }

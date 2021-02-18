@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/sheet_tag"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
@@ -27,13 +28,6 @@
     <!--        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"/>-->
     <!--</com.donkingliang.groupedadapter.widget.StickyHeaderLayout>-->
 
-
-    <com.yanzhenjie.recyclerview.SwipeRecyclerView
-        android:id="@+id/main_tag_list_view"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"/>
-
     <!--<pokercc.android.expandablerecyclerview.StickyHeaderRecyclerViewContainer-->
     <!--    android:id="@+id/sheet_tag_sticky_header"-->
     <!--    android:layout_width="match_parent"-->
@@ -45,5 +39,25 @@
     <!--        android:layout_height="wrap_content"-->
     <!--        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager" />-->
     <!--</pokercc.android.expandablerecyclerview.StickyHeaderRecyclerViewContainer>-->
+
+    <com.yanzhenjie.recyclerview.SwipeRecyclerView
+        android:id="@+id/main_tag_list_view"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"/>
+
+    <TextView
+        android:id="@+id/main_tag_create_category"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/main_tag_list_view"
+        android:padding="10dp"
+        android:textSize="14sp"
+        android:textColor="@color/bluePrimary"
+        android:background="?attr/root_view_bg"
+        android:gravity="center"
+        android:visibility="gone"
+        tools:visibility="visible"
+        android:text="@string/create_category"/>
 </RelativeLayout>
 

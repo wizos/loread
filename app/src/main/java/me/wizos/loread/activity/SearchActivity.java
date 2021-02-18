@@ -2,6 +2,7 @@ package me.wizos.loread.activity;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextUtils;
@@ -9,15 +10,19 @@ import android.text.TextWatcher;
 import android.util.ArrayMap;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ListView;
+import android.widget.Spinner;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -30,9 +35,12 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.RequestOptions;
 import com.elvishew.xlog.XLog;
 import com.hjq.toast.ToastUtils;
+import com.king.zxing.CameraScan;
+import com.king.zxing.CaptureActivity;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -43,23 +51,29 @@ import java.util.Set;
 import me.wizos.loread.App;
 import me.wizos.loread.Contract;
 import me.wizos.loread.R;
+import me.wizos.loread.bean.FeedEntries;
 import me.wizos.loread.bean.SearchFeed;
-import me.wizos.loread.bean.feedly.CategoryItem;
-import me.wizos.loread.bean.feedly.input.EditFeed;
-import me.wizos.loread.bean.rssfinder.FindResponse;
 import me.wizos.loread.bean.rssfinder.RSSFinderFeed;
+import me.wizos.loread.bean.rssfinder.RSSFinderResponse;
 import me.wizos.loread.bean.search.SearchFeedItem;
 import me.wizos.loread.bean.search.SearchFeeds;
 import me.wizos.loread.config.Test;
+import me.wizos.loread.db.Article;
 import me.wizos.loread.db.Category;
 import me.wizos.loread.db.CoreDB;
 import me.wizos.loread.db.Feed;
+import me.wizos.loread.db.FeedCategory;
 import me.wizos.loread.extractor.RSSSeeker;
 import me.wizos.loread.network.HttpClientManager;
 import me.wizos.loread.network.api.FeedlyApi;
 import me.wizos.loread.network.api.FeedlyService;
 import me.wizos.loread.network.api.RSSFinderService;
 import me.wizos.loread.network.callback.CallbackX;
+import me.wizos.loread.utils.Base64Utils;
+import me.wizos.loread.utils.Converter;
+import me.wizos.loread.utils.EncryptUtils;
+import me.wizos.loread.utils.FeedParserUtils;
+import me.wizos.loread.utils.HttpCall;
 import me.wizos.loread.utils.TimeUtils;
 import me.wizos.loread.view.SwipeRefreshLayoutS;
 import me.wizos.loread.view.colorful.Colorful;
@@ -73,18 +87,18 @@ import retrofit2.converter.gson.GsonConverterFactory;
 
 public class SearchActivity extends BaseActivity {
     protected static final String TAG = "SearchActivity";
-    private EditText searchView;
+    private EditText searchValueEditText;
     private ListView listView;
     private SwipeRefreshLayoutS swipeRefreshLayoutS;
 
     private ArrayList<SearchFeed> searchFeedItems = new ArrayList<>();
     private SearchListViewAdapter listViewAdapter;
     private View resultCountHeaderView;
-    // private View wordHeaderView;
     private TextView feedCountView;
     private RequestOptions options;
     private RSSSeeker rssSeeker;
     private int callCount = 0;
+    private static final int CALL_SIZE = 4;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -101,7 +115,7 @@ public class SearchActivity extends BaseActivity {
 
     private void initView() {
         swipeRefreshLayoutS = findViewById(R.id.search_swipe_refresh);
-        searchView = findViewById(R.id.search_toolbar_edittext);
+        searchValueEditText = findViewById(R.id.search_toolbar_edittext);
         listView = findViewById(R.id.search_list_view);
 
         swipeRefreshLayoutS.setEnabled(false);
@@ -118,8 +132,8 @@ public class SearchActivity extends BaseActivity {
         listViewAdapter = new SearchListViewAdapter(SearchActivity.this, searchFeedItems);
         listView.setAdapter(listViewAdapter);
 
-        searchView.requestFocus();
-        searchView.addTextChangedListener(new TextWatcher() {
+        searchValueEditText.requestFocus();
+        searchValueEditText.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
                 // XLog.i("输入前确认执行该方法", "开始输入：" + s .toString() + startAnimation + "  " + after + "  " + count);
@@ -144,7 +158,7 @@ public class SearchActivity extends BaseActivity {
             }
         });
 
-        searchView.setOnKeyListener(new View.OnKeyListener() {
+        searchValueEditText.setOnKeyListener(new View.OnKeyListener() {
             @Override
             public boolean onKey(View v, int keyCode, KeyEvent event) {
                 if (keyCode == KeyEvent.KEYCODE_ENTER) {
@@ -155,9 +169,206 @@ public class SearchActivity extends BaseActivity {
         });
     }
 
-    private Integer[] selectIndices;
+    public void onClickSearchFeeds(View view) {
+        String keyword = searchValueEditText.getText().toString();
+        if (TextUtils.isEmpty(keyword)) {
+            ToastUtils.show(R.string.enter_keyword_or_url);
+            return;
+        }
+        InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+        if(imm != null) imm.hideSoftInputFromWindow(searchValueEditText.getWindowToken(), 0);
 
-    private CustomViewHolder cvh;
+        searchValueEditText.clearFocus();
+        swipeRefreshLayoutS.setRefreshing(true);
+        listView.removeHeaderView(resultCountHeaderView);
+        listViewAdapter.clear();
+        listViewAdapter.notifyDataSetChanged();
+        callCount = 0;
+        if(rssSeeker != null){
+            rssSeeker.destroy();
+        }
+
+        if(keyword.toLowerCase().startsWith(Contract.SCHEMA_HTTP) || keyword.toLowerCase().startsWith(Contract.SCHEMA_HTTPS)){
+            // 1.检查是否为 RSS 网址
+            checkRSSURL(keyword);
+
+            // 2.检查该网页内是否有 RSS 声明
+            rssSeeker = new RSSSeeker(keyword, new RSSSeeker.Listener() {
+                @Override
+                public void onResponse(ArrayMap<String, String> rssMap) {
+                    XLog.i("RSS Seeker 成功"  );
+                    List<SearchFeed> list = new ArrayList<>(rssMap.size());
+                    for (Map.Entry<String,String> entry:rssMap.entrySet()) {
+                        list.add(new SearchFeed(entry.getKey(), entry.getValue()));
+                    }
+                    successUpdateResults(list);
+                }
+
+                @Override
+                public void onFailure(String msg) {
+                    XLog.i("RSS Seeker 失败：" + msg );
+                    failureUpdateResults();
+                }
+            });
+            rssSeeker.start();
+
+            // 3.通过 api.wizos.me 获取该网址的 RSS 远程规则
+            Retrofit retrofit = new Retrofit.Builder()
+                    .baseUrl(RSSFinderService.BASE_URL) // 设置网络请求的Url地址, 必须以/结尾
+                    .addConverterFactory(GsonConverterFactory.create())  // 设置数据解析器
+                    .client(HttpClientManager.i().searchClient())
+                    .build();
+            RSSFinderService rssFinderService = retrofit.create(RSSFinderService.class);
+            Call<RSSFinderResponse> callSearchFeeds = rssFinderService.find(Base64Utils.getInstance().encode(searchValueEditText.getText().toString()), Test.i().rssFinderUser);
+            callSearchFeeds.enqueue(new Callback<RSSFinderResponse>() {
+                @Override
+                public void onResponse(@NotNull Call<RSSFinderResponse> call, @NotNull Response<RSSFinderResponse> response) {
+                    XLog.i("RSS Finder 成功 " + call.isCanceled());
+                    if(call.isCanceled()){
+                        return;
+                    }
+                    RSSFinderResponse RSSFinderResponse = response.body();
+                    if (RSSFinderResponse != null && RSSFinderResponse.isOK()) {
+                        List<RSSFinderFeed> remoteFeedList = RSSFinderResponse.getFeeds();
+                        List<SearchFeed> feeds = new ArrayList<>();
+                        for (RSSFinderFeed feed : remoteFeedList){
+                            feeds.add(Converter.from(feed));
+                        }
+                        successUpdateResults(feeds);
+                    }else {
+                        failureUpdateResults();
+                    }
+                }
+
+                @Override
+                public void onFailure(@NotNull Call<RSSFinderResponse> call, @NotNull Throwable t) {
+                    XLog.i("RSS Finder 失败：" + call.isCanceled() + t);
+                    failureUpdateResults();
+                }
+            });
+        }
+
+
+        Retrofit retrofit = new Retrofit.Builder()
+                .baseUrl(FeedlyApi.OFFICIAL_BASE_URL + "/") // 设置网络请求的Url地址, 必须以/结尾
+                .addConverterFactory(GsonConverterFactory.create())  // 设置数据解析器
+                .client(HttpClientManager.i().searchClient())
+                .build();
+        FeedlyService feedlyService = retrofit.create(FeedlyService.class);
+        //对 发送请求 进行封装
+        Call<SearchFeeds> callSearchFeeds = feedlyService.getSearchFeeds(searchValueEditText.getText().toString(), 50);
+        callSearchFeeds.enqueue(new retrofit2.Callback<SearchFeeds>() {
+            @Override
+            public void onResponse(@NotNull Call<SearchFeeds> call, @NotNull Response<SearchFeeds> response) {
+                XLog.i("feedly 成功" + call.isCanceled());
+                if(call.isCanceled()){
+                    return;
+                }
+                SearchFeeds searchResult = response.body();
+                if (searchResult != null && searchResult.getResults() != null) {
+                    List<SearchFeedItem> items = searchResult.getResults();
+                    List<SearchFeed> feeds = new ArrayList<>();
+                    for (SearchFeedItem item: items){
+                        feeds.add(item.convert2SearchFeed());
+                    }
+                    successUpdateResults(feeds);
+                }else {
+                    failureUpdateResults();
+                }
+            }
+
+            @Override
+            public void onFailure(@NotNull Call<SearchFeeds> call, @NotNull Throwable t) {
+                XLog.i("feedly 失败：" + call.isCanceled() + " , " + t);
+                failureUpdateResults();
+            }
+        });
+    }
+
+    private void failureUpdateResults(){
+        callCount++;
+        if(callCount == CALL_SIZE){
+            callCount = 0;
+            swipeRefreshLayoutS.post(() -> {
+                swipeRefreshLayoutS.setRefreshing(false);
+                if(listViewAdapter.getCount() == 0){
+                    ToastUtils.show(App.i().getString(R.string.no_search_results_found));
+                }
+            });
+        }
+        XLog.i("failureUpdateResults: " + callCount);
+    }
+    private void successUpdateResults(List<SearchFeed> list){
+        callCount++;
+        if(callCount == CALL_SIZE){
+            callCount = 0;
+            swipeRefreshLayoutS.post(() -> swipeRefreshLayoutS.setRefreshing(false));
+        }
+        XLog.d("successUpdateResults: " + callCount);
+        listViewAdapter.addItems(list);
+        swipeRefreshLayoutS.post(new Runnable() {
+            @Override
+            public void run() {
+                listViewAdapter.notifyDataSetChanged();
+                feedCountView.setText(getString(R.string.search_cloudy_feeds_result_count, listViewAdapter.getCount()));
+                if(listView.getHeaderViewsCount() == 0){
+                    listView.addHeaderView(resultCountHeaderView);
+                }
+            }
+        });
+    }
+
+    private void successUpdateResults(FeedEntries feedEntries){
+        callCount++;
+        if( callCount == CALL_SIZE){
+            swipeRefreshLayoutS.post(() -> swipeRefreshLayoutS.setRefreshing(false));
+        }
+        XLog.d("successUpdateResults: " + callCount);
+        listViewAdapter.addItem(feedEntries);
+        swipeRefreshLayoutS.post(new Runnable() {
+            @Override
+            public void run() {
+                listViewAdapter.notifyDataSetChanged();
+                feedCountView.setText(getString(R.string.search_cloudy_feeds_result_count, listViewAdapter.getCount()));
+                if(listView.getHeaderViewsCount() == 0){
+                    listView.addHeaderView(resultCountHeaderView);
+                }
+            }
+        });
+    }
+
+    private void checkRSSURL(String url){
+        HttpCall.get(url, new okhttp3.Callback() {
+            @Override
+            public void onFailure(@NotNull okhttp3.Call call, @NotNull IOException e) {
+                failureUpdateResults();
+            }
+
+            @Override
+            public void onResponse(@NotNull okhttp3.Call call, @NotNull okhttp3.Response response) throws IOException {
+                if(!response.isSuccessful()){
+                    failureUpdateResults();
+                    return;
+                }
+
+                Feed feed = new Feed();
+                feed.setUid(App.i().getUser().getId());
+                feed.setId(EncryptUtils.MD5(url));
+                feed.setFeedUrl(url);
+                FeedEntries feedEntries = FeedParserUtils.parseResponseBody(SearchActivity.this, feed, response.body());
+                if(feedEntries == null || !feedEntries.isSuccess()){
+                    failureUpdateResults();
+                }else {
+                    successUpdateResults(feedEntries);
+                }
+            }
+        });
+    }
+
+
+
+
+
     public static class CustomViewHolder {
         TextView feedTitle;
         TextView feedSummary;
@@ -167,10 +378,10 @@ public class SearchActivity extends BaseActivity {
         CheckBox feedSubState;
         ImageView feedIcon;
     }
-
     class SearchListViewAdapter extends ArrayAdapter<SearchFeed> {
         private List<SearchFeed> searchFeeds;
         private Set<String> set = new ArraySet<>();
+        private ArrayMap<String, List<Article>> arrayMap = new ArrayMap<>();
 
         public SearchListViewAdapter(Context context, List<SearchFeed> feedList) {
             super(context, 0, feedList);
@@ -182,6 +393,13 @@ public class SearchActivity extends BaseActivity {
                 if(set.add(item.getFeedUrl())){
                     searchFeeds.add(item);
                 }
+            }
+        }
+
+        public void addItem(FeedEntries feedEntries){
+            if(set.add(feedEntries.getFeed().getFeedUrl())){
+                searchFeeds.add(Converter.from(feedEntries.getFeed()));
+                arrayMap.put(feedEntries.getFeed().getFeedUrl(), feedEntries.getArticles());
             }
         }
 
@@ -213,7 +431,8 @@ public class SearchActivity extends BaseActivity {
         @NotNull
         @Override
         public View getView(final int position, View convertView, @NotNull final ViewGroup parent) {
-            final SearchFeed item = this.getItem(position);
+            final SearchFeed searchFeed = this.getItem(position);
+            CustomViewHolder cvh;
             if (convertView == null) {
                 cvh = new CustomViewHolder();
                 convertView = LayoutInflater.from(SearchActivity.this).inflate(R.layout.activity_search_list_item_feed, null);
@@ -228,79 +447,70 @@ public class SearchActivity extends BaseActivity {
             } else {
                 cvh = (CustomViewHolder) convertView.getTag();
             }
-            cvh.feedTitle.setText(item.getTitle());
-            if (!TextUtils.isEmpty(item.getDescription())) {
+            cvh.feedTitle.setText(searchFeed.getTitle());
+            if (!TextUtils.isEmpty(searchFeed.getDescription())) {
                 cvh.feedSummary.setVisibility(View.VISIBLE);
-                cvh.feedSummary.setText(item.getDescription());
+                cvh.feedSummary.setText(searchFeed.getDescription());
             } else {
                 cvh.feedSummary.setVisibility(View.GONE);
                 cvh.feedSummary.setText("");
             }
             // XLog.i("当前view是：" + position +"  " + convertView.getId() + "");
-            Glide.with(SearchActivity.this).load(item.getIconUrl()).apply(options).into(cvh.feedIcon);
+            Glide.with(SearchActivity.this).load(searchFeed.getIconUrl()).apply(options).into(cvh.feedIcon);
 
-            cvh.feedUrl.setText(item.getFeedUrl());
+            cvh.feedUrl.setText(searchFeed.getFeedUrl());
             // getResources().getQuantityString(R.plurals.search_result_followers, searchFeedItem.getSubscribers(), searchFeedItem.getSubscribers(), searchFeedItem.getVelocity() )
-            if( item.getSubscribers() != 0 || item.getVelocity() != 0){
+            if( searchFeed.getSubscribers() != 0 || searchFeed.getVelocity() != 0){
                 cvh.feedSubsVelocity.setVisibility(View.VISIBLE);
-                cvh.feedSubsVelocity.setText( getString(R.string.search_result_meta, item.getSubscribers(), String.format(Locale.getDefault(), "%.2f",item.getVelocity())) ); //  + getString(R.string.search_result_articles, searchFeedItem.getVelocity())
+                cvh.feedSubsVelocity.setText( getString(R.string.search_result_meta, searchFeed.getSubscribers(), String.format(Locale.getDefault(), "%.2f", searchFeed.getVelocity())) ); //  + getString(R.string.search_result_articles, searchFeedItem.getVelocity())
             }else {
                 cvh.feedSubsVelocity.setVisibility(View.GONE);
             }
 
-            if (item.getLastUpdated() != 0) {
+            if (searchFeed.getLastUpdated() != 0) {
                 cvh.feedLastUpdated.setVisibility(View.VISIBLE);
-                cvh.feedLastUpdated.setText(getString(R.string.search_result_last_update_time, TimeUtils.format(item.getLastUpdated(), "yyyy-MM-dd")));
+                cvh.feedLastUpdated.setText(getString(R.string.search_result_last_update_time, TimeUtils.format(searchFeed.getLastUpdated(), "yyyy-MM-dd")));
             } else {
                 cvh.feedLastUpdated.setVisibility(View.GONE);
                 cvh.feedLastUpdated.setText("");
             }
 
-            cvh.feedSubState.setChecked( (CoreDB.i().feedDao().getByFeedUrl(App.i().getUser().getId(), item.getFeedUrl()) != null) );
+            XLog.i("搜索订阅源：" + App.i().getUser().getId() + " = " +  searchFeed.getFeedUrl());
+            cvh.feedSubState.setChecked( (CoreDB.i().feedDao().getByFeedUrl(App.i().getUser().getId(), searchFeed.getFeedUrl()) != null) );
             cvh.feedSubState.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
                 @Override
                 public void onCheckedChanged(CompoundButton view, boolean isChecked) {
                     if(isChecked){
                         view.setChecked(false);
-                        final List<Category> categoryList = CoreDB.i().categoryDao().getAll(App.i().getUser().getId());
-                        String[] categoryTitleArray = new String[categoryList.size()];
-                        for (int i = 0, size = categoryList.size(); i < size; i++) {
-                            categoryTitleArray[i] = categoryList.get(i).getTitle();
+
+                        FeedEntries feedEntries = new FeedEntries();
+                        feedEntries.setFeed(Converter.from(searchFeed));
+                        if(arrayMap.containsKey(searchFeed.getFeedUrl())){
+                            feedEntries.setArticles(arrayMap.get(searchFeed.getFeedUrl()));
                         }
-                        final EditFeed editFeed = new EditFeed();
-                        editFeed.setId(Contract.SCHEMA_FEED + item.getFeedUrl());
-                        new MaterialDialog.Builder(SearchActivity.this)
-                                .title(getString(R.string.select_category))
-                                .items(categoryTitleArray)
-                                .alwaysCallMultiChoiceCallback()
-                                .itemsCallbackMultiChoice(null, new MaterialDialog.ListCallbackMultiChoice() {
+
+                        MaterialDialog feedSettingDialog = new MaterialDialog.Builder(SearchActivity.this)
+                                .title(R.string.add_subscription)
+                                .customView(R.layout.dialog_add_feed, true)
+                                .negativeText(android.R.string.cancel)
+                                .onNegative(new MaterialDialog.SingleButtonCallback() {
                                     @Override
-                                    public boolean onSelection(MaterialDialog dialog, Integer[] which, CharSequence[] text) {
-                                        SearchActivity.this.selectIndices = which;
-                                        for (int i : which) {
-                                            XLog.i("点选了：" + i);
-                                        }
-                                        return true;
+                                    public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
+                                        dialog.dismiss();
                                     }
                                 })
-                                .positiveText(R.string.confirm)
+                                .positiveText(R.string.agree)
                                 .onPositive(new MaterialDialog.SingleButtonCallback() {
                                     @Override
                                     public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
-                                        ArrayList<CategoryItem> categoryItemList = new ArrayList<>();
-                                        for (Integer selectIndex : selectIndices) {
-                                            CategoryItem categoryItem = new CategoryItem();
-                                            categoryItem.setId(categoryList.get(selectIndex).getId());
-                                            categoryItemList.add(categoryItem);
-                                        }
-                                        editFeed.setCategoryItems(categoryItemList);
+                                        EditText feedNameEditText = (EditText) dialog.findViewById(R.id.dialog_feed_name_edittext);
+                                        feedEntries.getFeed().setTitle(feedNameEditText.getText().toString());
+
                                         view.setEnabled(false);
-                                        App.i().getApi().addFeed(editFeed, new CallbackX() {
+                                        App.i().getApi().addFeed(feedEntries, new CallbackX() {
                                             @Override
                                             public void onSuccess(Object result) {
-                                                XLog.i("添加成功");
-                                                ToastUtils.show(R.string.subscribe_success);
-                                                view.setEnabled(true);
+                                                ToastUtils.show(result.toString());
                                                 view.setEnabled(true);
                                             }
 
@@ -313,17 +523,51 @@ public class SearchActivity extends BaseActivity {
                                     }
                                 })
                                 .show();
+                        EditText feedUrlEditText = (EditText) feedSettingDialog.findViewById(R.id.dialog_feed_url_edittext);
+                        feedUrlEditText.setText(searchFeed.getFeedUrl());
+
+
+                        EditText feedNameEditText = (EditText) feedSettingDialog.findViewById(R.id.dialog_feed_name_edittext);
+                        feedNameEditText.setText(searchFeed.getTitle());
+
+                        Spinner categoryNameSpinner = (Spinner) feedSettingDialog.findViewById(R.id.category_name_editspinner);
+                        List<Category> categories = CoreDB.i().categoryDao().getAll(App.i().getUser().getId());
+                        List<String> items = new ArrayList<>();
+                        items.add(getString(R.string.un_category));
+                        if(categories != null){
+                            for (Category category:categories){
+                                items.add(category.getTitle());
+                            }
+                        }
+                        ArrayAdapter<String> adapter = new ArrayAdapter<>(SearchActivity.this, android.R.layout.simple_spinner_dropdown_item, items);
+                        categoryNameSpinner.setAdapter(adapter);
+                        categoryNameSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+                            @Override
+                            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                                position = position - 1;
+                                if(position >= 0 && categories != null){
+                                    List<FeedCategory> feedCategories = new ArrayList<>();
+                                    FeedCategory feedCategory = new FeedCategory(App.i().getUser().getId(), feedEntries.getFeed().getId(), categories.get(position).getId());
+                                    feedCategories.add(feedCategory);
+                                    feedEntries.setFeedCategories(feedCategories);
+                                }
+                            }
+
+                            @Override
+                            public void onNothingSelected(AdapterView<?> parent) {
+                            }
+                        });
                     }else {
                         view.setEnabled(false);
                         view.setChecked(true);
-                        Feed feed = CoreDB.i().feedDao().getByFeedUrl(App.i().getUser().getId(), item.getFeedUrl());
+                        Feed feed = CoreDB.i().feedDao().getByFeedUrl(App.i().getUser().getId(), searchFeed.getFeedUrl());
                         if(feed == null){
                             return;
                         }
                         App.i().getApi().unsubscribeFeed(feed.getId(), new CallbackX() {
                             @Override
                             public void onSuccess(Object result) {
-                                CoreDB.i().feedDao().deleteByFeedUrl(App.i().getUser().getId(), item.getFeedUrl());
+                                CoreDB.i().feedDao().deleteByFeedUrl(App.i().getUser().getId(), searchFeed.getFeedUrl());
                                 view.setEnabled(true);
                                 view.setChecked(false);
                             }
@@ -337,82 +581,6 @@ public class SearchActivity extends BaseActivity {
                     }
                 }
             });
-            // cvh.feedSubState.setOnClickListener(new View.OnClickListener() {
-            //     @Override
-            //     public void onClick(final View view) {
-            //         Feed feed = CoreDB.i().feedDao().getByFeedUrl(App.i().getUser().getId(), item.getFeedUrl());
-            //         if ( feed != null) {
-            //             view.setClickable(false); // 防止重复点击
-            //             App.i().getApi().unsubscribeFeed(feed.getId(), new CallbackX() {
-            //                 @Override
-            //                 public void onSuccess(Object result) {
-            //                     CoreDB.i().feedDao().deleteById(App.i().getUser().getId(), item.getFeedUrl());
-            //                     ((CheckBox) view).setChecked(false);
-            //                     view.setClickable(true);
-            //                 }
-            //
-            //                 @Override
-            //                 public void onFailure(Object error) {
-            //                     ToastUtils.show(getString(R.string.unsubscribe_failed,error));
-            //                     view.setClickable(true);
-            //                 }
-            //             });
-            //         } else {
-            //             // cvh.feedSubState.setText(R.string.font_add);
-            //             // showSelectFolder(view, item.getFeedUrl());
-            //             final List<Category> categoryList = CoreDB.i().categoryDao().getAll(App.i().getUser().getId());
-            //             String[] categoryTitleArray = new String[categoryList.size()];
-            //             for (int i = 0, size = categoryList.size(); i < size; i++) {
-            //                 categoryTitleArray[i] = categoryList.get(i).getTitle();
-            //             }
-            //             final EditFeed editFeed = new EditFeed();
-            //             editFeed.setId(Contract.SCHEMA_FEED + item.getFeedUrl());
-            //             new MaterialDialog.Builder(SearchActivity.this)
-            //                     .title(getString(R.string.select_category))
-            //                     .items(categoryTitleArray)
-            //                     .alwaysCallMultiChoiceCallback()
-            //                     .itemsCallbackMultiChoice(null, new MaterialDialog.ListCallbackMultiChoice() {
-            //                         @Override
-            //                         public boolean onSelection(MaterialDialog dialog, Integer[] which, CharSequence[] text) {
-            //                             SearchActivity.this.selectIndices = which;
-            //                             for (int i : which) {
-            //                                 XLog.i("点选了：" + i);
-            //                             }
-            //                             return true;
-            //                         }
-            //                     })
-            //                     .positiveText(R.string.confirm)
-            //                     .onPositive(new MaterialDialog.SingleButtonCallback() {
-            //                         @Override
-            //                         public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
-            //                             ArrayList<CategoryItem> categoryItemList = new ArrayList<>();
-            //                             for (Integer selectIndex : selectIndices) {
-            //                                 CategoryItem categoryItem = new CategoryItem();
-            //                                 categoryItem.setId(categoryList.get(selectIndex).getId());
-            //                                 categoryItemList.add(categoryItem);
-            //                             }
-            //                             editFeed.setCategoryItems(categoryItemList);
-            //                             view.setClickable(false);
-            //                             App.i().getApi().addFeed(editFeed, new CallbackX() {
-            //                                 @Override
-            //                                 public void onSuccess(Object result) {
-            //                                     XLog.i("添加成功");
-            //                                     ToastUtils.show(R.string.subscribe_success);
-            //                                     ((CheckBox) view).setChecked(true);
-            //                                     view.setClickable(true);
-            //                                 }
-            //
-            //                                 @Override
-            //                                 public void onFailure(Object error) {
-            //                                     ToastUtils.show(getString(R.string.subscribe_fail, error));
-            //                                     view.setClickable(true);
-            //                                 }
-            //                             });
-            //                         }
-            //                     }).show();
-            //         }
-            //     }
-            // });
             return convertView;
         }
     }
@@ -428,147 +596,41 @@ public class SearchActivity extends BaseActivity {
         // setDisplayShowCustomEnabled(true)  // 使自定义的普通View能在title栏显示，即actionBar.setCustomView能起作用，对应ActionBar.DISPLAY_SHOW_CUSTOM
     }
 
-    public void onClickSearchFeeds(View view) {
-        String keyword = searchView.getText().toString();
-        if (TextUtils.isEmpty(keyword)) {
-            ToastUtils.show(R.string.please_input_keyword);
-            return;
-        }
-        InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
-        if(imm != null) imm.hideSoftInputFromWindow(searchView.getWindowToken(), 0);
 
-        searchView.clearFocus();
-        swipeRefreshLayoutS.setRefreshing(true);
-        listView.removeHeaderView(resultCountHeaderView);
-        listViewAdapter.clear();
-        listViewAdapter.notifyDataSetChanged();
-        callCount = 0;
-        if(rssSeeker != null){
-            rssSeeker.destroy();
-        }
-
-        if(keyword.toLowerCase().startsWith(Contract.SCHEMA_HTTP) || keyword.toLowerCase().startsWith(Contract.SCHEMA_HTTPS)){
-            rssSeeker = new RSSSeeker(keyword, new RSSSeeker.Listener() {
-                @Override
-                public void onResponse(ArrayMap<String, String> rssMap) {
-                    XLog.i("RSS Seeker 成功"  );
-                    List<SearchFeed> list = new ArrayList<>(rssMap.size());
-                    for (Map.Entry<String,String> entry:rssMap.entrySet()) {
-                        list.add(new SearchFeed(entry.getKey(), entry.getValue()));
-                    }
-                    successUpdateResults(list);
-                }
-
-                @Override
-                public void onFailure(String msg) {
-                    XLog.i("RSS Seeker 失败：" + msg );
-                    failureUpdateResults();
-                }
-            });
-            rssSeeker.start();
-
-            Retrofit retrofit = new Retrofit.Builder()
-                    .baseUrl(RSSFinderService.BASE_URL) // 设置网络请求的Url地址, 必须以/结尾
-                    .addConverterFactory(GsonConverterFactory.create())  // 设置数据解析器
-                    .client(HttpClientManager.i().searchClient())
-                    .build();
-            RSSFinderService rssFinderService = retrofit.create(RSSFinderService.class);
-
-            // String user = TestConfig.i().rssFinderUser;
-            Call<FindResponse> callSearchFeeds = rssFinderService.find(searchView.getText().toString(), Test.i().rssFinderUser);
-            callSearchFeeds.enqueue(new Callback<FindResponse>() {
-                @Override
-                public void onResponse(@NotNull Call<FindResponse> call, @NotNull Response<FindResponse> response) {
-                    XLog.i("RSS Finder 成功 " + call.isCanceled());
-                    if(call.isCanceled()){
-                        return;
-                    }
-                    FindResponse findResponse = response.body();
-                    if (findResponse != null && findResponse.isOK()) {
-                        List<RSSFinderFeed> items = findResponse.getFeeds();
-                        List<SearchFeed> feeds = new ArrayList<>();
-                        for (RSSFinderFeed item: items){
-                            feeds.add(item.convert2SearchFeed());
-                        }
-                        successUpdateResults(feeds);
-                    }else {
-                        failureUpdateResults();
-                    }
-                }
-
-                @Override
-                public void onFailure(@NotNull Call<FindResponse> call, @NotNull Throwable t) {
-                    XLog.i("RSS Finder 失败：" + call.isCanceled() + t);
-                    failureUpdateResults();
-                }
-            });
-        }
-
-
-        Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl(FeedlyApi.OFFICIAL_BASE_URL + "/") // 设置网络请求的Url地址, 必须以/结尾
-                .addConverterFactory(GsonConverterFactory.create())  // 设置数据解析器
-                .client(HttpClientManager.i().searchClient())
-                .build();
-        FeedlyService feedlyService = retrofit.create(FeedlyService.class);
-
-        //对 发送请求 进行封装
-        Call<SearchFeeds> callSearchFeeds = feedlyService.getSearchFeeds(searchView.getText().toString(), 100);
-        callSearchFeeds.enqueue(new retrofit2.Callback<SearchFeeds>() {
-            @Override
-            public void onResponse(@NotNull Call<SearchFeeds> call, @NotNull Response<SearchFeeds> response) {
-                XLog.i("feedly 成功" + call.isCanceled());
-                if(call.isCanceled()){
-                    return;
-                }
-                SearchFeeds searchResult = response.body();
-                if (searchResult != null && searchResult.getResults() != null) {
-                    List<SearchFeedItem> items = searchResult.getResults();
-                    List<SearchFeed> feeds = new ArrayList<>();
-                    for (SearchFeedItem item: items){
-                        feeds.add(item.convert2SearchFeed());
-                    }
-                    successUpdateResults(feeds);
-                }else {
-                    failureUpdateResults();
-                }
-            }
-
-            @Override
-            public void onFailure(@NotNull Call<SearchFeeds> call, @NotNull Throwable t) {
-                XLog.i("feedly失败：" + call.isCanceled() + " , " + t);
-                failureUpdateResults();
-            }
-        });
+    public static final int REQUEST_CODE_SCAN = 1;
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_search, menu);
+        return true;
     }
-
-    private void failureUpdateResults(){
-        callCount++;
-        XLog.i("failureUpdateResults: " + callCount);
-        if( callCount == 3){
-            swipeRefreshLayoutS.post(() -> {
-                ToastUtils.show(App.i().getString(R.string.failed_please_try_again));
-                swipeRefreshLayoutS.setRefreshing(false);
-            });
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // //监听左上角的返回箭头
+        switch (item.getItemId()) {
+            case R.id.search_menu_qr:
+                //跳转的默认扫码界面
+                startActivityForResult(new Intent(this, CaptureActivity.class), REQUEST_CODE_SCAN);
+                break;
+            default:
+                break;
         }
+        return super.onOptionsItemSelected(item);
     }
-    private void successUpdateResults(List<SearchFeed> list){
-        callCount++;
-        XLog.d("successUpdateResults: " + callCount);
-        listViewAdapter.addItems(list);
-        if( callCount == 3){
-            swipeRefreshLayoutS.post(() -> swipeRefreshLayoutS.setRefreshing(false));
-        }
-        swipeRefreshLayoutS.post(new Runnable() {
-            @Override
-            public void run() {
-                listViewAdapter.notifyDataSetChanged();
-                feedCountView.setText(getString(R.string.search_cloudy_feeds_result_count, listViewAdapter.getCount()));
-                if(listView.getHeaderViewsCount() == 0){
-                    listView.addHeaderView(resultCountHeaderView);
-                }
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
+        super.onActivityResult(requestCode, resultCode, intent);
+
+        if(resultCode == RESULT_OK && intent!=null){
+            switch (requestCode){
+                case REQUEST_CODE_SCAN:
+                    String result = CameraScan.parseScanResult(intent);
+                    if(searchValueEditText != null){
+                        searchValueEditText.setText(result);
+                        onClickSearchFeeds(null);
+                    };
+                    break;
             }
-        });
+        }
     }
 
     @Override

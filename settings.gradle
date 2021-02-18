@@ -1,1 +1,6 @@
-include ':app', ":support",':floatwindow',':editspinner',':agentweb-core',':luban',':networklibs',':sniffing'//, 'netcipher-webkit'
+include ':app', ":support",':floatwindow',':editspinner',':agentweb-core',':luban',':networklibs'//, 'netcipher-webkit'
+
+// include ':reverseproxy',':sniffing'
+// include ':jsonfeed'
+includeBuild 'rome'
+rootProject.name = 'loread'

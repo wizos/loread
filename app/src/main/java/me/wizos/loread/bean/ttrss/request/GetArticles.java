@@ -2,6 +2,8 @@ package me.wizos.loread.bean.ttrss.request;
 
 import com.google.gson.annotations.SerializedName;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.Collection;
 
 import me.wizos.loread.utils.StringUtils;
@@ -24,5 +26,15 @@ public class GetArticles {
     }
     public String getSid() {
         return sid;
+    }
+
+    @NotNull
+    @Override
+    public String toString() {
+        return "GetArticles{" +
+                "op='" + op + '\'' +
+                ", sid='" + sid + '\'' +
+                ", articleIds='" + articleIds + '\'' +
+                '}';
     }
 }
