@@ -481,8 +481,6 @@ public class SearchActivity extends BaseActivity {
                 @Override
                 public void onCheckedChanged(CompoundButton view, boolean isChecked) {
                     if(isChecked){
-                        view.setChecked(false);
-
                         FeedEntries feedEntries = new FeedEntries();
                         feedEntries.setFeed(Converter.from(searchFeed));
                         if(arrayMap.containsKey(searchFeed.getFeedUrl())){
@@ -503,21 +501,25 @@ public class SearchActivity extends BaseActivity {
                                 .onPositive(new MaterialDialog.SingleButtonCallback() {
                                     @Override
                                     public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
+                                        dialog.dismiss();
                                         EditText feedNameEditText = (EditText) dialog.findViewById(R.id.dialog_feed_name_edittext);
                                         feedEntries.getFeed().setTitle(feedNameEditText.getText().toString());
 
                                         view.setEnabled(false);
+                                        view.setChecked(true);
                                         App.i().getApi().addFeed(feedEntries, new CallbackX() {
                                             @Override
                                             public void onSuccess(Object result) {
                                                 ToastUtils.show(result.toString());
                                                 view.setEnabled(true);
+                                                view.setChecked(true);
                                             }
 
                                             @Override
                                             public void onFailure(Object error) {
                                                 ToastUtils.show(getString(R.string.subscribe_fail, error));
                                                 view.setEnabled(true);
+                                                view.setChecked(false);
                                             }
                                         });
                                     }
@@ -558,12 +560,12 @@ public class SearchActivity extends BaseActivity {
                             }
                         });
                     }else {
-                        view.setEnabled(false);
-                        view.setChecked(true);
                         Feed feed = CoreDB.i().feedDao().getByFeedUrl(App.i().getUser().getId(), searchFeed.getFeedUrl());
                         if(feed == null){
                             return;
                         }
+                        view.setEnabled(false);
+                        view.setChecked(false);
                         App.i().getApi().unsubscribeFeed(feed.getId(), new CallbackX() {
                             @Override
                             public void onSuccess(Object result) {
@@ -576,6 +578,7 @@ public class SearchActivity extends BaseActivity {
                             public void onFailure(Object error) {
                                 ToastUtils.show(getString(R.string.unsubscribe_failed,error));
                                 view.setEnabled(true);
+                                view.setChecked(true);
                             }
                         });
                     }

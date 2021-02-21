@@ -193,7 +193,7 @@
         <activity
             android:name=".activity.FeedActivity"
             android:configChanges="uiMode|orientation|screenSize|keyboardHidden"
-            android:label="@string/title_activity_scrolling"
+            android:label="@string/feed"
             android:launchMode="singleTop"
             android:theme="@style/AppTheme.Day.NoActionBar" />
         <activity

@@ -358,6 +358,16 @@
     <!--    <item>great than</item>-->
     <!--</string-array>-->
 
+    <string-array name="exception">
+        <item>NOT LOGGED IN</item>
+        <item>SocketTimeoutException</item>
+        <item>ConnectException</item>
+        <item>IOException</item>
+        <item>RuntimeException</item>
+    </string-array>
+    <string name="not_logged_in">NOT LOGGED IN</string>
+
+
     <string name="if_x">if</string>
     <string name="and">and</string>
 
@@ -562,7 +572,7 @@
     <string name="font_untag_article" translatable="false">&#xe84d;</string>
 
 
-    <string name="title_activity_scrolling">ScrollingActivity</string>
+    <string name="feed">Feed</string>
 
     <string name="action_settings">Settings</string>
     <string name="suggestion_use_fever_for_tiny_tiny_rss">Suggestion: Due to the limitation of TinyTinyRSS, for the articles that have been synced to APP, the latest status cannot be synced to APP after "read/unread/starred/unstar" operation on the website. We suggest you to install Fever plugin and use Fever to login.</string>
@@ -642,7 +652,7 @@
 
     <string name="the_rule_of_full_text_extraction_has_expired">The rule of full-text extraction has expired: %1$s</string>
 
-    <string name="not_logged_in">NOT LOGGED IN</string>
+
     <string name="plz_login_again">Please login again</string>
 
     <string name="timeout">Timeout</string>
@@ -711,4 +721,5 @@
 
     <string name="no_search_results_found">No search results found</string>
     <string name="no_articles">No articles</string>
+
 </resources>

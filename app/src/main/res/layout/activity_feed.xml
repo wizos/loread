@@ -22,6 +22,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:background="?attr/topbar_bg"
+            tools:title="博谈"
             app:contentScrim="?attr/topbar_bg"
             app:statusBarScrim="?attr/topbar_bg"
             app:layout_scrollFlags="scroll|exitUntilCollapsed"

@@ -64,6 +64,7 @@ import me.wizos.loread.service.TimeHandler;
 import me.wizos.loread.utils.FileUtils;
 import me.wizos.loread.utils.NetworkUtils;
 import me.wizos.loread.utils.ScriptUtils;
+import me.wizos.loread.utils.Tool;
 import me.wizos.loread.view.webview.WebViewS;
 
 import static me.wizos.loread.utils.NetworkUtils.NETWORK_MOBILE;
@@ -287,8 +288,8 @@ public class App extends Application implements Thread.UncaughtExceptionHandler 
 
     @Override
     public void uncaughtException(@NotNull Thread thread, @NotNull Throwable ex) {
-        XLog.e("线程意外报错：" + Arrays.toString(ex.getStackTrace()));
-        ex.printStackTrace();
+        XLog.e("线程意外报错：");
+        Tool.printCallStack(ex);
         UMCrash.registerUMCrashCallback(new UMCrashCallback() {
             @Override
             public String onCallback() {

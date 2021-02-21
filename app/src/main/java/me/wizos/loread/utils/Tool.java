@@ -51,10 +51,16 @@ public class Tool {
         }
     }
 
+    public static void printCallStack(Throwable e) {
+        StackTraceElement[] stackElements = e.getStackTrace();
+        for (StackTraceElement stackElement : stackElements) {
+            XLog.e(stackElement.getClassName() + "_" + stackElement.getFileName() + "_" + stackElement.getLineNumber() + "_" + stackElement.getMethodName());
+        }
+    }
     public static void printCallStack(Exception e) {
         StackTraceElement[] stackElements = e.getStackTrace();
         for (StackTraceElement stackElement : stackElements) {
-            System.out.println(stackElement.getClassName() + "_" + stackElement.getFileName() + "_" + stackElement.getLineNumber() + "_" + stackElement.getMethodName());
+            XLog.e(stackElement.getClassName() + "_" + stackElement.getFileName() + "_" + stackElement.getLineNumber() + "_" + stackElement.getMethodName());
         }
     }
     public static void setBackgroundColor(View object) {

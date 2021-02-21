@@ -218,7 +218,7 @@ public class Converter {
 
         if(item.getContents() != null && item.getContents().size() > 0 && !StringUtils.isEmpty(item.getContents().get(0).getValue())){
             article.setContent(ArticleUtils.getOptimizedContent(item.getLink(), item.getContents().get(0).getValue()));
-        }else if(!StringUtils.isEmpty(item.getDescription().getValue())){
+        }else if(item.getDescription() != null && !StringUtils.isEmpty(item.getDescription().getValue())){
             article.setContent(ArticleUtils.getOptimizedContent(item.getLink(), item.getDescription().getValue()));
         }
 

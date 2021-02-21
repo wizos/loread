@@ -222,7 +222,7 @@ public class FileUtils {
             return true;
         } catch (IOException e) {
             XLog.e("保存错误");
-            e.printStackTrace();
+            Tool.printCallStack(e);
             return false;
         }
     }
@@ -254,7 +254,7 @@ public class FileUtils {
             fileWriter.close();  // 关闭此流。在关闭前会先刷新此流的缓冲区。在关闭后，再写入或者刷新的话，会抛IOException异常。
             return true;
         } catch (IOException e) {
-            e.printStackTrace();
+            Tool.printCallStack(e);
         }
         return false;
     }
@@ -277,8 +277,8 @@ public class FileUtils {
             }
             fileReader.close();
             br.close();
-        } catch (IOException f){
-            f.printStackTrace();
+        } catch (IOException e){
+            Tool.printCallStack(e);
         }
         return fileContent.toString();
     }
@@ -471,7 +471,7 @@ public class FileUtils {
             return 0;
         } catch (Exception ex) {
             XLog.e("报错", ex);
-            ex.printStackTrace();
+            Tool.printCallStack(ex);
             return -1;
         }
     }
@@ -507,7 +507,7 @@ public class FileUtils {
             srcChannel.close();
             dstChannel.close();
         } catch (IOException e) {
-            e.printStackTrace();
+            Tool.printCallStack(e);
         }
         return true;
     }

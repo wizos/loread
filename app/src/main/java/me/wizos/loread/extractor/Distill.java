@@ -135,22 +135,28 @@ public class Distill {
                     return;
                 }
                 ResponseBody responseBody = response.body();
-                if(response.isSuccessful() && responseBody != null){
-                    MediaType mediaType  = responseBody.contentType();
-                    String charset = null;
-                    if( mediaType != null ){
-                        charset = DataUtils.getCharsetFromContentType(mediaType.toString());
-                    }
-                    document = Jsoup.parse(responseBody.byteStream(), charset, url);
-                    // document.getElementsByTag("script").remove();
-                    XLog.d("OkHttp 获取全文成功：" + keyword + " = " );
-                    if(!document.body().text().contains(keyword)){
-                        getByWebView();
-                    }else {
-                        readability(document);
-                    }
-                }else {
+                if(!response.isSuccessful()){
+                    dispatcher.onFailure(App.i().getString(R.string.response_code, response.code()));
+                    return;
+                }
+
+                if(responseBody == null){
                     dispatcher.onFailure(App.i().getString(R.string.original_text_exception_plz_check));
+                    return;
+                }
+
+                MediaType mediaType  = responseBody.contentType();
+                String charset = null;
+                if( mediaType != null ){
+                    charset = DataUtils.getCharsetFromContentType(mediaType.toString());
+                }
+                document = Jsoup.parse(responseBody.byteStream(), charset, url);
+                // document.getElementsByTag("script").remove();
+                XLog.d("OkHttp 获取全文成功：" + keyword + " = " );
+                if(!document.body().text().contains(keyword)){
+                    getByWebView();
+                }else {
+                    readability(document);
                 }
                 response.close();
             }

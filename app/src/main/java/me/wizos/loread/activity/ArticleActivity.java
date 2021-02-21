@@ -521,43 +521,6 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
                 tmpOriginalFile = targetOriginalFile;
             }
 
-            // MediaType mediaType = response.getRawResponse().body().contentType();
-            // boolean renameToFileNameForSvg = false;
-            // if( mediaType != null && mediaType.subtype().contains("svg") && !fileNameExt.endsWith(".svg") ){
-            //     fileNameExt = fileNameExt + ".svg";
-            //     renameToFileNameForSvg = true;
-            // }
-            // File tmpOriginalFile = response.body();
-            // if(!ImageUtils.isImgOrSvg(tmpOriginalFile)){
-            //     tmpOriginalFile.delete();
-            //     // tmpOriginalFile.renameTo(new File(originalFileDir + imgId + ".error"));
-            //     if (selectedWebView.get() != null && !selectedWebView.get().isDestroyed()) {
-            //         selectedWebView.get().loadUrl("javascript:setTimeout( onImageError('" + imgId + "'),1)");
-            //     }
-            //     return;
-            // }else if(guessReferer){ // 当是根据系统自动猜得的referer而成功下载到图片时，保存自动识别的refer而规则
-            //     HeaderRefererConfig.i().addReferer(imageUrl, articleUrl);
-            // }
-            //
-            // if(renameToFileNameForSvg){
-            //     File targetOriginalFile = new File(originalFileDir + fileNameExt);
-            //     // 可能存在图片的文件名相同，但是实际是不同图片的情况。
-            //     if(targetOriginalFile.exists() && tmpOriginalFile.length() != targetOriginalFile.length()){
-            //        fileNameExt = imgId + "_" + fileNameExt;
-            //        targetOriginalFile = new File(originalFileDir + fileNameExt);
-            //     }
-            //
-            //     if(tmpOriginalFile.renameTo(targetOriginalFile)){
-            //         // XLog.i("改名成功：" + tmpOriginalFile.getAbsolutePath() + ", " + targetOriginalFile.getAbsolutePath() );
-            //         tmpOriginalFile = targetOriginalFile;
-            //     }
-            // }else {
-            //     File targetOriginalFile = new File(originalFileDir + imgId);
-            //     if(tmpOriginalFile.renameTo(targetOriginalFile)){
-            //         tmpOriginalFile = targetOriginalFile;
-            //     }
-            // }
-
             File downloadedOriginalFile = tmpOriginalFile;
 
             // XLog.i("下载图片成功，准备压缩：" + originalFileDir + fileNameExt + " or " + imgId + " = " + imageUrl );
@@ -1966,94 +1929,6 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
 
 
     private Distill distill;
-    // public void readabilityArticle() {
-    //     saveArticleProgress();
-    //     ToastUtils.show(getString(R.string.get_readability_ing));
-    //     String keyword;
-    //     if( App.i().articleFirstKeyword.containsKey(selectedArticle.getId()) ){
-    //         keyword = App.i().articleFirstKeyword.get(selectedArticle.getId());
-    //     }else {
-    //         keyword = ArticleUtil.getKeyword(selectedArticle.getContent());
-    //         App.i().articleFirstKeyword.put(selectedArticle.getId(),keyword);
-    //     }
-    //
-    //     distill = new Distill(selectedArticle.getLink(), keyword, new Distill.Listener() {
-    //         @Override
-    //         public void onResponse(String content) {
-    //             App.i().oldArticles.put(selectedArticle.getId(),(Article)selectedArticle.clone());
-    //             selectedArticle.updateContent(content);
-    //
-    //             CoreDB.i().articleDao().update(selectedArticle);
-    //             articleHandler.post(new Runnable() {
-    //                 @Override
-    //                 public void run() {
-    //                     if (swipeRefreshLayoutS == null ||selectedWebView == null) {
-    //                         return;
-    //                     }
-    //
-    //                     ToastUtils.show(getString(R.string.get_readability_success));
-    //                     AsyncTask.execute(new Runnable() {
-    //                         @Override
-    //                         public void run() {
-    //                             String content = ArticleUtil.getPageForDisplay(selectedArticle);
-    //                             articleHandler.post(new Runnable() {
-    //                                 @Override
-    //                                 public void run() {
-    //                                     selectedWebView.loadData(content);
-    //                                     readabilityMenuItem.setVisible(true);
-    //                                     swipeRefreshLayoutS.setEnableLoadMore(true);
-    //                                 }
-    //                             });
-    //                         }
-    //                     });
-    //                 }
-    //             });
-    //         }
-    //
-    //         @Override
-    //         public void onFailure(String msg) {
-    //             articleHandler.post(new Runnable() {
-    //                 @Override
-    //                 public void run() {
-    //                     if (swipeRefreshLayoutS == null) {
-    //                         return;
-    //                     }
-    //                     swipeRefreshLayoutS.finishLoadMore();
-    //                     swipeRefreshLayoutS.setEnableLoadMore(true);
-    //                     ToastUtils.show(getString(R.string.get_readability_failure, msg));
-    //                 }
-    //             });
-    //         }
-    //     });
-    //     distill.getContent();
-    // }
-    // public void showRSSArticle(){
-    //         Article oldArticle = null;
-    //         if(App.i().oldArticles != null){
-    //             oldArticle = App.i().oldArticles.get(selectedArticle.getId());
-    //         }
-    //         if(oldArticle != null){
-    //             selectedArticle.setContent(oldArticle.getContent());
-    //             selectedArticle.setSummary(oldArticle.getSummary());
-    //             selectedArticle.setImage(oldArticle.getImage());
-    //             App.i().oldArticles.remove(selectedArticle.getId());
-    //             ToastUtils.show(getString(R.string.cancel_readability));
-    //             AsyncTask.execute(new Runnable() {
-    //                 @Override
-    //                 public void run() {
-    //                     String content = ArticleUtil.getPageForDisplay(selectedArticle);
-    //                     articleHandler.post(new Runnable() {
-    //                         @Override
-    //                         public void run() {
-    //                             selectedWebView.loadData(content);
-    //                             readabilityMenuItem.setVisible(false);
-    //                         }
-    //                     });
-    //                 }
-    //             });
-    //             CoreDB.i().articleDao().update(selectedArticle);
-    //         }
-    // }
 
     public void switchReadabilityArticle(View view) {
         if(swipeRefreshLayoutS.isRefreshing()){
@@ -2063,9 +1938,6 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
             }
             return;
         }
-        // if(distill != null){
-        //     distill.cancel();
-        // }
         saveArticleProgress();
 
         Article oldArticle = null;

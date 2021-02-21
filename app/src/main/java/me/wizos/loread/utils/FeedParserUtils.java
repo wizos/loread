@@ -56,7 +56,7 @@ public class FeedParserUtils {
         content = content.trim();
 
         try {
-            if(content.startsWith("<?xml version")){
+            if(content.startsWith("<?xml version") || content.startsWith("<rss")){
                 SyndFeed xmlFeed = new SyndFeedInput().build(new XmlReader(new ByteArrayInputStream(content.getBytes(charset))));
                 feedEntries.setSuccess(true);
                 feedEntries.getFeed().setLastSyncError(null);

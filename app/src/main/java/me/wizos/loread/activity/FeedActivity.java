@@ -30,6 +30,7 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.RequestOptions;
 import com.carlt.networklibs.utils.NetworkUtils;
 import com.elvishew.xlog.XLog;
+import com.google.android.material.appbar.CollapsingToolbarLayout;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.hjq.toast.ToastUtils;
 import com.king.zxing.util.CodeUtils;
@@ -66,6 +67,9 @@ import me.wizos.loread.view.colorful.Colorful;
 public class FeedActivity extends BaseActivity {
     @BindView(R.id.feed_toolbar)
     Toolbar toolbar;
+
+    @BindView(R.id.feed_toolbar_layout)
+    CollapsingToolbarLayout actionBar;
 
     @BindView(R.id.feed_fab)
     FloatingActionButton iconFab;
@@ -107,6 +111,7 @@ public class FeedActivity extends BaseActivity {
     TextView viewRulesButton;
 
     Feed feed;
+    String feedId;
     ArrayList<CategoryItem> preCategoryItems;
 
     FeedViewModel feedViewModel;
@@ -120,6 +125,7 @@ public class FeedActivity extends BaseActivity {
         ButterKnife.bind(this);
 
         setSupportActionBar(toolbar);
+        // actionBar = getSupportActionBar();
         // 这个小于4.0版本是默认为true，在4.0及其以上是false。该方法的作用：决定左上角的图标是否可以点击(没有向左的小图标)，true 可点
         getSupportActionBar().setHomeButtonEnabled(true);
         // 决定左上角图标的左侧是否有向左的小箭头，true 有小箭头
@@ -137,23 +143,35 @@ public class FeedActivity extends BaseActivity {
             return;
         }
 
-        String feedId = bundle.getString("feedId");
+        feedId = bundle.getString("feedId");
         if (TextUtils.isEmpty(feedId)) {
+            finish();
             return;
         }
 
         feedViewModel = new ViewModelProvider(this).get(FeedViewModel.class);
 
-        feed = CoreDB.i().feedDao().getById(App.i().getUser().getId(),feedId);
-        if( null == feed){
-            finish();
-            return;
-        }
+        // feed = CoreDB.i().feedDao().getById(App.i().getUser().getId(),feedId);
+        // if( null == feed){
+        //     finish();
+        //     return;
+        // }
 
-        XLog.i("展示feed的详情：" + feedId + ","  + " , " + feed);
+        // XLog.i("展示feed的详情：" + feedId + ","  + " , " + feed);
 
         // initSettingView();
+    }
+
+    @Override
+    protected void onResume(){
+        super.onResume();
         loadData(feedId);
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        outState.putString("feedId", feedId);
+        super.onSaveInstanceState(outState);
     }
 
     private void loadData(String feedId){
@@ -177,8 +195,10 @@ public class FeedActivity extends BaseActivity {
 
     private void initSettingView(){
         Glide.with(this).load(UriUtils.getFaviconUrl(feed.getHtmlUrl())).apply(options).into(iconFab);
-        toolbar.setTitle(feed.getTitle());
-        toolbar.setSubtitle(feed.getFeedUrl());
+        actionBar.setTitle(feed.getTitle());
+        // 以下不生效
+        // getSupportActionBar().setSubtitle(feed.getFeedUrl());
+        // toolbar.setSubtitle(feed.getFeedUrl());
         siteLinkView.setText(feed.getHtmlUrl());
         feedLinkView.setText(feed.getFeedUrl());
         iconFab.setOnClickListener(new View.OnClickListener() {

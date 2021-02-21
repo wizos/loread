@@ -314,6 +314,16 @@
     <!--    <item>大于</item>-->
     <!--</string-array>-->
 
+
+    <string-array name="exception">
+        <item>未登录</item>
+        <item>SocketTimeoutException</item>
+        <item>ConnectException</item>
+        <item>IOException</item>
+        <item>RuntimeException</item>
+    </string-array>
+    <string name="not_logged_in">未登录</string>
+
     <string name="if_x">如果</string>
     <string name="and">并且</string>
     <string name="keyword">关键词</string>
@@ -460,7 +470,7 @@
 
     <string name="is_filed_cannot_edit">该文章已经被导出了，无法修改</string>
 
-    <string name="title_activity_scrolling">ScrollingActivity</string>
+    <string name="feed">订阅源</string>
     <string name="action_settings">设置</string>
     <string name="suggestion_use_fever_for_tiny_tiny_rss">建议：由于 TinyTinyRSS 的限制，针对已经同步到 APP 上的文章，在网站上对其进行“已读/未读/加星/去星”操作后，文章的最新状态无法同步到 APP 上。建议安装 Fever 插件，使用 Fever 方式登录。</string>
     <string name="server_site_url">服务器网址</string>
@@ -530,8 +540,6 @@
     <string name="normal">正常</string>
     <string name="the_rule_of_full_text_extraction_has_expired">全文提取规则已失效：%1$s</string>
 
-
-    <string name="not_logged_in">未登录</string>
     <string name="plz_login_again">请重新登录</string>
 
     <string name="timeout">超时</string>

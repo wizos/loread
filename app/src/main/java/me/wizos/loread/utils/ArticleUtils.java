@@ -524,6 +524,11 @@ public class ArticleUtils {
                 continue;
             }
             element.attr("href", element.attr("abs:href"));
+            tmp = element.attr("href");
+            if(tmp.startsWith(articleUrl + "#")){
+                tmp = tmp.substring(articleUrl.length());
+                element.attr("href", tmp);
+            }
         }
 
         elements = documentBody.select("video:not([src]), audio:not([src])");
@@ -550,6 +555,28 @@ public class ArticleUtils {
                 circulate = false;
             }
         }while (circulate);
+
+
+        elements = documentBody.getElementsByTag("table");
+        for (int i = 0, size = elements.size(); i < size; i++) {
+            Element tableElement = elements.get(i);
+            Elements lineElements = tableElement.select("th, tr");
+            if(lineElements.size() == 0){
+                tableElement.getElementsByTag("tbody").unwrap();
+                tableElement.unwrap();
+            }else if(lineElements.size() == 1){
+                Elements columnElements = lineElements.get(0).getElementsByTag("td");
+                if(columnElements.size() == 0){
+                    lineElements.unwrap();
+                    tableElement.unwrap();
+                }else if(columnElements.size() == 1){
+                    columnElements.unwrap();
+                    lineElements.unwrap();
+                    tableElement.getElementsByTag("tbody").unwrap();
+                    tableElement.unwrap();
+                }
+            }
+        }
 
 
         // 如果文章的开头就是 header 元素，或者是 article > header / section > header，则移除
@@ -912,6 +939,9 @@ public class ArticleUtils {
 
 
     public static String getOptimizedContentWithEnclosures(String content, @Nullable List<Enclosure> attachments){
+        if(content == null){
+            content = "";
+        }
         // 获取视频或者音频附件
         if (attachments != null && attachments.size() != 0) {
             for (Enclosure enclosure : attachments) {
