@@ -128,7 +128,7 @@ public class Converter {
 
         article.setLink(item.getUrl());
         article.setFeedId(String.valueOf(item.getFeedId()));
-        article.setFeedTitle(item.getAuthor());
+        // article.setFeedTitle(feedTitle);
 
         article.setContent(ArticleUtils.getOptimizedContent(item.getUrl(), item.getHtml()));
 

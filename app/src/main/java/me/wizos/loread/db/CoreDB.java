@@ -140,7 +140,6 @@ public abstract class CoreDB extends RoomDatabase {
                         "      END";
         db.execSQL(updateFeedStarCountWhenInsertArticle);
 
-
         //【当删除文章时】
         String updateFeedAllCountWhenDeleteArticle =
                 "CREATE TEMP TRIGGER IF NOT EXISTS updateFeedAllCountWhenDeleteArticle" +
@@ -369,6 +368,24 @@ public abstract class CoreDB extends RoomDatabase {
                         "        DELETE FROM Scope WHERE UID IS old.UID AND type IS 'feed' AND target IS old.id;" +
                         "    END";
         db.execSQL(onCascadeWhenDeleteFeed);
+
+
+        // 当插入新文章时，自动给 feedtitle 字段赋值
+        String updateArticleFeedTitleWhenInsertArticle =
+                "CREATE TEMP TRIGGER IF NOT EXISTS updateArticleFeedTitleWhenInsertArticle" +
+                        " AFTER INSERT ON ARTICLE" +
+                        "  BEGIN" +
+                        "   UPDATE ARTICLE SET FEEDTITLE = (select TITLE from FEED where ID = new.FEEDID AND UID IS new.UID) WHERE ID IS new.ID AND UID IS new.UID;" +
+                        "  END";
+        db.execSQL(updateArticleFeedTitleWhenInsertArticle);
+        // 当 feed.title 更新时，自动更新 feedtitle 字段
+        String updateArticleFeedTitleWhenUpdateFeed =
+                "CREATE TEMP TRIGGER IF NOT EXISTS updateArticleFeedTitleWhenUpdateFeed" +
+                        " AFTER UPDATE OF TITLE ON FEED" +
+                        "  BEGIN" +
+                        "   UPDATE Article SET feedTitle = new.title WHERE FEEDID IS new.ID AND UID IS new.UID;" +
+                        "  END";
+        db.execSQL(updateArticleFeedTitleWhenUpdateFeed);
 
         // TODO: 2021/2/10 当订阅源删除时，自动删除关联的feedCategory记录
         // TODO: 2021/2/10 当分类删除时，自动删除关联的feedCategory记录

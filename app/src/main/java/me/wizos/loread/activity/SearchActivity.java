@@ -481,6 +481,8 @@ public class SearchActivity extends BaseActivity {
                 @Override
                 public void onCheckedChanged(CompoundButton view, boolean isChecked) {
                     if(isChecked){
+                        // 先将状态重置回未勾选状态，待点击确定后再勾选
+                        view.setChecked(false);
                         FeedEntries feedEntries = new FeedEntries();
                         feedEntries.setFeed(Converter.from(searchFeed));
                         if(arrayMap.containsKey(searchFeed.getFeedUrl())){
@@ -497,16 +499,17 @@ public class SearchActivity extends BaseActivity {
                                         dialog.dismiss();
                                     }
                                 })
-                                .positiveText(R.string.agree)
+                                .positiveText(R.string.confirm)
                                 .onPositive(new MaterialDialog.SingleButtonCallback() {
                                     @Override
                                     public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
                                         dialog.dismiss();
+                                        view.setEnabled(false);
+                                        view.setChecked(true);
+
                                         EditText feedNameEditText = (EditText) dialog.findViewById(R.id.dialog_feed_name_edittext);
                                         feedEntries.getFeed().setTitle(feedNameEditText.getText().toString());
 
-                                        view.setEnabled(false);
-                                        view.setChecked(true);
                                         App.i().getApi().addFeed(feedEntries, new CallbackX() {
                                             @Override
                                             public void onSuccess(Object result) {
@@ -527,7 +530,6 @@ public class SearchActivity extends BaseActivity {
                                 .show();
                         EditText feedUrlEditText = (EditText) feedSettingDialog.findViewById(R.id.dialog_feed_url_edittext);
                         feedUrlEditText.setText(searchFeed.getFeedUrl());
-
 
                         EditText feedNameEditText = (EditText) feedSettingDialog.findViewById(R.id.dialog_feed_name_edittext);
                         feedNameEditText.setText(searchFeed.getTitle());
@@ -565,7 +567,6 @@ public class SearchActivity extends BaseActivity {
                             return;
                         }
                         view.setEnabled(false);
-                        view.setChecked(false);
                         App.i().getApi().unsubscribeFeed(feed.getId(), new CallbackX() {
                             @Override
                             public void onSuccess(Object result) {

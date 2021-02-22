@@ -3,7 +3,8 @@
     <string name="app_name">Loread</string>
     <string name="settings">Settings</string>
     <string name="category">Category</string>
-    <string name="un_category">UnCategory</string>
+    <string name="un_category">Uncategorized</string>
+    <string name="unsubscribed">Unsubscribed</string>
     <string name="tag">Tag</string>
 
     <string name="create_category">Create category</string>

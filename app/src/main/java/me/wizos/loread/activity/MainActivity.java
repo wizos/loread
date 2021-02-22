@@ -91,9 +91,10 @@ import me.wizos.loread.R;
 import me.wizos.loread.activity.viewmodel.ArticleListViewModel;
 import me.wizos.loread.activity.viewmodel.CategoryViewModel;
 import me.wizos.loread.adapter.ArticlePagedListAdapter;
-import me.wizos.loread.adapter.CategoriesAdapter;
+import me.wizos.loread.adapter.StreamsAdapter;
 import me.wizos.loread.bean.CategoryFeeds;
 import me.wizos.loread.bean.FeedEntries;
+import me.wizos.loread.bean.StreamTree;
 import me.wizos.loread.db.Article;
 import me.wizos.loread.db.Category;
 import me.wizos.loread.db.Collection;
@@ -110,6 +111,7 @@ import me.wizos.loread.utils.EncryptUtils;
 import me.wizos.loread.utils.FeedParserUtils;
 import me.wizos.loread.utils.HttpCall;
 import me.wizos.loread.utils.SnackbarUtils;
+import me.wizos.loread.utils.StringUtils;
 import me.wizos.loread.utils.TimeUtils;
 import me.wizos.loread.utils.UriUtils;
 import me.wizos.loread.view.IconFontView;
@@ -135,7 +137,8 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
 
     // 方案1
     private SwipeRecyclerView categoryListView;
-    private CategoriesAdapter categoryListAdapter;
+    // private CategoriesAdapter categoryListAdapter;
+    private StreamsAdapter categoryListAdapter;
     private TextView createCategoryButton;
 
     // 方案2
@@ -175,7 +178,7 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
         super.onCreate(savedInstanceState);// 由于使用了自动换主题，所以要放在这里
         checkProxy();
 
-        loadArticlesData();  // 获取文章列表数据为 App.articleList
+        refreshArticlesData();  // 获取文章列表数据为 App.articleList
         // loadCategoriesData();
         initCategoriesData();
         autoMarkReaded = App.i().getUser().isMarkReadOnScroll();
@@ -568,6 +571,10 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
     }
 
     private void renderViewByArticlesData(String toolBarTitle, int articleSize) {
+        // String title = toolBarTitle;
+        // if(App.i().getUser().getStreamType() == App.STATUS_STARED && !App.i().getUser().getStreamId().contains(App.STREAM_UNSUBSCRIBED)){
+        //     title = getString(R.string.all);
+        // }
         // XLog.w("更新列表数据 R");
         // 在setSupportActionBar(toolbar)之后调用toolbar.setTitle()的话。 在onCreate()中调用无效。在onStart()中调用无效。 在onResume()中调用有效。
         getSupportActionBar().setTitle(toolBarTitle);
@@ -623,7 +630,69 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
                 .adapter(adapter, new LinearLayoutManager(MainActivity.this))
                 .show();
     }
+    public void showCategoryMenuDialog(final StreamTree category) {
+        // 重命名弹窗的适配器
+        MaterialSimpleListAdapter adapter = new MaterialSimpleListAdapter(new MaterialSimpleListAdapter.Callback() {
+            @Override
+            public void onMaterialListItemSelected(MaterialDialog dialog, int index, MaterialSimpleListItem item) {
+                if (index == 0) {
+                    new MaterialDialog.Builder(MainActivity.this)
+                            .title(R.string.edit_name)
+                            .inputType(InputType.TYPE_CLASS_TEXT)
+                            .inputRange(1, 22)
+                            .input(null, category.getStreamName(), new MaterialDialog.InputCallback() {
+                                @Override
+                                public void onInput(@NotNull MaterialDialog dialog, CharSequence input) {
+                                    String renamed = input.toString();
+                                    XLog.i("分类重命名为：" + renamed);
+                                    if (category.getStreamName().equals(renamed)) {
+                                        return;
+                                    }
+                                    renameCategory(renamed, category);
+                                }
+                            })
+                            .positiveText(R.string.confirm)
+                            .negativeText(android.R.string.cancel)
+                            .show();
+                }else if(index == 1){
+                    Intent intent = new Intent(MainActivity.this, TriggerRuleManagerActivity.class);
+                    intent.putExtra(Contract.TYPE, Contract.TYPE_CATEGORY);
+                    intent.putExtra(Contract.TARGET_ID, category.getStreamId());
+                    startActivity(intent);
+                    overridePendingTransition(R.anim.in_from_bottom, R.anim.fade_out);
+                }
+                dialog.dismiss();
+            }
+        });
+        adapter.add(new MaterialSimpleListItem.Builder(MainActivity.this)
+                .content(R.string.rename)
+                .icon(R.drawable.ic_rename)
+                .backgroundColor(Color.TRANSPARENT)
+                .build());
+        adapter.add(new MaterialSimpleListItem.Builder(MainActivity.this)
+                .content(R.string.view_rule)
+                .icon(R.drawable.ic_rule)
+                .backgroundColor(Color.TRANSPARENT)
+                .build());
 
+        new MaterialDialog.Builder(MainActivity.this)
+                .adapter(adapter, new LinearLayoutManager(MainActivity.this))
+                .show();
+    }
+    public void renameCategory(final String renamed, StreamTree category) {
+        App.i().getApi().renameCategory(category.getStreamId(), renamed, new CallbackX<String,String>() {
+            @Override
+            public void onSuccess(String result) {
+                categoryListAdapter.notifyDataSetChanged();
+                ToastUtils.show(getString(R.string.edit_success));
+            }
+
+            @Override
+            public void onFailure(String error) {
+                ToastUtils.show(getString(R.string.edit_fail_with_reason, error));
+            }
+        });
+    }
     public void renameCategory(final String renamed, CategoryFeeds category) {
         App.i().getApi().renameCategory(category.getCategoryId(), renamed, new CallbackX<String,String>() {
             @Override
@@ -639,13 +708,12 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
         });
     }
 
-    public void showFeedActivity(final int parentPosition, final int childPosition) {
-        Collection feed = categoryListAdapter.getChild(parentPosition, childPosition);
-        if (feed == null) {
+    public void showFeedActivity(String feedId) {
+        if (StringUtils.isEmpty(feedId)) {
             return;
         }
         Intent intent = new Intent(MainActivity.this, FeedActivity.class);
-        intent.putExtra("feedId", feed.getId());
+        intent.putExtra("feedId", feedId);
         startActivity(intent);
         overridePendingTransition(R.anim.in_from_bottom, R.anim.fade_out);
     }
@@ -891,7 +959,7 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
                         runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
-                                categoryListAdapter.notifyDataChanged();
+                                categoryListAdapter.notifyDataSetChanged();
                             }
                         });
                     }
@@ -919,7 +987,9 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
         // tagListView.addHeaderView(headerView);
 
 
-        categoryListAdapter = new CategoriesAdapter(this);
+        // categoryListAdapter = new CategoriesAdapter(this);
+        categoryListAdapter = new StreamsAdapter(this);
+
         categoryListAdapter.setGroups(new ArrayList<>());
         categoryListView.setOnItemClickListener(new OnItemClickListener() {
             @Override
@@ -928,32 +998,36 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
                 // 根据原position判断该item是否是parent item
                 int groupPosition = categoryListAdapter.parentItemPosition(adapterPosition);
                 User user = App.i().getUser();
-                // if (tagListAdapter.isParentItem(adapterPosition)) {
-                //     user.setStreamId( tagListAdapter.getGroup(groupPosition).getId().replace("\"", "")  );
-                //     user.setStreamTitle( tagListAdapter.getGroup(groupPosition).getTitle() );
+
+                // if (categoryListAdapter.isParentItem(adapterPosition)) {
+                //     // user.setStreamId( categoryListAdapter.getGroup(groupPosition).getCategoryId().replace("\"", "")  );
+                //     // user.setStreamTitle( categoryListAdapter.getGroup(groupPosition).getCategoryName() );
+                //
+                //     user.setStreamId( categoryListAdapter.getGroup(groupPosition).getStreamId().replace("\"", "")  );
+                //     user.setStreamTitle( categoryListAdapter.getGroup(groupPosition).getStreamName() );
                 //     user.setStreamType( App.TYPE_GROUP );
-                //     //XLog.i("【 TagList 被点击】" + user.toString());
-                //     refreshArticlesData();
                 // } else {
-                //     int childPosition = tagListAdapter.childItemPosition(adapterPosition);
-                //     Collection feed = tagListAdapter.getChild(groupPosition, childPosition);
+                //     int childPosition = categoryListAdapter.childItemPosition(adapterPosition);
+                //     Collection feed = categoryListAdapter.getChild(groupPosition, childPosition);
                 //     user.setStreamId( feed.getId() );
                 //     user.setStreamTitle( feed.getTitle() );
                 //     user.setStreamType( App.TYPE_FEED );
-                //     refreshArticlesData();
                 // }
 
                 if (categoryListAdapter.isParentItem(adapterPosition)) {
-                    user.setStreamId( categoryListAdapter.getGroup(groupPosition).getCategoryId().replace("\"", "")  );
-                    user.setStreamTitle( categoryListAdapter.getGroup(groupPosition).getCategoryName() );
-                    user.setStreamType( App.TYPE_GROUP );
+                    StreamTree streamTree = categoryListAdapter.getGroup(groupPosition);
+                    user.setStreamId( streamTree.getStreamId().replace("\"", "")  );
+                    user.setStreamTitle( streamTree.getStreamName() );
+                    user.setStreamType( streamTree.getStreamType() );
                 } else {
+                    // 换取child position
                     int childPosition = categoryListAdapter.childItemPosition(adapterPosition);
                     Collection feed = categoryListAdapter.getChild(groupPosition, childPosition);
                     user.setStreamId( feed.getId() );
                     user.setStreamTitle( feed.getTitle() );
                     user.setStreamType( App.TYPE_FEED );
                 }
+
                 refreshArticlesData();
                 CoreDB.i().userDao().update(user);
             }
@@ -964,14 +1038,21 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
             public void onItemLongClick(View view, int adapterPosition) {
                 // XLog.e("被长安，view的id是" + allArticleHeaderView.getId() + "，parent的id" + parent.getId() + "，Tag是" + allArticleHeaderView.getCategoryById() + "，位置是" + tagListView.getPositionForView(allArticleHeaderView));
                 // 根据原position判断该item是否是parent item
+
                 if (categoryListAdapter.isParentItem(adapterPosition)) {
-                    int parentPosition = categoryListAdapter.parentItemPosition(adapterPosition);
-                    showCategoryMenuDialog(categoryListAdapter.getGroup(parentPosition));
+                    StreamTree streamTree = categoryListAdapter.getGroup(adapterPosition);
+                    if(streamTree.getStreamType() == StreamTree.FEED){
+                        showFeedActivity(streamTree.getStreamId());
+                    }else{
+                        int parentPosition = categoryListAdapter.parentItemPosition(adapterPosition);
+                        showCategoryMenuDialog(categoryListAdapter.getGroup(parentPosition));
+                    }
                 } else {
                     // 换取child position
                     int parentPosition = categoryListAdapter.parentItemPosition(adapterPosition);
                     int childPosition = categoryListAdapter.childItemPosition(adapterPosition);
-                    showFeedActivity(parentPosition, childPosition);
+                    Collection feed = categoryListAdapter.getChild(parentPosition, childPosition);
+                    showFeedActivity(feed.getId());
                 }
             }
         });

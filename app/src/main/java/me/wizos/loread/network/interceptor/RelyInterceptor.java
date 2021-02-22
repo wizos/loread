@@ -4,8 +4,6 @@ import android.webkit.CookieManager;
 
 import androidx.annotation.NonNull;
 
-import com.elvishew.xlog.XLog;
-
 import java.io.IOException;
 
 import me.wizos.loread.Contract;
@@ -59,7 +57,7 @@ public class RelyInterceptor implements Interceptor {
             builder.header(Contract.USER_AGENT, ua );
             hasNew = true;
         }
-        XLog.d("拦截到依赖：" + url + " , " + newUrl + " =  " + cookie  + " =  "  + ua );
+        // XLog.d("拦截到依赖：" + url + " , " + newUrl + " =  " + cookie  + " =  "  + ua );
         if(hasNew){
             return chain.proceed(builder.build());
         }

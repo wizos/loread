@@ -31,6 +31,10 @@ public interface FeedDao {
     @Query("SELECT * FROM feed WHERE uid = :uid AND feedUrl = :feedUrl LIMIT 1")
     Feed getByFeedUrl(String uid, String feedUrl);
 
+
+    @Query("SELECT * FROM feed WHERE uid = :uid AND feedUrl like :url LIMIT 1")
+    Feed getByFeedUrlLike(String uid, String url);
+
     // 包含上次同步时是正常的，以及不正常的
     @Query("SELECT * FROM feed " +
             "WHERE feed.uid = :uid " +

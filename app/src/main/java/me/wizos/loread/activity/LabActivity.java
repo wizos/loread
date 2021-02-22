@@ -15,6 +15,7 @@ import android.widget.EditText;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.sqlite.db.SimpleSQLiteQuery;
 import androidx.work.Constraints;
 import androidx.work.NetworkType;
 import androidx.work.PeriodicWorkRequest;
@@ -644,7 +645,34 @@ public class LabActivity extends AppCompatActivity {
         TriggerRuleUtils.exeAllRules(App.i().getUser().getId(), 0);
     }
 
+    public void exeSQL(View view){
+        EditText editText = findViewById(R.id.lab_enter_edittext);
+        String sql = editText.getText().toString();
+        CoreDB.i().articleDao().exeSQL(new SimpleSQLiteQuery(sql));
+    }
 
+    public void updateArticle(View view){
+        User user = App.i().getUser();
+        if(user==null){
+            ToastUtils.show("当前用户不存在");
+            return;
+        }
+
+        List<Article> articles = CoreDB.i().articleDao().getUncategoried(user.getId());
+        for (Article article: articles){
+            Uri uri = Uri.parse(article.getLink());
+            String host = uri.getHost();
+            if(StringUtils.isEmpty(host)){
+                continue;
+            }
+            Feed feed = CoreDB.i().feedDao().getByFeedUrlLike(user.getId(), "%" + host + "%");
+            if(feed == null){
+                continue;
+            }
+            article.setFeedId(feed.getId());
+        }
+        CoreDB.i().articleDao().insert(articles);
+    }
     @Override
     protected void onDestroy() {
         super.onDestroy();

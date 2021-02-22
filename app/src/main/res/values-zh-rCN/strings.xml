@@ -3,6 +3,7 @@
     <string name="app_name">知微</string>
     <string name="settings">设置</string>
     <string name="un_category">未分类</string>
+    <string name="unsubscribed">已退订</string>
     <string name="category">分类</string>
     <string name="tag">标签</string>
     <string name="create_category">创建分类</string>

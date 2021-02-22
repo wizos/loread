@@ -332,13 +332,13 @@ public class ArticleUtils {
 
         documentBody.getElementsByTag("ignore_js_op").unwrap();
         // 将 noscript 标签 unwrap；noscript 内部标签可能会和外部的一样，导致重复
-        documentBody.getElementsByTag("noscript").remove();
+        // documentBody.getElementsByTag("noscript").remove();
         // documentBody.getElementsByTag("noscript").unwrap();
-        // elements = documentBody.getElementsByTag("noscript");
-        // for (int i = 0, size = elements.size(); i < size; i++) {
-        //    element = elements.get(i).tagName("details");
-        //    element.insertChildren(0,new Element("summary").text("\uD83D\uDD17"));
-        // }
+        elements = documentBody.getElementsByTag("noscript");
+        for (int i = 0, size = elements.size(); i < size; i++) {
+           element = elements.get(i).tagName("details");
+           element.insertChildren(0,new Element("summary").text("\uD83D\uDD17"));
+        }
 
         // 去除推荐部分，可能有误杀
         // documentBody.select(".sharedaddy").remove();
@@ -364,6 +364,27 @@ public class ArticleUtils {
         documentBody.select("[onmouseover]").removeAttr("onmouseover");
 
         String tmp;
+
+        elements = documentBody.getElementsByTag("table");
+        for (int i = 0, size = elements.size(); i < size; i++) {
+            Element tableElement = elements.get(i);
+            Elements lineElements = tableElement.select("th, tr");
+            if(lineElements.size() == 0){
+                tableElement.getElementsByTag("tbody").tagName("div");
+                tableElement.tagName("div");
+            }else if(lineElements.size() == 1){
+                Elements columnElements = lineElements.get(0).getElementsByTag("td");
+                if(columnElements.size() == 0){
+                    lineElements.tagName("span");
+                    tableElement.tagName("div");
+                }else if(columnElements.size() == 1){
+                    columnElements.tagName("span");
+                    lineElements.tagName("span");
+                    tableElement.getElementsByTag("tbody").tagName("div");
+                    tableElement.tagName("div");
+                }
+            }
+        }
 
         // 去掉代码之间的空格
         elements = documentBody.getElementsByTag("code");
@@ -555,28 +576,6 @@ public class ArticleUtils {
                 circulate = false;
             }
         }while (circulate);
-
-
-        elements = documentBody.getElementsByTag("table");
-        for (int i = 0, size = elements.size(); i < size; i++) {
-            Element tableElement = elements.get(i);
-            Elements lineElements = tableElement.select("th, tr");
-            if(lineElements.size() == 0){
-                tableElement.getElementsByTag("tbody").unwrap();
-                tableElement.unwrap();
-            }else if(lineElements.size() == 1){
-                Elements columnElements = lineElements.get(0).getElementsByTag("td");
-                if(columnElements.size() == 0){
-                    lineElements.unwrap();
-                    tableElement.unwrap();
-                }else if(columnElements.size() == 1){
-                    columnElements.unwrap();
-                    lineElements.unwrap();
-                    tableElement.getElementsByTag("tbody").unwrap();
-                    tableElement.unwrap();
-                }
-            }
-        }
 
 
         // 如果文章的开头就是 header 元素，或者是 article > header / section > header，则移除

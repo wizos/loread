@@ -625,41 +625,49 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
 
     @JavascriptInterface
     @Override
-    public void downImage(String articleId, String imgId, String originalUrl, boolean guessReferer) {
-        String articleIdInMD5 = EncryptUtils.MD5(articleId);
-        String originalFileDir = App.i().getUserCachePath() + articleIdInMD5 + "/original/";
-        String newUrl = UrlRewriteConfig.i().getRedirectUrl(originalUrl);
-        if(!TextUtils.isEmpty(newUrl)){
-            originalUrl = newUrl;
-        }
+    public void downImage(String articleId, String imgId,final String originalUrl, boolean guessReferer) {
+        // final String url = originalUrl;
+        AsyncTask.THREAD_POOL_EXECUTOR.execute(new Runnable() {
+            @Override
+            public void run() {
+                String articleIdInMD5 = EncryptUtils.MD5(articleId);
+                String originalFileDir = App.i().getUserCachePath() + articleIdInMD5 + "/original/";
+                String newUrl = UrlRewriteConfig.i().getRedirectUrl(originalUrl);
+                String fileNameExt;
+                if(!TextUtils.isEmpty(newUrl)){
+                    fileNameExt = UriUtils.guessFileNameExt(newUrl);
+                }else {
+                    fileNameExt = UriUtils.guessFileNameExt(originalUrl);
+                }
 
-        String fileNameExt = UriUtils.guessFileNameExt(originalUrl);
+                // 下载时的过渡名称为 imgId
+                if (new File(originalFileDir + imgId).exists() || new File(originalFileDir + fileNameExt).exists()) {
+                    return;
+                }
 
-        // 下载时的过渡名称为 imgId
-        if (new File(originalFileDir + imgId).exists() || new File(originalFileDir + fileNameExt).exists()) {
-            return;
-        }
+                String compressedFileDir = App.i().getUserCachePath() + articleIdInMD5 + "/compressed/";
+                DownFileCallback fileCallback = new DownFileCallback(originalFileDir, imgId);
+                fileCallback.setParam(App.i(), selectedWebView, compressedFileDir, fileNameExt, guessReferer);
+                fileCallback.setRefererParam(originalUrl, selectedArticle.getLink(), guessReferer);
 
-        String compressedFileDir = App.i().getUserCachePath() + articleIdInMD5 + "/compressed/";
-        DownFileCallback fileCallback = new DownFileCallback(originalFileDir, imgId);
-        fileCallback.setParam(App.i(), selectedWebView, compressedFileDir, fileNameExt, guessReferer);
-        fileCallback.setRefererParam(originalUrl, selectedArticle.getLink(), guessReferer);
+                GetRequest<File> request = OkGo.<File>get(originalUrl)
+                        .tag(articleId)
+                        .client(imgHttpClient);
 
-        GetRequest<File> request = OkGo.<File>get(originalUrl)
-                .tag(articleId)
-                .client(imgHttpClient);
+                if( guessReferer ){
+                    request.headers(Contract.REFERER, StringUtils.urlEncode(selectedArticle.getLink()));
+                }else {
+                    String referer = HeaderRefererConfig.i().guessRefererByUrl(originalUrl);
+                    // referer = StringUtils.urlEncode(referer);
+                    if (!StringUtils.isEmpty(referer)) {
+                        request.headers(Contract.REFERER, referer);
+                    }
+                }
 
-        if( guessReferer ){
-            request.headers(Contract.REFERER, StringUtils.urlEncode(selectedArticle.getLink()));
-        }else {
-            String referer = HeaderRefererConfig.i().guessRefererByUrl(originalUrl);
-            // referer = StringUtils.urlEncode(referer);
-            if (!StringUtils.isEmpty(referer)) {
-                request.headers(Contract.REFERER, referer);
+                request.execute(fileCallback);
             }
-        }
+        });
 
-        request.execute(fileCallback);
         //XLog.d("下载图片：" + originalUrl);
     }
     @JavascriptInterface
@@ -965,16 +973,15 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
                     return;
                 }
                 XLog.i("加载文章");
-                swipeRefreshLayoutS.setRefreshing(false);
-                // swipeRefreshLayoutS.finishRefresh();
                 initIconState(article);
 
                 // 内容未变的时候不要重新载入内容
                 String oldArticleContent = selectedArticle == null ? "" :selectedArticle.getContent();
                 if(!article.getContent().equals(oldArticleContent)){
+                    swipeRefreshLayoutS.setRefreshing(false);
+                    // swipeRefreshLayoutS.finishRefresh();
                     loadWebViewContent(article);
                 }
-
                 selectedArticle = article;
             }
         });
@@ -2038,6 +2045,9 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
         String info = selectedArticle.getTitle() + "\n" +
                 "ID=" + selectedArticle.getId() + "\n" +
                 "ID-MD5=" + EncryptUtils.MD5(selectedArticle.getId()) + "\n" +
+                "Uid=" + selectedArticle.getUid() + "\n" +
+                "FeedId=" + selectedArticle.getFeedId() + "\n" +
+                "FeedTitle=" + selectedArticle.getFeedTitle() + "\n" +
                 "ReadState=" + selectedArticle.getReadStatus() + "\n" +
                 "ReadUpdated=" + selectedArticle.getReadUpdated() + "\n" +
                 "StarState=" + selectedArticle.getStarStatus() + "\n" +
@@ -2047,7 +2057,6 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
                 "Pubdate=" + selectedArticle.getPubDate() + "\n" +
                 "Crawldate=" + selectedArticle.getCrawlDate() + "\n" +
                 "Author=" + selectedArticle.getAuthor() + "\n" +
-                "FeedId=" + selectedArticle.getFeedId() + "\n" +
                 "Image=" + selectedArticle.getImage() + "\n" +
                 "Enclosure=" + selectedArticle.getEnclosure() + "\n" +
                 "【Link】" + selectedArticle.getLink() + "\n" +

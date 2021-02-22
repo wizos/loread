@@ -16,6 +16,7 @@ import java.util.Map;
 
 import me.wizos.loread.bean.CategoryFeeds;
 import me.wizos.loread.bean.GroupedTriggerRules;
+import me.wizos.loread.bean.StreamTree;
 import me.wizos.loread.db.Collection;
 import me.wizos.loread.db.FeedCategory;
 import me.wizos.loread.db.rule.TriggerRule;
@@ -104,40 +105,109 @@ public class Classifier {
         return groupedFeeds;
     }
 
-    // public static List<CategoryFeeds> group3(List<Collection> categories, List<FeedCategory> feedCategories, List<Collection> feeds){
-    //     ArrayMap<String, Collection> feedArrayMap = new ArrayMap<>();
-    //     for (Collection feed: feeds){
-    //         feedArrayMap.put(feed.getId(), feed);
-    //     }
-    //     // XLog.i("得到的FeedsMap：" + feedArrayMap);
-    //     // XLog.i("得到的 feedCategories：" + feedCategories);
-    //
-    //     ArrayMap<String, Collection> categoryArrayMap = new ArrayMap<>();
-    //     for (Collection category: categories){
-    //         categoryArrayMap.put(category.getId(), category);
-    //     }
-    //     // XLog.i("得到的 categoryArrayMap：" + categoryArrayMap);
-    //
-    //     LinkedHashMap<String, List<Collection>> categoryMap = new LinkedHashMap<>();
-    //     for (FeedCategory feedCategory: feedCategories){
-    //         List<Collection> subFeeds = categoryMap.get(feedCategory.getCategoryId());
-    //         if(subFeeds == null){
-    //             subFeeds = new ArrayList<>();
-    //             categoryMap.put(feedCategory.getCategoryId(), subFeeds);
-    //         }
-    //         subFeeds.add(feedArrayMap.remove(feedCategory.getFeedId()));
-    //     }
-    //     // XLog.i("得到的 categoryMap：" + categoryMap);
-    //
-    //     List<CategoryFeeds> groupedFeeds = new ArrayList<>(categories.size());
-    //     for (Map.Entry<String, List<Collection>> entry: categoryMap.entrySet()){
-    //         CategoryFeeds groupedFeed = new CategoryFeeds();
-    //         groupedFeed.setCategoryId(entry.getKey());
-    //         groupedFeed.setCategoryName(categoryArrayMap.get(entry.getKey()).getTitle());
-    //         groupedFeed.setCount(categoryArrayMap.get(entry.getKey()).getCount());
-    //         groupedFeed.setFeeds(categoryMap.get(entry.getKey()));
-    //         groupedFeeds.add(groupedFeed);
-    //     }
-    //     return groupedFeeds;
-    // }
+    public static List<StreamTree> group2(List<Collection> categories, List<FeedCategory> feedCategories, List<Collection> feeds){
+        ArrayMap<String, List<String>> feedCategoryMap = new ArrayMap<>();
+        for (FeedCategory feedCategory: feedCategories){
+            List<String> categoryIds = feedCategoryMap.get(feedCategory.getFeedId());
+            if(categoryIds == null){
+                categoryIds = new ArrayList<>();
+                feedCategoryMap.put(feedCategory.getFeedId(), categoryIds);
+            }
+            categoryIds.add(feedCategory.getCategoryId());
+        }
+
+        LinkedHashMap<String, StreamTree> streamTreeLinkedHashMap = new LinkedHashMap<>();
+        for (Collection category: categories){
+            StreamTree streamTree = new StreamTree();
+            streamTree.setStreamId(category.getId());
+            streamTree.setStreamName(category.getTitle());
+            streamTree.setStreamType(StreamTree.CATEGORY);
+            streamTree.setCount(category.getCount());
+            streamTreeLinkedHashMap.put(category.getId(), streamTree);
+        }
+
+        for (Collection feed: feeds){
+            List<String> categoryIds = feedCategoryMap.get(feed.getId());
+            if(categoryIds == null){
+                continue;
+            }
+            for (String id:categoryIds){
+                StreamTree groupedFeed = streamTreeLinkedHashMap.get(id);
+                if(groupedFeed == null){
+                    continue;
+                }
+                List<Collection> subFeeds = groupedFeed.getChildren();
+                if(subFeeds == null){
+                    subFeeds = new ArrayList<>();
+                    groupedFeed.setChildren(subFeeds);
+                }
+                subFeeds.add(feed);
+            }
+        }
+
+        List<StreamTree> streamTrees = new ArrayList<>(categories.size());
+        for (Map.Entry<String, StreamTree> entry: streamTreeLinkedHashMap.entrySet()){
+            streamTrees.add(entry.getValue());
+        }
+        return streamTrees;
+    }
+
+    public static List<StreamTree> group3(List<Collection> categories, List<FeedCategory> feedCategories, List<Collection> feeds){
+        ArrayMap<String, List<String>> feedCategoryMap = new ArrayMap<>();
+        for (FeedCategory feedCategory: feedCategories){
+            List<String> categoryIds = feedCategoryMap.get(feedCategory.getFeedId());
+            if(categoryIds == null){
+                categoryIds = new ArrayList<>();
+                feedCategoryMap.put(feedCategory.getFeedId(), categoryIds);
+            }
+            categoryIds.add(feedCategory.getCategoryId());
+        }
+
+        LinkedHashMap<String, StreamTree> streamTreeLinkedHashMap = new LinkedHashMap<>();
+        for (Collection category: categories){
+            StreamTree streamTree = new StreamTree();
+            streamTree.setStreamId(category.getId());
+            streamTree.setStreamName(category.getTitle());
+            streamTree.setStreamType(StreamTree.CATEGORY);
+            streamTree.setCount(category.getCount());
+            streamTreeLinkedHashMap.put(category.getId(), streamTree);
+        }
+
+        for (Collection feed: feeds){
+            List<String> categoryIds = feedCategoryMap.get(feed.getId());
+            if(categoryIds == null){
+                StreamTree streamTree = new StreamTree();
+                streamTree.setStreamId(feed.getId());
+                streamTree.setStreamName(feed.getTitle());
+                streamTree.setStreamType(StreamTree.FEED);
+                streamTree.setCount(feed.getCount());
+                streamTreeLinkedHashMap.put(feed.getId(), streamTree);
+                continue;
+            }
+            for (String id:categoryIds){
+                StreamTree streamTree = streamTreeLinkedHashMap.get(id);
+                if(streamTree == null){
+                    streamTree = new StreamTree();
+                    streamTree.setStreamId(feed.getId());
+                    streamTree.setStreamName(feed.getTitle());
+                    streamTree.setStreamType(StreamTree.FEED);
+                    streamTree.setCount(feed.getCount());
+                    streamTreeLinkedHashMap.put(feed.getId(), streamTree);
+                    continue;
+                }
+                List<Collection> subFeeds = streamTree.getChildren();
+                if(subFeeds == null){
+                    subFeeds = new ArrayList<>();
+                    streamTree.setChildren(subFeeds);
+                }
+                subFeeds.add(feed);
+            }
+        }
+
+        List<StreamTree> streamTrees = new ArrayList<>(categories.size());
+        for (Map.Entry<String, StreamTree> entry: streamTreeLinkedHashMap.entrySet()){
+            streamTrees.add(entry.getValue());
+        }
+        return streamTrees;
+    }
 }

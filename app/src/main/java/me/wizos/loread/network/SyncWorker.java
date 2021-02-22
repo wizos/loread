@@ -69,7 +69,6 @@ public class SyncWorker extends Worker  {
         if(App.i().getApi() instanceof FeverTinyRSSApi){
             ((FeverTinyRSSApi) App.i().getApi()).setWorker(this);
         }
-
         App.i().getApi().sync();
         App.i().isSyncing = false;
         LiveEventBus.get(SyncWorker.SYNC_TASK_STATUS).post(false);

@@ -7,91 +7,6 @@
     android:orientation="vertical"
     tools:context="me.wizos.loread.activity.LabActivity">
 
-    <!--<LinearLayout-->
-    <!--    style="@style/SettingItem">-->
-    <!--    <TextView-->
-    <!--        android:id="@+id/lab_use_httpdns"-->
-    <!--        style="@style/SettingItemTitle2"-->
-    <!--        android:text="使用HttpDns访问网站" />-->
-
-    <!--    <com.kyleduo.switchbutton.SwitchButton-->
-    <!--        android:id="@+id/lab_use_httpdns_sb"-->
-    <!--        style="@style/SwitchButtonStyle"-->
-    <!--        android:checked="true" />-->
-    <!--</LinearLayout>-->
-
-    <Button
-        android:id="@+id/setting_export_opml"
-        android:textSize="18sp"
-        android:textColor="@color/material_red_400"
-        style="@style/SettingItem"
-        android:layout_gravity="center"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:paddingTop="5dp"
-        android:paddingBottom="5dp"
-        android:gravity="center"
-        android:onClick="onClickExportOPML"
-        android:text="导出 OPML"
-        android:background="?android:attr/selectableItemBackground"
-        android:clickable="true"
-        android:focusable="true" />
-
-    <Button
-        android:id="@+id/setting_backup"
-        android:textSize="18sp"
-        android:textColor="@color/material_red_400"
-        style="@style/SettingItem"
-        android:layout_gravity="center"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:paddingTop="5dp"
-        android:paddingBottom="5dp"
-        android:gravity="center"
-        android:onClick="onClickBackup"
-        android:text="备份数据库"
-        android:background="?android:attr/selectableItemBackground"
-        android:clickable="true"
-        android:focusable="true" />
-
-    <Button
-        android:id="@+id/setting_restore"
-        android:textSize="18sp"
-        android:textColor="@color/material_red_400"
-        style="@style/SettingItem"
-        android:layout_gravity="center"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:paddingTop="5dp"
-        android:paddingBottom="5dp"
-        android:gravity="center"
-        android:onClick="onClickRestore"
-        android:text="恢复数据库"
-        android:background="?android:attr/selectableItemBackground"
-        android:clickable="true"
-        android:focusable="true" />
-
-    <Button
-        android:id="@+id/setting_read_config"
-        android:textSize="18sp"
-        android:textColor="@color/material_red_400"
-        style="@style/SettingItem"
-        android:layout_gravity="center"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:paddingTop="5dp"
-        android:paddingBottom="5dp"
-        android:gravity="center"
-        android:onClick="onClickReadConfig"
-        android:text="读取配置"
-        android:background="?android:attr/selectableItemBackground"
-        android:clickable="true"
-        android:focusable="true" />
-
-    <Space
-        android:layout_width="match_parent"
-        android:layout_height="20dp"/>
-
     <EditText
         android:id="@+id/lab_enter_edittext"
         android:layout_width="match_parent"
@@ -152,21 +67,21 @@
                 android:gravity="center_vertical"
                 android:layout_gravity="center_vertical"/>
 
-            <!--<Button-->
-            <!--    android:text="全文搜索"-->
-            <!--    android:onClick="onClickSearch"-->
-            <!--    android:layout_height="50dp"-->
-            <!--    style="@style/SettingItem"-->
-            <!--    android:gravity="center_vertical"-->
-            <!--    android:layout_gravity="center_vertical"/>-->
-            <!--<Button-->
-            <!--    android:text="精准搜索"-->
-            <!--    android:onClick="onClickSearch2"-->
-            <!--    android:layout_height="50dp"-->
-            <!--    style="@style/SettingItem"-->
-            <!--    android:gravity="center_vertical"-->
-            <!--    android:layout_gravity="center_vertical"/>-->
+            <Button
+                android:text="执行SQL"
+                android:onClick="exeSQL"
+                android:layout_height="50dp"
+                style="@style/SettingItem"
+                android:gravity="center_vertical"
+                android:layout_gravity="center_vertical"/>
 
+            <!--<Button-->
+            <!--    android:text="更新文章 feedId"-->
+            <!--    android:onClick="updateArticle"-->
+            <!--    android:layout_height="50dp"-->
+            <!--    style="@style/SettingItem"-->
+            <!--    android:gravity="center_vertical"-->
+            <!--    android:layout_gravity="center_vertical"/>-->
             <Space
                 android:layout_width="match_parent"
                 android:layout_height="20dp"/>
@@ -262,33 +177,53 @@
                 android:layout_width="match_parent"
                 android:layout_height="20dp"/>
 
-            <!--<Button-->
-            <!--    android:layout_width="match_parent"-->
-            <!--    android:layout_height="50dp"-->
-            <!--    style="@style/SettingItem"-->
-            <!--    android:onClick="openActionActivity"-->
-            <!--    android:gravity="center_vertical"-->
-            <!--    android:layout_gravity="center_vertical"-->
-            <!--    android:text="打开文章规则配置页面"/>-->
 
-            <!--<Button-->
-            <!--    android:layout_width="match_parent"-->
-            <!--    android:layout_height="50dp"-->
-            <!--    style="@style/SettingItem"-->
-            <!--    android:onClick="openActionManagerActivity"-->
-            <!--    android:gravity="center_vertical"-->
-            <!--    android:layout_gravity="center_vertical"-->
-            <!--    android:text="打开文章规则管理页面"/>-->
 
-            <!--<Button-->
-            <!--    android:text="根据action处理文章"-->
-            <!--    android:textAllCaps="false"-->
-            <!--    android:onClick="actionArticle"-->
-            <!--    android:layout_height="50dp"-->
-            <!--    style="@style/SettingItem"-->
-            <!--    android:gravity="center_vertical"-->
-            <!--    android:layout_gravity="center_vertical"/>-->
+            <Button
+                style="@style/SettingItem"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:gravity="center_vertical"
+                android:layout_gravity="center_vertical"
+                android:background="?android:attr/selectableItemBackground"
+                android:textSize="18sp"
+                android:textColor="@color/material_red_400"
+                android:onClick="onClickExportOPML"
+                android:text="导出 OPML"
+                android:clickable="true"
+                android:focusable="true" />
 
+            <Button
+                style="@style/SettingItem"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:gravity="center_vertical"
+                android:layout_gravity="center_vertical"
+                android:textSize="18sp"
+                android:textColor="@color/material_red_400"
+                android:onClick="onClickBackup"
+                android:text="备份数据库"
+                android:background="?android:attr/selectableItemBackground" />
+
+            <Button
+                style="@style/SettingItem"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:gravity="center_vertical"
+                android:layout_gravity="center_vertical"
+                android:onClick="onClickRestore"
+                android:text="恢复数据库"
+                android:background="?android:attr/selectableItemBackground" />
+
+            <Button
+                style="@style/SettingItem"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:gravity="center_vertical"
+                android:layout_gravity="center_vertical"
+                android:onClick="onClickReadConfig"
+                android:text="读取配置"
+                android:background="?android:attr/selectableItemBackground" />
 
         </LinearLayout>
     </ScrollView>

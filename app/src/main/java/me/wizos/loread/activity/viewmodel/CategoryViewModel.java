@@ -12,7 +12,7 @@ import java.util.List;
 
 import me.wizos.loread.App;
 import me.wizos.loread.R;
-import me.wizos.loread.bean.CategoryFeeds;
+import me.wizos.loread.bean.StreamTree;
 import me.wizos.loread.db.Collection;
 import me.wizos.loread.db.CoreDB;
 import me.wizos.loread.utils.Classifier;
@@ -27,43 +27,54 @@ public class CategoryViewModel extends ViewModel {
         XLog.i("触发重新加载【分类树】");
     }
 
-    public List<CategoryFeeds> getCategoryFeeds(){
+    public List<StreamTree> getCategoryFeeds(){
         String uid = App.i().getUser().getId();
 
         // 总分类
-        CategoryFeeds rootCategoryFeeds = new CategoryFeeds();
-        rootCategoryFeeds.setCategoryId("user/" + uid + App.CATEGORY_ALL);
-        rootCategoryFeeds.setCategoryName(App.i().getString(R.string.all));
+        StreamTree rootCategoryFeeds = new StreamTree();
+        rootCategoryFeeds.setStreamId("user/" + uid + App.CATEGORY_ALL);
+        rootCategoryFeeds.setStreamName(App.i().getString(R.string.all));
+        rootCategoryFeeds.setStreamType(StreamTree.SMART);
 
         // 未分类
-        CategoryFeeds unCategoryFeeds = new CategoryFeeds();
-        unCategoryFeeds.setCategoryId("user/" + uid + App.CATEGORY_UNCATEGORIZED);
-        unCategoryFeeds.setCategoryName(App.i().getString(R.string.un_category));
+        // StreamTree unCategoryFeeds = new StreamTree();
+        // unCategoryFeeds.setStreamId("user/" + uid + App.STREAM_UNSUBSCRIBED);
+        // unCategoryFeeds.setStreamName(App.i().getString(R.string.un_category));
+        // unCategoryFeeds.setStreamType(StreamTree.SMART);
+
+
+        // 已退订的收藏文章
+        StreamTree unsubscribeArticles = null;
 
         List<Collection> categoryCollection;
         List<Collection> feedCollection;
-
+        int count = 0;
         if( App.i().getUser().getStreamStatus() == App.STATUS_UNREAD ){
             rootCategoryFeeds.setCount(CoreDB.i().articleDao().getUnreadCount(uid));
-            unCategoryFeeds.setCount(CoreDB.i().articleDao().getUncategoryUnreadCount(uid));
-            unCategoryFeeds.setFeeds(CoreDB.i().feedDao().getFeedsUnreadCountByUnCategory(App.i().getUser().getId()));
             categoryCollection = CoreDB.i().categoryDao().getCategoriesUnreadCount(uid);
             feedCollection = CoreDB.i().feedDao().getFeedsUnreadCount(uid);
+            count = CoreDB.i().articleDao().getUnreadCountUnsubscribe(uid);
         }else if( App.i().getUser().getStreamStatus() == App.STATUS_STARED ){
             rootCategoryFeeds.setCount(CoreDB.i().articleDao().getStarCount(uid));
-            unCategoryFeeds.setCount(CoreDB.i().articleDao().getUncategoryStarCount(uid));
-            unCategoryFeeds.setFeeds(CoreDB.i().feedDao().getFeedsStarCountByUnCategory(App.i().getUser().getId()));
             categoryCollection = CoreDB.i().categoryDao().getCategoriesStarCount(uid);
             feedCollection = CoreDB.i().feedDao().getFeedsStaredCount(uid);
+            count = CoreDB.i().articleDao().getStarCountUnsubscribe(uid);
         }else {
             rootCategoryFeeds.setCount(CoreDB.i().articleDao().getAllCount(uid));
-            unCategoryFeeds.setCount(CoreDB.i().articleDao().getUncategoryAllCount(uid));
-            unCategoryFeeds.setFeeds(CoreDB.i().feedDao().getFeedsAllCountByUnCategory(App.i().getUser().getId()));
             categoryCollection = CoreDB.i().categoryDao().getCategoriesAllCount(uid);
             feedCollection = CoreDB.i().feedDao().getFeedsAllCount(uid);
+            count = CoreDB.i().articleDao().getAllCountUnsubscribe(uid);
         }
 
-        List<CategoryFeeds> categoryFeedsList = Classifier.group(categoryCollection, CoreDB.i().feedCategoryDao().getAll(uid), feedCollection);
+        if(count > 0){
+            unsubscribeArticles = new StreamTree();
+            unsubscribeArticles.setStreamId("user/" + uid + App.STREAM_UNSUBSCRIBED);
+            unsubscribeArticles.setStreamName(App.i().getString(R.string.unsubscribed));
+            unsubscribeArticles.setStreamType(StreamTree.SMART);
+            unsubscribeArticles.setCount(count);
+        }
+
+        List<StreamTree> categoryFeedsList = Classifier.group3(categoryCollection, CoreDB.i().feedCategoryDao().getAll(uid), feedCollection);
 
         // XLog.i("获得的 A ：" + categoryCollection);
         // XLog.i("获得的 B ：" + CoreDB.i().feedCategoryDao().getAll(uid));
@@ -71,67 +82,10 @@ public class CategoryViewModel extends ViewModel {
         // XLog.i("获得的 D ：" + categoryFeedsList);
 
         categoryFeedsList.add(0, rootCategoryFeeds);
-        // XLog.i( "加载分类：" + CoreDB.i().feedDao().getFeedsCountByUnCategory(uid) + " -> " + unCategoryFeeds.getCount());
 
-        if(CoreDB.i().feedDao().getFeedsCountByUnCategory(uid) != 0){
-            categoryFeedsList.add(1, unCategoryFeeds);
+        if(unsubscribeArticles != null){
+            categoryFeedsList.add(1, unsubscribeArticles);
         }
-
         return categoryFeedsList;
     }
-
-
-
-
-    // public LiveData<List<Collection>> categoriesLiveData;
-    // public LiveData<List<Collection>> feedsLiveData;
-    // public MutableLiveData<List<CategoryFeeds>> groupedFeedsLiveData = new MutableLiveData<>();
-    // public LiveData<List<Collection>> loadCategories(){
-    //     if( App.i().getUser().getStreamStatus() == App.STATUS_UNREAD ){
-    //         categoriesLiveData = CoreDB.i().categoryDao().getCategoriesUnreadCountLiveData(App.i().getUser().getId());
-    //     }else if( App.i().getUser().getStreamStatus() == App.STATUS_STARED ){
-    //         categoriesLiveData = CoreDB.i().categoryDao().getCategoriesStarCountLiveData(App.i().getUser().getId());
-    //     }else {
-    //         categoriesLiveData = CoreDB.i().categoryDao().getCategoriesAllCountLiveData(App.i().getUser().getId());
-    //     }
-    //     return categoriesLiveData;
-    // }
-    //
-    //
-    // public void loadGroupedFeeds(){
-    //     if( App.i().getUser().getStreamStatus() == App.STATUS_UNREAD ){
-    //         categoriesLiveData = CoreDB.i().categoryDao().getCategoriesUnreadCountLiveData(App.i().getUser().getId());
-    //         feedsLiveData = CoreDB.i().feedDao().getFeedsLiveDataUnreadCount(App.i().getUser().getId());
-    //     }else if( App.i().getUser().getStreamStatus() == App.STATUS_STARED ){
-    //         categoriesLiveData = CoreDB.i().categoryDao().getCategoriesStarCountLiveData(App.i().getUser().getId());
-    //         feedsLiveData = CoreDB.i().feedDao().getFeedsLiveDataStaredCount(App.i().getUser().getId());
-    //     }else {
-    //         categoriesLiveData = CoreDB.i().categoryDao().getCategoriesAllCountLiveData(App.i().getUser().getId());
-    //         feedsLiveData = CoreDB.i().feedDao().getFeedsLiveDataAllCount(App.i().getUser().getId());
-    //     }
-    //     groupedFeedsLiveData.postValue(Classifier.group2(categoriesLiveData.getValue(), CoreDB.i().feedCategoryDao().getAll(App.i().getUser().getId()), feedsLiveData.getValue()));
-    // }
-    //
-    // public LiveData<List<Collection>> loadFeeds(String categoryId){
-    //     if( App.i().getUser().getStreamStatus() == App.STATUS_UNREAD ){
-    //         if(categoryId.contains(App.CATEGORY_UNCATEGORIZED)){
-    //             feedsLiveData = CoreDB.i().feedDao().getFeedsLiveDataUnreadCountByUnCategory(App.i().getUser().getId());
-    //         }else {
-    //             feedsLiveData = CoreDB.i().feedDao().getFeedsLiveDataUnreadCountByCategoryId(App.i().getUser().getId(), categoryId);
-    //         }
-    //     }else if( App.i().getUser().getStreamStatus() == App.STATUS_STARED ){
-    //         if(categoryId.contains(App.CATEGORY_UNCATEGORIZED)){
-    //             feedsLiveData = CoreDB.i().feedDao().getFeedsLiveDataStarCountByUnCategory(App.i().getUser().getId());
-    //         }else {
-    //             feedsLiveData = CoreDB.i().feedDao().getFeedsLiveDataStarCountByCategoryId(App.i().getUser().getId(), categoryId);
-    //         }
-    //     }else {
-    //         if(categoryId.contains(App.CATEGORY_UNCATEGORIZED)){
-    //             feedsLiveData = CoreDB.i().feedDao().getFeedsLiveDataAllCountByUnCategory(App.i().getUser().getId());
-    //         }else {
-    //             feedsLiveData = CoreDB.i().feedDao().getFeedsLiveDataAllCountByCategoryId(App.i().getUser().getId(), categoryId);
-    //         }
-    //     }
-    //     return categoriesLiveData;
-    // }
 }

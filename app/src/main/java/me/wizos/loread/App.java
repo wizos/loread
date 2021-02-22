@@ -81,7 +81,9 @@ public class App extends Application implements Thread.UncaughtExceptionHandler 
     private static String TAG = "App";
     private static App instance;
     public static final String CATEGORY_ALL = "/category/global.all";
-    public static final String CATEGORY_UNCATEGORIZED = "/category/global.uncategorized";
+    // public static final String CATEGORY_UNCATEGORIZED = "/category/global.uncategorized";
+    // 已退订的文章
+    public static final String STREAM_UNSUBSCRIBED = "/category/global.unsubscribed";
     // public static final String CATEGORY_TAG = "/category/global.tag";
     // public static final String CATEGORY_SEARCH = "/category/global.search";
 
