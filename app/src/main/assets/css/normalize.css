@@ -93,15 +93,18 @@ h6:before{
 }
 section h1 {
 	font-size: 24px;
-	box-shadow: inset 0 -8px 0 #bf53b1;
+	box-shadow: inset 0 -4px 0 #bf53b1;
+	color: #bf53b1;
 }
 h2 {
 	font-size: 20px;
-	box-shadow: inset 0 -6px 0 #f7615f;
+	box-shadow: inset 0 -4px 0 #f7615f;
+	color: #f7615f;
 }
 h3 {
 	font-size: 16px;
 	box-shadow: inset 0 -2px 0 #e0af55;
+	color: #e0af55;
 }
 h4 {
 	font-size: 16px;
@@ -116,7 +119,7 @@ h6 {
 	color: #32b9a8;
 }
 
-/* LINKS // !important*/
+/* LINKS */
 a > svg{
 	width: 14px;
 	height:auto;
@@ -128,6 +131,15 @@ section a {
 #title a {
 	text-decoration: none;
 }
+h1 a, h2 a, h3 a, h4 a, h5 a, h6 a{
+	color: inherit;
+	text-decoration: none !important;
+}
+section h1 a:after, section h2 a:after, section h3 a:after, section h4 a:after, section h5 a:after, section h6 a:after{
+	content: "🔗";
+}
+
+
 a[href=''],a:not([href]) {
 	text-decoration: none !important;
 }
@@ -152,11 +164,7 @@ ul ul, ul ol, ol ol, ol ul {
 li{
 	margin: .2em 0;
 }
-/*
-dl {
-	padding: 0;
-}
-*/
+
 dl dt {
 	font-size: 14px;
 	font-weight: bold;
@@ -298,12 +306,6 @@ textarea{
 }
 
 /* 图片，视频 */
-/* 隐藏src为空的元素 */
-/*
-img[src=''],img[original-src=''],audio:not([src]),iframe:not([src]),[src=''],blockquote:empty,figure:empty,table:empty,pre:empty,code:empty,div:empty {
-	display: none !important;
-}
-*/
 img {
 	margin: 5px 0 !important;
 	max-width: 100% !important;
@@ -321,17 +323,15 @@ audio {
 	width: 100% !important;
 	margin: 5px 0 !important;
 }
-/*
-video {
-    background:rgba(0, 0, 0);
-}
-*/
+
 video,iframe,embed {
 	width: 100% !important;
-	height: 100% !important;
+	max-width: 100% !important;
+	height: auto;
 	display: block !important;
 }
 .video_wrap,.iframe_wrap,.embed_wrap {
+	height: auto;
 	margin: 5px 0 !important;
 	border-bottom: 5px solid rgba(0, 0, 0, 0.1) !important;
 	border-top: 5px solid rgba(0, 0, 0, 0.1) !important;
@@ -372,11 +372,9 @@ del{
 	opacity:0.4;
 }
 
+/*MathJax*/
 mjx-container {
     overflow-x: auto;
     overflow-y: hidden;
 }
-.plyr {
-	margin: 5px 0 !important;
-	border-radius: 5px !important;
-}
+

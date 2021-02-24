@@ -19,13 +19,11 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.vdurmont.emoji.EmojiParser;
 
-import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
@@ -263,24 +261,70 @@ public class FileUtils {
     public static String readFile(String path) {
         return readFile(new File(path));
     }
+    // public static String readFile(File file) {
+    //     StringBuilder fileContent = new StringBuilder();
+    //     String temp = "";
+    //     if (!file.exists()) {
+    //         return temp;
+    //     }
+    //     try {
+    //         // FileReader fileReader = new FileReader(file);
+    //         BufferedReader br = new BufferedReader(new FileReader(file));//一行一行读取 。在电子书程序上经常会用到。
+    //         while ((temp = br.readLine()) != null) {
+    //             fileContent.append(temp); // +"\r\n"
+    //         }
+    //         // fileReader.close();
+    //         br.close();
+    //     } catch (IOException e){
+    //         Tool.printCallStack(e);
+    //     }
+    //     return fileContent.toString();
+    // }
     public static String readFile(File file) {
-        StringBuilder fileContent = new StringBuilder();
         String temp = "";
         if (!file.exists()) {
             return temp;
         }
         try {
-            FileReader fileReader = new FileReader(file);
-            BufferedReader br = new BufferedReader(fileReader);//一行一行读取 。在电子书程序上经常会用到。
-            while ((temp = br.readLine()) != null) {
-                fileContent.append(temp); // +"\r\n"
+            FileInputStream in = new FileInputStream(file);
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            byte[] buffer = new byte[1024];
+            for (int count; (count = in.read(buffer)) != -1; ) {
+                out.write(buffer, 0, count);
             }
-            fileReader.close();
-            br.close();
-        } catch (IOException e){
+            return new String(out.toByteArray());
+        }catch (IOException e){
             Tool.printCallStack(e);
         }
-        return fileContent.toString();
+        return temp;
+    }
+
+    public static byte[] readFully(InputStream in) throws IOException {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        byte[] buffer = new byte[1024];
+        for (int count; (count = in.read(buffer)) != -1; ) {
+            out.write(buffer, 0, count);
+        }
+        return out.toByteArray();
+    }
+    public static String read(String path) throws FileNotFoundException {
+        return read(new File(path));
+    }
+    public static String read(File file) throws FileNotFoundException {
+        return read(new FileInputStream(file));
+    }
+    public static String read(InputStream in){
+        try {
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            byte[] buffer = new byte[1024];
+            for (int count; (count = in.read(buffer)) != -1; ) {
+                out.write(buffer, 0, count);
+            }
+            return new String(out.toByteArray());
+        }catch (IOException e){
+            Tool.printCallStack(e);
+        }
+        return "";
     }
 
     public static String readCacheFilePath(String articleIdInMD5, String originalUrl) {

@@ -45,7 +45,9 @@ public class Test {
     }
 
     public boolean ttsFile = false;
+    public boolean frame = false;
 
+    public boolean useJsoup = true;
     public boolean downloadNow = false;
     public boolean useLoread = false;
     public String rssFinderUser = null;

@@ -57,5 +57,6 @@ public interface ArticleBridge {
     void foundVideo(String src, long duration);
 
     void frameSrcChange(String oldSrc, String newSrc);
-    // String get(String url) throws IOException;
+
+    String rewrite(String url);
 }

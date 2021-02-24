@@ -79,9 +79,9 @@ public class WebViewS extends NestedScrollWebView {
         webSettings.setCacheMode(WebSettings.LOAD_NO_CACHE);
 
         // 通过 file url 加载的 Javascript 读取其他的本地文件 .建议关闭
-        webSettings.setAllowFileAccessFromFileURLs(false);
+        webSettings.setAllowFileAccessFromFileURLs(true);
         // 允许通过 file url 加载的 Javascript 可以访问其他的源，包括其他的文件和 http，https 等其他的源
-        webSettings.setAllowUniversalAccessFromFileURLs(false);
+        webSettings.setAllowUniversalAccessFromFileURLs(true);
         // 允许访问文件
         webSettings.setAllowFileAccess(true);
         // 保存密码数据

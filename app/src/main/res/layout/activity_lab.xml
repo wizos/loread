@@ -135,14 +135,6 @@
                 android:layout_gravity="center_vertical"
                 android:text="删除所有 Tag"/>
 
-            <Button
-                android:layout_width="match_parent"
-                android:layout_height="50dp"
-                style="@style/SettingItem"
-                android:onClick="getFeed"
-                android:gravity="center_vertical"
-                android:layout_gravity="center_vertical"
-                android:text="获取feed"/>
             <Space
                 android:layout_width="match_parent"
                 android:layout_height="20dp"/>
@@ -164,34 +156,11 @@
                 android:layout_gravity="center_vertical"
                 android:text="关闭 同步任务"/>
 
-            <Button
-                android:layout_width="match_parent"
-                android:layout_height="50dp"
-                style="@style/SettingItem"
-                android:onClick="reverseproxy"
-                android:gravity="center_vertical"
-                android:layout_gravity="center_vertical"
-                android:text="反向代理"/>
 
             <Space
                 android:layout_width="match_parent"
                 android:layout_height="20dp"/>
 
-
-
-            <Button
-                style="@style/SettingItem"
-                android:layout_width="match_parent"
-                android:layout_height="50dp"
-                android:gravity="center_vertical"
-                android:layout_gravity="center_vertical"
-                android:background="?android:attr/selectableItemBackground"
-                android:textSize="18sp"
-                android:textColor="@color/material_red_400"
-                android:onClick="onClickExportOPML"
-                android:text="导出 OPML"
-                android:clickable="true"
-                android:focusable="true" />
 
             <Button
                 style="@style/SettingItem"
@@ -213,6 +182,8 @@
                 android:layout_gravity="center_vertical"
                 android:onClick="onClickRestore"
                 android:text="恢复数据库"
+                android:textSize="18sp"
+                android:textColor="@color/material_red_400"
                 android:background="?android:attr/selectableItemBackground" />
 
             <Button
@@ -223,6 +194,8 @@
                 android:layout_gravity="center_vertical"
                 android:onClick="onClickReadConfig"
                 android:text="读取配置"
+                android:textSize="18sp"
+                android:textColor="@color/material_red_400"
                 android:background="?android:attr/selectableItemBackground" />
 
         </LinearLayout>

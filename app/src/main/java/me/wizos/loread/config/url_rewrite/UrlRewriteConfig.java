@@ -17,6 +17,7 @@ import me.wizos.loread.App;
 import me.wizos.loread.log.Console;
 import me.wizos.loread.utils.FileUtils;
 import me.wizos.loread.utils.HttpCall;
+import me.wizos.loread.utils.JavaScriptCompressor;
 import me.wizos.loread.utils.ScriptUtils;
 import me.wizos.loread.utils.StringUtils;
 import me.wizos.loread.utils.SymbolUtils;
@@ -76,6 +77,7 @@ public class UrlRewriteConfig {
             return false;
         }
         value = SymbolUtils.filterLineSymbol(value);
+        value = JavaScriptCompressor.compress(value);
         UrlRewriteRule userRule;
         String userConfig = FileUtils.readFile(App.i().getUserConfigPath() + FILENAME);
         Gson gson = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();

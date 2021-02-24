@@ -232,13 +232,6 @@
             android:screenOrientation="portrait"
             android:theme="@style/CaptureTheme"/>
 
-        <activity
-            android:name=".activity.ReverseProxyActivity"
-            android:configChanges="uiMode|orientation|screenSize|keyboardHidden"
-            android:label="反向代理"
-            android:launchMode="singleTop"
-            android:theme="@style/AppTheme.Day.NoActionBar" />
-
         <service
             android:name=".service.MusicService"
             android:exported="false"

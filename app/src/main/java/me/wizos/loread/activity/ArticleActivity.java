@@ -62,17 +62,26 @@ import com.lzy.okgo.request.GetRequest;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 
+import java.io.BufferedInputStream;
 import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.lang.ref.WeakReference;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import javax.net.ssl.HttpsURLConnection;
 
 import cc.shinichi.library.ImagePreview;
 import cc.shinichi.library.view.listener.OnBigImageLongClickListener;
@@ -105,6 +114,7 @@ import me.wizos.loread.sniffer.bean.MediaVideo;
 import me.wizos.loread.utils.ArticleUtils;
 import me.wizos.loread.utils.EncryptUtils;
 import me.wizos.loread.utils.FileUtils;
+import me.wizos.loread.utils.HttpsUtils;
 import me.wizos.loread.utils.ImageUtils;
 import me.wizos.loread.utils.ScreenUtils;
 import me.wizos.loread.utils.SnackbarUtils;
@@ -825,6 +835,14 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
         App.i().iFrames.put(newSrc, oldSrc);
     }
 
+    @JavascriptInterface
+    @Override
+    public String rewrite(String url) {
+        String src = UrlRewriteConfig.i().getRedirectUrl(url);
+        XLog.i("覆写url：" + url + "  -> 新：" + src);
+        return src;
+    }
+
     private void initView() {
         starView = findViewById(R.id.article_bottombar_star);
         starView.setOnLongClickListener(new View.OnLongClickListener() {
@@ -1149,7 +1167,7 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
         }
 
         // selectedWebView.loadData(ArticleUtil.getPageForDisplay(selectedArticle));
-        AsyncTask.execute(new Runnable() {
+        AsyncTask.THREAD_POOL_EXECUTOR.execute(new Runnable() {
             @Override
             public void run() {
                 String content = ArticleUtils.getPageForDisplay(article);
@@ -1321,7 +1339,7 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
                 // 判断是要在加载的时候获取还是同步的时候获取
             } else {
                 // selectedWebView.loadData(ArticleUtil.getPageForDisplay(selectedArticle));
-                AsyncTask.execute(new Runnable() {
+                AsyncTask.THREAD_POOL_EXECUTOR.execute(new Runnable() {
                     @Override
                     public void run() {
                         String content = ArticleUtils.getPageForDisplay(selectedArticle);
@@ -1336,7 +1354,7 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
             }
         } else {
             // selectedWebView.loadData(ArticleUtil.getPageForDisplay(selectedArticle));
-            AsyncTask.execute(new Runnable() {
+            AsyncTask.THREAD_POOL_EXECUTOR.execute(new Runnable() {
                 @Override
                 public void run() {
                     String content = ArticleUtils.getPageForDisplay(selectedArticle);
@@ -1401,7 +1419,7 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
 
     private ArrayMap<String, Media> mediaMap = new ArrayMap<>();
 
-    private class WebViewClientX extends WebViewClient {
+    public class WebViewClientX extends WebViewClient {
         // 通过重写WebViewClient的onReceivedSslError方法来接受所有网站的证书，忽略SSL错误。
         @Override
         public void onReceivedSslError(WebView view, SslErrorHandler handler, SslError error) {
@@ -1418,6 +1436,8 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
             if ( HostBlockConfig.i().isAd(url.toLowerCase()) ) {
                 return new WebResourceResponse(null, null, null);
             }
+            // 这里的嗅探并不多余，例如网易云的音频地址并不会出现在html中，但是网络请求中可以发现到。
+            // https://music.163.com/outchain/player?type=2&id=1299293129&height=66
             Media media = SnifferUtils.hasMedia(url);
             if (media != null){
                 XLog.d("根据 url 嗅探到多媒体：" + url);
@@ -1443,86 +1463,94 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
             //     e.printStackTrace();
             // }
 
+            // 仅拦截http，并且结尾为 css, js, woff, ttf 的请求
+            if (!Test.i().frame || !request.getMethod().equalsIgnoreCase("GET") || !url.startsWith("http") || url.endsWith(".css") || url.endsWith(".js") || url.endsWith(".woff") || url.endsWith(".ttf")  || url.contains(".css?") || url.contains(".js?") || url.contains(".woff?") || url.contains(".ttf?")){
+                return super.shouldInterceptRequest(view, request);
+            }
+
+            try {
+                HttpsURLConnection.setDefaultHostnameVerifier(HttpsUtils.UnSafeHostnameVerifier);
+                HttpsURLConnection.setDefaultSSLSocketFactory(HttpsUtils.getSslSocketFactory().sSLSocketFactory);
+                HttpURLConnection connection = (HttpURLConnection) new URL(url).openConnection();
+                connection.setRequestMethod(request.getMethod());
+                connection.setConnectTimeout(10_000);
+                connection.setReadTimeout(30_000);
+
+                for (Map.Entry<String, String> requestHeader : request.getRequestHeaders().entrySet()) {
+                    connection.setRequestProperty(requestHeader.getKey(), requestHeader.getValue());
+                }
+
+                XLog.i("请求加载资源："  + url );
+                // 将响应转换为网络资源响应参数所需的格式
+                if(isInterceptorThisRequest(connection.getResponseCode())){
+                    XLog.w("webview 无法代理，因为响应码为：" + connection.getResponseCode() );
+                    return super.shouldInterceptRequest(view, request);
+                }
+
+                XLog.i("请求加载资源C："  + url );
+                String encoding = connection.getContentEncoding();
+
+                Map<String, String> responseHeaders = new HashMap<>();
+                for (String key : connection.getHeaderFields().keySet()) {
+                    responseHeaders.put(key, connection.getHeaderField(key));
+                }
+                // 会导致视频无法加载
+                // responseHeaders.put("Access-Control-Allow-Origin", "*");
+
+                String ua = HeaderUserAgentConfig.i().guessUserAgentByUrl(url);
+                if (!StringUtils.isEmpty(ua)) {
+                    responseHeaders.put(Contract.USER_AGENT, ua );
+                }
+
+                String referer = HeaderRefererConfig.i().guessRefererByUrl(url);
+                if (!StringUtils.isEmpty(referer)) {
+                    responseHeaders.put(Contract.REFERER, referer);
+                }
+
+                String mimeType = "text/plain";
+                if (connection.getContentType() != null && !connection.getContentType().isEmpty()) {
+                    mimeType = connection.getContentType().split(";")[0];
+                }
+                XLog.i(url + ",   内容编码：" + mimeType + " , " +  connection.getContentType());
+
+                if(!mimeType.contains("text/html") ){
+                    // return super.shouldInterceptRequest(view, request);
+                    return new WebResourceResponse(mimeType, encoding, connection.getResponseCode(), StringUtils.isEmpty(connection.getResponseMessage()) ? "OK" : connection.getResponseMessage(), responseHeaders, connection.getInputStream());
+                }
 
 
-            // App.i().iFrames.put("https://www.bilibili.com/blackboard/html5mobileplayer.html?aid=458844599&bvid=BV1F5411J7nG&cid=285648301&page=1","");
-            // App.i().iFrames.put("https://www.bilibili.com/blackboard/html5mobileplayer.html?aid=416318352&bvid=BV1vV411q7FJ&cid=287605615&page=1", "");
-            // XLog.i("请求加载：" +  " ,  " + App.i().iFrames.containsKey(url) + "  == "  + url);
-            // if(App.i().iFrames.containsKey(url)){
-            //     try {
-            //         HttpURLConnection connection = (HttpURLConnection) new URL(url).openConnection();
-            //         connection.setRequestMethod(request.getMethod());
-            //         for (Map.Entry<String, String> requestHeader : request.getRequestHeaders().entrySet()) {
-            //             connection.setRequestProperty(requestHeader.getKey(), requestHeader.getValue());
-            //         }
-            //
-            //         // 将响应转换为网络资源响应参数所需的格式
-            //         InputStream in = new BufferedInputStream(connection.getInputStream());
-            //         if(isInterceptorThisRequest(connection.getResponseCode())){
-            //             XLog.i("webview 无法代理，因为响应码为：" + connection.getResponseCode() );
-            //             return super.shouldInterceptRequest(view, request);
-            //         }
-            //
-            //         String result = readText(in,"utf-8");
-            //         Document document = Jsoup.parse(result);
-            //
-            //         String js = FileUtils.readFile(App.i().getUserConfigPath() + "hashchange.js");
-            //         if (TextUtils.isEmpty(js)) {
-            //             js = FileUtils.readFileFromAssets(ArticleActivity.this, "js/hashchange.js");
-            //         }
-            //         document.head().prepend(js);
-            //
-            //         js = FileUtils.readFile(App.i().getUserConfigPath() + "iframe.js");
-            //         if (TextUtils.isEmpty(js)) {
-            //             js = FileUtils.readFileFromAssets(ArticleActivity.this, "js/iframe.js");
-            //         }
-            //         document.body().append(js);
-            //
-            //         js = FileUtils.readFile(App.i().getUserConfigPath() + "sniffer.js");
-            //         if (TextUtils.isEmpty(js)) {
-            //             js = FileUtils.readFileFromAssets(ArticleActivity.this, "js/sniffer.js");
-            //         }
-            //         document.body().append(js);
-            //
-            //         // document.head().prepend(FileUtils.readFileFromAssets(ArticleActivity.this, "js/hashchange.js"));
-            //         // document.body().append(FileUtils.readFileFromAssets(ArticleActivity.this, "js/iframe.js"));
-            //         // document.body().append(FileUtils.readFileFromAssets(ArticleActivity.this, "js/sniffer.js"));
-            //
-            //         result = document.outerHtml();
-            //         // XLog.i("得到的iframe为：" + result);
-            //         // XLog.i("得到的html为：" + js);
-            //
-            //         String encoding = connection.getContentEncoding();
-            //         Map<String, String> responseHeaders = new HashMap<>();
-            //         for (String key : connection.getHeaderFields().keySet()) {
-            //             responseHeaders.put(key, connection.getHeaderField(key));
-            //         }
-            //
-            //         String ua = NetworkUserAgentConfig.i().guessUserAgentByUrl(url);
-            //         if (!StringUtils.isEmpty(ua)) {
-            //             responseHeaders.put(Contract.USER_AGENT, ua );
-            //         }
-            //         String referer = HeaderRefererConfig.i().guessRefererByUrl(url);
-            //         if (!StringUtils.isEmpty(referer)) {
-            //             responseHeaders.put(Contract.REFERER, referer);
-            //         }
-            //
-            //         String mimeType = "text/plain";
-            //         if (connection.getContentType() != null && !connection.getContentType().isEmpty()) {
-            //             mimeType = connection.getContentType().split(";")[0];
-            //         }
-            //         XLog.i("webview 代理， 内容编码：" + mimeType + " , " + encoding + " , " + connection.getResponseMessage());
-            //         // https://www.jianshu.com/p/08920c2bb128
-            //         return new WebResourceResponse(mimeType, encoding, connection.getResponseCode(), connection.getResponseMessage(), responseHeaders, new ByteArrayInputStream(result.getBytes()));
-            //     } catch (IOException e) {
-            //         e.printStackTrace();
-            //         XLog.e("无法加载：" + e.getMessage());
-            //     }
-            //     XLog.i("webview 走代理失败");
-            //     return super.shouldInterceptRequest(view, request);
-            // }
+                // XLog.i("请求加载资源D：" );
+                InputStream in = new BufferedInputStream(connection.getInputStream());
+                // String result = readText(in,"utf-8");
+                String result = FileUtils.read(in);
+
+                String js;
+
+                js = FileUtils.readFile(App.i().getUserConfigPath() + "iframe.js");
+                if (TextUtils.isEmpty(js)) {
+                    js = FileUtils.readFileFromAssets(ArticleActivity.this, "js/iframe.js");
+                }
+
+                Document document = Jsoup.parse(result);
+                document.outputSettings().prettyPrint(false);
+                document.body().append(js);
+                // document.body().append(FileUtils.readFileFromAssets(ArticleActivity.this, "js/iframe.js"));
+                result = document.outerHtml();
+                // XLog.i("得到的iframe为：" + result);
+                // XLog.i("得到的html为：" + js);
+
+                XLog.i("webview 代理， 内容编码：" + mimeType + " , " + encoding + " , " + connection.getResponseMessage());
+                // https://www.jianshu.com/p/08920c2bb128
+                return new WebResourceResponse(mimeType, encoding, connection.getResponseCode(), StringUtils.isEmpty(connection.getResponseMessage()) ? "OK" : connection.getResponseMessage(), responseHeaders, new ByteArrayInputStream(result.getBytes()));
+            } catch (ClassCastException | IOException e) {
+                // Tool.printCallStack(e);
+                e.printStackTrace();
+                XLog.e("无法加载：" + e.getLocalizedMessage());
+            }
+            XLog.i("webview 走代理失败");
             return super.shouldInterceptRequest(view, request);
         }
+
 
         private boolean isInterceptorThisRequest(int code) {
             return (code < 100 || code > 599 || (code > 299 && code < 400));
@@ -1545,6 +1573,7 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
             }
             return null;
         }
+
         /**
          * @param webView
          * @param url
@@ -1556,7 +1585,6 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
         @Override
         public boolean shouldOverrideUrlLoading(WebView webView, String url) {
             XLog.i("加载 url：" + url);
-
             // 作者：胡几手，链接：https://www.jianshu.com/p/7dfb8797f893
             // 解决在webView第一次加载的url重定向到了另一个地址时，也会走shouldOverrideUrlLoading回调的问题
             WebView.HitTestResult hitTestResult = webView.getHitTestResult();
@@ -1958,7 +1986,7 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
             selectedArticle.setImage(oldArticle.getImage());
             App.i().oldArticles.remove(selectedArticle.getId());
             ToastUtils.show(getString(R.string.cancel_readability));
-            AsyncTask.execute(new Runnable() {
+            AsyncTask.THREAD_POOL_EXECUTOR.execute(new Runnable() {
                 @Override
                 public void run() {
                     String content = ArticleUtils.getPageForDisplay(selectedArticle);
@@ -1983,7 +2011,11 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
                 App.i().articleFirstKeyword.put(selectedArticle.getId(),keyword);
             }
             swipeRefreshLayoutS.setRefreshing(true);
-            distill = new Distill(selectedArticle.getLink(), keyword, new Distill.Listener() {
+            String url = UrlRewriteConfig.i().getRedirectUrl(selectedArticle.getLink());
+            if(StringUtils.isEmpty(url)){
+                url = selectedArticle.getLink();
+            }
+            distill = new Distill(url, keyword, new Distill.Listener() {
                 @Override
                 public void onResponse(String content) {
                     App.i().oldArticles.put(selectedArticle.getId(),(Article)selectedArticle.clone());
@@ -2001,7 +2033,7 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
                             // swipeRefreshLayoutS.finishRefresh();
                             ToastUtils.show(getString(R.string.get_readability_success));
                             readabilityView.setText(getString(R.string.font_article_readability));
-                            AsyncTask.execute(new Runnable() {
+                            AsyncTask.THREAD_POOL_EXECUTOR.execute(new Runnable() {
                                 @Override
                                 public void run() {
                                     String content = ArticleUtils.getPageForDisplay(selectedArticle);

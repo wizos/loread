@@ -15,8 +15,6 @@ import android.widget.FrameLayout;
 
 import androidx.annotation.ColorInt;
 
-import com.elvishew.xlog.XLog;
-
 import java.lang.ref.WeakReference;
 
 import me.wizos.loread.view.slideback.callback.SlideCallBack;
@@ -96,8 +94,8 @@ public class SlideLayout extends FrameLayout {
         rightViewTriggerStart = screenWidth - maxSlideLength * 6;
         rightViewTriggerEnd = screenWidth - sideSlideLength / 2;
 
-        XLog.i("左侧：" + leftViewTriggerStart + " , " + leftViewTriggerEnd);
-        XLog.i("右侧：" + rightViewTriggerStart + " , " + rightViewTriggerEnd);
+        // XLog.i("左侧：" + leftViewTriggerStart + " , " + leftViewTriggerEnd);
+        // XLog.i("右侧：" + rightViewTriggerStart + " , " + rightViewTriggerEnd);
 
         mAnimation = ValueAnimator.ofFloat(0f, 1f);
         mAnimation.setDuration(mDuration);

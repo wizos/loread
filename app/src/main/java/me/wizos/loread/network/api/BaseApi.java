@@ -19,6 +19,7 @@ import me.wizos.loread.bean.FeedEntries;
 import me.wizos.loread.bean.feedly.CategoryItem;
 import me.wizos.loread.bean.feedly.input.EditFeed;
 import me.wizos.loread.config.SaveDirectory;
+import me.wizos.loread.config.url_rewrite.UrlRewriteConfig;
 import me.wizos.loread.db.Article;
 import me.wizos.loread.db.Category;
 import me.wizos.loread.db.CoreDB;
@@ -30,6 +31,7 @@ import me.wizos.loread.utils.ArticleUtils;
 import me.wizos.loread.utils.BackupUtils;
 import me.wizos.loread.utils.EncryptUtils;
 import me.wizos.loread.utils.FileUtils;
+import me.wizos.loread.utils.StringUtils;
 
 /**
  * Created by Wizos on 2019/2/10.
@@ -274,7 +276,7 @@ public abstract class BaseApi {
 
 
     public void deleteExpiredArticles() {
-        // 最后的 300 * 1000L 是留前5分钟时间的不删除 WithPref.i().getClearBeforeDay()
+        // 最后的 300 * 1000L 是留前5分钟时间的不删除
         long time = System.currentTimeMillis() - App.i().getUser().getCachePeriod() * 24 * 3600 * 1000L - 60 * 1000L;
         String uid = App.i().getUser().getId();
 
@@ -300,24 +302,23 @@ public abstract class BaseApi {
         }
         CoreDB.i().articleDao().update(storeReadArts);
 
-        // List<Article> expiredArticles = CoreDB.i().articleDao().getReadedUnstarLtTime(uid, time);
-        // ArrayList<String> idListMD5 = new ArrayList<>(expiredArticles.size());
-        // for (Article article : expiredArticles) {
-        //     idListMD5.add(EncryptUtils.MD5(article.getId()));
-        // }
-        // XLog.i("清除A：" + time + "--" + expiredArticles);
-        // FileUtils.deleteHtmlDirList(idListMD5);
-        // CoreDB.i().articleDao().delete(expiredArticles);
-
-
-        List<String> expiredArticles = CoreDB.i().articleDao().getReadedUnstarIdsLtTime(uid, time);
+        List<Article> expiredArticles = CoreDB.i().articleDao().getReadedUnstarLtTime(uid, time);
         ArrayList<String> idListMD5 = new ArrayList<>(expiredArticles.size());
-        for (String articleId : expiredArticles) {
-            idListMD5.add(EncryptUtils.MD5(articleId));
+        for (Article article : expiredArticles) {
+            idListMD5.add(EncryptUtils.MD5(article.getId()));
         }
-        // XLog.i("清除A：" + time + "--" + expiredArticles);
+        XLog.i("清除A：" + time + "--" + expiredArticles);
         FileUtils.deleteHtmlDirList(idListMD5);
-        CoreDB.i().articleDao().delete(uid, expiredArticles);
+        CoreDB.i().articleDao().delete(expiredArticles);
+
+        // List<String> expiredArticles = CoreDB.i().articleDao().getReadedUnstarIdsLtTime(uid, time);
+        // ArrayList<String> idListMD5 = new ArrayList<>(expiredArticles.size());
+        // for (String articleId : expiredArticles) {
+        //     idListMD5.add(EncryptUtils.MD5(articleId));
+        // }
+        // // XLog.i("清除A：" + time + "--" + expiredArticles);
+        // FileUtils.deleteHtmlDirList(idListMD5);
+        // CoreDB.i().articleDao().delete(uid, expiredArticles);
     }
 
     void fetchReadability(String uid, long syncTimeMillis) {
@@ -335,7 +336,13 @@ public abstract class BaseApi {
                 keyword = ArticleUtils.getKeyword(article.getContent());
                 App.i().articleFirstKeyword.put(article.getId(), keyword);
             }
-            Distill distill = new Distill(article.getLink(), keyword, new Distill.Listener() {
+
+            String url = UrlRewriteConfig.i().getRedirectUrl(article.getLink());
+            if(StringUtils.isEmpty(url)){
+                url = article.getLink();
+            }
+
+            Distill distill = new Distill(url, keyword, new Distill.Listener() {
                 @Override
                 public void onResponse(String content) {
                     article.updateContent(content);

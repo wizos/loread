@@ -123,6 +123,6 @@ public class SymbolUtils {
     }
 
     public static String filterLineSymbol(String str) {
-        return str.replace("\r", "").replace("\n","").trim();
+        return str.replace("\r", "").replace("\n","").replace("\t","").trim();
     }
 }

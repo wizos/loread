@@ -54,7 +54,7 @@ public interface ArticleDao {
             "LEFT JOIN Feed ON (article.uid = Feed.uid AND article.feedId = Feed.id)" +
             "WHERE article.uid = :uid " +
             "AND Feed.id is NULL " +
-            "AND article.readStatus = " + App.STATUS_UNREAD  + " OR article.readStatus = " + App.STATUS_UNREADING )
+            "AND (article.readStatus = " + App.STATUS_UNREAD  + " OR article.readStatus = " + App.STATUS_UNREADING + ")")
     int getUnreadCountUnsubscribe(String uid);
 
     @Query("SELECT count(*) FROM article " +
