@@ -271,8 +271,8 @@ public class TinyRSSApi extends AuthApi implements ILogin {
         }
 
         handleDuplicateArticles(startSyncTimeMillis);
-        handleCrawlDate2();
         updateCollectionCount();
+        handleCrawlDate2();
         LiveEventBus.get(SyncWorker.SYNC_PROCESS_FOR_SUBTITLE).post( null );
     }
 

@@ -20,7 +20,6 @@ import me.wizos.loread.utils.HttpCall;
 import me.wizos.loread.utils.JavaScriptCompressor;
 import me.wizos.loread.utils.ScriptUtils;
 import me.wizos.loread.utils.StringUtils;
-import me.wizos.loread.utils.SymbolUtils;
 
 /**
  * 作用：在进行网络请求前，修改被请求的网址。
@@ -45,14 +44,22 @@ public class UrlRewriteConfig {
                     rule = new UrlRewriteRule();
                     Gson gson = new Gson();
                     // if(CorePref.i().userPref().getBoolean(Contract.ENABLE_REMOTE_URL_REWRITE_RULE, false)){
-                        String remoteConfig = FileUtils.readFile(App.i().getGlobalConfigPath() + FILENAME);
-                        if (!TextUtils.isEmpty(remoteConfig)) {
-                            UrlRewriteRule remoteRule = gson.fromJson(remoteConfig, UrlRewriteRule.class);
-                            // rule.hostBlock.addAll(remoteRule.hostBlock);
-                            rule.hostReplace.putAll(remoteRule.hostReplace);
-                            rule.urlRewrite.putAll(remoteRule.urlRewrite);
-                        }
-                    // }
+
+                    String includeConfig = FileUtils.readFileFromAssets(App.i(), "rule/" + FILENAME);
+                    if (!TextUtils.isEmpty(includeConfig)) {
+                        UrlRewriteRule remoteRule = gson.fromJson(includeConfig, UrlRewriteRule.class);
+                        rule.hostReplace.putAll(remoteRule.hostReplace);
+                        rule.urlRewrite.putAll(remoteRule.urlRewrite);
+                    }
+
+                    String remoteConfig = FileUtils.readFile(App.i().getGlobalConfigPath() + FILENAME);
+                    if (!TextUtils.isEmpty(remoteConfig)) {
+                        UrlRewriteRule remoteRule = gson.fromJson(remoteConfig, UrlRewriteRule.class);
+                        // rule.hostBlock.addAll(remoteRule.hostBlock);
+                        rule.hostReplace.putAll(remoteRule.hostReplace);
+                        rule.urlRewrite.putAll(remoteRule.urlRewrite);
+                    }
+
                     String userConfig = FileUtils.readFile(App.i().getUserConfigPath() + FILENAME);
                     if (!TextUtils.isEmpty(userConfig)) {
                         UrlRewriteRule userRule = gson.fromJson(userConfig, UrlRewriteRule.class);
@@ -76,7 +83,7 @@ public class UrlRewriteConfig {
         if(StringUtils.isEmpty(value)){
             return false;
         }
-        value = SymbolUtils.filterLineSymbol(value);
+        // value = SymbolUtils.filterLineSymbol(value);
         value = JavaScriptCompressor.compress(value);
         UrlRewriteRule userRule;
         String userConfig = FileUtils.readFile(App.i().getUserConfigPath() + FILENAME);

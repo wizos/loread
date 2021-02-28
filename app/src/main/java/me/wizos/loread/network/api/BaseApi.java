@@ -10,9 +10,11 @@ import com.elvishew.xlog.XLog;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import me.wizos.loread.App;
 import me.wizos.loread.bean.FeedEntries;
@@ -67,6 +69,9 @@ public abstract class BaseApi {
     abstract public void importOPML(Uri uri, CallbackX cb);
 
     void coverSaveCategories(List<Category> cloudyCategories) {
+        if(cloudyCategories == null){
+            return;
+        }
         String uid = App.i().getUser().getId();
         ArrayMap<String, Category> cloudyCategoriesTmp = new ArrayMap<>(cloudyCategories.size());
         for (Category category : cloudyCategories) {
@@ -97,6 +102,9 @@ public abstract class BaseApi {
     }
 
     void coverSaveFeeds(List<Feed> cloudyFeeds) {
+        if(cloudyFeeds == null){
+            return;
+        }
         String uid = App.i().getUser().getId();
         ArrayMap<String, Feed> cloudyMap = new ArrayMap<>(cloudyFeeds.size());
         for (Feed feed : cloudyFeeds) {
@@ -136,6 +144,9 @@ public abstract class BaseApi {
     }
 
     void coverFeedCategory(List<FeedCategory> cloudyFeedCategories) {
+        if(cloudyFeedCategories == null){
+            return;
+        }
         ArrayMap<String, FeedCategory> cloudyCategoriesTmp = new ArrayMap<>(cloudyFeedCategories.size());
         for (FeedCategory feedCategory : cloudyFeedCategories) {
             cloudyCategoriesTmp.put(feedCategory.getFeedId() + feedCategory.getCategoryId(), feedCategory);
@@ -156,12 +167,17 @@ public abstract class BaseApi {
     }
 
 
-    ArraySet<String> handleUnreadRefs(List<String> ids) {
+    ArraySet<String> handleUnreadRefs(List<String> idList) {
         String uid = App.i().getUser().getId();
 
         // 第1步，遍历数据量大的一方A，将其比对项目放入Map中
         List<String> localUnReadIds = CoreDB.i().articleDao().getUnreadArticleIds(uid);
         List<String> localReadIds = CoreDB.i().articleDao().getReadArticleIds(uid);
+        Set<String> ids = new HashSet<>(idList);
+
+        // XLog.i("本地未读ids:" + localUnReadIds);
+        // XLog.i("本地已读ids:" + localReadIds);
+        // XLog.i("云端获取的ids:" + ids);
 
         ArrayList<String> needMarkReadIds = new ArrayList<>();
         ArrayList<String> needMarkUnReadIds = new ArrayList<>();
@@ -171,13 +187,17 @@ public abstract class BaseApi {
         for (String articleId : ids) {
             if(localUnReadIds.contains(articleId)){
                 localUnReadIds.remove(articleId);
+                // XLog.i("本地未读包含：" + articleId);
             }else if(localReadIds.contains(articleId)){
                 localReadIds.remove(articleId);
                 needMarkUnReadIds.add(articleId);
+                // XLog.i("本地已读包含：" + articleId);
             }else {
                 needRequestIds.add(articleId);
+                // XLog.i("需要获取：" + articleId);
             }
         }
+        // XLog.i("须拉取未读ids:" + needRequestIds);
 
         // 取消标记未读
         for (String entry : localUnReadIds) {
@@ -193,12 +213,13 @@ public abstract class BaseApi {
     }
 
 
-    ArraySet<String> handleStaredRefs(List<String> ids) {
+    ArraySet<String> handleStaredRefs(List<String> idList) {
         String uid = App.i().getUser().getId();
 
         // 第1步，遍历数据量大的一方A，将其比对项目放入Map中
         List<String> localStarIds = CoreDB.i().articleDao().getStaredArticleIds(uid);
         List<String> localUnStarIds = CoreDB.i().articleDao().getUnStarArticleIds(uid);
+        Set<String> ids = new HashSet<>(idList);
 
         ArrayList<String> needMarkStarIds = new ArrayList<>();
         ArrayList<String> needMarkUnStarIds = new ArrayList<>();

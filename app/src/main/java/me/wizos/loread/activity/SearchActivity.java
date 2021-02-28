@@ -18,7 +18,6 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.CheckBox;
-import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ListView;
@@ -477,12 +476,14 @@ public class SearchActivity extends BaseActivity {
 
             XLog.i("搜索订阅源：" + App.i().getUser().getId() + " = " +  searchFeed.getFeedUrl());
             cvh.feedSubState.setChecked( (CoreDB.i().feedDao().getByFeedUrl(App.i().getUser().getId(), searchFeed.getFeedUrl()) != null) );
-            cvh.feedSubState.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            cvh.feedSubState.setOnClickListener(new View.OnClickListener() {
                 @Override
-                public void onCheckedChanged(CompoundButton view, boolean isChecked) {
-                    if(isChecked){
+                public void onClick(View view) {
+                    // XLog.i("是否勾选：" + cvh.feedSubState.isChecked());
+                    if(cvh.feedSubState.isChecked()){
                         // 先将状态重置回未勾选状态，待点击确定后再勾选
-                        view.setChecked(false);
+                        cvh.feedSubState.setChecked(false);
+                        // XLog.i("修改勾选状态");
                         FeedEntries feedEntries = new FeedEntries();
                         feedEntries.setFeed(Converter.from(searchFeed));
                         if(arrayMap.containsKey(searchFeed.getFeedUrl())){
@@ -503,9 +504,9 @@ public class SearchActivity extends BaseActivity {
                                 .onPositive(new MaterialDialog.SingleButtonCallback() {
                                     @Override
                                     public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
-                                        dialog.dismiss();
+                                        // dialog.dismiss();
                                         view.setEnabled(false);
-                                        view.setChecked(true);
+                                        cvh.feedSubState.setChecked(true);
 
                                         EditText feedNameEditText = (EditText) dialog.findViewById(R.id.dialog_feed_name_edittext);
                                         feedEntries.getFeed().setTitle(feedNameEditText.getText().toString());
@@ -515,14 +516,14 @@ public class SearchActivity extends BaseActivity {
                                             public void onSuccess(Object result) {
                                                 ToastUtils.show(result.toString());
                                                 view.setEnabled(true);
-                                                view.setChecked(true);
+                                                cvh.feedSubState.setChecked(true);
                                             }
 
                                             @Override
                                             public void onFailure(Object error) {
                                                 ToastUtils.show(getString(R.string.subscribe_fail, error));
                                                 view.setEnabled(true);
-                                                view.setChecked(false);
+                                                cvh.feedSubState.setChecked(false);
                                             }
                                         });
                                     }
@@ -562,6 +563,7 @@ public class SearchActivity extends BaseActivity {
                             }
                         });
                     }else {
+                        // XLog.i("去勾选");
                         Feed feed = CoreDB.i().feedDao().getByFeedUrl(App.i().getUser().getId(), searchFeed.getFeedUrl());
                         if(feed == null){
                             return;
@@ -572,19 +574,25 @@ public class SearchActivity extends BaseActivity {
                             public void onSuccess(Object result) {
                                 CoreDB.i().feedDao().deleteByFeedUrl(App.i().getUser().getId(), searchFeed.getFeedUrl());
                                 view.setEnabled(true);
-                                view.setChecked(false);
+                                cvh.feedSubState.setChecked(false);
                             }
 
                             @Override
                             public void onFailure(Object error) {
                                 ToastUtils.show(getString(R.string.unsubscribe_failed,error));
                                 view.setEnabled(true);
-                                view.setChecked(true);
+                                cvh.feedSubState.setChecked(true);
                             }
                         });
                     }
                 }
             });
+            // cvh.feedSubState.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            //     @Override
+            //     public void onCheckedChanged(CompoundButton view, boolean isChecked) {
+            //
+            //     }
+            // });
             return convertView;
         }
     }

@@ -28,16 +28,22 @@ public class HeaderRefererConfig {
                     rule = new ArrayMap<String,String>();
                     Gson gson = new Gson();
 
+                    String includeConfig = FileUtils.readFileFromAssets(App.i(), "rule/" + FILE_NAME);
+                    if (!TextUtils.isEmpty(includeConfig)) {
+                        ArrayMap<String,String> ruleObj = gson.fromJson(includeConfig, new TypeToken<ArrayMap<String,String>>() {}.getType());
+                        rule.putAll(ruleObj);
+                    }
+
                     String remoteConfig = FileUtils.readFile(App.i().getGlobalConfigPath() + FILE_NAME);
                     if (!TextUtils.isEmpty(remoteConfig)) {
-                        ArrayMap<String,String> remoteRule = gson.fromJson(remoteConfig, new TypeToken<ArrayMap<String,String>>() {}.getType());
-                        rule.putAll(remoteRule);
+                        ArrayMap<String,String> ruleObj = gson.fromJson(remoteConfig, new TypeToken<ArrayMap<String,String>>() {}.getType());
+                        rule.putAll(ruleObj);
                     }
 
                     String userConfig = FileUtils.readFile(App.i().getUserConfigPath() + FILE_NAME);
                     if (!TextUtils.isEmpty(userConfig)) {
-                        ArrayMap<String,String> userRule = gson.fromJson(userConfig, new TypeToken<ArrayMap<String,String>>() {}.getType());
-                        rule.putAll(userRule);
+                        ArrayMap<String,String> ruleObj = gson.fromJson(userConfig, new TypeToken<ArrayMap<String,String>>() {}.getType());
+                        rule.putAll(ruleObj);
                     }
                 }
             }

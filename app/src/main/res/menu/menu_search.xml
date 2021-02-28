@@ -1,0 +1,33 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context=".activity.SearchActivity">
+
+    <!--<item-->
+    <!--    android:title="@string/add_subscription"-->
+    <!--    android:icon="@drawable/ic_add"-->
+    <!--    app:showAsAction="ifRoom">-->
+    <!--    <menu>-->
+    <!--        &lt;!&ndash;<item&ndash;&gt;-->
+    <!--        &lt;!&ndash;    android:id="@+id/main_menu_add_feed"&ndash;&gt;-->
+    <!--        &lt;!&ndash;    android:title="@string/add_subscription"&ndash;&gt;-->
+    <!--        &lt;!&ndash;    android:icon="@drawable/ic_add"/>&ndash;&gt;-->
+    <!--        &lt;!&ndash;<item&ndash;&gt;-->
+    <!--        &lt;!&ndash;    android:id="@+id/main_menu_paste_feed"&ndash;&gt;-->
+    <!--        &lt;!&ndash;    android:title="@string/paste_subscription"&ndash;&gt;-->
+    <!--        &lt;!&ndash;    android:icon="@drawable/ic_copy"&ndash;&gt;-->
+    <!--        &lt;!&ndash;    android:visible="false"/>&ndash;&gt;-->
+    <!--        &lt;!&ndash;<item&ndash;&gt;-->
+    <!--        &lt;!&ndash;    android:id="@+id/main_menu_import_opml"&ndash;&gt;-->
+    <!--        &lt;!&ndash;    android:title="@string/import_opml"&ndash;&gt;-->
+    <!--        &lt;!&ndash;    android:icon="@drawable/ic_file"&ndash;&gt;-->
+    <!--        &lt;!&ndash;    android:visible="false"/>&ndash;&gt;-->
+    <!--    </menu>-->
+    <!--</item>-->
+
+    <item
+        android:id="@+id/search_menu_qr"
+        android:title="@string/scan_subscription"
+        android:icon="@drawable/ic_qr_scan"
+        app:showAsAction="never"/>
+</menu>

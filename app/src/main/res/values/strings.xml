@@ -185,6 +185,10 @@
     <!--界面显示-->
     <string name="setting_auto_toggle_theme_title">Auto switch night theme</string>
 
+
+    <string name="iframe_auto_height">Video optimization (height adaption, beautification control bar)</string>
+    <string name="may_not_play_text_exceptions">May not play, text exceptions</string>
+
     <string name="enable_logging">Enable logging</string>
     <string name="check_app_update">Check App Update</string>
 
@@ -632,6 +636,11 @@
     <string name="the_server_site_url_like">The server host like "https://example.com"</string>
     <string name="rss_summary">In layman\'s terms, RSS is a way to subscribe to information.\n\nJust as you follow John Doe on Twitter or Jane Doe on TikTok, you can follow them by adding their FEED URLs in the "RSS Reader".\n\nThis allows you to subscribe to Youtube, Instagram, Quora, Blog, Forum …</string>
 
+    <string name="more_introduction">More introduction</string>
+
+    <string name="rss_introduction">RSS introduction</string>
+
+    <string name="rss_detail"><b>What is RSS</b>\nRSS is the abbreviation of Really Simple Syndication, that is, the information provider writes the information in a URL \'a\' in a specific format and then publishes it in a URL \'B\'.\nAfter subscribing to URL \'B\' in an RSS reader, the reader visits it periodically to see if it has been updated.\nIn addition, RSS is sometimes referred to as a feed.\n\n<b>Format of RSS</b>\nUp to now (2021), RSS has 3 formats: RSS, ATOM and JSONFeed, each with different versions.\nThe first two are based on XML format, while the latter is based on JSON format and fewer RSS readers support it.\n\n<b>RSS Reader</b>\nThere are 2 types of RSS reader: online services and local services.\nThe former means that your data is stored on the server side and requires a registered account for easy cross-device use.\nThe latter means that your data is stored on the device you are using, which generally does not require an account, but does not facilitate synchronization of data across devices, and the reader needs to be on for a long time to ensure that it can regularly check for updates to the RSS feed.\n\n<b>What is OPML</b>\nTo facilitate bulk subscriptions and sharing of RSS feeds, RSS reader often provide import/export OPML files, which contain information of multiple RSS feeds.</string>
 
     <string name="open_with">Open with</string>
 

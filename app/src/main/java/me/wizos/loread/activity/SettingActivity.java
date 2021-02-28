@@ -73,6 +73,10 @@ public class SettingActivity extends BaseActivity {
     @BindView(R.id.setting_auto_sync_on_wifi_sb)
     SwitchButton autoSyncOnWifiSB;
 
+    @Nullable
+    @BindView(R.id.setting_iframe_auto_height_sb)
+    SwitchButton autoIframeHeightSB;
+
     @BindView(R.id.setting_auto_sync_on_wifi)
     View autoSyncOnWifi;
 
@@ -159,6 +163,7 @@ public class SettingActivity extends BaseActivity {
         }
         versionSummary.setText(title);
 
+        autoIframeHeightSB.setChecked(CorePref.i().globalPref().getBoolean(Contract.IFRAME_AUTO_HEIGHT, true));
 
         if (BuildConfig.DEBUG) {
             lab.setVisibility(View.VISIBLE);
@@ -184,9 +189,6 @@ public class SettingActivity extends BaseActivity {
             case R.id.setting_auto_toggle_theme_sb:
                 user.setAutoToggleTheme(v.isChecked());
                 break;
-            // case R.id.setting_down_img_sb:
-            //     user.setDownloadImgOnlyWifi(v.isChecked());
-            //     break;
             case R.id.setting_enable_log_sb:
                 CorePref.i().globalPref().putBoolean(Contract.ENABLE_LOGGING, v.isChecked()).commit();
                 // XLog.i("日志：" + MMKV.defaultMMKV().putBoolean(Contract.ENABLE_LOGGING, v.isChecked()).commit());
@@ -194,6 +196,9 @@ public class SettingActivity extends BaseActivity {
                 break;
             case R.id.setting_enable_check_app_update_sb:
                 CorePref.i().globalPref().putBoolean(Contract.ENABLE_CHECK_UPDATE, v.isChecked()).commit();
+                break;
+            case R.id.setting_iframe_auto_height_sb:
+                CorePref.i().globalPref().putBoolean(Contract.IFRAME_AUTO_HEIGHT, v.isChecked()).commit();
                 break;
             default:
                 break;

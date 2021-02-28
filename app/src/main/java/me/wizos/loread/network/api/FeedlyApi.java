@@ -358,8 +358,8 @@ public class FeedlyApi extends OAuthApi {
         }
 
         handleDuplicateArticles(startSyncTimeMillis);
-        handleCrawlDate2();
         updateCollectionCount();
+        handleCrawlDate2();
         LiveEventBus.get(SyncWorker.SYNC_PROCESS_FOR_SUBTITLE).post( null );
     }
 

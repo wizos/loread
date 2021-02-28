@@ -50,6 +50,7 @@ import me.wizos.loread.network.SyncWorker;
 import me.wizos.loread.network.callback.CallbackX;
 import me.wizos.loread.utils.Converter;
 import me.wizos.loread.utils.StringUtils;
+import me.wizos.loread.utils.Tool;
 import me.wizos.loread.utils.TriggerRuleUtils;
 import okhttp3.FormBody;
 import okhttp3.RequestBody;
@@ -318,12 +319,15 @@ public class InoReaderApi extends OAuthApi implements ILogin {
             if (categories != null && categories.size() > 0 && categories.get(0).getId().endsWith("/state/com.google/blogger-following")) {
                 categories.remove(0); // /state/com.google/blogger-following
             }
-            String[] array;
-            String tagTitle;
-            for (Category category : categories) {
-                array = category.getId().split("/");
-                tagTitle = array[array.length - 1];
-                category.setTitle(tagTitle);
+
+            if(categories != null){
+                String[] array;
+                String tagTitle;
+                for (Category category : categories) {
+                    array = category.getId().split("/");
+                    tagTitle = array[array.length - 1];
+                    category.setTitle(tagTitle);
+                }
             }
 
             // 获取feed
@@ -420,13 +424,14 @@ public class InoReaderApi extends OAuthApi implements ILogin {
         }
 
         handleDuplicateArticles(startSyncTimeMillis);
-        handleCrawlDate2();
         updateCollectionCount();
+        handleCrawlDate2();
         LiveEventBus.get(SyncWorker.SYNC_PROCESS_FOR_SUBTITLE).post( null );
     }
 
     private void handleException(Exception e, String msg) {
-        XLog.e("同步失败：" + e.getClass() + " = " + msg);
+        XLog.e("同步失败：" + e.getClass()+ " = " + msg);
+        Tool.printCallStack(e);
         e.printStackTrace();
         if("401".equalsIgnoreCase(msg)){
             ToastUtils.show(getString(R.string.plz_login_again));
@@ -455,14 +460,19 @@ public class InoReaderApi extends OAuthApi implements ILogin {
 
     private ArraySet<String> fetchUnreadRefs() throws IOException {
         List<ItemRefs> itemRefs = new ArrayList<>();
-        // String info;
         ItemIds tempItemIds = new ItemIds();
-        int i = 0;
-        do {
-            tempItemIds = service.getStreamItemsIds(getAuthorization(),STREAM_ID_READING_LIST, STREAM_ID_READ_LIST, 1000, false, tempItemIds.getContinuation()).execute().body();
-            i++;
+        // 由于 inoreader 限制，免费版最多只能获取到前 1000 个，即使 Continuation 还存在
+        tempItemIds = service.getStreamItemsIds(getAuthorization(),STREAM_ID_READING_LIST, STREAM_ID_READ_LIST, 1000, false, tempItemIds.getContinuation()).execute().body();
+        if(tempItemIds!=null){
             itemRefs.addAll(tempItemIds.getItemRefs());
-        } while (tempItemIds.getContinuation() != null && i < 5);
+        }
+
+        // int i = 0;
+        // do {
+        //     tempItemIds = service.getStreamItemsIds(getAuthorization(),STREAM_ID_READING_LIST, STREAM_ID_READ_LIST, 1000, false, tempItemIds.getContinuation()).execute().body();
+        //     i++;
+        //     itemRefs.addAll(tempItemIds.getItemRefs());
+        // } while (tempItemIds.getContinuation() != null && i < 3);
         Collections.reverse(itemRefs); // 倒序排列
 
         ArrayList<String> ids = new ArrayList<>(itemRefs.size());
@@ -475,12 +485,18 @@ public class InoReaderApi extends OAuthApi implements ILogin {
     private ArraySet<String> fetchStaredRefs() throws HttpException, IOException {
         List<ItemRefs> itemRefs = new ArrayList<>();
         ItemIds tempItemIds = new ItemIds();
-        int i = 0;
-        do {
-            tempItemIds = service.getStreamItemsIds(getAuthorization(),STREAM_ID_STAR_LIST, null, 1000, false, tempItemIds.getContinuation()).execute().body();
-            i++;
+
+        // 由于 inoreader 限制，免费版最多只能获取到前 1000 个，即使 Continuation 还存在
+        tempItemIds = service.getStreamItemsIds(getAuthorization(),STREAM_ID_STAR_LIST, null, 1000, false, tempItemIds.getContinuation()).execute().body();
+        if(tempItemIds!=null){
             itemRefs.addAll(tempItemIds.getItemRefs());
-        } while (tempItemIds.getContinuation() != null && i < 5);
+        }
+        // int i = 0;
+        // do {
+        //     tempItemIds = service.getStreamItemsIds(getAuthorization(),STREAM_ID_STAR_LIST, null, 1000, false, tempItemIds.getContinuation()).execute().body();
+        //     i++;
+        //     itemRefs.addAll(tempItemIds.getItemRefs());
+        // } while (tempItemIds.getContinuation() != null && i < 5);
         Collections.reverse(itemRefs); // 倒序排列
 
         ArrayList<String> ids = new ArrayList<>(itemRefs.size());
@@ -726,7 +742,7 @@ public class InoReaderApi extends OAuthApi implements ILogin {
     /**
      * 将 未读资源 和 加星资源，去重分为3组
      */
-    public ArrayList<ArraySet<String>> splitRefs(ArraySet<String> tempUnreadIds, ArraySet<String> tempStarredIds) {
+    private ArrayList<ArraySet<String>> splitRefs(ArraySet<String> tempUnreadIds, ArraySet<String> tempStarredIds) {
         // XLog.i("【reRefs1】云端未读" + tempUnreadIds.size() + "，云端加星" + tempStarredIds.size());
         int total = Math.min(tempUnreadIds.size(), tempStarredIds.size());
 

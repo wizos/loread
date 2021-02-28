@@ -440,4 +440,8 @@ public class StringUtils {
         return str.replaceAll("[\\x00-\\x08\\x0b-\\x0c\\x0e-\\x1f]", "");
     }
 
+    private final static Pattern pattern = Pattern.compile("^(.*?)(charset\\s*=)\\s*.*?(;.*?)?$");
+    public static String charset(String value){
+        return pattern.matcher(value).replaceFirst("$1$2uft-8$3");
+    }
 }

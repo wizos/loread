@@ -43,7 +43,7 @@ public class ItemRefs {
     }
 
     public String getLongId() {
-        String idHex = Long.toHexString(Long.valueOf(id));
+        String idHex = Long.toHexString(Long.parseLong(id));
         return "tag:google.com,2005:reader/item/" + String.format("%0" + (16 - idHex.length()) + "d", 0) + idHex;
         // String.format("%0"+length+"d", arr) 中
         // (16 - id.length())代表的是格式化后字符串的总长度。

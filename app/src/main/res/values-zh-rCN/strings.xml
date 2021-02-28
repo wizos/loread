@@ -175,14 +175,15 @@
     <string name="server">服务器</string>
     <string name="port">端口</string>
     <string name="username">用户名</string>
-
     <string name="plz_set_and_save_proxy_first">请先设置并保存代理</string>
-
     <string name="invalid_port_hint">端口的取值范围是：1–65535</string>
-
     <string name="empty_is_not_allowed">不允许为空</string>
     <!--界面显示-->
     <string name="setting_auto_toggle_theme_title">自动切换夜间主题</string>
+
+
+    <string name="iframe_auto_height">视频优化（高度自适应、美化控制条）</string>
+    <string name="may_not_play_text_exceptions">可能会无法播放，文字异常</string>
 
     <string name="enable_logging">日志记录</string>
     <string name="check_app_update">检查 App 更新</string>
@@ -520,6 +521,12 @@
     <string name="the_server_site_url_like">服务器网址格式为“https://example.com”</string>
 
     <string name="rss_summary">通俗得说，RSS 是一种订阅资讯的方式。\n\n就像在微博上关注张三、在B站上关注李四，你可以在『RSS 阅读器』中添加对应的订阅网址来关注他们。\n\n由此可实现订阅微博、知乎、优酷、公众号、博客、论坛……</string>
+
+    <string name="more_introduction">更多介绍</string>
+
+    <string name="rss_introduction">RSS 简介</string>
+    <string name="rss_detail"><b>RSS 是什么</b>\nRSS 是 Really Simple Syndication（简易信息聚合）的简称，即信息提供者将某个网址 A 内的信息，用特定格式编写后，以网址 B 发布出来。\n将 B 网址添加到 RSS 阅读器中后，阅读器会定期访问它，以判断是否有更新。\n另外，RSS 有时也会用 Feed 来称呼。\n\n<b>RSS 格式标准</b>\n到目前为止(2021年)，RSS 共有 3 种格式：RSS、ATOM、JSONFeed，每种又有不同的版本。\n前 2 种是基于 XML 格式，后者是基于 JSON 格式且市面上支持该格式的 RSS 阅读器较少。\n\n<b>RSS 阅读器</b>\nRSS 阅读器分为在线服务和本地服务 2 种：\n前者是指你的数据都保存在服务器端，需要注册账号，便于跨设备使用。\n后者是指你的数据都保存在使用的设备上，一般无需账号，但不便于跨设备使用时同步数据，且阅读器需要长时间开启，以保证它能定期去检查 RSS 订阅源是否更新。\n\n<b>OPML 是什么</b>\n为了便于批量订阅以及分享 RSS 源，RSS 阅读器通常会提供导入/导出 OPML 文件，该文件包含多个 RSS 源的信息。</string>
+
 
     <string name="open_with">打开方式</string>
 

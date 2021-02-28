@@ -5,7 +5,7 @@
 
     <item
         android:id="@+id/main_menu_proxy_disable"
-        android:icon="@drawable/ic_flight_land2"
+        android:icon="@drawable/ic_flight_land"
         android:title="@string/proxy"
         android:visible="false"
         tools:visible="true"

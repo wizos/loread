@@ -16,6 +16,7 @@ public class Contract {
     public static final String ENABLE_REMOTE_HOST_BLOCK_RULE = "enable_remote_host_block_rule";
     public static final String ENABLE_CHECK_UPDATE = "enable_check_update";
     public static final String DEFAULT_USER_AGENT = "default_user-agent"; // 跟随系统, 指定的项目
+    public static final String IFRAME_AUTO_HEIGHT = "iframe_auto_height";
 
     public static final String SOCKS5_PROXY = "socks5_proxy";
     public static final String ENABLE_PROXY = "enable_proxy";

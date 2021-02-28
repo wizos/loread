@@ -33,9 +33,7 @@ function handleEvent() {
         } else if (event === 'video') {
             console.log("video 变化：" + "宽:" + data.width + "px; 高:" + data.height + "px; src：" + data.src + "；标题：" + data.title);
             var frame = document.getElementById(data.id);
-            if (data.height > data.width && frame) {
-                $(frame).css("height", (data.height / data.width * frame.clientWidth));
-            }
+            $(frame).css("height", (data.height / data.width * frame.clientWidth));
             ArticleBridge.foundVideo(data.src, data.duration);
         }
 /*
@@ -158,6 +156,12 @@ function handleFrame() {
             el.name = el.id;
             var frame = $(el);
             frame.wrap('<div class="iframe_wrap"></div>');
+
+            if(el.src.indexOf('youtube.com') != -1 || el.src.indexOf('youtube.com') != -1){
+                frame.wrap('<div class="plyr__video-embed"></div>');
+                new Plyr(frame.parent()[0], PlyrConfig);
+            }
+
             frame.removeAttr("style");
             frame.css("pointer-events", "none");
             frame.parent().click(function(event) {
@@ -236,7 +240,7 @@ function loadOnInner(url) {
     if (isEmpty(url)) {
         return false;
     }
-    var flags = ["anchor.fm", "music.163.com/outchain/player", "player.bilibili.com/player.html", "bilibili.com/blackboard/html5mobileplayer.html", "player.youku.com", "open.iqiyi.com", "letv.com", "sohu.com", "fpie1.com/#/video", "fpie2.com/#/video", "share.polyv.net", "www.google.com/maps/embed", "youtube.com/embed"];
+    var flags = ["anchor.fm", "ixigua.com","music.163.com/outchain/player", "player.bilibili.com/player.html", "bilibili.com/blackboard/html5mobileplayer.html", "player.youku.com", "open.iqiyi.com", "letv.com", "sohu.com", "fpie1.com/#/video", "fpie2.com/#/video", "share.polyv.net", "www.google.com/maps/embed", "youtube.com/embed", "vimeo.com"];
     for (var i = 0; i < flags.length; i++) {
         if (url.indexOf(flags[i]) != -1) {
             return true;

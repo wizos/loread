@@ -131,63 +131,14 @@ public class LocalApi extends BaseApi {
 
 
                 handleDuplicateArticles(startSyncTimeMillis);
-                handleCrawlDate2();
                 updateCollectionCount();
+                handleCrawlDate2();
                 LiveEventBus.get(SyncWorker.SYNC_PROCESS_FOR_SUBTITLE).post( null );
                 newArticleCount = 0;
                 syncedFeedCount = 0;
             }
         });
         syncFeeds(uid, startSyncTimeMillis, needSyncFeeds);
-        // barrier.await(5, TimeUnit.MINUTES);  //设置等待uploadImages返回结果最多5分钟
-        // for(Feed feed: needSyncFeeds){
-        //     Request request = new Request.Builder().url(feed.getFeedUrl()).build();
-        //     Call call = HttpClientManager.i().searchClient().newCall(request);
-        //     call.enqueue(new Callback() {
-        //         @Override
-        //         public void onFailure(@NotNull Call call, @NotNull IOException e) {
-        //             LiveEventBus.get(SyncWorker.SYNC_PROCESS_FOR_SUBTITLE).post(getString(R.string.sync_feed, syncedFeedCount, needSyncFeeds.size()));
-        //             syncedFeedCount ++;
-        //             checkSyncEnd(uid, startSyncTimeMillis, needSyncFeeds.size());
-        //
-        //             XLog.w("同步失败：" + feed.getTitle() + " => " + e.getLocalizedMessage());
-        //             if ( e instanceof ConnectException || e instanceof SocketTimeoutException){
-        //                 return;
-        //             }
-        //
-        //             feed.setLastSyncError(e.getLocalizedMessage());
-        //             Tool.printCallStack(e);
-        //         }
-        //
-        //         @Override
-        //         public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
-        //             LiveEventBus.get(SyncWorker.SYNC_PROCESS_FOR_SUBTITLE).post(getString(R.string.sync_feed, syncedFeedCount, needSyncFeeds.size()));
-        //             syncedFeedCount ++;
-        //             if(response.isSuccessful()){
-        //                 ResponseBody responseBody = response.body();
-        //
-        //                 FeedEntries feedEntries = FeedParserUtils.parseResponseBody(App.i(), feed, responseBody);
-        //                 if(feedEntries == null || !feedEntries.isSuccess()){
-        //                     return;
-        //                 }
-        //
-        //                 CoreDB.i().feedDao().update(feedEntries.getFeed());
-        //                 List<Article> entries = feedEntries.getArticles();
-        //                 for (Article entry: entries){
-        //                     if(CoreDB.i().articleDao().getCountById(uid, entry.getId()) > 0){
-        //                         continue;
-        //                     }
-        //                     entry.setCrawlDate(startSyncTimeMillis);
-        //                     newArticleCount++;
-        //                     CoreDB.i().articleDao().insert(entry);
-        //                 }
-        //             }else {
-        //                 XLog.w("同步失败：" + feed.getTitle());
-        //             }
-        //             checkSyncEnd(uid, startSyncTimeMillis, needSyncFeeds.size());
-        //         }
-        //     });
-        // }
     }
     
     int newArticleCount = 0;

@@ -202,7 +202,7 @@ public class App extends Application implements Thread.UncaughtExceptionHandler 
         UMConfigure.setLogEnabled(BuildConfig.DEBUG);
         // 子进程是否支持自定义事件统计。参数：boolean 默认不使用
         UMConfigure. setProcessEvent(false);
-        XLog.i("测试设备信息：" + Arrays.toString(UMConfigure.getTestDeviceInfo(this)));
+        XLog.i("设备信息：" + Arrays.toString(UMConfigure.getTestDeviceInfo(this)));
         if(BuildConfig.DEBUG){
             MobclickAgent.setPageCollectionMode(MobclickAgent.PageMode.MANUAL);
         }else {

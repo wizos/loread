@@ -230,6 +230,46 @@
                     tools:text="" />
             </LinearLayout>
 
+            <TextView
+                style="@style/SettingItemHeader"
+                android:text="@string/lab" />
+            <LinearLayout
+                android:id="@+id/setting_iframe_auto_height"
+                style="@style/SettingItem">
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+                    <TextView
+                        android:id="@+id/setting_iframe_auto_height_title"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:textSize="16sp"
+                        android:textColor="?attr/lv_item_title_color"
+                        android:text="@string/iframe_auto_height" />
+                    <TextView
+                        android:id="@+id/setting_iframe_auto_height_desc"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:textSize="12sp"
+                        android:textColor="?attr/lv_item_desc_color"
+                        android:text="@string/may_not_play_text_exceptions" />
+                </LinearLayout>
+                <!--<TextView-->
+                <!--    android:id="@+id/setting_iframe_auto_height_title"-->
+                <!--    android:layout_width="0dp"-->
+                <!--    android:layout_weight="1"-->
+                <!--    style="@style/SettingItemTitle2"-->
+                <!--    android:text="@string/iframe_auto_height" />-->
+
+                <com.kyleduo.switchbutton.SwitchButton
+                    android:id="@+id/setting_iframe_auto_height_sb"
+                    style="@style/SwitchButtonStyle"
+                    android:onClick="onSBClick"
+                    android:checked="true" />
+            </LinearLayout>
+
             <!--<LinearLayout-->
             <!--    android:id="@+id/setting_enable_enable_max_image"-->
             <!--    style="@style/SettingItem"-->
@@ -268,6 +308,7 @@
             <LinearLayout
                 android:id="@+id/setting_enable_check_app_update"
                 style="@style/SettingItem"
+                android:visibility="gone"
                 android:gravity="center_vertical">
                 <TextView
                     android:id="@+id/setting_enable_check_app_update_title"

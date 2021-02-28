@@ -2,6 +2,7 @@ package me.wizos.loread.utils;
 
 import android.Manifest;
 import android.app.Activity;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -9,9 +10,11 @@ import android.content.res.AssetManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
+import android.provider.MediaStore;
 import android.text.Html;
 
 import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
 
 import com.elvishew.xlog.XLog;
@@ -183,11 +186,6 @@ public class FileUtils {
     public static String getSaveableName(String fileName) {
         // 因为有些title会用 html中的转义。所以这里要改过来
         fileName = Html.fromHtml(fileName).toString();
-        // if(Test.i().useEmojiFilter){
-        //     fileName = EmojiParser.removeAllEmojis(fileName);
-        // }else {
-        //     fileName = SymbolUtil.filterEmoji(fileName);
-        // }
         fileName = EmojiParser.removeAllEmojis(fileName);
 
         fileName = SymbolUtils.filterUnsavedSymbol(fileName).trim();
@@ -203,6 +201,101 @@ public class FileUtils {
         return save(new File(filePath), fileContent);
     }
 
+    // public static boolean save(String filePath, String fileContent, boolean append) {
+    //     if (!isExternalStorageWritable()) {
+    //         return false;
+    //     }
+    //     File file = new File(filePath);
+    //
+    //     try {
+    //         if (file.exists()) {
+    //             if (!append) {
+    //                 return false;
+    //             }
+    //         } else {
+    //             File folder = file.getParentFile();
+    //             if (!folder.exists()) {
+    //                 folder.mkdirs();
+    //             }
+    //         }
+    //
+    //         // XLog.d("【】" + file.toString() + "--"+ folder.toString());
+    //         FileWriter fileWriter = new FileWriter(file, append); //在 (file,false) 后者表示在 fileWriter 对文件再次写入时，是否会在该文件的结尾续写，true 是续写，false 是覆盖。
+    //         fileWriter.write(fileContent);
+    //         fileWriter.flush();  // 刷新该流中的缓冲。将缓冲区中的字符数据保存到目的文件中去。
+    //         fileWriter.close();  // 关闭此流。在关闭前会先刷新此流的缓冲区。在关闭后，再写入或者刷新的话，会抛IOException异常。
+    //         return true;
+    //     } catch (IOException e) {
+    //         Tool.printCallStack(e);
+    //     }
+    //     return false;
+    // }
+
+
+    /**
+     * 保存文本到公共目录(txt文本,其他文件同理)
+     * 29 以下，需要提前申请文件读写权限
+     * 29及29以上的，不需要权限
+     * 保存的文件在 Download 目录下
+     *
+     * @param mContext 上下文
+     * @param content  文本内容
+     * @return 文件的 uri
+     */
+    public static Uri saveTextFile(Context mContext, String name, String content) {
+        if (StringUtils.isEmpty(content))
+            return null;
+        if (Build.VERSION.SDK_INT < 29) {
+            if (!isGranted(mContext)) {
+                XLog.e("FileSaveUtil：save to file need storage permission");
+                return null;
+            }
+            File destFile = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), name);
+            if (!save2(destFile, content))
+                return null;
+            Uri uri = null;
+            if (destFile.exists())
+                uri = Uri.parse("file://" + destFile.getAbsolutePath());
+            return uri;
+        } else {//android Q
+            Uri contentUri;
+            if (Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
+                contentUri = MediaStore.Downloads.EXTERNAL_CONTENT_URI;
+            } else
+                contentUri = MediaStore.Downloads.INTERNAL_CONTENT_URI;
+            //创建ContentValues对象，准备插入数据
+            ContentValues contentValues = new ContentValues();
+            contentValues.put(MediaStore.Downloads.MIME_TYPE, "text/plain");//文件格式
+            contentValues.put(MediaStore.Downloads.DATE_TAKEN, System.currentTimeMillis());
+            contentValues.put(MediaStore.Downloads.DISPLAY_NAME, name);//文件名字
+            Uri fileUri = mContext.getContentResolver().insert(contentUri, contentValues);
+            if (fileUri == null)
+                return null;
+            OutputStream outputStream = null;
+            try {
+                outputStream = mContext.getContentResolver().openOutputStream(fileUri);
+                if (outputStream != null) {
+                    outputStream.write(content.getBytes());
+                    outputStream.flush();
+                }
+                return fileUri;
+            } catch (Exception e) {
+                e.printStackTrace();
+                mContext.getContentResolver().delete(fileUri, null, null);  // 失败的时候，删除此 uri 记录
+                return null;
+            } finally {
+                try {
+                    if (outputStream != null)
+                        outputStream.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    // ignore
+                }
+            }
+        }
+    }
+
+
     public static boolean save(File file, String fileContent){
         if (!isExternalStorageWritable()) {
             return false;
@@ -210,9 +303,11 @@ public class FileUtils {
         File folder = file.getParentFile();
         try {
             if (folder != null && !folder.exists()) {
-                folder.mkdirs();
+                boolean success = folder.mkdirs();
+                XLog.i("创建目录结果：" + success);
             }
-            XLog.i("保存文件：" + file.toString() );
+
+            XLog.i("保存文件路径：" + file.toString() + "，创建文件结果：" + file.createNewFile() );
             FileWriter fileWriter = new FileWriter(file, false); //在 (file,false) 后者表示在 fileWriter 对文件再次写入时，是否会在该文件的结尾续写，true 是续写，false 是覆盖。
             fileWriter.write(fileContent);
             fileWriter.flush();  // 刷新该流中的缓冲。将缓冲区中的字符数据保存到目的文件中去。
@@ -225,38 +320,67 @@ public class FileUtils {
         }
     }
 
-
-
-    public static boolean saveText(String filePath, String fileContent, boolean append) {
-        if (!isExternalStorageWritable()) {
+    public static boolean save2(File file, String content) {
+        if (!createFile(file, true)) {
+            XLog.e("FileSaveUtil： create or delete file <$file> failed.");
             return false;
         }
-        File file = new File(filePath);
-
+        FileOutputStream outStream = null;
+        boolean ret;
         try {
-            if (file.exists()) {
-                if (!append) {
-                    return false;
-                }
-            } else {
-                File folder = file.getParentFile();
-                if (!folder.exists()) {
-                    folder.mkdirs();
-                }
-            }
-
-            // XLog.d("【】" + file.toString() + "--"+ folder.toString());
-            FileWriter fileWriter = new FileWriter(file, append); //在 (file,false) 后者表示在 fileWriter 对文件再次写入时，是否会在该文件的结尾续写，true 是续写，false 是覆盖。
-            fileWriter.write(fileContent);
-            fileWriter.flush();  // 刷新该流中的缓冲。将缓冲区中的字符数据保存到目的文件中去。
-            fileWriter.close();  // 关闭此流。在关闭前会先刷新此流的缓冲区。在关闭后，再写入或者刷新的话，会抛IOException异常。
-            return true;
-        } catch (IOException e) {
+            outStream = new FileOutputStream(file);
+            outStream.write(content.getBytes());
+            outStream.flush();
+            ret = true;
+        } catch (Exception e) {
+            XLog.e("错误");
             Tool.printCallStack(e);
+            e.printStackTrace();
+            ret = false;
+        } finally {
+            try {
+                if (outStream != null)
+                    outStream.close();
+            } catch (IOException e) {
+                XLog.e("错误");
+                Tool.printCallStack(e);
+                e.printStackTrace();
+                // ignore
+            }
         }
-        return false;
+        return ret;
     }
 
+    private static boolean createFile(File file, boolean isDeleteOldFile) {
+        if (file == null) return false;
+        if (file.exists()) {
+            if (isDeleteOldFile) {
+                if (!file.delete()) return false;
+            } else
+                return file.isFile();
+        }
+        if (!createDir(file.getParentFile())) return false;
+        try {
+            return file.createNewFile();
+        } catch (IOException e) {
+            XLog.e("错误");
+            Tool.printCallStack(e);
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    private static boolean createDir(File file) {
+        if (file == null) return false;
+        if (file.exists())
+            return file.isDirectory();
+        else
+            return file.mkdirs();
+    }
+
+    private static boolean isGranted(Context context) {
+        return (Build.VERSION.SDK_INT < Build.VERSION_CODES.M || PackageManager.PERMISSION_GRANTED == ContextCompat.checkSelfPermission(context, Manifest.permission.WRITE_EXTERNAL_STORAGE));
+    }
 
     public static String readFile(String path) {
         return readFile(new File(path));
@@ -299,6 +423,23 @@ public class FileUtils {
         return temp;
     }
 
+    // public static String readText(InputStream inputStream, String charset){
+    //     try {
+    //         InputStreamReader inputStreamReader = new InputStreamReader(inputStream,charset);
+    //         BufferedReader buffer = new BufferedReader(inputStreamReader);
+    //         String s=null;
+    //         StringBuilder builder = new StringBuilder();
+    //         while ((s = buffer.readLine())!=null){
+    //             builder.append(s);
+    //         }
+    //         buffer.close();
+    //         inputStreamReader.close();
+    //         return builder.toString();
+    //     } catch (Exception e) {
+    //         e.printStackTrace();
+    //     }
+    //     return null;
+    // }
     public static byte[] readFully(InputStream in) throws IOException {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         byte[] buffer = new byte[1024];
@@ -313,6 +454,19 @@ public class FileUtils {
     public static String read(File file) throws FileNotFoundException {
         return read(new FileInputStream(file));
     }
+
+    /**
+     * https://www.cnblogs.com/lzl-sml/p/3497949.html
+     * java 默认String在内存中的编码是ucs-2编码。当你要把byte[]转换成String时，这里就涉及到了
+     * 编码转换的问题，假如你不指定byte[]里面的编码，那可能在转换后会有问题。假如你没有指定
+     * byte[]里面所用到的编码，转换就会根据当前系统环境给你指定一个编码，在android系统中就会默认byte[]中的数据是
+     * 用utf8编码的。在android中如果byte[]中的数据不是utf8编码，那么使用默认方式转换到String时，这时就造成转换后
+     * 的数据出现了问题，再将出问题的String转换回byte[]时，同样会有问题。
+     * 所以在获取一些不知道编码的二进制数据的时候，不要转换成String，在android中使用byte[]，或者InputStream
+     * 来存储，传输，处理二进制数据就行。
+     * @param in
+     * @return
+     */
     public static String read(InputStream in){
         try {
             ByteArrayOutputStream out = new ByteArrayOutputStream();
@@ -659,18 +813,23 @@ public class FileUtils {
         return bytes.toString();
     }
 
-    public static String readFileFromAssets(Context context, String fileName) throws IOException {
+    public static String readFileFromAssets(Context context, String fileName) {
         if (null == context || null == fileName) return null;
-        AssetManager am = context.getAssets();
-        InputStream input = am.open(fileName);
-        ByteArrayOutputStream output = new ByteArrayOutputStream();
-        byte[] buffer = new byte[1024];
-        int len = 0;
-        while ((len = input.read(buffer)) != -1) {
-            output.write(buffer, 0, len);
+        try {
+            AssetManager am = context.getAssets();
+            InputStream input = am.open(fileName);
+            ByteArrayOutputStream output = new ByteArrayOutputStream();
+            byte[] buffer = new byte[1024];
+            int len = 0;
+            while ((len = input.read(buffer)) != -1) {
+                output.write(buffer, 0, len);
+            }
+            output.close();
+            input.close();
+            return output.toString();
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
         }
-        output.close();
-        input.close();
-        return output.toString();
     }
 }

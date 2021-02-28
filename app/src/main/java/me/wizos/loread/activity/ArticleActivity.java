@@ -28,6 +28,7 @@ import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewConfiguration;
+import android.webkit.CookieManager;
 import android.webkit.JavascriptInterface;
 import android.webkit.SslErrorHandler;
 import android.webkit.WebChromeClient;
@@ -61,17 +62,15 @@ import com.lzy.okgo.request.GetRequest;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.lang.ref.WeakReference;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -102,6 +101,7 @@ import me.wizos.loread.db.Article;
 import me.wizos.loread.db.ArticleTag;
 import me.wizos.loread.db.Category;
 import me.wizos.loread.db.CoreDB;
+import me.wizos.loread.db.CorePref;
 import me.wizos.loread.db.Feed;
 import me.wizos.loread.db.Tag;
 import me.wizos.loread.extractor.Distill;
@@ -112,10 +112,12 @@ import me.wizos.loread.sniffer.bean.Media;
 import me.wizos.loread.sniffer.bean.MediaAudio;
 import me.wizos.loread.sniffer.bean.MediaVideo;
 import me.wizos.loread.utils.ArticleUtils;
+import me.wizos.loread.utils.DataUtils;
 import me.wizos.loread.utils.EncryptUtils;
 import me.wizos.loread.utils.FileUtils;
 import me.wizos.loread.utils.HttpsUtils;
 import me.wizos.loread.utils.ImageUtils;
+import me.wizos.loread.utils.InputStreamCache;
 import me.wizos.loread.utils.ScreenUtils;
 import me.wizos.loread.utils.SnackbarUtils;
 import me.wizos.loread.utils.StringUtils;
@@ -1423,7 +1425,7 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
         // 通过重写WebViewClient的onReceivedSslError方法来接受所有网站的证书，忽略SSL错误。
         @Override
         public void onReceivedSslError(WebView view, SslErrorHandler handler, SslError error) {
-            XLog.i("SSL错误：已忽略，继续加载页面");
+            XLog.w("SSL错误：已忽略，继续加载页面");
             handler.proceed(); // 忽略SSL证书错误，继续加载页面
         }
 
@@ -1464,7 +1466,7 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
             // }
 
             // 仅拦截http，并且结尾为 css, js, woff, ttf 的请求
-            if (!Test.i().frame || !request.getMethod().equalsIgnoreCase("GET") || !url.startsWith("http") || url.endsWith(".css") || url.endsWith(".js") || url.endsWith(".woff") || url.endsWith(".ttf")  || url.contains(".css?") || url.contains(".js?") || url.contains(".woff?") || url.contains(".ttf?")){
+            if (!CorePref.i().globalPref().getBoolean(Contract.IFRAME_AUTO_HEIGHT, true) || !request.getMethod().equalsIgnoreCase("GET") || !url.startsWith("http") || url.endsWith(".css") || url.endsWith(".js") || url.endsWith(".woff") || url.endsWith(".ttf")  || url.contains(".css?") || url.contains(".js?") || url.contains(".woff?") || url.contains(".ttf?")){
                 return super.shouldInterceptRequest(view, request);
             }
 
@@ -1480,14 +1482,22 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
                     connection.setRequestProperty(requestHeader.getKey(), requestHeader.getValue());
                 }
 
-                XLog.i("请求加载资源："  + url );
+                // connection.setRequestProperty("Pragma", "no-cache");
+                // connection.setRequestProperty("X-Requested-With", "me.wizos.loread");
+                // connection.setRequestProperty("Sec-Fetch-Site", "cross-site");
+                // connection.setRequestProperty("Sec-Fetch-Mode", "navigate");
+                // connection.setRequestProperty("Sec-Fetch-Dest", "Sec-Fetch-Dest");
+                connection.setRequestProperty("Cookie", CookieManager.getInstance().getCookie(url));
+
+
+                XLog.i("请求加载资源A："  + url );
                 // 将响应转换为网络资源响应参数所需的格式
                 if(isInterceptorThisRequest(connection.getResponseCode())){
                     XLog.w("webview 无法代理，因为响应码为：" + connection.getResponseCode() );
                     return super.shouldInterceptRequest(view, request);
                 }
 
-                XLog.i("请求加载资源C："  + url );
+                XLog.i("请求加载资源B："  + url );
                 String encoding = connection.getContentEncoding();
 
                 Map<String, String> responseHeaders = new HashMap<>();
@@ -1514,34 +1524,91 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
                 XLog.i(url + ",   内容编码：" + mimeType + " , " +  connection.getContentType());
 
                 if(!mimeType.contains("text/html") ){
-                    // return super.shouldInterceptRequest(view, request);
-                    return new WebResourceResponse(mimeType, encoding, connection.getResponseCode(), StringUtils.isEmpty(connection.getResponseMessage()) ? "OK" : connection.getResponseMessage(), responseHeaders, connection.getInputStream());
+                    return super.shouldInterceptRequest(view, request);
+                    // 不能使用以下方法，会导致播放时视频异常
+                    // return new WebResourceResponse(mimeType, encoding, connection.getResponseCode(), StringUtils.isEmpty(connection.getResponseMessage()) ? "OK" : connection.getResponseMessage(), responseHeaders, connection.getInputStream());
                 }
 
 
                 // XLog.i("请求加载资源D：" );
-                InputStream in = new BufferedInputStream(connection.getInputStream());
-                // String result = readText(in,"utf-8");
-                String result = FileUtils.read(in);
 
                 String js;
-
                 js = FileUtils.readFile(App.i().getUserConfigPath() + "iframe.js");
                 if (TextUtils.isEmpty(js)) {
                     js = FileUtils.readFileFromAssets(ArticleActivity.this, "js/iframe.js");
                 }
+                // Document document = Jsoup.parse(connection.getInputStream(), connection.getContentEncoding(), url);
+                // document.outputSettings().prettyPrint(false);
+                // document.body().append(js);
+                // // document.body().append(FileUtils.readFileFromAssets(ArticleActivity.this, "js/iframe.js"));
+                // Elements metaElements = document.select("meta[http-equiv=content-type], meta[charset]");
+                // for (Element meta : metaElements) {
+                //     if (meta.hasAttr("http-equiv")){
+                //         meta.attr("content", StringUtils.charset(meta.attr("content")));
+                //         XLog.i("编码1：" + StringUtils.charset(meta.attr("content")));
+                //     }
+                //     if (meta.hasAttr("charset")){
+                //         meta.attr("charset", StandardCharsets.UTF_8.displayName());
+                //         XLog.i("编码2：" + StandardCharsets.UTF_8.displayName());
+                //     }
+                // }
+                // String result = document.outerHtml();
 
-                Document document = Jsoup.parse(result);
+                // 方法二，由于在初始化 Jsoup.parse 中 encoding 可能为 null，导致得到的数据中部分出现乱码
+                // Document document = Jsoup.parse(connection.getInputStream(), encoding, url);
+                // document.outputSettings().prettyPrint(false);
+                // XLog.i("得到的iframe为："  + " , " + document.outerHtml());
+                // XLog.i("webview 代理， 内容编码A：" + mimeType + " , " + encoding + " , " + connection.getResponseMessage());
+                // if(StringUtils.isEmpty(encoding)){
+                //     Element metaElement = document.select("meta[http-equiv=content-type], meta[charset]").first();
+                //     if(metaElement != null){
+                //         encoding = DataUtils.getCharsetFromContentType(metaElement.toString());
+                //     }else {
+                //         encoding = Charset.defaultCharset().displayName();
+                //     }
+                // }
+                // document.body().append(js);
+
+                // 先将 inputStream 缓存起来
+                InputStreamCache inputStreamCache = new InputStreamCache(connection.getInputStream());
+
+                // 读取 inputStream，并默认转为 utf-8 编码的 String，再用 Jsoup 解析出来
+                Document document = Jsoup.parse(inputStreamCache.getSting(), url);
                 document.outputSettings().prettyPrint(false);
+                XLog.i("得到的iframe为："  + " , " + document.outerHtml());
+                XLog.i("webview 代理， 内容编码A：" + mimeType + " , " + encoding + " , " + connection.getResponseMessage());
+                Element metaElement = document.select("meta[http-equiv=content-type], meta[charset]").first();
+                if(metaElement != null){
+                    encoding = DataUtils.getCharsetFromContentType(metaElement.toString());
+                }else {
+                    encoding = StandardCharsets.UTF_8.displayName();
+                }
+                // 当默认读取的 utf-8 编码，与 html 的实际编码不相同时，再次用 Jsoup 及准确的编码来做解析
+                if(!StandardCharsets.UTF_8.displayName().equalsIgnoreCase(encoding)){
+                    document = Jsoup.parse(inputStreamCache.getInputStream(), encoding, url);
+                    document.outputSettings().prettyPrint(false);
+                }
+                // document.head().append("<link rel='stylesheet' type='text/css' href='https://cdn.bootcdn.net/ajax/libs/plyr/3.6.3/plyr.min.css'/>");
+                // document.body().append("<script src='https://cdn.bootcdn.net/ajax/libs/zepto/1.2.0/zepto.min.js'></script>");
+                // document.body().append("<script src='https://cdn.bootcdn.net/ajax/libs/plyr/3.6.3/plyr.js'></script>");
+
+                document.head().append("<style>" + FileUtils.readFileFromAssets(ArticleActivity.this, "css/plyr.css") + "</style>");
+                document.body().append("<script>" + FileUtils.readFileFromAssets(ArticleActivity.this, "js/zepto.min.js") + "</script>");
+                document.body().append("<script>" + FileUtils.readFileFromAssets(ArticleActivity.this, "js/plyr.js") + "</script>");
+
+                String plyrI18n = ",i18n:{speed:'"+ App.i().getString(R.string.speed) +"',normal:'"+ App.i().getString(R.string.normal) +"'}";
+                document.body().append("<script>const PlyrConfig = {controls: ['play-large','play','progress','current-time','duration','settings','download','fullscreen'],settings: ['captions', 'quality', 'speed'],speed : { selected: 2, options: [0.75, 1, 1.5, 1.75, 2] } " + plyrI18n + "}</script>");
+
                 document.body().append(js);
-                // document.body().append(FileUtils.readFileFromAssets(ArticleActivity.this, "js/iframe.js"));
-                result = document.outerHtml();
-                // XLog.i("得到的iframe为：" + result);
+                inputStreamCache.destroyCache();
+
+                // XLog.i("得到的iframe为："  + " , " + result);
                 // XLog.i("得到的html为：" + js);
 
-                XLog.i("webview 代理， 内容编码：" + mimeType + " , " + encoding + " , " + connection.getResponseMessage());
+                XLog.i("webview 代理， 内容编码B：" + mimeType + " , " + encoding + " , " + connection.getResponseMessage());
                 // https://www.jianshu.com/p/08920c2bb128
-                return new WebResourceResponse(mimeType, encoding, connection.getResponseCode(), StringUtils.isEmpty(connection.getResponseMessage()) ? "OK" : connection.getResponseMessage(), responseHeaders, new ByteArrayInputStream(result.getBytes()));
+                // 出现锟斤拷的原因就是UTF-8转码GBK的过程中出现了问题
+                return new WebResourceResponse(mimeType, encoding, connection.getResponseCode(), StringUtils.isEmpty(connection.getResponseMessage()) ? "OK" : connection.getResponseMessage(), responseHeaders, new ByteArrayInputStream(document.outerHtml().getBytes(encoding)));
             } catch (ClassCastException | IOException e) {
                 // Tool.printCallStack(e);
                 e.printStackTrace();
@@ -1556,23 +1623,6 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
             return (code < 100 || code > 599 || (code > 299 && code < 400));
         }
 
-        public String readText(InputStream inputStream, String charset){
-            try {
-                InputStreamReader inputStreamReader = new InputStreamReader(inputStream,charset);
-                BufferedReader buffer = new BufferedReader(inputStreamReader);
-                String s=null;
-                StringBuilder builder = new StringBuilder();
-                while ((s = buffer.readLine())!=null){
-                    builder.append(s);
-                }
-                buffer.close();
-                inputStreamReader.close();
-                return builder.toString();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-            return null;
-        }
 
         /**
          * @param webView
@@ -2011,11 +2061,11 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
                 App.i().articleFirstKeyword.put(selectedArticle.getId(),keyword);
             }
             swipeRefreshLayoutS.setRefreshing(true);
-            String url = UrlRewriteConfig.i().getRedirectUrl(selectedArticle.getLink());
-            if(StringUtils.isEmpty(url)){
-                url = selectedArticle.getLink();
-            }
-            distill = new Distill(url, keyword, new Distill.Listener() {
+            // String url = UrlRewriteConfig.i().getRedirectUrl(selectedArticle.getLink());
+            // if(StringUtils.isEmpty(url)){
+            //     url = selectedArticle.getLink();
+            // }
+            distill = new Distill(selectedArticle.getLink(), keyword, new Distill.Listener() {
                 @Override
                 public void onResponse(String content) {
                     App.i().oldArticles.put(selectedArticle.getId(),(Article)selectedArticle.clone());

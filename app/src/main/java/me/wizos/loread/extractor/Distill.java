@@ -123,11 +123,11 @@ public class Distill {
         call.enqueue(new Callback() {
             @Override
             public void onFailure(@NotNull Call call, @NotNull IOException e) {
-                XLog.d("OkHttp 获取全文失败");
                 if(call.isCanceled()){
                     return;
                 }
-                dispatcher.onFailure(App.i().getString(R.string.not_responding_plz_try_again));
+                dispatcher.onFailure(e.getLocalizedMessage());
+                XLog.w("OkHttp 获取全文失败：" + e.getLocalizedMessage());
             }
             @Override
             public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
@@ -152,7 +152,7 @@ public class Distill {
                 }
                 document = Jsoup.parse(responseBody.byteStream(), charset, url);
                 // document.getElementsByTag("script").remove();
-                XLog.d("OkHttp 获取全文成功：" + keyword + " = " );
+                XLog.w("OkHttp 获取全文成功：" + keyword + " = " );
                 if(!document.body().text().contains(keyword)){
                     getByWebView();
                 }else {

@@ -50,7 +50,7 @@ public class ProviderActivity extends BaseActivity {
         if(Build.VERSION.SDK_INT < 23){
             setContentView(R.layout.activity_provider_low_version);
         }else {
-            setContentView(R.layout.activity_provider2);
+            setContentView(R.layout.activity_provider);
         }
 
         View selectLoginAccountView = findViewById(R.id.select_login_account);
@@ -59,6 +59,13 @@ public class ProviderActivity extends BaseActivity {
         }else {
             selectLoginAccountView.setVisibility(View.GONE);
         }
+    }
+
+    public void showRSSDetail(View view){
+        new MaterialDialog.Builder(this)
+                .title(R.string.rss_introduction)
+                .content(R.string.rss_detail)
+                .build().show();
     }
 
     public void selectLoginAccount(View view){

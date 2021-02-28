@@ -298,8 +298,8 @@ public class FeverApi extends AuthApi implements ILogin {
         }
         App.i().isSyncing = false;
         handleDuplicateArticles(startSyncTimeMillis);
-        handleCrawlDate2();
         updateCollectionCount();
+        handleCrawlDate2();
         LiveEventBus.get(SyncWorker.SYNC_PROCESS_FOR_SUBTITLE).post(null);
     }
 

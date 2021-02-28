@@ -48,12 +48,6 @@ table pre{
 /*
  * 设置最大宽度，防止超出屏幕
  */
-/*
-body * {
-	max-width: 100% !important;
-}
-*/
-
 body, div:not(.plyr__menu__container):not(.plyr__progress), p, tbody, textarea, ins{
 	max-width: 100% !important;
 }
@@ -63,7 +57,9 @@ body, div:not(.plyr__menu__container):not(.plyr__progress), p, tbody, textarea, 
 table div{
 	width:auto !important;
 }
-
+div{
+	margin:0 !important;
+}
 p{
 	text-indent:0 !important;
 	background:none !important;
@@ -93,18 +89,27 @@ h6:before{
 }
 section h1 {
 	font-size: 24px;
-	box-shadow: inset 0 -4px 0 #bf53b1;
 	color: #bf53b1;
+	border-color: #bf53b1;
+	border-width: 5px;
+	border-radius: 5px;
+	border-bottom-style: solid;
 }
 h2 {
 	font-size: 20px;
-	box-shadow: inset 0 -4px 0 #f7615f;
 	color: #f7615f;
+	border-color: #f7615f;
+	border-width: 5px;
+	border-radius: 5px;
+	border-bottom-style: solid;
 }
 h3 {
 	font-size: 16px;
-	box-shadow: inset 0 -2px 0 #e0af55;
 	color: #e0af55;
+	border-color: #e0af55;
+	border-width: 3px;
+	border-radius: 5px;
+	border-bottom-style: solid;
 }
 h4 {
 	font-size: 16px;
@@ -331,6 +336,8 @@ video,iframe,embed {
 	display: block !important;
 }
 .video_wrap,.iframe_wrap,.embed_wrap {
+	width: 100% !important;
+	max-width: 100% !important;
 	height: auto;
 	margin: 5px 0 !important;
 	border-bottom: 5px solid rgba(0, 0, 0, 0.1) !important;
@@ -366,7 +373,9 @@ hr {
 #content{
 	margin-top: 10px
 }
-
+#content section{
+	display: inline-block;
+}
 
 del{
 	opacity:0.4;
@@ -377,4 +386,3 @@ mjx-container {
     overflow-x: auto;
     overflow-y: hidden;
 }
-
