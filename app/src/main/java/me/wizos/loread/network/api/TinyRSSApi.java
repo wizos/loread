@@ -12,8 +12,6 @@ import com.lzy.okgo.exception.HttpException;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
-import java.net.ConnectException;
-import java.net.SocketTimeoutException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
@@ -49,6 +47,7 @@ import me.wizos.loread.network.SyncWorker;
 import me.wizos.loread.network.callback.CallbackX;
 import me.wizos.loread.utils.Converter;
 import me.wizos.loread.utils.StringUtils;
+import me.wizos.loread.utils.Tool;
 import me.wizos.loread.utils.TriggerRuleUtils;
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -150,7 +149,7 @@ public class TinyRSSApi extends AuthApi implements ILogin {
 
     @Override
     public void sync() {
-        long startSyncTimeMillis = System.currentTimeMillis() + 3600_000;
+        long startSyncTimeMillis = System.currentTimeMillis();
         String uid = App.i().getUser().getId();
         try {
             // TinyResponse<ApiLevel> apiLevelTinyResponse = service.getApiLevel(new GetApiLevel(getAuthorization())).execute().body();
@@ -233,7 +232,7 @@ public class TinyRSSApi extends AuthApi implements ILogin {
                     articles.add(Converter.from(item, new Converter.ArticleConvertListener() {
                         @Override
                         public Article onEnd(Article article) {
-                            article.setCrawlDate(startSyncTimeMillis);
+                            article.setCrawlDate(System.currentTimeMillis());
                             article.setUid(uid);
                             return article;
                         }
@@ -251,23 +250,14 @@ public class TinyRSSApi extends AuthApi implements ILogin {
             // 获取文章全文
             LiveEventBus.get(SyncWorker.SYNC_PROCESS_FOR_SUBTITLE).post(getString(R.string.fetch_article_full_content));
             fetchReadability(uid, startSyncTimeMillis);
+            fetchIcon(uid);
             // 执行文章自动处理脚本
             TriggerRuleUtils.exeAllRules(uid,startSyncTimeMillis);
 
             // 提示更新完成
             LiveEventBus.get(SyncWorker.NEW_ARTICLE_NUMBER).post(hadFetchCount);
-        }catch (IllegalStateException e){
-            handleException(e, e.getMessage());
-        }catch (HttpException e) {
-            handleException(e, e.message());
-        } catch (ConnectException e) {
-            handleException(e, "同步失败：Connect异常");
-        } catch (SocketTimeoutException e) {
-            handleException(e, "同步失败：Socket超时");
-        } catch (IOException e) {
-            handleException(e, "同步失败：IO异常");
-        } catch (RuntimeException e) {
-            handleException(e, "同步失败：Runtime异常");
+        } catch (RuntimeException | IOException e) {
+            handleException(e);
         }
 
         handleDuplicateArticles(startSyncTimeMillis);
@@ -276,18 +266,24 @@ public class TinyRSSApi extends AuthApi implements ILogin {
         LiveEventBus.get(SyncWorker.SYNC_PROCESS_FOR_SUBTITLE).post( null );
     }
 
-    private void handleException(Exception e, String msg) {
-        XLog.w("同步失败：" + e.getClass() + " = " + msg);
-        e.printStackTrace();
-        if(Contract.NOT_LOGGED_IN.equalsIgnoreCase(msg)){
+
+    private void handleException(Exception e) {
+        XLog.w("同步失败：" + e.getClass() + " = " + e.getMessage());
+        Tool.printCallStack(e);
+        if (Contract.NOT_LOGGED_IN.equalsIgnoreCase(e.getMessage())) {
             ToastUtils.show(getString(R.string.not_logged_in));
-        }else {
-            ToastUtils.show(msg);
+        } else {
+            ToastUtils.show(e.getMessage());
         }
     }
 
     @Override
     public void renameCategory(String categoryId, String targetName, CallbackX cb) {
+        cb.onFailure(App.i().getString(R.string.server_api_not_supported, Contract.PROVIDER_TINYRSS));
+    }
+
+    @Override
+    public void deleteCategory(String categoryId, CallbackX cb) {
         cb.onFailure(App.i().getString(R.string.server_api_not_supported, Contract.PROVIDER_TINYRSS));
     }
 

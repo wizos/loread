@@ -25,12 +25,14 @@ import java.util.Locale;
 import java.util.Map;
 
 import me.wizos.loread.App;
+import me.wizos.loread.BuildConfig;
 import me.wizos.loread.Contract;
 import me.wizos.loread.R;
 import me.wizos.loread.bean.FeedEntries;
 import me.wizos.loread.bean.Token;
 import me.wizos.loread.bean.feedly.CategoryItem;
 import me.wizos.loread.bean.feedly.input.EditFeed;
+import me.wizos.loread.bean.inoreader.GsTag;
 import me.wizos.loread.bean.inoreader.ItemIds;
 import me.wizos.loread.bean.inoreader.ItemRefs;
 import me.wizos.loread.bean.inoreader.LoginResult;
@@ -49,6 +51,7 @@ import me.wizos.loread.network.StringConverterFactory;
 import me.wizos.loread.network.SyncWorker;
 import me.wizos.loread.network.callback.CallbackX;
 import me.wizos.loread.utils.Converter;
+import me.wizos.loread.utils.PagingUtils;
 import me.wizos.loread.utils.StringUtils;
 import me.wizos.loread.utils.Tool;
 import me.wizos.loread.utils.TriggerRuleUtils;
@@ -70,8 +73,8 @@ import static me.wizos.loread.utils.StringUtils.getString;
  */
 
 public class InoReaderApi extends OAuthApi implements ILogin {
-    public static final String APP_ID = "1000001277";
-    public static final String APP_KEY = "8dByWzO4AYi425yx5glICKntEY2g3uJo";
+    // public static final String APP_ID = "1000001277";
+    // public static final String APP_KEY = "8dByWzO4AYi425yx5glICKntEY2g3uJo";
     public static final String OFFICIAL_BASE_URL = "https://www.innoreader.com/";
 
     private static final String REDIRECT_URI = "loread://oauth_inoreader";
@@ -172,7 +175,7 @@ public class InoReaderApi extends OAuthApi implements ILogin {
         if(StringUtils.isEmpty(baseUrl)){
             baseUrl = OFFICIAL_BASE_URL;
         }
-        return baseUrl + "oauth2/auth?response_type=code&client_id=" + APP_ID + "&redirect_uri=" + REDIRECT_URI +  "&state=loread&lang=" + Locale.getDefault();
+        return baseUrl + "oauth2/auth?response_type=code&client_id=" + BuildConfig.INOREADER_APP_ID + "&redirect_uri=" + REDIRECT_URI +  "&state=loread&lang=" + Locale.getDefault();
     }
 
     @Override
@@ -183,25 +186,12 @@ public class InoReaderApi extends OAuthApi implements ILogin {
         }else {
             baseUrl = OFFICIAL_BASE_URL;
         }
-        return baseUrl + "oauth2/auth?response_type=code&client_id=" + APP_ID + "&redirect_uri=" + REDIRECT_URI + "&state=loread&lang=" + Locale.getDefault();
+        return baseUrl + "oauth2/auth?response_type=code&client_id=" + BuildConfig.INOREADER_APP_ID + "&redirect_uri=" + REDIRECT_URI + "&state=loread&lang=" + Locale.getDefault();
     }
 
     @Override
     public void getAccessToken(String authorizationCode, CallbackX cb) {
-        String redirectUri;
-        if(!StringUtils.isEmpty(tempBaseUrl)){
-            redirectUri = Uri.parse(tempBaseUrl).getHost();
-        }else {
-            redirectUri = Uri.parse(OFFICIAL_BASE_URL).getHost();
-        }
-        FormBody.Builder builder = new FormBody.Builder();
-        builder.add("grant_type", "authorization_code");
-        builder.add("code", authorizationCode);
-        builder.add("redirect_uri", REDIRECT_URI + "/" + redirectUri);
-        builder.add("client_id", APP_ID);
-        builder.add("client_secret", APP_KEY);
-
-        service.getAccessToken("authorization_code", REDIRECT_URI, APP_ID,APP_KEY, authorizationCode).enqueue(new Callback<Token>() {
+        service.getAccessToken("authorization_code", REDIRECT_URI, BuildConfig.INOREADER_APP_ID, BuildConfig.INOREADER_APP_KEY, authorizationCode).enqueue(new Callback<Token>() {
             @Override
             public void onResponse(@NotNull Call<Token> call, @NotNull Response<Token> response) {
                 if(!response.isSuccessful()){
@@ -225,7 +215,7 @@ public class InoReaderApi extends OAuthApi implements ILogin {
 
     @Override
     public void refreshingAccessToken(String refreshToken, CallbackX cb) {
-        service.refreshingAccessToken("refresh_token",refreshToken,APP_ID,APP_KEY).enqueue(new Callback<Token>() {
+        service.refreshingAccessToken("refresh_token",refreshToken, BuildConfig.INOREADER_APP_ID, BuildConfig.INOREADER_APP_KEY).enqueue(new Callback<Token>() {
             @Override
             public void onResponse(@NotNull Call<Token> call, @NotNull Response<Token> response) {
                 if(!response.isSuccessful()){
@@ -260,7 +250,10 @@ public class InoReaderApi extends OAuthApi implements ILogin {
 
     @Override
     public String refreshingAccessToken(String refreshToken) throws IOException {
-        Token token = service.refreshingAccessToken("refresh_token",refreshToken,APP_ID,APP_KEY).execute().body();
+        Token token = service.refreshingAccessToken("refresh_token", refreshToken, BuildConfig.INOREADER_APP_ID, BuildConfig.INOREADER_APP_KEY).execute().body();
+        if(token == null){
+            return "";
+        }
         if (TextUtils.isEmpty(token.getRefreshToken())) {
             token.setRefreshToken(refreshToken);
         }
@@ -301,33 +294,36 @@ public class InoReaderApi extends OAuthApi implements ILogin {
 
     @Override
     public void sync() {
-        long startSyncTimeMillis = System.currentTimeMillis() + 3600_000;
+        long startSyncTimeMillis = System.currentTimeMillis();
         String uid = App.i().getUser().getId();
         try {
             XLog.i("3 - 同步订阅源信息");
             LiveEventBus.get(SyncWorker.SYNC_PROCESS_FOR_SUBTITLE).post( App.i().getString(R.string.step_sync_feed_info, "3.") );
 
             // 获取分类
-            List<Category> categories = service.getCategoryItems(getAuthorization()).execute().body().getCategories();
+            // List<Category> categories = service.getCategoryItems(getAuthorization()).execute().body().getCategories();
+            List<GsTag> tags = service.getCategoryItems(getAuthorization()).execute().body().getCategories();
             // 去除分类中的的一些无用分类
-            if (categories != null && categories.size() > 0 && categories.get(0).getId().endsWith("/state/com.google/starred")) {
-                categories.remove(0); // /state/com.google/starred
+            if (tags.size() > 0 && tags.get(0).getId().endsWith("/state/com.google/starred")) {
+                tags.remove(0); // /state/com.google/starred
             }
-            if (categories != null && categories.size() > 0 && categories.get(0).getId().endsWith("/state/com.google/broadcast")) {
-                categories.remove(0); // /state/com.google/broadcast
+            if (tags.size() > 0 && tags.get(0).getId().endsWith("/state/com.google/broadcast")) {
+                tags.remove(0); // /state/com.google/broadcast
             }
-            if (categories != null && categories.size() > 0 && categories.get(0).getId().endsWith("/state/com.google/blogger-following")) {
-                categories.remove(0); // /state/com.google/blogger-following
+            if (tags.size() > 0 && tags.get(0).getId().endsWith("/state/com.google/blogger-following")) {
+                tags.remove(0); // /state/com.google/blogger-following
             }
 
-            if(categories != null){
-                String[] array;
-                String tagTitle;
-                for (Category category : categories) {
-                    array = category.getId().split("/");
-                    tagTitle = array[array.length - 1];
-                    category.setTitle(tagTitle);
-                }
+            List<Category> categories = new ArrayList<>();
+            for (GsTag tag:tags) {
+                categories.add(Converter.from(uid, tag));
+            }
+            String[] array;
+            String tagTitle;
+            for (Category category : categories) {
+                array = category.getId().split("/");
+                tagTitle = array[array.length - 1];
+                category.setTitle(tagTitle);
             }
 
             // 获取feed
@@ -367,7 +363,7 @@ public class InoReaderApi extends OAuthApi implements ILogin {
             fetchArticle(allSize, 0, new ArrayList<>(refsList.get(0)), new Converter.ArticleConvertListener() {
                 @Override
                 public Article onEnd(Article article) {
-                    article.setCrawlDate(startSyncTimeMillis);
+                    article.setCrawlDate(System.currentTimeMillis());
                     article.setReadStatus(App.STATUS_UNREAD);
                     article.setStarStatus(App.STATUS_UNSTAR);
                     article.setUid(uid);
@@ -378,7 +374,7 @@ public class InoReaderApi extends OAuthApi implements ILogin {
             fetchArticle(allSize, refsList.get(0).size(), new ArrayList<>(refsList.get(1)), new Converter.ArticleConvertListener() {
                 @Override
                 public Article onEnd(Article article) {
-                    article.setCrawlDate(startSyncTimeMillis);
+                    article.setCrawlDate(System.currentTimeMillis());
                     article.setReadStatus(App.STATUS_READED);
                     article.setStarStatus(App.STATUS_STARED);
                     article.setUid(uid);
@@ -390,7 +386,7 @@ public class InoReaderApi extends OAuthApi implements ILogin {
             fetchArticle(allSize, refsList.get(0).size() + refsList.get(1).size(), new ArrayList<>(refsList.get(2)), new Converter.ArticleConvertListener() {
                 @Override
                 public Article onEnd(Article article) {
-                    article.setCrawlDate(startSyncTimeMillis);
+                    article.setCrawlDate(System.currentTimeMillis());
                     article.setReadStatus(App.STATUS_UNSTAR);
                     article.setStarStatus(App.STATUS_STARED);
                     article.setUid(uid);
@@ -404,6 +400,7 @@ public class InoReaderApi extends OAuthApi implements ILogin {
             // 获取文章全文
             LiveEventBus.get(SyncWorker.SYNC_PROCESS_FOR_SUBTITLE).post(getString(R.string.fetch_article_full_content));
             fetchReadability(uid, startSyncTimeMillis);
+            fetchIcon(uid);
             // 执行文章自动处理脚本
             TriggerRuleUtils.exeAllRules(uid,startSyncTimeMillis);
 
@@ -430,7 +427,7 @@ public class InoReaderApi extends OAuthApi implements ILogin {
     }
 
     private void handleException(Exception e, String msg) {
-        XLog.e("同步失败：" + e.getClass()+ " = " + msg);
+        XLog.w("同步失败：" + e.getClass() + " = " + e.getMessage());
         Tool.printCallStack(e);
         e.printStackTrace();
         if("401".equalsIgnoreCase(msg)){
@@ -440,21 +437,40 @@ public class InoReaderApi extends OAuthApi implements ILogin {
         }
     }
 
-    private void fetchArticle(int allSize, int syncedSize, List<String> subIds, Converter.ArticleConvertListener articleConverter) throws IOException{
-        int needFetchCount = subIds.size();
-        int hadFetchCount = 0;
+    private void fetchArticle(int allSize,final int syncedSize, List<String> subIds, Converter.ArticleConvertListener articleConverter) throws IOException{
+        // int needFetchCount = subIds.size();
+        // int hadFetchCount = 0;
+        //
+        // while (needFetchCount > 0) {
+        //     int fetchUnit = Math.min(needFetchCount, fetchContentCntForEach);
+        //     List<Item> items = service.getItemContents(getAuthorization(), genRequestBody(subIds.subList(hadFetchCount, hadFetchCount = hadFetchCount + fetchUnit))).execute().body().getItems();
+        //     List<Article> tempArticleList = new ArrayList<>(fetchUnit);
+        //     for (Item item : items) {
+        //         tempArticleList.add(Converter.from(item, articleConverter));
+        //     }
+        //     CoreDB.i().articleDao().insert(tempArticleList);
+        //     LiveEventBus.get(SyncWorker.SYNC_PROCESS_FOR_SUBTITLE).post( App.i().getString(R.string.step_sync_article_content, "1.", syncedSize = syncedSize + fetchUnit, allSize) );
+        //     needFetchCount = subIds.size() - hadFetchCount;
+        // }
 
-        while (needFetchCount > 0) {
-            int fetchUnit = Math.min(needFetchCount, fetchContentCntForEach);
-            List<Item> items = service.getItemContents(getAuthorization(), genRequestBody(subIds.subList(hadFetchCount, hadFetchCount = hadFetchCount + fetchUnit))).execute().body().getItems();
-            List<Article> tempArticleList = new ArrayList<>(fetchUnit);
-            for (Item item : items) {
-                tempArticleList.add(Converter.from(item, articleConverter));
+        PagingUtils.processing(subIds, 20, new PagingUtils.PagingListener<String>() {
+            int sync = syncedSize;
+            @Override
+            public void onPage(List<String> childList) {
+                try{
+                    List<Item> items = service.getItemContents(getAuthorization(), genRequestBody(childList)).execute().body().getItems();
+                    List<Article> tempArticleList = new ArrayList<>(childList.size());
+                    for (Item item : items) {
+                        tempArticleList.add(Converter.from(item, articleConverter));
+                    }
+                    CoreDB.i().articleDao().insert(tempArticleList);
+                    LiveEventBus.get(SyncWorker.SYNC_PROCESS_FOR_SUBTITLE).post( App.i().getString(R.string.step_sync_article_content, "1.", sync = sync + childList.size(), allSize) );
+                }catch (IOException e){
+                    XLog.e("获取文章失败：" + e.getLocalizedMessage());
+                    e.printStackTrace();
+                }
             }
-            CoreDB.i().articleDao().insert(tempArticleList);
-            LiveEventBus.get(SyncWorker.SYNC_PROCESS_FOR_SUBTITLE).post( App.i().getString(R.string.step_sync_article_content, "1.", syncedSize = syncedSize + fetchUnit, allSize) );
-            needFetchCount = subIds.size() - hadFetchCount;
-        }
+        });
     }
 
 
@@ -512,6 +528,11 @@ public class InoReaderApi extends OAuthApi implements ILogin {
             builder.add("i", id);
         }
         return builder.build();
+    }
+
+    @Override
+    public void deleteCategory(String categoryId, CallbackX cb) {
+        cb.onFailure(App.i().getString(R.string.server_api_not_supported, Contract.PROVIDER_INOREADER));
     }
 
     public void renameCategory(String categoryId, String targetName, CallbackX cb) {

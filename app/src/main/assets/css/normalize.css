@@ -48,7 +48,7 @@ table pre{
 /*
  * 设置最大宽度，防止超出屏幕
  */
-body, div:not(.plyr__menu__container):not(.plyr__progress), p, tbody, textarea, ins{
+body, div:not(.plyr__menu__container):not(.plyr__progress), p, tbody, textarea, ins, section{
 	max-width: 100% !important;
 }
 /* 
@@ -57,14 +57,15 @@ body, div:not(.plyr__menu__container):not(.plyr__progress), p, tbody, textarea, 
 table div{
 	width:auto !important;
 }
-div{
-	margin:0 !important;
+div:not(.plyr__menu__container):not(.plyr__progress):not(.video_wrap):not(.iframe_wrap):not(.embed_wrap){
+	//margin:0 !important;
 }
 p{
 	text-indent:0 !important;
 	background:none !important;
 	width:auto !important;
 	height:auto !important;
+	line-break: anywhere;
 }
 
 /* HEADERS */

@@ -38,4 +38,12 @@ public class CategoryItem {
         category.setTitle(label);
         return category;
     }
+
+    @Override
+    public String toString() {
+        return "CategoryItem{" +
+                "id='" + id + '\'' +
+                ", label='" + label + '\'' +
+                '}';
+    }
 }

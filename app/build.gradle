@@ -9,8 +9,8 @@ android {
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         applicationId "me.wizos.loread"
-        versionCode 16
-        versionName "2.4.0"
+        versionCode 22
+        versionName "2.4.6"
         ndk {
             abiFilters 'armeabi-v7a', 'arm64-v8a'
         }
@@ -20,6 +20,14 @@ android {
                 arguments = ["room.schemaLocation": "$projectDir/schemas".toString()]//指定数据库schema导出的位置
             }
         }
+        flavorDimensions "default"
+
+        buildConfigField "String", "DORAEMON_KIT_PRODUCT_ID", "\"${DORAEMON_KIT_PRODUCT_ID}\""
+        buildConfigField "String", "INOREADER_APP_ID", "\"${INOREADER_APP_ID}\""
+        buildConfigField "String", "INOREADER_APP_KEY", "\"${INOREADER_APP_KEY}\""
+        buildConfigField "String", "FEEDLY_APP_ID", "\"${FEEDLY_APP_ID}\""
+        buildConfigField "String", "FEEDLY_APP_KEY", "\"${FEEDLY_APP_KEY}\""
+
     }
     buildTypes {
         release {
@@ -40,11 +48,15 @@ android {
     }
     lintOptions {
         checkReleaseBuilds false
-        // Or, if you prefer, you can continue to check for errors in release builds,
-        // but continue the build even when errors are found:
+        // Or, if you prefer, you can continue to check for errors in release builds, but continue the build even when errors are found:
         abortOnError false
     }
-
+    /*配置渠道*/
+    productFlavors {
+        coolapk {manifestPlaceholders = [UMENG_CHANNEL_VALUE: "CoolApk"]}
+        xiaomi {manifestPlaceholders = [UMENG_CHANNEL_VALUE: "XiaoMi"]}
+        github {manifestPlaceholders = [UMENG_CHANNEL_VALUE: "Github"]} // ,UMENG_APP_KEY: "${UMENG_APP_KEY}"
+    }
 }
 repositories{
     flatDir{
@@ -63,7 +75,7 @@ dependencies {
     implementation 'androidx.recyclerview:recyclerview:1.1.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.0.4'
     implementation "androidx.paging:paging-runtime:2.1.2"
-    implementation "androidx.work:work-runtime:2.5.0" // 2.4.0
+    implementation "androidx.work:work-runtime:2.5.0"
     implementation 'com.google.android.material:material:1.3.0'
 
     debugImplementation 'com.didichuxing.doraemonkit:dokitx:3.3.5'
@@ -182,7 +194,7 @@ dependencies {
     implementation 'cn.wanghaomiao:JsoupXpath:2.4.3'
 
 
-    // // 创建和解析JSONFeed提要 [https://github.com/fschiettecatte/jsonfeed] 无法使用，JSONObject 使用呃类找不到
+    // 创建和解析JSONFeed提要, github.com/fschiettecatte/JsonFeed 无法使用，JSONObject 使用的类找不到
 
     // [https://github.com/rometools/rome]
     // RSS 解析与生成
@@ -202,21 +214,36 @@ dependencies {
     implementation 'io.apisense:rhino-android:1.1.1'
 
     // [https://github.com/bumptech/glide]
-    implementation 'com.github.bumptech.glide:glide:4.11.0'
-    annotationProcessor 'com.github.bumptech.glide:compiler:4.11.0'
+    implementation 'com.github.bumptech.glide:glide:4.12.0'
+    annotationProcessor 'com.github.bumptech.glide:compiler:4.12.0'
+
+    // [https://github.com/kirich1409/SvgGlidePlugins]
+    implementation project(':svg')
+
+    // webpdecoder [https://github.com/zjupure/GlideWebpDecoder]
+    // implementation "com.zlc.glide:webpdecoder:2.0.4.12.0"
+
+    // [https://github.com/penfeizhou/APNG4Android]
+    // implementation 'com.github.penfeizhou.android.animation:awebp:2.8.0'
+    // implementation 'com.github.penfeizhou.android.animation:apng:2.8.0'
+    // implementation 'com.github.penfeizhou.android.animation:gif:2.8.0'
+    // implementation 'com.github.penfeizhou.android.animation:glide-plugin:2.8.0'
+
     // Glide 底层使用okhttp3
     implementation('com.github.bumptech.glide:okhttp3-integration:4.11.0') { transitive = false }
     // 查看大图 [https://github.com/SherlockGougou/BigImageViewPager]
     implementation 'com.github.SherlockGougou:BigImageViewPager:androidx-6.0.1' // 6.0.1,6.1.3
 
+    // 生成/扫描二维码 https://github.com/bingoogolapple/BGAQRCode-Androidc
+    // implementation 'cn.bingoogolapple:bga-qrcode-zxing:1.3.7'
     implementation 'com.king.zxing:zxing-lite:2.0.2'
 
     // retrofit2
     implementation('com.squareup.retrofit2:retrofit:2.8.1') { transitive = false }
     implementation('com.squareup.retrofit2:converter-gson:2.8.1') { transitive = false }
     // okHttp
-    implementation 'com.squareup.okhttp3:okhttp:4.9.0' // 4.7.1
-    implementation 'com.squareup.okio:okio:2.9.0' // 2.6.0
+    implementation 'com.squareup.okhttp3:okhttp:4.9.0'
+    implementation 'com.squareup.okio:okio:2.9.0'
     implementation files('libs/okgo-3.0.4.jar')
 
     // NetCipher是适用于Android的库，它提供了多种改进方法移动应用程序中的网络安全。
@@ -243,10 +270,8 @@ dependencies {
     // 防止三方 SDK 中常见的损害用户体验的行为 [https://github.com/oasisfeng/condom]
     implementation 'com.oasisfeng.condom:library:2.5.0'
 
-    // 生成/扫描二维码 https://github.com/bingoogolapple/BGAQRCode-Androidc
-    // implementation 'cn.bingoogolapple:bga-qrcode-zxing:1.3.7'
 
     // 允许在 API 26 之下使用 java.time.Instant
     // https://stackoverflow.com/questions/55550936/call-requires-api-level-26-current-min-is-23-java-time-instantnow
-    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:1.1.1'
+    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:1.1.5'
 }

@@ -44,8 +44,10 @@
         android:id="@+id/main_tag_list_view"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+
         app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"/>
 
+    <!--android:background="?attr/root_view_bg"-->
     <TextView
         android:id="@+id/main_tag_create_category"
         android:layout_width="match_parent"

@@ -45,19 +45,15 @@ public class Tool {
         XLog.e("-----------------------------------");
     }
 
-    public static void printCallStack(StackTraceElement[] stackElements) {
-        for (StackTraceElement stackElement : stackElements) {
-            XLog.e(stackElement.getClassName() + "_" + stackElement.getFileName() + "_" + stackElement.getLineNumber() + "_" + stackElement.getMethodName());
-        }
-    }
-
     public static void printCallStack(Throwable e) {
+        XLog.e(e.getMessage());
         StackTraceElement[] stackElements = e.getStackTrace();
         for (StackTraceElement stackElement : stackElements) {
             XLog.e(stackElement.getClassName() + "_" + stackElement.getFileName() + "_" + stackElement.getLineNumber() + "_" + stackElement.getMethodName());
         }
     }
     public static void printCallStack(Exception e) {
+        XLog.e(e.getMessage());
         StackTraceElement[] stackElements = e.getStackTrace();
         for (StackTraceElement stackElement : stackElements) {
             XLog.e(stackElement.getClassName() + "_" + stackElement.getFileName() + "_" + stackElement.getLineNumber() + "_" + stackElement.getMethodName());

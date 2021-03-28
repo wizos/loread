@@ -59,7 +59,7 @@ public class TriggerRuleUtils {
      * 执行规则
      * TODO: 2021/1/30 还有正则没有支持
      */
-    public static void exeRule(String uid, long crawlTimeMillis, TriggerRule triggerRule){
+    public static void exeRule2(String uid, long crawlTimeMillis, TriggerRule triggerRule){
         Set<String> txtSet = new HashSet<>();
         txtSet.add("title");
         txtSet.add("content");
@@ -126,6 +126,74 @@ public class TriggerRuleUtils {
         }
     }
 
+
+    /**
+     * 执行规则
+     * TODO: 2021/1/30 还有正则没有支持
+     */
+    public static int exeRule(String uid, long crawlTimeMillis, TriggerRule triggerRule){
+        Set<String> txtSet = new HashSet<>();
+        txtSet.add("title");
+        txtSet.add("content");
+        txtSet.add("author");
+
+        Set<String> numberSet = new HashSet<>();
+        numberSet.add("pictures");
+        numberSet.add("audios");
+        numberSet.add("videos");
+
+        List<String> articleIds;
+        SimpleSQLiteQuery query;
+
+        if(Contract.TYPE_GLOBAL.equals(triggerRule.getScope().getType())){
+            List<Condition> conditions = triggerRule.getConditions();
+            Set<String> conditionSet = new HashSet<>();
+            for (Condition condition:conditions) {
+                joinTextConditions(txtSet, numberSet, condition, conditionSet);
+            }
+
+            // XLog.i("条件 为：" + conditionSet);
+            if(conditionSet.size() == 0){
+                return 0;
+            }
+
+            query = new SimpleSQLiteQuery("SELECT article.id FROM article WHERE uid = '" + uid + "' AND crawlDate >= " + crawlTimeMillis + " AND " + StringUtils.join(" and ", conditionSet));
+        }else if(Contract.TYPE_CATEGORY.equals(triggerRule.getScope().getType())){
+            List<Condition> conditions = triggerRule.getConditions();
+            Set<String> conditionSet = new HashSet<>();
+            for (Condition condition:conditions) {
+                joinTextConditions(txtSet, numberSet, condition, conditionSet);
+            }
+
+            // XLog.i("条件 为：" + conditionSet);
+            if(conditionSet.size() == 0){
+                return 0;
+            }
+
+            String categoryId = triggerRule.getScope().getTarget();
+            query = new SimpleSQLiteQuery("SELECT article.id FROM article LEFT JOIN FeedCategory ON (article.uid = FeedCategory.uid AND article.feedId = FeedCategory.feedId) WHERE article.uid = '" + uid + "' AND article.crawlDate >= " + crawlTimeMillis + " AND FeedCategory.categoryId = '" + categoryId + "' AND " + StringUtils.join(" AND ", conditionSet));
+        }else if(Contract.TYPE_FEED.equals(triggerRule.getScope().getType())){
+            List<Condition> conditions = triggerRule.getConditions();
+            Set<String> conditionSet = new HashSet<>();
+            for (Condition condition:conditions) {
+                joinTextConditions(txtSet, numberSet, condition, conditionSet);
+            }
+
+            // XLog.i("条件 为：" + conditionSet);
+            if(conditionSet.size() == 0){
+                return 0;
+            }
+
+            String feedId = triggerRule.getScope().getTarget();
+            query = new SimpleSQLiteQuery("SELECT article.id FROM article LEFT JOIN Feed ON (article.uid = Feed.uid AND article.feedId = Feed.id) WHERE article.uid = '" + uid + "' AND article.crawlDate >= " + crawlTimeMillis + " AND Feed.id = '" + feedId + "' AND " + StringUtils.join(" AND ", conditionSet));
+        }else {
+            return 0;
+        }
+        articleIds = CoreDB.i().articleDao().getActionRuleArticleIds(query);
+        doActionWithArticles(articleIds, triggerRule.getActions());
+        // XLog.i("文章结果 为：" + query.getSql() + " == " + articleIds.size());
+        return articleIds.size();
+    }
 
     private static void joinTextConditions(Set<String> txtSet, Set<String> numberSet, Condition condition, Set<String> conditionSet){
         String[] keywords = condition.getValue().split("\\|");

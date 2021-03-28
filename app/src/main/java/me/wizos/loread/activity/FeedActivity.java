@@ -38,6 +38,7 @@ import com.lxj.xpopup.XPopup;
 import com.lxj.xpopup.enums.PopupAnimation;
 import com.noober.background.BackgroundLibrary;
 import com.noober.background.drawable.DrawableCreator;
+import com.umeng.analytics.MobclickAgent;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -57,6 +58,8 @@ import me.wizos.loread.db.Category;
 import me.wizos.loread.db.CoreDB;
 import me.wizos.loread.db.Feed;
 import me.wizos.loread.db.FeedCategory;
+import me.wizos.loread.db.User;
+import me.wizos.loread.network.api.LocalApi;
 import me.wizos.loread.network.callback.CallbackX;
 import me.wizos.loread.utils.BackupUtils;
 import me.wizos.loread.utils.ScreenUtils;
@@ -104,6 +107,11 @@ public class FeedActivity extends BaseActivity {
     @BindView(R.id.feed_save_folder_value)
     TextView feedSaveFolderView;
 
+    @BindView(R.id.feed_auto_sync_frequency)
+    LinearLayout feedSyncFrequencyLayout;
+    @BindView(R.id.feed_sync_frequency_summary)
+    TextView feedSyncFrequencyView;
+
     // @BindView(R.id.feed_create_rule)
     // TextView createRuleButton;
 
@@ -150,7 +158,7 @@ public class FeedActivity extends BaseActivity {
         }
 
         feedViewModel = new ViewModelProvider(this).get(FeedViewModel.class);
-
+        MobclickAgent.onEvent(this, "enter_feed_activity");
         // feed = CoreDB.i().feedDao().getById(App.i().getUser().getId(),feedId);
         // if( null == feed){
         //     finish();
@@ -201,18 +209,6 @@ public class FeedActivity extends BaseActivity {
         // toolbar.setSubtitle(feed.getFeedUrl());
         siteLinkView.setText(feed.getHtmlUrl());
         feedLinkView.setText(feed.getFeedUrl());
-        iconFab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                if(TextUtils.isEmpty(feed.getHtmlUrl())){
-                    return;
-                }
-                Intent intent = new Intent(FeedActivity.this, WebActivity.class);
-                intent.setData(Uri.parse(feed.getHtmlUrl()));
-                startActivity(intent);
-                overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
-            }
-        });
 
 
         if (!TextUtils.isEmpty(feed.getTitle())) {
@@ -263,9 +259,18 @@ public class FeedActivity extends BaseActivity {
                 categoryTitleArray[i] = categoryList.get(i).getTitle();
             }
 
-            final Integer[] beforeSelectedIndices = new Integer[]{preCategoryItems.size()};
-            for (int i = 0, size = preCategoryItems.size(); i < size; i++) {
-                beforeSelectedIndices[i] = categoryMap.get(preCategoryItems.get(i).getId());
+            Integer[] beforeSelectedIndices;
+            if(preCategoryItems.size() == 0){
+                beforeSelectedIndices = null;
+            }else {
+                beforeSelectedIndices = new Integer[preCategoryItems.size()];
+                // XLog.i(preCategoryItems);
+                // XLog.i(categoryMap);
+                for (int i = 0, size = preCategoryItems.size(); i < size; i++) {
+                    // String id = preCategoryItems.get(i).getId();
+                    // Integer count  = categoryMap.get(id);
+                    beforeSelectedIndices[i] = categoryMap.get(preCategoryItems.get(i).getId());
+                }
             }
 
             new MaterialDialog.Builder(FeedActivity.this)
@@ -347,6 +352,7 @@ public class FeedActivity extends BaseActivity {
         if(BuildConfig.DEBUG){
             String optionName = SaveDirectory.i().getDirNameSettingByFeed(feed.getId());
             feedSaveFolderView.setText(optionName);
+            feedSaveFolderLayout.setVisibility(View.VISIBLE);
             feedSaveFolderLayout.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
@@ -366,6 +372,76 @@ public class FeedActivity extends BaseActivity {
                             .show();
                 }
             });
+
+            User user = App.i().getUser();
+            if(user != null && App.i().getApi() instanceof LocalApi){
+                feedSyncFrequencyLayout.setVisibility(View.VISIBLE);
+                int feedSyncInterval = feed.getSyncInterval();
+                if(feedSyncInterval == -1){
+                    feedSyncFrequencyView.setText(getString(R.string.disable_sync_frequency));
+                }else if(feedSyncInterval == 0){
+                    feedSyncInterval = user.getAutoSyncFrequency();
+                    if (feedSyncInterval >= 60) {
+                        feedSyncFrequencyView.setText(getString(R.string.default_sync_frequency, getString(R.string.xx_hour, feedSyncInterval / 60)));
+                    } else {
+                        feedSyncFrequencyView.setText(getString(R.string.default_sync_frequency, getString(R.string.xx_minute, feedSyncInterval)));
+                    }
+                }else if (feedSyncInterval >= 60) {
+                    feedSyncFrequencyView.setText(getString(R.string.xx_hour, feedSyncInterval / 60));
+                } else {
+                    feedSyncFrequencyView.setText(getString(R.string.xx_minute, feedSyncInterval));
+                }
+
+                feedSyncFrequencyLayout.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        int[] minuteArray = getResources().getIntArray(R.array.feed_sync_frequency_value);
+                        int preSelectTimeFrequencyIndex = -1;
+                        int num = minuteArray.length;
+                        CharSequence[] list = new CharSequence[num];
+                        int item;
+                        for (int i = 0; i < num; i++) {
+                            item = minuteArray[i];
+                            if(item == -1){
+                                list[i] = getString(R.string.disable_sync_frequency);
+                            }else if(item == 0){
+                                int userSyncInterval = user.getAutoSyncFrequency();
+                                if (userSyncInterval >= 60) {
+                                    list[i] = getString(R.string.default_sync_frequency, getString(R.string.xx_hour, userSyncInterval / 60));
+                                } else {
+                                    list[i] = getString(R.string.default_sync_frequency, getString(R.string.xx_minute, userSyncInterval));
+                                }
+                            }else if(item >= 60){
+                                list[i] = getResources().getString(R.string.xx_hour, item / 60);
+                            }else {
+                                list[i] = getResources().getString(R.string.xx_minute, item);
+                            }
+
+                            if (feed.getSyncInterval() == minuteArray[i]) {
+                                preSelectTimeFrequencyIndex = i;
+                            }
+                        }
+
+
+                        new MaterialDialog.Builder(FeedActivity.this)
+                                .title(R.string.sync_frequency)
+                                .items(list)
+                                .itemsCallbackSingleChoice(preSelectTimeFrequencyIndex, new MaterialDialog.ListCallbackSingleChoice() {
+                                    @Override
+                                    public boolean onSelection(MaterialDialog dialog, View view, int which, CharSequence text) {
+                                        feed.setSyncInterval(minuteArray[which]);
+                                        CoreDB.i().feedDao().update(feed);
+
+                                        XLog.i("选择了" + which);
+                                        feedSyncFrequencyView.setText(list[which]);
+                                        dialog.dismiss();
+                                        return true; // allow selection
+                                    }
+                                })
+                                .show();
+                    }
+                });
+            }
         }
 
 
@@ -414,19 +490,25 @@ public class FeedActivity extends BaseActivity {
         });
     }
 
-    public void copyIconUrl(@Nullable View view) {
-        if (feed == null || TextUtils.isEmpty(feed.getIconUrl())) {
+    public void openIconUrl(@Nullable View view) {
+        if(feed == null || TextUtils.isEmpty(feed.getIconUrl())){
             return;
         }
-        //获取剪贴板管理器：
-        ClipboardManager cm = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
-        // 创建普通字符型ClipData
-        ClipData mClipData = ClipData.newRawUri(feed.getTitle(), Uri.parse(feed.getIconUrl()));
-        // 将ClipData内容放到系统剪贴板里。
-        cm.setPrimaryClip(mClipData);
-        ToastUtils.show(R.string.copy_success);
+        Intent intent = new Intent(FeedActivity.this, WebActivity.class);
+        intent.setData(Uri.parse(feed.getIconUrl()));
+        startActivity(intent);
+        overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
     }
 
+    public void openHtmlUrl(@Nullable View view) {
+        if(feed == null || TextUtils.isEmpty(feed.getHtmlUrl())){
+            return;
+        }
+        Intent intent = new Intent(FeedActivity.this, WebActivity.class);
+        intent.setData(Uri.parse(feed.getHtmlUrl()));
+        startActivity(intent);
+        overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
+    }
     public void copyHtmlUrl(@Nullable View view) {
         if (feed == null || TextUtils.isEmpty(feed.getHtmlUrl())) {
             return;
@@ -435,11 +517,22 @@ public class FeedActivity extends BaseActivity {
         ClipboardManager cm = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
         // 创建普通字符型ClipData
         ClipData mClipData = ClipData.newRawUri(feed.getTitle(), Uri.parse(feed.getHtmlUrl()));
+        if(cm == null){
+            return;
+        }
         // 将ClipData内容放到系统剪贴板里。
         cm.setPrimaryClip(mClipData);
         ToastUtils.show(R.string.copy_success);
     }
-
+    public void openFeedUrl(@Nullable View view) {
+        if(feed == null || TextUtils.isEmpty(feed.getFeedUrl())){
+            return;
+        }
+        Intent intent = new Intent(FeedActivity.this, WebActivity.class);
+        intent.setData(Uri.parse(feed.getFeedUrl()));
+        startActivity(intent);
+        overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
+    }
     public void copyFeedUrl(@Nullable View view) {
         if (feed==null || TextUtils.isEmpty(feed.getFeedUrl())) {
             return;
@@ -449,6 +542,9 @@ public class FeedActivity extends BaseActivity {
         // 创建普通字符型ClipData
         ClipData mClipData = ClipData.newRawUri(feed.getTitle(), Uri.parse(feed.getFeedUrl()));
         // 将ClipData内容放到系统剪贴板里。
+        if(cm == null){
+            return;
+        }
         cm.setPrimaryClip(mClipData);
         ToastUtils.show(R.string.copy_success);
     }
@@ -469,55 +565,6 @@ public class FeedActivity extends BaseActivity {
     }
 
     private Integer[] selectIndices;
-
-    // public void showSelectFolder(final View view, final String feedId) {
-    //     final List<Category> categoryList = CoreDB.i().categoryDao().getAll(App.i().getUser().getId());
-    //     String[] categoryTitleArray = new String[categoryList.size()];
-    //     for (int i = 0, size = categoryList.size(); i < size; i++) {
-    //         categoryTitleArray[i] = categoryList.get(i).getTitle();
-    //     }
-    //
-    //     final EditFeed editFeed = new EditFeed();
-    //     editFeed.setId(feedId);
-    //     new MaterialDialog.Builder(this)
-    //             .title(getString(R.string.select_category))
-    //             .items(categoryTitleArray)
-    //             .alwaysCallMultiChoiceCallback()
-    //             .itemsCallbackMultiChoice(null, (dialog, which, text) -> {
-    //                 FeedActivity.this.selectIndices = which;
-    //                 for (int i : which) {
-    //                     XLog.e("点选了：" + i);
-    //                 }
-    //                 return true;
-    //             })
-    //             .positiveText(R.string.confirm)
-    //             .onPositive((dialog, which) -> {
-    //                 ArrayList<CategoryItem> categoryItemList = new ArrayList<>();
-    //                 for (Integer selectIndex : selectIndices) {
-    //                     CategoryItem categoryItem = new CategoryItem();
-    //                     categoryItem.setId(categoryList.get(selectIndex).getId());
-    //                     categoryItemList.add(categoryItem);
-    //                 }
-    //                 editFeed.setCategoryItems(categoryItemList);
-    //                 view.setClickable(false);
-    //                 App.i().getApi().addFeed(editFeed, new CallbackX() {
-    //                     @Override
-    //                     public void onSuccess(Object result) {
-    //                         XLog.e("添加成功");
-    //                         ((IconFontView) view).setText(R.string.font_tick);
-    //                         ToastUtils.show(R.string.subscribe_success);
-    //                         view.setClickable(true);
-    //                     }
-    //
-    //                     @Override
-    //                     public void onFailure(Object error) {
-    //                         ToastUtils.show(getString(R.string.subscribe_fail, (String)error));
-    //                         view.setClickable(true);
-    //                     }
-    //                 });
-    //             }).show();
-    // }
-
     public void showSelectFolder(final View view, Feed feed) {
         final List<Category> categoryList = CoreDB.i().categoryDao().getAll(App.i().getUser().getId());
         String[] categoryTitleArray = new String[categoryList.size()];

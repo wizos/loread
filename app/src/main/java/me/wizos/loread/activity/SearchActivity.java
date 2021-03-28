@@ -36,6 +36,7 @@ import com.elvishew.xlog.XLog;
 import com.hjq.toast.ToastUtils;
 import com.king.zxing.CameraScan;
 import com.king.zxing.CaptureActivity;
+import com.umeng.analytics.MobclickAgent;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -187,6 +188,7 @@ public class SearchActivity extends BaseActivity {
             rssSeeker.destroy();
         }
 
+        MobclickAgent.onEvent(this, "search_feeds", keyword);
         if(keyword.toLowerCase().startsWith(Contract.SCHEMA_HTTP) || keyword.toLowerCase().startsWith(Contract.SCHEMA_HTTPS)){
             // 1.检查是否为 RSS 网址
             checkRSSURL(keyword);
@@ -337,7 +339,7 @@ public class SearchActivity extends BaseActivity {
     }
 
     private void checkRSSURL(String url){
-        HttpCall.get(url, new okhttp3.Callback() {
+        HttpCall.i().get(url, new okhttp3.Callback() {
             @Override
             public void onFailure(@NotNull okhttp3.Call call, @NotNull IOException e) {
                 failureUpdateResults();
@@ -354,7 +356,7 @@ public class SearchActivity extends BaseActivity {
                 feed.setUid(App.i().getUser().getId());
                 feed.setId(EncryptUtils.MD5(url));
                 feed.setFeedUrl(url);
-                FeedEntries feedEntries = FeedParserUtils.parseResponseBody(SearchActivity.this, feed, response.body());
+                FeedEntries feedEntries = FeedParserUtils.parseResponseBody(SearchActivity.this, feed, response);
                 if(feedEntries == null || !feedEntries.isSuccess()){
                     failureUpdateResults();
                 }else {
@@ -363,9 +365,6 @@ public class SearchActivity extends BaseActivity {
             }
         });
     }
-
-
-
 
 
     public static class CustomViewHolder {

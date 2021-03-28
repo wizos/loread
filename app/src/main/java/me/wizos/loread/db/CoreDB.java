@@ -31,7 +31,7 @@ import me.wizos.loread.db.rule.Scope;
 @Database(
         entities = {User.class,Article.class,Feed.class,Category.class, FeedCategory.class, Tag.class, ArticleTag.class, Scope.class, Condition.class, Action.class},
         views = {FeedView.class,CategoryView.class},
-        version = 4
+        version = 6
 )
 public abstract class CoreDB extends RoomDatabase {
     public static final String DATABASE_NAME = "loread.db";
@@ -67,11 +67,22 @@ public abstract class CoreDB extends RoomDatabase {
             database.execSQL("ALTER TABLE Feed ADD lastSyncError TEXT");
             database.execSQL("ALTER TABLE Feed ADD lastErrorCount INTEGER NOT NULL DEFAULT 0");
 
-            // database.execSQL("ALTER TABLE User ADD syncInterval INTEGER NOT NULL DEFAULT 0");
             database.execSQL("ALTER TABLE User ADD lastSyncTime INTEGER NOT NULL DEFAULT 0");
 
             database.execSQL("DROP VIEW IF EXISTS FeedView;");
             database.execSQL("CREATE VIEW `FeedView` AS SELECT uid,id,title,feedUrl,htmlUrl,iconUrl,displayMode,UNREAD_SUM AS unreadCount,STAR_SUM AS starCount,ALL_SUM AS allCount,state,syncInterval, lastSyncTime, lastSyncError, lastErrorCount FROM FEED LEFT JOIN (SELECT uid AS article_uid, feedId, COUNT(1) AS UNREAD_SUM FROM article WHERE readStatus != 2 GROUP BY uid,feedId) A ON FEED.uid = A.article_uid AND FEED.id = A.feedId LEFT JOIN (SELECT uid AS article_uid, feedId, COUNT(1) AS STAR_SUM FROM article WHERE starStatus = 4 GROUP BY uid,feedId) B ON FEED.uid = B.article_uid AND FEED.id = B.feedId LEFT JOIN (SELECT uid AS article_uid, feedId, COUNT(1) AS ALL_SUM FROM article GROUP BY uid,feedId) C ON FEED.uid = c.article_uid AND FEED.id = C.feedId");
+        }
+    };
+    private static final Migration MIGRATION_4_5 = new Migration(4, 5) {
+        @Override
+        public void migrate(SupportSQLiteDatabase database) {
+            database.execSQL("ALTER TABLE Article ADD feedUrl TEXT");
+        }
+    };
+    private static final Migration MIGRATION_5_6 = new Migration(5, 6) {
+        @Override
+        public void migrate(SupportSQLiteDatabase database) {
+            database.execSQL("update Feed set syncInterval = 0 where syncInterval = -1");
         }
     };
     // 设置爬取时间可以为null，但是实际验证是不允许为null的
@@ -91,6 +102,8 @@ public abstract class CoreDB extends RoomDatabase {
                             .addMigrations(MIGRATION_1_2)
                             .addMigrations(MIGRATION_2_3)
                             .addMigrations(MIGRATION_3_4)
+                            .addMigrations(MIGRATION_4_5)
+                            .addMigrations(MIGRATION_5_6)
                             .addMigrations()
                             .allowMainThreadQueries()
                             .build();
@@ -139,6 +152,40 @@ public abstract class CoreDB extends RoomDatabase {
                         "        UPDATE FEED SET STARCOUNT = STARCOUNT + 1 WHERE ID IS new.FEEDID AND UID IS new.UID;" +
                         "      END";
         db.execSQL(updateFeedStarCountWhenInsertArticle);
+
+        String updateArticleFeedUrlWhenInsertArticle =
+                "CREATE TEMP TRIGGER IF NOT EXISTS updateArticleFeedUrlWhenInsertArticle" +
+                        " AFTER INSERT ON ARTICLE" +
+                        " WHEN (new.feedUrl = null)" +
+                        "      BEGIN" +
+                        "        UPDATE ARTICLE SET FEEDURL = (select FEEDURL from FEED where ID = new.FEEDID AND UID IS new.UID) WHERE ID IS new.ID AND UID IS new.UID;" +
+                        "      END";
+        db.execSQL(updateArticleFeedUrlWhenInsertArticle);
+        // 当 feedUrl 更新时，自动更新 feedtitle 字段
+        String updateArticleFeedUrlWhenWhenUpdateFeed =
+                "CREATE TEMP TRIGGER IF NOT EXISTS updateArticleFeedUrlWhenWhenUpdateFeed" +
+                        " AFTER UPDATE OF FEEDURL ON FEED" +
+                        "  BEGIN" +
+                        "   UPDATE Article SET feedUrl = new.feedUrl WHERE FEEDID IS new.ID AND UID IS new.UID;" +
+                        "  END";
+        db.execSQL(updateArticleFeedUrlWhenWhenUpdateFeed);
+
+        // 当插入新文章时，自动给 feedTitle 字段赋值
+        String updateArticleFeedTitleWhenInsertArticle =
+                "CREATE TEMP TRIGGER IF NOT EXISTS updateArticleFeedTitleWhenInsertArticle" +
+                        " AFTER INSERT ON ARTICLE" +
+                        "  BEGIN" +
+                        "   UPDATE ARTICLE SET FEEDTITLE = (select TITLE from FEED where ID = new.FEEDID AND UID IS new.UID) WHERE ID IS new.ID AND UID IS new.UID;" +
+                        "  END";
+        db.execSQL(updateArticleFeedTitleWhenInsertArticle);
+        // 当 feedTitle 更新时，自动更新 feedtitle 字段
+        String updateArticleFeedTitleWhenUpdateFeed =
+                "CREATE TEMP TRIGGER IF NOT EXISTS updateArticleFeedTitleWhenUpdateFeed" +
+                        " AFTER UPDATE OF TITLE ON FEED" +
+                        "  BEGIN" +
+                        "   UPDATE Article SET feedTitle = new.title WHERE FEEDID IS new.ID AND UID IS new.UID;" +
+                        "  END";
+        db.execSQL(updateArticleFeedTitleWhenUpdateFeed);
 
         //【当删除文章时】
         String updateFeedAllCountWhenDeleteArticle =
@@ -241,9 +288,10 @@ public abstract class CoreDB extends RoomDatabase {
         String updateTagAllCountWhenInsertArticle =
                 "CREATE TEMP TRIGGER IF NOT EXISTS updateTagAllCountWhenInsertArticle" +
                         " AFTER UPDATE OF ALLCOUNT ON FEED" +
-                        " WHEN (new.ALLCOUNT = old.ALLCOUNT + 1)" +
+                        // " WHEN (new.ALLCOUNT = old.ALLCOUNT + 1)" +
+                        " WHEN (new.ALLCOUNT > old.ALLCOUNT)" +
                         "   BEGIN" +
-                        "        UPDATE CATEGORY SET ALLCOUNT = ALLCOUNT + 1" +
+                        "        UPDATE CATEGORY SET ALLCOUNT = ALLCOUNT + (new.ALLCOUNT - old.ALLCOUNT)" +
                         "        WHERE ID IN (select CATEGORYID from FEEDCATEGORY where FEEDID = old.ID AND UID IS old.UID);" +
                         "   END";
         db.execSQL(updateTagAllCountWhenInsertArticle);
@@ -251,9 +299,11 @@ public abstract class CoreDB extends RoomDatabase {
         String updateTagAllCountWhenDeleteArticle =
                 "CREATE TEMP TRIGGER IF NOT EXISTS updateTagAllCountWhenDeleteArticle" +
                         " AFTER UPDATE OF ALLCOUNT ON FEED" +
-                        " WHEN (new.ALLCOUNT = old.ALLCOUNT - 1)" +
+                        // " WHEN (new.ALLCOUNT = old.ALLCOUNT - 1)" +
+                        " WHEN (new.ALLCOUNT < old.ALLCOUNT)" +
                         "      BEGIN" +
-                        "        UPDATE CATEGORY SET ALLCOUNT = ALLCOUNT - 1" +
+                        // "        UPDATE CATEGORY SET ALLCOUNT = ALLCOUNT - 1" +
+                        "        UPDATE CATEGORY SET ALLCOUNT = ALLCOUNT - (old.ALLCOUNT - new.ALLCOUNT)" +
                         "        WHERE ID IN (select CATEGORYID from FEEDCATEGORY where FEEDID = old.ID AND UID IS old.UID);" +
                         "      END";
         db.execSQL(updateTagAllCountWhenDeleteArticle);
@@ -360,7 +410,6 @@ public abstract class CoreDB extends RoomDatabase {
                         "        DELETE FROM Scope WHERE UID IS old.UID AND type IS 'category' AND target IS old.id;" +
                         "    END";
         db.execSQL(onCascadeWhenDeleteCategory);
-
         String onCascadeWhenDeleteFeed =
                 "CREATE TEMP TRIGGER IF NOT EXISTS onCascadeWhenDeleteFeed" +
                         "  AFTER DELETE ON FEED" +
@@ -370,22 +419,63 @@ public abstract class CoreDB extends RoomDatabase {
         db.execSQL(onCascadeWhenDeleteFeed);
 
 
-        // 当插入新文章时，自动给 feedtitle 字段赋值
-        String updateArticleFeedTitleWhenInsertArticle =
-                "CREATE TEMP TRIGGER IF NOT EXISTS updateArticleFeedTitleWhenInsertArticle" +
-                        " AFTER INSERT ON ARTICLE" +
-                        "  BEGIN" +
-                        "   UPDATE ARTICLE SET FEEDTITLE = (select TITLE from FEED where ID = new.FEEDID AND UID IS new.UID) WHERE ID IS new.ID AND UID IS new.UID;" +
-                        "  END";
-        db.execSQL(updateArticleFeedTitleWhenInsertArticle);
-        // 当 feed.title 更新时，自动更新 feedtitle 字段
-        String updateArticleFeedTitleWhenUpdateFeed =
-                "CREATE TEMP TRIGGER IF NOT EXISTS updateArticleFeedTitleWhenUpdateFeed" +
-                        " AFTER UPDATE OF TITLE ON FEED" +
-                        "  BEGIN" +
-                        "   UPDATE Article SET feedTitle = new.title WHERE FEEDID IS new.ID AND UID IS new.UID;" +
-                        "  END";
-        db.execSQL(updateArticleFeedTitleWhenUpdateFeed);
+        // 当 Feed 从 Category 中移出时，更新计数
+        String updateTagUnreadCountWhenUngroup =
+                "CREATE TEMP TRIGGER IF NOT EXISTS updateTagUnreadCountWhenUngroup" +
+                        " AFTER DELETE ON FEEDCATEGORY" +
+                        "      BEGIN" +
+                        "        UPDATE CATEGORY" +
+                        "        SET UNREADCOUNT = UNREADCOUNT - (select UNREADCOUNT from FEED where ID = old.FEEDID AND UID IS old.UID)" +
+                        "        WHERE ID = old.CATEGORYID AND UID IS old.UID;" +
+                        "      END";
+        db.execSQL(updateTagUnreadCountWhenUngroup);
+        String updateTagStarCountWhenUngroup =
+                "CREATE TEMP TRIGGER IF NOT EXISTS updateTagStarCountWhenUngroup" +
+                        " AFTER DELETE ON FEEDCATEGORY" +
+                        "      BEGIN" +
+                        "        UPDATE CATEGORY" +
+                        "        SET STARCOUNT = STARCOUNT - (select STARCOUNT from FEED where ID = old.FEEDID AND UID IS old.UID)" +
+                        "        WHERE ID = old.CATEGORYID AND UID IS old.UID;" +
+                        "      END";
+        db.execSQL(updateTagStarCountWhenUngroup);
+        String updateTagAllCountWhenUngroup =
+                "CREATE TEMP TRIGGER IF NOT EXISTS updateTagAllCountWhenUngroup" +
+                        " AFTER DELETE ON FEEDCATEGORY" +
+                        "      BEGIN" +
+                        "        UPDATE CATEGORY" +
+                        "        SET ALLCOUNT = ALLCOUNT - (select ALLCOUNT from FEED where ID = old.FEEDID AND UID IS old.UID)" +
+                        "        WHERE ID = old.CATEGORYID AND UID IS old.UID;" +
+                        "      END";
+        db.execSQL(updateTagAllCountWhenUngroup);
+
+        // 当 Feed 从 Category 中移入时，更新计数
+        String updateTagUnreadCountWhenMakeGroup =
+                "CREATE TEMP TRIGGER IF NOT EXISTS updateTagUnreadCountWhenMakeGroup" +
+                        " AFTER INSERT ON FEEDCATEGORY" +
+                        "      BEGIN" +
+                        "        UPDATE CATEGORY" +
+                        "        SET UNREADCOUNT = UNREADCOUNT + (select UNREADCOUNT from FEED where ID = new.FEEDID AND UID IS new.UID)" +
+                        "        WHERE ID = new.CATEGORYID AND UID IS new.UID;" +
+                        "      END";
+        db.execSQL(updateTagUnreadCountWhenMakeGroup);
+        String updateTagStarCountWhenMakeGroup =
+                "CREATE TEMP TRIGGER IF NOT EXISTS updateTagStarCountWhenMakeGroup" +
+                        " AFTER INSERT ON FEEDCATEGORY" +
+                        "      BEGIN" +
+                        "        UPDATE CATEGORY" +
+                        "        SET STARCOUNT = STARCOUNT + (select STARCOUNT from FEED where ID = new.FEEDID AND UID IS new.UID)" +
+                        "        WHERE ID = new.CATEGORYID AND UID IS new.UID;" +
+                        "      END";
+        db.execSQL(updateTagStarCountWhenMakeGroup);
+        String updateTagAllCountWhenMakeGroup =
+                "CREATE TEMP TRIGGER IF NOT EXISTS updateTagAllCountWhenMakeGroup" +
+                        " AFTER INSERT ON FEEDCATEGORY" +
+                        "      BEGIN" +
+                        "        UPDATE CATEGORY" +
+                        "        SET ALLCOUNT = ALLCOUNT + (select ALLCOUNT from FEED where ID = new.FEEDID AND UID IS new.UID)" +
+                        "        WHERE ID = new.CATEGORYID AND UID IS new.UID;" +
+                        "      END";
+        db.execSQL(updateTagAllCountWhenMakeGroup);
 
         // TODO: 2021/2/10 当订阅源删除时，自动删除关联的feedCategory记录
         // TODO: 2021/2/10 当分类删除时，自动删除关联的feedCategory记录

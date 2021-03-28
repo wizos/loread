@@ -67,27 +67,35 @@ public interface TriggerRuleDao {
     // @Query("SELECT * FROM Scope WHERE uid = :uid AND type = 'feed' AND target = :target")
     // List<TriggerRule> getFeedRules(String uid, String target);
 
+    @Transaction
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     Long insertTarget(Scope target);
 
+    @Transaction
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     List<Long> insertTargets(Scope... targets);
 
+    @Transaction
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     List<Long> insertTargets(List<Scope> targets);
 
+    @Transaction
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     List<Long> insertConditions(Condition... conditions);
 
+    @Transaction
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     List<Long> insertConditions(List<Condition> conditions);
 
+    @Transaction
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     List<Long> insertActions(Action... actions);
 
+    @Transaction
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     List<Long> insertActions(List<Action> actions);
 
+    @Transaction
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     List<Long> insertActions(Set<Action> actions);
 

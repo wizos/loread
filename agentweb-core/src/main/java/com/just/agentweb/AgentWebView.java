@@ -524,4 +524,14 @@ public class AgentWebView extends LollipopFixedWebView {
             setAccessibilityEnabled(mIsAccessibilityEnabledOriginal);
         }
     }
+
+
+
+    /**
+     * Webview 后台播放音视频实现
+     */
+    @Override
+    protected void onWindowVisibilityChanged(int visibility) {
+        super.onWindowVisibilityChanged(View.VISIBLE);
+    }
 }

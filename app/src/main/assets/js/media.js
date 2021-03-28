@@ -5,6 +5,8 @@ $(document).ready(function(e) {
     handleFrame();
     handleEmbed();
     handleTable();
+    $("section, img").removeAttr("style");
+
     hljs.initHighlightingOnLoad();
     MathJax = {
         tex: {inlineMath: [['\\$', '\\$'], ['\\(', '\\)']]},
@@ -26,14 +28,15 @@ function handleEvent() {
     window.addEventListener('message',function(e) {
         var data = e.data;
         var event = data.event;
-        console.log("收到子 iframe 的信息：" + event + "，id: " + data.id);
+        //console.log("收到子 iframe 的信息：" + event + "，id: " + data.id);
         if (event === 'audio') {
             console.log(" 音频：" + "src：" + data.src + "; id：" + data.id);
             ArticleBridge.foundAudio(data.src, data.duration);
         } else if (event === 'video') {
-            console.log("video 变化：" + "宽:" + data.width + "px; 高:" + data.height + "px; src：" + data.src + "；标题：" + data.title);
+            //console.log("video 变化：" + "宽:" + data.width + "px; 高:" + data.height + "px; src：" + data.src + "；标题：" + data.title);
             var frame = document.getElementById(data.id);
             $(frame).css("height", (data.height / data.width * frame.clientWidth));
+            $(frame).css("pointer-events", "auto");
             ArticleBridge.foundVideo(data.src, data.duration);
         }
 /*
@@ -68,6 +71,7 @@ function handleImage() {
         }
 
         image.attr('id', hashCode(originalUrl.replace(/^https*:\/\/.*?\//i, "")));
+        image.removeAttr("style");
     });
 
     $('img').click(function(event) {
@@ -101,7 +105,7 @@ function handleImage() {
         load: function(el) {
             ArticleBridge.readImage(articleId, el.getAttribute('id'), el.getAttribute('original-src'));
         },
-        rootMargin: '1080px 0px'
+        rootMargin: '540px 0px'
     }).observe();
 }
 
@@ -156,17 +160,13 @@ function handleFrame() {
             el.name = el.id;
             var frame = $(el);
             frame.wrap('<div class="iframe_wrap"></div>');
-
-            if(el.src.indexOf('youtube.com') != -1 || el.src.indexOf('youtube.com') != -1){
-                frame.wrap('<div class="plyr__video-embed"></div>');
-                new Plyr(frame.parent()[0], PlyrConfig);
-            }
-
             frame.removeAttr("style");
             frame.css("pointer-events", "none");
             frame.parent().click(function(event) {
-                ArticleBridge.openLink(frame.attr("src"));
-                event.preventDefault();
+                if (!loadOnInner(frame.attr('src'))) {
+                    ArticleBridge.openLink(frame.attr("src"));
+                    event.preventDefault();
+                }
             });
 
             // 当iframe加载完毕后，根据src来判断是否需要关闭新窗口打开
@@ -228,6 +228,7 @@ function qqVideoRemoveAd(el) {
             var videoHtml = '<video controls src="' + vurl + '" poster="https://puui.qpic.cn/qqvideo_ori/0/' + vids + '_496_280/0"></video>';
             var videoNode = parseDom(videoHtml);
             replaceNode(videoNode, el);
+            new Plyr(videoNode, PlyrConfig);
         },
         error: function() {
             el.src = el.src.replace('v.qq.com/iframe/player.html', 'v.qq.com/txp/iframe/player.html');
@@ -240,7 +241,7 @@ function loadOnInner(url) {
     if (isEmpty(url)) {
         return false;
     }
-    var flags = ["anchor.fm", "ixigua.com","music.163.com/outchain/player", "player.bilibili.com/player.html", "bilibili.com/blackboard/html5mobileplayer.html", "player.youku.com", "open.iqiyi.com", "letv.com", "sohu.com", "fpie1.com/#/video", "fpie2.com/#/video", "share.polyv.net", "www.google.com/maps/embed", "youtube.com/embed", "vimeo.com"];
+    var flags = ["anchor.fm", "ixigua.com","music.163.com/outchain/player", "player.bilibili.com/player.html", "bilibili.com/blackboard/html5mobileplayer.html", "player.youku.com", "open.iqiyi.com", "letv.com", "sohu.com", "v.qq.com", "fpie1.com/#/video", "fpie2.com/#/video", "share.polyv.net", "www.google.com/maps/embed", "youtube.com/embed", "vimeo.com"];
     for (var i = 0; i < flags.length; i++) {
         if (url.indexOf(flags[i]) != -1) {
             return true;

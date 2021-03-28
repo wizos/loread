@@ -1,6 +1,7 @@
 package me.wizos.loread.network.api;
 
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.text.TextUtils;
 import android.util.ArrayMap;
 
@@ -8,6 +9,12 @@ import androidx.collection.ArraySet;
 
 import com.elvishew.xlog.XLog;
 
+import org.jetbrains.annotations.NotNull;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -28,12 +35,21 @@ import me.wizos.loread.db.CoreDB;
 import me.wizos.loread.db.Feed;
 import me.wizos.loread.db.FeedCategory;
 import me.wizos.loread.extractor.Distill;
+import me.wizos.loread.network.HttpClientManager;
 import me.wizos.loread.network.callback.CallbackX;
 import me.wizos.loread.utils.ArticleUtils;
 import me.wizos.loread.utils.BackupUtils;
 import me.wizos.loread.utils.EncryptUtils;
 import me.wizos.loread.utils.FileUtils;
+import me.wizos.loread.utils.HttpCall;
+import me.wizos.loread.utils.PagingUtils;
 import me.wizos.loread.utils.StringUtils;
+import me.wizos.loread.utils.UriUtils;
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.Request;
+import okhttp3.Response;
+import okhttp3.ResponseBody;
 
 /**
  * Created by Wizos on 2019/2/10.
@@ -47,6 +63,8 @@ public abstract class BaseApi {
 
     // NOTE: 2021/2/10 要禁止修改特殊分类（例如全部，未分类），但由于数据库中并未实际存在该分类，所以当下无影响
     abstract public void renameCategory(String categoryId, String targetName, CallbackX cb);
+
+    abstract public void deleteCategory(String categoryId, CallbackX cb);
 
     abstract public void editFeedCategories(List<CategoryItem> lastCategoryItems, EditFeed editFeed, CallbackX cb);
 
@@ -168,6 +186,9 @@ public abstract class BaseApi {
 
 
     ArraySet<String> handleUnreadRefs(List<String> idList) {
+        if(idList == null || idList.size() == 0){
+            return new ArraySet<>();
+        }
         String uid = App.i().getUser().getId();
 
         // 第1步，遍历数据量大的一方A，将其比对项目放入Map中
@@ -206,14 +227,30 @@ public abstract class BaseApi {
             }
         }
 
-        CoreDB.i().articleDao().markArticlesUnread(uid, needMarkUnReadIds);
-        CoreDB.i().articleDao().markArticlesRead(uid, needMarkReadIds);
+        PagingUtils.processing(needMarkUnReadIds, 100, new PagingUtils.PagingListener<String>() {
+            @Override
+            public void onPage(List<String> childList) {
+                CoreDB.i().articleDao().markArticlesUnread(uid, childList);
+                // XLog.i("处理当前页：" + childList);
+            }
+        });
+
+        PagingUtils.processing(needMarkReadIds, 100, new PagingUtils.PagingListener<String>() {
+            @Override
+            public void onPage(List<String> childList) {
+                CoreDB.i().articleDao().markArticlesRead(uid, childList);
+                // XLog.i("处理当前页：" + childList);
+            }
+        });
         XLog.d("处理未读资源：" + ids.size() + "，需要拉取数量：" + needRequestIds.size() + "，需要标记未读：" + needMarkUnReadIds.size() + "，需要标记已读：" + needMarkReadIds.size());
         return needRequestIds;
     }
 
 
     ArraySet<String> handleStaredRefs(List<String> idList) {
+        if(idList == null || idList.size() == 0){
+            return new ArraySet<>();
+        }
         String uid = App.i().getUser().getId();
 
         // 第1步，遍历数据量大的一方A，将其比对项目放入Map中
@@ -244,8 +281,9 @@ public abstract class BaseApi {
             }
         }
 
-        CoreDB.i().articleDao().markArticlesStar(uid, needMarkStarIds);
-        CoreDB.i().articleDao().markArticlesUnStar(uid, needMarkUnStarIds);
+        PagingUtils.processing(needMarkStarIds, 100, childList -> CoreDB.i().articleDao().markArticlesStar(uid, childList));
+        PagingUtils.processing(needMarkUnStarIds, 100, childList -> CoreDB.i().articleDao().markArticlesUnStar(uid, childList));
+
         XLog.d("处理加星资源：" + ids.size() + "，需要拉取数量：" + needRequestIds.size() + "，需要标记加星：" + needMarkStarIds.size() + "，需要标记无星：" + needMarkUnStarIds.size());
         return needRequestIds;
     }
@@ -285,6 +323,7 @@ public abstract class BaseApi {
         long lastStarMaskTimeMillis = CoreDB.i().articleDao().getLastStarTimeMillis(uid);
 
         long lastMarkTimeMillis = Math.max(lastReadMarkTimeMillis, lastStarMaskTimeMillis);
+        lastMarkTimeMillis = Math.max(lastMarkTimeMillis, App.i().getLastShowTimeMillis());
         // long lastCrawTimeMillis = CoreDB.i().articleDao().getLastCrawlTimeMillis(uid);
         CoreDB.i().articleDao().updateIdleCrawlDateTimes(uid, lastMarkTimeMillis);
     }
@@ -306,8 +345,7 @@ public abstract class BaseApi {
         for (Article article : boxReadArts) {
             article.setSaveStatus(App.STATUS_IS_FILED);
             String dir = SaveDirectory.i().getSaveDir(article.getFeedId(), article.getId()) + "/";
-            //XLog.e("保存目录：" + dir);
-            //FileUtil.saveArticle(App.i().getUserBoxPath() + dir, article);
+            //XLog.d("保存目录：" + dir);
             ArticleUtils.saveArticle(App.i().getUserBoxPath() + dir, article);
         }
         CoreDB.i().articleDao().update(boxReadArts);
@@ -317,29 +355,18 @@ public abstract class BaseApi {
         for (Article article : storeReadArts) {
             article.setSaveStatus(App.STATUS_IS_FILED);
             String dir = "/" + SaveDirectory.i().getSaveDir(article.getFeedId(), article.getId()) + "/";
-            //XLog.e("保存目录：" + dir);
-            //FileUtil.saveArticle(App.i().getUserStorePath() + dir, article);
             ArticleUtils.saveArticle(App.i().getUserStorePath() + dir, article);
         }
         CoreDB.i().articleDao().update(storeReadArts);
 
-        List<Article> expiredArticles = CoreDB.i().articleDao().getReadedUnstarLtTime(uid, time);
+        List<String> expiredArticles = CoreDB.i().articleDao().getReadedUnstarIdsLtTime(uid, time);
         ArrayList<String> idListMD5 = new ArrayList<>(expiredArticles.size());
-        for (Article article : expiredArticles) {
-            idListMD5.add(EncryptUtils.MD5(article.getId()));
+        for (String articleId : expiredArticles) {
+            idListMD5.add(EncryptUtils.MD5(articleId));
         }
-        XLog.i("清除A：" + time + "--" + expiredArticles);
+        // XLog.d("清除：" + time + "--" + expiredArticles);
         FileUtils.deleteHtmlDirList(idListMD5);
-        CoreDB.i().articleDao().delete(expiredArticles);
-
-        // List<String> expiredArticles = CoreDB.i().articleDao().getReadedUnstarIdsLtTime(uid, time);
-        // ArrayList<String> idListMD5 = new ArrayList<>(expiredArticles.size());
-        // for (String articleId : expiredArticles) {
-        //     idListMD5.add(EncryptUtils.MD5(articleId));
-        // }
-        // // XLog.i("清除A：" + time + "--" + expiredArticles);
-        // FileUtils.deleteHtmlDirList(idListMD5);
-        // CoreDB.i().articleDao().delete(uid, expiredArticles);
+        PagingUtils.processing(expiredArticles, 100, childList -> CoreDB.i().articleDao().delete(uid, childList));
     }
 
     void fetchReadability(String uid, long syncTimeMillis) {
@@ -363,7 +390,7 @@ public abstract class BaseApi {
                 url = article.getLink();
             }
 
-            Distill distill = new Distill(url, keyword, new Distill.Listener() {
+            Distill distill = new Distill(url, article.getLink(), keyword, new Distill.Listener() {
                 @Override
                 public void onResponse(String content) {
                     article.updateContent(content);
@@ -378,4 +405,54 @@ public abstract class BaseApi {
             distill.getContent();
         }
     }
+
+    void fetchIcon(String uid) {
+        List<Feed> feeds = CoreDB.i().feedDao().getFeedsByNoIconUrl(uid);
+        for(Feed feed: feeds){
+            // XLog.i("需要抓取 Icon 的 Feed：" + feed.getTitle() + " => " + feed.getFeedUrl());
+            Request request = new Request.Builder().url(feed.getHtmlUrl()).build();
+            Call call = HttpClientManager.i().simpleClient().newCall(request);
+            call.enqueue(new Callback() {
+                @Override
+                public void onFailure(@NotNull Call call, @NotNull IOException e) {
+                }
+
+                @Override
+                public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
+                    if(!response.isSuccessful()){
+                        return;
+                    }
+                    ResponseBody responseBody = response.body();
+                    if(responseBody == null){
+                        return;
+                    }
+                    Document document = Jsoup.parse(responseBody.string(), feed.getHtmlUrl());
+                    Element iconEle = document.selectFirst("[rel='shortcut icon']"); // [rel='shortcut icon'], [rel*=icon]
+                    if(iconEle == null){
+                        iconEle = document.selectFirst("[rel='icon']");
+                        if(iconEle == null){
+                            iconEle = document.selectFirst("[rel*=icon]");
+                        }
+                    }
+
+                    if(iconEle !=null){
+                        feed.setIconUrl(iconEle.attr("abs:href"));
+                    }else {
+                        AsyncTask.THREAD_POOL_EXECUTOR.execute(new Runnable() {
+                            @Override
+                            public void run() {
+                                if(HttpCall.i().valid(UriUtils.getFaviconUrl(feed.getHtmlUrl()))){
+                                    feed.setIconUrl(UriUtils.getFaviconUrl(feed.getHtmlUrl()));
+                                    CoreDB.i().feedDao().update(feed);
+                                }
+                            }
+                        });
+
+                    }
+                    CoreDB.i().feedDao().update(feed);
+                }
+            });
+        }
+    }
+
 }

@@ -19,6 +19,7 @@ import com.hjq.toast.ToastUtils;
 import com.jeremyliao.liveeventbus.LiveEventBus;
 import com.lxj.xpopup.XPopup;
 import com.lxj.xpopup.impl.LoadingPopupView;
+import com.umeng.analytics.MobclickAgent;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -154,14 +155,16 @@ public class ProviderActivity extends BaseActivity {
     public void loginTinyRSS(View view) {
         // Intent intent = new Intent(this, LoginTinyRSSActivity.class);
         Intent intent = new Intent(this, LoginActivity.class);
-        intent.setAction(Contract.PROVIDER_TINYRSS);
+        // intent.setAction(Contract.PROVIDER_TINYRSS);
+        intent.putExtra(Contract.PROVIDER, Contract.PROVIDER_TINYRSS);
         startActivityForResult(intent, LOGIN_CODE);
         overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
     }
 
     public void loginFever(View view) {
         Intent intent = new Intent(this, LoginActivity.class);
-        intent.setAction(Contract.PROVIDER_FEVER);
+        // intent.setAction(Contract.PROVIDER_FEVER);
+        intent.putExtra(Contract.PROVIDER, Contract.PROVIDER_FEVER);
         startActivityForResult(intent, LOGIN_CODE);
         overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
     }
@@ -177,6 +180,7 @@ public class ProviderActivity extends BaseActivity {
         }
 
         CorePref.i().globalPref().putString(Contract.UID, user.getId());
+        MobclickAgent.onProfileSignIn(user.getSource(), user.getUserId());
         App.i().restartApp();
     }
 
@@ -206,7 +210,7 @@ public class ProviderActivity extends BaseActivity {
                         App.i().setApi(api);
                         CoreDB.i().userDao().insert(user);
                         dialog.dismiss();
-                        XLog.e(token);
+                        MobclickAgent.onProfileSignIn(user.getSource(), user.getId());
                         App.i().restartApp();
                         LiveEventBus.get(SyncWorker.SYNC_TASK_START).post(true);
                     }

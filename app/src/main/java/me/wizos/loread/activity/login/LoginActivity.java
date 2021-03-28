@@ -25,18 +25,23 @@ import me.wizos.loread.R;
 import me.wizos.loread.activity.BaseActivity;
 import me.wizos.loread.activity.ProviderActivity;
 import me.wizos.loread.activity.viewmodel.FeverUserViewModel;
-import me.wizos.loread.activity.viewmodel.InoReaderUserViewModel;
 import me.wizos.loread.activity.viewmodel.LoginViewModel;
 import me.wizos.loread.activity.viewmodel.TinyRSSUserViewModel;
-import me.wizos.loread.network.api.InoReaderApi;
 import me.wizos.loread.view.colorful.Colorful;
 
 public class LoginActivity extends BaseActivity {
     private LoginViewModel loginViewModel;
+    private String provider;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        Bundle bundle;
+        if (savedInstanceState != null) {
+            bundle = savedInstanceState;
+        } else {
+            bundle = getIntent().getExtras();
+        }
         setContentView(R.layout.activity_login);
         Toolbar mToolbar = findViewById(R.id.login_toolbar);
         setSupportActionBar(mToolbar);
@@ -61,18 +66,21 @@ public class LoginActivity extends BaseActivity {
         //     }
         // });
 
-        String provider = getIntent().getAction();
-        if(Contract.PROVIDER_INOREADER.equals(provider)){
-            loginViewModel = new ViewModelProvider(this).get(InoReaderUserViewModel.class);
-            baseUrlEditText.setText(InoReaderApi.OFFICIAL_BASE_URL);
-        }else if(Contract.PROVIDER_TINYRSS.equals(provider)){
+        if(bundle == null){
+            finish();
+            return;
+        }
+        provider = bundle.getString(Contract.PROVIDER);
+        if(Contract.PROVIDER_TINYRSS.equals(provider)){
             loginViewModel = new ViewModelProvider(this).get(TinyRSSUserViewModel.class);
             TextView noteView = findViewById(R.id.login_suggestion);
             noteView.setVisibility(View.VISIBLE);
         }else if(Contract.PROVIDER_FEVER.equals(provider)){
             loginViewModel = new ViewModelProvider(this).get(FeverUserViewModel.class);
         }else {
+            // loginViewModel = new ViewModelProvider(this).get(FeverUserViewModel.class);
             finish();
+            return;
         }
 
         TextWatcher afterTextChangedListener = new TextWatcher() {
@@ -178,6 +186,13 @@ public class LoginActivity extends BaseActivity {
                 }
             }
         });
+    }
+
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        outState.putString(Contract.PROVIDER, provider);
+        super.onSaveInstanceState(outState);
     }
     public Colorful.Builder buildColorful(Colorful.Builder mColorfulBuilder) {
         return mColorfulBuilder;

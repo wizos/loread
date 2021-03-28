@@ -7,7 +7,8 @@ public enum FileTypeSVG {
     /**
      * svg，还有一种是xml文件头
      */
-    SVG("3C73766720");
+    SVG("3C73766720"),
+    XML("3C3F786D6C");
 
     private String value = "";
 

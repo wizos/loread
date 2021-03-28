@@ -136,7 +136,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_marginEnd="10dp"
-                    android:onClick="copyHtmlUrl"
+                    android:onClick="openHtmlUrl"
                     android:maxLines="1"
                     android:ellipsize="end"
                     android:textSize="14sp"
@@ -173,7 +173,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_marginEnd="10dp"
-                    android:onClick="copyFeedUrl"
+                    android:onClick="openFeedUrl"
                     android:maxLines="1"
                     android:ellipsize="end"
                     android:textSize="14sp"
@@ -265,41 +265,20 @@
                         tools:text="订阅源的标题作为目录" />
                 </LinearLayout>
 
-
-                <!--<TextView-->
-                <!--    style="@style/SettingItemHeader"-->
-                <!--    android:text="@string/global_rule" />-->
-                <!--<androidx.recyclerview.widget.RecyclerView-->
-                <!--    android:layout_width="match_parent"-->
-                <!--    android:layout_height="wrap_content"-->
-                <!--    tools:listitem="@layout/item_trigger_rule_view"-->
-                <!--    tools:itemCount="3"/>-->
-
-                <!--<TextView-->
-                <!--    android:visibility="gone"-->
-                <!--    tools:visibility="visible"-->
-                <!--    style="@style/SettingItemHeader"-->
-                <!--    android:text="@string/category_rule" />-->
-
-                <!--<androidx.recyclerview.widget.RecyclerView-->
-                <!--    android:id="@+id/feed_category_action_view_recycler_view"-->
-                <!--    android:layout_width="match_parent"-->
-                <!--    android:layout_height="wrap_content"-->
-                <!--    tools:listitem="@layout/item_trigger_rule_view"-->
-                <!--    tools:itemCount="2"/>-->
-
-
-                <!--<pokercc.android.expandablerecyclerview.StickyHeader-->
-                <!--    android:layout_width="match_parent"-->
-                <!--    android:layout_height="match_parent">-->
-                <!--    <pokercc.android.expandablerecyclerview.ExpandableRecyclerView-->
-                <!--        android:id="@+id/feed_rules_recycler_view"-->
-                <!--        android:layout_width="match_parent"-->
-                <!--        android:layout_height="match_parent"-->
-                <!--        tools:listitem="@layout/item_trigger_rule_view"-->
-                <!--        tools:itemCount="3"-->
-                <!--        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"/>-->
-                <!--</pokercc.android.expandablerecyclerview.StickyHeader>-->
+                <LinearLayout
+                    android:id="@+id/feed_auto_sync_frequency"
+                    tools:visibility="visible"
+                    android:visibility="gone"
+                    android:background="?android:attr/selectableItemBackground"
+                    style="@style/SettingItem">
+                    <TextView
+                        style="@style/SettingItemTitle2"
+                        android:text="@string/sync_frequency" />
+                    <TextView
+                        android:id="@+id/feed_sync_frequency_summary"
+                        style="@style/SettingItemSummary"
+                        tools:text="30 分钟" />
+                </LinearLayout>
 
                 <TextView
                     android:id="@+id/feed_view_rules"
@@ -307,23 +286,12 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="10dp"
                     android:layout_marginBottom="10dp"
-                    android:padding="10dp"
+                    android:padding="20dp"
                     android:textSize="14sp"
                     android:textColor="@color/bluePrimary"
                     android:gravity="center"
-                    android:text="@string/view_rule"/>
-
-                <!--<TextView-->
-                <!--    android:id="@+id/feed_create_rule"-->
-                <!--    android:layout_width="match_parent"-->
-                <!--    android:layout_height="wrap_content"-->
-                <!--    android:layout_marginTop="5dp"-->
-                <!--    android:layout_marginBottom="5dp"-->
-                <!--    android:padding="5dp"-->
-                <!--    android:textSize="14sp"-->
-                <!--    android:textColor="@color/bluePrimary"-->
-                <!--    android:gravity="center"-->
-                <!--    android:text="@string/create_rule"/>-->
+                    android:text="@string/view_rule"
+                    android:background="?android:attr/selectableItemBackground"/>
 
                 <androidx.appcompat.widget.AppCompatButton
                     android:layout_width="wrap_content"
@@ -342,7 +310,6 @@
                     app:bl_ripple_enable="true"
                     android:text="@string/unsubscribe"/>
             </LinearLayout>
-
         </LinearLayout>
 
     </androidx.core.widget.NestedScrollView>
@@ -350,14 +317,18 @@
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/feed_fab"
-        android:onClick="copyIconUrl"
+        android:onClick="openIconUrl"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_margin="@dimen/fab_margin"
-        android:background="@color/bluePrimary"
         android:padding="0dp"
+        android:scaleType="center"
         android:src="@drawable/logo"
+        android:background="@color/bluePrimary"
+        android:backgroundTint="@color/bluePrimary"
+        app:backgroundTint="@color/bluePrimary"
+        app:contentScrim="@color/bluePrimary"
         app:layout_anchor="@id/feed_app_bar"
         app:layout_anchorGravity="bottom|end"
-        app:srcCompat="@drawable/logo" />
+        />
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

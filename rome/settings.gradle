@@ -1,0 +1,6 @@
+rootProject.name = 'rome-parent'
+
+include ':rome'
+include ':rome-modules'
+include ':rome-opml'
+include ':rome-utils'

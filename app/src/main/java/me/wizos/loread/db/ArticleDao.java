@@ -62,18 +62,28 @@ public interface ArticleDao {
             "WHERE article.uid = :uid " +
             "AND Feed.id is NULL " )
     int getAllCountUnsubscribe(String uid);
-    // @Query("SELECT article.id FROM article " +
-    //         "LEFT JOIN FeedCategory ON (article.uid = FeedCategory.uid AND article.feedId = FeedCategory.feedId)" +
-    //         "LEFT JOIN ArticleTag ON (article.uid = ArticleTag.uid AND article.id = ArticleTag.articleId)" +
-    //         "WHERE article.uid = :uid " +
-    //         "AND article.crawlDate < :timeMillis " +
-    //         "AND ArticleTag.tagId is NULL " +
-    //         "AND FeedCategory.categoryId is NULL " +
-    //         "AND (article.starStatus = " + App.STATUS_STARED + " OR (article.starStatus = " + App.STATUS_UNSTAR +" AND article.starUpdated > :timeMillis) ) ")
-    // LiveData<List<String>> getStaredIdsByUncategory2(String uid, long timeMillis);
-    // @Query("SELECT * FROM article WHERE uid = :uid")
-    // List<Article> getAll(String uid);
 
+    @Query("SELECT article.* FROM article " +
+            "LEFT JOIN Feed ON (article.uid = feed.uid AND article.feedId = feed.id)" +
+            "WHERE article.uid = :uid " +
+            "AND feed.id is NULL ")
+    List<Article> getUnsubscribed(String uid);
+
+    @Query("SELECT article.* FROM article " +
+            "LEFT JOIN Feed ON (article.uid = feed.uid AND article.feedId = feed.id)" +
+            "WHERE article.uid = :uid " +
+            "AND article.feedTitle is NULL " +
+            "AND feed.id is NOT NULL ")
+    List<Article> getEmptyFeedTitle(String uid);
+
+
+    @Query("SELECT article.* FROM article " +
+            "LEFT JOIN Feed ON (article.uid = feed.uid AND article.feedId = feed.id)" +
+            "WHERE article.uid = :uid " +
+            "AND article.feedUrl is NULL " +
+            "AND feed.id is NOT NULL " +
+            "GROUP BY feed.id")
+    List<Article> getEmptyFeedUrl(String uid);
 
     @Query("SELECT * FROM article " +
             "WHERE uid = :uid " +
@@ -184,73 +194,53 @@ public interface ArticleDao {
     LiveData<List<String>> getStaredIdsByCategoryId2(String uid, String categoryId, String categoryTitle, long timeMillis);
 
     @Query("SELECT article.* FROM article " +
-            "LEFT JOIN FeedCategory ON (article.uid = FeedCategory.uid AND article.feedId = FeedCategory.feedId)" +
+            "LEFT JOIN Feed ON (article.uid = Feed.uid AND article.feedId = Feed.id)" +
             "WHERE article.uid = :uid " +
             "AND article.crawlDate < :timeMillis " +
-            "AND FeedCategory.categoryId is NULL " +
+            "AND Feed.id is NULL " +
             "ORDER BY crawlDate,pubDate DESC")
-    DataSource.Factory<Integer,Article> getAllByUncategory(String uid, long timeMillis);
+    DataSource.Factory<Integer,Article> getAllByUnsubscribed(String uid, long timeMillis);
     @Query("SELECT article.id FROM article " +
             "LEFT JOIN FeedCategory ON (article.uid = FeedCategory.uid AND article.feedId = FeedCategory.feedId)" +
             "WHERE article.uid = :uid " +
             "AND article.crawlDate < :timeMillis " +
             "AND FeedCategory.categoryId is NULL " +
             "ORDER BY crawlDate,pubDate DESC")
-    LiveData<List<String>> getAllIdsByUncategory(String uid, long timeMillis);
+    LiveData<List<String>> getAllIdsByUnsubscribed(String uid, long timeMillis);
 
     @Query("SELECT article.* FROM article " +
-            "LEFT JOIN FeedCategory ON (article.uid = FeedCategory.uid AND article.feedId = FeedCategory.feedId)" +
+            "LEFT JOIN Feed ON (article.uid = Feed.uid AND article.feedId = Feed.id)" +
             "WHERE article.uid = :uid " +
             "AND article.crawlDate < :timeMillis " +
-            "AND FeedCategory.categoryId is NULL " +
+            "AND Feed.id is NULL " +
             "AND (article.readStatus = " + App.STATUS_UNREAD  + " OR article.readStatus = " + App.STATUS_UNREADING + " OR (article.readStatus = " + App.STATUS_READED +" AND article.readUpdated > :timeMillis) ) " +
             "ORDER BY crawlDate,pubDate DESC")
-    DataSource.Factory<Integer,Article> getUnreadByUncategory(String uid, long timeMillis);
+    DataSource.Factory<Integer,Article> getUnreadByUnsubscribed(String uid, long timeMillis);
     @Query("SELECT article.id FROM article " +
-            "LEFT JOIN FeedCategory ON (article.uid = FeedCategory.uid AND article.feedId = FeedCategory.feedId)" +
+            "LEFT JOIN Feed ON (article.uid = Feed.uid AND article.feedId = Feed.id)" +
             "WHERE article.uid = :uid " +
             "AND article.crawlDate < :timeMillis " +
-            "AND FeedCategory.categoryId is NULL " +
+            "AND Feed.id is NULL " +
             "AND (article.readStatus = " + App.STATUS_UNREAD  + " OR article.readStatus = " + App.STATUS_UNREADING + " OR (article.readStatus = " + App.STATUS_READED +" AND article.readUpdated > :timeMillis) ) " +
             "ORDER BY crawlDate,pubDate DESC")
-    LiveData<List<String>> getUnreadIdsByUncategory(String uid, long timeMillis);
+    LiveData<List<String>> getUnreadIdsByUnsubscribed(String uid, long timeMillis);
 
     @Query("SELECT article.* FROM article " +
-            "LEFT JOIN FeedCategory ON (article.uid = FeedCategory.uid AND article.feedId = FeedCategory.feedId)" +
+            "LEFT JOIN Feed ON (article.uid = Feed.uid AND article.feedId = Feed.id)" +
             "WHERE article.uid = :uid " +
             "AND article.crawlDate < :timeMillis " +
-            "AND FeedCategory.categoryId is NULL " +
+            "AND Feed.id is NULL " +
             "AND (article.starStatus = " + App.STATUS_STARED + " OR (article.starStatus = " + App.STATUS_UNSTAR +" AND article.starUpdated > :timeMillis) ) " +
             "ORDER BY crawlDate DESC, pubDate DESC, link")
     DataSource.Factory<Integer,Article> getStaredByUnsubscribed(String uid, long timeMillis);
     @Query("SELECT article.id FROM article " +
-            "LEFT JOIN FeedCategory ON (article.uid = FeedCategory.uid AND article.feedId = FeedCategory.feedId)" +
-            "LEFT JOIN ArticleTag ON (article.uid = ArticleTag.uid AND article.id = ArticleTag.articleId)" +
+            "LEFT JOIN Feed ON (article.uid = Feed.uid AND article.feedId = Feed.id)" +
             "WHERE article.uid = :uid " +
             "AND article.crawlDate < :timeMillis " +
-            "AND FeedCategory.categoryId is NULL " +
+            "AND Feed.id is NULL " +
             "AND (article.starStatus = " + App.STATUS_STARED + " OR (article.starStatus = " + App.STATUS_UNSTAR +" AND article.starUpdated > :timeMillis) ) " +
             "ORDER BY crawlDate DESC, pubDate DESC, link")
     LiveData<List<String>> getStaredIdsByUnsubscribed(String uid, long timeMillis);
-
-
-    @Query("SELECT article.* FROM article " +
-            "LEFT JOIN FeedCategory ON (article.uid = FeedCategory.uid AND article.feedId = FeedCategory.feedId)" +
-            "WHERE article.uid = :uid " +
-            "AND article.crawlDate < :timeMillis " +
-            "AND FeedCategory.categoryId is NULL " +
-            "AND (article.starStatus = " + App.STATUS_STARED + " OR (article.starStatus = " + App.STATUS_UNSTAR +" AND article.starUpdated > :timeMillis) ) " +
-            "ORDER BY crawlDate DESC, pubDate DESC, link")
-    DataSource.Factory<Integer,Article> getStaredByUncategory(String uid, long timeMillis);
-    @Query("SELECT article.id FROM article " +
-            "LEFT JOIN FeedCategory ON (article.uid = FeedCategory.uid AND article.feedId = FeedCategory.feedId)" +
-            "LEFT JOIN ArticleTag ON (article.uid = ArticleTag.uid AND article.id = ArticleTag.articleId)" +
-            "WHERE article.uid = :uid " +
-            "AND article.crawlDate < :timeMillis " +
-            "AND FeedCategory.categoryId is NULL " +
-            "AND (article.starStatus = " + App.STATUS_STARED + " OR (article.starStatus = " + App.STATUS_UNSTAR +" AND article.starUpdated > :timeMillis) ) " +
-            "ORDER BY crawlDate DESC, pubDate DESC, link")
-    LiveData<List<String>> getStaredIdsByUncategory(String uid, long timeMillis);
 
     @Query("SELECT article.* FROM article " +
             "LEFT JOIN FeedCategory ON (article.uid = FeedCategory.uid AND article.feedId = FeedCategory.feedId)" +
@@ -262,16 +252,7 @@ public interface ArticleDao {
             "AND (article.starStatus = " + App.STATUS_STARED + " OR (article.starStatus = " + App.STATUS_UNSTAR +" AND article.starUpdated > :timeMillis) ) " +
             "ORDER BY crawlDate DESC, pubDate DESC, link")
     DataSource.Factory<Integer,Article> getStaredByUncategory2(String uid, long timeMillis);
-    @Query("SELECT article.id FROM article " +
-            "LEFT JOIN FeedCategory ON (article.uid = FeedCategory.uid AND article.feedId = FeedCategory.feedId)" +
-            "LEFT JOIN ArticleTag ON (article.uid = ArticleTag.uid AND article.id = ArticleTag.articleId)" +
-            "WHERE article.uid = :uid " +
-            "AND article.crawlDate < :timeMillis " +
-            "AND ArticleTag.tagId is NULL " +
-            "AND FeedCategory.categoryId is NULL " +
-            "AND (article.starStatus = " + App.STATUS_STARED + " OR (article.starStatus = " + App.STATUS_UNSTAR +" AND article.starUpdated > :timeMillis) ) " +
-            "ORDER BY crawlDate DESC, pubDate DESC, link")
-    LiveData<List<String>> getStaredIdsByUncategory2(String uid, long timeMillis);
+
 
     @Query("SELECT * FROM article " +
             "WHERE uid = :uid " +
@@ -523,7 +504,7 @@ public interface ArticleDao {
     // SELECT link FROM article WHERE crawlDate = 0 AND link in (SELECT link FROM article GROUP BY link HAVING COUNT(*) > 1)
     @Query("SELECT link FROM article " +
             "WHERE uid = :uid " +
-            "AND crawlDate = :timeMillis " +
+            "AND crawlDate >= :timeMillis " +
             "AND link IN (SELECT link FROM article WHERE uid = :uid GROUP BY link HAVING COUNT(*) > 1)") //,title
     List<String> getDuplicateLink(String uid, long timeMillis);
 
@@ -535,11 +516,11 @@ public interface ArticleDao {
 
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    // @Transaction
+    @Transaction
     void insert(Article... articles);
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    // @Transaction
+    @Transaction
     void insert(List<Article> articles);
 
     @Update
@@ -550,27 +531,34 @@ public interface ArticleDao {
     @Transaction
     void update(List<Article> articles);
 
+    @Transaction
     @Query("UPDATE Article SET readStatus = " + App.STATUS_READED + " WHERE uid = :uid AND id in (:articleIds)")
     void markArticlesRead(String uid, List<String> articleIds);
 
+    @Transaction
     @Query("UPDATE Article SET readStatus = " + App.STATUS_UNREAD + " WHERE uid = :uid AND id in (:articleIds)")
     void markArticlesUnread(String uid, List<String> articleIds);
 
+    @Transaction
     @Query("UPDATE Article SET readStatus = " + App.STATUS_UNREADING + " WHERE uid = :uid AND id in (:articleIds)")
     void markArticlesUnreading(String uid, List<String> articleIds);
 
+    @Transaction
     @Query("UPDATE Article SET starStatus = " + App.STATUS_STARED + " WHERE uid = :uid AND id in (:articleIds)")
     void markArticlesStar(String uid, List<String> articleIds);
 
+    @Transaction
     @Query("UPDATE Article SET starStatus = " + App.STATUS_UNSTAR + " WHERE uid = :uid AND id in (:articleIds)")
     void markArticlesUnStar(String uid, List<String> articleIds);
 
+    @Transaction
     @Query("UPDATE Article SET crawlDate = pubDate WHERE uid = :uid")
     void updateCrawlDateToPubDate(String uid);
 
     // @Query("UPDATE ARTICLE SET FEEDTITLE = (select TITLE from FEED where ID = ARTICLE.FEEDID AND UID IS ARTICLE.UID) WHERE ID IS ARTICLE.ID AND UID IS ARTICLE.UID;")
     // void updateFeedTitle();
 
+    @Transaction
     @RawQuery
     Object exeSQL(SupportSQLiteQuery query);
 
@@ -580,14 +568,16 @@ public interface ArticleDao {
      * @param lastMarkTimeMillis
      * @param targetTimeMillis
      */
-    @Query("UPDATE Article SET crawlDate = :targetTimeMillis WHERE uid = :uid AND crawlDate > :lastMarkTimeMillis ")
+    @Transaction
+    @Query("UPDATE Article SET crawlDate = :targetTimeMillis WHERE uid = :uid AND crawlDate >= :lastMarkTimeMillis ")
     void updateIdleCrawlDate(String uid, long lastMarkTimeMillis, long targetTimeMillis);
 
-
-    @Query("UPDATE Article SET crawlDate = :lastMarkTimeMillis WHERE uid = :uid AND crawlDate > :lastMarkTimeMillis AND (SELECT count(DISTINCT crawlDate) FROM article WHERE uid = :uid AND crawlDate > :lastMarkTimeMillis ORDER BY crawlDate DESC) >= 1")
+    @Transaction
+    @Query("UPDATE Article SET crawlDate = :lastMarkTimeMillis WHERE uid = :uid AND crawlDate >= :lastMarkTimeMillis AND (SELECT count(DISTINCT crawlDate) FROM article WHERE uid = :uid AND crawlDate >= :lastMarkTimeMillis ORDER BY crawlDate DESC) >= 1")
     void updateIdleCrawlDateTimes(String uid, long lastMarkTimeMillis);
 
 
+    @Transaction
     @Query("DELETE FROM article WHERE uid = :uid AND feedId = :feedId AND starStatus = " + App.STATUS_UNSTAR)
     void deleteUnStarByFeedId(String uid, String feedId);
 
@@ -599,30 +589,23 @@ public interface ArticleDao {
     @Transaction
     void delete(List<Article> articles);
 
+    @Transaction
     @Query("DELETE FROM article WHERE uid = (:uid) AND id in (:ids)")
     void delete(String uid, List<String> ids);
 
-    @Query("SELECT * FROM article WHERE uid = :uid AND readStatus = " + App.STATUS_READED + " AND starStatus = " + App.STATUS_UNSTAR + " AND saveStatus = " + App.STATUS_TO_BE_FILED + " AND crawlDate < :time" )
+    @Query("SELECT * FROM article WHERE uid = :uid AND readStatus = " + App.STATUS_READED + " AND starStatus = " + App.STATUS_UNSTAR + " AND saveStatus = " + App.STATUS_TO_BE_FILED + " AND crawlDate < :time AND readUpdated < :time AND starUpdated < :time" )
     List<Article> getReadedUnstarBeFiledLtTime(String uid, long time);
 
-    @Query("SELECT * FROM article WHERE uid = :uid AND readStatus = " + App.STATUS_READED + " AND starStatus = " + App.STATUS_STARED + " AND saveStatus = " + App.STATUS_TO_BE_FILED + " AND crawlDate < :time" )
+    @Query("SELECT * FROM article WHERE uid = :uid AND readStatus = " + App.STATUS_READED + " AND starStatus = " + App.STATUS_STARED + " AND saveStatus = " + App.STATUS_TO_BE_FILED + " AND crawlDate < :time AND readUpdated < :time AND starUpdated < :time" )
     List<Article> getReadedStaredBeFiledLtTime(String uid, long time);
 
-    @Query("SELECT * FROM article WHERE uid = :uid AND readStatus = " + App.STATUS_READED + " AND starStatus = " + App.STATUS_UNSTAR + " AND crawlDate < :time" )
-    List<Article> getReadedUnstarLtTime(String uid, long time);
+    // @Query("SELECT * FROM article WHERE uid = :uid AND readStatus = " + App.STATUS_READED + " AND starStatus = " + App.STATUS_UNSTAR + " AND crawlDate < :time" )
+    // List<Article> getReadedUnstarLtTime(String uid, long time);
 
-
-    @Query("SELECT id FROM article WHERE uid = :uid AND readStatus = " + App.STATUS_READED + " AND starStatus = " + App.STATUS_UNSTAR + " AND crawlDate < :time" )
+    @Query("SELECT id FROM article WHERE uid = :uid AND readStatus = " + App.STATUS_READED + " AND starStatus = " + App.STATUS_UNSTAR + " AND crawlDate < :time AND readUpdated < :time AND starUpdated < :time" )
     List<String> getReadedUnstarIdsLtTime(String uid, long time);
 
-
-
-    @Query("SELECT article.* FROM article " +
-            "LEFT JOIN Feed ON (article.uid = feed.uid AND article.feedId = feed.id)" +
-            "WHERE article.uid = :uid " +
-            "AND feed.id is NULL ")
-    List<Article> getUncategoried(String uid);
-
+    @Transaction
     @Query("DELETE FROM article WHERE uid = :uid")
     void clear(String uid);
 }

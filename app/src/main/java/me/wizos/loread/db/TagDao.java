@@ -43,6 +43,7 @@ public interface TagDao {
     @Transaction
     void delete(Tag... tags);
 
+    @Transaction
     @Query("DELETE FROM tag WHERE uid = (:uid)")
     void clear(String... uid);
 }

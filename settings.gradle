@@ -1,5 +1,5 @@
 include ':app', ":support",':floatwindow',':editspinner',':agentweb-core',':luban',':networklibs'//, 'netcipher-webkit'
-
+include(':svg')
 // include ':reverseproxy',':sniffing'
 // include ':jsonfeed'
 includeBuild 'rome'

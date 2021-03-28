@@ -48,6 +48,7 @@ public interface ArticleTagDao {
     @Transaction
     void update(List<ArticleTag> articleTags);
 
+    @Transaction
     @Query("UPDATE articletag SET tagId = :newTagId where  uid = :uid AND tagId = :oldTagId")
     void updateCategoryId(String uid, String oldTagId, String newTagId);
 
@@ -60,12 +61,15 @@ public interface ArticleTagDao {
     @Transaction
     void delete(List<ArticleTag> articleTags);
 
+    @Transaction
     @Query("DELETE FROM articletag WHERE uid = :uid AND articleId = :articleId")
     void deleteByArticleId(String uid, String articleId);
 
+    @Transaction
     @Query("DELETE FROM articletag WHERE uid = (:uid) AND tagId = :tagId")
     void deleteByTagId(String uid, String tagId);
 
+    @Transaction
     @Query("DELETE FROM articletag WHERE uid = (:uid)")
     void clear(String... uid);
 }

@@ -19,6 +19,7 @@ import com.elvishew.xlog.XLog;
 import com.freedom.lauzy.playpauseviewlib.PlayPauseView;
 import com.hjq.toast.ToastUtils;
 import com.noober.background.drawable.DrawableCreator;
+import com.umeng.analytics.MobclickAgent;
 import com.yhao.floatwindow.constant.MoveType;
 import com.yhao.floatwindow.constant.Screen;
 import com.yhao.floatwindow.view.FloatWindow;
@@ -51,6 +52,7 @@ public class TTSActivity extends BaseActivity {
         intent.putExtra("isQueue",isQueue);
         startService(intent);
         bindService(intent, playConnection, BIND_AUTO_CREATE);
+        MobclickAgent.onEvent(this, "enter_tts_activity");
     }
 
 

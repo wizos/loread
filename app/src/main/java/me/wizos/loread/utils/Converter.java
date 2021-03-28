@@ -26,12 +26,14 @@ import me.wizos.loread.bean.SearchFeed;
 import me.wizos.loread.bean.feedly.CategoryItem;
 import me.wizos.loread.bean.feedly.Entry;
 import me.wizos.loread.bean.feedly.input.EditFeed;
+import me.wizos.loread.bean.inoreader.GsTag;
 import me.wizos.loread.bean.inoreader.itemContents.Item;
 import me.wizos.loread.bean.jsonfeed.JsonFeed;
 import me.wizos.loread.bean.jsonfeed.JsonItem;
 import me.wizos.loread.bean.rssfinder.RSSFinderFeed;
 import me.wizos.loread.bean.ttrss.result.ArticleItem;
 import me.wizos.loread.db.Article;
+import me.wizos.loread.db.Category;
 import me.wizos.loread.db.Feed;
 import me.wizos.loread.db.FeedCategory;
 
@@ -210,6 +212,8 @@ public class Converter {
         article.setAuthor(item.getAuthor());
         if(item.getPublishedDate() != null){
             article.setPubDate(item.getPublishedDate().getTime());
+        }else {
+            article.setPubDate(System.currentTimeMillis());
         }
 
         article.setLink(item.getLink());
@@ -349,10 +353,15 @@ public class Converter {
         return editFeed;
     }
 
+    public static Category from(String uid, GsTag tag){
+        Category category = new Category();
+        category.setUid(uid);
+        category.setId(tag.getId());
+        return category;
+    }
 
     public static Feed updateFrom(Feed localFeed, SyndFeed remoteFeed){
-        localFeed.setTitle(remoteFeed.getTitle());
-
+        // localFeed.setTitle(remoteFeed.getTitle());
         if(!StringUtils.isEmpty(remoteFeed.getLink())){
             localFeed.setHtmlUrl(remoteFeed.getLink());
         }else if(null != remoteFeed.getLinks() && remoteFeed.getLinks().size() > 0){
@@ -371,7 +380,7 @@ public class Converter {
     }
 
     public static Feed updateFrom(Feed localFeed, JsonFeed remoteFeed){
-        localFeed.setTitle(remoteFeed.getTitle());
+        // localFeed.setTitle(remoteFeed.getTitle());
         localFeed.setFeedUrl(remoteFeed.getFeedUrl());
         localFeed.setHtmlUrl(remoteFeed.getHomePageUrl());
         if (null != remoteFeed.getIcon() && !remoteFeed.getIcon().startsWith("data:") ){

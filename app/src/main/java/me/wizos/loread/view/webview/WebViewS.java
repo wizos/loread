@@ -176,29 +176,11 @@ public class WebViewS extends NestedScrollWebView {
         loadDataWithBaseURL(App.i().getWebViewBaseUrl(), htmlContent, "text/html", "UTF-8", null);
     }
 
-
-    @Override
-    protected void onScrollChanged(final int l, final int t, final int oldl, final int oldt) {
-        super.onScrollChanged(l, t, oldl, oldt);
-        if (mOnScrollChangedCallback != null) {
-            mOnScrollChangedCallback.onScrollY(t - oldt);
-        }
-    }
-
-    public OnScrollChangedCallback getOnScrollChangedCallback() {
-        return mOnScrollChangedCallback;
-    }
-
-    public void setOnScrollChangedCallback(final OnScrollChangedCallback onScrollChangedCallback) {
-        mOnScrollChangedCallback = onScrollChangedCallback;
-    }
-
-    private OnScrollChangedCallback mOnScrollChangedCallback;
-
     /**
-     * Impliment in the activity/fragment/view that you want to listen to the webview
+     * Webview 后台播放音视频实现
      */
-    public interface OnScrollChangedCallback {
-        void onScrollY(int dy);
+    @Override
+    protected void onWindowVisibilityChanged(int visibility) {
+        super.onWindowVisibilityChanged(View.VISIBLE);
     }
 }

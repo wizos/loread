@@ -1,0 +1,27 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+  <head>
+    <title></title>
+  </head>
+  <body>
+  
+    This is a ROME plug in that implements the Content RSS extension.
+    http://purl.org/rss/1.0/modules/content/
+    
+    Note, this supports both the "Original" syntax via the ContentItem object 
+    and the "New" Syntax via the ".getEncodeds()" method on the ContentModule.
+    
+    <h2>Sample Usage:</h2>
+    <pre>
+        SyndFeedInput input = new SyndFeedInput();
+        SyndFeed syndfeed = input.build(new XmlReader(feed.toURL()));
+
+        Module module = syndfeed.getModule("http://purl.org/rss/1.0/modules/content/");
+        ContentModule content = (ContentModule) module;
+        
+        Iterator it = content.getEncodeds().iterator();
+        System.out.println( it.next() );
+    </pre>
+  </body>
+</html>

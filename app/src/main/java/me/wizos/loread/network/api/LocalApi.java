@@ -2,7 +2,6 @@ package me.wizos.loread.network.api;
 
 import android.content.ContentResolver;
 import android.net.Uri;
-import android.os.AsyncTask;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -23,8 +22,8 @@ import java.net.SocketTimeoutException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.concurrent.BrokenBarrierException;
-import java.util.concurrent.CyclicBarrier;
+
+import javax.net.ssl.SSLException;
 
 import me.wizos.loread.App;
 import me.wizos.loread.Contract;
@@ -43,13 +42,11 @@ import me.wizos.loread.network.callback.CallbackX;
 import me.wizos.loread.utils.EncryptUtils;
 import me.wizos.loread.utils.FeedParserUtils;
 import me.wizos.loread.utils.StringUtils;
-import me.wizos.loread.utils.Tool;
 import me.wizos.loread.utils.TriggerRuleUtils;
 import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.Request;
 import okhttp3.Response;
-import okhttp3.ResponseBody;
 
 import static me.wizos.loread.utils.StringUtils.getString;
 
@@ -66,7 +63,8 @@ public class LocalApi extends BaseApi {
     public LocalApi() {
     }
     int syncedFeedCount = 0;
-    CyclicBarrier barrier;
+    // CyclicBarrier barrier;
+    private final Object mLock = new Object();
 
     @Override
     public void sync() {
@@ -95,7 +93,7 @@ public class LocalApi extends BaseApi {
          * 2、
          */
 
-        long startSyncTimeMillis = System.currentTimeMillis() + 3600_000;
+        long startSyncTimeMillis = System.currentTimeMillis(); //  + 3600_000
         String uid = App.i().getUser().getId();
 
         if(CoreDB.i().feedDao().getCount(uid) == 0){
@@ -111,117 +109,135 @@ public class LocalApi extends BaseApi {
         LiveEventBus.get(SyncWorker.SYNC_PROCESS_FOR_SUBTITLE).post(getString(R.string.sync_feed, "1", needSyncFeeds.size()));
 
 
-        barrier = new CyclicBarrier(5, new Runnable() {
-            @Override
-            public void run() {
-                XLog.i(Thread.currentThread().getName() + " 完成最后任务");
-                LiveEventBus.get(SyncWorker.SYNC_PROCESS_FOR_SUBTITLE).post(getString(R.string.clear_article));
-                deleteExpiredArticles();
+        // barrier = new CyclicBarrier(1);
 
-                // 获取文章全文
-                LiveEventBus.get(SyncWorker.SYNC_PROCESS_FOR_SUBTITLE).post(getString(R.string.fetch_article_full_content));
-                fetchReadability(uid, startSyncTimeMillis);
-                // 执行文章自动处理脚本
-                TriggerRuleUtils.exeAllRules(uid, startSyncTimeMillis);
-                // 清理无文章的tag
-                //clearNotArticleTags(uid);
+        // for(Feed feed: needSyncFeeds){
+        //     AsyncTask.THREAD_POOL_EXECUTOR.execute(new Runnable() {
+        //         @Override
+        //         public void run() {
+        //             XLog.d("同步：" + feed.getTitle() + "（" + feed.getFeedUrl()+ "）" );
+        //             Request request = new Request.Builder().url(feed.getFeedUrl()).build();
+        //             Call call = HttpClientManager.i().simpleClient().newCall(request);
+        //             try{
+        //                 Response response = call.execute();
+        //                 syncedFeedCount ++;
+        //                 XLog.w("同步成功：" + feed.getTitle() + "（" + feed.getFeedUrl()+ "）" + response.isSuccessful()+ ", 线程：" + Thread.currentThread() + ", 已同步数量：" + barrier.getNumberWaiting());
+        //                 LiveEventBus.get(SyncWorker.SYNC_PROCESS_FOR_SUBTITLE).post(getString(R.string.sync_feed, syncedFeedCount, barrier.getParties()));
+        //                 if(response.isSuccessful()){
+        //                     FeedEntries feedEntries = FeedParserUtils.parseResponseBody(App.i(), feed, response);
+        //                     if(feedEntries != null){
+        //                         if (feedEntries.isSuccess()) {
+        //                             CoreDB.i().feedDao().update(feedEntries.getFeed());
+        //                             List<Article> entries = feedEntries.getArticles();
+        //                             for (Article entry : entries) {
+        //                                 if (CoreDB.i().articleDao().getCountById(uid, entry.getId()) > 0) {
+        //                                     continue;
+        //                                 }
+        //                                 entry.setCrawlDate(System.currentTimeMillis()); // startSyncTimeMillis
+        //                                 newArticleCount++;
+        //                                 CoreDB.i().articleDao().insert(entry);
+        //                             }
+        //                         }
+        //                     }
+        //                 }
+        //             }catch (IOException e){
+        //                 XLog.w("同步异常：" + feed.getTitle() + "（" + feed.getFeedUrl()+ "） => " + e.getClass() + ":" + e.getLocalizedMessage() + ", 线程：" + Thread.currentThread() + ", 已同步数量：" + barrier.getNumberWaiting());
+        //                 syncedFeedCount ++;
+        //                 LiveEventBus.get(SyncWorker.SYNC_PROCESS_FOR_SUBTITLE).post(getString(R.string.sync_feed, syncedFeedCount, barrier.getParties()));
+        //
+        //                 if ( !(e instanceof ConnectException) && !(e instanceof SocketTimeoutException) && !(e instanceof SSLException)){
+        //                     feed.setLastSyncError(e.getLocalizedMessage());
+        //                     feed.setLastErrorCount(feed.getLastErrorCount() + 1);
+        //                     CoreDB.i().feedDao().update(feed);
+        //                     // Tool.printCallStack(e);
+        //                     e.printStackTrace();
+        //                 }
+        //             }
+        //             XLog.w("同步结果：" + feed.getTitle());
+        //             await();
+        //         }
+        //     });
+        // }
 
-                // 提示更新完成
-                LiveEventBus.get(SyncWorker.NEW_ARTICLE_NUMBER).post(newArticleCount);
 
+        for(Feed feed: needSyncFeeds){
+            Request request = new Request.Builder().url(feed.getFeedUrl()).build();
+            Call call = HttpClientManager.i().simpleClient().newCall(request);
+            // XLog.d("同步：" + feed.getTitle() + "（" + feed.getFeedUrl()+ "）" );
 
-                handleDuplicateArticles(startSyncTimeMillis);
-                updateCollectionCount();
-                handleCrawlDate2();
-                LiveEventBus.get(SyncWorker.SYNC_PROCESS_FOR_SUBTITLE).post( null );
-                newArticleCount = 0;
-                syncedFeedCount = 0;
-            }
-        });
-        syncFeeds(uid, startSyncTimeMillis, needSyncFeeds);
-    }
-    
-    int newArticleCount = 0;
+            call.enqueue(new Callback() {
+                @Override
+                public void onFailure(@NotNull Call call, @NotNull IOException e) {
+                    XLog.w("同步异常：" + feed.getTitle() + "（" + feed.getFeedUrl()+ " ） => " + e.getClass() + ":" + e.getLocalizedMessage() + ", 线程：" + Thread.currentThread() + ", 已同步数量：" + syncedFeedCount);
+                    syncedFeedCount ++;
+                    LiveEventBus.get(SyncWorker.SYNC_PROCESS_FOR_SUBTITLE).post(getString(R.string.sync_feed, syncedFeedCount, needSyncFeeds.size()));
 
+                    if ( !(e instanceof ConnectException) && !(e instanceof SocketTimeoutException) && !(e instanceof SSLException)){
+                        feed.setLastSyncError(e.getLocalizedMessage());
+                        feed.setLastErrorCount(feed.getLastErrorCount() + 1);
+                        CoreDB.i().feedDao().update(feed);
+                        e.printStackTrace();
+                    }
 
-    private void syncFeeds(String uid, long startSyncTimeMillis, List<Feed> needSyncFeeds){
-        AsyncTask.SERIAL_EXECUTOR.execute(new Runnable() {
-            @Override
-            public void run() {
-                for(Feed feed: needSyncFeeds){
-                    Request request = new Request.Builder().url(feed.getFeedUrl()).build();
-                    Call call = HttpClientManager.i().searchClient().newCall(request);
-                    call.enqueue(new Callback() {
-                        @Override
-                        public void onFailure(@NotNull Call call, @NotNull IOException e) {
-                            LiveEventBus.get(SyncWorker.SYNC_PROCESS_FOR_SUBTITLE).post(getString(R.string.sync_feed, syncedFeedCount, needSyncFeeds.size()));
-                            syncedFeedCount ++;
-                            // checkSyncEnd(uid, startSyncTimeMillis, needSyncFeeds.size());
+                    // XLog.v("同步结果：" + feed.getTitle());
+                    // await();
+                    checkSyncEnd(needSyncFeeds.size());
+                }
 
-                            XLog.w("同步失败：" + feed.getTitle() + " => " + e.getLocalizedMessage());
-                            if ( e instanceof ConnectException || e instanceof SocketTimeoutException){
-                                await();
-                                return;
-                            }
+                @Override
+                public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
+                    syncedFeedCount ++;
+                    XLog.w("同步成功：" + feed.getTitle() + "（" + feed.getFeedUrl()+ "）" + response.isSuccessful()+ ", 线程：" + Thread.currentThread() + ", 已同步数量：" + syncedFeedCount);
+                    LiveEventBus.get(SyncWorker.SYNC_PROCESS_FOR_SUBTITLE).post(getString(R.string.sync_feed, syncedFeedCount, needSyncFeeds.size()));
 
-                            feed.setLastSyncError(e.getLocalizedMessage());
-                            Tool.printCallStack(e);
-                            await();
-                        }
-
-                        @Override
-                        public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
-                            LiveEventBus.get(SyncWorker.SYNC_PROCESS_FOR_SUBTITLE).post(getString(R.string.sync_feed, syncedFeedCount, needSyncFeeds.size()));
-                            syncedFeedCount ++;
-                            if(response.isSuccessful()){
-                                ResponseBody responseBody = response.body();
-
-                                FeedEntries feedEntries = FeedParserUtils.parseResponseBody(App.i(), feed, responseBody);
-                                if(feedEntries == null || !feedEntries.isSuccess()){
-                                    await();
-                                    return;
-                                }
-
+                    if(response.isSuccessful()){
+                        FeedEntries feedEntries = FeedParserUtils.parseResponseBody(App.i(), feed, response);
+                        if(feedEntries != null){
+                            if (feedEntries.isSuccess()) {
                                 CoreDB.i().feedDao().update(feedEntries.getFeed());
                                 List<Article> entries = feedEntries.getArticles();
-                                for (Article entry: entries){
-                                    if(CoreDB.i().articleDao().getCountById(uid, entry.getId()) > 0){
+                                for (Article entry : entries) {
+                                    if (CoreDB.i().articleDao().getCountById(uid, entry.getId()) > 0) {
                                         continue;
                                     }
-                                    entry.setCrawlDate(startSyncTimeMillis);
+                                    entry.setCrawlDate(System.currentTimeMillis()); // startSyncTimeMillis
                                     newArticleCount++;
                                     CoreDB.i().articleDao().insert(entry);
                                 }
-                            }else {
-                                XLog.w("同步失败：" + feed.getTitle());
                             }
-                            // checkSyncEnd(uid, startSyncTimeMillis, needSyncFeeds.size());
-                            await();
                         }
-                    });
+                    }
+                    // XLog.v("同步结果：" + feed.getTitle());
+                    // await();
+                    checkSyncEnd(needSyncFeeds.size());
+                    response.close();
                 }
-            }
-        });
+            });
+        }
 
-        await();
-        System.out.println("看看CyclicBarrier的await方法能不能把我阻塞住！");
-    }
 
-    private void await(){
+        // try {
+        //     barrier.await(needSyncFeeds.size() * 30, TimeUnit.SECONDS); // 15, TimeUnit.MINUTES 设置等待返回结果最多5分钟 | TimeoutException
+        // } catch (BrokenBarrierException | InterruptedException | TimeoutException ex) {
+        //     XLog.i("barrier 异常：" + ex.getLocalizedMessage());
+        //     ex.printStackTrace();
+        // }
+        // await();
+
         try {
-            barrier.await(); // 15, TimeUnit.MINUTES 设置等待返回结果最多5分钟 | TimeoutException
-        } catch (BrokenBarrierException | InterruptedException ex) {
-            XLog.i("barrier 异常：" + ex.getLocalizedMessage());
-            ex.printStackTrace();
-        }
-    }
-
-    private void checkSyncEnd(String uid, long startSyncTimeMillis, int feedCount){
-        XLog.i("同步次数：" + syncedFeedCount + ", 总数：" + feedCount);
-        if(syncedFeedCount != feedCount){
-            return;
+            // wait();
+            synchronized (mLock) {
+                mLock.wait(needSyncFeeds.size() * 30_000);
+            }
+        }catch (Exception e){
+            XLog.i("wait 异常：" + e.getLocalizedMessage());
+            e.printStackTrace();
         }
 
+
+        XLog.i("看看CyclicBarrier的await方法能不能把我阻塞住！");
+
+        XLog.i(Thread.currentThread().getName() + " 完成最后任务");
         LiveEventBus.get(SyncWorker.SYNC_PROCESS_FOR_SUBTITLE).post(getString(R.string.clear_article));
         deleteExpiredArticles();
 
@@ -230,19 +246,39 @@ public class LocalApi extends BaseApi {
         fetchReadability(uid, startSyncTimeMillis);
         // 执行文章自动处理脚本
         TriggerRuleUtils.exeAllRules(uid, startSyncTimeMillis);
-        // 清理无文章的tag
-        //clearNotArticleTags(uid);
-
-        // 提示更新完成
-        LiveEventBus.get(SyncWorker.NEW_ARTICLE_NUMBER).post(newArticleCount);
-
 
         handleDuplicateArticles(startSyncTimeMillis);
-        handleCrawlDate2();
         updateCollectionCount();
+        handleCrawlDate2();
+        // 提示更新完成
+        LiveEventBus.get(SyncWorker.NEW_ARTICLE_NUMBER).post(newArticleCount);
         LiveEventBus.get(SyncWorker.SYNC_PROCESS_FOR_SUBTITLE).post( null );
         newArticleCount = 0;
         syncedFeedCount = 0;
+    }
+    
+    int newArticleCount = 0;
+
+    // private void await(){
+    //     try {
+    //         barrier.await(); // 15, TimeUnit.MINUTES 设置等待返回结果最多5分钟 | TimeoutException
+    //     } catch (BrokenBarrierException | InterruptedException ex) {
+    //         XLog.i("barrier 异常：" + ex.getClass() + ":" + ex.getMessage());
+    //         ex.printStackTrace();
+    //     }
+    // }
+
+
+    private void checkSyncEnd(int feedCount){
+        XLog.i("同步次数：" + syncedFeedCount + ", 总数：" + feedCount);
+        if(syncedFeedCount != feedCount){
+            return;
+        }
+        // await();
+        // notifyAll();
+        synchronized(mLock) {
+            mLock.notify();
+        }
     }
 
 
@@ -256,10 +292,17 @@ public class LocalApi extends BaseApi {
     }
 
     @Override
+    public void deleteCategory(String categoryId, CallbackX cb) {
+        Category category = CoreDB.i().categoryDao().getById(App.i().getUser().getId(), categoryId);
+        CoreDB.i().categoryDao().delete(category);
+        cb.onSuccess(App.i().getString(R.string.success));
+    }
+
+    @Override
     public void addFeed(FeedEntries feedEntries, CallbackX cb) {
         Feed feed = feedEntries.getFeed();
         feed.setUid(App.i().getUser().getId());
-        feed.setSyncInterval(-1);
+        feed.setSyncInterval(0);
         // 从搜索界面传过来的时候，因为没有考虑到其他api，所有没有feedId，要在这里组装
         feed.setId(EncryptUtils.MD5(feed.getFeedUrl()));
         CoreDB.i().feedDao().insert(feed);
@@ -302,8 +345,8 @@ public class LocalApi extends BaseApi {
             ContentResolver contentResolver = App.i().getContentResolver();
             XLog.i("导入路径为B：" + uri);
             WireFeedInput input = new WireFeedInput();
-            Opml feed = (Opml) input.build( new XmlReader(contentResolver.openInputStream(uri)));
-            List<Outline> outlines = feed.getOutlines();
+            Opml opml = (Opml) input.build(new XmlReader(contentResolver.openInputStream(uri)));
+            List<Outline> outlines = opml.getOutlines();
             // XLog.i("输出为B：" + outlines);
             parserOutlines(uid, null, outlines);
             cb.onSuccess(App.i().getString(R.string.success));
@@ -332,7 +375,7 @@ public class LocalApi extends BaseApi {
                 category.setId(EncryptUtils.MD5(category.getTitle()));
                 categories.add(category);
                 parserOutlines(uid, category, outline.getChildren());
-            }else if(outline.getType().equalsIgnoreCase("rss")){
+            }else if(outline.getType().toLowerCase().startsWith("rss") || outline.getType().toLowerCase().startsWith("atom")){
                 if(StringUtils.isEmpty(outline.getXmlUrl())){
                     continue;
                 }
@@ -345,7 +388,7 @@ public class LocalApi extends BaseApi {
                 }else {
                     feed.setTitle("");
                 }
-                feed.setSyncInterval(-1);
+                feed.setSyncInterval(0);
                 feed.setHtmlUrl(outline.getHtmlUrl());
                 feed.setFeedUrl(outline.getXmlUrl());
                 feed.setId(EncryptUtils.MD5(feed.getFeedUrl()));

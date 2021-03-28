@@ -62,6 +62,7 @@ public class Distill {
     private static final String TAG = "Distill";
     private static final int TIMEOUT = 15_000; // 30 秒 30_000
     private String url;
+    private String originalUrl;
     private String keyword;
     private Listener dispatcher;
 
@@ -73,8 +74,9 @@ public class Distill {
     private boolean isCancel = false;
     private boolean isRunning = false;
 
-    public Distill(@NotNull String url, @Nullable String keyword, @NotNull Listener callback) {
+    public Distill(@NotNull String url, @Nullable String originalUrl, @Nullable String keyword, @NotNull Listener callback) {
         this.url = url;
+        this.originalUrl = originalUrl;
         this.keyword = keyword;
         this.dispatcher = new Listener() {
             @Override
@@ -193,6 +195,9 @@ public class Distill {
     private void readability(Document doc) throws IOException{
         doc.outputSettings().prettyPrint(false);
         XLog.i("易读，keyword：" + keyword);
+        if(!StringUtils.isEmpty(originalUrl)){
+            url = originalUrl;
+        }
         ExtractPage extractPage =  getContentWithKeyword(url, doc, keyword);
         // XLog.e("获取易读，原文：" + content);
         if(!StringUtils.isEmpty(extractPage.getMsg())){
@@ -238,13 +243,14 @@ public class Distill {
                     content = newDoc.html();
                     if(StringUtils.isEmpty(content)){
                         extractPage.setMsg(App.i().getString(R.string.no_text_found_by_rule_and_extractor, uri.getHost()));
-                    }else {
-                        try {
-                            ArticleExtractConfig.i().saveRuleByHost(doc, uri, newDoc.cssSelector());
-                        }catch (Selector.SelectorParseException | NullPointerException e){
-                            e.printStackTrace();
-                        }
                     }
+                    // else {
+                    //     try {
+                    //         ArticleExtractConfig.i().saveRuleByHost(doc, uri, newDoc.cssSelector());
+                    //     }catch (Selector.SelectorParseException | NullPointerException e){
+                    //         e.printStackTrace();
+                    //     }
+                    // }
                 }
                 // extractPage.setMsg(App.i().getString(R.string.no_text_found_by_rule, uri.getHost()));
             }

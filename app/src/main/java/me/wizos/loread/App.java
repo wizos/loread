@@ -3,7 +3,6 @@ package me.wizos.loread;
 import android.app.Application;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
-import android.content.res.Configuration;
 import android.os.AsyncTask;
 import android.text.TextUtils;
 import android.util.DisplayMetrics;
@@ -43,7 +42,6 @@ import java.util.List;
 import java.util.Map;
 
 import me.wizos.loread.activity.SplashActivity;
-import me.wizos.loread.config.Test;
 import me.wizos.loread.config.update.AppUpdateModel;
 import me.wizos.loread.db.Article;
 import me.wizos.loread.db.CoreDB;
@@ -65,6 +63,7 @@ import me.wizos.loread.utils.FileUtils;
 import me.wizos.loread.utils.NetworkUtils;
 import me.wizos.loread.utils.ScriptUtils;
 import me.wizos.loread.utils.Tool;
+import me.wizos.loread.utils.VersionUtils;
 import me.wizos.loread.view.webview.WebViewS;
 
 import static me.wizos.loread.utils.NetworkUtils.NETWORK_MOBILE;
@@ -163,13 +162,6 @@ public class App extends Application implements Thread.UncaughtExceptionHandler 
             return size() > 8;
         }
     };
-    // 保存最近打开的文章中的iframe的src，用于拦截webview的请求时，只拦截iframe的数据
-    public LinkedHashMap<String, String> iFrames = new LinkedHashMap<String, String>() {
-        @Override
-        protected boolean removeEldestEntry(Map.Entry<String, String> eldest) {
-            return size() > 8;
-        }
-    };
 
     public static App i() {
         if (instance == null) { // 双重锁定，只有在 withDB 还没被初始化的时候才会进入到下一行，然后加上同步锁
@@ -181,6 +173,15 @@ public class App extends Application implements Thread.UncaughtExceptionHandler 
         }
         return instance;
     }
+    private long lastShowTimeMillis = 0;
+
+    public long getLastShowTimeMillis() {
+        return lastShowTimeMillis;
+    }
+
+    public void setLastShowTimeMillis(long lastShowTimeMillis) {
+        this.lastShowTimeMillis = lastShowTimeMillis;
+    }
 
     @Override
     public void onCreate() {
@@ -190,19 +191,20 @@ public class App extends Application implements Thread.UncaughtExceptionHandler 
         CoreDB.init(this);
         LogHelper.init(this, CorePref.i().globalPref().getBoolean(Contract.ENABLE_LOGGING, false));
 
-
         initVar();
         TimeHandler.init(this);
         ToastUtils.init(this, new ToastAliPayStyle(this));
 
-        DoraemonKit.install(this, "1a9100642569bfed39d6b82032950e1f");
+        DoraemonKit.install(this, BuildConfig.DORAEMON_KIT_PRODUCT_ID);
 
-        UMConfigure.init(this, "5fe169310b4a4938464e0332", "CoolApk", UMConfigure.DEVICE_TYPE_PHONE, null);
+        UMConfigure.init(this, UMConfigure.DEVICE_TYPE_PHONE,"");
         // 打开统计SDK调试模式
         UMConfigure.setLogEnabled(BuildConfig.DEBUG);
         // 子进程是否支持自定义事件统计。参数：boolean 默认不使用
         UMConfigure. setProcessEvent(false);
-        XLog.i("设备信息：" + Arrays.toString(UMConfigure.getTestDeviceInfo(this)));
+
+        XLog.i("App 版本：" + VersionUtils.getVersionName(this));
+        XLog.i("UMeng 信息：" + Arrays.toString(UMConfigure.getTestDeviceInfo(this)));
         if(BuildConfig.DEBUG){
             MobclickAgent.setPageCollectionMode(MobclickAgent.PageMode.MANUAL);
         }else {
@@ -217,7 +219,7 @@ public class App extends Application implements Thread.UncaughtExceptionHandler 
         CorePref.i().globalPref().putString(Contract.USER_AGENT, WebSettings.getDefaultUserAgent(this));
 
         PackageInfo webViewPackageInfo = WebViewCompat.getCurrentWebViewPackage(this);
-        XLog.i("WebView 版本: " + webViewPackageInfo.versionName);
+        XLog.i("WebView 版本: " + (webViewPackageInfo == null ? "" :webViewPackageInfo.versionName) );
 
         WebView.setWebContentsDebuggingEnabled(BuildConfig.DEBUG);
         if(BuildConfig.DEBUG) AgentWebConfig.debug();
@@ -322,10 +324,6 @@ public class App extends Application implements Thread.UncaughtExceptionHandler 
     @Override
     public void onTrimMemory(int level) {
         super.onTrimMemory(level);
-        // XLog.v("onTrimMemory：" + level);
-        if (level == TRIM_MEMORY_UI_HIDDEN) {
-            Glide.get(this).clearMemory();
-        }
         Glide.get(this).trimMemory(level);
     }
 
@@ -335,18 +333,8 @@ public class App extends Application implements Thread.UncaughtExceptionHandler 
     @Override
     public void onLowMemory() {
         super.onLowMemory();
-        // XLog.v("onLowMemory");
-        // 清理 Glide 的缓存
         Glide.get(this).clearMemory();
     }
-
-
-    // private void initCrashReport() {
-    //     // 为了保证运营数据的准确性，建议不要在异步线程初始化 Bugly。
-    //     CrashReport.initCrashReport(getApplicationContext(), "900044326", BuildConfig.DEBUG);
-    //     // 在开发测试阶段，可以在初始化Bugly之前通过以下接口把调试设备设置成“开发设备”。
-    //     CrashReport.setIsDevelopmentDevice(instance, BuildConfig.DEBUG);
-    // }
 
     public String getWebViewBaseUrl() {
         if (TextUtils.isEmpty(webViewBaseUrl)) {
@@ -355,12 +343,10 @@ public class App extends Application implements Thread.UncaughtExceptionHandler 
         return webViewBaseUrl;
     }
 
-    private boolean deviceIsNight = false;
     private void initVar() {
         DisplayMetrics outMetrics = getResources().getDisplayMetrics();
         screenWidth = outMetrics.widthPixels;
         screenHeight = outMetrics.heightPixels;
-        deviceIsNight = (getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES;
     }
 
     private void initAppUpdate(){
@@ -466,12 +452,7 @@ public class App extends Application implements Thread.UncaughtExceptionHandler 
     }
     public BaseApi getApi() {
         if (api == null) {
-            String source;
-            if(Test.i().useLoread){
-                source = Contract.PROVIDER_FEVER_TINYRSS;
-            }else {
-                source = getUser().getSource();
-            }
+            String source = getUser().getSource();
             switch (source) {
                 case Contract.PROVIDER_TINYRSS:
                     TinyRSSApi tinyRSSApi = new TinyRSSApi(getUser().getHost());
@@ -523,4 +504,41 @@ public class App extends Application implements Thread.UncaughtExceptionHandler 
         startActivity(intent);
         android.os.Process.killProcess(android.os.Process.myPid());
     }
+
+
+
+
+    // private List<ThemeChangeObserver> mThemeChangeObserverStack; //  主题切换监听栈
+    // /**
+    //  * 获得observer堆栈
+    //  * */
+    // private List<ThemeChangeObserver> obtainThemeChangeObserverStack() {
+    //     if (mThemeChangeObserverStack == null) mThemeChangeObserverStack = new ArrayList<>();
+    //     return mThemeChangeObserverStack;
+    // }
+    // /**
+    //  * 向堆栈中添加observer
+    //  * */
+    // public void registerObserver(ThemeChangeObserver observer) {
+    //     if (observer == null || obtainThemeChangeObserverStack().contains(observer)) return ;
+    //     obtainThemeChangeObserverStack().add(observer);
+    // }
+    // /**
+    //  * 从堆栈中移除observer
+    //  * */
+    // public void unregisterObserver(ThemeChangeObserver observer) {
+    //     if (observer == null || !(obtainThemeChangeObserverStack().contains(observer))) return ;
+    //     obtainThemeChangeObserverStack().remove(observer);
+    // }
+    // /**
+    //  * 向堆栈中所有对象发送更新UI的指令
+    //  * */
+    // public void notifyByThemeChanged() {
+    //     List<ThemeChangeObserver> observers = obtainThemeChangeObserverStack();
+    //     for (ThemeChangeObserver observer : observers) {
+    //         observer.declareCurrentTheme();
+    //         observer.notifyByThemeChanged();
+    //     }
+    // }
+
 }

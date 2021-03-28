@@ -30,6 +30,7 @@ import com.lxj.xpopup.XPopup;
 import com.lxj.xpopup.enums.PopupAnimation;
 import com.lxj.xpopup.interfaces.OnSelectListener;
 import com.noober.background.drawable.DrawableCreator;
+import com.umeng.analytics.MobclickAgent;
 import com.yhao.floatwindow.constant.MoveType;
 import com.yhao.floatwindow.constant.Screen;
 import com.yhao.floatwindow.view.FloatWindow;
@@ -74,6 +75,7 @@ public class MusicActivity extends BaseActivity {
         startService(intent);
         bindService(intent, playConnection, BIND_AUTO_CREATE);
         applyPermissions();
+        MobclickAgent.onEvent(this, "enter_audio_activity");
     }
 
 

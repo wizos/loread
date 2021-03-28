@@ -3,7 +3,6 @@ package me.wizos.loread.db;
 import androidx.annotation.NonNull;
 import androidx.room.Entity;
 import androidx.room.ForeignKey;
-import androidx.room.Ignore;
 import androidx.room.Index;
 
 import me.wizos.loread.bean.feedly.CategoryItem;
@@ -21,17 +20,14 @@ import static androidx.room.ForeignKey.CASCADE;
         foreignKeys = @ForeignKey(entity = User.class, parentColumns = "id", childColumns = "uid", onDelete = CASCADE))
 public class Category {
     @NonNull
-    private String id;
-    @NonNull
     private String uid;
+    @NonNull
+    private String id;
     private String title;
 
     private int unreadCount;
     private int starCount;
     private int allCount;
-    // 添加此标记后不会生成数据库表的列
-    @Ignore
-    public boolean isExpand;
 
     public String getUid() {
         return uid;
@@ -97,7 +93,6 @@ public class Category {
                 ", unreadCount=" + unreadCount +
                 ", starCount=" + starCount +
                 ", allCount=" + allCount +
-                ", isExpand=" + isExpand +
                 '}';
     }
 }

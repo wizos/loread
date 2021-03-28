@@ -48,7 +48,7 @@ public class UriUtils {
      * @return
      */
     public static boolean isWebUrl(String url) {
-        return !TextUtils.isEmpty(url) && Patterns.WEB_URL.matcher(url).matches();
+        return !StringUtils.isEmpty(url) && Patterns.WEB_URL.matcher(url).matches();
     }
 
 

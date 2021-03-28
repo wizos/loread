@@ -177,7 +177,7 @@ public class ArticlePagedListAdapter extends PagedListAdapter<Article, ArticlePa
             if (!TextUtils.isEmpty(article.getImage())) {
                 articleImg.setVisibility(View.VISIBLE);
                 if ( NetworkUtils.isAvailable() && (!App.i().getUser().isDownloadImgOnlyWifi() || NetworkUtils.getNetType().equals(NetType.WIFI)) ) {
-                    // KLog.e( "数据：" + article.getTitle() + "   "  +  App.Referer+ "   "  +  article.getLink() );
+                    // XLog.e( "数据：" + article.getTitle() + "   "  +  App.Referer+ "   "  +  article.getLink() );
                     String referer = HeaderRefererConfig.i().guessRefererByUrl(article.getImage());
                     if (StringUtils.isEmpty(referer) && !TextUtils.isEmpty(article.getLink())){
                         referer = StringUtils.urlEncode(article.getLink());

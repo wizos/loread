@@ -42,8 +42,7 @@
 
 
     <string name="star_marked">已星标</string>
-    <string name="star_marked_to_favorites">已星标至『%1$s』收藏夹</string>
-
+    <string name="star_marked_to_favorites">已添加至『%1$s』收藏夹</string>
     <string name="new_favorites">新增收藏夹</string>
     <string name="add_to_favorites">加入收藏夹</string>
     <string name="edit_favorites">修改收藏夹</string>
@@ -168,6 +167,9 @@
     <string name="auto_sync">自动同步</string>
     <string name="auto_sync_on_wifi_title">仅在Wifi模式下自动同步</string>
     <string name="sync_frequency">同步的时间间隔</string>
+    <string name="default_sync_frequency">默认间隔（%1$s）</string>
+    <string name="reason_for_sync_error">同步错误原因</string>
+    <string name="disable_sync_frequency">禁止同步</string>
     <string name="setting_down_img_title">省流量下载图片</string>
     <string name="proxy">代理</string>
     <string name="enable_proxy">启用代理</string>
@@ -184,6 +186,9 @@
 
     <string name="iframe_auto_height">视频优化（高度自适应、美化控制条）</string>
     <string name="may_not_play_text_exceptions">可能会无法播放，文字异常</string>
+
+    <string name="block_ads">屏蔽广告</string>
+    <string name="may_cause_abnormal_images_and_web_pages">可能导致图片、网页异常</string>
 
     <string name="enable_logging">日志记录</string>
     <string name="check_app_update">检查 App 更新</string>
@@ -224,6 +229,9 @@
     <string name="rule_already_exists">规则已存在</string>
 
     <string name="executed">已执行</string>
+    <plurals name="executed_involving_n_articles">
+        <item quantity="other">已执行，涉及 %1$d 篇新文章</item>
+    </plurals>
     <string name="execute_for_existing_articles">对已存在的文章执行该规则</string>
     <string name="explain">说明</string>
     <string name="url_rewrite_summary">链接覆写可用于将小图转为大图链接，去除跳转等。\n覆写的方式有2种：\n1、<u>替换 host</u>\n当 url 的 host <u>是</u> key 时，host 将被 value 替换。\n2、<u>修改 url</u>\n当 url 的 host <u>含</u> key 时，url 将被 value 中的 js 脚本修改。\n系统会传入 url（链接），请直接修改 url。\n调用 \"call.valid(url)==true\" 方法，可验证 url 是否有效。</string>
@@ -338,7 +346,7 @@
     <string name="containing_any_keyword_is_eligible">包含一个关键字即符合本条件</string>
     <string name="only_positive_integers_are_allowed">只允许正整数</string>
 
-    <string name="delete">删去</string>
+    <string name="delete">删除</string>
     <string name="other">其他</string>
     <!--操作-->
     <string name="open_link_by_builtin_browser">仅用内置浏览器打开链接</string>
@@ -381,9 +389,9 @@
     <string name="network_not_connected_please_check_it">网络没有连接上，请检查一下</string>
     <!--<string name="tag_choose_tips">想看哪个分类？</string>-->
 
-    <string name="xx_minute">%1$s 分钟</string>
-    <string name="xx_hour">%1$s 小时</string>
-    <string name="clear_day_summary">%1$s 天</string>
+    <string name="xx_minute">%1$d 分钟</string>
+    <string name="xx_hour">%1$d 小时</string>
+    <string name="clear_day_summary">%1$d 天</string>
 
     <string name="save_img">保存图片</string>
     <string name="share_img">分享图片</string>
@@ -414,7 +422,7 @@
     <string name="bag_network_please_check_it">网络不好，请重试一下</string>
     <string name="failed_please_try_again">失败，请重试一下</string>
 
-    <string name="input_feed_url">输入订阅源网址</string>
+    <string name="input_feed_url">输入订阅网址</string>
 
 
     <string name="search_cloudy_feeds_result_count">已搜到 %1$d 个订阅源</string>
@@ -532,7 +540,7 @@
 
     <string name="feed_desc">简介</string>
     <string name="site_url">站点网址</string>
-    <string name="feed_url">订阅源网址</string>
+    <string name="feed_url">订阅网址</string>
     <string name="feed_name">订阅源名称</string>
     <string name="unsubscribe">退订</string>
 
@@ -588,6 +596,7 @@
     <string name="failure">失败</string>
     <string name="lab">实验室</string>
 
+    <string name="icon">标志</string>
     <string name="inoreader_logo">InoReader 的标志</string>
     <string name="feedly_logo">Feedly 的标志</string>
     <string name="fever_logo">Fever 的标志</string>
@@ -610,6 +619,9 @@
 
     <string name="url_is_not_accessible_with_reason">网址无法访问：%1$s</string>
 
+    <string name="import_failed_feedback_to_the_developer">导入失败，请反馈给开发者</string>
+    <string name="the_apk_does_not_exist">apk 不存在！</string>
+    <string name="is_not_an_apk_file">不是 apk 文件！</string>
     <string name="no_search_results_found">未搜索到任何结果</string>
     <string name="no_articles">没有文章了</string>
 </resources>

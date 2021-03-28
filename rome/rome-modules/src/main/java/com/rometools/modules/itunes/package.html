@@ -1,0 +1,37 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+  <head>
+    <title></title>
+  </head>
+  <body>
+  
+    This is a ROME plug in that implements the iTunes RSS extensions as defined
+    <a href="http://phobos.apple.com/static/iTunesRSS.html">by Apple</a> in their
+    documentation. BTW, an anti-shoutout to Apple for moving the original 
+    <a href="http://phobos.apple.com/static/podcast_specifications.pdf">PDF spec
+    </a>. Thanks for making it harder than it needed to be.
+    
+    <h2>Sample Usage:</h2>
+    <pre>
+        SyndFeedInput input = new SyndFeedInput();
+        SyndFeed syndfeed = input.build(new XmlReader(feed.toURL()));
+
+        Module module = syndfeed.getModule("http://www.itunes.com/DTDs/Podcast-1.0.dtd");
+        FeedInformation feedInfo = (FeedInformation) module;
+        
+        System.out.println( feedInfo.getImage() );
+        System.out.println( feedInfo.getCategory() );
+        
+        // Or to create a feed..
+        
+        ArrayList modules = new ArrayList();
+        EntryInformation e = new EntryInformationImpl();
+        e.setDuration( new Duration( 10000 ) );
+        modules.add( e );
+        syndEntry.setModules( modules );
+    </pre>
+    
+    Similarly you can get an EntryInformation object off SyndEntries or Items.
+  </body>
+</html>

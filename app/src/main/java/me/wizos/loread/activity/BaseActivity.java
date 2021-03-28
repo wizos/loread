@@ -20,11 +20,22 @@ import me.wizos.loread.view.colorful.Colorful;
 /**
  * @author Wizos on 2016/3/12.
  */
-public abstract class BaseActivity extends AppCompatActivity {
+public abstract class BaseActivity extends AppCompatActivity { //  implements ThemeChangeObserver
     private static String TAG = "BaseActivity";
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        // ((App) getApplication()).registerObserver(this);
+        // declareCurrentTheme();
         super.onCreate(savedInstanceState);
+
+        // // 设置透明状态栏
+        // if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+        //     Window window = getWindow();
+        //     WindowManager.LayoutParams attributes = window.getAttributes();
+        //     attributes.flags |= WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS;
+        //     window.setAttributes(attributes);
+        // }
+
         showCurrentTheme();
     }
 
@@ -55,6 +66,25 @@ public abstract class BaseActivity extends AppCompatActivity {
         } else {
             mColorful.setTheme(R.style.AppTheme_Day);
         }
+
+        // if (App.i().getUser() != null) {
+        //     if (!App.i().getUser().isAutoToggleTheme()) {
+        //         if (App.i().getUser().getThemeMode() == App.THEME_NIGHT){
+        //             mColorful.setTheme(R.style.AppTheme_Night);
+        //         } else {
+        //             mColorful.setTheme(R.style.AppTheme_Day);
+        //         }
+        //     }else {
+        //         int hour = TimeUtils.getCurrentHour();
+        //         if (hour >= 7 && hour < 20) {
+        //             mColorful.setTheme(R.style.AppTheme_Day);
+        //         } else {
+        //             mColorful.setTheme(R.style.AppTheme_Night);
+        //         }
+        //     }
+        // } else {
+        //     mColorful.setTheme(R.style.AppTheme_Day);
+        // }
     }
 
     /**
@@ -81,20 +111,6 @@ public abstract class BaseActivity extends AppCompatActivity {
     @Override
     public void onConfigurationChanged(@NotNull Configuration config) {
         super.onConfigurationChanged(config);
-        // User user = App.i().getUser();
-        // if (user != null && user.isAutoToggleTheme()) {
-        //     int currentNightMode = config.uiMode & Configuration.UI_MODE_NIGHT_MASK;
-        //     if(currentNightMode == Configuration.UI_MODE_NIGHT_NO && user.getThemeMode() == App.THEME_NIGHT){
-        //         XLog.d("夜间模式未启用，使用浅色主题");
-        //         mColorful.setTheme(R.style.AppTheme_Day);
-        //         user.setThemeMode(App.THEME_DAY);
-        //     }else if(currentNightMode == Configuration.UI_MODE_NIGHT_YES && user.getThemeMode() == App.THEME_DAY){
-        //         XLog.d("夜间模式启用，使用深色主题");
-        //         mColorful.setTheme(R.style.AppTheme_Night);
-        //         user.setThemeMode(App.THEME_NIGHT);
-        //     }
-        //     CoreDB.i().userDao().update(user);
-        // }
     }
 
     @Override
@@ -107,4 +123,63 @@ public abstract class BaseActivity extends AppCompatActivity {
         }
         return super.onKeyDown(keyCode, event);
     }
+
+
+
+
+
+
+
+    // @Override
+    // public void declareCurrentTheme() {
+    //     if (App.i().getUser() != null && App.i().getUser().getThemeMode() == App.THEME_NIGHT) {
+    //         setTheme(R.style.AppTheme_Night);
+    //     } else {
+    //         setTheme(R.style.AppTheme_Day);
+    //     }
+    // }
+    //
+    // @Override
+    // public void setContentView(@LayoutRes int layoutResID) {
+    //     super.setContentView(layoutResID);
+    //     // View status = findViewById(R.id.custom_id_title_status_bar);
+    //     // if (status != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+    //     //     status.getLayoutParams().height = getStatusBarHeight();
+    //     // }
+    // }
+    //
+    // // /**
+    // //  * */
+    // // public int getStatusBarHeight() {
+    // //     int result = 0;
+    // //     int resourceId = getContext().getResources().getIdentifier("status_bar_height", "dimen", "android");
+    // //     if (resourceId > 0) {
+    // //         result = getContext().getResources().getDimensionPixelSize(resourceId);
+    // //     }
+    // //     return result;
+    // // }
+    //
+    //
+    // public void switchCurrentTheme() {
+    //     User user = App.i().getUser();
+    //     if (App.i().getUser().getThemeMode() == App.THEME_DAY) {
+    //         user.setThemeMode(App.THEME_NIGHT);
+    //     } else {
+    //         user.setThemeMode(App.THEME_DAY);
+    //     }
+    //     CoreDB.i().userDao().update(user);
+    //     declareCurrentTheme();
+    // }
+    //
+    // // /**
+    // //  * */
+    // // public Context getContext() {
+    // //     return BaseActivity.this;
+    // // }
+    //
+    // @Override
+    // protected void onDestroy() {
+    //     ((App) getApplication()).unregisterObserver(this);
+    //     super.onDestroy();
+    // }
 }

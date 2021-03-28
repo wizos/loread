@@ -251,7 +251,7 @@ public class FileUtils {
                 return null;
             }
             File destFile = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), name);
-            if (!save2(destFile, content))
+            if (!save(destFile, content))
                 return null;
             Uri uri = null;
             if (destFile.exists())
@@ -296,7 +296,7 @@ public class FileUtils {
     }
 
 
-    public static boolean save(File file, String fileContent){
+    public static boolean save3(File file, String fileContent){
         if (!isExternalStorageWritable()) {
             return false;
         }
@@ -314,13 +314,13 @@ public class FileUtils {
             fileWriter.close();  // 关闭此流。在关闭前会先刷新此流的缓冲区。在关闭后，再写入或者刷新的话，会抛IOException异常。
             return true;
         } catch (IOException e) {
-            XLog.e("保存错误");
+            XLog.e("保存错误：" + e.getLocalizedMessage());
             Tool.printCallStack(e);
             return false;
         }
     }
 
-    public static boolean save2(File file, String content) {
+    public static boolean save(File file, String content) {
         if (!createFile(file, true)) {
             XLog.e("FileSaveUtil： create or delete file <$file> failed.");
             return false;
@@ -333,7 +333,7 @@ public class FileUtils {
             outStream.flush();
             ret = true;
         } catch (Exception e) {
-            XLog.e("错误");
+            XLog.e("错误：" + e.getLocalizedMessage());
             Tool.printCallStack(e);
             e.printStackTrace();
             ret = false;
@@ -342,7 +342,7 @@ public class FileUtils {
                 if (outStream != null)
                     outStream.close();
             } catch (IOException e) {
-                XLog.e("错误");
+                XLog.e("错误：" + e.getLocalizedMessage());
                 Tool.printCallStack(e);
                 e.printStackTrace();
                 // ignore

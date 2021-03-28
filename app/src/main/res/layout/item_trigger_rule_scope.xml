@@ -7,9 +7,11 @@
     <TextView
         android:id="@+id/item_rule_target_textview"
         android:padding="5dp"
-        android:textSize="14sp"
+        android:textSize="16sp"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:textColor="?attr/lv_item_title_color"
+        android:background="?attr/root_view_bg"
         android:textStyle="bold"
         tools:text="分类：XXX"/>
 </LinearLayout>

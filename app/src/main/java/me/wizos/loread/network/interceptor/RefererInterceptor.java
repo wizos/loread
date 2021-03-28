@@ -29,7 +29,7 @@ public class RefererInterceptor implements Interceptor {
         if (!StringUtils.isEmpty(referer)) {
             request = request.newBuilder().header(Contract.REFERER, referer).build();
         }
-        //XLog.i("拦截到的referer：" + request.url().toString() + " , " + referer );
+        // XLog.i("拦截到的referer：" + request.url().toString() + " , " + referer );
         return chain.proceed(request);
     }
 }

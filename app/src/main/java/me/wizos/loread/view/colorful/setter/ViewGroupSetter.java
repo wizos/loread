@@ -7,6 +7,8 @@ import android.widget.AbsListView;
 
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.elvishew.xlog.XLog;
+
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -87,10 +89,11 @@ public class ViewGroupSetter extends ViewSetter {
         if (mView.getBackground() != null) {
             alpha = mView.getBackground().getAlpha();// 自加。保留透明度信息。
         }
+        // XLog.i("需要修改底色为：" + getColor(newTheme) + " 透明度：" + alpha);
         mView.setBackgroundColor(getColor(newTheme));
         mView.getBackground().setAlpha(alpha);// 自加。保留透明度信息。
         // 清空AbsListView的元素
-        clearListViewRecyclerBin(mView);
+        // clearListViewRecyclerBin(mView);
         // 清空RecyclerView
         clearRecyclerViewRecyclerBin(mView);
         // 修改所有子元素的相关属性
@@ -102,7 +105,7 @@ public class ViewGroupSetter extends ViewSetter {
      * @return
      */
     private View findViewById(View rootView, int viewId) {
-//		Log.d("", "### viewgroup find view : " + targetView);
+		// Log.d("", "### viewgroup find view : " + targetView);
         return rootView.findViewById(viewId);
     }
 
@@ -127,13 +130,13 @@ public class ViewGroupSetter extends ViewSetter {
                 // 每次都要从ViewGroup中查找数据
                 setter.mView = findViewById(viewGroup, setter.mViewId);
 
-//				Log.e("", "### childView : " + childView + ", id = "
-//						+ childView.getId());
-//				Log.e("", "### setter view : " + setter.mView + ", id = "
-//						+ setter.getViewId());
+				// Log.e("", "### childView : " + childView + ", id = "
+				// 		+ childView.getId());
+				// Log.e("", "### setter view : " + setter.mView + ", id = "
+				// 		+ setter.getViewId());
                 if (childView.getId() == setter.getViewId()) {
                     setter.setValue(newTheme, themeId);
-//					Log.e("", "@@@ 修改新的属性: " + childView);
+					// Log.e("", "@@@ 修改新的属性: " + childView);
                 }
             }
         }
@@ -166,32 +169,59 @@ public class ViewGroupSetter extends ViewSetter {
     }
 
     private void clearRecyclerViewRecyclerBin(View rootView) {
-//        KLog.e("", "### 准备 清空RecyclerView的Recycer ");
         if (rootView instanceof RecyclerView) {
+            // XLog.i("### 准备 清空RecyclerView的Recycer ");
+            // RecyclerView.RecycledViewPool recycledViewPool = ((RecyclerView) rootView).getRecycledViewPool();
+            // recycledViewPool.clear();
+            // try {
+            //     ((RecyclerView) rootView).getRecycledViewPool().clear();
+            //     Field localField = RecyclerView.class.getDeclaredField("mRecycler");
+            //     localField.setAccessible(true);
+            //     Method localMethod = Class.forName(
+            //             "androidx.recyclerview.widget.RecyclerView$Recycler")
+            //             .getDeclaredMethod("clear", new Class[0]);
+            //     localMethod.setAccessible(true);
+            //     localMethod.invoke(localField.get(rootView), new Object[0]);
+            //     rootView.invalidate();
+            //     ((RecyclerView) rootView).getRecycledViewPool().clear();
+            //
+            //     // XLog.i("", "### 清空RecyclerView的Recycer ");
+            // } catch (NoSuchFieldException e1) {
+            //     e1.printStackTrace();
+            // } catch (ClassNotFoundException e2) {
+            //     e2.printStackTrace();
+            // } catch (NoSuchMethodException e3) {
+            //     e3.printStackTrace();
+            // } catch (IllegalAccessException e4) {
+            //     e4.printStackTrace();
+            // } catch (InvocationTargetException e5) {
+            //     e5.printStackTrace();
+            // }
+
             try {
-                Field localField = RecyclerView.class.getDeclaredField("mRecycler");
-                localField.setAccessible(true);
-                Method localMethod = Class.forName(
-                        "androidx.recyclerview.widget.RecyclerView$Recycler")
-                        .getDeclaredMethod("clear", new Class[0]);
-                localMethod.setAccessible(true);
-                localMethod.invoke(localField.get(rootView), new Object[0]);
+                Field declaredField = RecyclerView.class.getDeclaredField("mRecycler");
+                declaredField.setAccessible(true);
+                Method declaredMethod = Class.forName(RecyclerView.Recycler.class.getName()).getDeclaredMethod("clear");
+                declaredMethod.setAccessible(true);
+                declaredMethod.invoke(declaredField.get(rootView));
                 ((RecyclerView) rootView).getRecycledViewPool().clear();
-
-                rootView.invalidate();
-
-                // KLog.e("", "### 清空RecyclerView的Recycer ");
-            } catch (NoSuchFieldException e1) {
-                e1.printStackTrace();
-            } catch (ClassNotFoundException e2) {
-                e2.printStackTrace();
-            } catch (NoSuchMethodException e3) {
-                e3.printStackTrace();
-            } catch (IllegalAccessException e4) {
-                e4.printStackTrace();
-            } catch (InvocationTargetException e5) {
-                e5.printStackTrace();
+            } catch (NoSuchFieldException | ClassNotFoundException | InvocationTargetException | NoSuchMethodException | IllegalAccessException e) {
+                XLog.e("错误：" + e);
             }
+
+            // Class<RecyclerView> recyclerViewClass = RecyclerView.class;
+            // try {
+            //     Field declaredField = recyclerViewClass.getDeclaredField("mRecycler" );
+            //     declaredField.setAccessible(true);
+            //     Method declaredMethod = Class.forName(RecyclerView.Recycler. class.getName()).getDeclaredMethod("clear", new Class[0]);
+            //     declaredMethod.setAccessible(true);
+            //     declaredMethod.invoke(declaredField.get(((RecyclerView) rootView)), new Object[0]);
+            //     RecyclerView.RecycledViewPool recycledViewPool = ((RecyclerView) rootView).getRecycledViewPool();
+            //     recycledViewPool.clear();
+            // } catch (Exception e) {
+            //     XLog.e("错误：" + e);
+            // }
+
         }
     }
 

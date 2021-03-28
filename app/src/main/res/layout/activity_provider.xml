@@ -1,143 +1,147 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:app="http://schemas.android.com/apk/res-auto"
+<androidx.core.widget.NestedScrollView xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/provider_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
     android:fitsSystemWindows="true"
     android:addStatesFromChildren="true"
     android:windowDrawsSystemBarBackgrounds="true"
     tools:context=".activity.ProviderActivity">
 
-    <TextView
-        android:id="@+id/provider_rss_title"
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/provider_root"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="88dp"
-        android:gravity="center"
-        android:text="@string/everything_is_rssible"
-        android:textSize="20sp"
-        android:textStyle="bold"
-        app:layout_constraintHorizontal_bias="1.0"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        android:layout_height="match_parent">
 
-    <TextView
-        android:id="@+id/provider_rss_summary"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_margin="20dp"
-        android:text="@string/rss_summary"
-        android:textSize="16sp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/provider_rss_title" />
+        <TextView
+            android:id="@+id/provider_rss_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="88dp"
+            android:gravity="center"
+            android:text="@string/everything_is_rssible"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            app:layout_constraintHorizontal_bias="1.0"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
 
-    <TextView
-        android:id="@+id/provider_rss_detail"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:gravity="center"
-        android:onClick="showRSSDetail"
-        android:layout_marginTop="10dp"
-        android:layout_marginBottom="10dp"
-        android:layout_marginStart="20dp"
-        android:layout_marginEnd="20dp"
-        android:padding="10dp"
-        android:text="@string/more_introduction"
-        android:textColor="@color/bluePrimary"
-        android:textSize="14sp"
-        app:layout_constraintTop_toBottomOf="@+id/provider_rss_summary" />
+        <TextView
+            android:id="@+id/provider_rss_summary"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="20dp"
+            android:text="@string/rss_summary"
+            android:textSize="16sp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/provider_rss_title" />
 
-    <LinearLayout
-        android:id="@+id/linearLayout"
-        android:layout_width="220dp"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:layout_margin="10dp"
-        android:gravity="center"
-        android:orientation="vertical"
-        app:layout_constraintBottom_toTopOf="@+id/provider_author"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/provider_rss_detail">
+        <TextView
+            android:id="@+id/provider_rss_detail"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:onClick="showRSSDetail"
+            android:layout_marginTop="10dp"
+            android:layout_marginBottom="10dp"
+            android:layout_marginStart="20dp"
+            android:layout_marginEnd="20dp"
+            android:padding="10dp"
+            android:text="@string/more_introduction"
+            android:textColor="@color/bluePrimary"
+            android:textSize="14sp"
+            app:layout_constraintTop_toBottomOf="@+id/provider_rss_summary" />
 
-        <Button
-            android:id="@+id/select_login_account"
+        <LinearLayout
+            android:id="@+id/linearLayout"
+            android:layout_width="220dp"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_margin="10dp"
+            android:gravity="center"
+            android:orientation="vertical"
+            app:layout_constraintBottom_toTopOf="@+id/provider_author"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/provider_rss_detail">
+
+            <Button
+                android:id="@+id/select_login_account"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="20dp"
+                android:minWidth="120dp"
+                android:onClick="selectLoginAccount"
+                android:text="@string/select_login_account"
+                android:textAllCaps="false"
+                android:visibility="gone" />
+
+            <Button
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:drawableStart="@drawable/logo_inoreader_icon"
+                android:gravity="center_vertical|start"
+                android:minWidth="150dp"
+                android:onClick="oauthInoReader"
+                android:text="@string/inoreader"
+                android:textAllCaps="false" />
+
+            <Button
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:drawableStart="@drawable/logo_feedly_icon"
+                android:gravity="center_vertical|start"
+                android:minWidth="150dp"
+                android:onClick="oauthFeedly"
+                android:text="@string/feedly"
+                android:textAllCaps="false" />
+
+            <Button
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:drawableStart="@drawable/logo_fever_icon"
+                android:gravity="center_vertical|start"
+                android:minWidth="150dp"
+                android:onClick="loginFever"
+                android:text="@string/fever"
+                android:textAllCaps="false" />
+
+            <Button
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:drawableStart="@drawable/logo_tinytinyrss_icon"
+                android:gravity="center_vertical|start"
+                android:minWidth="150dp"
+                android:onClick="loginTinyRSS"
+                android:text="@string/tinytinyrss"
+                android:textAllCaps="false" />
+
+            <Button
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:drawableStart="@drawable/logo_rss_icon"
+                android:gravity="center_vertical|start"
+                android:minWidth="150dp"
+                android:onClick="selectLocalRSS"
+                android:text="@string/local_rss"
+                android:textAllCaps="false" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/provider_author"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="20dp"
-            android:minWidth="120dp"
-            android:onClick="selectLoginAccount"
-            android:text="@string/select_login_account"
-            android:textAllCaps="false"
-            android:visibility="gone" />
+            android:layout_gravity="center"
+            android:layout_marginBottom="12dp"
+            android:alpha="0.6"
+            android:onClick="clickAuthor"
+            android:text="@string/developed_by_wizos"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent" />
 
-        <Button
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:drawableStart="@drawable/logo_inoreader_icon"
-            android:gravity="center_vertical|start"
-            android:minWidth="150dp"
-            android:onClick="oauthInoReader"
-            android:text="@string/inoreader"
-            android:textAllCaps="false" />
-
-        <Button
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:drawableStart="@drawable/logo_feedly_icon"
-            android:gravity="center_vertical|start"
-            android:minWidth="150dp"
-            android:onClick="oauthFeedly"
-            android:text="@string/feedly"
-            android:textAllCaps="false" />
-
-        <Button
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:drawableStart="@drawable/logo_fever_icon"
-            android:gravity="center_vertical|start"
-            android:minWidth="150dp"
-            android:onClick="loginFever"
-            android:text="@string/fever"
-            android:textAllCaps="false" />
-
-        <Button
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:drawableStart="@drawable/logo_tinytinyrss_icon"
-            android:gravity="center_vertical|start"
-            android:minWidth="150dp"
-            android:onClick="loginTinyRSS"
-            android:text="@string/tinytinyrss"
-            android:textAllCaps="false" />
-
-        <Button
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:drawableStart="@drawable/logo_rss_icon"
-            android:gravity="center_vertical|start"
-            android:minWidth="150dp"
-            android:onClick="selectLocalRSS"
-            android:text="@string/local_rss"
-            android:textAllCaps="false" />
-    </LinearLayout>
-
-    <TextView
-        android:id="@+id/provider_author"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:layout_marginBottom="12dp"
-        android:alpha="0.6"
-        android:onClick="clickAuthor"
-        android:text="@string/developed_by_wizos"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
-
-</androidx.constraintlayout.widget.ConstraintLayout>
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</androidx.core.widget.NestedScrollView>

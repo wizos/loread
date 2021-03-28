@@ -7,6 +7,8 @@
     android:gravity="center_vertical"
     android:layout_marginTop="6dp"
     android:layout_marginBottom="6dp"
+    android:paddingStart="12dp"
+    android:paddingEnd="12dp"
     tools:ShowIn="@layout/activity_main"
     android:orientation="vertical"
     android:baselineAligned="false">
@@ -17,14 +19,11 @@
         android:id="@+id/main_list_item_surface"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:paddingStart="12dp"
-        android:paddingEnd="12dp"
         android:background="?attr/root_view_bg"
         tools:ignore="UselessParent">
 
         <RelativeLayout
             android:id="@+id/main_slv_item_text"
-
             android:layout_marginTop="6dp"
             android:layout_width="match_parent"
             android:layout_height="wrap_content">

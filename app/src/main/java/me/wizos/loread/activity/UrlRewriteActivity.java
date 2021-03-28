@@ -24,6 +24,7 @@ import com.afollestad.materialdialogs.DialogAction;
 import com.afollestad.materialdialogs.MaterialDialog;
 import com.hjq.toast.ToastUtils;
 import com.reginald.editspinner.EditSpinner;
+import com.umeng.analytics.MobclickAgent;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -155,6 +156,7 @@ public class UrlRewriteActivity extends BaseActivity {
                     String oldValue = UrlRewriteConfig.i().getValue(testRuleResult.host);
                     if(StringUtils.isEmpty(oldValue)){
                         if(UrlRewriteConfig.i().addRule(testRuleResult.isReplaceHost, testRuleResult.host, testRuleResult.value)){
+                            MobclickAgent.onEvent(UrlRewriteActivity.this, "save_url_rewrite_rule");
                             ToastUtils.show(R.string.success);
                         }else {
                             ToastUtils.show(R.string.failure);

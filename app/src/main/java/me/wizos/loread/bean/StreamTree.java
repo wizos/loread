@@ -9,7 +9,7 @@ package me.wizos.loread.bean;
 
 import java.util.List;
 
-import me.wizos.loread.db.Collection;
+import me.wizos.loread.bean.collectiontree.Collection;
 
 public class StreamTree {
     // public static final int ROOT = -2;

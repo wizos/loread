@@ -167,6 +167,9 @@
     <string name="auto_sync">Auto sync</string>
     <string name="auto_sync_on_wifi_title">Auto sync in Wifi mode</string>
     <string name="sync_frequency">Time interval for sync</string>
+    <string name="default_sync_frequency">Default interval (%1$s)</string>
+    <string name="reason_for_sync_error">Reason for sync error</string>
+    <string name="disable_sync_frequency">Disable sync</string>
 
     <string name="setting_down_img_title">Save traffic to download pictures</string>
     <string name="proxy">Proxy</string>
@@ -188,6 +191,9 @@
 
     <string name="iframe_auto_height">Video optimization (height adaption, beautification control bar)</string>
     <string name="may_not_play_text_exceptions">May not play, text exceptions</string>
+
+    <string name="block_ads">Block ads</string>
+    <string name="may_cause_abnormal_images_and_web_pages">May cause abnormal images and web pages</string>
 
     <string name="enable_logging">Enable logging</string>
     <string name="check_app_update">Check App Update</string>
@@ -229,6 +235,10 @@
     <string name="rule_already_exists">Rule already exists</string>
 
     <string name="executed">Executed</string>
+    <plurals name="executed_involving_n_articles">
+        <item quantity="one">Executed, involving %1$s article</item>
+        <item quantity="other">Executed, involving %1$s articles</item>
+    </plurals>
     <string name="execute_for_existing_articles">Execute for existing articles</string>
     <string name="explain">Explain</string>
     <string name="url_rewrite_summary">Url rewrite can be used to convert small image into large image, remove jumps, etc.\nThere are 2 methods to rewrite:\n1. <u>Replace Host</u> \nwhen the url\'s host <u>is</u> key, host will be replaced with value.\n2. Rewrite Url \nWhen the url\'s host <u>contains</u> key, url will be modified by js script in value. \nThe system will pass in the \"url\", plz rewrite it. \nThe method \"call.valid(url)==true\" can be called to verify that the new url is valid.</string>
@@ -432,9 +442,9 @@
 
     <string name="input_feed_url">Enter the feed URL</string>
 
-    <string name="xx_minute">%1$s minutes</string>
-    <string name="xx_hour">%1$s hours</string>
-    <string name="clear_day_summary">%1$s days</string>
+    <string name="xx_minute">%1$d minutes</string>
+    <string name="xx_hour">%1$d hours</string>
+    <string name="clear_day_summary">%1$d days</string>
 
     <string name="save_img">Save picture</string>
     <string name="share_img">Share picture</string>
@@ -706,6 +716,7 @@
     <string name="port_10808" translatable="false">10808</string>
     <string name="lab">Lab</string>
 
+    <string name="icon">Icon</string>
     <string name="inoreader_logo">Logo of InoReader</string>
     <string name="feedly_logo">Logo of Feedly</string>
     <string name="fever_logo">Logo of Fever</string>
@@ -729,6 +740,9 @@
 
     <string name="url_is_not_accessible_with_reason">URL is not accessible: %1$s</string>
 
+    <string name="import_failed_feedback_to_the_developer">Import failed, please feedback to the developer</string>
+    <string name="the_apk_does_not_exist">The apk does not exist!</string>
+    <string name="is_not_an_apk_file">Is not an apk file!</string>
     <string name="no_search_results_found">No search results found</string>
     <string name="no_articles">No articles</string>
 

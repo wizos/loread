@@ -90,16 +90,15 @@ public class TinyRSSTokenInterceptor implements Interceptor {
                 CoreDB.i().userDao().update(user);
                 App.i().getAuthApi().setAuthorization(user.getAuth());
 
-                String hhh = Tool.bodyToString(request.body());
-                XLog.v("修改前后的 string：" + hhh);
+                String authorization = Tool.bodyToString(request.body());
                 Pattern pattern = Pattern.compile("\"sid\"\\s*:\\s*\"(.*?)\"");
-                hhh = pattern.matcher(hhh).replaceAll("\"sid\":\"" + user.getAuth() +"\"");
+                authorization = pattern.matcher(authorization).replaceAll("\"sid\":\"" + user.getAuth() +"\"");
 
                 Request.Builder builder = request
                         .newBuilder()
-                        .post(RequestBody.create(MediaType.parse("application/json;charset=UTF-8"), hhh));
+                        .post(RequestBody.create(MediaType.parse("application/json;charset=UTF-8"), authorization));
 
-                XLog.d("修改前后的 string：" + hhh);
+                XLog.d("修改前后的 authorization：" + authorization);
                 return chain.proceed(builder.build());
             }
         }

@@ -45,10 +45,12 @@ public class ScriptUtils {
             return true;
         } catch (ScriptException e) {
             XLog.e("脚本执行错误1：" + e.getMessage() + "," +e.getFileName()  + ","+ e.getColumnNumber()  + "," + e.getLineNumber() );
+            XLog.i("错误脚本为：" + js);
             e.printStackTrace();
             return false;
         } catch (Exception e){
             XLog.e("脚本执行错误2：" + e.getMessage());
+            XLog.i("错误脚本为：" + js);
             e.printStackTrace();
             return false;
         }

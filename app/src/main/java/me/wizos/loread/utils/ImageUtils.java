@@ -6,7 +6,6 @@ import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Matrix;
 import android.graphics.Paint;
-import android.media.ThumbnailUtils;
 import android.os.AsyncTask;
 
 import com.elvishew.xlog.XLog;
@@ -34,32 +33,39 @@ public class ImageUtils {
         void onError(Throwable e);
     }
 
-    public static void mergeBitmap(Context context, final File bgFile, final OnMergeListener onMergeListener) {
-        mergeBitmap(new WeakReference<>(context), bgFile, onMergeListener);
-    }
-
-    public static void mergeBitmap(final WeakReference<Context> context, final File bgFile, final OnMergeListener onMergeListener) {
-        if (!bgFile.getAbsolutePath().toLowerCase().endsWith(".gif") || !bgFile.getAbsolutePath().toLowerCase().contains("/compressed/")) {
+    /**
+     *
+     * @param context
+     * @param bgFile 文件名后缀必须为.gif，并且在compressed文件夹中
+     * @param onMergeListener
+     */
+    public static void mergeBitmap(final WeakReference<Context> context, final File bgFile, boolean isGIF, final OnMergeListener onMergeListener) {
+        // XLog.d("是否为动图：" + isGIF + " , " + bgFile.getAbsolutePath());
+        if (!isGIF || !bgFile.getAbsolutePath().toLowerCase().contains("/compressed/")) {
             onMergeListener.onSuccess();
             return;
         }
+
         AsyncTask.SERIAL_EXECUTOR.execute(() -> {
             try {
                 FileInputStream fis1 = new FileInputStream(bgFile);
                 Bitmap bgBitmap = BitmapFactory.decodeStream(fis1).copy(Bitmap.Config.ARGB_8888, true);
 
-                int shortSide = Math.min(bgBitmap.getWidth(), bgBitmap.getHeight());
+                // int shortSide = Math.min(bgBitmap.getWidth(), bgBitmap.getHeight());
                 Bitmap fgBitmap = BitmapFactory.decodeStream(context.get().getAssets().open("image/gif_player.png")).copy(Bitmap.Config.ARGB_8888, true);
 
-                if (shortSide < fgBitmap.getWidth()) {
-                    onMergeListener.onSuccess();
-                    return;
-                }
-                Bitmap newBitmap = ImageUtils.mergeBitmap(bgBitmap, fgBitmap);
-
+                // XLog.d("宽度：" + shortSide + ", " + fgBitmap.getWidth());
+                // if (shortSide <= fgBitmap.getWidth()) {
+                //     bgBitmap.recycle();
+                //     fgBitmap.recycle();
+                //     onMergeListener.onSuccess();
+                //     return;
+                // }
+                Bitmap newBitmap = mergeBitmap(bgBitmap, fgBitmap);
+                // XLog.d("新图片：" + newBitmap.getWidth());
                 //将合并后的bitmap3保存为png图片到本地
                 FileOutputStream out = new FileOutputStream(bgFile.getAbsolutePath());
-                newBitmap.compress(Bitmap.CompressFormat.JPEG, 100, out);
+                newBitmap.compress(Bitmap.CompressFormat.PNG, 100, out);
 
                 out.close();
 
@@ -71,9 +77,8 @@ public class ImageUtils {
                 newBitmap = null;
                 onMergeListener.onSuccess();
             } catch (Exception e) {
-
                 e.printStackTrace();
-                XLog.e("报错");
+                XLog.e("报错：" + e.getMessage());
                 onMergeListener.onError(e);
             }
         });
@@ -122,99 +127,6 @@ public class ImageUtils {
         return newBitmap;
     }
 
-
-    public static void genPic(final File file, final File fileNew) {
-        AsyncTask.SERIAL_EXECUTOR.execute(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    // FileInputStream fileInputStream = new FileInputStream(App.i().getExUserFilesDir() + "/compressed/pic.jpg");
-
-                    Bitmap newBitmap = getThumbnail(file, 1080);
-                    //将合并后的bitmap3保存为png图片到本地
-                    FileOutputStream out = new FileOutputStream(fileNew);
-                    newBitmap.compress(Bitmap.CompressFormat.JPEG, 100, out);
-                    XLog.e("成功获取 getThumbnail");
-                } catch (Exception e) {
-                    XLog.e("报错");
-                    e.printStackTrace();
-                }
-            }
-        });
-    }
-    // 作者：呵呵瓤儿
-    // 链接：https://www.jianshu.com/p/cc61ea00f768
-    // 來源：简书
-    // 简书著作权归作者所有，任何形式的转载都请联系作者获得授权并注明出处。
-
-    /**
-     * 这样得到的图片会比原图体积大3倍
-     */
-    public static Bitmap getThumbnail(File file, int screenWidth) throws IOException {
-        BitmapFactory.Options options = new BitmapFactory.Options();
-        //只读取图片，不加载到内存中
-        options.inJustDecodeBounds = true;
-        options.inSampleSize = 1;
-
-        BitmapFactory.decodeStream(new FileInputStream(file), null, options);
-        int imgWidth = options.outWidth;
-        int imgHeight = options.outHeight;
-
-        XLog.e("宽高1=" + imgWidth + "  " + imgHeight);
-        // 将长宽变为偶数
-        imgWidth = imgWidth % 2 == 1 ? imgWidth + 1 : imgWidth;
-        imgHeight = imgHeight % 2 == 1 ? imgHeight + 1 : imgHeight;
-        screenWidth = screenWidth % 2 == 1 ? screenWidth + 1 : screenWidth;
-
-        // 如果图片宽度大于屏幕宽度，则生成缩略图
-        if (imgWidth > screenWidth) {
-            imgHeight = (int) (((float) screenWidth) / ((float) imgWidth) * imgHeight);
-            imgWidth = screenWidth;
-        }
-        return ThumbnailUtils.extractThumbnail(BitmapFactory.decodeFile(file.getAbsolutePath()), imgWidth, imgHeight);
-    }
-
-    /**
-     * 未检验过
-     * 作者：dream_monkey
-     * 原文：https://blog.csdn.net/dream_monkey/article/details/51461622
-     */
-    public static Bitmap adjustImage(String absolutePath, int screenWidth, int screenHeight) {
-        BitmapFactory.Options opt = new BitmapFactory.Options();
-        // 这个isjustdecodebounds很重要
-        opt.inJustDecodeBounds = true;
-        BitmapFactory.decodeFile(absolutePath, opt);
-
-        // 获取到这个图片的原始宽度和高度
-        int picWidth = opt.outWidth;
-        // int picHeight = opt.outHeight;
-
-        // 将长宽变为偶数
-        picWidth = picWidth % 2 == 1 ? picWidth + 1 : picWidth;
-        screenWidth = screenWidth % 2 == 1 ? screenWidth + 1 : screenWidth;
-        // picHeight = picHeight % 2 == 1 ? picHeight + 1 : picHeight;
-        // screenHeight = screenHeight % 2 == 1 ? screenHeight + 1 : screenHeight;
-
-        // isSampleSize是表示对图片的缩放程度，比如值为2图片的宽度和高度都变为以前的1/2
-        // inSampleSize只能是2的次方，如计算结果是7会按4进行压缩，计算结果是15会按8进行压缩。
-        opt.inSampleSize = 1;
-        // 根据屏的大小和图片大小计算出缩放比例
-        if (picWidth > screenWidth)
-            opt.inSampleSize = picWidth / screenWidth;
-
-        // if (picWidth > picHeight) {
-        //     if (picWidth > screenWidth)
-        //         opt.inSampleSize = picWidth / screenWidth;
-        // } else {
-        //     if (picHeight > screenHeight)
-        //         opt.inSampleSize = picHeight / screenHeight;
-        // }
-
-        // 这次再真正地生成一个有像素的，经过缩放了的bitmap
-        opt.inJustDecodeBounds = false;
-        return BitmapFactory.decodeFile(absolutePath, opt);
-    }
-
     public static String getImageType(File srcFilePath) {
         FileInputStream imgFile;
         byte[] b = new byte[10];
@@ -249,14 +161,48 @@ public class ImageUtils {
         }
     }
 
+    // /**
+    //  * 常见的图片格式以及SVG
+    //  * 图片返回true
+    //  * svg返回false
+    //  * 都不是则返回null
+    //  */
+    // public static Boolean isImgOrSvg(File file) {
+    //     try {
+    //         FileInputStream is = new FileInputStream(file);
+    //         byte[] src = new byte[28];
+    //         is.read(src, 0, 28);
+    //         StringBuilder stringBuilder = new StringBuilder("");
+    //         for (byte b : src) {
+    //             int v = b & 0xFF;
+    //             String hv = Integer.toHexString(v).toUpperCase();
+    //             if (hv.length() < 2) {
+    //                 stringBuilder.append(0);
+    //             }
+    //             stringBuilder.append(hv);
+    //         }
+    //         String fileHeader = stringBuilder.toString();
+    //
+    //         FileTypeIMG[] imgTypes = FileTypeIMG.values();
+    //         for (FileTypeIMG imgType : imgTypes) {
+    //             if (fileHeader.startsWith(imgType.getValue())) {
+    //                 return true;
+    //             }
+    //         }
+    //         FileTypeSVG[] svgTypes = FileTypeSVG.values();
+    //         for (FileTypeSVG svgType : svgTypes) {
+    //             if (fileHeader.startsWith(svgType.getValue())) {
+    //                 return false;
+    //             }
+    //         }
+    //         return null;
+    //     }catch (IOException e){
+    //         return null;
+    //     }
+    // }
 
-    /**
-     * 常见的图片格式以及SVG
-     * 图片返回true
-     * svg返回false
-     * 都不是则返回null
-     */
-    public static Boolean isImgOrSvg(File file) {
+
+    public static ImgFileType getImgType(File file) {
         try {
             FileInputStream is = new FileInputStream(file);
             byte[] src = new byte[28];
@@ -272,16 +218,10 @@ public class ImageUtils {
             }
             String fileHeader = stringBuilder.toString();
 
-            FileTypeIMG[] imgTypes = FileTypeIMG.values();
-            for (FileTypeIMG imgType : imgTypes) {
+            ImgFileType[] imgTypes = ImgFileType.values();
+            for (ImgFileType imgType : imgTypes) {
                 if (fileHeader.startsWith(imgType.getValue())) {
-                    return true;
-                }
-            }
-            FileTypeSVG[] svgTypes = FileTypeSVG.values();
-            for (FileTypeSVG svgType : svgTypes) {
-                if (fileHeader.startsWith(svgType.getValue())) {
-                    return false;
+                    return imgType;
                 }
             }
             return null;
@@ -290,68 +230,34 @@ public class ImageUtils {
         }
     }
 
-    public static boolean isImgOrSvg2(File file) {
-        try {
-            FileInputStream is = new FileInputStream(file);
-            byte[] src = new byte[28];
-            is.read(src, 0, 28);
-            StringBuilder stringBuilder = new StringBuilder("");
-            for (byte b : src) {
-                int v = b & 0xFF;
-                String hv = Integer.toHexString(v).toUpperCase();
-                if (hv.length() < 2) {
-                    stringBuilder.append(0);
-                }
-                stringBuilder.append(hv);
-            }
-            String fileHeader = stringBuilder.toString();
 
-            FileTypeIMG[] imgTypes = FileTypeIMG.values();
-            for (FileTypeIMG imgType : imgTypes) {
-                if (fileHeader.startsWith(imgType.getValue())) {
-                    return true;
-                }
-            }
-            FileTypeSVG[] svgTypes = FileTypeSVG.values();
-            for (FileTypeSVG svgType : svgTypes) {
-                if (fileHeader.startsWith(svgType.getValue())) {
-                    return true;
-                }
-            }
-        }catch (IOException e){
-            return false;
-        }
-        return false;
-    }
-
-
-    /**
-     * 常见的图片格式以及SVG
-     */
-    public static boolean isImgOrSvg3(File file) {
-        try {
-            FileInputStream is = new FileInputStream(file);
-            byte[] src = new byte[28];
-            is.read(src, 0, 28);
-            StringBuilder stringBuilder = new StringBuilder("");
-            for (byte b : src) {
-                int v = b & 0xFF;
-                String hv = Integer.toHexString(v).toUpperCase();
-                if (hv.length() < 2) {
-                    stringBuilder.append(0);
-                }
-                stringBuilder.append(hv);
-            }
-            ImgFileType[] fileTypes = ImgFileType.values();
-            for (ImgFileType fileType : fileTypes) {
-                if (stringBuilder.toString().startsWith(fileType.getValue())) {
-                    return true;
-                }
-            }
-        }catch (IOException e){
-            return false;
-        }
-        return false;
-    }
+    // /**
+    //  * 常见的图片格式以及SVG
+    //  */
+    // public static boolean isImgOrSvg3(File file) {
+    //     try {
+    //         FileInputStream is = new FileInputStream(file);
+    //         byte[] src = new byte[28];
+    //         is.read(src, 0, 28);
+    //         StringBuilder stringBuilder = new StringBuilder("");
+    //         for (byte b : src) {
+    //             int v = b & 0xFF;
+    //             String hv = Integer.toHexString(v).toUpperCase();
+    //             if (hv.length() < 2) {
+    //                 stringBuilder.append(0);
+    //             }
+    //             stringBuilder.append(hv);
+    //         }
+    //         ImgFileType[] fileTypes = ImgFileType.values();
+    //         for (ImgFileType fileType : fileTypes) {
+    //             if (stringBuilder.toString().startsWith(fileType.getValue())) {
+    //                 return true;
+    //             }
+    //         }
+    //     }catch (IOException e){
+    //         return false;
+    //     }
+    //     return false;
+    // }
 
 }

@@ -530,6 +530,7 @@ public class ArticleUtils {
 
         // 清除空的style
         documentBody.select("[style='']").removeAttr("style");
+        documentBody.select("img[style]").removeAttr("style");
 
         // 将相对连接转为绝对链接
         elements = documentBody.getElementsByAttribute("src");
@@ -851,7 +852,6 @@ public class ArticleUtils {
                             .replaceAll("/(width|height)=\\d+/ig","")
                             .replaceAll("/(&(amp;)*){2,}/ig","&")
             );
-            App.i().iFrames.put(element.attr("src"), element.attr("src"));
         }
 
         elements = document.getElementsByTag("embed");

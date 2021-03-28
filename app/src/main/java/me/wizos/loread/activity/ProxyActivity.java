@@ -23,6 +23,7 @@ import com.google.gson.GsonBuilder;
 import com.hjq.toast.ToastUtils;
 import com.jeremyliao.liveeventbus.LiveEventBus;
 import com.kyleduo.switchbutton.SwitchButton;
+import com.umeng.analytics.MobclickAgent;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -98,6 +99,7 @@ public class ProxyActivity extends BaseActivity {
         enableButton.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                MobclickAgent.onEvent(ProxyActivity.this, "enable_proxy", String.valueOf(isChecked));
                 if(isChecked){
                     String json = CorePref.i().globalPref().getString(Contract.SOCKS5_PROXY,"");
                     if(!TextUtils.isEmpty(json)){

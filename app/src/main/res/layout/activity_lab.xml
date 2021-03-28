@@ -89,30 +89,40 @@
 
             <Button
                 android:layout_width="match_parent"
-                android:onClick="onClickClearHtmlDir"
+                android:onClick="deleteMissingHtmlDir"
                 android:gravity="center_vertical"
                 android:layout_gravity="center_vertical"
                 android:layout_height="50dp"
                 style="@style/SettingItem"
-                android:text="清理因故障未被删除的缓存文件"/>
+                android:text="清理因故未删的缓存文件"/>
 
             <Button
                 android:layout_width="match_parent"
-                android:onClick="onClickArchive"
+                android:onClick="deleteExpiredArticles"
                 android:gravity="center_vertical"
                 android:layout_gravity="center_vertical"
                 android:layout_height="50dp"
                 style="@style/SettingItem"
-                android:text="归档：清理过期数据"/>
+                android:text="清理过期已读数据"/>
 
             <Button
                 android:layout_width="match_parent"
-                android:onClick="onClickArrangeCrawlDateArticle"
+                android:onClick="trimArticlesCrawlDate"
                 android:gravity="center_vertical"
                 android:layout_gravity="center_vertical"
                 android:layout_height="50dp"
                 style="@style/SettingItem"
                 android:text="更新文章的爬取时间为发布时间"/>
+
+
+            <Button
+                android:layout_width="match_parent"
+                android:onClick="trimUnsubscribedArticles"
+                android:gravity="center_vertical"
+                android:layout_gravity="center_vertical"
+                android:layout_height="50dp"
+                style="@style/SettingItem"
+                android:text="更新退订文章的空FeedUrl"/>
 
             <Space
                 android:layout_width="match_parent"

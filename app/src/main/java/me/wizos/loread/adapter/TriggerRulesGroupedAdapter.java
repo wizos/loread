@@ -167,8 +167,9 @@ public class TriggerRulesGroupedAdapter extends ExpandableAdapter<ExpandableAdap
                         if (index == 0) {
                             CoreDB.i().triggerRuleDao().delete(triggerRule.getScope());
                         }else if(index == 1){
-                            TriggerRuleUtils.exeRule(App.i().getUser().getId(),0, triggerRule);
-                            ToastUtils.show(R.string.executed);
+                            int count = TriggerRuleUtils.exeRule(App.i().getUser().getId(),0, triggerRule);
+                            // ToastUtils.show(R.string.executed);
+                            ToastUtils.show(context.getResources().getQuantityString(R.plurals.executed_involving_n_articles,count,count));
                         }
                         dialog.dismiss();
                     }

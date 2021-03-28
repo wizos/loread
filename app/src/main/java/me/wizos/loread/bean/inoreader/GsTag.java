@@ -27,4 +27,12 @@ public class GsTag {
     public void setSortid(String sortid) {
         this.sortid = sortid;
     }
+
+    @Override
+    public String toString() {
+        return "GsTag{" +
+                "id='" + id + '\'' +
+                ", sortid='" + sortid + '\'' +
+                '}';
+    }
 }

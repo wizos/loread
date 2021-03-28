@@ -32,6 +32,7 @@ public class Article implements Cloneable{
     private String enclosure; // 包含图片，视频等多媒体信息
 
     private String feedId;
+    private String feedUrl;
     private String feedTitle;
     private String author;
     private String link = "";
@@ -108,6 +109,14 @@ public class Article implements Cloneable{
 
     public void setFeedId(String feedId) {
         this.feedId = feedId;
+    }
+
+    public String getFeedUrl() {
+        return feedUrl;
+    }
+
+    public void setFeedUrl(String feedUrl) {
+        this.feedUrl = feedUrl;
     }
 
     public String getFeedTitle() {
@@ -196,6 +205,7 @@ public class Article implements Cloneable{
         this.image = ArticleUtils.getCoverUrl(link, content);
     }
 
+    @NotNull
     @Override
     public Object clone(){
         try{
@@ -205,6 +215,7 @@ public class Article implements Cloneable{
         }
         return this;
     }
+    @NotNull
     @Override
     public String toString() {
         return "Article{" +
@@ -215,6 +226,7 @@ public class Article implements Cloneable{
                 ", image='" + image + '\'' +
                 ", enclosure='" + enclosure + '\'' +
                 ", feedId='" + feedId + '\'' +
+                ", feedUrl='" + feedUrl + '\'' +
                 ", feedTitle='" + feedTitle + '\'' +
                 ", author='" + author + '\'' +
                 ", link='" + link + '\'' +

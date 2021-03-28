@@ -6,18 +6,16 @@ import org.parceler.Parcel;
 
 import java.util.ArrayList;
 
-import me.wizos.loread.db.Category;
-
 @Parcel
 public class GsTags {
     @SerializedName("tags")
-    ArrayList<Category> categories;
+    ArrayList<GsTag> categories;
 
-    public ArrayList<Category> getCategories() {
+    public ArrayList<GsTag> getCategories() {
         return categories;
     }
 
-    public void setCategories(ArrayList<Category> categories) {
+    public void setCategories(ArrayList<GsTag> categories) {
         this.categories = categories;
     }
 }

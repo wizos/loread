@@ -1,5 +1,7 @@
 package me.wizos.loread.network;
 
+import com.elvishew.xlog.XLog;
+
 import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
@@ -18,7 +20,7 @@ public class StringConverterFactory extends Converter.Factory {
     // 判断是否处理的依据就是type参数，type就是上面接口出现的List了
     @Override
     public Converter<ResponseBody, ?> responseBodyConverter(Type type, Annotation[] annotations, Retrofit retrofit) {
-        // KLog.e("响应的类型：" + type );
+        XLog.i("响应的类型：" + type);
         if (type == String.class) {
             return new StringBodyConverter<Type>();
         }

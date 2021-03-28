@@ -1,0 +1,45 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+  <head>
+    <title></title>
+  </head>
+  <body>
+   This is a module for ROME that supports both the 
+    <a href="http://web.resource.org/rss/1.0/modules/cc/">"CC" RSS1</a> module and the 
+    <a href="backend.userland.com/creativeCommonsRssModule"> RSS 2 (and Atom)</a> 
+    module in a unified manner. 
+
+    <p>It does this by superimposing the "rome:creativecommon" namespace over both of them
+    for the purposes of the module, and synchronizes them into a unified structure. For RSS2
+    it attempts to correlate the license into a code-capable fashion. If the license link 
+    goes to one of the standard licenses at creativecommons.org, it will populate the permissions
+    based on it's know set (See License.Behaviour).</p>
+    
+    <p>The module has 2 fields on it. One is "allLicenses". This is simply an array of all licenses
+    in a feed. The second one "licenses" contains licenses that apply to a specific element (feed or 
+    entry). Licenses then contain "permits" and "requires" behaviours. If a license is used that
+    the system can't determine anything about, these will be null. Zero-lenght means "known and
+    empty."</p>
+    
+    <p>At this time, because of a ROME limitation, writing RSS1 feeds is not possible. However,
+    if you read an RSS1 feed, you can convert it to an RSS2 feed properly.</p>
+    
+    <p>Sample Usage:
+    <pre>
+        
+        CreativeCommons commons = new CreativeCommonsImpl();
+        commons.setLicense( new License[]{ License.NONCOMMERCIAL } );
+        // Note, you do not have to setAllLicenses right now. When the RSS1 functionality is
+        // added, this will be required at the Feed level only.
+        ArrayList modules = new ArrayList()
+        modules.add( commons );
+        syndEntry.setModules( commons );
+        
+        //Alternately, to get the module:
+        CreativeCommons commons = (CreativeCommons) syndFeed.getModule( CreativeCommons.URI );
+        
+    </pre>
+    </p>
+  </body>
+</html>

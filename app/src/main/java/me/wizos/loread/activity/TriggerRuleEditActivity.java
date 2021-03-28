@@ -17,6 +17,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.elvishew.xlog.XLog;
 import com.hjq.toast.ToastUtils;
+import com.umeng.analytics.MobclickAgent;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -195,7 +196,7 @@ public class TriggerRuleEditActivity extends AppCompatActivity {
                 CoreDB.i().triggerRuleDao().insertActions(actions);
 
                 triggerRule.setActions(actions);
-
+                MobclickAgent.onEvent(TriggerRuleEditActivity.this, "save_trigger_rule");
                 ToastUtils.show(R.string.success);
                 XLog.d("需要新增的规则为：" + triggerRule);
                 finish();

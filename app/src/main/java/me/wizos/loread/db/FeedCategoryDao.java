@@ -43,6 +43,7 @@ public interface FeedCategoryDao {
     @Transaction
     void update(List<FeedCategory> feedCategories);
 
+    @Transaction
     @Query("UPDATE feedcategory SET categoryId = :newCategoryId where  uid = :uid AND categoryId = :oldCategoryId")
     void updateCategoryId(String uid,String oldCategoryId, String newCategoryId);
 
@@ -51,9 +52,11 @@ public interface FeedCategoryDao {
     @Transaction
     void delete(FeedCategory feedCategory);
 
+    @Transaction
     @Query("DELETE FROM feedcategory WHERE uid = (:uid) AND feedId = :feedId")
     void deleteByFeedId(String uid, String feedId);
 
+    @Transaction
     @Query("DELETE FROM feedcategory WHERE uid = :uid")
     void clear(String uid);
 }

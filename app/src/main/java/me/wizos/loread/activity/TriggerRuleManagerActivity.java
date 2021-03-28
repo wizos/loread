@@ -8,11 +8,12 @@ import android.view.Menu;
 import android.view.MenuItem;
 
 import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
+
+import com.umeng.analytics.MobclickAgent;
 
 import java.util.List;
 
@@ -28,10 +29,12 @@ import me.wizos.loread.db.CoreDB;
 import me.wizos.loread.db.Feed;
 import me.wizos.loread.db.rule.TriggerRule;
 import me.wizos.loread.utils.Classifier;
+import me.wizos.loread.view.colorful.Colorful;
+import me.wizos.loread.view.colorful.setter.ViewGroupSetter;
 import pokercc.android.expandablerecyclerview.ExpandableRecyclerView;
 
 
-public class TriggerRuleManagerActivity extends AppCompatActivity {
+public class TriggerRuleManagerActivity extends BaseActivity {
     @BindView(R.id.action_manager_recycler_view)
     ExpandableRecyclerView rulesView;
 
@@ -71,6 +74,7 @@ public class TriggerRuleManagerActivity extends AppCompatActivity {
         targetId = intent.getStringExtra(Contract.TARGET_ID);
 
         initListView();
+        MobclickAgent.onEvent(this, "enter_trigger_rule_manager_activity", type);
     }
 
     public void initListView() {
@@ -220,11 +224,24 @@ public class TriggerRuleManagerActivity extends AppCompatActivity {
         super.onDestroy();
     }
 
-    // @Override
-    // protected Colorful.Builder buildColorful(Colorful.Builder mColorfulBuilder) {
-    //     mColorfulBuilder
-    //             .backgroundColor(R.id.action_root, R.attr.root_view_bg)
-    //             .backgroundColor(R.id.action_toolbar, R.attr.topbar_bg);
-    //     return mColorfulBuilder;
-    // }
+    @Override
+    protected Colorful.Builder buildColorful(Colorful.Builder mColorfulBuilder) {
+        ViewGroupSetter ruleListViewSetter = new ViewGroupSetter(rulesView);
+        ruleListViewSetter.childViewTextColor(R.id.item_rule_target_textview, R.attr.lv_item_title_color);
+        ruleListViewSetter.childViewBgColor(R.id.item_rule_target_textview, R.attr.root_view_bg);
+
+        ruleListViewSetter.childViewTextColor(R.id.item_condition_labelview, R.attr.lv_item_title_color);
+        ruleListViewSetter.childViewTextColor(R.id.item_condition_textview, R.attr.lv_item_title_color);
+        ruleListViewSetter.childViewBgColor(R.id.item_condition, R.attr.root_view_bg);
+
+        ruleListViewSetter.childViewTextColor(R.id.item_action_labelview, R.attr.lv_item_title_color);
+        ruleListViewSetter.childViewTextColor(R.id.item_action_textview, R.attr.lv_item_title_color);
+        ruleListViewSetter.childViewBgColor(R.id.item_action, R.attr.root_view_bg);
+
+        mColorfulBuilder
+                .setter(ruleListViewSetter)
+                .backgroundColor(R.id.action_manager_toolbar, R.attr.topbar_bg)
+                .backgroundColor(R.id.action_manager_nested_scroll_view, R.attr.root_view_bg);
+        return mColorfulBuilder;
+    }
 }

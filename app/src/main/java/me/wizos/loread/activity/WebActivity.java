@@ -60,6 +60,7 @@ import me.wizos.loread.bridge.WebBridge;
 import me.wizos.loread.config.HostBlockConfig;
 import me.wizos.loread.config.header_useragent.UserAgentConfig;
 import me.wizos.loread.config.url_rewrite.UrlRewriteConfig;
+import me.wizos.loread.db.CorePref;
 import me.wizos.loread.utils.ScreenUtils;
 import me.wizos.loread.utils.StringUtils;
 import me.wizos.loread.view.colorful.Colorful;
@@ -591,13 +592,13 @@ public class WebActivity extends BaseActivity implements WebBridge {
         public WebResourceResponse shouldInterceptRequest(WebView view, final WebResourceRequest request) {
             String url = request.getUrl().toString();
             if (url.toLowerCase().startsWith(SCHEMA_HTTP) || url.toLowerCase().startsWith(SCHEMA_HTTPS)) {
-                if (HostBlockConfig.i().isAd(url)) {
+                if (CorePref.i().globalPref().getBoolean(Contract.BLOCK_ADS, true) && HostBlockConfig.i().isAd(url)) {
                     // 有广告的请求数据，我们直接返回空数据，注：不能直接返回null
                     return new WebResourceResponse(null, null, null);
                 }
                 // NOTE: 2021/1/24  由于会将小图转为大图，造成问题，所以不重定向。
                 String newUrl = UrlRewriteConfig.i().getRedirectUrl(url);
-                XLog.i("网页重定向：" + url + " -> " + newUrl);
+                XLog.d("网页重定向：" + url + " -> " + newUrl);
                 if(!TextUtils.isEmpty(newUrl) && !url.equalsIgnoreCase(newUrl)){
                     return super.shouldInterceptRequest(view, new WebResourceRequest() {
                         @Override
@@ -963,13 +964,13 @@ public class WebActivity extends BaseActivity implements WebBridge {
     @Override
     protected void onPause() {
         super.onPause();
-        agentWeb.getWebLifeCycle().onPause();
+        // agentWeb.getWebLifeCycle().onPause();
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        agentWeb.getWebLifeCycle().onResume();
+        // agentWeb.getWebLifeCycle().onResume();
     }
 
     @Override

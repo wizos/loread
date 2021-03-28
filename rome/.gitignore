@@ -1,0 +1,10 @@
+target
+.checkstyle
+.project
+.settings
+.classpath
+.idea
+*.iml
+.gradle
+local.properties
+build

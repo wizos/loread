@@ -27,7 +27,6 @@ import com.afollestad.materialdialogs.MaterialDialog;
 import com.afollestad.materialdialogs.Theme;
 import com.elvishew.xlog.XLog;
 import com.hjq.toast.ToastUtils;
-import com.lzy.okgo.OkGo;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -63,7 +62,6 @@ import me.wizos.loread.utils.BackupUtils;
 import me.wizos.loread.utils.EncryptUtils;
 import me.wizos.loread.utils.FileUtils;
 import me.wizos.loread.utils.StringUtils;
-import me.wizos.loread.utils.TriggerRuleUtils;
 
 import static androidx.work.ExistingPeriodicWorkPolicy.KEEP;
 import static me.wizos.loread.Contract.SCHEMA_HTTP;
@@ -78,146 +76,97 @@ public class LabActivity extends AppCompatActivity {
     }
 
     private MaterialDialog materialDialog;
-    public void onClickExportOPML(View view) {
-        materialDialog = new MaterialDialog.Builder(this)
-                .title("正在处理")
-                .content("请耐心等待下")
-                .progress(true, 0)
-                .canceledOnTouchOutside(false)
-                .progressIndeterminateStyle(false)
-                .show();
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                BackupUtils.exportUserAllOPML(App.i().getUser());
-                materialDialog.dismiss();
-            }
-        }).start();
-    }
+
     public void onClickBackup(View view) {
-        materialDialog = new MaterialDialog.Builder(this)
-                .title("正在处理")
-                .content("请耐心等待下")
-                .progress(true, 0)
-                .canceledOnTouchOutside(false)
-                .progressIndeterminateStyle(false)
+        new MaterialDialog.Builder(this)
+                .title("确定要备份吗？")
+                .canceledOnTouchOutside(true)
+                .positiveText(R.string.confirm)
+                .onPositive(new MaterialDialog.SingleButtonCallback() {
+                    @Override
+                    public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
+                        dialog.dismiss();
+                        materialDialog = new MaterialDialog.Builder(LabActivity.this)
+                                .title("正在处理")
+                                .content("请耐心等待下")
+                                .progress(true, 0)
+                                .canceledOnTouchOutside(false)
+                                .progressIndeterminateStyle(false)
+                                .show();
+                        new Thread(new Runnable() {
+                            @Override
+                            public void run() {
+                                BackupUtils.db(LabActivity.this, BackupUtils.BACKUP);
+                            }
+                        }).start();
+                        materialDialog.dismiss();
+                    }
+                })
                 .show();
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                //BackupUtil.backupFile();
-                BackupUtils.db(LabActivity.this, BackupUtils.BACKUP);
-                materialDialog.dismiss();
-            }
-        }).start();
     }
 
     public void onClickRestore(View view) {
-        materialDialog = new MaterialDialog.Builder(this)
-                .title("正在处理")
-                .content("请耐心等待下")
-                .progress(true, 0)
-                .canceledOnTouchOutside(false)
-                .progressIndeterminateStyle(false)
+        // materialDialog = new MaterialDialog.Builder(this)
+        //         .title("正在处理")
+        //         .content("请耐心等待下")
+        //         .progress(true, 0)
+        //         .canceledOnTouchOutside(false)
+        //         .progressIndeterminateStyle(false)
+        //         .onPositive(new MaterialDialog.SingleButtonCallback() {
+        //             @Override
+        //             public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
+        //                 OkGo.getInstance().cancelAll();
+        //                 new Thread(new Runnable() {
+        //                     @Override
+        //                     public void run() {
+        //                         BackupUtils.db(LabActivity.this, BackupUtils.RESTORE);
+        //                         materialDialog.dismiss();
+        //                     }
+        //                 }).start();
+        //             }
+        //         })
+        //         .show();
+        new MaterialDialog.Builder(this)
+                .title("确定要恢复吗？")
+                .canceledOnTouchOutside(true)
+                .positiveText(R.string.confirm)
+                .onPositive(new MaterialDialog.SingleButtonCallback() {
+                    @Override
+                    public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
+                        dialog.dismiss();
+                        materialDialog = new MaterialDialog.Builder(LabActivity.this)
+                                .title("正在处理")
+                                .content("请耐心等待下")
+                                .progress(true, 0)
+                                .canceledOnTouchOutside(false)
+                                .progressIndeterminateStyle(false)
+                                .show();
+
+                        new Thread(new Runnable() {
+                            @Override
+                            public void run() {
+                                BackupUtils.db(LabActivity.this, BackupUtils.RESTORE);
+                            }
+                        }).start();
+                        materialDialog.dismiss();
+                    }
+                })
                 .show();
-        OkGo.getInstance().cancelAll();
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                // BackupUtil.restoreFile();
-                BackupUtils.db(LabActivity.this, BackupUtils.RESTORE);
-                materialDialog.dismiss();
-            }
-        }).start();
     }
 
 
     public void onClickReadConfig(View view) {
-        materialDialog = new MaterialDialog.Builder(this)
-                .content("正在读取")
-                .progress(true, 0)
-                .canceledOnTouchOutside(false)
-                .progressIndeterminateStyle(false)
-                .show();
         Test.i().reset();
         HostBlockConfig.i().reset();
         UrlRewriteConfig.i().reset();
-        // BigImageConfig.i().reset();
         HeaderRefererConfig.i().reset();
         HeaderUserAgentConfig.i().reset();
         UserAgentConfig.i().reset();
         ArticleExtractConfig.i().reset();
-        // ArticleActionConfig.i().reset();
         SaveDirectory.i().reset();
-        materialDialog.dismiss();
+        ToastUtils.show("已读取");
     }
 
-
-    public void onClickArrangeCrawlDateArticle(View view) {
-        long time = System.currentTimeMillis();
-        AsyncTask.THREAD_POOL_EXECUTOR.execute(new Runnable() {
-            @Override
-            public void run() {
-                CoreDB.i().articleDao().updateCrawlDateToPubDate(App.i().getUser().getId());
-                XLog.i("整理耗时：" + (System.currentTimeMillis() - time));
-            }
-        });
-    }
-
-
-    public void onClickArchive(View view) {
-        materialDialog = new MaterialDialog.Builder(this)
-                .title("正在处理")
-                .content("请耐心等待下")
-                .progress(true, 0)
-                .canceledOnTouchOutside(false)
-                .progressIndeterminateStyle(false)
-                .show();
-        AsyncTask.SERIAL_EXECUTOR.execute(new Runnable() {
-            @Override
-            public void run() {
-                App.i().getApi().deleteExpiredArticles();
-                materialDialog.dismiss();
-            }
-        });
-    }
-
-
-    public void onClickClearHtmlDir(View view) {
-        AsyncTask.SERIAL_EXECUTOR.execute(new Runnable() {
-            @Override
-            public void run() {
-                clearHtmlDir();
-            }
-        });
-    }
-
-
-    /**
-     * 将某些没有被清理到的缓存文件夹给清理掉
-     */
-    private void clearHtmlDir() {
-        //List<Article> articles = WithDB.i().getArtsAllNoOrder();
-        List<Article> articles = CoreDB.i().articleDao().getAll(App.i().getUser().getId());
-        ArrayMap<String, String> temp = new ArrayMap<>(articles.size());
-
-        for (Article article : articles) {
-            temp.put(EncryptUtils.MD5(article.getId()), "1");
-        }
-
-
-        File dir = new File(App.i().getUserCachePath());
-        File[] arts = dir.listFiles();
-        XLog.e("文件数量：" + arts.length);
-        String x;
-        for (File sourceFile : arts) {
-            x = temp.get(sourceFile.getName());
-            if (null == x) {
-                XLog.e("移动文件名：" + "   " + sourceFile.getName());
-                FileUtils.moveDir(sourceFile.getAbsolutePath(), App.i().getUserFilesDir() + "/move/" + sourceFile.getName());
-            }
-        }
-    }
 
 
     public void startSyncWorkManager(View view) {
@@ -407,7 +356,7 @@ public class LabActivity extends AppCompatActivity {
         if(StringUtils.isEmpty(url)){
             url = oldUrl;
         }
-        new Distill(url, "", new Distill.Listener() {
+        new Distill(url, oldUrl, "", new Distill.Listener() {
             @Override
             public void onResponse(String content) {
                 runOnUiThread(new Runnable() {
@@ -584,43 +533,156 @@ public class LabActivity extends AppCompatActivity {
     // }
 
 
-    public void actionArticle(View view){
-        User user = App.i().getUser();
-        if(user==null){
-            ToastUtils.show("当前用户不存在");
-            return;
-        }
-        TriggerRuleUtils.exeAllRules(App.i().getUser().getId(), 0);
-    }
-
     public void exeSQL(View view){
         EditText editText = findViewById(R.id.lab_enter_edittext);
         String sql = editText.getText().toString();
         CoreDB.i().articleDao().exeSQL(new SimpleSQLiteQuery(sql));
     }
 
-    public void updateArticle(View view){
+
+    public void deleteExpiredArticles(View view) {
+        materialDialog = new MaterialDialog.Builder(this)
+                .title("正在处理")
+                .content("请耐心等待下")
+                .progress(true, 0)
+                .canceledOnTouchOutside(false)
+                .progressIndeterminateStyle(false)
+                .show();
+        AsyncTask.SERIAL_EXECUTOR.execute(new Runnable() {
+            @Override
+            public void run() {
+                App.i().getApi().deleteExpiredArticles();
+                materialDialog.dismiss();
+            }
+        });
+    }
+
+
+    public void deleteMissingHtmlDir(View view) {
+        materialDialog = new MaterialDialog.Builder(this)
+                .title("正在处理")
+                .content("请耐心等待下")
+                .progress(true, 0)
+                .canceledOnTouchOutside(false)
+                .progressIndeterminateStyle(false)
+                .show();
+        AsyncTask.SERIAL_EXECUTOR.execute(new Runnable() {
+            @Override
+            public void run() {
+                List<Article> articles = CoreDB.i().articleDao().getAll(App.i().getUser().getId());
+                ArrayMap<String, String> temp = new ArrayMap<>(articles.size());
+
+                for (Article article : articles) {
+                    temp.put(EncryptUtils.MD5(article.getId()), "1");
+                }
+
+                File dir = new File(App.i().getUserCachePath());
+                File[] arts = dir.listFiles();
+                XLog.e("文件数量：" + arts.length);
+                String x;
+                for (File sourceFile : arts) {
+                    x = temp.get(sourceFile.getName());
+                    if (null == x) {
+                        XLog.e("移动文件名：" + "   " + sourceFile.getName());
+                        FileUtils.moveDir(sourceFile.getAbsolutePath(), App.i().getUserFilesDir() + "/move/" + sourceFile.getName());
+                    }
+                }
+                materialDialog.dismiss();
+                ToastUtils.show("清理完成");
+            }
+        });
+    }
+
+
+    public void trimArticlesCrawlDate(View view) {
+        long time = System.currentTimeMillis();
+        AsyncTask.THREAD_POOL_EXECUTOR.execute(new Runnable() {
+            @Override
+            public void run() {
+                CoreDB.i().articleDao().updateCrawlDateToPubDate(App.i().getUser().getId());
+                XLog.i("整理耗时：" + (System.currentTimeMillis() - time));
+            }
+        });
+    }
+
+    public void trimUnsubscribedArticles(View view){
         User user = App.i().getUser();
         if(user==null){
             ToastUtils.show("当前用户不存在");
             return;
         }
 
-        List<Article> articles = CoreDB.i().articleDao().getUncategoried(user.getId());
-        for (Article article: articles){
-            Uri uri = Uri.parse(article.getLink());
-            String host = uri.getHost();
-            if(StringUtils.isEmpty(host)){
-                continue;
+        AsyncTask.THREAD_POOL_EXECUTOR.execute(new Runnable() {
+            @Override
+            public void run() {
+                List<Article> articles = CoreDB.i().articleDao().getUnsubscribed(user.getId());
+                for (Article article: articles){
+                    Uri uri = Uri.parse(article.getLink());
+                    String host = uri.getHost();
+                    if(StringUtils.isEmpty(host)){
+                        continue;
+                    }
+                    List<Feed> feeds = CoreDB.i().feedDao().getAllByFeedUrlLike(user.getId(), "%" + host + "%");
+                    if(feeds == null || feeds.size() != 1){
+                        feeds = CoreDB.i().feedDao().getAllByTitleLike(user.getId(), "%" + article.getFeedTitle() + "%");
+                    }
+
+                    if(feeds == null || feeds.size() != 1){
+                        feeds = CoreDB.i().feedDao().getAllByTitleLike(user.getId(), "%" + article.getAuthor() + "%");
+                    }
+
+                    if(feeds == null || feeds.size() != 1){
+                        continue;
+                    }
+
+                    Feed feed = feeds.get(0);
+                    article.setFeedId(feed.getId());
+                }
+                CoreDB.i().articleDao().insert(articles);
+                ToastUtils.show("处理完成");
             }
-            Feed feed = CoreDB.i().feedDao().getByFeedUrlLike(user.getId(), "%" + host + "%");
-            if(feed == null){
-                continue;
-            }
-            article.setFeedId(feed.getId());
-        }
-        CoreDB.i().articleDao().insert(articles);
+        });
     }
+
+    public void trimArticlesNullInfo(View view){
+        User user = App.i().getUser();
+        if(user==null){
+            ToastUtils.show("当前用户不存在");
+            return;
+        }
+
+        AsyncTask.THREAD_POOL_EXECUTOR.execute(new Runnable() {
+            @Override
+            public void run() {
+                List<Article> articles = CoreDB.i().articleDao().getUnsubscribed(user.getId());
+                for (Article article: articles){
+                    Uri uri = Uri.parse(article.getLink());
+                    String host = uri.getHost();
+                    if(StringUtils.isEmpty(host)){
+                        continue;
+                    }
+                    List<Feed> feeds = CoreDB.i().feedDao().getAllByFeedUrlLike(user.getId(), "%" + host + "%");
+                    if(feeds == null || feeds.size() != 1){
+                        feeds = CoreDB.i().feedDao().getAllByTitleLike(user.getId(), "%" + article.getFeedTitle() + "%");
+                    }
+
+                    if(feeds == null || feeds.size() != 1){
+                        feeds = CoreDB.i().feedDao().getAllByTitleLike(user.getId(), "%" + article.getAuthor() + "%");
+                    }
+
+                    if(feeds == null || feeds.size() != 1){
+                        continue;
+                    }
+
+                    Feed feed = feeds.get(0);
+                    article.setFeedId(feed.getId());
+                }
+                CoreDB.i().articleDao().insert(articles);
+                ToastUtils.show("处理完成");
+            }
+        });
+    }
+
     @Override
     protected void onDestroy() {
         super.onDestroy();

@@ -9,6 +9,8 @@ import com.elvishew.xlog.XLog;
 import java.io.IOException;
 
 import me.wizos.loread.App;
+import me.wizos.loread.db.CoreDB;
+import me.wizos.loread.db.User;
 import okhttp3.Authenticator;
 import okhttp3.Request;
 import okhttp3.Response;
@@ -54,8 +56,13 @@ public class TokenAuthenticator implements Authenticator {
         //要用retrofit的同步方式
         XLog.e("TokenAuthenticator授权过期：授权码 " + authorization);
 
+        User user = App.i().getUser();
+        if(user != null){
+            user.setAuth(authorization);
+            CoreDB.i().userDao().update(user);
+        }
         return response.request().newBuilder()
-                .header("authorization", authorization)
+                .addHeader("authorization", authorization)
                 .build();
     }
 

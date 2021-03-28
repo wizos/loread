@@ -13,7 +13,7 @@ import java.util.concurrent.TimeUnit;
 
 import me.wizos.loread.App;
 import me.wizos.loread.network.interceptor.FeverTinyRSSTokenInterceptor;
-import me.wizos.loread.network.interceptor.InoreaderHeaderInterceptor;
+import me.wizos.loread.network.interceptor.InoReaderTokenInterceptor;
 import me.wizos.loread.network.interceptor.LoggerInterceptor;
 import me.wizos.loread.network.interceptor.RefererInterceptor;
 import me.wizos.loread.network.interceptor.RelyInterceptor;
@@ -74,8 +74,10 @@ public class HttpClientManager {
                 .readTimeout(10, TimeUnit.SECONDS)
                 .writeTimeout(10, TimeUnit.SECONDS)
                 .connectTimeout(10, TimeUnit.SECONDS)
+                .callTimeout(30, TimeUnit.SECONDS)
                 .sslSocketFactory(HttpsUtils.getSslSocketFactory().sSLSocketFactory, HttpsUtils.getSslSocketFactory().trustManager)
                 .hostnameVerifier(HttpsUtils.UnSafeHostnameVerifier)
+                .retryOnConnectionFailure(false)
                 .followRedirects(true)
                 .followSslRedirects(true)
                 .addInterceptor(new RelyInterceptor())
@@ -84,8 +86,10 @@ public class HttpClientManager {
                 .readTimeout(30, TimeUnit.SECONDS)
                 .writeTimeout(30, TimeUnit.SECONDS)
                 .connectTimeout(15, TimeUnit.SECONDS)
+                .callTimeout(60, TimeUnit.SECONDS)
                 .sslSocketFactory(HttpsUtils.getSslSocketFactory().sSLSocketFactory, HttpsUtils.getSslSocketFactory().trustManager)
                 .hostnameVerifier(HttpsUtils.UnSafeHostnameVerifier)
+                .retryOnConnectionFailure(false)
                 .followRedirects(true)
                 .followSslRedirects(true)
                 .addInterceptor(new RelyInterceptor())
@@ -94,18 +98,21 @@ public class HttpClientManager {
                 .readTimeout(15, TimeUnit.SECONDS)
                 .writeTimeout(15, TimeUnit.SECONDS)
                 .connectTimeout(5, TimeUnit.SECONDS)
+                .callTimeout(30, TimeUnit.SECONDS)
                 .sslSocketFactory(HttpsUtils.getSslSocketFactory().sSLSocketFactory, HttpsUtils.getSslSocketFactory().trustManager)
                 .hostnameVerifier(HttpsUtils.UnSafeHostnameVerifier)
                 // 用于模拟弱网的拦截器
                 // .addNetworkInterceptor(new DoraemonWeakNetworkInterceptor())
                 // 网络请求监控的拦截器
                 // .addInterceptor(new DoraemonInterceptor())
+                .retryOnConnectionFailure(false)
                 .followRedirects(true)
                 .followSslRedirects(true);
         tinyBuilder = new OkHttpClient.Builder()
                 .readTimeout(30, TimeUnit.SECONDS)
                 .writeTimeout(30, TimeUnit.SECONDS)
                 .connectTimeout(15, TimeUnit.SECONDS)
+                .callTimeout(60, TimeUnit.SECONDS)
                 .sslSocketFactory(HttpsUtils.getSslSocketFactory().sSLSocketFactory, HttpsUtils.getSslSocketFactory().trustManager)
                 .hostnameVerifier(HttpsUtils.UnSafeHostnameVerifier)
                 .followRedirects(true)
@@ -115,6 +122,7 @@ public class HttpClientManager {
                 .readTimeout(30, TimeUnit.SECONDS)
                 .writeTimeout(30, TimeUnit.SECONDS)
                 .connectTimeout(15, TimeUnit.SECONDS)
+                .callTimeout(60, TimeUnit.SECONDS)
                 .sslSocketFactory(HttpsUtils.getSslSocketFactory().sSLSocketFactory, HttpsUtils.getSslSocketFactory().trustManager)
                 .hostnameVerifier(HttpsUtils.UnSafeHostnameVerifier)
                 .followRedirects(true)
@@ -124,6 +132,7 @@ public class HttpClientManager {
                 .readTimeout(30, TimeUnit.SECONDS)
                 .writeTimeout(30, TimeUnit.SECONDS)
                 .connectTimeout(15, TimeUnit.SECONDS)
+                .callTimeout(60, TimeUnit.SECONDS)
                 .sslSocketFactory(HttpsUtils.getSslSocketFactory().sSLSocketFactory, HttpsUtils.getSslSocketFactory().trustManager)
                 .hostnameVerifier(HttpsUtils.UnSafeHostnameVerifier)
                 .followRedirects(true)
@@ -132,18 +141,20 @@ public class HttpClientManager {
                 .readTimeout(30, TimeUnit.SECONDS)
                 .writeTimeout(30, TimeUnit.SECONDS)
                 .connectTimeout(15, TimeUnit.SECONDS)
+                .callTimeout(60, TimeUnit.SECONDS)
                 .sslSocketFactory(HttpsUtils.getSslSocketFactory().sSLSocketFactory, HttpsUtils.getSslSocketFactory().trustManager)
                 .hostnameVerifier(HttpsUtils.UnSafeHostnameVerifier)
                 .followRedirects(true)
                 .followSslRedirects(true)
                 // .addInterceptor(new AuthorizationInterceptor())
-                .addInterceptor(new InoreaderHeaderInterceptor())
-                .addInterceptor(new LoggerInterceptor())
+                // .addInterceptor(new InoReaderHeaderInterceptor())
+                .addInterceptor(new InoReaderTokenInterceptor())
                 .authenticator(new TokenAuthenticator());
         feedlyBuilder = new OkHttpClient.Builder()
                 .readTimeout(30, TimeUnit.SECONDS)
                 .writeTimeout(30, TimeUnit.SECONDS)
                 .connectTimeout(15, TimeUnit.SECONDS)
+                .callTimeout(60, TimeUnit.SECONDS)
                 .sslSocketFactory(HttpsUtils.getSslSocketFactory().sSLSocketFactory, HttpsUtils.getSslSocketFactory().trustManager)
                 .hostnameVerifier(HttpsUtils.UnSafeHostnameVerifier)
                 .followRedirects(true)
@@ -155,6 +166,7 @@ public class HttpClientManager {
                 .readTimeout(60, TimeUnit.SECONDS)
                 .writeTimeout(60, TimeUnit.SECONDS)
                 .connectTimeout(15, TimeUnit.SECONDS)
+                .callTimeout(60, TimeUnit.SECONDS)
                 .sslSocketFactory(HttpsUtils.getSslSocketFactory().sSLSocketFactory, HttpsUtils.getSslSocketFactory().trustManager)
                 .hostnameVerifier(HttpsUtils.UnSafeHostnameVerifier)
                 .followRedirects(true)
@@ -162,7 +174,7 @@ public class HttpClientManager {
                 .addInterceptor(new RelyInterceptor());
         if(App.i().proxyNodeSocks5 == null){
             smallOkHttpClient = smallBuilder.build();
-            simpleOkHttpClient = searchBuilder.build();
+            simpleOkHttpClient = simpleBuilder.build();
             searchHttpClient = searchBuilder.build();
             ttrssHttpClient = tinyBuilder.build();
             feverTinyRSSHttpClient = tinyFeverBuilder.build();
@@ -212,6 +224,9 @@ public class HttpClientManager {
             }
         }
         imageHttpClient.dispatcher().setMaxRequests(4);
+        // simpleOkHttpClient.dispatcher().setMaxRequests(5);
+        searchHttpClient.dispatcher().setMaxRequests(5);
+        smallOkHttpClient.dispatcher().setMaxRequests(5);
     }
 
     public OkHttpClient smallClient() {

@@ -29,7 +29,7 @@ public class HttpCall {
     }
 
 
-    public static void get(String feedUrl, Callback callback){
+    public void get(String feedUrl, Callback callback){
         Request request = new Request.Builder().url(feedUrl).build();
         Call call = HttpClientManager.i().searchClient().newCall(request);
         call.enqueue(callback);

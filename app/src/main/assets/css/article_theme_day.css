@@ -24,7 +24,7 @@ code, tt ,pre {
 }
 blockquote{
 	background: rgba(0, 0, 0, 0.04) !important;
-	border-left: 5px solid rgba(0, 0, 0, 0.3) !important;
+	border-left: 5px solid rgba(0, 0, 0, 0.1) !important;
 	color: rgba(0, 0, 0, 0.5) !important;
 }
 details{

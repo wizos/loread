@@ -4,8 +4,6 @@ import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.PackageInfo;
-import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -54,6 +52,7 @@ import me.wizos.loread.network.api.LocalApi;
 import me.wizos.loread.network.api.TinyRSSApi;
 import me.wizos.loread.network.callback.CallbackX;
 import me.wizos.loread.utils.BackupUtils;
+import me.wizos.loread.utils.VersionUtils;
 import me.wizos.loread.view.colorful.Colorful;
 
 /**
@@ -77,13 +76,16 @@ public class SettingActivity extends BaseActivity {
     @BindView(R.id.setting_iframe_auto_height_sb)
     SwitchButton autoIframeHeightSB;
 
+    @Nullable
+    @BindView(R.id.setting_adblock_sb)
+    SwitchButton blockAdsSB;
+
     @BindView(R.id.setting_auto_sync_on_wifi)
     View autoSyncOnWifi;
 
     @Nullable
     @BindView(R.id.setting_auto_sync_frequency)
     View autoSyncFrequency;
-
     @BindView(R.id.setting_sync_frequency_summary)
     TextView autoSyncFrequencySummary;
 
@@ -115,7 +117,7 @@ public class SettingActivity extends BaseActivity {
     }
 
     private void initView() {
-        SwitchButton openLinkMode, autoToggleTheme, enableLogging, enableUpdate;
+        SwitchButton openLinkMode, enableLogging, enableUpdate; // autoToggleTheme,
         // autoSyncSB = findViewById(R.id.setting_auto_sync_sb);
         // autoSyncOnWifi.findViewById(R.id.setting_auto_sync_on_wifi_sb);
         // autoSyncFrequency.findViewById(R.id.setting_auto_sync_on_wifi_sb);
@@ -131,20 +133,20 @@ public class SettingActivity extends BaseActivity {
         });
 
         clearBeforeDaySummary = findViewById(R.id.setting_clear_day_summary);
-        clearBeforeDaySummary.setText(getResources().getString(R.string.clear_day_summary, String.valueOf(App.i().getUser().getCachePeriod())));
+        clearBeforeDaySummary.setText(getResources().getString(R.string.clear_day_summary, App.i().getUser().getCachePeriod()));
 
         int autoSyncFrequency = App.i().getUser().getAutoSyncFrequency();
         if (autoSyncFrequency >= 60) {
-            autoSyncFrequencySummary.setText(getResources().getString(R.string.xx_hour, autoSyncFrequency / 60 + ""));
+            autoSyncFrequencySummary.setText(getResources().getString(R.string.xx_hour, autoSyncFrequency / 60));
 
         } else {
-            autoSyncFrequencySummary.setText(getResources().getString(R.string.xx_minute, autoSyncFrequency + ""));
+            autoSyncFrequencySummary.setText(getResources().getString(R.string.xx_minute, autoSyncFrequency));
         }
         openLinkMode = findViewById(R.id.setting_link_open_mode_sb);
         openLinkMode.setChecked(App.i().getUser().isOpenLinkBySysBrowser());
 
-        autoToggleTheme = findViewById(R.id.setting_auto_toggle_theme_sb);
-        autoToggleTheme.setChecked(App.i().getUser().isAutoToggleTheme());
+        // autoToggleTheme = findViewById(R.id.setting_auto_toggle_theme_sb);
+        // autoToggleTheme.setChecked(App.i().getUser().isAutoToggleTheme());
 
         enableLogging = findViewById(R.id.setting_enable_log_sb);
         enableLogging.setChecked(CorePref.i().globalPref().getBoolean(Contract.ENABLE_LOGGING, false));
@@ -153,18 +155,10 @@ public class SettingActivity extends BaseActivity {
         enableUpdate.setChecked(CorePref.i().globalPref().getBoolean(Contract.ENABLE_CHECK_UPDATE, false));
 
         TextView versionSummary = findViewById(R.id.setting_about_summary);
-        PackageManager manager = this.getPackageManager();
-        String title;
-        try {
-            PackageInfo info = manager.getPackageInfo(this.getPackageName(), 0);
-            title = info.versionName;
-        } catch (PackageManager.NameNotFoundException unused) {
-            title = "";
-        }
-        versionSummary.setText(title);
+        versionSummary.setText(VersionUtils.getVersionName(this));
 
-        autoIframeHeightSB.setChecked(CorePref.i().globalPref().getBoolean(Contract.IFRAME_AUTO_HEIGHT, true));
-
+        autoIframeHeightSB.setChecked(CorePref.i().globalPref().getBoolean(Contract.IFRAME_LISTENER, true));
+        blockAdsSB.setChecked(CorePref.i().globalPref().getBoolean(Contract.BLOCK_ADS, true));
         if (BuildConfig.DEBUG) {
             lab.setVisibility(View.VISIBLE);
             lab.setOnClickListener(new View.OnClickListener() {
@@ -186,9 +180,9 @@ public class SettingActivity extends BaseActivity {
             case R.id.setting_link_open_mode_sb:
                 user.setOpenLinkBySysBrowser(v.isChecked());
                 break;
-            case R.id.setting_auto_toggle_theme_sb:
-                user.setAutoToggleTheme(v.isChecked());
-                break;
+            // case R.id.setting_auto_toggle_theme_sb:
+            //     user.setAutoToggleTheme(v.isChecked());
+            //     break;
             case R.id.setting_enable_log_sb:
                 CorePref.i().globalPref().putBoolean(Contract.ENABLE_LOGGING, v.isChecked()).commit();
                 // XLog.i("日志：" + MMKV.defaultMMKV().putBoolean(Contract.ENABLE_LOGGING, v.isChecked()).commit());
@@ -198,7 +192,10 @@ public class SettingActivity extends BaseActivity {
                 CorePref.i().globalPref().putBoolean(Contract.ENABLE_CHECK_UPDATE, v.isChecked()).commit();
                 break;
             case R.id.setting_iframe_auto_height_sb:
-                CorePref.i().globalPref().putBoolean(Contract.IFRAME_AUTO_HEIGHT, v.isChecked()).commit();
+                CorePref.i().globalPref().putBoolean(Contract.IFRAME_LISTENER, v.isChecked()).commit();
+                break;
+            case R.id.setting_adblock_sb:
+                CorePref.i().globalPref().putBoolean(Contract.BLOCK_ADS, v.isChecked()).commit();
                 break;
             default:
                 break;
@@ -216,9 +213,9 @@ public class SettingActivity extends BaseActivity {
         CharSequence[] timeDescItems = new CharSequence[num];
         for (int i = 0; i < num; i++) {
             if (minuteArray[i] >= 60) {
-                timeDescItems[i] = getResources().getString(R.string.xx_hour, minuteArray[i] / 60 + "");
+                timeDescItems[i] = getResources().getString(R.string.xx_hour, minuteArray[i] / 60);
             } else {
-                timeDescItems[i] = getResources().getString(R.string.xx_minute, minuteArray[i] + "");
+                timeDescItems[i] = getResources().getString(R.string.xx_minute, minuteArray[i]);
             }
             if (preSelectTimeFrequency == minuteArray[i]) {
                 preSelectTimeFrequencyIndex = i;
@@ -255,7 +252,7 @@ public class SettingActivity extends BaseActivity {
         int num = dayValueArray.length;
         CharSequence[] dayDescArrayTemp = new CharSequence[num];
         for (int i = 0; i < num; i++) {
-            dayDescArrayTemp[i] = getResources().getString(R.string.clear_day_summary, dayValueArray[i] + "");
+            dayDescArrayTemp[i] = getResources().getString(R.string.clear_day_summary, dayValueArray[i]);
             if (preSelectClearBeforeDay == dayValueArray[i]) {
                 preSelectClearBeforeDayIndex = i;
             }
@@ -320,6 +317,7 @@ public class SettingActivity extends BaseActivity {
             intent.putExtra(Intent.EXTRA_MIME_TYPES, new String[]{"text/plain", "text/xml", "text/opml", "*/*"});
             startActivityForResult(intent, IMPORT_OPML_CODE);
         }
+        MobclickAgent.onEvent(this, "process_opml_file", "import");
     }
 
     public void exportOPML(View view) {
@@ -341,6 +339,7 @@ public class SettingActivity extends BaseActivity {
                 }
             });
         }
+        MobclickAgent.onEvent(this, "process_opml_file", "export");
     }
     public void showAbout(View view) {
         new MaterialDialog.Builder(this)
@@ -538,8 +537,11 @@ public class SettingActivity extends BaseActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
         super.onActivityResult(requestCode, resultCode, intent);
-        XLog.i("返回：" + intent.getData());
         if (requestCode == IMPORT_OPML_CODE) {
+            if (intent == null){
+                ToastUtils.show(R.string.import_failed_feedback_to_the_developer);
+                return;
+            }
             Uri uri = intent.getData();
             if(uri!=null && App.i().getApi() instanceof LocalApi){
                 App.i().getApi().importOPML(uri, new CallbackX() {

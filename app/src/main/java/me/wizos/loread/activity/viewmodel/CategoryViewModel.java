@@ -12,8 +12,9 @@ import java.util.List;
 
 import me.wizos.loread.App;
 import me.wizos.loread.R;
-import me.wizos.loread.bean.StreamTree;
-import me.wizos.loread.db.Collection;
+import me.wizos.loread.bean.collectiontree.Collection;
+import me.wizos.loread.bean.collectiontree.CollectionFeed;
+import me.wizos.loread.bean.collectiontree.CollectionTree;
 import me.wizos.loread.db.CoreDB;
 import me.wizos.loread.utils.Classifier;
 
@@ -27,59 +28,51 @@ public class CategoryViewModel extends ViewModel {
         XLog.i("触发重新加载【分类树】");
     }
 
-    public List<StreamTree> getCategoryFeeds(){
+    public List<CollectionTree> getCategoryFeeds(){
         String uid = App.i().getUser().getId();
 
         // 总分类
-        StreamTree rootCategoryFeeds = new StreamTree();
-        rootCategoryFeeds.setStreamId("user/" + uid + App.CATEGORY_ALL);
-        rootCategoryFeeds.setStreamName(App.i().getString(R.string.all));
-        rootCategoryFeeds.setStreamType(StreamTree.SMART);
-
-        // 未分类
-        // StreamTree unCategoryFeeds = new StreamTree();
-        // unCategoryFeeds.setStreamId("user/" + uid + App.STREAM_UNSUBSCRIBED);
-        // unCategoryFeeds.setStreamName(App.i().getString(R.string.un_category));
-        // unCategoryFeeds.setStreamType(StreamTree.SMART);
-
+        CollectionTree rootCategoryFeeds = new CollectionTree();
+        Collection rootCollection = new Collection();
+        rootCollection.setId("user/" + uid + App.CATEGORY_ALL);
+        rootCollection.setTitle(App.i().getString(R.string.all));
+        rootCategoryFeeds.setParent(rootCollection);
+        rootCategoryFeeds.setType(CollectionTree.SMART);
 
         // 已退订的收藏文章
-        StreamTree unsubscribeArticles = null;
+        CollectionTree unsubscribeArticles = null;
 
-        List<Collection> categoryCollection;
-        List<Collection> feedCollection;
+        List<Collection> categories;
+        List<CollectionFeed> feeds;
         int count = 0;
         if( App.i().getUser().getStreamStatus() == App.STATUS_UNREAD ){
-            rootCategoryFeeds.setCount(CoreDB.i().articleDao().getUnreadCount(uid));
-            categoryCollection = CoreDB.i().categoryDao().getCategoriesUnreadCount(uid);
-            feedCollection = CoreDB.i().feedDao().getFeedsUnreadCount(uid);
+            rootCollection.setCount(CoreDB.i().articleDao().getUnreadCount(uid));
+            categories = CoreDB.i().categoryDao().getCategoriesUnreadCount(uid);
+            feeds = CoreDB.i().feedDao().getFeedsUnreadCount(uid);
             count = CoreDB.i().articleDao().getUnreadCountUnsubscribe(uid);
         }else if( App.i().getUser().getStreamStatus() == App.STATUS_STARED ){
-            rootCategoryFeeds.setCount(CoreDB.i().articleDao().getStarCount(uid));
-            categoryCollection = CoreDB.i().categoryDao().getCategoriesStarCount(uid);
-            feedCollection = CoreDB.i().feedDao().getFeedsStaredCount(uid);
+            rootCollection.setCount(CoreDB.i().articleDao().getStarCount(uid));
+            categories = CoreDB.i().categoryDao().getCategoriesStarCount(uid);
+            feeds = CoreDB.i().feedDao().getFeedsStaredCount(uid);
             count = CoreDB.i().articleDao().getStarCountUnsubscribe(uid);
         }else {
-            rootCategoryFeeds.setCount(CoreDB.i().articleDao().getAllCount(uid));
-            categoryCollection = CoreDB.i().categoryDao().getCategoriesAllCount(uid);
-            feedCollection = CoreDB.i().feedDao().getFeedsAllCount(uid);
+            rootCollection.setCount(CoreDB.i().articleDao().getAllCount(uid));
+            categories = CoreDB.i().categoryDao().getCategoriesAllCount(uid);
+            feeds = CoreDB.i().feedDao().getFeedsAllCount(uid);
             count = CoreDB.i().articleDao().getAllCountUnsubscribe(uid);
         }
 
         if(count > 0){
-            unsubscribeArticles = new StreamTree();
-            unsubscribeArticles.setStreamId("user/" + uid + App.STREAM_UNSUBSCRIBED);
-            unsubscribeArticles.setStreamName(App.i().getString(R.string.unsubscribed));
-            unsubscribeArticles.setStreamType(StreamTree.SMART);
-            unsubscribeArticles.setCount(count);
+            unsubscribeArticles = new CollectionTree();
+            Collection unsubscribeCollection = new Collection();
+            unsubscribeCollection.setId("user/" + uid + App.STREAM_UNSUBSCRIBED);
+            unsubscribeCollection.setTitle(App.i().getString(R.string.unsubscribed));
+            unsubscribeCollection.setCount(count);
+            unsubscribeArticles.setType(CollectionTree.SMART);
+            unsubscribeArticles.setParent(unsubscribeCollection);
         }
 
-        List<StreamTree> categoryFeedsList = Classifier.group3(categoryCollection, CoreDB.i().feedCategoryDao().getAll(uid), feedCollection);
-
-        // XLog.i("获得的 A ：" + categoryCollection);
-        // XLog.i("获得的 B ：" + CoreDB.i().feedCategoryDao().getAll(uid));
-        // XLog.i("获得的 C ：" + feedCollection);
-        // XLog.i("获得的 D ：" + categoryFeedsList);
+        List<CollectionTree> categoryFeedsList = Classifier.group2(categories, CoreDB.i().feedCategoryDao().getAll(uid), feeds);
 
         categoryFeedsList.add(0, rootCategoryFeeds);
 

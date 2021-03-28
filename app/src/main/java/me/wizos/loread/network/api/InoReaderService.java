@@ -2,6 +2,7 @@ package me.wizos.loread.network.api;
 
 import androidx.annotation.NonNull;
 
+import me.wizos.loread.BuildConfig;
 import me.wizos.loread.bean.Token;
 import me.wizos.loread.bean.inoreader.GsTags;
 import me.wizos.loread.bean.inoreader.ItemIds;
@@ -15,6 +16,7 @@ import retrofit2.http.Field;
 import retrofit2.http.FormUrlEncoded;
 import retrofit2.http.GET;
 import retrofit2.http.Header;
+import retrofit2.http.Headers;
 import retrofit2.http.POST;
 import retrofit2.http.Query;
 
@@ -33,6 +35,10 @@ public interface InoReaderService {
             @Field("code") String code
     );
 
+    // @Headers({
+    //         "AppId:" + BuildConfig.INOREADER_APP_ID,
+    //         "AppKey: " + BuildConfig.INOREADER_APP_KEY
+    // })
     @FormUrlEncoded
     @POST("oauth2/token")
     Call<Token> refreshingAccessToken(
@@ -43,6 +49,14 @@ public interface InoReaderService {
     );
 
 
+    // @Headers({
+    //         "AppId: 1000001277",
+    //         "AppKey: 8dByWzO4AYi425yx5glICKntEY2g3uJo"
+    // })
+    @Headers({
+            "AppId:" + BuildConfig.INOREADER_APP_ID,
+            "AppKey: " + BuildConfig.INOREADER_APP_KEY
+    })
     @FormUrlEncoded
     @POST("accounts/ClientLogin")
     Call<String> login(
@@ -50,22 +64,38 @@ public interface InoReaderService {
             @Field("Passwd") String password
     );
 
+    @Headers({
+            "AppId:" + BuildConfig.INOREADER_APP_ID,
+            "AppKey: " + BuildConfig.INOREADER_APP_KEY
+    })
     @GET("/reader/api/0/user-info")
     Call<UserInfo> getUserInfo(
             @Header("authorization") String authorization
     );
 
 
+    @Headers({
+            "AppId:" + BuildConfig.INOREADER_APP_ID,
+            "AppKey: " + BuildConfig.INOREADER_APP_KEY
+    })
     @GET("reader/api/0/tag/list")
     Call<GsTags> getCategoryItems(
             @Header("authorization") String authorization
     );
 
+    @Headers({
+            "AppId:" + BuildConfig.INOREADER_APP_ID,
+            "AppKey: " + BuildConfig.INOREADER_APP_KEY
+    })
     @GET("reader/api/0/subscription/list")
     Call<Subscriptions> getFeeds(
             @Header("authorization") String authorization
     );
 
+    @Headers({
+            "AppId:" + BuildConfig.INOREADER_APP_ID,
+            "AppKey: " + BuildConfig.INOREADER_APP_KEY
+    })
     @GET("reader/api/0/stream/items/ids")
     Call<ItemIds> getStreamItemsIds(
             @Header("authorization") String authorization,
@@ -76,6 +106,10 @@ public interface InoReaderService {
             @Query("continuation") String continuation
     );
 
+    @Headers({
+            "AppId:" + BuildConfig.INOREADER_APP_ID,
+            "AppKey: " + BuildConfig.INOREADER_APP_KEY
+    })
     @GET("reader/api/0/stream/items/ids")
     Call<ItemIds> getUnreadRefs(
             @Header("authorization") String authorization,
@@ -86,6 +120,10 @@ public interface InoReaderService {
             @Query("continuation") String continuation
     );
 
+    @Headers({
+            "AppId:" + BuildConfig.INOREADER_APP_ID,
+            "AppKey: " + BuildConfig.INOREADER_APP_KEY
+    })
     @GET("reader/api/0/stream/items/ids")
     Call<ItemIds> syncStarredRefs(
             @Header("authorization") String authorization,
@@ -96,6 +134,10 @@ public interface InoReaderService {
             @Query("continuation") String continuation
     );
 
+    @Headers({
+            "AppId:" + BuildConfig.INOREADER_APP_ID,
+            "AppKey: " + BuildConfig.INOREADER_APP_KEY
+    })
     @POST("reader/api/0/stream/items/contents")
     Call<StreamContents> getItemContents(
             @Header("authorization") String authorization,
@@ -103,18 +145,29 @@ public interface InoReaderService {
     );
 
 
+    @Headers({
+            "AppId:" + BuildConfig.INOREADER_APP_ID,
+            "AppKey: " + BuildConfig.INOREADER_APP_KEY
+    })
     @POST("reader/api/0/subscription/quickadd")
     Call<String> addFeed(
             @NonNull @Body RequestBody requestBody
     );
 
+    @Headers({
+            "AppId:" + BuildConfig.INOREADER_APP_ID,
+            "AppKey: " + BuildConfig.INOREADER_APP_KEY
+    })
     @POST("reader/api/0/subscription/edit")
     Call<String> editFeed(
             @Header("authorization") String authorization,
             @NonNull @Body RequestBody requestBody
     );
 
-
+    @Headers({
+            "AppId:" + BuildConfig.INOREADER_APP_ID,
+            "AppKey: " + BuildConfig.INOREADER_APP_KEY
+    })
     @POST("reader/api/0/edit-tag")
     Call<String> markArticle(
             @Header("authorization") String authorization,
@@ -123,10 +176,13 @@ public interface InoReaderService {
 
     // 失败返回：Error=Tag not found!
     // 成功返回：OK
+    @Headers({
+            "AppId:" + BuildConfig.INOREADER_APP_ID,
+            "AppKey: " + BuildConfig.INOREADER_APP_KEY
+    })
     @POST("reader/api/0/rename-tag")
     Call<String> renameTag(
             @Header("authorization") String authorization,
             @Body RequestBody requestBody
     );
-
 }

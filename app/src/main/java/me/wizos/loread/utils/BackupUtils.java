@@ -6,6 +6,7 @@ import android.os.Environment;
 import com.elvishew.xlog.XLog;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+import com.rometools.rome.io.FeedException;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -18,6 +19,7 @@ import me.wizos.loread.App;
 import me.wizos.loread.Contract;
 import me.wizos.loread.R;
 import me.wizos.loread.bean.ProcessResult;
+import me.wizos.loread.bean.collectiontree.CollectionTree;
 import me.wizos.loread.db.Article;
 import me.wizos.loread.db.ArticleTag;
 import me.wizos.loread.db.CoreDB;
@@ -74,7 +76,7 @@ public class BackupUtils {
 
 
     public static ProcessResult<String> exportUserAllOPML(User user) {
-        return exportOPML(user, CoreDB.i().feedDao().getAll(user.getId()), new File(getExternalStorageBackupDir(), user.getId() + ".opml"));
+        return exportOPML2(user, Classifier.group2(CoreDB.i().categoryDao().getCategoriesAllCount(user.getId()), CoreDB.i().feedCategoryDao().getAll(user.getId()), CoreDB.i().feedDao().getFeedsAllCount(user.getId())), new File(getExternalStorageBackupDir(), user.getId() + "_" + TimeUtils.format(System.currentTimeMillis(), "yyyyMMddHHmmss") + ".opml"));
     }
     public static ProcessResult<String> exportUserUnsubscribeOPML(User user, List<Feed> feeds) {
         return exportOPML(user, feeds, new File(getExternalStorageBackupDir(), user.getId() + "_unsubscribe.opml"));
@@ -124,26 +126,7 @@ public class BackupUtils {
         return processResult;
     }
 
-
-
-
-    public static void exportOPML2() {
-        User user = App.i().getUser();
-        if(user == null){
-            return;
-        }
-        List<Feed> feeds = CoreDB.i().feedDao().getAll(user.getId());
-        if (!Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
-            XLog.w("外置存储设备不可用");
-            return;
-        }
-
-        File file = new File(getExternalStorageBackupDir(), user.getId() + ".opml");
-        String title = StringUtils.getString(R.string.opml_content_title, user.getUserName(), user.getSource());
-        OPMLUtils.export(title, file, feeds);
-    }
-    public static ProcessResult<String> exportOPML() {
-        User user = App.i().getUser();
+    public static ProcessResult<String> exportOPML2(User user, List<CollectionTree> feeds, File file) {
         ProcessResult<String> processResult = new ProcessResult<>();
         if(user == null){
             processResult.setSuccess(false);
@@ -157,7 +140,21 @@ public class BackupUtils {
             return processResult;
         }
 
-        List<Feed> feeds = CoreDB.i().feedDao().getAll(user.getId());
+        String parentPath = file.getParent();
+        if(StringUtils.isEmpty(parentPath)){
+            processResult.setSuccess(false);
+            processResult.setMsg("父目录为空");
+            XLog.w("父目录为空");
+            return processResult;
+        }
+
+        File dir = new File(parentPath);
+        if (!dir.exists() && !dir.mkdirs()){
+            processResult.setSuccess(false);
+            processResult.setMsg(App.i().getString(R.string.unable_to_create_folder_with_path, dir.getName()));
+            XLog.w("无法创建 Backup 文件夹");
+            return processResult;
+        }
 
         if (feeds == null || feeds.size() == 0) {
             processResult.setSuccess(false);
@@ -166,36 +163,90 @@ public class BackupUtils {
             return processResult;
         }
 
-        File file = new File(getExternalStorageBackupDir(), user.getId() + ".opml");
-        String title = App.i().getString(R.string.opml_content_title, user.getUserName(), user.getSource());
-        OPMLUtils.export(title, file, feeds);
-        processResult.setSuccess(true);
-        processResult.setMsg(App.i().getString(R.string.exported_as_file_with_path, file.getPath()));
+        try {
+            String title = App.i().getString(R.string.opml_content_title, user.getUserName(), user.getSource());
+            OPMLUtils.export2(title, file, feeds);
+            processResult.setSuccess(true);
+            processResult.setMsg(App.i().getString(R.string.exported_as_file_with_path, file.getPath()));
+        }catch (IOException | FeedException e){
+            e.printStackTrace();
+            XLog.e("导出异常：" + e.getClass() + " : " + e.getMessage());
+            processResult.setSuccess(false);
+            processResult.setMsg(App.i().getString(R.string.failure));
+        }
         return processResult;
     }
-    public static void backupUnsubscribeFeed(User user, List<Feed> feeds) {
-        if (!Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
-            XLog.w("外置存储设备不可用");
-            return;
-        }
-        File dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS);
-        if (!dir.isDirectory()) {
-            if(!dir.mkdirs()){
-                XLog.w("无法创建 Documents 文件夹");
-                return;
-            }
-        }
-        File file;
-        String title;
-        if(user != null){
-            title = StringUtils.getString(R.string.opml_content_title, user.getUserName(), user.getSource());
-            file = new File(dir.getAbsolutePath() + File.separator + user.getSource() + "_" + user.getUserName() + "_unsubscribe.opml");
-        }else {
-            title = StringUtils.getString(R.string.opml_content_sample_title);
-            file = new File(dir.getAbsolutePath() + File.separator + "unsubscribe.opml");
-        }
-        OPMLUtils.export(title, file, feeds);
-    }
+
+
+    // public static void exportOPML2() {
+    //     User user = App.i().getUser();
+    //     if(user == null){
+    //         return;
+    //     }
+    //     List<Feed> feeds = CoreDB.i().feedDao().getAll(user.getId());
+    //     if (!Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
+    //         XLog.w("外置存储设备不可用");
+    //         return;
+    //     }
+    //
+    //     File file = new File(getExternalStorageBackupDir(), user.getId() + ".opml");
+    //     String title = StringUtils.getString(R.string.opml_content_title, user.getUserName(), user.getSource());
+    //     OPMLUtils.export(title, file, feeds);
+    // }
+    // public static ProcessResult<String> exportOPML() {
+    //     User user = App.i().getUser();
+    //     ProcessResult<String> processResult = new ProcessResult<>();
+    //     if(user == null){
+    //         processResult.setSuccess(false);
+    //         processResult.setMsg(App.i().getString(R.string.please_login_to_rss_service_first));
+    //         return processResult;
+    //     }
+    //     if (!Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
+    //         processResult.setSuccess(false);
+    //         processResult.setMsg(App.i().getString(R.string.external_storage_device_is_not_available));
+    //         XLog.w("外置存储设备不可用");
+    //         return processResult;
+    //     }
+    //
+    //     List<Feed> feeds = CoreDB.i().feedDao().getAll(user.getId());
+    //
+    //     if (feeds == null || feeds.size() == 0) {
+    //         processResult.setSuccess(false);
+    //         processResult.setMsg(App.i().getString(R.string.no_feeds_no_need_to_export));
+    //         XLog.w("需要导出的feeds为空");
+    //         return processResult;
+    //     }
+    //
+    //     File file = new File(getExternalStorageBackupDir(), user.getId() + ".opml");
+    //     String title = App.i().getString(R.string.opml_content_title, user.getUserName(), user.getSource());
+    //     OPMLUtils.export(title, file, feeds);
+    //     processResult.setSuccess(true);
+    //     processResult.setMsg(App.i().getString(R.string.exported_as_file_with_path, file.getPath()));
+    //     return processResult;
+    // }
+    // public static void backupUnsubscribeFeed(User user, List<Feed> feeds) {
+    //     if (!Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
+    //         XLog.w("外置存储设备不可用");
+    //         return;
+    //     }
+    //     File dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS);
+    //     if (!dir.isDirectory()) {
+    //         if(!dir.mkdirs()){
+    //             XLog.w("无法创建 Documents 文件夹");
+    //             return;
+    //         }
+    //     }
+    //     File file;
+    //     String title;
+    //     if(user != null){
+    //         title = StringUtils.getString(R.string.opml_content_title, user.getUserName(), user.getSource());
+    //         file = new File(dir.getAbsolutePath() + File.separator + user.getSource() + "_" + user.getUserName() + "_unsubscribe.opml");
+    //     }else {
+    //         title = StringUtils.getString(R.string.opml_content_sample_title);
+    //         file = new File(dir.getAbsolutePath() + File.separator + "unsubscribe.opml");
+    //     }
+    //     OPMLUtils.export(title, file, feeds);
+    // }
 
 
 

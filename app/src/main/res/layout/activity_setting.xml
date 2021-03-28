@@ -41,12 +41,13 @@
             android:layout_height="match_parent"
             android:paddingBottom="@dimen/activity_vertical_margin"
             android:orientation="vertical">
-
             <TextView
                 android:id="@+id/setting_sync_icon"
                 style="@style/SettingItemHeader"
                 android:text="@string/sync" />
-            <LinearLayout style="@style/SettingItem">
+            <LinearLayout
+                android:background="?android:attr/selectableItemBackground"
+                style="@style/SettingItem">
                 <TextView
                     android:id="@+id/setting_auto_sync_title"
                     style="@style/SettingItemTitle2"
@@ -62,6 +63,7 @@
                 android:id="@+id/setting_auto_sync_on_wifi"
                 tools:visibility="visible"
                 android:visibility="gone"
+                android:background="?android:attr/selectableItemBackground"
                 style="@style/SettingItem">
 
                 <TextView
@@ -82,10 +84,10 @@
                 tools:visibility="visible"
                 android:visibility="gone"
                 android:onClick="onClickAutoSyncFrequencySelect"
+                android:background="?android:attr/selectableItemBackground"
                 style="@style/SettingItem">
                 <TextView
                     style="@style/SettingItemTitle2"
-                    android:background="?android:attr/selectableItemBackground"
                     android:text="@string/sync_frequency" />
                 <TextView
                     android:id="@+id/setting_sync_frequency_summary"
@@ -93,45 +95,31 @@
                     tools:text="30 分钟" />
             </LinearLayout>
 
-            <!--<LinearLayout-->
-            <!--    android:id="@+id/setting_down_img"-->
-            <!--    style="@style/SettingItem"-->
-            <!--    android:gravity="center_vertical">-->
-            <!--    <TextView-->
-            <!--        android:id="@+id/setting_down_img_title"-->
-            <!--        style="@style/SettingItemTitle2"-->
-            <!--        android:text="@string/setting_down_img_title" />-->
-            <!--    <com.kyleduo.switchbutton.SwitchButton-->
-            <!--        android:id="@+id/setting_down_img_sb"-->
-            <!--        style="@style/SwitchButtonStyle"-->
-            <!--        android:allowUndo="false"-->
-            <!--        android:checked="false"-->
-            <!--        android:onClick="onSBClick" />-->
-            <!--</LinearLayout>-->
-
             <TextView
                 style="@style/SettingItemHeader"
                 android:text="@string/other" />
 
-            <LinearLayout
-                android:id="@+id/setting_auto_toggle_theme"
-                style="@style/SettingItem"
-                android:gravity="center_vertical">
-                <TextView
-                    android:id="@+id/setting_auto_toggle_theme_title"
-                    android:layout_width="0dp"
-                    android:layout_weight="1"
-                    style="@style/SettingItemTitle2"
-                    android:text="@string/setting_auto_toggle_theme_title" />
-                <com.kyleduo.switchbutton.SwitchButton
-                    android:id="@+id/setting_auto_toggle_theme_sb"
-                    style="@style/SwitchButtonStyle"
-                    android:onClick="onSBClick"
-                    android:checked="true" />
-            </LinearLayout>
+            <!--<LinearLayout-->
+            <!--    android:id="@+id/setting_auto_toggle_theme"-->
+            <!--    android:gravity="center_vertical"-->
+            <!--    style="@style/SettingItem"-->
+            <!--    android:background="?android:attr/selectableItemBackground">-->
+            <!--    <TextView-->
+            <!--        android:id="@+id/setting_auto_toggle_theme_title"-->
+            <!--        android:layout_width="0dp"-->
+            <!--        android:layout_weight="1"-->
+            <!--        style="@style/SettingItemTitle2"-->
+            <!--        android:text="@string/setting_auto_toggle_theme_title" />-->
+            <!--    <com.kyleduo.switchbutton.SwitchButton-->
+            <!--        android:id="@+id/setting_auto_toggle_theme_sb"-->
+            <!--        style="@style/SwitchButtonStyle"-->
+            <!--        android:onClick="onSBClick"-->
+            <!--        android:checked="true" />-->
+            <!--</LinearLayout>-->
 
             <LinearLayout
                 android:id="@+id/setting_link_open_mode"
+                android:background="?android:attr/selectableItemBackground"
                 style="@style/SettingItem">
                 <TextView
                     android:id="@+id/setting_link_open_mode_title"
@@ -147,6 +135,7 @@
             <LinearLayout
                 android:id="@+id/setting_clear_day"
                 android:onClick="showClearBeforeDay"
+                android:background="?android:attr/selectableItemBackground"
                 style="@style/SettingItem">
                 <TextView
                     android:id="@+id/setting_clear_day_title"
@@ -164,6 +153,7 @@
             <LinearLayout
                 android:id="@+id/setting_import_opml"
                 style="@style/SettingItem"
+                android:background="?android:attr/selectableItemBackground"
                 android:onClick="importOPML">
                 <TextView
                     android:id="@+id/setting_import_opml_title"
@@ -179,6 +169,7 @@
             <LinearLayout
                 android:id="@+id/setting_export_opml"
                 style="@style/SettingItem"
+                android:background="?android:attr/selectableItemBackground"
                 android:onClick="exportOPML">
                 <TextView
                     android:id="@+id/setting_export_opml_title"
@@ -199,6 +190,7 @@
 
             <LinearLayout
                 android:id="@+id/setting_rule_update"
+                android:background="?android:attr/selectableItemBackground"
                 style="@style/SettingItem"
                 android:onClick="openActionManager">
                 <TextView
@@ -216,6 +208,7 @@
 
             <LinearLayout
                 android:id="@+id/setting_enable_url_rewrite"
+                android:background="?android:attr/selectableItemBackground"
                 style="@style/SettingItem"
                 android:onClick="openTestUrlRewrite">
                 <TextView
@@ -235,6 +228,7 @@
                 android:text="@string/lab" />
             <LinearLayout
                 android:id="@+id/setting_iframe_auto_height"
+                android:background="?android:attr/selectableItemBackground"
                 style="@style/SettingItem">
                 <LinearLayout
                     android:layout_width="0dp"
@@ -256,13 +250,6 @@
                         android:textColor="?attr/lv_item_desc_color"
                         android:text="@string/may_not_play_text_exceptions" />
                 </LinearLayout>
-                <!--<TextView-->
-                <!--    android:id="@+id/setting_iframe_auto_height_title"-->
-                <!--    android:layout_width="0dp"-->
-                <!--    android:layout_weight="1"-->
-                <!--    style="@style/SettingItemTitle2"-->
-                <!--    android:text="@string/iframe_auto_height" />-->
-
                 <com.kyleduo.switchbutton.SwitchButton
                     android:id="@+id/setting_iframe_auto_height_sb"
                     style="@style/SwitchButtonStyle"
@@ -270,45 +257,46 @@
                     android:checked="true" />
             </LinearLayout>
 
-            <!--<LinearLayout-->
-            <!--    android:id="@+id/setting_enable_enable_max_image"-->
-            <!--    style="@style/SettingItem"-->
-            <!--    android:gravity="center_vertical">-->
-            <!--    <TextView-->
-            <!--        android:id="@+id/setting_enable_enable_max_image_title"-->
-            <!--        android:layout_width="0dp"-->
-            <!--        android:layout_weight="1"-->
-            <!--        style="@style/SettingItemTitle2"-->
-            <!--        android:text="@string/enable_max_image" />-->
-            <!--    <TextView-->
-            <!--        android:id="@+id/setting_enable_max_image_summary"-->
-            <!--        style="@style/SettingItemSummary"-->
-            <!--        tools:text="" />-->
-            <!--</LinearLayout>-->
+            <LinearLayout
+                android:id="@+id/setting_adblock"
+                android:background="?android:attr/selectableItemBackground"
+                style="@style/SettingItem">
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+                    <TextView
+                        android:id="@+id/setting_adblock_title"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:textSize="16sp"
+                        android:textColor="?attr/lv_item_title_color"
+                        android:text="@string/block_ads" />
+                    <TextView
+                        android:id="@+id/setting_adblock_desc"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:textSize="12sp"
+                        android:textColor="?attr/lv_item_desc_color"
+                        android:text="@string/may_cause_abnormal_images_and_web_pages" />
+                </LinearLayout>
+                <com.kyleduo.switchbutton.SwitchButton
+                    android:id="@+id/setting_adblock_sb"
+                    style="@style/SwitchButtonStyle"
+                    android:onClick="onSBClick"
+                    android:checked="true" />
+            </LinearLayout>
 
             <TextView
                 style="@style/SettingItemHeader"
                 android:text="@string/about" />
 
-            <!--<LinearLayout-->
-            <!--    android:visibility="gone"-->
-            <!--    android:id="@+id/setting_license"-->
-            <!--    style="@style/SettingItem"-->
-            <!--    android:orientation="horizontal">-->
-            <!--    <TextView-->
-            <!--        android:id="@+id/setting_license_title"-->
-            <!--        style="@style/SettingItemTitleHorizontal"-->
-            <!--        android:text="@string/license" />-->
-            <!--    <TextView-->
-            <!--        android:id="@+id/setting_license_summary"-->
-            <!--        style="@style/SettingItemSummary"-->
-            <!--        android:text="More" />-->
-            <!--</LinearLayout>-->
-
             <LinearLayout
                 android:id="@+id/setting_enable_check_app_update"
                 style="@style/SettingItem"
                 android:visibility="gone"
+                android:background="?android:attr/selectableItemBackground"
                 android:gravity="center_vertical">
                 <TextView
                     android:id="@+id/setting_enable_check_app_update_title"
@@ -326,6 +314,7 @@
             <LinearLayout
                 android:id="@+id/setting_enable_log"
                 style="@style/SettingItem"
+                android:background="?android:attr/selectableItemBackground"
                 android:gravity="center_vertical">
                 <TextView
                     android:id="@+id/setting_enable_log_title"
@@ -343,6 +332,7 @@
             <LinearLayout
                 android:id="@+id/setting_send_log_file"
                 style="@style/SettingItem"
+                android:background="?android:attr/selectableItemBackground"
                 android:onClick="onClickSendLogFile"
                 android:orientation="horizontal">
                 <TextView
@@ -358,6 +348,7 @@
                 android:id="@+id/setting_join_qqgroup"
                 style="@style/SettingItem"
                 android:onClick="joinQQGroup"
+                android:background="?android:attr/selectableItemBackground"
                 android:orientation="horizontal">
                 <TextView
                     android:id="@+id/setting_join_qqgroup_title"
@@ -373,6 +364,7 @@
                 android:id="@+id/setting_feedback"
                 style="@style/SettingItem"
                 android:visibility="gone"
+                android:background="?android:attr/selectableItemBackground"
                 android:onClick="onClickFeedback"
                 android:orientation="horizontal">
                 <TextView
@@ -388,6 +380,7 @@
                 android:id="@+id/setting_about"
                 style="@style/SettingItem"
                 android:onClick="showAbout"
+                android:background="?android:attr/selectableItemBackground"
                 android:orientation="horizontal">
                 <TextView
                     android:id="@+id/setting_about_title"

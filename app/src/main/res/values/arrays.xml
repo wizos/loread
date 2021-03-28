@@ -14,9 +14,24 @@
         <item>7</item>
         <item>15</item>
         <item>30</item>
+        <item>60</item>
+        <item>180</item>
+        <item>360</item>
     </integer-array>
 
     <integer-array name="setting_sync_frequency_minute">
+        <item>15</item>
+        <item>30</item>
+        <item>60</item>
+        <item>180</item>
+        <item>360</item>
+        <item>720</item>
+    </integer-array>
+
+
+    <integer-array name="feed_sync_frequency_value">
+        <item>-1</item>
+        <item>0</item>
         <item>15</item>
         <item>30</item>
         <item>60</item>

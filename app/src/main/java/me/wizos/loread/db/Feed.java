@@ -9,8 +9,6 @@ import org.jetbrains.annotations.NotNull;
 
 import static androidx.room.ForeignKey.CASCADE;
 
-// import com.rometools.rome.feed.synd.SyndFeed;
-
 /**
  * Feed 与 Category 是 多对多关系，即一个 Feed 可以存在与多个 Category 中，Category 也可以包含多个 Feed
  * Created by Wizos on 2020/3/17.
@@ -18,13 +16,13 @@ import static androidx.room.ForeignKey.CASCADE;
 @Entity(
         primaryKeys = {"id","uid"},
         indices = {@Index({"id"}),@Index({"uid"}),@Index({"title"}),@Index({"feedUrl"})},
-        foreignKeys = @ForeignKey(entity = User.class, parentColumns = "id", childColumns = "uid", onDelete = CASCADE) )
+        foreignKeys = @ForeignKey(entity = User.class, parentColumns = "id", childColumns = "uid", onDelete = CASCADE))
 public class Feed {
-    @NonNull
-    private String id;
     @NonNull
     private String uid;
 
+    @NonNull
+    private String id;
     private String title;
 
     private String feedUrl;
@@ -41,18 +39,14 @@ public class Feed {
     // 记录该文feed什么时候被取消订阅。0为已订阅
     private long state = 0;
 
-    // 针对单个 feed 的同步时间间隔；-1 代表该值无效，需要使用 user 级别即全局设置的间隔时间，0 代表禁止更新，正整数代表间隔的分钟
-    // @Ignore
+    // 针对单个 feed 的同步时间间隔；0 代表该值无效，需要使用 user 级别即全局设置的间隔时间，-1  代表禁止更新，正整数代表间隔的分钟
     private int syncInterval;
     // 最近同步的时间戳，初始值为 0，单位
     // 最近同步的时间戳 + 同步的时间间隔（分钟） * 60_000 （60秒，1000毫秒）< 当前时间 ====> 代表是需要同步的
-    // @Ignore
     private long lastSyncTime;
     // 最近同步异常的原因
-    // @Ignore
     private String lastSyncError;
     // 最近同步异常的次数
-    // @Ignore
     private int lastErrorCount;
 
 

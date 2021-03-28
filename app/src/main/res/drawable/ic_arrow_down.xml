@@ -1,0 +1,16 @@
+<!--
+  ~ Copyright (c) 2021 wizos
+  ~ 项目：loread
+  ~ 邮箱：wizos@qq.com
+  ~ 创建时间：2021-03-12 11:34:09
+  -->
+
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+  <path
+      android:fillColor="?attr/tag_slv_item_icon"
+      android:pathData="M7.41,8.59L12,13.17l4.59,-4.58L18,10l-6,6 -6,-6 1.41,-1.41z"/>
+</vector>
