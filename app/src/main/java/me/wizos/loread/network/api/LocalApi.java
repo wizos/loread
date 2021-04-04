@@ -2,9 +2,13 @@ package me.wizos.loread.network.api;
 
 import android.content.ContentResolver;
 import android.net.Uri;
+import android.os.AsyncTask;
+import android.os.Handler;
+import android.os.Looper;
+import android.os.Message;
+import android.webkit.WebSettings;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 
 import com.elvishew.xlog.XLog;
 import com.hjq.toast.ToastUtils;
@@ -22,6 +26,7 @@ import java.net.SocketTimeoutException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 import javax.net.ssl.SSLException;
 
@@ -39,8 +44,10 @@ import me.wizos.loread.db.FeedCategory;
 import me.wizos.loread.network.HttpClientManager;
 import me.wizos.loread.network.SyncWorker;
 import me.wizos.loread.network.callback.CallbackX;
+import me.wizos.loread.utils.Converter;
 import me.wizos.loread.utils.EncryptUtils;
 import me.wizos.loread.utils.FeedParserUtils;
+import me.wizos.loread.utils.PagingUtils;
 import me.wizos.loread.utils.StringUtils;
 import me.wizos.loread.utils.TriggerRuleUtils;
 import okhttp3.Call;
@@ -50,10 +57,6 @@ import okhttp3.Response;
 
 import static me.wizos.loread.utils.StringUtils.getString;
 
-// import com.rometools.rome.feed.synd.SyndFeed;
-// import com.rometools.rome.io.FeedException;
-// import com.rometools.rome.io.SyndFeedInput;
-// import com.rometools.rome.io.XmlReader;
 
 /**
  * Created by Wizos on 2019/2/8.
@@ -63,8 +66,11 @@ public class LocalApi extends BaseApi {
     public LocalApi() {
     }
     int syncedFeedCount = 0;
+    int newArticleCount = 0;
     // CyclicBarrier barrier;
+    private Handler handler;
     private final Object mLock = new Object();
+    private final int TIMEOUT = 1;
 
     @Override
     public void sync() {
@@ -93,7 +99,7 @@ public class LocalApi extends BaseApi {
          * 2、
          */
 
-        long startSyncTimeMillis = System.currentTimeMillis(); //  + 3600_000
+        long startSyncTimeMillis = App.i().getLastShowTimeMillis(); //  + 3600_000
         String uid = App.i().getUser().getId();
 
         if(CoreDB.i().feedDao().getCount(uid) == 0){
@@ -101,186 +107,230 @@ public class LocalApi extends BaseApi {
             return;
         }
 
-        List<Feed> needSyncFeeds = CoreDB.i().feedDao().getFeedsNeedSync(uid, App.i().getUser().getAutoSyncFrequency(), System.currentTimeMillis());
-        XLog.i("需要同步的订阅源数量为：" + needSyncFeeds.size() + "， 全局同步时间间隔：" + App.i().getUser().getAutoSyncFrequency() + " , 当前时间：" +  System.currentTimeMillis());
+        List<Feed> needSyncFeeds = CoreDB.i().feedDao().getFeedsNeedSync(uid, App.i().getUser().getAutoSyncFrequency(), startSyncTimeMillis);
+        XLog.e("需要同步的订阅源数量为：" + needSyncFeeds.size() + "， 全局同步时间间隔：" + App.i().getUser().getAutoSyncFrequency() + " , 当前时间：" +  startSyncTimeMillis);
         if(needSyncFeeds.size() == 0){
             return;
         }
         LiveEventBus.get(SyncWorker.SYNC_PROCESS_FOR_SUBTITLE).post(getString(R.string.sync_feed, "1", needSyncFeeds.size()));
+        handler = new Handler(Looper.getMainLooper(), new Handler.Callback() {
+            @Override
+            public boolean handleMessage(@NonNull Message msg) {
+                XLog.d("处理同步超时：" + msg.what);
+                if(msg.what != TIMEOUT){
+                    return false; //返回true 不对msg进行进一步处理
+                }
 
-
-        // barrier = new CyclicBarrier(1);
-
-        // for(Feed feed: needSyncFeeds){
-        //     AsyncTask.THREAD_POOL_EXECUTOR.execute(new Runnable() {
-        //         @Override
-        //         public void run() {
-        //             XLog.d("同步：" + feed.getTitle() + "（" + feed.getFeedUrl()+ "）" );
-        //             Request request = new Request.Builder().url(feed.getFeedUrl()).build();
-        //             Call call = HttpClientManager.i().simpleClient().newCall(request);
-        //             try{
-        //                 Response response = call.execute();
-        //                 syncedFeedCount ++;
-        //                 XLog.w("同步成功：" + feed.getTitle() + "（" + feed.getFeedUrl()+ "）" + response.isSuccessful()+ ", 线程：" + Thread.currentThread() + ", 已同步数量：" + barrier.getNumberWaiting());
-        //                 LiveEventBus.get(SyncWorker.SYNC_PROCESS_FOR_SUBTITLE).post(getString(R.string.sync_feed, syncedFeedCount, barrier.getParties()));
-        //                 if(response.isSuccessful()){
-        //                     FeedEntries feedEntries = FeedParserUtils.parseResponseBody(App.i(), feed, response);
-        //                     if(feedEntries != null){
-        //                         if (feedEntries.isSuccess()) {
-        //                             CoreDB.i().feedDao().update(feedEntries.getFeed());
-        //                             List<Article> entries = feedEntries.getArticles();
-        //                             for (Article entry : entries) {
-        //                                 if (CoreDB.i().articleDao().getCountById(uid, entry.getId()) > 0) {
-        //                                     continue;
-        //                                 }
-        //                                 entry.setCrawlDate(System.currentTimeMillis()); // startSyncTimeMillis
-        //                                 newArticleCount++;
-        //                                 CoreDB.i().articleDao().insert(entry);
-        //                             }
-        //                         }
-        //                     }
-        //                 }
-        //             }catch (IOException e){
-        //                 XLog.w("同步异常：" + feed.getTitle() + "（" + feed.getFeedUrl()+ "） => " + e.getClass() + ":" + e.getLocalizedMessage() + ", 线程：" + Thread.currentThread() + ", 已同步数量：" + barrier.getNumberWaiting());
-        //                 syncedFeedCount ++;
-        //                 LiveEventBus.get(SyncWorker.SYNC_PROCESS_FOR_SUBTITLE).post(getString(R.string.sync_feed, syncedFeedCount, barrier.getParties()));
-        //
-        //                 if ( !(e instanceof ConnectException) && !(e instanceof SocketTimeoutException) && !(e instanceof SSLException)){
-        //                     feed.setLastSyncError(e.getLocalizedMessage());
-        //                     feed.setLastErrorCount(feed.getLastErrorCount() + 1);
-        //                     CoreDB.i().feedDao().update(feed);
-        //                     // Tool.printCallStack(e);
-        //                     e.printStackTrace();
-        //                 }
-        //             }
-        //             XLog.w("同步结果：" + feed.getTitle());
-        //             await();
-        //         }
-        //     });
-        // }
-
+                synchronized(mLock) {
+                    mLock.notify();
+                }
+                return true;
+            }
+        });
 
         for(Feed feed: needSyncFeeds){
-            Request request = new Request.Builder().url(feed.getFeedUrl()).build();
-            Call call = HttpClientManager.i().simpleClient().newCall(request);
-            // XLog.d("同步：" + feed.getTitle() + "（" + feed.getFeedUrl()+ "）" );
+            Request.Builder request = new Request.Builder().url(feed.getFeedUrl());
+            request.header(Contract.USER_AGENT, WebSettings.getDefaultUserAgent(App.i()));
 
+            Call call = HttpClientManager.i().simpleClient().newCall(request.build());
+            // XLog.d("同步：" + feed.getTitle() + "（" + feed.getFeedUrl()+ "）" );
             call.enqueue(new Callback() {
                 @Override
                 public void onFailure(@NotNull Call call, @NotNull IOException e) {
-                    XLog.w("同步异常：" + feed.getTitle() + "（" + feed.getFeedUrl()+ " ） => " + e.getClass() + ":" + e.getLocalizedMessage() + ", 线程：" + Thread.currentThread() + ", 已同步数量：" + syncedFeedCount);
                     syncedFeedCount ++;
                     LiveEventBus.get(SyncWorker.SYNC_PROCESS_FOR_SUBTITLE).post(getString(R.string.sync_feed, syncedFeedCount, needSyncFeeds.size()));
+                    XLog.d("同步异常：" + feed.getTitle() + "（" + feed.getFeedUrl()+ " ） => " + e.getClass() + ":" + e.getLocalizedMessage() + ", 线程：" + Thread.currentThread() + ", 已同步数量：" + syncedFeedCount);
 
                     if ( !(e instanceof ConnectException) && !(e instanceof SocketTimeoutException) && !(e instanceof SSLException)){
                         feed.setLastSyncError(e.getLocalizedMessage());
                         feed.setLastErrorCount(feed.getLastErrorCount() + 1);
-                        CoreDB.i().feedDao().update(feed);
-                        e.printStackTrace();
+                        feed.setLastSyncTime(System.currentTimeMillis());
+
+                        // AsyncTask.THREAD_POOL_EXECUTOR.execute(new Runnable() {
+                        //     @Override
+                        //     public void run() {
+                        //         CoreDB.i().feedDao().update(feed);
+                        //     }
+                        // });
                     }
 
-                    // XLog.v("同步结果：" + feed.getTitle());
-                    // await();
-                    checkSyncEnd(needSyncFeeds.size());
+                    checkSyncEnd(feed, syncedFeedCount, needSyncFeeds.size());
+                    e.printStackTrace();
                 }
 
                 @Override
                 public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
-                    syncedFeedCount ++;
-                    XLog.w("同步成功：" + feed.getTitle() + "（" + feed.getFeedUrl()+ "）" + response.isSuccessful()+ ", 线程：" + Thread.currentThread() + ", 已同步数量：" + syncedFeedCount);
-                    LiveEventBus.get(SyncWorker.SYNC_PROCESS_FOR_SUBTITLE).post(getString(R.string.sync_feed, syncedFeedCount, needSyncFeeds.size()));
+                    AsyncTask.THREAD_POOL_EXECUTOR.execute(new Runnable() {
+                        @Override
+                        public void run() {
+                            syncedFeedCount ++;
+                            LiveEventBus.get(SyncWorker.SYNC_PROCESS_FOR_SUBTITLE).post(getString(R.string.sync_feed, syncedFeedCount, needSyncFeeds.size()));
+                            XLog.d("同步成功：" + feed.getTitle() + " [" + feed.getFeedUrl()+ "] " + response.isSuccessful() + ", 已同步数量：" + syncedFeedCount);
 
-                    if(response.isSuccessful()){
-                        FeedEntries feedEntries = FeedParserUtils.parseResponseBody(App.i(), feed, response);
-                        if(feedEntries != null){
-                            if (feedEntries.isSuccess()) {
-                                CoreDB.i().feedDao().update(feedEntries.getFeed());
-                                List<Article> entries = feedEntries.getArticles();
-                                for (Article entry : entries) {
-                                    if (CoreDB.i().articleDao().getCountById(uid, entry.getId()) > 0) {
-                                        continue;
+                            if(response.isSuccessful()){
+                                FeedEntries feedEntries = FeedParserUtils.parseResponseBody(App.i(), feed, response.body(), new Converter.ArticleConvertListener() {
+                                    @Override
+                                    public Article onEnd(Article article) {
+                                        article.setCrawlDate(App.i().getLastShowTimeMillis());
+                                        return article;
                                     }
-                                    entry.setCrawlDate(System.currentTimeMillis()); // startSyncTimeMillis
-                                    newArticleCount++;
-                                    CoreDB.i().articleDao().insert(entry);
+                                });
+                                if(feedEntries != null){
+                                    if (feedEntries.isSuccess()) {
+                                        // CoreDB.i().feedDao().update(feedEntries.getFeed());
+                                        Map<String, Article> articleMap = feedEntries.getArticleMap();
+
+                                        PagingUtils.slice(new ArrayList<>(articleMap.keySet()), 50, new PagingUtils.PagingListener<String>() {
+                                            @Override
+                                            public void onPage(@NotNull List<String> childList) {
+                                                List<String> removeIds = CoreDB.i().articleDao().getIds(uid, childList);
+                                                if(removeIds != null){
+                                                    for (String id: removeIds){
+                                                        articleMap.remove(id);
+                                                        // XLog.e("重复文章：" + id);
+                                                    }
+                                                }
+                                            }
+                                        });
+                                        ArrayList<Article> newArticles = new ArrayList<>(articleMap.values());
+                                        for (Article article: newArticles){
+                                            article.setCrawlDate(App.i().getLastShowTimeMillis());
+                                        }
+                                        // XLog.i("抓取了新文章：" + newArticles.size() + ", 已抓取：" + newArticleCount);
+                                        // XLog.i("新文章：" + newArticles );
+                                        newArticleCount = newArticleCount + newArticles.size();
+                                        CoreDB.i().articleDao().insert(newArticles);
+                                    }
+                                }else {
+                                    feed.setLastSyncTime(System.currentTimeMillis());
                                 }
+                            }else {
+                                feed.setLastSyncError( StringUtils.isEmpty(response.message()) ? String.valueOf(response.code()) : (response.code() + ", " + response.message()) );
+                                feed.setLastErrorCount(feed.getLastErrorCount() + 1);
+                                feed.setLastSyncTime(System.currentTimeMillis());
+                                // CoreDB.i().feedDao().update(feed);
                             }
+                            response.close();
+                            checkSyncEnd(feed, syncedFeedCount, needSyncFeeds.size());
                         }
-                    }
-                    // XLog.v("同步结果：" + feed.getTitle());
-                    // await();
-                    checkSyncEnd(needSyncFeeds.size());
-                    response.close();
+                    });
+
+                    // checkSyncEnd(syncedFeedCount, needSyncFeeds.size());
                 }
             });
         }
 
-
-        // try {
-        //     barrier.await(needSyncFeeds.size() * 30, TimeUnit.SECONDS); // 15, TimeUnit.MINUTES 设置等待返回结果最多5分钟 | TimeoutException
-        // } catch (BrokenBarrierException | InterruptedException | TimeoutException ex) {
-        //     XLog.i("barrier 异常：" + ex.getLocalizedMessage());
-        //     ex.printStackTrace();
-        // }
-        // await();
-
         try {
-            // wait();
+            waitSyncTimeout(needSyncFeeds.size());
             synchronized (mLock) {
-                mLock.wait(needSyncFeeds.size() * 30_000);
+                mLock.wait(needSyncFeeds.size() * 20_000);
+                XLog.d("最多等待时间：" + (needSyncFeeds.size() * 20_000));
             }
         }catch (Exception e){
-            XLog.i("wait 异常：" + e.getLocalizedMessage());
+            XLog.e("wait 异常：" + e.getLocalizedMessage());
             e.printStackTrace();
         }
 
 
-        XLog.i("看看CyclicBarrier的await方法能不能把我阻塞住！");
-
-        XLog.i(Thread.currentThread().getName() + " 完成最后任务");
+        // AsyncTask.SERIAL_EXECUTOR.execute(new Runnable() {
+        //     @Override
+        //     public void run() {
+        //
+        //         synchronized(mLock) {
+        //             mLock.notify();
+        //         }
+        //     }
+        // });
+        // try {
+        //     synchronized (mLock) {
+        //         mLock.wait();
+        //         XLog.d("最多等待时间 N 秒：");
+        //     }
+        // }catch (Exception e){
+        //     XLog.e("wait 异常：" + e.getLocalizedMessage());
+        //     e.printStackTrace();
+        // }
+        long time1 = System.currentTimeMillis();
         LiveEventBus.get(SyncWorker.SYNC_PROCESS_FOR_SUBTITLE).post(getString(R.string.clear_article));
         deleteExpiredArticles();
+        long time2 = System.currentTimeMillis();
+        XLog.i("清理文章耗时：" + (time2 - time1));
 
         // 获取文章全文
         LiveEventBus.get(SyncWorker.SYNC_PROCESS_FOR_SUBTITLE).post(getString(R.string.fetch_article_full_content));
         fetchReadability(uid, startSyncTimeMillis);
+        time1 = System.currentTimeMillis();
+        XLog.i("获取全文耗时：" + (time1 - time2));
+        fetchIcon(uid);
+
+        LiveEventBus.get(SyncWorker.SYNC_PROCESS_FOR_SUBTITLE).post(getString(R.string.execute_rules));
         // 执行文章自动处理脚本
         TriggerRuleUtils.exeAllRules(uid, startSyncTimeMillis);
+        time2 = System.currentTimeMillis();
+        XLog.i("执行规则耗时：" + (time2 - time1));
 
         handleDuplicateArticles(startSyncTimeMillis);
+        time1 = System.currentTimeMillis();
+        XLog.i("处理重复文章耗时：" + (time1 - time2));
         updateCollectionCount();
-        handleCrawlDate2();
+        time2 = System.currentTimeMillis();
+        XLog.i("重置计数耗时A：" + (time2 - time1));
+        handleArticleInfo();
+        time1 = System.currentTimeMillis();
+        XLog.i("重置文章爬取时间、赋值feedUrl、feedTitle耗时：" + (time1 - time2));
+        XLog.e("重置爬取时间：" + startSyncTimeMillis + " = " + App.i().getLastShowTimeMillis());
+
+
         // 提示更新完成
         LiveEventBus.get(SyncWorker.NEW_ARTICLE_NUMBER).post(newArticleCount);
         LiveEventBus.get(SyncWorker.SYNC_PROCESS_FOR_SUBTITLE).post( null );
         newArticleCount = 0;
         syncedFeedCount = 0;
+        waitSavedFeeds.clear();
     }
-    
-    int newArticleCount = 0;
-
-    // private void await(){
-    //     try {
-    //         barrier.await(); // 15, TimeUnit.MINUTES 设置等待返回结果最多5分钟 | TimeoutException
-    //     } catch (BrokenBarrierException | InterruptedException ex) {
-    //         XLog.i("barrier 异常：" + ex.getClass() + ":" + ex.getMessage());
-    //         ex.printStackTrace();
-    //     }
-    // }
 
 
-    private void checkSyncEnd(int feedCount){
-        XLog.i("同步次数：" + syncedFeedCount + ", 总数：" + feedCount);
+    private void waitSyncTimeout(int needSyncFeedCount){
+        if (handler.hasMessages(TIMEOUT)) {
+            handler.removeMessages(TIMEOUT);
+        }
+        handler.sendEmptyMessageDelayed(TIMEOUT, needSyncFeedCount * 20_000);
+    }
+
+
+    private void checkSyncEnd(int syncedFeedCount, int feedCount){
+        // XLog.d("同步次数：" + syncedFeedCount + ", 总数：" + feedCount);
         if(syncedFeedCount != feedCount){
+            waitSyncTimeout(feedCount - syncedFeedCount);
             return;
         }
-        // await();
-        // notifyAll();
+        handler.removeCallbacksAndMessages(null);
         synchronized(mLock) {
             mLock.notify();
         }
     }
 
+    private List<Feed> waitSavedFeeds = new ArrayList<>();
+    private void checkSyncEnd(Feed feed, int syncedFeedCount, int feedCount){
+        // XLog.d("同步次数：" + syncedFeedCount + ", 总数：" + feedCount);
+        waitSavedFeeds.add(feed);
+        if(waitSavedFeeds.size() == 50){
+            CoreDB.i().feedDao().update(waitSavedFeeds);
+            waitSavedFeeds.clear();
+        }
+        if(syncedFeedCount != feedCount){
+            waitSyncTimeout(feedCount - syncedFeedCount);
+            return;
+        }
+        if(waitSavedFeeds.size() != 0){
+            CoreDB.i().feedDao().update(waitSavedFeeds);
+            waitSavedFeeds.clear();
+        }
+        handler.removeCallbacksAndMessages(null);
+        synchronized(mLock) {
+            mLock.notify();
+        }
+    }
 
     @Override
     public void renameCategory(String categoryId, String targetName, CallbackX cb) {
@@ -293,8 +343,28 @@ public class LocalApi extends BaseApi {
 
     @Override
     public void deleteCategory(String categoryId, CallbackX cb) {
+        List<Feed> feeds = CoreDB.i().feedDao().getByCategoryId(App.i().getUser().getId(), categoryId);
+        CoreDB.i().feedDao().delete(feeds);
+
+        CoreDB.i().articleDao().deleteUnsubscribeUnStar(App.i().getUser().getId());
+        // PagingUtils.slice(feeds, 50, new PagingUtils.PagingListener<Feed>() {
+        //     @Override
+        //     public void onPage(@NotNull List<Feed> childFeeds) {
+        //         for (Feed feed: childFeeds){
+        //             CoreDB.i().articleDao().deleteUnStarByFeedId(App.i().getUser().getId(), feed.getId());
+        //         }
+        //     }
+        // });
+
         Category category = CoreDB.i().categoryDao().getById(App.i().getUser().getId(), categoryId);
         CoreDB.i().categoryDao().delete(category);
+
+        List<FeedCategory> feedCategories = CoreDB.i().feedCategoryDao().getByCategoryId(App.i().getUser().getId(), categoryId);
+        CoreDB.i().feedCategoryDao().delete(feedCategories);
+        cb.onSuccess(App.i().getString(R.string.success));
+    }
+
+    public void unsubscribeFeed(String feedId, CallbackX cb) {
         cb.onSuccess(App.i().getString(R.string.success));
     }
 
@@ -319,6 +389,7 @@ public class LocalApi extends BaseApi {
             }
             CoreDB.i().feedCategoryDao().insert(feedCategories);
         }
+        updateCollectionCount();
         cb.onSuccess(App.i().getString(R.string.subscribe_success));
     }
 
@@ -326,15 +397,6 @@ public class LocalApi extends BaseApi {
     public void renameFeed(String feedId, String targetName, CallbackX cb) {
         CoreDB.i().feedDao().updateName(App.i().getUser().getId(), feedId, targetName);
         cb.onSuccess(App.i().getString(R.string.success));
-    }
-
-
-    public void editFeed(@NonNull String feedId, @Nullable String feedTitle, @Nullable ArrayList<CategoryItem> categoryItems, CallbackX cb) {
-        Feed feed = CoreDB.i().feedDao().getById(App.i().getUser().getId(), feedId);
-        if(feed!=null){
-
-        }
-        cb.onFailure(App.i().getString(R.string.server_api_not_supported, Contract.PROVIDER_LOREAD));
     }
 
 
@@ -410,10 +472,6 @@ public class LocalApi extends BaseApi {
 
     @Override
     public void editFeedCategories(List<CategoryItem> lastCategoryItems, EditFeed editFeed, CallbackX cb) {
-        cb.onSuccess(App.i().getString(R.string.success));
-    }
-
-    public void unsubscribeFeed(String feedId, CallbackX cb) {
         cb.onSuccess(App.i().getString(R.string.success));
     }
 

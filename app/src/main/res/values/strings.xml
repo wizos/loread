@@ -104,8 +104,8 @@
     <string name="step_sync_article_start">%1$s Sync article</string>
     <string name="step_sync_article_size">%1$s Sync article [%2$d]</string>
     <string name="step_sync_article_refs">%1$s Sync Article Info</string>
-
-    <string name="fetch_article_full_content">Fetch article full content</string>
+    <string name="fetch_article_full_content">Fetching article full content</string>
+    <string name="execute_rules">Executing rules</string>
 
     <plurals name="articles_count">
         <item quantity="one">%1$s article</item>
@@ -136,6 +136,7 @@
     <string name="editing">Editing</string>
     <string name="response_fail">Response fail</string>
     <string name="provider_response_code">%1$s response code %2$d</string>
+    <string name="article_link_is_wrong_with_reason">Article link is wrong：%1$s</string>
     <string name="response_code">Response code %1$d</string>
     <string name="return_data_exception">Return data exception</string>
 
@@ -462,12 +463,13 @@
 
     <string name="get_readability_ing">Getting full text</string>
     <string name="get_readability_success">Get Successful</string>
-    <string name="get_readability_failure">Get failed: %1$s</string>
+    <string name="get_readability_failure_with_reason">Get failed: %1$s</string>
     <string name="cancel_readability">Unshow the crawled full text</string>
 
     <string name="music_time">0:00</string>
     <string name="music_speed">1.0</string>
 
+    <string name="edit">Edit</string>
     <string name="edit_name">Edit name</string>
     <string name="search">Search</string>
 
@@ -481,6 +483,7 @@
     <string name="open_by_inner">Open by inner</string>
 
     <string name="copy_success">Copy succeeded</string>
+    <string name="copy_failure">Copy failed</string>
 
     <string name="subscribe">Subscribe</string>
     <string name="subscribe_success">Subscription succeeded</string>
@@ -656,10 +659,19 @@
 
 
     <string name="feed_desc">Description</string>
+    <string name="article_count">Article count</string>
+    <string name="article_count_detail">All %1$d, Unread %2$d, Star %3$d</string>
     <string name="site_url">Site url</string>
     <string name="feed_url">Feed url</string>
     <string name="feed_name">Feed name</string>
     <string name="unsubscribe">Unsubscribe</string>
+
+    <string name="refetch">Refetch</string>
+    <string name="fetching">Fetching</string>
+    <string name="fetch_success">Fetch success</string>
+    <string name="fetch_success_with_reason">Fetch success: %1$d</string>
+    <string name="fetch_failed">Fetch failed</string>
+    <string name="fetch_failed_with_reason">Fetch failed: %1$s</string>
 
     <string name="display_filter_is_under_development">Display filter function is still under development</string>
 
@@ -745,5 +757,5 @@
     <string name="is_not_an_apk_file">Is not an apk file!</string>
     <string name="no_search_results_found">No search results found</string>
     <string name="no_articles">No articles</string>
-
+    <string name="the_feeds_in_the_category_will_be_deleted_together">The feeds in the category will be deleted together</string>
 </resources>

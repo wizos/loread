@@ -20,7 +20,7 @@ public interface FeedCategoryDao {
     List<FeedCategory> getAll(String uid);
 
     @Query("SELECT * FROM feedcategory WHERE uid = :uid AND categoryId = :categoryId")
-    List<FeedCategory> getByCategory(String uid,String categoryId);
+    List<FeedCategory> getByCategoryId(String uid,String categoryId);
 
     @Query("SELECT categoryId FROM feedcategory WHERE uid = :uid AND feedId = :feedId")
     List<String> getCategoryId(String uid,String feedId);
@@ -50,11 +50,22 @@ public interface FeedCategoryDao {
 
     @Delete
     @Transaction
-    void delete(FeedCategory feedCategory);
+    void delete(FeedCategory... feedCategory);
+    @Delete
+    @Transaction
+    void delete(List<FeedCategory> feedCategories);
 
     @Transaction
     @Query("DELETE FROM feedcategory WHERE uid = (:uid) AND feedId = :feedId")
     void deleteByFeedId(String uid, String feedId);
+
+    @Transaction
+    @Query("DELETE FROM feedcategory WHERE uid = (:uid) AND feedId NOT IN (SELECT id FROM feed WHERE uid = :uid)")
+    void deleteByFeedId(String uid);
+
+    @Transaction
+    @Query("DELETE FROM feedcategory WHERE uid = (:uid) AND categoryId NOT IN (SELECT id FROM category WHERE uid = :uid)")
+    void deleteByCategoryId(String uid);
 
     @Transaction
     @Query("DELETE FROM feedcategory WHERE uid = :uid")

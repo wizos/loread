@@ -13,6 +13,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.channels.FileChannel;
+import java.util.ArrayList;
 import java.util.List;
 
 import me.wizos.loread.App;
@@ -79,6 +80,11 @@ public class BackupUtils {
         return exportOPML2(user, Classifier.group2(CoreDB.i().categoryDao().getCategoriesAllCount(user.getId()), CoreDB.i().feedCategoryDao().getAll(user.getId()), CoreDB.i().feedDao().getFeedsAllCount(user.getId())), new File(getExternalStorageBackupDir(), user.getId() + "_" + TimeUtils.format(System.currentTimeMillis(), "yyyyMMddHHmmss") + ".opml"));
     }
     public static ProcessResult<String> exportUserUnsubscribeOPML(User user, List<Feed> feeds) {
+        return exportOPML(user, feeds, new File(getExternalStorageBackupDir(), user.getId() + "_unsubscribe.opml"));
+    }
+    public static ProcessResult<String> exportUserUnsubscribeOPML(User user, Feed feed) {
+        List<Feed> feeds = new ArrayList<>();
+        feeds.add(feed);
         return exportOPML(user, feeds, new File(getExternalStorageBackupDir(), user.getId() + "_unsubscribe.opml"));
     }
 

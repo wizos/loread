@@ -37,7 +37,7 @@ public class ArticleListViewModel extends ViewModel {
         long timeMillis = System.currentTimeMillis();
         App.i().setLastShowTimeMillis(timeMillis);
 
-        DataSource.Factory<Integer, Article> articleFactory = null;
+        DataSource.Factory<Integer, Article> articleFactory;
         // XLog.i("生成 getArticles ：" + streamId + "   " + timeMillis);
 
         if(streamType == CollectionTree.CATEGORY){
@@ -51,7 +51,7 @@ public class ArticleListViewModel extends ViewModel {
                 articleFactory = articleDao.getAllByCategoryId(uid, streamId, timeMillis);
                 articleIdsLiveData = articleDao.getAllIdsByCategoryId(uid, streamId, timeMillis);
             }
-        }else if(streamType == CollectionTree.FEED){ //  if(streamType == StreamTree.FEED)
+        }else if(streamType == CollectionTree.FEED){
             if (streamStatus == App.STATUS_STARED) {
                 articleFactory = articleDao.getStaredByFeedId(uid, streamId, timeMillis);
                 articleIdsLiveData = articleDao.getStaredIdsByFeedId(uid, streamId, timeMillis);
@@ -88,32 +88,6 @@ public class ArticleListViewModel extends ViewModel {
                     articleIdsLiveData = articleDao.getAllIds(uid,timeMillis);
                 }
             }
-
-            // if (streamStatus == App.STATUS_STARED){
-            //     if (streamId.contains(App.STREAM_UNSUBSCRIBED)){
-            //         articleFactory = articleDao.getStaredByUncategory2(uid, timeMillis);
-            //         articleIdsLiveData = articleDao.getStaredIdsByUncategory2(uid,timeMillis);
-            //     }else {
-            //         articleFactory = articleDao.getStared(uid, timeMillis);
-            //         articleIdsLiveData = articleDao.getStaredArticleIds(uid,timeMillis);
-            //     }
-            // } else if (streamStatus == App.STATUS_UNREAD) {
-            //     if (streamId.contains(App.STREAM_UNSUBSCRIBED)){
-            //         articleFactory = articleDao.getUnreadByUncategory(uid, timeMillis);
-            //         articleIdsLiveData = articleDao.getUnreadIdsByUncategory(uid,timeMillis);
-            //     }else {
-            //         articleFactory = articleDao.getUnread(uid, timeMillis);
-            //         articleIdsLiveData = articleDao.getUnreadIds(uid,timeMillis);
-            //     }
-            // } else {
-            //     if (streamId.contains(App.STREAM_UNSUBSCRIBED)){
-            //         articleFactory = articleDao.getAllByUncategory(uid, timeMillis);
-            //         articleIdsLiveData = articleDao.getAllIdsByUncategory(uid,timeMillis);
-            //     }else {
-            //         articleFactory = articleDao.getAll(uid, timeMillis);
-            //         articleIdsLiveData = articleDao.getAllIds(uid,timeMillis);
-            //     }
-            // }
         }
 
         // setPageSize 指定每次分页加载的条目数量
@@ -150,6 +124,30 @@ public class ArticleListViewModel extends ViewModel {
                 .build()
         ).build();
         articleIdsLiveData = CoreDB.i().articleDao().getAllIdsByKeyword(uid, keyword, timeMillis);
+
+        articlesLiveData.observe(owner, articlesObserver);
+        articleIdsLiveData.observe(owner, articleIdsObserver);
+    }
+
+    public void loadArticles(String uid, @NonNull LifecycleOwner owner, @NonNull Observer<PagedList<Article>> articlesObserver, @NonNull Observer<List<String>> articleIdsObserver){
+        if(articlesLiveData != null && articlesLiveData.hasObservers()){
+            articlesLiveData.removeObservers(owner);
+            articlesLiveData = null;
+        }
+        if(articleIdsLiveData != null && articleIdsLiveData.hasObservers()){
+            articleIdsLiveData.removeObservers(owner);
+            articleIdsLiveData = null;
+        }
+
+        // setPageSize 指定每次分页加载的条目数量
+        articlesLiveData = new LivePagedListBuilder<>(CoreDB.i().articleDao().getDuplicateArticles(uid), new PagedList.Config.Builder()
+                .setInitialLoadSizeHint(20)
+                .setPageSize(20)
+                .setPrefetchDistance(20)
+                .setMaxSize(60)
+                .build()
+        ).build();
+        articleIdsLiveData = CoreDB.i().articleDao().getDuplicateArticleIds(uid);
 
         articlesLiveData.observe(owner, articlesObserver);
         articleIdsLiveData.observe(owner, articleIdsObserver);

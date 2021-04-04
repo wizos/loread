@@ -53,6 +53,7 @@ public class Tool {
         }
     }
     public static void printCallStack(Exception e) {
+        if(BuildConfig.DEBUG)return;
         XLog.e(e.getMessage());
         StackTraceElement[] stackElements = e.getStackTrace();
         for (StackTraceElement stackElement : stackElements) {

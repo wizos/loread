@@ -23,6 +23,10 @@ import me.wizos.loread.utils.Classifier;
 public class CategoryViewModel extends ViewModel {
     public LiveData<Integer> userLiveData;
     public void observeCategoriesAndFeeds(@NonNull LifecycleOwner owner, @NonNull Observer<Integer> observer){
+        if(userLiveData != null && userLiveData.hasObservers()){
+            userLiveData.removeObservers(owner);
+            userLiveData = null;
+        }
         userLiveData = CoreDB.i().userDao().observeSize();
         userLiveData.observe(owner, observer);
         XLog.i("触发重新加载【分类树】");
@@ -45,11 +49,17 @@ public class CategoryViewModel extends ViewModel {
         List<Collection> categories;
         List<CollectionFeed> feeds;
         int count = 0;
+
+        long time1 = System.currentTimeMillis();
         if( App.i().getUser().getStreamStatus() == App.STATUS_UNREAD ){
-            rootCollection.setCount(CoreDB.i().articleDao().getUnreadCount(uid));
             categories = CoreDB.i().categoryDao().getCategoriesUnreadCount(uid);
+            XLog.i("读取未读分类A，耗时：" + (System.currentTimeMillis() - time1));
+            rootCollection.setCount(CoreDB.i().articleDao().getUnreadCount(uid));
+            XLog.i("读取未读分类B，耗时：" + (System.currentTimeMillis() - time1));
             feeds = CoreDB.i().feedDao().getFeedsUnreadCount(uid);
+            XLog.i("读取未读分类C，耗时：" + (System.currentTimeMillis() - time1));
             count = CoreDB.i().articleDao().getUnreadCountUnsubscribe(uid);
+            XLog.i("读取未读分类D，耗时：" + (System.currentTimeMillis() - time1));
         }else if( App.i().getUser().getStreamStatus() == App.STATUS_STARED ){
             rootCollection.setCount(CoreDB.i().articleDao().getStarCount(uid));
             categories = CoreDB.i().categoryDao().getCategoriesStarCount(uid);
@@ -72,7 +82,9 @@ public class CategoryViewModel extends ViewModel {
             unsubscribeArticles.setParent(unsubscribeCollection);
         }
 
+        long time = System.currentTimeMillis();
         List<CollectionTree> categoryFeedsList = Classifier.group2(categories, CoreDB.i().feedCategoryDao().getAll(uid), feeds);
+        XLog.i("归类，耗时：" + (System.currentTimeMillis() - time));
 
         categoryFeedsList.add(0, rootCategoryFeeds);
 

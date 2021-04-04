@@ -30,6 +30,18 @@ public interface FeedDao {
     @Query("SELECT * FROM feed WHERE uid = :uid AND feedUrl = :feedUrl LIMIT 1")
     Feed getByFeedUrl(String uid, String feedUrl);
 
+    @Query("SELECT feed.* FROM feed " +
+            "LEFT JOIN FeedCategory ON (feed.uid = FeedCategory.uid AND feed.id = FeedCategory.feedId) " +
+            "WHERE feed.uid = :uid " +
+            "AND feedcategory.categoryId = :categoryId ")
+    List<Feed> getByCategoryId(String uid, String categoryId);
+
+    // @Query("SELECT * FROM feed " +
+    //         "WHERE feed.uid = :uid " +
+    //         "AND id IN ( SELECT feedid FROM feedcategory WHERE categoryId = :categoryId) " +
+    //         "ORDER BY CASE WHEN feed.unreadCount > 0 THEN 0 ELSE 1 END, feed.title COLLATE NOCASE ASC")
+    // List<Feed> getByCategoryId(String uid, String categoryId);
+
     @Query("SELECT * FROM feed WHERE uid = :uid AND iconUrl IS NULL AND htmlUrl IS NOT NULL")
     List<Feed> getFeedsByNoIconUrl(String uid);
 
@@ -44,32 +56,25 @@ public interface FeedDao {
             "WHERE feed.uid = :uid " +
             "AND feed.lastErrorCount < 16 " +
             "AND ( " +
-            "      (syncInterval = 0 AND (lastSyncTime + :globalSyncInterval * 60000 + lastErrorCount * lastErrorCount * lastErrorCount * 15) < :currentTimeMillis) " +
+            "      (syncInterval = 0 AND (lastSyncTime + :globalSyncInterval * 60000 + lastErrorCount * lastErrorCount * lastErrorCount * 15000) < :currentTimeMillis) " +
             "      OR " +
-            "      (syncInterval > 0 AND (lastSyncTime + syncInterval * 60000 + lastErrorCount * lastErrorCount * lastErrorCount * 15) < :currentTimeMillis) " +
+            "      (syncInterval > 0 AND (lastSyncTime + syncInterval * 60000 + lastErrorCount * lastErrorCount * lastErrorCount * 15000) < :currentTimeMillis) " +
             "    ) " +
             "ORDER BY lastSyncTime ASC")
     List<Feed> getFeedsNeedSync(String uid, int globalSyncInterval, long currentTimeMillis);
 
 
-    @Query("SELECT * FROM feed " +
+    @Query("SELECT uid,id,title,feedUrl,htmlUrl,iconUrl,syncInterval,lastSyncError,lastErrorCount,unreadCount as count FROM feed " +
             "WHERE feed.uid = :uid " +
-            "AND id IN ( SELECT feedid FROM feedcategory WHERE categoryId = :categoryId) " +
-            "ORDER BY CASE WHEN feed.unreadCount > 0 THEN 0 ELSE 1 END, feed.title COLLATE NOCASE ASC")
-    List<Feed> getByCategoryId(String uid,String categoryId);
-
-
-    @Query("SELECT uid,id,title,feedUrl,htmlUrl,iconUrl,lastSyncError,lastErrorCount,unreadCount as count FROM feed " +
-            "WHERE feed.uid = :uid " +
-            "ORDER BY CASE WHEN feed.unreadCount > 0 THEN 0 ELSE 1 END, feed.title COLLATE NOCASE ASC")
+            "ORDER BY CASE WHEN feed.unreadCount > 0 THEN 0 WHEN feed.lastErrorCount > 0 THEN 1 ELSE 2 END, feed.title COLLATE NOCASE ASC")
     List<CollectionFeed> getFeedsUnreadCount(String uid);
-    @Query("SELECT uid,id,title,feedUrl,htmlUrl,iconUrl,lastSyncError,lastErrorCount,starCount as count FROM feed " +
+    @Query("SELECT uid,id,title,feedUrl,htmlUrl,iconUrl,syncInterval,lastSyncError,lastErrorCount,starCount as count FROM feed " +
             "WHERE feed.uid = :uid " +
-            "ORDER BY CASE WHEN feed.starCount > 0 THEN 0 ELSE 1 END, feed.title COLLATE NOCASE ASC")
+            "ORDER BY CASE WHEN feed.starCount > 0 THEN 0 WHEN feed.lastErrorCount > 0 THEN 1 ELSE 2 END, feed.title COLLATE NOCASE ASC")
     List<CollectionFeed> getFeedsStaredCount(String uid);
-    @Query("SELECT uid,id,title,feedUrl,htmlUrl,iconUrl,lastSyncError,lastErrorCount,allCount as count FROM feed " +
+    @Query("SELECT uid,id,title,feedUrl,htmlUrl,iconUrl,syncInterval,lastSyncError,lastErrorCount,allCount as count FROM feed " +
             "WHERE feed.uid = :uid " +
-            "ORDER BY CASE WHEN feed.allCount > 0 THEN 0 ELSE 1 END, feed.title COLLATE NOCASE ASC")
+            "ORDER BY CASE WHEN feed.allCount > 0 THEN 0 WHEN feed.lastErrorCount > 0 THEN 1 ELSE 2 END, feed.title COLLATE NOCASE ASC")
     List<CollectionFeed> getFeedsAllCount(String uid);
 
     // @Query("SELECT uid,id,title,feedUrl,htmlUrl,iconUrl,displayMode,state,syncInterval,lastSyncTime,lastSyncError,lastErrorCount,unreadCount as count,unreadCount,starCount,allCount FROM feed " +
@@ -205,6 +210,10 @@ public interface FeedDao {
     @Query("UPDATE feed SET title = :newName where uid = :uid AND id = :id")
     void updateName(String uid, String id, String newName);
 
+    @Transaction
+    @Query("UPDATE feed SET syncInterval = -1 where uid = :uid AND lastErrorCount = 16")
+    void blockSync(String uid);
+
     @Update
     @Transaction
     void update(Feed... feeds);
@@ -215,9 +224,10 @@ public interface FeedDao {
     @Delete
     @Transaction
     void delete(Feed... feeds);
-    //@Delete
-    //@Transaction
-    //void delete(List<Feed> feeds);
+
+    @Delete
+    @Transaction
+    void delete(List<Feed> feeds);
 
     @Transaction
     @Query("DELETE FROM feed WHERE uid = (:uid) AND id = :id")

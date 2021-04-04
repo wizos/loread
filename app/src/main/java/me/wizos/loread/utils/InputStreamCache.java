@@ -47,6 +47,7 @@ public class InputStreamCache {
             byteArrayOutputStream.flush();
         } catch (IOException e) {
             XLog.e(e.getMessage());
+            e.printStackTrace();
         }
     }
 

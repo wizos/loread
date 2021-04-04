@@ -62,7 +62,7 @@ public class OPML10Parser extends BaseWireFeedParser implements WireFeedParser {
         final Element e = document.getRootElement();
 
         if (e.getName().equals("opml") && (e.getChild("head") == null || e.getChild("head").getChild("docs") == null)
-                && (e.getAttributeValue("version") == null || e.getAttributeValue("version").equals("1.0"))) {
+                && (e.getAttributeValue("version") == null || e.getAttributeValue("version").startsWith("1."))) {
             return true;
         }
 

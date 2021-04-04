@@ -5,27 +5,29 @@ import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
-import android.graphics.drawable.Drawable;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.text.InputType;
 import android.text.TextUtils;
 import android.util.ArrayMap;
 import android.view.MenuItem;
 import android.view.View;
+import android.webkit.WebSettings;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.widget.AppCompatButton;
 import androidx.appcompat.widget.Toolbar;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.afollestad.materialdialogs.DialogAction;
+import com.afollestad.materialdialogs.GravityEnum;
 import com.afollestad.materialdialogs.MaterialDialog;
+import com.afollestad.materialdialogs.Theme;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.RequestOptions;
 import com.carlt.networklibs.utils.NetworkUtils;
@@ -33,15 +35,19 @@ import com.elvishew.xlog.XLog;
 import com.google.android.material.appbar.CollapsingToolbarLayout;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.hjq.toast.ToastUtils;
+import com.jeremyliao.liveeventbus.LiveEventBus;
 import com.king.zxing.util.CodeUtils;
 import com.lxj.xpopup.XPopup;
 import com.lxj.xpopup.enums.PopupAnimation;
 import com.noober.background.BackgroundLibrary;
-import com.noober.background.drawable.DrawableCreator;
 import com.umeng.analytics.MobclickAgent;
 
+import org.jetbrains.annotations.NotNull;
+
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -54,18 +60,29 @@ import me.wizos.loread.bean.FeedEntries;
 import me.wizos.loread.bean.feedly.CategoryItem;
 import me.wizos.loread.bean.feedly.input.EditFeed;
 import me.wizos.loread.config.SaveDirectory;
+import me.wizos.loread.db.Article;
 import me.wizos.loread.db.Category;
 import me.wizos.loread.db.CoreDB;
 import me.wizos.loread.db.Feed;
 import me.wizos.loread.db.FeedCategory;
 import me.wizos.loread.db.User;
+import me.wizos.loread.network.HttpClientManager;
+import me.wizos.loread.network.SyncWorker;
+import me.wizos.loread.network.api.BaseApi;
 import me.wizos.loread.network.api.LocalApi;
 import me.wizos.loread.network.callback.CallbackX;
 import me.wizos.loread.utils.BackupUtils;
-import me.wizos.loread.utils.ScreenUtils;
+import me.wizos.loread.utils.Converter;
+import me.wizos.loread.utils.FeedParserUtils;
+import me.wizos.loread.utils.PagingUtils;
 import me.wizos.loread.utils.UriUtils;
 import me.wizos.loread.view.IconFontView;
 import me.wizos.loread.view.colorful.Colorful;
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.Request;
+import okhttp3.Response;
+import okhttp3.ResponseBody;
 
 public class FeedActivity extends BaseActivity {
     @BindView(R.id.feed_toolbar)
@@ -77,11 +94,21 @@ public class FeedActivity extends BaseActivity {
     @BindView(R.id.feed_fab)
     FloatingActionButton iconFab;
 
+    @BindView(R.id.feed_article_count)
+    TextView articleCountView;
+
     @BindView(R.id.feed_site_link)
     TextView siteLinkView;
 
     @BindView(R.id.feed_rss_link)
     TextView feedLinkView;
+
+    @BindView(R.id.feed_site_link_edit)
+    ImageView siteLinkEditButton;
+
+    @BindView(R.id.feed_rss_link_edit)
+    ImageView rssLinkEditButton;
+
 
     @BindView(R.id.feed_settings)
     LinearLayout feedSettingsLayout;
@@ -112,11 +139,16 @@ public class FeedActivity extends BaseActivity {
     @BindView(R.id.feed_sync_frequency_summary)
     TextView feedSyncFrequencyView;
 
-    // @BindView(R.id.feed_create_rule)
-    // TextView createRuleButton;
+    @BindView(R.id.feed_view_info)
+    TextView feedInfoButton;
+
+    @BindView(R.id.feed_refetch)
+    TextView refetchButton;
 
     @BindView(R.id.feed_view_rules)
     TextView viewRulesButton;
+
+
 
     Feed feed;
     String feedId;
@@ -207,15 +239,111 @@ public class FeedActivity extends BaseActivity {
         // 以下不生效
         // getSupportActionBar().setSubtitle(feed.getFeedUrl());
         // toolbar.setSubtitle(feed.getFeedUrl());
+        articleCountView.setText(getString(R.string.article_count_detail, feed.getAllCount(), feed.getUnreadCount(), feed.getStarCount()));
         siteLinkView.setText(feed.getHtmlUrl());
+        siteLinkView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                openHtmlUrl();
+            }
+        });
         feedLinkView.setText(feed.getFeedUrl());
+        feedLinkView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                openFeedUrl();
+            }
+        });
 
+        if(App.i().getApi() instanceof LocalApi){
+            siteLinkEditButton.setVisibility(View.VISIBLE);
+            rssLinkEditButton.setVisibility(View.VISIBLE);
+            refetchButton.setVisibility(View.VISIBLE);
+        }else {
+            siteLinkEditButton.setVisibility(View.GONE);
+            rssLinkEditButton.setVisibility(View.GONE);
+            refetchButton.setVisibility(View.GONE);
+        }
+
+        refetchButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(!UriUtils.isHttpOrHttpsUrl(feed.getFeedUrl())){
+                    ToastUtils.show(R.string.invalid_url_hint);
+                    return;
+                }
+                ToastUtils.show(R.string.fetching);
+                Request.Builder request = new Request.Builder().url(feed.getFeedUrl());
+                request.header(Contract.USER_AGENT, WebSettings.getDefaultUserAgent(App.i()));
+                HttpClientManager.i().searchClient().newCall(request.build()).enqueue(new Callback() {
+                    @Override
+                    public void onFailure(@NotNull Call call, @NotNull IOException e) {
+                        ToastUtils.show(getString(R.string.fetch_failed_with_reason, e.getLocalizedMessage()));
+                    }
+
+                    @Override
+                    public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
+                        if(!response.isSuccessful()){
+                            ToastUtils.show(getString(R.string.fetch_failed_with_reason, response.code() + "," + response.message()));
+                        }else {
+                            ResponseBody responseBody = response.body();
+                            if(responseBody == null){
+                                ToastUtils.show(getString(R.string.fetch_failed_with_reason, getString(R.string.return_data_exception)));
+                            }else {
+                                FeedEntries feedEntries = FeedParserUtils.parseResponseBody(FeedActivity.this, feed, responseBody, new Converter.ArticleConvertListener() {
+                                    @Override
+                                    public Article onEnd(Article article) {
+                                        article.setCrawlDate(App.i().getLastShowTimeMillis());
+                                        return article;
+                                    }
+                                });
+                                if(feedEntries == null){
+                                    ToastUtils.show(getString(R.string.fetch_failed));
+                                }else if(!feedEntries.isSuccess()){
+                                    ToastUtils.show(getString(R.string.fetch_failed_with_reason, feedEntries.getFeed().getLastSyncError()));
+                                }else {
+                                    AsyncTask.THREAD_POOL_EXECUTOR.execute(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            Map<String, Article> articleMap = feedEntries.getArticleMap();
+                                            String uid = App.i().getUser().getId();
+                                            PagingUtils.slice(new ArrayList<>(articleMap.keySet()), 50, new PagingUtils.PagingListener<String>() {
+                                                @Override
+                                                public void onPage(@NotNull List<String> childList) {
+                                                    List<String> removeIds = CoreDB.i().articleDao().getIds(uid, childList);
+                                                    if(removeIds != null){
+                                                        for (String id: removeIds){
+                                                            articleMap.remove(id);
+                                                        }
+                                                    }
+                                                }
+                                            });
+                                            ArrayList<Article> newArticles = new ArrayList<>(articleMap.values());
+                                            for (Article article: newArticles){
+                                                article.setCrawlDate(App.i().getLastShowTimeMillis());
+                                            }
+                                            CoreDB.i().articleDao().insert(newArticles);
+                                            BaseApi.updateCollectionCount();
+                                            ToastUtils.show(getString(R.string.fetch_success_with_reason, newArticles.size()));
+                                            if(newArticles.size() > 0){
+                                                LiveEventBus.get(SyncWorker.NEW_ARTICLE_NUMBER).post(newArticles.size());
+                                            }
+                                        }
+                                    });
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        });
 
         if (!TextUtils.isEmpty(feed.getTitle())) {
             feedNameView.setText(feed.getTitle());
         } else {
             feedNameView.setText(R.string.unknown);
         }
+
         feedNameLayout.setOnClickListener(v -> new MaterialDialog.Builder(FeedActivity.this)
                 .title(R.string.site_remark)
                 .inputType(InputType.TYPE_CLASS_TEXT)
@@ -321,7 +449,7 @@ public class FeedActivity extends BaseActivity {
 
 
         int displayMode = feed.getDisplayMode();
-        if( displayMode == App.OPEN_MODE_LINK){
+        if(displayMode == App.OPEN_MODE_LINK){
             feedDisplayModeView.setText(R.string.original);
         }else if( displayMode == App.OPEN_MODE_READABILITY){
             feedDisplayModeView.setText(R.string.readability);
@@ -442,6 +570,42 @@ public class FeedActivity extends BaseActivity {
                     }
                 });
             }
+
+
+            feedInfoButton.setVisibility(View.VISIBLE);
+            feedInfoButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    new MaterialDialog.Builder(FeedActivity.this)
+                            .title(R.string.article_info)
+                            .content(feed.toString())
+                            .positiveText("复制")
+                            .onPositive(new MaterialDialog.SingleButtonCallback() {
+                                @Override
+                                public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
+                                    //获取剪贴板管理器：
+                                    ClipboardManager cm = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+                                    // 创建普通字符型ClipData
+                                    ClipData mClipData = ClipData.newPlainText("ArticleContent", feed.toString());
+                                    // 将ClipData内容放到系统剪贴板里。
+                                    cm.setPrimaryClip(mClipData);
+                                    ToastUtils.show("已复制内容");
+                                }
+                            })
+
+                            .positiveColorRes(R.color.material_red_400)
+                            .titleGravity(GravityEnum.CENTER)
+                            .titleColorRes(R.color.material_red_400)
+                            .contentColorRes(android.R.color.white)
+                            .backgroundColorRes(R.color.material_blue_grey_800)
+                            .dividerColorRes(R.color.material_teal_a400)
+                            // .btnSelector(R.drawable.md_btn_selector_custom, DialogAction.POSITIVE)
+                            .positiveColor(Color.WHITE)
+                            .negativeColorAttr(android.R.attr.textColorSecondaryInverse)
+                            .theme(Theme.DARK)
+                            .show();
+                }
+            });
         }
 
 
@@ -491,7 +655,7 @@ public class FeedActivity extends BaseActivity {
     }
 
     public void openIconUrl(@Nullable View view) {
-        if(feed == null || TextUtils.isEmpty(feed.getIconUrl())){
+        if(feed == null || TextUtils.isEmpty(feed.getIconUrl()) || !BuildConfig.DEBUG){
             return;
         }
         Intent intent = new Intent(FeedActivity.this, WebActivity.class);
@@ -500,7 +664,7 @@ public class FeedActivity extends BaseActivity {
         overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
     }
 
-    public void openHtmlUrl(@Nullable View view) {
+    public void openHtmlUrl() {
         if(feed == null || TextUtils.isEmpty(feed.getHtmlUrl())){
             return;
         }
@@ -508,6 +672,30 @@ public class FeedActivity extends BaseActivity {
         intent.setData(Uri.parse(feed.getHtmlUrl()));
         startActivity(intent);
         overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
+    }
+    public void editHtmlUrl(@Nullable View view) {
+        if (feed==null || TextUtils.isEmpty(feed.getHtmlUrl())) {
+            return;
+        }
+        new MaterialDialog.Builder(this)
+                .title(R.string.edit)
+                .inputType(InputType.TYPE_TEXT_VARIATION_URI)
+                .inputRange(12, 240)
+                .input("", feed.getHtmlUrl(), new MaterialDialog.InputCallback() {
+                    @Override
+                    public void onInput(@NonNull MaterialDialog dialog, CharSequence input) {
+                        if(UriUtils.isHttpOrHttpsUrl(input.toString())){
+                            feed.setHtmlUrl(input.toString());
+                            CoreDB.i().feedDao().update(feed);
+                            ToastUtils.show(R.string.success);
+                        }else {
+                            ToastUtils.show(R.string.invalid_url_hint);
+                        }
+                    }
+                })
+                .negativeText(android.R.string.cancel)
+                .positiveText(R.string.confirm)
+                .show();
     }
     public void copyHtmlUrl(@Nullable View view) {
         if (feed == null || TextUtils.isEmpty(feed.getHtmlUrl())) {
@@ -524,7 +712,7 @@ public class FeedActivity extends BaseActivity {
         cm.setPrimaryClip(mClipData);
         ToastUtils.show(R.string.copy_success);
     }
-    public void openFeedUrl(@Nullable View view) {
+    public void openFeedUrl() {
         if(feed == null || TextUtils.isEmpty(feed.getFeedUrl())){
             return;
         }
@@ -533,6 +721,32 @@ public class FeedActivity extends BaseActivity {
         startActivity(intent);
         overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
     }
+
+    public void editFeedUrl(@Nullable View view) {
+        if (feed==null || TextUtils.isEmpty(feed.getFeedUrl())) {
+            return;
+        }
+        new MaterialDialog.Builder(this)
+                .title(R.string.edit)
+                .inputType(InputType.TYPE_TEXT_VARIATION_URI)
+                .inputRange(12, 240)
+                .input("", feed.getFeedUrl(), new MaterialDialog.InputCallback() {
+                    @Override
+                    public void onInput(@NonNull MaterialDialog dialog, CharSequence input) {
+                        if(UriUtils.isHttpOrHttpsUrl(input.toString())){
+                            feed.setFeedUrl(input.toString());
+                            CoreDB.i().feedDao().update(feed);
+                            ToastUtils.show(R.string.success);
+                        }else {
+                            ToastUtils.show(R.string.invalid_url_hint);
+                        }
+                    }
+                })
+                .negativeText(android.R.string.cancel)
+                .positiveText(R.string.confirm)
+                .show();
+    }
+
     public void copyFeedUrl(@Nullable View view) {
         if (feed==null || TextUtils.isEmpty(feed.getFeedUrl())) {
             return;
@@ -617,50 +831,50 @@ public class FeedActivity extends BaseActivity {
         if (feed == null) {
             return;
         }
-        if (CoreDB.i().feedDao().getById(App.i().getUser().getId(), feed.getId()) == null) {
-            showSelectFolder(view, feed);
-        } else {
-            new MaterialDialog.Builder(this)
-                    .title(R.string.warning)
-                    .content(R.string.are_you_sure_that_unsubscribe_this_feed_link)
-                    .positiveText(R.string.confirm)
-                    .negativeText(R.string.cancel)
-                    .positiveColor(Color.RED)
-                    .onPositive(new MaterialDialog.SingleButtonCallback() {
-                        @Override
-                        public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
-                            App.i().getApi().unsubscribeFeed(feed.getId(), new CallbackX() {
-                                @Override
-                                public void onSuccess(Object result) {
-                                    XLog.e("退订成功");
-                                    ToastUtils.show(getString(R.string.unsubscribe_succeeded));
-                                    ((AppCompatButton) view).setText(R.string.subscribe);
-                                    Drawable drawable = new DrawableCreator.Builder()
-                                            .setRipple(true, getResources().getColor(R.color.primary))
-                                            .setPressedSolidColor(getResources().getColor(R.color.primary), getResources().getColor(R.color.bluePrimary))
-                                            .setSolidColor(getResources().getColor(R.color.bluePrimary))
-                                            .setCornersRadius(ScreenUtils.dp2px(30))
-                                            .build();
-                                    view.setBackground(drawable);
+        // if (CoreDB.i().feedDao().getById(App.i().getUser().getId(), feed.getId()) == null) {
+        //     showSelectFolder(view, feed);
+        // } else {
+        //
+        // }
+        new MaterialDialog.Builder(this)
+                .title(R.string.warning)
+                .content(R.string.are_you_sure_that_unsubscribe_this_feed_link)
+                .positiveText(R.string.confirm)
+                .negativeText(R.string.cancel)
+                .positiveColor(Color.RED)
+                .onPositive((dialog, which) -> App.i().getApi().unsubscribeFeed(feed.getId(), new CallbackX() {
+                    @Override
+                    public void onSuccess(Object result) {
+                        // ((AppCompatButton) view).setText(R.string.subscribe);
+                        // Drawable drawable = new DrawableCreator.Builder()
+                        //         .setRipple(true, getResources().getColor(R.color.primary))
+                        //         .setPressedSolidColor(getResources().getColor(R.color.primary), getResources().getColor(R.color.bluePrimary))
+                        //         .setSolidColor(getResources().getColor(R.color.bluePrimary))
+                        //         .setCornersRadius(ScreenUtils.dp2px(30))
+                        //         .build();
+                        // view.setBackground(drawable);
 
-                                    List<Feed> feeds = new ArrayList<>();
-                                    feeds.add(feed);
-                                    BackupUtils.exportUserUnsubscribeOPML(App.i().getUser(), feeds);
-                                    CoreDB.i().feedCategoryDao().deleteByFeedId(feed.getUid(), feed.getId());
-                                    CoreDB.i().articleDao().deleteUnStarByFeedId(feed.getUid(), feed.getId());
-                                    CoreDB.i().deleteFeed(feed);
-                                }
+                        AsyncTask.THREAD_POOL_EXECUTOR.execute(new Runnable() {
+                            @Override
+                            public void run() {
+                                long time = System.currentTimeMillis();
+                                BackupUtils.exportUserUnsubscribeOPML(App.i().getUser(), feed);
+                                CoreDB.i().feedCategoryDao().deleteByFeedId(feed.getUid(), feed.getId());
+                                CoreDB.i().articleDao().deleteUnStarByFeedId(feed.getUid(), feed.getId());
+                                CoreDB.i().deleteFeed(feed);
+                                // CoreDB.i().articleDao().deleteUnsubscribeUnStar(feed.getUid());
+                                ToastUtils.show(getString(R.string.unsubscribe_succeeded));
+                                XLog.i("退订成功，数据库耗时：" + (System.currentTimeMillis() - time) );
+                            }
+                        });
+                    }
 
-                                @Override
-                                public void onFailure(Object error) {
-                                    XLog.e("失败：" + error);
-                                    ToastUtils.show(getString(R.string.unsubscribe_failed, error));
-                                }
-                            });
-
-                        }
-                    }).build().show();
-        }
+                    @Override
+                    public void onFailure(Object error) {
+                        XLog.e("失败：" + error);
+                        ToastUtils.show(getString(R.string.unsubscribe_failed, error));
+                    }
+                })).build().show();
     }
 
 

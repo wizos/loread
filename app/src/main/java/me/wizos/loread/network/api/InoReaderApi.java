@@ -294,7 +294,7 @@ public class InoReaderApi extends OAuthApi implements ILogin {
 
     @Override
     public void sync() {
-        long startSyncTimeMillis = System.currentTimeMillis();
+        long startSyncTimeMillis = App.i().getLastShowTimeMillis();
         String uid = App.i().getUser().getId();
         try {
             XLog.i("3 - 同步订阅源信息");
@@ -363,7 +363,7 @@ public class InoReaderApi extends OAuthApi implements ILogin {
             fetchArticle(allSize, 0, new ArrayList<>(refsList.get(0)), new Converter.ArticleConvertListener() {
                 @Override
                 public Article onEnd(Article article) {
-                    article.setCrawlDate(System.currentTimeMillis());
+                    article.setCrawlDate(App.i().getLastShowTimeMillis());
                     article.setReadStatus(App.STATUS_UNREAD);
                     article.setStarStatus(App.STATUS_UNSTAR);
                     article.setUid(uid);
@@ -374,7 +374,7 @@ public class InoReaderApi extends OAuthApi implements ILogin {
             fetchArticle(allSize, refsList.get(0).size(), new ArrayList<>(refsList.get(1)), new Converter.ArticleConvertListener() {
                 @Override
                 public Article onEnd(Article article) {
-                    article.setCrawlDate(System.currentTimeMillis());
+                    article.setCrawlDate(App.i().getLastShowTimeMillis());
                     article.setReadStatus(App.STATUS_READED);
                     article.setStarStatus(App.STATUS_STARED);
                     article.setUid(uid);
@@ -386,7 +386,7 @@ public class InoReaderApi extends OAuthApi implements ILogin {
             fetchArticle(allSize, refsList.get(0).size() + refsList.get(1).size(), new ArrayList<>(refsList.get(2)), new Converter.ArticleConvertListener() {
                 @Override
                 public Article onEnd(Article article) {
-                    article.setCrawlDate(System.currentTimeMillis());
+                    article.setCrawlDate(App.i().getLastShowTimeMillis());
                     article.setReadStatus(App.STATUS_UNSTAR);
                     article.setStarStatus(App.STATUS_STARED);
                     article.setUid(uid);
@@ -422,7 +422,7 @@ public class InoReaderApi extends OAuthApi implements ILogin {
 
         handleDuplicateArticles(startSyncTimeMillis);
         updateCollectionCount();
-        handleCrawlDate2();
+        handleArticleInfo();
         LiveEventBus.get(SyncWorker.SYNC_PROCESS_FOR_SUBTITLE).post( null );
     }
 
@@ -453,10 +453,10 @@ public class InoReaderApi extends OAuthApi implements ILogin {
         //     needFetchCount = subIds.size() - hadFetchCount;
         // }
 
-        PagingUtils.processing(subIds, 20, new PagingUtils.PagingListener<String>() {
+        PagingUtils.slice(subIds, 20, new PagingUtils.PagingListener<String>() {
             int sync = syncedSize;
             @Override
-            public void onPage(List<String> childList) {
+            public void onPage(@NotNull List<String> childList) {
                 try{
                     List<Item> items = service.getItemContents(getAuthorization(), genRequestBody(childList)).execute().body().getItems();
                     List<Article> tempArticleList = new ArrayList<>(childList.size());

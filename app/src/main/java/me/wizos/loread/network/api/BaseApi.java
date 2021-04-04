@@ -35,6 +35,7 @@ import me.wizos.loread.db.CoreDB;
 import me.wizos.loread.db.Feed;
 import me.wizos.loread.db.FeedCategory;
 import me.wizos.loread.extractor.Distill;
+import me.wizos.loread.extractor.ExtractPage;
 import me.wizos.loread.network.HttpClientManager;
 import me.wizos.loread.network.callback.CallbackX;
 import me.wizos.loread.utils.ArticleUtils;
@@ -227,17 +228,17 @@ public abstract class BaseApi {
             }
         }
 
-        PagingUtils.processing(needMarkUnReadIds, 100, new PagingUtils.PagingListener<String>() {
+        PagingUtils.slice(needMarkUnReadIds, 100, new PagingUtils.PagingListener<String>() {
             @Override
-            public void onPage(List<String> childList) {
+            public void onPage(@NotNull List<String> childList) {
                 CoreDB.i().articleDao().markArticlesUnread(uid, childList);
                 // XLog.i("处理当前页：" + childList);
             }
         });
 
-        PagingUtils.processing(needMarkReadIds, 100, new PagingUtils.PagingListener<String>() {
+        PagingUtils.slice(needMarkReadIds, 100, new PagingUtils.PagingListener<String>() {
             @Override
-            public void onPage(List<String> childList) {
+            public void onPage(@NotNull List<String> childList) {
                 CoreDB.i().articleDao().markArticlesRead(uid, childList);
                 // XLog.i("处理当前页：" + childList);
             }
@@ -281,8 +282,8 @@ public abstract class BaseApi {
             }
         }
 
-        PagingUtils.processing(needMarkStarIds, 100, childList -> CoreDB.i().articleDao().markArticlesStar(uid, childList));
-        PagingUtils.processing(needMarkUnStarIds, 100, childList -> CoreDB.i().articleDao().markArticlesUnStar(uid, childList));
+        PagingUtils.slice(needMarkStarIds, 100, childList -> CoreDB.i().articleDao().markArticlesStar(uid, childList));
+        PagingUtils.slice(needMarkUnStarIds, 100, childList -> CoreDB.i().articleDao().markArticlesUnStar(uid, childList));
 
         XLog.d("处理加星资源：" + ids.size() + "，需要拉取数量：" + needRequestIds.size() + "，需要标记加星：" + needMarkStarIds.size() + "，需要标记无星：" + needMarkUnStarIds.size());
         return needRequestIds;
@@ -311,27 +312,44 @@ public abstract class BaseApi {
                 article.setPubDate(articleSample.getPubDate());
                 articles.add(article);
             }
-            XLog.w("需要更新的文章数量A：" + articles);
+            // XLog.w("需要更新的文章数量A：" + articles);
             CoreDB.i().articleDao().update(articles);
         }
     }
 
     // 优化在使用状态下多次同步到新文章时，这些文章的爬取时间
-    void handleCrawlDate2() {
-        String uid = App.i().getUser().getId();
-        long lastReadMarkTimeMillis = CoreDB.i().articleDao().getLastReadTimeMillis(uid);
-        long lastStarMaskTimeMillis = CoreDB.i().articleDao().getLastStarTimeMillis(uid);
+    void handleArticleInfo() {
+        AsyncTask.THREAD_POOL_EXECUTOR.execute(new Runnable() {
+            @Override
+            public void run() {
+                String uid = App.i().getUser().getId();
+                // 兜底策略：删掉所有未订阅、无星标的文章
+                CoreDB.i().articleDao().deleteUnsubscribeUnStar(uid);
+                // 兜底策略
+                CoreDB.i().feedCategoryDao().deleteByCategoryId(uid);
+                CoreDB.i().feedCategoryDao().deleteByFeedId(uid);
 
-        long lastMarkTimeMillis = Math.max(lastReadMarkTimeMillis, lastStarMaskTimeMillis);
-        lastMarkTimeMillis = Math.max(lastMarkTimeMillis, App.i().getLastShowTimeMillis());
-        // long lastCrawTimeMillis = CoreDB.i().articleDao().getLastCrawlTimeMillis(uid);
-        CoreDB.i().articleDao().updateIdleCrawlDateTimes(uid, lastMarkTimeMillis);
+                long lastMarkTimeMillis = App.i().getLastShowTimeMillis();
+                CoreDB.i().articleDao().updateIdleCrawlDate(uid, lastMarkTimeMillis, lastMarkTimeMillis);
+                CoreDB.i().articleDao().updateFeedUrl(uid);
+                CoreDB.i().articleDao().updateFeedTitle(uid);
+                CoreDB.i().feedDao().blockSync(uid);
+            }
+        });
     }
 
-    void updateCollectionCount() {
-        String uid = App.i().getUser().getId();
-        CoreDB.i().feedDao().update(CoreDB.i().feedDao().getFeedsRealTimeCount(uid));
-        CoreDB.i().categoryDao().update(CoreDB.i().categoryDao().getCategoriesRealTimeCount(uid));
+    public static void updateCollectionCount() {
+        AsyncTask.THREAD_POOL_EXECUTOR.execute(new Runnable() {
+            @Override
+            public void run() {
+                long time1 = System.currentTimeMillis();
+                String uid = App.i().getUser().getId();
+                CoreDB.i().feedDao().update(CoreDB.i().feedDao().getFeedsRealTimeCount(uid));
+                CoreDB.i().categoryDao().update(CoreDB.i().categoryDao().getCategoriesRealTimeCount(uid));
+                long time2 = System.currentTimeMillis();
+                XLog.i("重置计数耗时：" + (time2 - time1));
+            }
+        });
     }
 
 
@@ -366,7 +384,7 @@ public abstract class BaseApi {
         }
         // XLog.d("清除：" + time + "--" + expiredArticles);
         FileUtils.deleteHtmlDirList(idListMD5);
-        PagingUtils.processing(expiredArticles, 100, childList -> CoreDB.i().articleDao().delete(uid, childList));
+        PagingUtils.slice(expiredArticles, 100, childList -> CoreDB.i().articleDao().delete(uid, childList));
     }
 
     void fetchReadability(String uid, long syncTimeMillis) {
@@ -390,10 +408,11 @@ public abstract class BaseApi {
                 url = article.getLink();
             }
 
+            String finalUrl = url;
             Distill distill = new Distill(url, article.getLink(), keyword, new Distill.Listener() {
                 @Override
-                public void onResponse(String content) {
-                    article.updateContent(content);
+                public void onResponse(ExtractPage page) {
+                    article.updateContent(ArticleUtils.getOptimizedContent(finalUrl, page.getContent()));
                     CoreDB.i().articleDao().update(article);
                 }
 
@@ -410,6 +429,9 @@ public abstract class BaseApi {
         List<Feed> feeds = CoreDB.i().feedDao().getFeedsByNoIconUrl(uid);
         for(Feed feed: feeds){
             // XLog.i("需要抓取 Icon 的 Feed：" + feed.getTitle() + " => " + feed.getFeedUrl());
+            if(!UriUtils.isHttpOrHttpsUrl(feed.getHtmlUrl())){
+                continue;
+            }
             Request request = new Request.Builder().url(feed.getHtmlUrl()).build();
             Call call = HttpClientManager.i().simpleClient().newCall(request);
             call.enqueue(new Callback() {
@@ -420,10 +442,12 @@ public abstract class BaseApi {
                 @Override
                 public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
                     if(!response.isSuccessful()){
+                        response.close();
                         return;
                     }
                     ResponseBody responseBody = response.body();
                     if(responseBody == null){
+                        response.close();
                         return;
                     }
                     Document document = Jsoup.parse(responseBody.string(), feed.getHtmlUrl());
@@ -437,6 +461,7 @@ public abstract class BaseApi {
 
                     if(iconEle !=null){
                         feed.setIconUrl(iconEle.attr("abs:href"));
+                        CoreDB.i().feedDao().update(feed);
                     }else {
                         AsyncTask.THREAD_POOL_EXECUTOR.execute(new Runnable() {
                             @Override
@@ -447,9 +472,9 @@ public abstract class BaseApi {
                                 }
                             }
                         });
-
                     }
-                    CoreDB.i().feedDao().update(feed);
+                    // CoreDB.i().feedDao().update(feed);
+                    response.close();
                 }
             });
         }

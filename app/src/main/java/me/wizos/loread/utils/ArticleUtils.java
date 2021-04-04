@@ -306,6 +306,9 @@ public class ArticleUtils {
         if (StringUtils.isEmpty(content)) {
             return "";
         }
+        if(articleUrl == null){
+            articleUrl = "";
+        }
         Pattern pattern;
         Matcher matcher;
 
@@ -314,7 +317,12 @@ public class ArticleUtils {
 
         Element element;
         Elements elements;
-        Document document = Jsoup.parseBodyFragment(content, articleUrl);
+        Document document;
+        if(StringUtils.isEmpty(articleUrl)){
+            document = Jsoup.parseBodyFragment(content);
+        }else {
+            document = Jsoup.parseBodyFragment(content, articleUrl);
+        }
         document.outputSettings().prettyPrint(false);
         Element documentBody = document.body();
 
@@ -772,8 +780,13 @@ public class ArticleUtils {
         String originalUrl;
         String imgHolder = "file:///android_asset/image/image_holder.png";
 
+        Document document;
         Element element;
-        Document document = Jsoup.parseBodyFragment(article.getContent(), article.getLink());
+        if(StringUtils.isEmpty(article.getLink())){
+            document = Jsoup.parseBodyFragment(article.getContent());
+        }else {
+            document = Jsoup.parseBodyFragment(article.getContent(), article.getLink());
+        }
         document.outputSettings().prettyPrint(false);
         document = ColorModifier.i().modifyDocColor(document);
 
@@ -883,8 +896,13 @@ public class ArticleUtils {
         return document.body().html().trim();
     }
     public static String getCoverUrl(String articleUrl, String content) {
-        // 获取第1个图片作为封面
-        Document document = Jsoup.parseBodyFragment(content,articleUrl);
+        // 获取第1个图片作为封面;
+        Document document;
+        if(StringUtils.isEmpty(articleUrl)){
+            document = Jsoup.parseBodyFragment(content);
+        }else {
+            document = Jsoup.parseBodyFragment(content, articleUrl);
+        }
         document.outputSettings().prettyPrint(false);
         Elements elements = document.getElementsByTag("img");
         String coverUrl = "";

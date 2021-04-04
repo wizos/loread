@@ -122,7 +122,7 @@
                 android:layout_gravity="center_vertical"
                 android:layout_height="50dp"
                 style="@style/SettingItem"
-                android:text="更新退订文章的空FeedUrl"/>
+                android:text="更新退订文章的 Feed 信息"/>
 
             <Space
                 android:layout_width="match_parent"
@@ -165,7 +165,14 @@
                 android:gravity="center_vertical"
                 android:layout_gravity="center_vertical"
                 android:text="关闭 同步任务"/>
-
+            <Button
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                style="@style/SettingItem"
+                android:onClick="switchDoraemonKit"
+                android:gravity="center_vertical"
+                android:layout_gravity="center_vertical"
+                android:text="显示滴滴工具"/>
 
             <Space
                 android:layout_width="match_parent"

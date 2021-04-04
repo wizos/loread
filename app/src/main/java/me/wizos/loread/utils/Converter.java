@@ -14,6 +14,8 @@ import com.rometools.rome.feed.synd.SyndEntry;
 import com.rometools.rome.feed.synd.SyndFeed;
 import com.rometools.rome.feed.synd.SyndLink;
 
+import java.io.IOException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -130,7 +132,6 @@ public class Converter {
 
         article.setLink(item.getUrl());
         article.setFeedId(String.valueOf(item.getFeedId()));
-        // article.setFeedTitle(feedTitle);
 
         article.setContent(ArticleUtils.getOptimizedContent(item.getUrl(), item.getHtml()));
 
@@ -205,25 +206,36 @@ public class Converter {
     /**
      * 将 SyndEntry 的文章转为本地文章格式
      */
-    public static Article from(String uid, String feedId, String feedTitle, SyndEntry item){
+    public static Article from(Feed feed, SyndEntry item, ArticleConvertListener convertListener){
         Article article = new Article();
 
-        article.setUid(uid);
+        article.setUid(feed.getUid());
         article.setAuthor(item.getAuthor());
         if(item.getPublishedDate() != null){
             article.setPubDate(item.getPublishedDate().getTime());
-        }else {
-            article.setPubDate(System.currentTimeMillis());
+        }else if(item.getUpdatedDate() != null){
+            article.setPubDate(item.getUpdatedDate().getTime());
         }
 
-        article.setLink(item.getLink());
-        article.setFeedId(feedId);
-        article.setFeedTitle(feedTitle);
+        if(!UriUtils.isHttpOrHttpsUrl(item.getLink())){
+            try {
+                URL absolutePath = new URL(new URL(feed.getFeedUrl()), item.getLink() );
+                article.setLink(absolutePath.toString());
+            }catch (IOException e){
+                article.setLink(item.getLink());
+            }
+        }else {
+            article.setLink(item.getLink());
+        }
+
+        article.setFeedId(feed.getId());
+        article.setFeedUrl(feed.getFeedUrl());
+        article.setFeedTitle(feed.getTitle());
 
         if(item.getContents() != null && item.getContents().size() > 0 && !StringUtils.isEmpty(item.getContents().get(0).getValue())){
-            article.setContent(ArticleUtils.getOptimizedContent(item.getLink(), item.getContents().get(0).getValue()));
+            article.setContent(ArticleUtils.getOptimizedContent(article.getLink(), item.getContents().get(0).getValue()));
         }else if(item.getDescription() != null && !StringUtils.isEmpty(item.getDescription().getValue())){
-            article.setContent(ArticleUtils.getOptimizedContent(item.getLink(), item.getDescription().getValue()));
+            article.setContent(ArticleUtils.getOptimizedContent(article.getLink(), item.getDescription().getValue()));
         }
 
         List<Enclosure> enclosures = new ArrayList<>();
@@ -250,6 +262,10 @@ public class Converter {
         article.setSaveStatus(App.STATUS_NOT_FILED);
         article.setReadStatus(App.STATUS_UNREAD);
         article.setStarStatus(App.STATUS_UNSTAR);
+
+        if (convertListener != null) {
+            convertListener.onEnd(article);
+        }
         return article;
     }
 
@@ -265,7 +281,7 @@ public class Converter {
     /**
      * 将 JsonFeed 的文章转为本地文章格式
      */
-    public static Article from(String uid, String feedId, String feedTitle, JsonItem item){
+    public static Article from(String uid, String feedId, String feedTitle, JsonItem item, ArticleConvertListener convertListener){
         Article article = new Article();
 
         article.setUid(uid);
@@ -308,6 +324,9 @@ public class Converter {
         article.setSaveStatus(App.STATUS_NOT_FILED);
         article.setReadStatus(App.STATUS_UNREAD);
         article.setStarStatus(App.STATUS_UNSTAR);
+        if (convertListener != null) {
+            convertListener.onEnd(article);
+        }
         return article;
     }
 
@@ -361,7 +380,9 @@ public class Converter {
     }
 
     public static Feed updateFrom(Feed localFeed, SyndFeed remoteFeed){
-        // localFeed.setTitle(remoteFeed.getTitle());
+        if(StringUtils.isEmpty(localFeed.getTitle())){
+            localFeed.setTitle(remoteFeed.getTitle());
+        }
         if(!StringUtils.isEmpty(remoteFeed.getLink())){
             localFeed.setHtmlUrl(remoteFeed.getLink());
         }else if(null != remoteFeed.getLinks() && remoteFeed.getLinks().size() > 0){
@@ -382,7 +403,9 @@ public class Converter {
     public static Feed updateFrom(Feed localFeed, JsonFeed remoteFeed){
         // localFeed.setTitle(remoteFeed.getTitle());
         localFeed.setFeedUrl(remoteFeed.getFeedUrl());
-        localFeed.setHtmlUrl(remoteFeed.getHomePageUrl());
+        if(!StringUtils.isEmpty(remoteFeed.getHomePageUrl()) && UriUtils.isHttpOrHttpsUrl(remoteFeed.getHomePageUrl())){
+            localFeed.setHtmlUrl(remoteFeed.getHomePageUrl());
+        }
         if (null != remoteFeed.getIcon() && !remoteFeed.getIcon().startsWith("data:") ){
             localFeed.setIconUrl(remoteFeed.getIcon());
         }

@@ -25,6 +25,7 @@ import com.afollestad.materialdialogs.DialogAction;
 import com.afollestad.materialdialogs.GravityEnum;
 import com.afollestad.materialdialogs.MaterialDialog;
 import com.afollestad.materialdialogs.Theme;
+import com.didichuxing.doraemonkit.DoraemonKit;
 import com.elvishew.xlog.XLog;
 import com.hjq.toast.ToastUtils;
 
@@ -55,9 +56,11 @@ import me.wizos.loread.db.FeedCategory;
 import me.wizos.loread.db.Tag;
 import me.wizos.loread.db.User;
 import me.wizos.loread.extractor.Distill;
+import me.wizos.loread.extractor.ExtractPage;
 import me.wizos.loread.network.SyncWorker;
 import me.wizos.loread.network.api.FeverApi;
 import me.wizos.loread.network.api.TinyRSSApi;
+import me.wizos.loread.utils.ArticleUtils;
 import me.wizos.loread.utils.BackupUtils;
 import me.wizos.loread.utils.EncryptUtils;
 import me.wizos.loread.utils.FileUtils;
@@ -186,6 +189,13 @@ public class LabActivity extends AppCompatActivity {
         WorkManager.getInstance(this).cancelAllWorkByTag(SyncWorker.TAG);
     }
 
+    public void switchDoraemonKit(View view){
+        if(DoraemonKit.isShow()){
+            DoraemonKit.hide();
+        }else {
+            DoraemonKit.show();
+        }
+    }
     public void openLink(View view){
         EditText editText = findViewById(R.id.lab_enter_edittext);
         String url = editText.getText().toString();
@@ -356,20 +366,21 @@ public class LabActivity extends AppCompatActivity {
         if(StringUtils.isEmpty(url)){
             url = oldUrl;
         }
+        String finalUrl = url;
         new Distill(url, oldUrl, "", new Distill.Listener() {
             @Override
-            public void onResponse(String content) {
+            public void onResponse(ExtractPage page) {
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
                         new MaterialDialog.Builder(LabActivity.this)
                                 .title(R.string.article_info)
-                                .content(Html.fromHtml(content))
+                                .content(Html.fromHtml(ArticleUtils.getOptimizedContent(finalUrl, page.getContent())))
                                 .positiveText("显示源代码")
                                 .onPositive(new MaterialDialog.SingleButtonCallback() {
                                     @Override
                                     public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
-                                        dialog.setContent(content);
+                                        dialog.setContent( page.getContent());
                                     }
                                 })
 
@@ -392,7 +403,7 @@ public class LabActivity extends AppCompatActivity {
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        ToastUtils.show(getString(R.string.get_readability_failure, msg));
+                        ToastUtils.show(getString(R.string.get_readability_failure_with_reason, msg));
                     }
                 });
             }
@@ -637,45 +648,8 @@ public class LabActivity extends AppCompatActivity {
 
                     Feed feed = feeds.get(0);
                     article.setFeedId(feed.getId());
-                }
-                CoreDB.i().articleDao().insert(articles);
-                ToastUtils.show("处理完成");
-            }
-        });
-    }
-
-    public void trimArticlesNullInfo(View view){
-        User user = App.i().getUser();
-        if(user==null){
-            ToastUtils.show("当前用户不存在");
-            return;
-        }
-
-        AsyncTask.THREAD_POOL_EXECUTOR.execute(new Runnable() {
-            @Override
-            public void run() {
-                List<Article> articles = CoreDB.i().articleDao().getUnsubscribed(user.getId());
-                for (Article article: articles){
-                    Uri uri = Uri.parse(article.getLink());
-                    String host = uri.getHost();
-                    if(StringUtils.isEmpty(host)){
-                        continue;
-                    }
-                    List<Feed> feeds = CoreDB.i().feedDao().getAllByFeedUrlLike(user.getId(), "%" + host + "%");
-                    if(feeds == null || feeds.size() != 1){
-                        feeds = CoreDB.i().feedDao().getAllByTitleLike(user.getId(), "%" + article.getFeedTitle() + "%");
-                    }
-
-                    if(feeds == null || feeds.size() != 1){
-                        feeds = CoreDB.i().feedDao().getAllByTitleLike(user.getId(), "%" + article.getAuthor() + "%");
-                    }
-
-                    if(feeds == null || feeds.size() != 1){
-                        continue;
-                    }
-
-                    Feed feed = feeds.get(0);
-                    article.setFeedId(feed.getId());
+                    article.setFeedUrl(feed.getFeedUrl());
+                    article.setFeedTitle(feed.getTitle());
                 }
                 CoreDB.i().articleDao().insert(articles);
                 ToastUtils.show("处理完成");

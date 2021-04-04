@@ -20,7 +20,7 @@ import java.lang.ref.WeakReference;
 /**
  * Created by Wizos on 2018/12/22.
  */
-public class ImageUtils {
+public class ImgUtils {
     public interface OnMergeListener {
         /**
          * Fired when a compression returns successfully, override to handle in your own code
@@ -161,47 +161,6 @@ public class ImageUtils {
         }
     }
 
-    // /**
-    //  * 常见的图片格式以及SVG
-    //  * 图片返回true
-    //  * svg返回false
-    //  * 都不是则返回null
-    //  */
-    // public static Boolean isImgOrSvg(File file) {
-    //     try {
-    //         FileInputStream is = new FileInputStream(file);
-    //         byte[] src = new byte[28];
-    //         is.read(src, 0, 28);
-    //         StringBuilder stringBuilder = new StringBuilder("");
-    //         for (byte b : src) {
-    //             int v = b & 0xFF;
-    //             String hv = Integer.toHexString(v).toUpperCase();
-    //             if (hv.length() < 2) {
-    //                 stringBuilder.append(0);
-    //             }
-    //             stringBuilder.append(hv);
-    //         }
-    //         String fileHeader = stringBuilder.toString();
-    //
-    //         FileTypeIMG[] imgTypes = FileTypeIMG.values();
-    //         for (FileTypeIMG imgType : imgTypes) {
-    //             if (fileHeader.startsWith(imgType.getValue())) {
-    //                 return true;
-    //             }
-    //         }
-    //         FileTypeSVG[] svgTypes = FileTypeSVG.values();
-    //         for (FileTypeSVG svgType : svgTypes) {
-    //             if (fileHeader.startsWith(svgType.getValue())) {
-    //                 return false;
-    //             }
-    //         }
-    //         return null;
-    //     }catch (IOException e){
-    //         return null;
-    //     }
-    // }
-
-
     public static ImgFileType getImgType(File file) {
         try {
             FileInputStream is = new FileInputStream(file);
@@ -229,35 +188,4 @@ public class ImageUtils {
             return null;
         }
     }
-
-
-    // /**
-    //  * 常见的图片格式以及SVG
-    //  */
-    // public static boolean isImgOrSvg3(File file) {
-    //     try {
-    //         FileInputStream is = new FileInputStream(file);
-    //         byte[] src = new byte[28];
-    //         is.read(src, 0, 28);
-    //         StringBuilder stringBuilder = new StringBuilder("");
-    //         for (byte b : src) {
-    //             int v = b & 0xFF;
-    //             String hv = Integer.toHexString(v).toUpperCase();
-    //             if (hv.length() < 2) {
-    //                 stringBuilder.append(0);
-    //             }
-    //             stringBuilder.append(hv);
-    //         }
-    //         ImgFileType[] fileTypes = ImgFileType.values();
-    //         for (ImgFileType fileType : fileTypes) {
-    //             if (stringBuilder.toString().startsWith(fileType.getValue())) {
-    //                 return true;
-    //             }
-    //         }
-    //     }catch (IOException e){
-    //         return false;
-    //     }
-    //     return false;
-    // }
-
 }

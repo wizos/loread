@@ -243,7 +243,7 @@ public class SearchActivity extends BaseActivity {
 
                 @Override
                 public void onFailure(@NotNull Call<RSSFinderResponse> call, @NotNull Throwable t) {
-                    XLog.i("RSS Finder 失败：" + call.isCanceled() + t);
+                    XLog.i("RSS Finder 失败：" + call.isCanceled()+ " ， " + t);
                     failureUpdateResults();
                 }
             });
@@ -321,7 +321,7 @@ public class SearchActivity extends BaseActivity {
 
     private void successUpdateResults(FeedEntries feedEntries){
         callCount++;
-        if( callCount == CALL_SIZE){
+        if(callCount == CALL_SIZE){
             swipeRefreshLayoutS.post(() -> swipeRefreshLayoutS.setRefreshing(false));
         }
         XLog.d("successUpdateResults: " + callCount);
@@ -339,6 +339,9 @@ public class SearchActivity extends BaseActivity {
     }
 
     private void checkRSSURL(String url){
+        // Request.Builder request = new Request.Builder().url(url).tag(TAG);
+        // request.header(Contract.USER_AGENT, WebSettings.getDefaultUserAgent(App.i()));
+        // HttpClientManager.i().searchClient().newCall(request.build()).enqueue();
         HttpCall.i().get(url, new okhttp3.Callback() {
             @Override
             public void onFailure(@NotNull okhttp3.Call call, @NotNull IOException e) {
@@ -356,7 +359,13 @@ public class SearchActivity extends BaseActivity {
                 feed.setUid(App.i().getUser().getId());
                 feed.setId(EncryptUtils.MD5(url));
                 feed.setFeedUrl(url);
-                FeedEntries feedEntries = FeedParserUtils.parseResponseBody(SearchActivity.this, feed, response);
+                FeedEntries feedEntries = FeedParserUtils.parseResponseBody(SearchActivity.this, feed, response.body(), new Converter.ArticleConvertListener() {
+                    @Override
+                    public Article onEnd(Article article) {
+                        article.setCrawlDate(App.i().getLastShowTimeMillis());
+                        return article;
+                    }
+                });
                 if(feedEntries == null || !feedEntries.isSuccess()){
                     failureUpdateResults();
                 }else {

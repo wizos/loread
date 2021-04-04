@@ -3,6 +3,7 @@ package me.wizos.loread.adapter;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
+import android.os.AsyncTask;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -161,67 +162,77 @@ public class TriggerRulesGroupedAdapter extends ExpandableAdapter<ExpandableAdap
             });
 
             itemView.setOnLongClickListener(v -> {
-                MaterialSimpleListAdapter adapter = new MaterialSimpleListAdapter(new MaterialSimpleListAdapter.Callback() {
-                    @Override
-                    public void onMaterialListItemSelected(MaterialDialog dialog, int index, MaterialSimpleListItem item) {
-                        if (index == 0) {
-                            CoreDB.i().triggerRuleDao().delete(triggerRule.getScope());
-                        }else if(index == 1){
-                            int count = TriggerRuleUtils.exeRule(App.i().getUser().getId(),0, triggerRule);
-                            // ToastUtils.show(R.string.executed);
-                            ToastUtils.show(context.getResources().getQuantityString(R.plurals.executed_involving_n_articles,count,count));
-                        }
-                        dialog.dismiss();
-                    }
-                });
-                adapter.add(new MaterialSimpleListItem.Builder(context)
-                        .content(R.string.delete)
-                        .icon(R.drawable.ic_delete)
-                        .backgroundColor(Color.TRANSPARENT)
-                        .build());
-
-                adapter.add(new MaterialSimpleListItem.Builder(context)
-                        .content(R.string.execute_for_existing_articles)
-                        .icon(R.drawable.ic_rule)
-                        .backgroundColor(Color.TRANSPARENT)
-                        .build());
-
-                new MaterialDialog.Builder(context)
-                        .adapter(adapter, new LinearLayoutManager(context))
-                        .show();
+                exeRule(triggerRule);
+                // MaterialSimpleListAdapter adapter = new MaterialSimpleListAdapter(new MaterialSimpleListAdapter.Callback() {
+                //     @Override
+                //     public void onMaterialListItemSelected(MaterialDialog dialog, int index, MaterialSimpleListItem item) {
+                //         if (index == 0) {
+                //             CoreDB.i().triggerRuleDao().delete(triggerRule.getScope());
+                //         }else if(index == 1){
+                //             int count = TriggerRuleUtils.exeRule(App.i().getUser().getId(),0, triggerRule);
+                //             // ToastUtils.show(R.string.executed);
+                //             ToastUtils.show(context.getResources().getQuantityString(R.plurals.executed_involving_n_articles,count,count));
+                //         }
+                //         dialog.dismiss();
+                //     }
+                // });
+                // adapter.add(new MaterialSimpleListItem.Builder(context)
+                //         .content(R.string.delete)
+                //         .icon(R.drawable.ic_delete)
+                //         .backgroundColor(Color.TRANSPARENT)
+                //         .build());
+                //
+                // adapter.add(new MaterialSimpleListItem.Builder(context)
+                //         .content(R.string.execute_for_existing_articles)
+                //         .icon(R.drawable.ic_rule)
+                //         .backgroundColor(Color.TRANSPARENT)
+                //         .build());
+                //
+                // new MaterialDialog.Builder(context)
+                //         .adapter(adapter, new LinearLayoutManager(context))
+                //         .show();
                 return true;
             });
 
             adapter.setOnLongClickListener(v -> {
-                MaterialSimpleListAdapter adapter = new MaterialSimpleListAdapter(new MaterialSimpleListAdapter.Callback() {
-                    @Override
-                    public void onMaterialListItemSelected(MaterialDialog dialog, int index, MaterialSimpleListItem item) {
-                        if (index == 0) {
-                            CoreDB.i().triggerRuleDao().delete(triggerRule.getScope());
-                        }else if(index == 1){
-                            TriggerRuleUtils.exeRule(App.i().getUser().getId(),0, triggerRule);
-                            ToastUtils.show(R.string.executed);
-                        }
-                        dialog.dismiss();
-                    }
-                });
-                adapter.add(new MaterialSimpleListItem.Builder(context)
-                        .content(R.string.delete)
-                        .icon(R.drawable.ic_delete)
-                        .backgroundColor(Color.TRANSPARENT)
-                        .build());
-
-                adapter.add(new MaterialSimpleListItem.Builder(context)
-                        .content(R.string.execute_for_existing_articles)
-                        .icon(R.drawable.ic_rule)
-                        .backgroundColor(Color.TRANSPARENT)
-                        .build());
-
-                new MaterialDialog.Builder(context)
-                        .adapter(adapter, new LinearLayoutManager(context))
-                        .show();
+                exeRule(triggerRule);
                 return true;
             });
+        }
+
+        private void exeRule(TriggerRule triggerRule){
+            MaterialSimpleListAdapter adapter = new MaterialSimpleListAdapter(new MaterialSimpleListAdapter.Callback() {
+                @Override
+                public void onMaterialListItemSelected(MaterialDialog dialog, int index, MaterialSimpleListItem item) {
+                    if (index == 0) {
+                        CoreDB.i().triggerRuleDao().delete(triggerRule.getScope());
+                    }else if(index == 1){
+                        AsyncTask.THREAD_POOL_EXECUTOR.execute(new Runnable() {
+                            @Override
+                            public void run() {
+                                TriggerRuleUtils.exeRule(App.i().getUser().getId(),0, triggerRule);
+                                ToastUtils.show(R.string.executed);
+                             }
+                        });
+                    }
+                    dialog.dismiss();
+                }
+            });
+            adapter.add(new MaterialSimpleListItem.Builder(context)
+                    .content(R.string.delete)
+                    .icon(R.drawable.ic_delete)
+                    .backgroundColor(Color.TRANSPARENT)
+                    .build());
+
+            adapter.add(new MaterialSimpleListItem.Builder(context)
+                    .content(R.string.execute_for_existing_articles)
+                    .icon(R.drawable.ic_rule)
+                    .backgroundColor(Color.TRANSPARENT)
+                    .build());
+
+            new MaterialDialog.Builder(context)
+                    .adapter(adapter, new LinearLayoutManager(context))
+                    .show();
         }
     }
 }

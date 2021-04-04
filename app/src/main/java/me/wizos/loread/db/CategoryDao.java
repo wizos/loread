@@ -30,6 +30,9 @@ public interface CategoryDao {
     @Query("SELECT uid,id,title,allCount as count FROM category WHERE uid = :uid ORDER BY title COLLATE NOCASE ASC")
     List<Collection> getCategoriesAllCount(String uid);
 
+    // @Query("SELECT uid,id,title,allCount as count FROM category WHERE uid = :uid ORDER BY title COLLATE NOCASE ASC")
+    // List<Collections> getCollectionsAllCount(String uid);
+
     // @Query("SELECT *,unreadCount as count FROM category WHERE uid = :uid ORDER BY title COLLATE NOCASE ASC")
     // List<Category> getCategoriesUnreadCount2(String uid);
     // @Query("SELECT *,starCount as count FROM category WHERE uid = :uid ORDER BY title COLLATE NOCASE ASC")

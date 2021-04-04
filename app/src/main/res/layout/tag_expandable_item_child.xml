@@ -61,5 +61,7 @@
         android:padding="5dp"
         android:textColor="?attr/lv_item_desc_color"
         android:textSize="12sp"
+        android:visibility="gone"
+        tools:visibility="visible"
         tools:text="-9.9" />
 </LinearLayout>

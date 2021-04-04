@@ -18,10 +18,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewConfiguration;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
 import android.widget.CompoundButton;
-import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
@@ -78,7 +75,6 @@ import com.yanzhenjie.recyclerview.SwipeRecyclerView;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -87,39 +83,31 @@ import java.util.concurrent.TimeUnit;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 import me.wizos.loread.App;
+import me.wizos.loread.BuildConfig;
 import me.wizos.loread.Contract;
 import me.wizos.loread.R;
 import me.wizos.loread.activity.viewmodel.ArticleListViewModel;
 import me.wizos.loread.activity.viewmodel.CategoryViewModel;
 import me.wizos.loread.adapter.ArticlePagedListAdapter;
 import me.wizos.loread.adapter.StreamsAdapter;
-import me.wizos.loread.bean.FeedEntries;
 import me.wizos.loread.bean.collectiontree.Collection;
 import me.wizos.loread.bean.collectiontree.CollectionTree;
 import me.wizos.loread.db.Article;
 import me.wizos.loread.db.Category;
 import me.wizos.loread.db.CoreDB;
 import me.wizos.loread.db.CorePref;
-import me.wizos.loread.db.Feed;
-import me.wizos.loread.db.FeedCategory;
 import me.wizos.loread.db.User;
 import me.wizos.loread.network.SyncWorker;
 import me.wizos.loread.network.api.LocalApi;
 import me.wizos.loread.network.callback.CallbackX;
 import me.wizos.loread.network.proxy.ProxyNodeSocks5;
 import me.wizos.loread.utils.EncryptUtils;
-import me.wizos.loread.utils.FeedParserUtils;
-import me.wizos.loread.utils.HttpCall;
 import me.wizos.loread.utils.SnackbarUtils;
 import me.wizos.loread.utils.StringUtils;
-import me.wizos.loread.utils.UriUtils;
 import me.wizos.loread.view.IconFontView;
 import me.wizos.loread.view.SwipeRefreshLayoutS;
 import me.wizos.loread.view.colorful.Colorful;
 import me.wizos.loread.view.colorful.setter.ViewGroupSetter;
-import okhttp3.Call;
-import okhttp3.Callback;
-import okhttp3.Response;
 
 
 /**
@@ -537,16 +525,29 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
     private void loadSearchedArticles(String keyword) {
         MobclickAgent.onEvent(this, "click_button_search_articles", keyword);
         openLoadingPopupView();
-        articleListViewModel.loadArticles(App.i().getUser().getId(), keyword, this,
-                articles -> {
-                    renderViewByArticlesData( getString(R.string.title_search,keyword), articles.size() );
-                    articlesAdapter.submitList(articles);
-                    dismissLoadingPopupView();
-                },
-                articleIds -> {
-                    articlesAdapter.setArticleIds(articleIds);
-                    App.i().setArticleIds(articleIds);
-                });
+        if(BuildConfig.DEBUG && keyword.equals("<重复文章>")){
+            articleListViewModel.loadArticles(App.i().getUser().getId(), this,
+                    articles -> {
+                        renderViewByArticlesData( getString(R.string.title_search,keyword), articles.size() );
+                        articlesAdapter.submitList(articles);
+                        dismissLoadingPopupView();
+                    },
+                    articleIds -> {
+                        articlesAdapter.setArticleIds(articleIds);
+                        App.i().setArticleIds(articleIds);
+                    });
+        }else {
+            articleListViewModel.loadArticles(App.i().getUser().getId(), keyword, this,
+                    articles -> {
+                        renderViewByArticlesData( getString(R.string.title_search,keyword), articles.size() );
+                        articlesAdapter.submitList(articles);
+                        dismissLoadingPopupView();
+                    },
+                    articleIds -> {
+                        articlesAdapter.setArticleIds(articleIds);
+                        App.i().setArticleIds(articleIds);
+                    });
+        }
         articleListView.scrollToPosition(0);
         articlesAdapter.setLastPos(0);
     }
@@ -562,81 +563,6 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
         countTips.setText( getResources().getQuantityString(R.plurals.articles_count, articleSize, articleSize) );
     }
 
-    // public void showCategoryMenuDialog1(final StreamTree category) {
-    //     // 重命名弹窗的适配器
-    //     MaterialSimpleListAdapter adapter = new MaterialSimpleListAdapter(new MaterialSimpleListAdapter.Callback() {
-    //         @Override
-    //         public void onMaterialListItemSelected(MaterialDialog dialog, int index, MaterialSimpleListItem item) {
-    //             if(index == 0){
-    //                 new MaterialDialog.Builder(MainActivity.this)
-    //                         .title(R.string.delete)
-    //                         .positiveText(R.string.confirm)
-    //                         .negativeText(android.R.string.cancel)
-    //                         .onPositive(new MaterialDialog.SingleButtonCallback() {
-    //                             @Override
-    //                             public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
-    //                                 App.i().getApi().deleteCategory(category.getStreamId(), new CallbackX() {
-    //                                     @Override
-    //                                     public void onSuccess(Object result) {
-    //                                         ToastUtils.show((String)result);
-    //                                     }
-    //
-    //                                     @Override
-    //                                     public void onFailure(Object error) {
-    //                                     }
-    //                                 });
-    //                             }
-    //                         })
-    //                         .show();
-    //             } else if (index == 1) {
-    //                 new MaterialDialog.Builder(MainActivity.this)
-    //                         .title(R.string.edit_name)
-    //                         .inputType(InputType.TYPE_CLASS_TEXT)
-    //                         .inputRange(1, 22)
-    //                         .input(null, category.getStreamName(), new MaterialDialog.InputCallback() {
-    //                             @Override
-    //                             public void onInput(@NotNull MaterialDialog dialog, CharSequence input) {
-    //                                 String renamed = input.toString();
-    //                                 XLog.i("分类重命名为：" + renamed);
-    //                                 if (category.getStreamName().equals(renamed)) {
-    //                                     return;
-    //                                 }
-    //                                 renameCategory(renamed, category);
-    //                             }
-    //                         })
-    //                         .positiveText(R.string.confirm)
-    //                         .negativeText(android.R.string.cancel)
-    //                         .show();
-    //             }else if(index == 2){
-    //                 Intent intent = new Intent(MainActivity.this, TriggerRuleManagerActivity.class);
-    //                 intent.putExtra(Contract.TYPE, Contract.TYPE_CATEGORY);
-    //                 intent.putExtra(Contract.TARGET_ID, category.getStreamId());
-    //                 startActivity(intent);
-    //                 overridePendingTransition(R.anim.in_from_bottom, R.anim.fade_out);
-    //             }
-    //             dialog.dismiss();
-    //         }
-    //     });
-    //     adapter.add(new MaterialSimpleListItem.Builder(MainActivity.this)
-    //             .content(R.string.delete)
-    //             .icon(R.drawable.ic_delete)
-    //             .backgroundColor(Color.TRANSPARENT)
-    //             .build());
-    //     adapter.add(new MaterialSimpleListItem.Builder(MainActivity.this)
-    //             .content(R.string.rename)
-    //             .icon(R.drawable.ic_rename)
-    //             .backgroundColor(Color.TRANSPARENT)
-    //             .build());
-    //     adapter.add(new MaterialSimpleListItem.Builder(MainActivity.this)
-    //             .content(R.string.view_rule)
-    //             .icon(R.drawable.ic_rule)
-    //             .backgroundColor(Color.TRANSPARENT)
-    //             .build());
-    //
-    //     new MaterialDialog.Builder(MainActivity.this)
-    //             .adapter(adapter, new LinearLayoutManager(MainActivity.this))
-    //             .show();
-    // }
     public void showCategoryMenuDialog(final CollectionTree category) {
         // 重命名弹窗的适配器
         MaterialSimpleListAdapter adapter = new MaterialSimpleListAdapter(new MaterialSimpleListAdapter.Callback() {
@@ -645,6 +571,7 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
                 if(index == 0){
                     new MaterialDialog.Builder(MainActivity.this)
                             .title(R.string.delete)
+                            .content(R.string.the_feeds_in_the_category_will_be_deleted_together)
                             .positiveText(R.string.confirm)
                             .negativeText(android.R.string.cancel)
                             .onPositive(new MaterialDialog.SingleButtonCallback() {
@@ -921,31 +848,6 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
             }
         });
 
-        // OnItemMenuClickListener mItemMenuClickListener = new OnItemMenuClickListener() {
-        //     @Override
-        //     public void onItemClick(SwipeMenuBridge menuBridge, int position) {
-        //         // 任何操作必须先关闭菜单，否则可能出现Item菜单打开状态错乱。
-        //         menuBridge.closeMenu();
-        //
-        //         // 左侧还是右侧菜单：
-        //         int direction = menuBridge.getDirection();
-        //
-        //         if (direction == SwipeRecyclerView.RIGHT_DIRECTION) {
-        //             XLog.i("onItemClick  onCloseRight：" + position + "  ");
-        //             if (position > -1) {
-        //                 toggleReadState(position);
-        //             }
-        //         } else if (direction == SwipeRecyclerView.LEFT_DIRECTION) {
-        //             XLog.i("onItemClick  onCloseLeft：" + position + "  ");
-        //             if (position > -1) {
-        //                 toggleStarState(position);
-        //             }
-        //         }
-        //     }
-        // };
-        // // 菜单点击监听。
-        // articleListView.setOnItemMenuClickListener(mItemMenuClickListener);
-
         articleListView.setOnItemClickListener(new OnItemClickListener() {
             @Override
             public void onItemClick(View view, int position) {
@@ -982,12 +884,12 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
         categoryViewModel.observeCategoriesAndFeeds(this, new Observer<Integer>() {
             @Override
             public void onChanged(Integer integer) {
-                AsyncTask.SERIAL_EXECUTOR.execute(new Runnable() {
+                AsyncTask.THREAD_POOL_EXECUTOR.execute(new Runnable() {
                     @Override
                     public void run() {
-                        // long time = System.currentTimeMillis();
+                        long time = System.currentTimeMillis();
                         categoryListAdapter.setGroups(categoryViewModel.getCategoryFeeds());
-                        // XLog.i("重新加载 分类树 耗时：" + (System.currentTimeMillis() - time));
+                        XLog.i("重新加载分类树，耗时：" + (System.currentTimeMillis() - time));
                         runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
@@ -1018,8 +920,6 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
         // View headerView = getLayoutInflater().inflate(R.layout.tag_expandable_item_group, tagListView, false);
         // tagListView.addHeaderView(headerView);
 
-
-        // categoryListAdapter = new CategoriesAdapter(this);
         categoryListAdapter = new StreamsAdapter(this);
 
         categoryListAdapter.setGroups(new ArrayList<>());
@@ -1030,20 +930,6 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
                 // 根据原position判断该item是否是parent item
                 int groupPosition = categoryListAdapter.parentItemPosition(adapterPosition);
                 User user = App.i().getUser();
-
-                // if (categoryListAdapter.isParentItem(adapterPosition)) {
-                //     StreamTree streamTree = categoryListAdapter.getGroup(groupPosition);
-                //     user.setStreamId( streamTree.getStreamId().replace("\"", "")  );
-                //     user.setStreamTitle( streamTree.getStreamName() );
-                //     user.setStreamType( streamTree.getStreamType() );
-                // } else {
-                //     // 换取child position
-                //     int childPosition = categoryListAdapter.childItemPosition(adapterPosition);
-                //     Collection feed = categoryListAdapter.getChild(groupPosition, childPosition);
-                //     user.setStreamId( feed.getId() );
-                //     user.setStreamTitle( feed.getTitle() );
-                //     user.setStreamType( App.TYPE_FEED );
-                // }
 
                 if (categoryListAdapter.isParentItem(adapterPosition)) {
                     CollectionTree streamTree = categoryListAdapter.getGroup(groupPosition);
@@ -1069,22 +955,6 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
                 MobclickAgent.onEvent(MainActivity.this, "click_categories_button");
                 // XLog.e("被长安，view的id是" + allArticleHeaderView.getId() + "，parent的id" + parent.getId() + "，Tag是" + allArticleHeaderView.getCategoryById() + "，位置是" + tagListView.getPositionForView(allArticleHeaderView));
                 // 根据原position判断该item是否是parent item
-
-                // if (categoryListAdapter.isParentItem(adapterPosition)) {
-                //     StreamTree streamTree = categoryListAdapter.getGroup(adapterPosition);
-                //     if(streamTree.getStreamType() == StreamTree.FEED){
-                //         showFeedActivity(streamTree.getStreamId());
-                //     }else{
-                //         int parentPosition = categoryListAdapter.parentItemPosition(adapterPosition);
-                //         showCategoryMenuDialog(categoryListAdapter.getGroup(parentPosition));
-                //     }
-                // } else {
-                //     // 换取child position
-                //     int parentPosition = categoryListAdapter.parentItemPosition(adapterPosition);
-                //     int childPosition = categoryListAdapter.childItemPosition(adapterPosition);
-                //     Collection feed = categoryListAdapter.getChild(parentPosition, childPosition);
-                //     showFeedActivity(feed.getId());
-                // }
 
                 if (categoryListAdapter.isParentItem(adapterPosition)) {
                     CollectionTree streamTree = categoryListAdapter.getGroup(adapterPosition);
@@ -1548,7 +1418,7 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
                 }
                 CoreDB.i().userDao().update(user);
                 refreshArticlesData();
-                // loadCategoriesData();
+                initCategoriesData();
                 quickSettingDialog.dismiss();
             }
         });
@@ -1635,9 +1505,10 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
     }
 
     private void openLoadingPopupView(){
-        loadingPopupView = new XPopup.Builder(MainActivity.this)
-                .asLoading(getString(R.string.loading))
-                .show();
+        if(loadingPopupView == null){
+            loadingPopupView = new XPopup.Builder(MainActivity.this).asLoading(getString(R.string.loading));
+        }
+        loadingPopupView.show();
     }
     private void dismissLoadingPopupView(){
         if(loadingPopupView != null) loadingPopupView.smartDismiss();
@@ -1695,139 +1566,139 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
                 startActivity(intent);
                 overridePendingTransition(R.anim.in_from_bottom, R.anim.fade_out);
                 break;
-            case R.id.main_menu_add_feed:
-                new MaterialDialog.Builder(MainActivity.this)
-                        .title(R.string.input_feed_url)
-                        .inputType(InputType.TYPE_TEXT_VARIATION_URI)
-                        .inputRange(1, 88)
-                        .input(Contract.SCHEMA_HTTPS, null, new MaterialDialog.InputCallback() {
-                            @Override
-                            public void onInput(@NotNull MaterialDialog dialog, CharSequence input) {
-                                if(!UriUtils.isHttpOrHttpsUrl(input.toString())){
-                                    ToastUtils.show(R.string.invalid_url_hint);
-                                }else {
-                                    MaterialDialog materialDialog = new MaterialDialog.Builder(MainActivity.this)
-                                            .canceledOnTouchOutside(false)
-                                            .content(R.string.loading).build();
-                                    materialDialog.show();
-
-                                    HttpCall.i().get(input.toString(), new Callback() {
-                                        @Override
-                                        public void onFailure(@NotNull Call call, @NotNull IOException e) {
-                                            materialDialog.dismiss();
-                                            ToastUtils.show(getString(R.string.edit_fail_with_reason, e.getLocalizedMessage()));
-                                        }
-
-                                        @Override
-                                        public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
-                                            materialDialog.dismiss();
-                                            if(!response.isSuccessful()){
-                                                return;
-                                            }
-
-                                            Feed feed = new Feed();
-                                            feed.setUid(App.i().getUser().getId());
-                                            feed.setId(EncryptUtils.MD5(input.toString()));
-                                            feed.setFeedUrl(input.toString());
-                                            FeedEntries feedEntries = FeedParserUtils.parseResponseBody(MainActivity.this, feed, response);
-                                            if(feedEntries == null){
-                                                return;
-                                            }
-                                            if(!feedEntries.isSuccess()){
-                                                ToastUtils.show(feedEntries.getFeed().getLastSyncError());
-                                            }else {
-                                                runOnUiThread(new Runnable() {
-                                                    @Override
-                                                    public void run() {
-                                                        MaterialDialog feedSettingDialog = new MaterialDialog.Builder(MainActivity.this)
-                                                                .title(R.string.add_subscription)
-                                                                .customView(R.layout.dialog_add_feed, true)
-                                                                .negativeText(android.R.string.cancel)
-                                                                .onNegative(new MaterialDialog.SingleButtonCallback() {
-                                                                    @Override
-                                                                    public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
-                                                                        // InputMethodManager imm = (InputMethodManager) MainActivity.this.getSystemService(Context.INPUT_METHOD_SERVICE);
-                                                                        // if(imm != null) imm.hideSoftInputFromWindow(categoryNameSpinner.getWindowToken(), 0);
-                                                                        dialog.dismiss();
-                                                                    }
-                                                                })
-                                                                .positiveText(R.string.agree)
-                                                                .onPositive(new MaterialDialog.SingleButtonCallback() {
-                                                                    @Override
-                                                                    public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
-                                                                        // InputMethodManager imm = (InputMethodManager) MainActivity.this.getSystemService(Context.INPUT_METHOD_SERVICE);
-                                                                        // if(imm != null) imm.hideSoftInputFromWindow(categoryNameSpinner.getWindowToken(), 0);
-                                                                        EditText feedNameEditText = (EditText) dialog.findViewById(R.id.dialog_feed_name_edittext);
-                                                                        feedEntries.getFeed().setTitle(feedNameEditText.getText().toString());
-                                                                        feedEntries.getFeed().setSyncInterval(0);
-                                                                        CoreDB.i().feedDao().insert(feedEntries.getFeed());
-                                                                        List<Article> entries = feedEntries.getArticles();
-                                                                        if( entries!= null && entries.size() > 0){
-                                                                            CoreDB.i().articleDao().insert(entries);
-                                                                        }
-                                                                        CoreDB.i().feedCategoryDao().insert(feedEntries.getFeedCategories());
-
-                                                                        // if(feedEntries.getFeedCategories() !=  null){
-                                                                        //     for (FeedCategory feedCategory: feedEntries.getFeedCategories()){
-                                                                        //         feedCategory.setFeedId(feedEntries.getFeed().getId());
-                                                                        //     }
-                                                                        //     CoreDB.i().feedCategoryDao().insert(feedEntries.getFeedCategories());
-                                                                        // }else {
-                                                                        //     FeedCategory feedCategory = new FeedCategory();
-                                                                        //     feedCategory.setFeedId(feedEntries.getFeed().getId());
-                                                                        //     CoreDB.i().feedCategoryDao().insert(feedEntries.getFeedCategories());
-                                                                        // }
-                                                                    }
-                                                                })
-                                                                .show();
-                                                        EditText feedUrlEditText = (EditText) feedSettingDialog.findViewById(R.id.dialog_feed_url_edittext);
-                                                        feedUrlEditText.setText(input.toString());
-
-
-                                                        EditText feedNameEditText = (EditText) feedSettingDialog.findViewById(R.id.dialog_feed_name_edittext);
-                                                        feedNameEditText.setText(feedEntries.getFeed().getTitle());
-
-                                                        categoryNameSpinner = (Spinner) feedSettingDialog.findViewById(R.id.category_name_editspinner);
-                                                        List<Category> categories = CoreDB.i().categoryDao().getAll(App.i().getUser().getId());
-                                                        List<String> items = new ArrayList<>();
-                                                        items.add(getString(R.string.un_category));
-                                                        if(categories != null){
-                                                            for (Category category:categories){
-                                                                items.add(category.getTitle());
-                                                            }
-                                                        }
-                                                        ArrayAdapter<String> adapter = new ArrayAdapter<>(MainActivity.this, android.R.layout.simple_spinner_dropdown_item, items);
-                                                        categoryNameSpinner.setAdapter(adapter);
-                                                        categoryNameSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-                                                            @Override
-                                                            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                                                                position = position - 1;
-                                                                if(position >= 0 && categories != null){
-                                                                    FeedCategory feedCategory = new FeedCategory();
-                                                                    feedCategory.setUid(App.i().getUser().getId());
-                                                                    feedCategory.setCategoryId(categories.get(position).getId());
-                                                                    List<FeedCategory> feedCategories = new ArrayList<>();
-                                                                    feedCategories.add(feedCategory);
-                                                                    feedEntries.setFeedCategories(feedCategories);
-                                                                }
-                                                            }
-
-                                                            @Override
-                                                            public void onNothingSelected(AdapterView<?> parent) {
-                                                            }
-                                                        });
-                                                    }
-                                                });
-                                            }
-                                        }
-                                    });
-                                }
-                            }
-                        })
-                        .positiveText(R.string.confirm)
-                        .negativeText(android.R.string.cancel)
-                        .show();
-                break;
+            // case R.id.main_menu_add_feed:
+            //     new MaterialDialog.Builder(MainActivity.this)
+            //             .title(R.string.input_feed_url)
+            //             .inputType(InputType.TYPE_TEXT_VARIATION_URI)
+            //             .inputRange(1, 88)
+            //             .input(Contract.SCHEMA_HTTPS, null, new MaterialDialog.InputCallback() {
+            //                 @Override
+            //                 public void onInput(@NotNull MaterialDialog dialog, CharSequence input) {
+            //                     if(!UriUtils.isHttpOrHttpsUrl(input.toString())){
+            //                         ToastUtils.show(R.string.invalid_url_hint);
+            //                     }else {
+            //                         MaterialDialog materialDialog = new MaterialDialog.Builder(MainActivity.this)
+            //                                 .canceledOnTouchOutside(false)
+            //                                 .content(R.string.loading).build();
+            //                         materialDialog.show();
+            //
+            //                         HttpCall.i().get(input.toString(), new Callback() {
+            //                             @Override
+            //                             public void onFailure(@NotNull Call call, @NotNull IOException e) {
+            //                                 materialDialog.dismiss();
+            //                                 ToastUtils.show(getString(R.string.edit_fail_with_reason, e.getLocalizedMessage()));
+            //                             }
+            //
+            //                             @Override
+            //                             public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
+            //                                 materialDialog.dismiss();
+            //                                 if(!response.isSuccessful()){
+            //                                     return;
+            //                                 }
+            //
+            //                                 Feed feed = new Feed();
+            //                                 feed.setUid(App.i().getUser().getId());
+            //                                 feed.setId(EncryptUtils.MD5(input.toString()));
+            //                                 feed.setFeedUrl(input.toString());
+            //                                 FeedEntries feedEntries = FeedParserUtils.parseResponseBody(MainActivity.this, feed, response);
+            //                                 if(feedEntries == null){
+            //                                     return;
+            //                                 }
+            //                                 if(!feedEntries.isSuccess()){
+            //                                     ToastUtils.show(feedEntries.getFeed().getLastSyncError());
+            //                                 }else {
+            //                                     runOnUiThread(new Runnable() {
+            //                                         @Override
+            //                                         public void run() {
+            //                                             MaterialDialog feedSettingDialog = new MaterialDialog.Builder(MainActivity.this)
+            //                                                     .title(R.string.add_subscription)
+            //                                                     .customView(R.layout.dialog_add_feed, true)
+            //                                                     .negativeText(android.R.string.cancel)
+            //                                                     .onNegative(new MaterialDialog.SingleButtonCallback() {
+            //                                                         @Override
+            //                                                         public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
+            //                                                             // InputMethodManager imm = (InputMethodManager) MainActivity.this.getSystemService(Context.INPUT_METHOD_SERVICE);
+            //                                                             // if(imm != null) imm.hideSoftInputFromWindow(categoryNameSpinner.getWindowToken(), 0);
+            //                                                             dialog.dismiss();
+            //                                                         }
+            //                                                     })
+            //                                                     .positiveText(R.string.agree)
+            //                                                     .onPositive(new MaterialDialog.SingleButtonCallback() {
+            //                                                         @Override
+            //                                                         public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
+            //                                                             // InputMethodManager imm = (InputMethodManager) MainActivity.this.getSystemService(Context.INPUT_METHOD_SERVICE);
+            //                                                             // if(imm != null) imm.hideSoftInputFromWindow(categoryNameSpinner.getWindowToken(), 0);
+            //                                                             EditText feedNameEditText = (EditText) dialog.findViewById(R.id.dialog_feed_name_edittext);
+            //                                                             feedEntries.getFeed().setTitle(feedNameEditText.getText().toString());
+            //                                                             feedEntries.getFeed().setSyncInterval(0);
+            //                                                             CoreDB.i().feedDao().insert(feedEntries.getFeed());
+            //                                                             List<Article> entries = feedEntries.getArticles();
+            //                                                             if( entries!= null && entries.size() > 0){
+            //                                                                 CoreDB.i().articleDao().insert(entries);
+            //                                                             }
+            //                                                             CoreDB.i().feedCategoryDao().insert(feedEntries.getFeedCategories());
+            //
+            //                                                             // if(feedEntries.getFeedCategories() !=  null){
+            //                                                             //     for (FeedCategory feedCategory: feedEntries.getFeedCategories()){
+            //                                                             //         feedCategory.setFeedId(feedEntries.getFeed().getId());
+            //                                                             //     }
+            //                                                             //     CoreDB.i().feedCategoryDao().insert(feedEntries.getFeedCategories());
+            //                                                             // }else {
+            //                                                             //     FeedCategory feedCategory = new FeedCategory();
+            //                                                             //     feedCategory.setFeedId(feedEntries.getFeed().getId());
+            //                                                             //     CoreDB.i().feedCategoryDao().insert(feedEntries.getFeedCategories());
+            //                                                             // }
+            //                                                         }
+            //                                                     })
+            //                                                     .show();
+            //                                             EditText feedUrlEditText = (EditText) feedSettingDialog.findViewById(R.id.dialog_feed_url_edittext);
+            //                                             feedUrlEditText.setText(input.toString());
+            //
+            //
+            //                                             EditText feedNameEditText = (EditText) feedSettingDialog.findViewById(R.id.dialog_feed_name_edittext);
+            //                                             feedNameEditText.setText(feedEntries.getFeed().getTitle());
+            //
+            //                                             categoryNameSpinner = (Spinner) feedSettingDialog.findViewById(R.id.category_name_editspinner);
+            //                                             List<Category> categories = CoreDB.i().categoryDao().getAll(App.i().getUser().getId());
+            //                                             List<String> items = new ArrayList<>();
+            //                                             items.add(getString(R.string.un_category));
+            //                                             if(categories != null){
+            //                                                 for (Category category:categories){
+            //                                                     items.add(category.getTitle());
+            //                                                 }
+            //                                             }
+            //                                             ArrayAdapter<String> adapter = new ArrayAdapter<>(MainActivity.this, android.R.layout.simple_spinner_dropdown_item, items);
+            //                                             categoryNameSpinner.setAdapter(adapter);
+            //                                             categoryNameSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            //                                                 @Override
+            //                                                 public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+            //                                                     position = position - 1;
+            //                                                     if(position >= 0 && categories != null){
+            //                                                         FeedCategory feedCategory = new FeedCategory();
+            //                                                         feedCategory.setUid(App.i().getUser().getId());
+            //                                                         feedCategory.setCategoryId(categories.get(position).getId());
+            //                                                         List<FeedCategory> feedCategories = new ArrayList<>();
+            //                                                         feedCategories.add(feedCategory);
+            //                                                         feedEntries.setFeedCategories(feedCategories);
+            //                                                     }
+            //                                                 }
+            //
+            //                                                 @Override
+            //                                                 public void onNothingSelected(AdapterView<?> parent) {
+            //                                                 }
+            //                                             });
+            //                                         }
+            //                                     });
+            //                                 }
+            //                             }
+            //                         });
+            //                     }
+            //                 }
+            //             })
+            //             .positiveText(R.string.confirm)
+            //             .negativeText(android.R.string.cancel)
+            //             .show();
+            //     break;
             default:
                 break;
         }

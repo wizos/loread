@@ -23,6 +23,7 @@ import me.wizos.loread.bean.collectiontree.Collection;
 import me.wizos.loread.bean.collectiontree.CollectionFeed;
 import me.wizos.loread.bean.collectiontree.CollectionTree;
 import me.wizos.loread.utils.ColorfulUtils;
+import me.wizos.loread.utils.StringUtils;
 
 /**
  * Created by Wizos on 2019/4/17.
@@ -231,14 +232,26 @@ public class StreamsAdapter extends ExpandableAdapter<RecyclerView.ViewHolder>{ 
                 titleView.setTextColor(ColorfulUtils.getColor(context, R.attr.lv_item_title_color));
             }else if(category.getType() == CollectionTree.FEED){
                 Glide.with(itemView.getContext()).load(((CollectionFeed)category.getParent()).getIconUrl()).apply(options).into(iconView);
-                if(((CollectionFeed)category.getParent()).getLastErrorCount() != 0){
-                    titleView.setTextColor(itemView.getContext().getResources().getColor(android.R.color.holo_red_dark));
+
+                if(((CollectionFeed)category.getParent()).getSyncInterval() == -1){
+                    titleView.setAlpha(0.40f);
+                    titleView.setTextColor(ColorfulUtils.getColor(context, R.attr.lv_item_title_color));
+                }else {
+                    titleView.setAlpha(1f);
+                    if(((CollectionFeed)category.getParent()).getLastErrorCount() > 0){
+                        titleView.setTextColor(context.getResources().getColor(android.R.color.holo_red_dark));
+                    }else {
+                        titleView.setTextColor(ColorfulUtils.getColor(context, R.attr.lv_item_title_color));
+                    }
+                }
+
+                if(!StringUtils.isEmpty(((CollectionFeed)category.getParent()).getLastSyncError())){
                     errorView.setVisibility(View.VISIBLE);
                 }else {
-                    titleView.setTextColor(ColorfulUtils.getColor(context, R.attr.lv_item_title_color));
                     errorView.setVisibility(View.GONE);
                 }
             }
+
             errorView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
@@ -253,7 +266,7 @@ public class StreamsAdapter extends ExpandableAdapter<RecyclerView.ViewHolder>{ 
                 countView.setText(String.valueOf(count));
                 countView.setVisibility(View.VISIBLE);
             } else {
-                countView.setVisibility(View.INVISIBLE);
+                countView.setVisibility(View.GONE);
             }
 
 
@@ -295,11 +308,20 @@ public class StreamsAdapter extends ExpandableAdapter<RecyclerView.ViewHolder>{ 
         public void bind(CollectionFeed feed) {
             Glide.with(itemView.getContext()).load(feed.getIconUrl()).apply(options).into(iconView);
             titleView.setText(feed.getTitle());
-            if(feed.getLastErrorCount() != 0){
-                titleView.setTextColor(itemView.getContext().getResources().getColor(android.R.color.holo_red_dark));
+            if(feed.getSyncInterval() == -1){
+                titleView.setAlpha(0.40f);
+                titleView.setTextColor(ColorfulUtils.getColor(context, R.attr.lv_item_desc_color));
+            }else {
+                titleView.setAlpha(1f);
+                if(feed.getLastErrorCount() > 0){
+                    titleView.setTextColor(itemView.getContext().getResources().getColor(android.R.color.holo_red_dark));
+                }else {
+                    titleView.setTextColor(ColorfulUtils.getColor(context, R.attr.lv_item_title_color));
+                }
+            }
+            if(!StringUtils.isEmpty(feed.getLastSyncError())){
                 errorView.setVisibility(View.VISIBLE);
             }else {
-                titleView.setTextColor(ColorfulUtils.getColor(context, R.attr.lv_item_title_color));
                 errorView.setVisibility(View.GONE);
             }
             errorView.setOnClickListener(new View.OnClickListener() {
@@ -310,7 +332,7 @@ public class StreamsAdapter extends ExpandableAdapter<RecyclerView.ViewHolder>{ 
             });
             int count = feed.getCount();
             countView.setText(String.valueOf(count));
-            countView.setVisibility(count > 0 ? View.VISIBLE : View.INVISIBLE);
+            countView.setVisibility(count > 0 ? View.VISIBLE : View.GONE);
         }
     }
 }

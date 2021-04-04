@@ -50,7 +50,7 @@ public class ExtractPage {
     public String getContent() {
         if (content == null) {
             if (contentElement != null) {
-                content = contentElement.text();
+                content = contentElement.html();
             }
         }
         return content;

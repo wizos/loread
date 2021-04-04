@@ -286,6 +286,36 @@ public class Extractor {
         XLog.e("提取失败");
         return null;
     }
+
+    public ExtractPage getNews(String keyword) throws Exception {
+        ExtractPage extractPage = new ExtractPage();
+        Element contentElement;
+        try {
+            contentElement = getContentElementWithKeyword(keyword);
+            extractPage.setContentElement(contentElement);
+        } catch (Exception ex) {
+            XLog.e("modPage content extraction failed,extraction abort", ex);
+            throw new Exception(ex);
+        }
+
+        if (doc.baseUri() != null) {
+            extractPage.setUrl(doc.baseUri());
+        }
+
+        try {
+            extractPage.setTime(getTime(contentElement));
+        } catch (Exception ex) {
+            XLog.e("modPage title extraction failed", ex);
+        }
+
+        try {
+            extractPage.setTitle(getTitle(contentElement));
+        } catch (Exception ex) {
+            XLog.e("title extraction failed", ex);
+        }
+        return extractPage;
+    }
+
     public ExtractPage getNews() throws Exception {
         ExtractPage extractPage = new ExtractPage();
         Element contentElement;

@@ -176,7 +176,11 @@ public class App extends Application implements Thread.UncaughtExceptionHandler 
     private long lastShowTimeMillis = 0;
 
     public long getLastShowTimeMillis() {
-        return lastShowTimeMillis;
+        if(lastShowTimeMillis == 0){
+            return System.currentTimeMillis();
+        }else {
+            return lastShowTimeMillis;
+        }
     }
 
     public void setLastShowTimeMillis(long lastShowTimeMillis) {
@@ -196,6 +200,21 @@ public class App extends Application implements Thread.UncaughtExceptionHandler 
         ToastUtils.init(this, new ToastAliPayStyle(this));
 
         DoraemonKit.install(this, BuildConfig.DORAEMON_KIT_PRODUCT_ID);
+        // if(BuildConfig.DEBUG){
+        //     Matrix.Builder builder = new Matrix.Builder(this); // build matrix
+        //     builder.patchListener(new TestPluginListener(this)); // add general pluginListener
+        //     DynamicConfigImpl dynamicConfig = new DynamicConfigImpl(); // dynamic config
+        //     // init plugin
+        //     IOCanaryPlugin ioCanaryPlugin = new IOCanaryPlugin(new IOConfig.Builder()
+        //             .dynamicConfig(dynamicConfig)
+        //             .build());
+        //     //add to matrix
+        //     builder.plugin(ioCanaryPlugin);
+        //     //init matrix
+        //     Matrix.init(builder.build());
+        //     //start plugin
+        //     ioCanaryPlugin.start();
+        // }
 
         UMConfigure.init(this, UMConfigure.DEVICE_TYPE_PHONE,"");
         // 打开统计SDK调试模式

@@ -7,9 +7,11 @@
 
 package me.wizos.loread.utils;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.List;
 public class PagingUtils {
-    public static<T> void processing(List<T> list, int unit, PagingListener<T> pagingListener){
+    public static<T> void slice(@NotNull List<T> list, int unit, PagingListener<T> pagingListener){
         if(list == null || unit <= 0 || pagingListener == null){
             return;
         }
@@ -27,6 +29,6 @@ public class PagingUtils {
     }
 
     public interface PagingListener<T>{
-        void onPage(List<T> childList);
+        void onPage(@NotNull List<T> childList);
     }
 }

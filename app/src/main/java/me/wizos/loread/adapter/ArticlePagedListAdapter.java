@@ -149,6 +149,8 @@ public class ArticlePagedListAdapter extends PagedListAdapter<Article, ArticlePa
             articleImg.setVisibility(View.GONE);
 
             articleSummary.setText("");
+            articleFeed.setText("");
+            articlePublished.setText("");
             articleSave.setVisibility(View.GONE);
             articleReading.setVisibility(View.GONE);
             articleStar.setVisibility(View.GONE);

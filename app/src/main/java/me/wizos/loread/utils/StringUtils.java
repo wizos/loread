@@ -13,7 +13,6 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -281,9 +280,10 @@ public class StringUtils {
      */
     public static String join(CharSequence delimiter, CharSequence... elements) {
         // 空指针判断
-        Objects.requireNonNull(delimiter);
-        Objects.requireNonNull(elements);
-
+        // Objects.requireNonNull(delimiter);
+        // Objects.requireNonNull(elements);
+        if (elements == null) return null;
+        if (delimiter == null) delimiter = ",";
         // Number of elements not likely worth Arrays.stream overhead.
         // 此处用到了StringJoiner(JDK 8引入的类）
         // 先构造一个以参数delimiter为分隔符的StringJoiner对象

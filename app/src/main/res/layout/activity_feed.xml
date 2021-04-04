@@ -115,6 +115,37 @@
 
 
             <LinearLayout
+                android:id="@+id/feed_article_count_layout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                style="@style/SettingItem">
+                <TextView
+                    android:id="@+id/feed_article_count_label"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="10dp"
+                    android:lines="1"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:textColor="?attr/lv_item_title_color"
+                    android:text="@string/article_count" />
+
+                <TextView
+                    android:id="@+id/feed_article_count"
+                    android:layout_weight="1"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="10dp"
+                    android:layout_gravity="center_vertical"
+                    android:maxLines="1"
+                    android:ellipsize="end"
+                    android:textSize="12sp"
+                    android:textColor="?attr/lv_item_desc_color"
+                    tools:text="全部 22, 未读 12, 收藏 10" />
+            </LinearLayout>
+
+            <LinearLayout
                 android:id="@+id/feed_site_link_layout"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -130,18 +161,29 @@
                     android:textStyle="bold"
                     android:textColor="?attr/lv_item_title_color"
                     android:text="@string/site_url" />
+
+                <!--android:onClick="openHtmlUrl"-->
                 <TextView
                     android:id="@+id/feed_site_link"
                     android:layout_weight="1"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_marginEnd="10dp"
-                    android:onClick="openHtmlUrl"
+                    android:layout_gravity="center_vertical"
                     android:maxLines="1"
                     android:ellipsize="end"
-                    android:textSize="14sp"
-                    android:textColor="?attr/lv_item_title_color"
+                    android:textSize="12sp"
+                    android:textColor="?attr/lv_item_desc_color"
                     tools:text="http://blog.wizos.me" />
+                <ImageView
+                    android:id="@+id/feed_site_link_edit"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:layout_marginEnd="10dp"
+                    android:visibility="gone"
+                    tools:visibility="visible"
+                    android:onClick="editHtmlUrl"
+                    android:src="@drawable/ic_edit" />
                 <ImageView
                     android:id="@+id/feed_site_link_copy"
                     android:layout_width="wrap_content"
@@ -167,17 +209,18 @@
                     android:textStyle="bold"
                     android:textColor="?attr/lv_item_title_color"
                     android:text="@string/feed_url" />
+                <!--android:onClick="openFeedUrl"-->
                 <TextView
                     android:id="@+id/feed_rss_link"
                     android:layout_weight="1"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
+                    android:layout_gravity="center_vertical"
                     android:layout_marginEnd="10dp"
-                    android:onClick="openFeedUrl"
                     android:maxLines="1"
                     android:ellipsize="end"
-                    android:textSize="14sp"
-                    android:textColor="?attr/lv_item_title_color"
+                    android:textSize="12sp"
+                    android:textColor="?attr/lv_item_desc_color"
                     tools:text="http://blog.wizos.me/feedfffffffffddddddddnn" />
 
                 <ImageView
@@ -187,7 +230,15 @@
                     android:layout_marginEnd="10dp"
                     android:onClick="createFeedUrlQRCode"
                     android:src="@drawable/ic_qr_code" />
-
+                <ImageView
+                    android:id="@+id/feed_rss_link_edit"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:layout_marginEnd="10dp"
+                    android:visibility="gone"
+                    tools:visibility="visible"
+                    android:onClick="editFeedUrl"
+                    android:src="@drawable/ic_edit" />
                 <ImageView
                     android:id="@+id/feed_rss_link_copy"
                     android:layout_width="wrap_content"
@@ -208,10 +259,11 @@
 
                 <LinearLayout
                     android:id="@+id/feed_remark"
-                    tools:visibility="visible"
-                    android:visibility="visible"
-                    android:background="?android:attr/selectableItemBackground"
-                    style="@style/SettingItem">
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:paddingStart="10dp"
+                    android:paddingEnd="10dp"
+                    android:background="?android:attr/selectableItemBackground">
                     <TextView
                         style="@style/SettingItemTitle2"
                         android:text="@string/remark" />
@@ -223,10 +275,11 @@
 
                 <LinearLayout
                     android:id="@+id/feed_category"
-                    tools:visibility="visible"
-                    android:visibility="visible"
                     android:background="?android:attr/selectableItemBackground"
-                    style="@style/SettingItem">
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:paddingStart="10dp"
+                    android:paddingEnd="10dp">
                     <TextView
                         style="@style/SettingItemTitle2"
                         android:text="@string/category" />
@@ -238,9 +291,11 @@
 
                 <LinearLayout
                     android:id="@+id/feed_display_mode"
-                    android:visibility="visible"
                     android:background="?android:attr/selectableItemBackground"
-                    style="@style/SettingItem">
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:paddingStart="10dp"
+                    android:paddingEnd="10dp">
                     <TextView
                         style="@style/SettingItemTitle2"
                         android:text="@string/display_mode_for_article" />
@@ -255,7 +310,10 @@
                     tools:visibility="visible"
                     android:visibility="gone"
                     android:background="?android:attr/selectableItemBackground"
-                    style="@style/SettingItem">
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:paddingStart="10dp"
+                    android:paddingEnd="10dp">
                     <TextView
                         style="@style/SettingItemTitle2"
                         android:text="@string/article_saved_directory" />
@@ -270,7 +328,10 @@
                     tools:visibility="visible"
                     android:visibility="gone"
                     android:background="?android:attr/selectableItemBackground"
-                    style="@style/SettingItem">
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:paddingStart="10dp"
+                    android:paddingEnd="10dp">
                     <TextView
                         style="@style/SettingItemTitle2"
                         android:text="@string/sync_frequency" />
@@ -279,14 +340,37 @@
                         style="@style/SettingItemSummary"
                         tools:text="30 分钟" />
                 </LinearLayout>
+                <TextView
+                    android:id="@+id/feed_view_info"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:padding="15dp"
+                    android:textSize="14sp"
+                    android:textColor="@color/bluePrimary"
+                    android:gravity="center"
+                    android:visibility="gone"
+                    tools:visibility="visible"
+                    android:text="订阅源信息"
+                    android:background="?android:attr/selectableItemBackground"/>
+
+                <TextView
+                    android:id="@+id/feed_refetch"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:padding="15dp"
+                    android:textSize="14sp"
+                    android:textColor="@color/bluePrimary"
+                    android:gravity="center"
+                    android:visibility="gone"
+                    tools:visibility="visible"
+                    android:text="@string/refetch"
+                    android:background="?android:attr/selectableItemBackground"/>
 
                 <TextView
                     android:id="@+id/feed_view_rules"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="10dp"
-                    android:layout_marginBottom="10dp"
-                    android:padding="20dp"
+                    android:padding="15dp"
                     android:textSize="14sp"
                     android:textColor="@color/bluePrimary"
                     android:gravity="center"
@@ -329,6 +413,5 @@
         app:backgroundTint="@color/bluePrimary"
         app:contentScrim="@color/bluePrimary"
         app:layout_anchor="@id/feed_app_bar"
-        app:layout_anchorGravity="bottom|end"
-        />
+        app:layout_anchorGravity="bottom|end" />
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

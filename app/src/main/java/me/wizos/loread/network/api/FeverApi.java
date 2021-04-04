@@ -147,7 +147,7 @@ public class FeverApi extends AuthApi implements ILogin {
 
     @Override
     public void sync() {
-        long startSyncTimeMillis = System.currentTimeMillis();
+        long startSyncTimeMillis = App.i().getLastShowTimeMillis();
         String uid = App.i().getUser().getId();
         try {
 
@@ -259,7 +259,7 @@ public class FeverApi extends AuthApi implements ILogin {
                     articles.add(Converter.from(item, new Converter.ArticleConvertListener() {
                         @Override
                         public Article onEnd(Article article) {
-                            article.setCrawlDate(System.currentTimeMillis());
+                            article.setCrawlDate(App.i().getLastShowTimeMillis());
                             article.setUid(uid);
                             return article;
                         }
@@ -290,7 +290,7 @@ public class FeverApi extends AuthApi implements ILogin {
         App.i().isSyncing = false;
         handleDuplicateArticles(startSyncTimeMillis);
         updateCollectionCount();
-        handleCrawlDate2();
+        handleArticleInfo();
         LiveEventBus.get(SyncWorker.SYNC_PROCESS_FOR_SUBTITLE).post(null);
     }
 

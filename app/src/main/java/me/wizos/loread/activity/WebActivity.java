@@ -828,81 +828,6 @@ public class WebActivity extends BaseActivity implements WebBridge {
                         })
                         .show();
                 break;
-
-                //
-                // final ArrayList<String> uaTitle = new ArrayList<>();
-                // String holdUA = NetworkUserAgentConfig.i().getHoldUserAgent();
-                // uaTitle.add(getString(R.string.default_x));
-                // int i = 0;
-                // for (Map.Entry<String, String> entry : NetworkUserAgentConfig.i().getUserAgents().entrySet()) {
-                //     uaTitle.add(entry.getKey());
-                //     if(entry.getKey().equals(holdUA)){
-                //         selected = i;
-                //     }
-                //     i++;
-                //     XLog.i("被选UA：" + entry.getKey());
-                // }
-                //
-                // int finalSelected = selected;
-                // new MaterialDialog.Builder(WebActivity.this)
-                //         .title(R.string.select_user_agent)
-                //         .items(uaTitle)
-                //         .itemsCallbackSingleChoice(selected + 1, new MaterialDialog.ListCallbackSingleChoice() {
-                //             @Override
-                //             public boolean onSelection(MaterialDialog dialog, View view, final int which, CharSequence text) {
-                //                 // 默认
-                //                 if (which == 0) {
-                //                     NetworkUserAgentConfig.i().setHoldUserAgent(null);
-                //                 }
-                //                 // 手动选择项
-                //                 else if (which - 1 != finalSelected) {
-                //                     NetworkUserAgentConfig.i().setHoldUserAgent(text.toString());
-                //
-                //                 }
-                //                 NetworkUserAgentConfig.i().save();
-                //                 agentWeb.getWebCreator().getWebView().getSettings().setUserAgentString(NetworkUserAgentConfig.i().guessUserAgentByUrl(receivedUrl));
-                //                 agentWeb.getWebCreator().getWebView().reload();
-                //                 // XLog.i("默认的UA是：" + agentWeb.getWebCreator().getWebView().getSettings().getUserAgentString() );
-                //                 dialog.dismiss();
-                //                 return true;
-                //             }
-                //         })
-                //         .neutralText(R.string.custom_user_agent)
-                //         .onNeutral(new MaterialDialog.SingleButtonCallback() {
-                //             @Override
-                //             public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
-                //                 new MaterialDialog.Builder(WebActivity.this)
-                //                         .title(R.string.enter_user_agent)
-                //                         .inputType(InputType.TYPE_CLASS_TEXT)
-                //                         .inputRange(12, 200)
-                //                         .input(null, agentWeb.getWebCreator().getWebView().getSettings().getUserAgentString(), new MaterialDialog.InputCallback() {
-                //                             @Override
-                //                             public void onInput(@NotNull MaterialDialog dialog, CharSequence input) {
-                //                                 NetworkUserAgentConfig.i().setHoldUserAgent(getString(R.string.custom));
-                //                                 NetworkUserAgentConfig.i().getUserAgents().put(getString(R.string.custom),input.toString());
-                //                                 NetworkUserAgentConfig.i().save();
-                //                                 XLog.i("当前输入的是：" + input.toString());
-                //                                 agentWeb.getWebCreator().getWebView().getSettings().setUserAgentString(NetworkUserAgentConfig.i().guessUserAgentByUrl(receivedUrl));
-                //                                 agentWeb.getWebCreator().getWebView().reload();
-                //                             }
-                //                         })
-                //                         .positiveText(R.string.confirm)
-                //                         .negativeText(android.R.string.cancel)
-                //                         .neutralText(R.string.remove_custom_user_agent)
-                //                         .neutralColor(WebActivity.this.getResources().getColor(R.color.material_red_400))
-                //                         .onNeutral(new MaterialDialog.SingleButtonCallback() {
-                //                             @Override
-                //                             public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
-                //                                 NetworkUserAgentConfig.i().setHoldUserAgent(getString(R.string.custom));
-                //                                 NetworkUserAgentConfig.i().getUserAgents().remove(getString(R.string.custom));
-                //                                 NetworkUserAgentConfig.i().save();
-                //                             }
-                //                         })
-                //                         .show();
-                //             }
-                //         })
-                //         .show();
-                // break;
             case R.id.web_menu_open_by_sys:
                 Intent intent = new Intent(Intent.ACTION_VIEW);
                 if (!TextUtils.isEmpty(receivedUrl)) {
@@ -924,15 +849,18 @@ public class WebActivity extends BaseActivity implements WebBridge {
                     mClipData = ClipData.newRawUri(agentWeb.getWebCreator().getWebView().getTitle(), Uri.parse(originalUrl));
                 }
                 // 将ClipData内容放到系统剪贴板里。
-                cm.setPrimaryClip(mClipData);
-                ToastUtils.show(getString(R.string.copy_success));
+                if(cm != null){
+                    cm.setPrimaryClip(mClipData);
+                    ToastUtils.show(R.string.copy_success);
+                }else {
+                    ToastUtils.show(R.string.copy_failure);
+                }
                 break;
             case R.id.web_menu_share:
                 Intent sendIntent = new Intent(Intent.ACTION_SEND);
                 sendIntent.setType("text/plain");
                 sendIntent.putExtra(Intent.EXTRA_SUBJECT, mToolbar.getTitle());
-                // sendIntent.putExtra(Intent.EXTRA_TEXT, mToolbar.getTitle() + " " +  webViewS.getUrl() );
-                sendIntent.putExtra(Intent.EXTRA_TEXT, mToolbar.getTitle() + " " + agentWeb.getWebCreator().getWebView().getUrl());
+                sendIntent.putExtra(Intent.EXTRA_TEXT, StringUtils.join(" ", mToolbar.getTitle(), agentWeb.getWebCreator().getWebView().getUrl()));
                 sendIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 startActivity(Intent.createChooser(sendIntent, getString(R.string.share_to)));
                 overridePendingTransition(R.anim.fade_in, R.anim.out_from_bottom);

@@ -8,6 +8,8 @@
 package me.wizos.loread.bean;
 
 
+import android.util.ArrayMap;
+
 import com.rometools.rome.feed.synd.SyndEntry;
 import com.rometools.rome.feed.synd.SyndFeed;
 
@@ -15,6 +17,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import me.wizos.loread.bean.jsonfeed.JsonFeed;
 import me.wizos.loread.bean.jsonfeed.JsonItem;
@@ -29,22 +32,30 @@ public class FeedEntries {
     Feed feed;
     List<FeedCategory> feedCategories;
     List<Article> articles;
+    Map<String, Article> articleMap;
 
-
-    public void from(Feed feed, SyndFeed remoteFeed) {
+    public void from(Feed feed, SyndFeed remoteFeed, Converter.ArticleConvertListener convertListener) {
         this.feed = Converter.updateFrom(feed, remoteFeed);
         this.articles = new ArrayList<>(remoteFeed.getEntries().size());
+        this.articleMap = new ArrayMap<>(remoteFeed.getEntries().size());
+        Article article;
         for (SyndEntry entry: remoteFeed.getEntries()){
-            articles.add( Converter.from(feed.getUid(), feed.getId(), feed.getTitle(), entry) );
+            article = Converter.from(feed, entry, convertListener);
+            articles.add(article);
+            articleMap.put(article.getId(), article);
         }
         success = true;
     }
 
-    public void from(Feed feed, JsonFeed remoteFeed) {
+    public void from(Feed feed, JsonFeed remoteFeed, Converter.ArticleConvertListener convertListener) {
         this.feed = Converter.updateFrom(feed, remoteFeed);
         this.articles = new ArrayList<>(remoteFeed.getItems().size());
+        this.articleMap = new ArrayMap<>(remoteFeed.getItems().size());
+        Article article;
         for (JsonItem entry: remoteFeed.getItems()){
-            articles.add( Converter.from(feed.getUid(), feed.getId(), feed.getTitle(), entry) );
+            article = Converter.from(feed.getUid(), feed.getId(), feed.getTitle(), entry, convertListener);
+            articles.add(article);
+            articleMap.put(article.getId(), article);
         }
         success = true;
     }
@@ -82,6 +93,9 @@ public class FeedEntries {
         this.articles = articleList;
     }
 
+    public Map<String, Article> getArticleMap() {
+        return articleMap;
+    }
 
     @NotNull
     @Override
@@ -91,6 +105,7 @@ public class FeedEntries {
                 ", feed=" + feed +
                 ", feedCategories=" + feedCategories +
                 ", articles=" + articles +
+                ", articleMap=" + articleMap +
                 '}';
     }
 }

@@ -106,6 +106,7 @@
     <string name="step_sync_article_size">%1$s 同步文章 [%2$d]</string>
     <string name="step_sync_article_refs">%1$s 同步文章信息</string>
     <string name="fetch_article_full_content">抓取文章全文</string>
+    <string name="execute_rules">执行规则</string>
 
     <plurals name="articles_count">
         <item quantity="other">%1$d 篇文章</item>
@@ -135,6 +136,7 @@
     <string name="provider_response_code">%1$s 响应码 %2$d</string>
     <string name="response_code">响应码 %1$d</string>
 
+    <string name="article_link_is_wrong_with_reason">文章链接错误：%1$s</string>
     <string name="return_data_exception">返回数据异常</string>
 
     <string name="provider_return_data_exception">%1$s 返回数据异常</string>
@@ -268,6 +270,12 @@
     <string name="view_rule">查看规则</string>
     <string name="action">动作</string>
     <string name="execute">执行</string>
+    <string name="refetch">重新抓取</string>
+    <string name="fetching">抓取中</string>
+    <string name="fetch_success">抓取成功</string>
+    <string name="fetch_success_with_reason">抓取成功：%1$d 篇</string>
+    <string name="fetch_failed">抓取失败</string>
+    <string name="fetch_failed_with_reason">抓取失败：%1$s</string>
 
     <string name="mark_read">标为已读</string>
     <string name="mark_star">添加星标</string>
@@ -409,7 +417,7 @@
 
     <string name="get_readability_ing">正在抓取全文</string>
     <string name="get_readability_success">抓取成功</string>
-    <string name="get_readability_failure">抓取失败：%1$s</string>
+    <string name="get_readability_failure_with_reason">抓取失败：%1$s</string>
     <string name="cancel_readability">已取消展示抓取的全文</string>
 
 
@@ -417,6 +425,7 @@
     <string name="music_time">0:00</string>
     <string name="music_speed">1.0</string>
 
+    <string name="edit">编辑</string>
     <string name="edit_name">编辑名称</string>
     <string name="search">搜索</string>
     <string name="bag_network_please_check_it">网络不好，请重试一下</string>
@@ -435,6 +444,7 @@
     <string name="open_by_inner">内部打开</string>
 
     <string name="copy_success">复制成功</string>
+    <string name="copy_failure">复制失败</string>
 
 
     <string name="subscribe">订阅</string>
@@ -539,6 +549,8 @@
     <string name="open_with">打开方式</string>
 
     <string name="feed_desc">简介</string>
+    <string name="article_count">文章数量</string>
+    <string name="article_count_detail">全部 %1$d, 未读 %2$d, 收藏 %3$d</string>
     <string name="site_url">站点网址</string>
     <string name="feed_url">订阅网址</string>
     <string name="feed_name">订阅源名称</string>
@@ -624,4 +636,6 @@
     <string name="is_not_an_apk_file">不是 apk 文件！</string>
     <string name="no_search_results_found">未搜索到任何结果</string>
     <string name="no_articles">没有文章了</string>
+
+    <string name="the_feeds_in_the_category_will_be_deleted_together">分类中的源将被一并删除</string>
 </resources>

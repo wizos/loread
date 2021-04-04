@@ -4,6 +4,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
 import android.util.ArrayMap;
+import android.webkit.WebSettings;
 
 import androidx.annotation.NonNull;
 
@@ -22,6 +23,7 @@ import java.util.Map;
 import java.util.regex.Pattern;
 
 import me.wizos.loread.App;
+import me.wizos.loread.Contract;
 import me.wizos.loread.R;
 import me.wizos.loread.network.HttpClientManager;
 import me.wizos.loread.utils.DataUtils;
@@ -52,7 +54,6 @@ public class RSSSeeker {
     public RSSSeeker(@NotNull String url, @NotNull Listener callback) {
         this.url = url;
         this.okHttpClient = HttpClientManager.i().searchClient();
-        this.okHttpClient.dispatcher().setMaxRequests(10);
         this.dispatcher = new Listener() {
             @Override
             public void onResponse(ArrayMap<String, String> rssMap) {
@@ -96,7 +97,9 @@ public class RSSSeeker {
     public void start() {
         XLog.i("开始用 OkHttp 获取全文：" + url );
         handler.sendEmptyMessageDelayed(TIMEOUT, TIMEOUT);
-        okHttpClient.newCall(new Request.Builder().url(url).tag(TAG).build()).enqueue(new Callback() {
+        Request.Builder request = new Request.Builder().url(url).tag(TAG);
+        request.header(Contract.USER_AGENT, WebSettings.getDefaultUserAgent(App.i()));
+        okHttpClient.newCall(request.build()).enqueue(new Callback() {
             @Override
             public void onFailure(@NotNull Call call, @NotNull IOException e) {
                 if(call.isCanceled()){

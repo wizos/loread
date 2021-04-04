@@ -11,6 +11,7 @@ import android.text.TextUtils;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebResourceResponse;
+import android.webkit.WebSettings;
 import android.webkit.WebView;
 
 import androidx.annotation.NonNull;
@@ -35,6 +36,7 @@ import javax.script.Bindings;
 import javax.script.SimpleBindings;
 
 import me.wizos.loread.App;
+import me.wizos.loread.Contract;
 import me.wizos.loread.R;
 import me.wizos.loread.config.HostBlockConfig;
 import me.wizos.loread.config.article_extract.ArticleExtractConfig;
@@ -42,11 +44,11 @@ import me.wizos.loread.config.article_extract.ArticleExtractRule;
 import me.wizos.loread.config.url_rewrite.UrlRewriteConfig;
 import me.wizos.loread.log.Console;
 import me.wizos.loread.network.HttpClientManager;
-import me.wizos.loread.utils.ArticleUtils;
 import me.wizos.loread.utils.DataUtils;
 import me.wizos.loread.utils.HttpCall;
 import me.wizos.loread.utils.ScriptUtils;
 import me.wizos.loread.utils.StringUtils;
+import me.wizos.loread.utils.UriUtils;
 import me.wizos.loread.view.webview.WebViewS;
 import okhttp3.Call;
 import okhttp3.Callback;
@@ -69,7 +71,7 @@ public class Distill {
     private Call call;
     private WebViewS webViewS;
     private Handler handler;
-    private Document document;
+    private Document doc;
 
     private boolean isCancel = false;
     private boolean isRunning = false;
@@ -80,9 +82,9 @@ public class Distill {
         this.keyword = keyword;
         this.dispatcher = new Listener() {
             @Override
-            public void onResponse(String content) {
+            public void onResponse(ExtractPage page) {
                 handler.removeMessages(TIMEOUT);
-                if(!isCancel) callback.onResponse(content);
+                if(!isCancel) callback.onResponse(page);
                 handler.post(() -> destroy());
             }
 
@@ -100,11 +102,11 @@ public class Distill {
                 if(msg.what != TIMEOUT){
                     return false; //返回true 不对msg进行进一步处理
                 }
-                if(document == null){
+                if(doc == null){
                     dispatcher.onFailure(App.i().getString(R.string.timeout));
                 }else {
                     try {
-                        readability(document);
+                        readability(doc);
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
@@ -118,8 +120,16 @@ public class Distill {
     public void getContent(){
         isRunning = true;
         handler.sendEmptyMessageDelayed(TIMEOUT, TIMEOUT);
-        Request request = new Request.Builder().url(url).tag(TAG).build();
-        call = HttpClientManager.i().searchClient().newCall(request);
+        if(!UriUtils.isHttpOrHttpsUrl(url)){
+            dispatcher.onFailure(App.i().getString(R.string.article_link_is_wrong_with_reason, url));
+            return;
+        }
+        // Request request = new Request.Builder().url(url).tag(TAG).build();
+        Request.Builder request = new Request.Builder().url(url).tag(TAG);
+        request.header(Contract.USER_AGENT, WebSettings.getDefaultUserAgent(App.i()));
+
+        call = HttpClientManager.i().searchClient().newCall(request.build());
+
 
         XLog.d("开始用 OkHttp 获取全文");
         call.enqueue(new Callback() {
@@ -152,13 +162,13 @@ public class Distill {
                 if( mediaType != null ){
                     charset = DataUtils.getCharsetFromContentType(mediaType.toString());
                 }
-                document = Jsoup.parse(responseBody.byteStream(), charset, url);
+                doc = Jsoup.parse(responseBody.byteStream(), charset, url);
                 // document.getElementsByTag("script").remove();
                 XLog.w("OkHttp 获取全文成功：" + keyword + " = " );
-                if(!document.body().text().contains(keyword)){
+                if(!doc.body().text().contains(keyword)){
                     getByWebView();
                 }else {
-                    readability(document);
+                    readability(doc);
                 }
                 response.close();
             }
@@ -198,16 +208,54 @@ public class Distill {
         if(!StringUtils.isEmpty(originalUrl)){
             url = originalUrl;
         }
-        ExtractPage extractPage =  getContentWithKeyword(url, doc, keyword);
+        ExtractPage extractPage =  getArticles(url, doc, keyword);
         // XLog.e("获取易读，原文：" + content);
         if(!StringUtils.isEmpty(extractPage.getMsg())){
-            dispatcher.onFailure( extractPage.getMsg() );
+            dispatcher.onFailure(extractPage.getMsg());
         }else if(StringUtils.isEmpty(extractPage.getContent())){
             dispatcher.onFailure( App.i().getString(R.string.no_text_found) );
         }else {
-            dispatcher.onResponse( ArticleUtils.getOptimizedContent(url, extractPage.getContent()) );
+            dispatcher.onResponse(extractPage);
+            // ArticleUtils.getOptimizedContent(url, extractPage.getContent())
         }
     }
+
+    /*输入Jsoup的Document，获取正文文本*/
+    public ExtractPage getArticles(String url, Document doc, String keyword) throws MalformedURLException {
+        URL uri = new URL(url);
+        ArticleExtractRule rule;
+        String content = null;
+        ExtractPage extractPage = null;
+        rule = ArticleExtractConfig.i().getRule(uri.getHost(),doc);
+        XLog.i("抓取规则："  + uri.getHost() + " ==  " + rule );
+        try {
+            if(rule == null){
+                extractPage = new Extractor(doc).getNews(keyword);
+                if(StringUtils.isEmpty(extractPage.getContent())){
+                    extractPage.setMsg(App.i().getString(R.string.no_text_found));
+                }else {
+                    ArticleExtractConfig.i().saveRuleByHost(doc, uri, extractPage.getContentElement().cssSelector());
+                }
+            }else {
+                content = getContentByRule(uri, doc, rule);
+                extractPage = new Extractor(doc).getNews(keyword);
+                XLog.d("获取到的内容：" + content);
+                if(!StringUtils.isEmpty(content)){
+                    extractPage.setContent(content);
+                }
+                if(StringUtils.isEmpty(extractPage.getContent())){
+                    extractPage.setMsg(App.i().getString(R.string.no_text_found_by_rule_and_extractor, uri.getHost()));
+                }
+            }
+        }catch (Exception e){
+            XLog.e("异常：" + e.getMessage());
+            e.printStackTrace();
+            extractPage = new ExtractPage();
+            extractPage.setMsg(App.i().getString(R.string.get_readability_failure_with_reason, e.getMessage()));
+        }
+        return extractPage;
+    }
+
     /*输入Jsoup的Document，获取正文文本*/
     public ExtractPage getContentWithKeyword(String url, Document doc, String keyword) throws MalformedURLException {
         URL uri = new URL(url);
@@ -244,15 +292,7 @@ public class Distill {
                     if(StringUtils.isEmpty(content)){
                         extractPage.setMsg(App.i().getString(R.string.no_text_found_by_rule_and_extractor, uri.getHost()));
                     }
-                    // else {
-                    //     try {
-                    //         ArticleExtractConfig.i().saveRuleByHost(doc, uri, newDoc.cssSelector());
-                    //     }catch (Selector.SelectorParseException | NullPointerException e){
-                    //         e.printStackTrace();
-                    //     }
-                    // }
                 }
-                // extractPage.setMsg(App.i().getString(R.string.no_text_found_by_rule, uri.getHost()));
             }
         }
         extractPage.setContent(content);
@@ -381,8 +421,9 @@ public class Distill {
         }
     }
     public interface Listener {
-        void onResponse(String content);
+        void onResponse(ExtractPage page);
         void onFailure(String msg);
+        // void onResponse(String content);
         // void onTimeout();
         // void onNotResponse();
         // void onNoTextFound();

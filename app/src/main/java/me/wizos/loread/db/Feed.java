@@ -208,8 +208,8 @@ public class Feed {
                 ", state=" + state +
                 ", syncInterval=" + syncInterval +
                 ", lastSyncTime=" + lastSyncTime +
-                ", lastSyncError='" + lastSyncError + '\'' +
                 ", lastErrorCount=" + lastErrorCount +
+                ", lastSyncError='" + lastSyncError + '\'' +
                 '}';
     }
 }

@@ -1,8 +1,12 @@
 package me.wizos.loread.utils;
 
+import android.os.AsyncTask;
+
 import androidx.sqlite.db.SimpleSQLiteQuery;
 
 import com.elvishew.xlog.XLog;
+
+import org.jetbrains.annotations.NotNull;
 
 import java.text.Collator;
 import java.util.ArrayList;
@@ -42,106 +46,22 @@ public class TriggerRuleUtils {
      */
     public static void exeAllRules(String uid, long minCrawlTimeMillis){
         List<TriggerRule> triggerRules = CoreDB.i().triggerRuleDao().getRules(uid);
-        XLog.i("执行 triggerRules 规则：");
-        for (TriggerRule triggerRule:triggerRules){
-            exeRule(uid, minCrawlTimeMillis, triggerRule);
-        }
-    }
-
-    public static void exeRules(String uid, long minCrawlTimeMillis, List<TriggerRule> triggerRules){
-        XLog.i("执行 triggerRules 规则：");
-        for (TriggerRule triggerRule:triggerRules){
-            exeRule(uid, minCrawlTimeMillis, triggerRule);
-        }
+        XLog.i("执行 triggerRules 规则：" + minCrawlTimeMillis);
+        AsyncTask.THREAD_POOL_EXECUTOR.execute(new Runnable() {
+            @Override
+            public void run() {
+                for (TriggerRule triggerRule:triggerRules){
+                    exeRule(uid, minCrawlTimeMillis, triggerRule);
+                }
+            }
+        });
     }
 
     /**
      * 执行规则
      * TODO: 2021/1/30 还有正则没有支持
      */
-    public static void exeRule2(String uid, long crawlTimeMillis, TriggerRule triggerRule){
-        Set<String> txtSet = new HashSet<>();
-        txtSet.add("title");
-        txtSet.add("content");
-        txtSet.add("author");
-
-        Set<String> numberSet = new HashSet<>();
-        numberSet.add("pictures");
-        numberSet.add("audios");
-        numberSet.add("videos");
-
-        if(Contract.TYPE_GLOBAL.equals(triggerRule.getScope().getType())){
-            List<Condition> conditions = triggerRule.getConditions();
-            Set<String> conditionSet = new HashSet<>();
-            for (Condition condition:conditions) {
-                joinTextConditions(txtSet, numberSet, condition, conditionSet);
-            }
-
-            // XLog.i("条件 为：" + conditionSet);
-            if(conditionSet.size() == 0){
-                return;
-            }
-
-            SimpleSQLiteQuery query = new SimpleSQLiteQuery("SELECT article.id FROM article WHERE uid = '" + uid + "' AND crawlDate >= " + crawlTimeMillis + " AND " + StringUtils.join(" and ", conditionSet));
-            List<String> articleIds = CoreDB.i().articleDao().getActionRuleArticleIds(query);
-
-            doActionWithArticles(articleIds, triggerRule.getActions());
-            // XLog.i("文章结果 为：" + query.getSql() + " == " + articleIds.size());
-        }else if(Contract.TYPE_CATEGORY.equals(triggerRule.getScope().getType())){
-            List<Condition> conditions = triggerRule.getConditions();
-            Set<String> conditionSet = new HashSet<>();
-            for (Condition condition:conditions) {
-                joinTextConditions(txtSet, numberSet, condition, conditionSet);
-            }
-
-            // XLog.i("条件 为：" + conditionSet);
-            if(conditionSet.size() == 0){
-                return;
-            }
-
-            String categoryId = triggerRule.getScope().getTarget();
-            SimpleSQLiteQuery query = new SimpleSQLiteQuery("SELECT article.id FROM article LEFT JOIN FeedCategory ON (article.uid = FeedCategory.uid AND article.feedId = FeedCategory.feedId) WHERE article.uid = '" + uid + "' AND article.crawlDate >= " + crawlTimeMillis + " AND FeedCategory.categoryId = '" + categoryId + "' AND " + StringUtils.join(" AND ", conditionSet));
-            List<String> articleIds = CoreDB.i().articleDao().getActionRuleArticleIds(query);
-
-            doActionWithArticles(articleIds, triggerRule.getActions());
-            // XLog.i("文章结果 为：" + query.getSql() + " == " + articleIds.size());
-        }else if(Contract.TYPE_FEED.equals(triggerRule.getScope().getType())){
-            List<Condition> conditions = triggerRule.getConditions();
-            Set<String> conditionSet = new HashSet<>();
-            for (Condition condition:conditions) {
-                joinTextConditions(txtSet, numberSet, condition, conditionSet);
-            }
-
-            // XLog.i("条件 为：" + conditionSet);
-            if(conditionSet.size() == 0){
-                return;
-            }
-
-            String feedId = triggerRule.getScope().getTarget();
-            SimpleSQLiteQuery query = new SimpleSQLiteQuery("SELECT article.id FROM article LEFT JOIN Feed ON (article.uid = Feed.uid AND article.feedId = Feed.id) WHERE article.uid = '" + uid + "' AND article.crawlDate >= " + crawlTimeMillis + " AND Feed.id = '" + feedId + "' AND " + StringUtils.join(" AND ", conditionSet));
-            List<String> articleIds = CoreDB.i().articleDao().getActionRuleArticleIds(query);
-
-            doActionWithArticles(articleIds, triggerRule.getActions());
-            // XLog.i("文章结果 为：" + query.getSql() + " == " + articleIds.size());
-        }
-    }
-
-
-    /**
-     * 执行规则
-     * TODO: 2021/1/30 还有正则没有支持
-     */
-    public static int exeRule(String uid, long crawlTimeMillis, TriggerRule triggerRule){
-        Set<String> txtSet = new HashSet<>();
-        txtSet.add("title");
-        txtSet.add("content");
-        txtSet.add("author");
-
-        Set<String> numberSet = new HashSet<>();
-        numberSet.add("pictures");
-        numberSet.add("audios");
-        numberSet.add("videos");
-
+    public static void exeRule(String uid, long crawlTimeMillis, TriggerRule triggerRule){
         List<String> articleIds;
         SimpleSQLiteQuery query;
 
@@ -149,12 +69,12 @@ public class TriggerRuleUtils {
             List<Condition> conditions = triggerRule.getConditions();
             Set<String> conditionSet = new HashSet<>();
             for (Condition condition:conditions) {
-                joinTextConditions(txtSet, numberSet, condition, conditionSet);
+                joinTextConditions(condition, conditionSet);
             }
 
             // XLog.i("条件 为：" + conditionSet);
             if(conditionSet.size() == 0){
-                return 0;
+                return;
             }
 
             query = new SimpleSQLiteQuery("SELECT article.id FROM article WHERE uid = '" + uid + "' AND crawlDate >= " + crawlTimeMillis + " AND " + StringUtils.join(" and ", conditionSet));
@@ -162,12 +82,12 @@ public class TriggerRuleUtils {
             List<Condition> conditions = triggerRule.getConditions();
             Set<String> conditionSet = new HashSet<>();
             for (Condition condition:conditions) {
-                joinTextConditions(txtSet, numberSet, condition, conditionSet);
+                joinTextConditions(condition, conditionSet);
             }
 
             // XLog.i("条件 为：" + conditionSet);
             if(conditionSet.size() == 0){
-                return 0;
+                return;
             }
 
             String categoryId = triggerRule.getScope().getTarget();
@@ -176,26 +96,27 @@ public class TriggerRuleUtils {
             List<Condition> conditions = triggerRule.getConditions();
             Set<String> conditionSet = new HashSet<>();
             for (Condition condition:conditions) {
-                joinTextConditions(txtSet, numberSet, condition, conditionSet);
+                joinTextConditions(condition, conditionSet);
             }
 
             // XLog.i("条件 为：" + conditionSet);
             if(conditionSet.size() == 0){
-                return 0;
+                return;
             }
 
             String feedId = triggerRule.getScope().getTarget();
             query = new SimpleSQLiteQuery("SELECT article.id FROM article LEFT JOIN Feed ON (article.uid = Feed.uid AND article.feedId = Feed.id) WHERE article.uid = '" + uid + "' AND article.crawlDate >= " + crawlTimeMillis + " AND Feed.id = '" + feedId + "' AND " + StringUtils.join(" AND ", conditionSet));
         }else {
-            return 0;
+            return;
         }
         articleIds = CoreDB.i().articleDao().getActionRuleArticleIds(query);
+
         doActionWithArticles(articleIds, triggerRule.getActions());
         // XLog.i("文章结果 为：" + query.getSql() + " == " + articleIds.size());
-        return articleIds.size();
+        // return articleIds.size();
     }
 
-    private static void joinTextConditions(Set<String> txtSet, Set<String> numberSet, Condition condition, Set<String> conditionSet){
+    private static void joinTextConditions(Condition condition, Set<String> conditionSet){
         String[] keywords = condition.getValue().split("\\|");
         Set<String> subConditionSet = new HashSet<>();
 
@@ -246,19 +167,9 @@ public class TriggerRuleUtils {
             for(int i=0, size=Integer.parseInt(condition.getValue()) + 1; i<size; i++){
                 slices.add(keyword);
             }
-            // if(slices.size() == 0){
-            //     slices.add(keyword);
-            // }
             if(">".equals(condition.getJudge())){
                 conditionSet.add( "( article.content like '%" + StringUtils.join("%", slices) + "%')");
             }else if("<=".equals(condition.getJudge())){
-                // ArrayList<String> slice = new ArrayList<>();
-                // for(int i=0, size=Integer.parseInt(condition.getValue()) + 1; i<size; i++){
-                //     slice.add(keyword);
-                // }
-                // if(slice.size() == 0){
-                //     slice.add(keyword);
-                // }
                 conditionSet.add( "( article.content not like '%" + StringUtils.join("%", slices) + "%')");
             }
         }
@@ -324,8 +235,6 @@ public class TriggerRuleUtils {
         return needActionArticleIds;
     }
 
-
-
     private static List<String> getArticleIdsWithRegexp(String uid, List<String> inArticleIds, Condition condition, boolean match){
         int totalSize = inArticleIds.size(); // 总记录数
         int pageSize = Math.min(50, totalSize); // 每页N条
@@ -368,20 +277,17 @@ public class TriggerRuleUtils {
             return;
         }
         XLog.i("预计有 " + articleIds.size() + " 份文章被处理为：" + actions);
-        int needCount = articleIds.size();
-        int hadCount = 0;
-        int num = 0;
-        List<String> subArticleIds;
-        List<String> handlingArticleIds;
         String uid = App.i().getUser().getId();
-
-        while (needCount > 0) {
-            num = Math.min(50, needCount);
-            subArticleIds = articleIds.subList(hadCount, hadCount + num);
-            for (Action action:actions) {
-                if(action.getAction().equals(Contract.MARK_READ)){
-                    handlingArticleIds = CoreDB.i().articleDao().getUnreadOrUnreadingArticleIds(uid,subArticleIds);
-                    if(handlingArticleIds.size() != 0){
+        PagingUtils.slice(articleIds, 50, new PagingUtils.PagingListener<String>() {
+            @Override
+            public void onPage(@NotNull List<String> subArticleIds) {
+                List<String> handlingArticleIds;
+                for (Action action:actions) {
+                    if(action.getAction().equals(Contract.MARK_READ)){
+                        handlingArticleIds = CoreDB.i().articleDao().getUnreadOrUnreadingArticleIds(uid, subArticleIds);
+                        if(handlingArticleIds.size() == 0){
+                            continue;
+                        }
                         List<String> finalHandlingArticleIds = handlingArticleIds;
                         App.i().getApi().markArticleListReaded(handlingArticleIds, new CallbackX() {
                             @Override
@@ -394,31 +300,76 @@ public class TriggerRuleUtils {
                             }
                         });
                         XLog.d("以下文章被处理为：mark read "  + handlingArticleIds);
-                    }
-                }
+                    }else if(action.getAction().equals(Contract.MARK_STAR)){
+                        handlingArticleIds = CoreDB.i().articleDao().getUnStarArticleIds(uid,subArticleIds);
+                        XLog.d("以下文章被处理为：mark star "  + handlingArticleIds);
+                        for (String articleId:handlingArticleIds) {
+                            App.i().getApi().markArticleStared(articleId, new CallbackX() {
+                                @Override
+                                public void onSuccess(Object result) {
+                                }
 
-                if(action.getAction().equals(Contract.MARK_STAR)){
-                    handlingArticleIds = CoreDB.i().articleDao().getUnStarArticleIds(uid,subArticleIds);
-                    for (String articleId:handlingArticleIds) {
-                        App.i().getApi().markArticleStared(articleId, new CallbackX() {
-                            @Override
-                            public void onSuccess(Object result) {
-                            }
-
-                            @Override
-                            public void onFailure(Object error) {
-                                List<String> id = new ArrayList<>();
-                                id.add(articleId);
-                                CoreDB.i().articleDao().markArticlesUnStar(uid, id);
-                            }
-                        });
+                                @Override
+                                public void onFailure(Object error) {
+                                    List<String> id = new ArrayList<>();
+                                    id.add(articleId);
+                                    CoreDB.i().articleDao().markArticlesUnStar(uid, id);
+                                }
+                            });
+                        }
+                        CoreDB.i().articleDao().markArticlesStar(uid, handlingArticleIds);
                     }
-                    CoreDB.i().articleDao().markArticlesStar(uid, handlingArticleIds);
                 }
             }
+        });
 
-            hadCount = hadCount + num;
-            needCount = articleIds.size() - hadCount;
-        }
+        // int needCount = articleIds.size();
+        // int hadCount = 0;
+        // int num = 0;
+        // while (needCount > 0) {
+        //     num = Math.min(50, needCount);
+        //     subArticleIds = articleIds.subList(hadCount, hadCount + num);
+        //     for (Action action:actions) {
+        //         if(action.getAction().equals(Contract.MARK_READ)){
+        //             handlingArticleIds = CoreDB.i().articleDao().getUnreadOrUnreadingArticleIds(uid,subArticleIds);
+        //             if(handlingArticleIds.size() != 0){
+        //                 List<String> finalHandlingArticleIds = handlingArticleIds;
+        //                 App.i().getApi().markArticleListReaded(handlingArticleIds, new CallbackX() {
+        //                     @Override
+        //                     public void onSuccess(Object result) {
+        //                         CoreDB.i().articleDao().markArticlesRead(App.i().getUser().getId(), finalHandlingArticleIds);
+        //                     }
+        //
+        //                     @Override
+        //                     public void onFailure(Object error) {
+        //                     }
+        //                 });
+        //                 XLog.d("以下文章被处理为：mark read "  + handlingArticleIds);
+        //             }
+        //         }
+        //
+        //         if(action.getAction().equals(Contract.MARK_STAR)){
+        //             handlingArticleIds = CoreDB.i().articleDao().getUnStarArticleIds(uid,subArticleIds);
+        //             for (String articleId:handlingArticleIds) {
+        //                 App.i().getApi().markArticleStared(articleId, new CallbackX() {
+        //                     @Override
+        //                     public void onSuccess(Object result) {
+        //                     }
+        //
+        //                     @Override
+        //                     public void onFailure(Object error) {
+        //                         List<String> id = new ArrayList<>();
+        //                         id.add(articleId);
+        //                         CoreDB.i().articleDao().markArticlesUnStar(uid, id);
+        //                     }
+        //                 });
+        //             }
+        //             CoreDB.i().articleDao().markArticlesStar(uid, handlingArticleIds);
+        //         }
+        //     }
+        //
+        //     hadCount = hadCount + num;
+        //     needCount = articleIds.size() - hadCount;
+        // }
     }
 }

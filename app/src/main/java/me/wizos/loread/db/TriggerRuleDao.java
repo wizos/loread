@@ -18,9 +18,6 @@ import me.wizos.loread.db.rule.TriggerRule;
 
 @Dao
 public interface TriggerRuleDao {
-    @Query("SELECT * FROM Scope WHERE uid = :uid group by target ORDER BY CASE WHEN type = 'global' THEN 0 WHEN type = 'category' THEN 1 ELSE 2 END, target COLLATE NOCASE ASC")
-    List<Scope> getTargetsSet(String uid);
-
     @Transaction
     @Query("SELECT * FROM Scope WHERE uid = :uid AND id = :id LIMIT 1")
     TriggerRule getRule(String uid, long id);

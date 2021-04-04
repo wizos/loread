@@ -220,7 +220,7 @@ public class FeedlyApi extends OAuthApi {
 
     @Override
     public void sync() {
-        long startSyncTimeMillis = System.currentTimeMillis(); //  + 3600_000
+        long startSyncTimeMillis = App.i().getLastShowTimeMillis(); //  + 3600_000
         String uid = App.i().getUser().getId();
         try {
             XLog.e("3 - 同步订阅源信息");
@@ -299,7 +299,7 @@ public class FeedlyApi extends OAuthApi {
             fetchArticle(allSize, 0, new ArrayList<>(refsList.get(0)), new Converter.ArticleConvertListener() {
                 @Override
                 public Article onEnd(Article article) {
-                    article.setCrawlDate(System.currentTimeMillis());
+                    article.setCrawlDate(App.i().getLastShowTimeMillis());
                     article.setReadStatus(App.STATUS_UNREAD);
                     article.setStarStatus(App.STATUS_UNSTAR);
                     article.setUid(uid);
@@ -310,7 +310,7 @@ public class FeedlyApi extends OAuthApi {
             fetchArticle(allSize, refsList.get(0).size(), new ArrayList<>(refsList.get(1)), new Converter.ArticleConvertListener() {
                 @Override
                 public Article onEnd(Article article) {
-                    article.setCrawlDate(System.currentTimeMillis());
+                    article.setCrawlDate(App.i().getLastShowTimeMillis());
                     article.setReadStatus(App.STATUS_READED);
                     article.setStarStatus(App.STATUS_STARED);
                     article.setUid(uid);
@@ -322,7 +322,7 @@ public class FeedlyApi extends OAuthApi {
             fetchArticle(allSize, refsList.get(0).size() + refsList.get(1).size(), new ArrayList<>(refsList.get(2)), new Converter.ArticleConvertListener() {
                 @Override
                 public Article onEnd(Article article) {
-                    article.setCrawlDate(System.currentTimeMillis());
+                    article.setCrawlDate(App.i().getLastShowTimeMillis());
                     article.setReadStatus(App.STATUS_UNSTAR);
                     article.setStarStatus(App.STATUS_STARED);
                     article.setUid(uid);
@@ -360,7 +360,7 @@ public class FeedlyApi extends OAuthApi {
 
         handleDuplicateArticles(startSyncTimeMillis);
         updateCollectionCount();
-        handleCrawlDate2();
+        handleArticleInfo();
         LiveEventBus.get(SyncWorker.SYNC_PROCESS_FOR_SUBTITLE).post( null );
     }
 

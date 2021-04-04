@@ -77,19 +77,19 @@ public class HttpClientManager {
                 .callTimeout(30, TimeUnit.SECONDS)
                 .sslSocketFactory(HttpsUtils.getSslSocketFactory().sSLSocketFactory, HttpsUtils.getSslSocketFactory().trustManager)
                 .hostnameVerifier(HttpsUtils.UnSafeHostnameVerifier)
-                .retryOnConnectionFailure(false)
+                // .retryOnConnectionFailure(true)
                 .followRedirects(true)
                 .followSslRedirects(true)
                 .addInterceptor(new RelyInterceptor())
                 .addInterceptor(new RefererInterceptor());
         simpleBuilder = new OkHttpClient.Builder()
-                .readTimeout(30, TimeUnit.SECONDS)
-                .writeTimeout(30, TimeUnit.SECONDS)
+                .readTimeout(60, TimeUnit.SECONDS)
+                .writeTimeout(60, TimeUnit.SECONDS)
                 .connectTimeout(15, TimeUnit.SECONDS)
-                .callTimeout(60, TimeUnit.SECONDS)
+                .callTimeout(120, TimeUnit.SECONDS)
                 .sslSocketFactory(HttpsUtils.getSslSocketFactory().sSLSocketFactory, HttpsUtils.getSslSocketFactory().trustManager)
                 .hostnameVerifier(HttpsUtils.UnSafeHostnameVerifier)
-                .retryOnConnectionFailure(false)
+                // .retryOnConnectionFailure(true)
                 .followRedirects(true)
                 .followSslRedirects(true)
                 .addInterceptor(new RelyInterceptor())
@@ -105,9 +105,11 @@ public class HttpClientManager {
                 // .addNetworkInterceptor(new DoraemonWeakNetworkInterceptor())
                 // 网络请求监控的拦截器
                 // .addInterceptor(new DoraemonInterceptor())
-                .retryOnConnectionFailure(false)
+                .retryOnConnectionFailure(true)
                 .followRedirects(true)
-                .followSslRedirects(true);
+                .followSslRedirects(true)
+                .addInterceptor(new RelyInterceptor())
+                .addInterceptor(new RefererInterceptor());
         tinyBuilder = new OkHttpClient.Builder()
                 .readTimeout(30, TimeUnit.SECONDS)
                 .writeTimeout(30, TimeUnit.SECONDS)
@@ -224,7 +226,7 @@ public class HttpClientManager {
             }
         }
         imageHttpClient.dispatcher().setMaxRequests(4);
-        // simpleOkHttpClient.dispatcher().setMaxRequests(5);
+        simpleOkHttpClient.dispatcher().setMaxRequests(6);
         searchHttpClient.dispatcher().setMaxRequests(5);
         smallOkHttpClient.dispatcher().setMaxRequests(5);
     }

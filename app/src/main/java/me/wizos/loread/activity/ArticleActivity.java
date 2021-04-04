@@ -106,6 +106,7 @@ import me.wizos.loread.db.CorePref;
 import me.wizos.loread.db.Feed;
 import me.wizos.loread.db.Tag;
 import me.wizos.loread.extractor.Distill;
+import me.wizos.loread.extractor.ExtractPage;
 import me.wizos.loread.network.HttpClientManager;
 import me.wizos.loread.network.callback.CallbackX;
 import me.wizos.loread.sniffer.SnifferUtils;
@@ -117,9 +118,9 @@ import me.wizos.loread.utils.DataUtils;
 import me.wizos.loread.utils.EncryptUtils;
 import me.wizos.loread.utils.FileUtils;
 import me.wizos.loread.utils.HttpsUtils;
-import me.wizos.loread.utils.ImageUtils;
 import me.wizos.loread.utils.ImgFileType;
 import me.wizos.loread.utils.ImgFileTypeJudge;
+import me.wizos.loread.utils.ImgUtils;
 import me.wizos.loread.utils.InputStreamCache;
 import me.wizos.loread.utils.ScreenUtils;
 import me.wizos.loread.utils.SnackbarUtils;
@@ -282,7 +283,7 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
                         downImage(articleId, imgId, originalUrl, false);
                     }
                 }else {
-                    if(ImageUtils.getImgType(new File(cacheUrl)) != null){
+                    if(ImgUtils.getImgType(new File(cacheUrl)) != null){
                         selectedWebView.loadUrl("javascript:setTimeout( onImageLoadSuccess('" + imgId + "','" + cacheUrl + "'),1)");
                     }else {
                         selectedWebView.loadUrl("javascript:setTimeout( onImageError('" + imgId + "'),1 )");
@@ -491,7 +492,7 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
         public void onSuccess(Response<File> response) {
             File tmpOriginalFile = response.body();
             // Boolean isImgOrSvg = ImageUtils.isImgOrSvg(tmpOriginalFile);
-            ImgFileType imgFileType = ImageUtils.getImgType(tmpOriginalFile);
+            ImgFileType imgFileType = ImgUtils.getImgType(tmpOriginalFile);
 
             if(imgFileType == null){
                 // tmpOriginalFile.renameTo(new File(originalFileDir + imgId + ".error"));
@@ -569,7 +570,7 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
 
                         @Override
                         public void onSuccess(final File file) {
-                            ImageUtils.mergeBitmap(weakReferenceContext, file, isGIF, new ImageUtils.OnMergeListener() {
+                            ImgUtils.mergeBitmap(weakReferenceContext, file, isGIF, new ImgUtils.OnMergeListener() {
                                 @Override
                                 public void onSuccess() {
                                     // XLog.d("图片合成成功" + Thread.currentThread());
@@ -985,12 +986,22 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
                 }
 
                 // 内容未变的时候不要重新载入内容
-                String oldArticleContent = selectedArticle == null ? "" :selectedArticle.getContent();
-                if(!article.getContent().equals(oldArticleContent)){
-                    swipeRefreshLayoutS.setRefreshing(false);
+                // String oldArticleContent = selectedArticle == null ? null :selectedArticle.getContent();
+                // if(!article.getContent().equals(oldArticleContent)){
+                //     swipeRefreshLayoutS.setRefreshing(false);
+                //     // swipeRefreshLayoutS.finishRefresh();
+                //     loadWebViewContent(article);
+                // }
+
+                if(selectedArticle == null ||
+                        !selectedArticle.getContent().equals(article.getContent()) ||
+                        !selectedArticle.getTitle().equals(article.getTitle()) ||
+                        !selectedArticle.getFeedTitle().equals(article.getFeedTitle()) ){
                     // swipeRefreshLayoutS.finishRefresh();
+                    swipeRefreshLayoutS.setRefreshing(false);
                     loadWebViewContent(article);
                 }
+
                 selectedArticle = article;
                 selectedFeed = CoreDB.i().feedDao().getById(App.i().getUser().getId(), article.getFeedId());
 
@@ -1166,6 +1177,7 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
             @Override
             public void run() {
                 String content = ArticleUtils.getPageForDisplay(article);
+                // XLog.d("要加载的内容为：" + content);
                 articleHandler.post(new Runnable() {
                     @Override
                     public void run() {
@@ -1278,7 +1290,7 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
                     connection.setRequestProperty(requestHeader.getKey(), requestHeader.getValue());
                 }
 
-                connection.setRequestProperty("Cookie", CookieManager.getInstance().getCookie(url));
+                connection.setRequestProperty(Contract.COOKIE, CookieManager.getInstance().getCookie(url));
 
                 XLog.i("请求加载资源A："  + url );
                 // 将响应转换为网络资源响应参数所需的格式
@@ -1818,6 +1830,7 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
         }
 
         if(oldArticle != null){
+            // selectedArticle.setPubDate(oldArticle.getPubDate());
             selectedArticle.setContent(oldArticle.getContent());
             selectedArticle.setSummary(oldArticle.getSummary());
             selectedArticle.setImage(oldArticle.getImage());
@@ -1853,12 +1866,17 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
                 url = selectedArticle.getLink();
             }
             MobclickAgent.onEvent(this, "readability", url);
-            distill = new Distill(url,selectedArticle.getLink(), keyword, new Distill.Listener() {
+            String finalUrl = url;
+            distill = new Distill(url, selectedArticle.getLink(), keyword, new Distill.Listener() {
                 @Override
-                public void onResponse(String content) {
+                public void onResponse(ExtractPage page) {
                     App.i().oldArticles.put(selectedArticle.getId(),(Article)selectedArticle.clone());
 
-                    selectedArticle.updateContent(content);
+                    selectedArticle.updateContent(ArticleUtils.getOptimizedContent(finalUrl, page.getContent()));
+                    // Date date = DateParser.parseDate(page.getTime(), Locale.getDefault());
+                    // if(date != null){
+                    //     selectedArticle.setPubDate(date.getTime());
+                    // }
 
                     CoreDB.i().articleDao().update(selectedArticle);
                     articleHandler.post(new Runnable() {
@@ -1897,7 +1915,7 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
                             }
                             swipeRefreshLayoutS.setRefreshing(false);
                             // swipeRefreshLayoutS.finishRefresh();
-                            ToastUtils.show(getString(R.string.get_readability_failure, msg));
+                            ToastUtils.show(getString(R.string.get_readability_failure_with_reason, msg));
                         }
                     });
                 }
