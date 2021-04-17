@@ -1,8 +1,8 @@
 apply plugin: 'com.android.application'
 // 使用Kotlin插件
-apply plugin: 'kotlin-android'
+// apply plugin: 'kotlin-android'
 // 使用Kotlin Android扩展插件
-apply plugin: 'kotlin-android-extensions'
+// apply plugin: 'kotlin-android-extensions'
 
 android {
     compileSdkVersion rootProject.ext.compileSdkVersion
@@ -14,7 +14,7 @@ android {
         targetSdkVersion rootProject.ext.targetSdkVersion
         applicationId "me.wizos.loread"
         versionCode 22
-        versionName "2.4.6"
+        versionName "2.5.0"
         ndk {
             abiFilters 'armeabi-v7a', 'arm64-v8a'
         }
@@ -40,7 +40,7 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
         debug {
-            // applicationIdSuffix '.debug' //增加包名后缀
+            applicationIdSuffix '.debug' //增加包名后缀
             minifyEnabled false
             debuggable true
         }
@@ -50,9 +50,9 @@ android {
         targetCompatibility JavaVersion.VERSION_1_8
         coreLibraryDesugaringEnabled true
     }
-    kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_1_8
-    }
+    // kotlinOptions {
+    //     jvmTarget = JavaVersion.VERSION_1_8
+    // }
     lintOptions {
         checkReleaseBuilds false
         // Or, if you prefer, you can continue to check for errors in release builds, but continue the build even when errors are found:

@@ -47,6 +47,7 @@ import me.wizos.loread.network.callback.CallbackX;
 import me.wizos.loread.utils.Converter;
 import me.wizos.loread.utils.EncryptUtils;
 import me.wizos.loread.utils.FeedParserUtils;
+import me.wizos.loread.utils.InputStreamCache;
 import me.wizos.loread.utils.PagingUtils;
 import me.wizos.loread.utils.StringUtils;
 import me.wizos.loread.utils.TriggerRuleUtils;
@@ -54,6 +55,7 @@ import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.Request;
 import okhttp3.Response;
+import okhttp3.ResponseBody;
 
 import static me.wizos.loread.utils.StringUtils.getString;
 
@@ -67,7 +69,6 @@ public class LocalApi extends BaseApi {
     }
     int syncedFeedCount = 0;
     int newArticleCount = 0;
-    // CyclicBarrier barrier;
     private Handler handler;
     private final Object mLock = new Object();
     private final int TIMEOUT = 1;
@@ -99,7 +100,7 @@ public class LocalApi extends BaseApi {
          * 2、
          */
 
-        long startSyncTimeMillis = App.i().getLastShowTimeMillis(); //  + 3600_000
+        long startSyncTimeMillis = App.i().getLastShowTimeMillis() + 3600_000;
         String uid = App.i().getUser().getId();
 
         if(CoreDB.i().feedDao().getCount(uid) == 0){
@@ -145,13 +146,6 @@ public class LocalApi extends BaseApi {
                         feed.setLastSyncError(e.getLocalizedMessage());
                         feed.setLastErrorCount(feed.getLastErrorCount() + 1);
                         feed.setLastSyncTime(System.currentTimeMillis());
-
-                        // AsyncTask.THREAD_POOL_EXECUTOR.execute(new Runnable() {
-                        //     @Override
-                        //     public void run() {
-                        //         CoreDB.i().feedDao().update(feed);
-                        //     }
-                        // });
                     }
 
                     checkSyncEnd(feed, syncedFeedCount, needSyncFeeds.size());
@@ -167,17 +161,20 @@ public class LocalApi extends BaseApi {
                             LiveEventBus.get(SyncWorker.SYNC_PROCESS_FOR_SUBTITLE).post(getString(R.string.sync_feed, syncedFeedCount, needSyncFeeds.size()));
                             XLog.d("同步成功：" + feed.getTitle() + " [" + feed.getFeedUrl()+ "] " + response.isSuccessful() + ", 已同步数量：" + syncedFeedCount);
 
-                            if(response.isSuccessful()){
-                                FeedEntries feedEntries = FeedParserUtils.parseResponseBody(App.i(), feed, response.body(), new Converter.ArticleConvertListener() {
+                            ResponseBody responseBody = response.body();
+
+                            if(response.isSuccessful() && responseBody != null){
+                                FeedEntries feedEntries = FeedParserUtils.parseInputSteam(App.i(), feed, new InputStreamCache(responseBody.byteStream()), new Converter.ArticleConvertListener() {
                                     @Override
                                     public Article onEnd(Article article) {
-                                        article.setCrawlDate(App.i().getLastShowTimeMillis());
+                                        article.setCrawlDate(startSyncTimeMillis);
                                         return article;
                                     }
                                 });
+
+
                                 if(feedEntries != null){
                                     if (feedEntries.isSuccess()) {
-                                        // CoreDB.i().feedDao().update(feedEntries.getFeed());
                                         Map<String, Article> articleMap = feedEntries.getArticleMap();
 
                                         PagingUtils.slice(new ArrayList<>(articleMap.keySet()), 50, new PagingUtils.PagingListener<String>() {
@@ -194,7 +191,7 @@ public class LocalApi extends BaseApi {
                                         });
                                         ArrayList<Article> newArticles = new ArrayList<>(articleMap.values());
                                         for (Article article: newArticles){
-                                            article.setCrawlDate(App.i().getLastShowTimeMillis());
+                                            article.setCrawlDate(startSyncTimeMillis);
                                         }
                                         // XLog.i("抓取了新文章：" + newArticles.size() + ", 已抓取：" + newArticleCount);
                                         // XLog.i("新文章：" + newArticles );
@@ -208,14 +205,11 @@ public class LocalApi extends BaseApi {
                                 feed.setLastSyncError( StringUtils.isEmpty(response.message()) ? String.valueOf(response.code()) : (response.code() + ", " + response.message()) );
                                 feed.setLastErrorCount(feed.getLastErrorCount() + 1);
                                 feed.setLastSyncTime(System.currentTimeMillis());
-                                // CoreDB.i().feedDao().update(feed);
                             }
                             response.close();
                             checkSyncEnd(feed, syncedFeedCount, needSyncFeeds.size());
                         }
                     });
-
-                    // checkSyncEnd(syncedFeedCount, needSyncFeeds.size());
                 }
             });
         }
@@ -232,24 +226,6 @@ public class LocalApi extends BaseApi {
         }
 
 
-        // AsyncTask.SERIAL_EXECUTOR.execute(new Runnable() {
-        //     @Override
-        //     public void run() {
-        //
-        //         synchronized(mLock) {
-        //             mLock.notify();
-        //         }
-        //     }
-        // });
-        // try {
-        //     synchronized (mLock) {
-        //         mLock.wait();
-        //         XLog.d("最多等待时间 N 秒：");
-        //     }
-        // }catch (Exception e){
-        //     XLog.e("wait 异常：" + e.getLocalizedMessage());
-        //     e.printStackTrace();
-        // }
         long time1 = System.currentTimeMillis();
         LiveEventBus.get(SyncWorker.SYNC_PROCESS_FOR_SUBTITLE).post(getString(R.string.clear_article));
         deleteExpiredArticles();
@@ -272,7 +248,6 @@ public class LocalApi extends BaseApi {
         handleDuplicateArticles(startSyncTimeMillis);
         time1 = System.currentTimeMillis();
         XLog.i("处理重复文章耗时：" + (time1 - time2));
-        updateCollectionCount();
         time2 = System.currentTimeMillis();
         XLog.i("重置计数耗时A：" + (time2 - time1));
         handleArticleInfo();

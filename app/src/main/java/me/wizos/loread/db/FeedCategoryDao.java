@@ -61,11 +61,11 @@ public interface FeedCategoryDao {
 
     @Transaction
     @Query("DELETE FROM feedcategory WHERE uid = (:uid) AND feedId NOT IN (SELECT id FROM feed WHERE uid = :uid)")
-    void deleteByFeedId(String uid);
+    void deleteRedundantByFeedId(String uid);
 
     @Transaction
     @Query("DELETE FROM feedcategory WHERE uid = (:uid) AND categoryId NOT IN (SELECT id FROM category WHERE uid = :uid)")
-    void deleteByCategoryId(String uid);
+    void deleteRedundantByCategoryId(String uid);
 
     @Transaction
     @Query("DELETE FROM feedcategory WHERE uid = :uid")

@@ -23,7 +23,7 @@
         android:lines="1"
         android:textSize="12sp"
         android:textStyle="bold"
-        android:textColor="?attr/lv_item_desc_color"
+        android:textColor="?attr/list_item_desc_color"
         tools:text="收藏220" />
     <androidx.appcompat.widget.AppCompatImageView
         android:id="@+id/main_header_eye"

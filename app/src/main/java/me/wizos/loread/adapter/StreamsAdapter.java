@@ -33,10 +33,12 @@ public class StreamsAdapter extends ExpandableAdapter<RecyclerView.ViewHolder>{ 
     private LayoutInflater mInflater;
     private List<CollectionTree> categories;
     private Context context;
+    private RequestOptions circleCropOptions;
 
     public StreamsAdapter(Context context) {
         this.context = context;
         this.mInflater = LayoutInflater.from(context);
+        circleCropOptions = new RequestOptions().circleCrop();
     }
 
     public void setGroups(List<CollectionTree> parents) {
@@ -173,15 +175,15 @@ public class StreamsAdapter extends ExpandableAdapter<RecyclerView.ViewHolder>{ 
     @Override
     public RecyclerView.ViewHolder createParentHolder(@NonNull ViewGroup root, int viewType) {
         // XLog.d("createParentHolder");
-        View view = mInflater.inflate(R.layout.tag_expandable_item_group, root, false);
-        return new ParentHolder(context, view);
+        View view = mInflater.inflate(R.layout.main_bottom_sheet_category_group, root, false);
+        return new ParentHolder(context, circleCropOptions, view);
     }
 
     @Override
     public RecyclerView.ViewHolder createChildHolder(@NonNull ViewGroup root, int viewType) {
         // XLog.d("createChildHolder");
-        View view = mInflater.inflate(R.layout.tag_expandable_item_child, root, false);
-        return new ChildHolder(context, view);
+        View view = mInflater.inflate(R.layout.main_bottom_sheet_category_child, root, false);
+        return new ChildHolder(context, circleCropOptions, view);
     }
 
     @Override
@@ -203,11 +205,12 @@ public class StreamsAdapter extends ExpandableAdapter<RecyclerView.ViewHolder>{ 
         TextView countView;
         StreamsAdapter adapter;
         Context context;
-        RequestOptions options = new RequestOptions().circleCrop();
+        RequestOptions circleCropOptions;
 
-        ParentHolder(Context context, @NonNull View itemView) {
+        ParentHolder(Context context, RequestOptions options, @NonNull View itemView) {
             super(itemView);
             this.context = context;
+            this.circleCropOptions = options;
             iconView = itemView.findViewById(R.id.group_item_icon);
             titleView = itemView.findViewById(R.id.group_item_title);
             errorView = itemView.findViewById(R.id.group_item_error);
@@ -219,7 +222,7 @@ public class StreamsAdapter extends ExpandableAdapter<RecyclerView.ViewHolder>{ 
             if(category.getType() == CollectionTree.SMART){
                 iconView.setImageResource(R.drawable.ic_bookmark);
                 errorView.setVisibility(View.GONE);
-                titleView.setTextColor(ColorfulUtils.getColor(context, R.attr.lv_item_title_color));
+                titleView.setTextColor(ColorfulUtils.getColor(context, R.attr.list_item_title_color));
             }else if(category.getType() == CollectionTree.CATEGORY){
                 if (category.getChildren() == null || category.getChildren().size() == 0) {
                     iconView.setImageResource(R.drawable.ic_bookmark);
@@ -229,19 +232,19 @@ public class StreamsAdapter extends ExpandableAdapter<RecyclerView.ViewHolder>{ 
                     iconView.setImageResource(R.drawable.ic_arrow_right);
                 }
                 errorView.setVisibility(View.GONE);
-                titleView.setTextColor(ColorfulUtils.getColor(context, R.attr.lv_item_title_color));
+                titleView.setTextColor(ColorfulUtils.getColor(context, R.attr.list_item_title_color));
             }else if(category.getType() == CollectionTree.FEED){
-                Glide.with(itemView.getContext()).load(((CollectionFeed)category.getParent()).getIconUrl()).apply(options).into(iconView);
+                Glide.with(itemView.getContext()).load(((CollectionFeed)category.getParent()).getIconUrl()).apply(circleCropOptions).into(iconView);
 
                 if(((CollectionFeed)category.getParent()).getSyncInterval() == -1){
                     titleView.setAlpha(0.40f);
-                    titleView.setTextColor(ColorfulUtils.getColor(context, R.attr.lv_item_title_color));
+                    titleView.setTextColor(ColorfulUtils.getColor(context, R.attr.list_item_title_color));
                 }else {
                     titleView.setAlpha(1f);
                     if(((CollectionFeed)category.getParent()).getLastErrorCount() > 0){
                         titleView.setTextColor(context.getResources().getColor(android.R.color.holo_red_dark));
                     }else {
-                        titleView.setTextColor(ColorfulUtils.getColor(context, R.attr.lv_item_title_color));
+                        titleView.setTextColor(ColorfulUtils.getColor(context, R.attr.list_item_title_color));
                     }
                 }
 
@@ -294,11 +297,12 @@ public class StreamsAdapter extends ExpandableAdapter<RecyclerView.ViewHolder>{ 
         ImageView errorView;
         TextView countView;
         Context context;
-        RequestOptions options = new RequestOptions().circleCrop();
+        RequestOptions circleCropOptions;
 
-        ChildHolder(Context context, @NonNull View itemView) {
+        ChildHolder(Context context, RequestOptions options, @NonNull View itemView) {
             super(itemView);
             this.context = context;
+            this.circleCropOptions = options;
             iconView = itemView.findViewById(R.id.child_item_icon);
             titleView = itemView.findViewById(R.id.child_item_title);
             errorView = itemView.findViewById(R.id.child_item_error);
@@ -306,17 +310,17 @@ public class StreamsAdapter extends ExpandableAdapter<RecyclerView.ViewHolder>{ 
         }
 
         public void bind(CollectionFeed feed) {
-            Glide.with(itemView.getContext()).load(feed.getIconUrl()).apply(options).into(iconView);
+            Glide.with(itemView.getContext()).load(feed.getIconUrl()).apply(circleCropOptions).into(iconView);
             titleView.setText(feed.getTitle());
             if(feed.getSyncInterval() == -1){
                 titleView.setAlpha(0.40f);
-                titleView.setTextColor(ColorfulUtils.getColor(context, R.attr.lv_item_desc_color));
+                titleView.setTextColor(ColorfulUtils.getColor(context, R.attr.list_item_desc_color));
             }else {
                 titleView.setAlpha(1f);
                 if(feed.getLastErrorCount() > 0){
                     titleView.setTextColor(itemView.getContext().getResources().getColor(android.R.color.holo_red_dark));
                 }else {
-                    titleView.setTextColor(ColorfulUtils.getColor(context, R.attr.lv_item_title_color));
+                    titleView.setTextColor(ColorfulUtils.getColor(context, R.attr.list_item_title_color));
                 }
             }
             if(!StringUtils.isEmpty(feed.getLastSyncError())){

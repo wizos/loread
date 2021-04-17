@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.res.Resources.Theme;
 import android.util.TypedValue;
 import android.view.View;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.fragment.app.Fragment;
@@ -12,6 +13,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import me.wizos.loread.R;
+import me.wizos.loread.view.colorful.setter.ImageSrcResourceSetter;
 import me.wizos.loread.view.colorful.setter.TextColorSetter;
 import me.wizos.loread.view.colorful.setter.ViewBackgroundColorSetter;
 import me.wizos.loread.view.colorful.setter.ViewBackgroundDrawableSetter;
@@ -102,6 +104,12 @@ public final class Colorful {
         public Builder backgroundDrawable(int viewId, int drawableId) {
             mElements.add(new ViewBackgroundDrawableSetter(
                     findViewById(viewId), drawableId));
+            return this;
+        }
+
+        public Builder srcResource(int viewId, int resId) {
+            ImageView imageView = (ImageView) findViewById(viewId);
+            mElements.add(new ImageSrcResourceSetter(imageView, resId));
             return this;
         }
 

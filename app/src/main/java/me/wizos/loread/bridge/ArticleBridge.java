@@ -17,7 +17,7 @@ package me.wizos.loread.bridge;
  */
 
 public interface ArticleBridge {
-    String TAG = "ArticleBridge";
+    String TAG = "LoreadBridge";
 
     void log(String paramString);
 
@@ -49,10 +49,6 @@ public interface ArticleBridge {
     void postVideoPortrait(boolean isPortrait);
 
     void requestDisallowInterceptTouchEvent(boolean disallow);
-
-    void foundAudio(String src, long duration);
-
-    void foundVideo(String src, long duration);
 
     String rewrite(String url);
 }

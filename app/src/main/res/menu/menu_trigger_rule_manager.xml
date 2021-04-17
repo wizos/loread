@@ -2,6 +2,11 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     tools:context=".activity.TriggerRuleManagerActivity">
+    <item
+        android:id="@+id/action_manager_menu_exe_all_rules"
+        android:icon="@drawable/ic_fast_forward"
+        android:title="@string/execute_all_rules"
+        app:showAsAction="ifRoom" />
 
     <item
         android:id="@+id/action_manager_menu_create_rule_global"
@@ -14,5 +19,4 @@
         android:icon="@drawable/ic_edit"
         android:title="@string/create_rule"
         app:showAsAction="never" />
-
 </menu>

@@ -3,12 +3,10 @@ package me.wizos.loread.activity;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
-import android.graphics.Color;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Parcelable;
-import android.text.Html;
 import android.util.ArrayMap;
 import android.view.View;
 import android.widget.EditText;
@@ -22,9 +20,7 @@ import androidx.work.PeriodicWorkRequest;
 import androidx.work.WorkManager;
 
 import com.afollestad.materialdialogs.DialogAction;
-import com.afollestad.materialdialogs.GravityEnum;
 import com.afollestad.materialdialogs.MaterialDialog;
-import com.afollestad.materialdialogs.Theme;
 import com.didichuxing.doraemonkit.DoraemonKit;
 import com.elvishew.xlog.XLog;
 import com.hjq.toast.ToastUtils;
@@ -55,16 +51,17 @@ import me.wizos.loread.db.Feed;
 import me.wizos.loread.db.FeedCategory;
 import me.wizos.loread.db.Tag;
 import me.wizos.loread.db.User;
-import me.wizos.loread.extractor.Distill;
-import me.wizos.loread.extractor.ExtractPage;
+import me.wizos.loread.network.Getting;
 import me.wizos.loread.network.SyncWorker;
 import me.wizos.loread.network.api.FeverApi;
 import me.wizos.loread.network.api.TinyRSSApi;
-import me.wizos.loread.utils.ArticleUtils;
 import me.wizos.loread.utils.BackupUtils;
 import me.wizos.loread.utils.EncryptUtils;
 import me.wizos.loread.utils.FileUtils;
+import me.wizos.loread.utils.InputStreamCache;
 import me.wizos.loread.utils.StringUtils;
+import me.wizos.loread.utils.UriUtils;
+import okhttp3.Request;
 
 import static androidx.work.ExistingPeriodicWorkPolicy.KEEP;
 import static me.wizos.loread.Contract.SCHEMA_HTTP;
@@ -210,17 +207,20 @@ public class LabActivity extends AppCompatActivity {
         overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
     }
 
-    public void openActionActivity(View view) {
-        Intent intent = new Intent(LabActivity.this, TriggerRuleEditActivity.class);
-        intent.putExtra(Contract.RULE_ID, 1L);
+    public void openLinkInNewPage(View view){
+        EditText editText = findViewById(R.id.lab_enter_edittext);
+        String url = editText.getText().toString();
+        if(StringUtils.isEmpty(url)){
+            ToastUtils.show("未输入网址，请检查");
+            return;
+        }
+        Intent intent;
+        intent = new Intent(this, Web2Activity.class);
+        intent.setData(Uri.parse(url));
         startActivity(intent);
         overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
     }
-    public void openActionManagerActivity(View view) {
-        Intent intent = new Intent(LabActivity.this, TriggerRuleManagerActivity.class);
-        startActivity(intent);
-        overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
-    }
+
 
     public void openActivity2(View view){
         EditText editText = findViewById(R.id.lab_enter_edittext);
@@ -334,94 +334,6 @@ public class LabActivity extends AppCompatActivity {
         return list.size();
     }
 
-    // public void loginAccount(){
-    //     // TODO: 2020/4/14 开始模拟登录
-    //     if(!Config.i().enableAuth){
-    //         return;
-    //     }
-    //     handleAccount();
-    //
-    //     Account account = new Account(getString(R.string.app_name),ACCOUNT_TYPE);
-    //     // 帐户密码和信息这里用null演示
-    //     mAccountManager.addAccountExplicitly(account, null, null);
-    //     // 自动同步
-    //     Bundle bundle= new Bundle();
-    //     ContentResolver.setIsSyncable(account, AccountProvider.AUTHORITY, 1);
-    //     ContentResolver.setSyncAutomatically(account, AccountProvider.AUTHORITY,true);
-    //     ContentResolver.addPeriodicSync(account, AccountProvider.AUTHORITY,bundle, 30);    // 间隔时间为30秒
-    //     // 手动同步
-    //     ContentResolver.requestSync(account, AccountProvider.AUTHORITY, bundle);
-    //     finish();
-    // }
-
-    public void getFullText(View view){
-        EditText editText = findViewById(R.id.lab_enter_edittext);
-        String oldUrl = editText.getText().toString();
-        if(StringUtils.isEmpty(oldUrl)){
-            ToastUtils.show("未输入网址，请检查");
-            return;
-        }
-
-        String url = UrlRewriteConfig.i().getRedirectUrl(oldUrl);
-        if(StringUtils.isEmpty(url)){
-            url = oldUrl;
-        }
-        String finalUrl = url;
-        new Distill(url, oldUrl, "", new Distill.Listener() {
-            @Override
-            public void onResponse(ExtractPage page) {
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        new MaterialDialog.Builder(LabActivity.this)
-                                .title(R.string.article_info)
-                                .content(Html.fromHtml(ArticleUtils.getOptimizedContent(finalUrl, page.getContent())))
-                                .positiveText("显示源代码")
-                                .onPositive(new MaterialDialog.SingleButtonCallback() {
-                                    @Override
-                                    public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
-                                        dialog.setContent( page.getContent());
-                                    }
-                                })
-
-                                .positiveColorRes(R.color.material_red_400)
-                                .titleGravity(GravityEnum.CENTER)
-                                .titleColorRes(R.color.material_red_400)
-                                .contentColorRes(android.R.color.white)
-                                .backgroundColorRes(R.color.material_blue_grey_800)
-                                .dividerColorRes(R.color.material_teal_a400)
-                                .positiveColor(Color.WHITE)
-                                .negativeColorAttr(android.R.attr.textColorSecondaryInverse)
-                                .theme(Theme.DARK)
-                                .show();
-                    }
-                });
-            }
-
-            @Override
-            public void onFailure(String msg) {
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        ToastUtils.show(getString(R.string.get_readability_failure_with_reason, msg));
-                    }
-                });
-            }
-        });
-    }
-    public void openLinkInNewPage(View view){
-        EditText editText = findViewById(R.id.lab_enter_edittext);
-        String url = editText.getText().toString();
-        if(StringUtils.isEmpty(url)){
-            ToastUtils.show("未输入网址，请检查");
-            return;
-        }
-        Intent intent;
-        intent = new Intent(this, Web2Activity.class);
-        intent.setData(Uri.parse(url));
-        startActivity(intent);
-        overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
-    }
 
     public void onClickClearTags(View view) {
         CoreDB.i().tagDao().clear(App.i().getUser().getId());
@@ -471,8 +383,14 @@ public class LabActivity extends AppCompatActivity {
 
         EditText editText = findViewById(R.id.lab_enter_edittext);
         String url = editText.getText().toString();
+
+        if(!UriUtils.isHttpOrHttpsUrl(url)){
+            ToastUtils.show(R.string.invalid_url_hint);
+            return;
+        }
+
         user.setHost(url);
-        CoreDB.i().userDao().insert(user);
+        CoreDB.i().userDao().update(user);
 
         AsyncTask.THREAD_POOL_EXECUTOR.execute(new Runnable() {
             @Override
@@ -530,24 +448,94 @@ public class LabActivity extends AppCompatActivity {
     }
 
 
-    // public void onClickSearch(View view) {
-    //     EditText editText = findViewById(R.id.lab_enter_edittext);
-    //     String text = editText.getText().toString();
-    //     long time = System.currentTimeMillis();
-    //     if(StringUtils.isEmpty(text)){
-    //         ToastUtils.show("请输入关键词");
-    //     }else {
-    //         List<Article> articles = CoreDB.i().articleDao().search(App.i().getUser().getId(),text);
-    //         XLog.i("搜索耗时：" + (System.currentTimeMillis() - time));
-    //         XLog.i("搜索结果：" + (articles==null ? 0:articles.size()));
-    //     }
-    // }
 
+    public void getPlainTextByOkHttp(View view){
+        EditText editText = findViewById(R.id.lab_enter_edittext);
+        String url = editText.getText().toString();
+        if(!UriUtils.isHttpOrHttpsUrl(url)){
+            ToastUtils.show("并非url");
+        }else {
+            EditText headerEdit = findViewById(R.id.lab_enter2_edittext);
+            String headerTxt = headerEdit.getText().toString();
+
+            Request.Builder builder = new Request.Builder();
+            builder.url(url);
+            if(!StringUtils.isEmpty(headerTxt)){
+                String[] lines = headerTxt.split("\n");
+                for (String line:lines){
+                    String[] dict = line.split(":");
+                    if(dict.length != 2){
+                        continue;
+                    }
+                    builder.addHeader(dict[0], dict[1]);
+                }
+            }
+
+            Getting getting = new Getting(url, new Getting.Listener() {
+                @Override
+                public void onResponse(InputStreamCache inputStreamCache) {
+                    show(inputStreamCache.getSting());
+                }
+
+                @Override
+                public void onFailure(String msg) {
+                    ToastUtils.show(msg);
+                }
+            });
+            getting.request(builder.build());
+            getting.policy(Getting.ONLY_OKHTTP);
+            getting.start();
+        }
+    }
+
+
+    public void getPlainTextByWebview(View view){
+        EditText editText = findViewById(R.id.lab_enter_edittext);
+        String url = editText.getText().toString();
+        if(!UriUtils.isHttpOrHttpsUrl(url)){
+            ToastUtils.show("并非url");
+        }else {
+            Getting getting = new Getting(url, new Getting.Listener() {
+                @Override
+                public void onResponse(InputStreamCache inputStreamCache) {
+                    show(inputStreamCache.getSting());
+                }
+
+                @Override
+                public void onFailure(String msg) {
+                    ToastUtils.show(msg);
+                }
+            });
+            getting.policy(Getting.ONLY_WEBVIEW);
+            getting.start();
+        }
+    }
+
+    private void show(String text){
+        new MaterialDialog.Builder(this)
+                .title("获取的内容")
+                .content(text)
+                .show();
+    }
 
     public void exeSQL(View view){
         EditText editText = findViewById(R.id.lab_enter_edittext);
         String sql = editText.getText().toString();
-        CoreDB.i().articleDao().exeSQL(new SimpleSQLiteQuery(sql));
+        if(StringUtils.isEmpty(sql)){
+            ToastUtils.show("SQL语句为空");
+        }else {
+            // String[] lines = sql.split(";");
+            AsyncTask.SERIAL_EXECUTOR.execute(new Runnable() {
+                @Override
+                public void run() {
+                    // for (String line: lines){
+                    // }
+                    long time = System.currentTimeMillis();
+                    CoreDB.i().articleDao().exeSQL(new SimpleSQLiteQuery(sql));
+                    XLog.i("耗时：" + (System.currentTimeMillis() - time));
+                }
+            });
+        }
     }
 
 
@@ -568,6 +556,40 @@ public class LabActivity extends AppCompatActivity {
         });
     }
 
+    // public void deleteRepeatedGuidArticles(View view){
+    //     materialDialog = new MaterialDialog.Builder(this)
+    //             .title("正在处理")
+    //             .content("请耐心等待下")
+    //             .progress(true, 0)
+    //             .canceledOnTouchOutside(false)
+    //             .progressIndeterminateStyle(false)
+    //             .show();
+    //     AsyncTask.SERIAL_EXECUTOR.execute(new Runnable() {
+    //         @Override
+    //         public void run() {
+    //             List<Article> articles = CoreDB.i().articleDao().getAll(App.i().getUser().getId());
+    //             ArrayMap<String, String> temp = new ArrayMap<>(articles.size());
+    //
+    //             for (Article article : articles) {
+    //                 temp.put(EncryptUtils.MD5(article.getId()), "1");
+    //             }
+    //
+    //             File dir = new File(App.i().getUserCachePath());
+    //             File[] arts = dir.listFiles();
+    //             XLog.e("文件数量：" + arts.length);
+    //             String x;
+    //             for (File sourceFile : arts) {
+    //                 x = temp.get(sourceFile.getName());
+    //                 if (null == x) {
+    //                     XLog.e("移动文件名：" + "   " + sourceFile.getName());
+    //                     FileUtils.moveDir(sourceFile.getAbsolutePath(), App.i().getUserFilesDir() + "/move/" + sourceFile.getName());
+    //                 }
+    //             }
+    //             materialDialog.dismiss();
+    //             ToastUtils.show("清理完成");
+    //         }
+    //     });
+    // }
 
     public void deleteMissingHtmlDir(View view) {
         materialDialog = new MaterialDialog.Builder(this)

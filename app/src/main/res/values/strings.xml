@@ -21,6 +21,7 @@
     <string name="enter_user_agent">Enter UserAgent</string>
     <string name="remove_custom_user_agent">Remove custom UserAgent</string>
 
+    <string name="feed_manager">Feed manager</string>
     <string name="theme_switched_automatically">Themes have been switched automatically</string>
     <string name="feed_url_display">Feed URL: %s</string>
     <string name="site_url_display">Site URL: %s</string>
@@ -105,6 +106,7 @@
     <string name="step_sync_article_size">%1$s Sync article [%2$d]</string>
     <string name="step_sync_article_refs">%1$s Sync Article Info</string>
     <string name="fetch_article_full_content">Fetching article full content</string>
+    <string name="execute_all_rules">Executing all rules</string>
     <string name="execute_rules">Executing rules</string>
 
     <plurals name="articles_count">
@@ -387,6 +389,24 @@
     <string name="if_x">if</string>
     <string name="and">and</string>
 
+
+
+    <string-array name="feed_manager_order_title">
+        <item>Title</item>
+        <item>All count</item>
+        <item>Unread count</item>
+        <item>Star count</item>
+        <item>Health state</item>
+    </string-array>
+
+    <string-array name="feed_manager_order_value">
+        <item>title</item>
+        <item>lll count</item>
+        <item>unread count</item>
+        <item>star count</item>
+        <item>health state</item>
+    </string-array>
+
     <string name="keyword">Keywords</string>
     <string name="text">Text</string>
     <string name="number">Number</string>
@@ -477,6 +497,7 @@
     <string name="search_header_search_cloudy_feeds">Search feeds</string>
     <string name="search_header_search_local_articles">Search articles on my phone</string>
 
+    <string name="link">Link</string>
     <string name="share_link">Copy link</string>
     <string name="copy_link">Share link</string>
     <string name="open_by_outer">Open by outer</string>
@@ -505,10 +526,12 @@
     <string name="include_valueless">Include Valueless</string>
     <string name="night_theme">Night theme</string>
 
+    <string name="order">Order</string>
     <string name="article_list_order_asc">Older first</string>
     <string name="article_list_order_desc">Newest first</string>
 
 
+    <string name="filter">Filter</string>
     <string name="all">All</string>
     <string name="unread">Unread</string>
     <string name="starred">Star</string>
@@ -706,6 +729,7 @@
     <string name="exit_search">Exit search</string>
     <string name="subscription">Subscription</string>
 
+    <string name="search_feed_name_and_feed_url">Search feed name or feed url</string>
     <string name="update_all">Update all</string>
 
     <string name="yesterday_time">Yesterday %1$s</string>

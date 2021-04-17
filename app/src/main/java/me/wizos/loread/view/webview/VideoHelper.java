@@ -26,6 +26,7 @@ import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
 import android.webkit.WebChromeClient;
@@ -213,6 +214,10 @@ public class VideoHelper {
             videoParentView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_FULLSCREEN); // 全屏
             mDecorView.addView(videoParentView);
         }
+        if (videoView.getParent() != null) {
+            ((ViewGroup)this.videoView.getParent()).removeView(videoView);
+        }
+
         videoParentView.addView(videoView, WindowManager.LayoutParams.MATCH_PARENT, WindowManager.LayoutParams.MATCH_PARENT);
         videoParentView.setVisibility(View.VISIBLE);
         mCallback = callback;

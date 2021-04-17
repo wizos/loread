@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+    <LinearLayout
+        android:id="@+id/child_item"
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingStart="42dp"
+        android:paddingEnd="12dp"
+        android:gravity="center_vertical"
+        android:background="?attr/root_view_bg"
+        tools:ignore="UselessParent">
+
+        <ImageView
+            android:id="@+id/child_item_icon"
+            android:layout_width="30dp"
+            android:layout_height="match_parent"
+            tools:src="@drawable/ic_arrow_down"
+            android:padding="5dp"
+            android:contentDescription="@string/icon" />
+        <TextView
+            android:id="@+id/child_item_title"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:paddingTop="15dp"
+            android:paddingBottom="15dp"
+            android:paddingStart="5dp"
+            android:layout_weight="1"
+            android:gravity="center_vertical"
+            android:lines="1"
+            android:textColor="?attr/list_item_title_color"
+            android:textSize="16sp"
+            tools:text="这是子item"
+            tools:ignore="RtlSymmetry" />
+
+        <!--android:textColor="#5a8fca"-->
+
+        <ImageView
+            android:id="@+id/child_item_error"
+            android:layout_width="30dp"
+            android:layout_height="match_parent"
+            android:src="@drawable/ic_warning"
+            android:padding="5dp"
+            android:visibility="gone"
+            tools:visibility="visible"
+            android:contentDescription="@string/reason_for_sync_error" />
+        <TextView
+            android:id="@+id/child_item_count"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:padding="5dp"
+            android:textColor="?attr/list_item_desc_color"
+            android:textSize="12sp"
+            android:visibility="gone"
+            tools:visibility="visible"
+            tools:text="-9.9" />
+    </LinearLayout>
+</FrameLayout>
+

@@ -27,11 +27,9 @@ public final class ViewBackgroundDrawableSetter extends ViewSetter {
         if (mView == null) {
             return;
         }
-        TypedArray a = newTheme.obtainStyledAttributes(themeId,
-                new int[]{mAttrResId});
+        TypedArray a = newTheme.obtainStyledAttributes(themeId, new int[]{mAttrResId});
         int attributeResourceId = a.getResourceId(0, 0);
-        Drawable drawable = mView.getResources().getDrawable(
-                attributeResourceId);
+        Drawable drawable = mView.getResources().getDrawable(attributeResourceId);
         a.recycle();
         mView.setBackgroundDrawable(drawable);
     }

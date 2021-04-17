@@ -75,29 +75,29 @@
         <item name="bottombar_bg">@color/white</item>
         <item name="bottombar_fg">@color/main_day_light</item>
 
-        <item name="lv_item_bg">@color/white_screen_bg</item>
-        <item name="lv_item_fg">@color/main_day_dark</item>
+        <item name="list_item_bg">@color/white_screen_bg</item>
+        <item name="list_item_fg">@color/main_day_dark</item>
 
-        <item name="tag_slv_item_icon">@color/main_day_dark</item>
+        <item name="list_item_icon">@color/main_day_dark</item>
 
-        <item name="icon_title_color">@color/main_day_dark</item>
-        <item name="lv_item_title_color">@color/main_day_dark</item>
+        <!--<item name="icon_title_color">@color/main_day_dark</item>-->
+        <item name="list_item_title_color">@color/main_day_dark</item>
         <item name="setting_header_title_color">@color/main_day_dark</item>
-        <item name="lv_item_desc_color">@color/main_day_info</item>
-        <item name="lv_item_info_color">@color/main_day_info</item>
-        <item name="lv_item_divider">@color/main_day_info</item>
+        <item name="list_item_desc_color">@color/main_day_info</item>
+        <item name="list_item_info_color">@color/main_day_info</item>
+        <item name="list_item_divider">@color/main_day_info</item>
         <!--light_lv_divider-->
 
-        <item name="art_title">@color/main_day_dark</item>
-        <item name="art_feed">@color/main_day_light</item>
-        <item name="art_date">@color/main_day_light</item>
-        <item name="art_time">@color/main_day_light</item>
+        <!--<item name="art_title">@color/main_day_dark</item>-->
+        <!--<item name="art_feed">@color/main_day_light</item>-->
+        <!--<item name="art_date">@color/main_day_light</item>-->
+        <!--<item name="art_time">@color/main_day_light</item>-->
 
         <item name="setting_title">@color/main_day_dark</item>
         <item name="setting_tips">@color/main_day_info</item>
 
 
-        <item name="bubble_bg">@drawable/textview_border_day</item>
+        <!--<item name="bubble_bg">@drawable/textview_border_day</item>-->
     </style>
 
 
@@ -116,28 +116,28 @@
         <item name="bottombar_bg">@color/dark_background</item>
         <item name="bottombar_fg">@color/main_night_title</item>
 
-        <item name="lv_item_bg">@color/dark_background</item>
-        <item name="lv_item_fg">@color/dark_foreground</item>
+        <item name="list_item_bg">@color/dark_background</item>
+        <item name="list_item_fg">@color/dark_foreground</item>
 
-        <item name="tag_slv_item_icon">@color/main_night_title</item>
-        <item name="icon_title_color">@color/main_night_info</item>
+        <item name="list_item_icon">@color/main_night_title</item>
+        <!--<item name="icon_title_color">@color/main_night_info</item>-->
         <item name="setting_header_title_color">@color/main_night_info</item>
-        <item name="lv_item_title_color">@color/main_night_title</item>
-        <item name="lv_item_desc_color">@color/main_night_info</item>
+        <item name="list_item_title_color">@color/main_night_title</item>
+        <item name="list_item_desc_color">@color/main_night_info</item>
         <!--// main_night_dark-->
-        <item name="lv_item_info_color">@color/main_night_info</item>
-        <item name="lv_item_divider">@color/dark_foreground</item>
+        <item name="list_item_info_color">@color/main_night_info</item>
+        <item name="list_item_divider">@color/dark_foreground</item>
         <!--// black_lv_divider-->
 
-        <item name="art_title">#039586</item>
-        <item name="art_feed">#057971</item>
-        <item name="art_date">#057971</item>
-        <item name="art_time">#057971</item>
+        <!--<item name="art_title">#039586</item>-->
+        <!--<item name="art_feed">#057971</item>-->
+        <!--<item name="art_date">#057971</item>-->
+        <!--<item name="art_time">#057971</item>-->
 
         <item name="setting_title">@color/main_night_title</item>
         <item name="setting_tips">@color/main_night_info</item>
 
-        <item name="bubble_bg">@drawable/textview_border_night</item>
+        <!--<item name="bubble_bg">@drawable/textview_border_night</item>-->
     </style>
 
     <style name="AppTheme.Day.NoActionBar">
@@ -149,7 +149,7 @@
     <style name="SettingItem">
         <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">wrap_content</item>
-        <item name="android:textColor">?attr/lv_item_title_color</item>
+        <item name="android:textColor">?attr/list_item_title_color</item>
         <item name="android:padding">10dp</item>
     </style>
 
@@ -158,7 +158,7 @@
         <item name="android:layout_weight">1</item>
         <item name="android:layout_height">45dp</item>
         <item name="android:textSize">16sp</item>
-        <item name="android:textColor">?attr/lv_item_title_color</item>
+        <item name="android:textColor">?attr/list_item_title_color</item>
         <item name="android:layout_gravity">center</item>
         <item name="android:gravity">center_vertical</item>
     </style>
@@ -183,7 +183,7 @@
         <item name="android:layout_weight">1</item>
         <item name="android:layout_height">45dp</item>
         <item name="android:textSize">16sp</item>
-        <item name="android:textColor">?attr/lv_item_title_color</item>
+        <item name="android:textColor">?attr/list_item_title_color</item>
         <item name="android:layout_gravity">center</item>
         <item name="android:gravity">center_vertical</item>
     </style>
@@ -192,7 +192,7 @@
         <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">38dp</item>
         <item name="android:textSize">18sp</item>
-        <item name="android:textColor">?attr/lv_item_title_color</item>
+        <item name="android:textColor">?attr/list_item_title_color</item>
         <item name="android:layout_gravity">center</item>
         <item name="android:gravity">center_vertical</item>
     </style>
@@ -211,7 +211,7 @@
         <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">wrap_content</item>
         <item name="android:textSize">12sp</item>
-        <item name="android:textColor">?attr/lv_item_desc_color</item>
+        <item name="android:textColor">?attr/list_item_desc_color</item>
         <item name="android:gravity">center|left</item>
         <item name="android:padding">10dp</item>
     </style>
@@ -221,7 +221,7 @@
         <item name="android:layout_weight">1</item>
         <item name="android:layout_height">38dp</item>
         <item name="android:textSize">14sp</item>
-        <item name="android:textColor">?attr/lv_item_title_color</item>
+        <item name="android:textColor">?attr/list_item_title_color</item>
         <item name="android:layout_gravity">center</item>
         <item name="android:gravity">center_vertical</item>
     </style>
@@ -231,7 +231,7 @@
         <item name="android:layout_weight">1</item>
         <item name="android:layout_height">38dp</item>
         <item name="android:textSize">18sp</item>
-        <item name="android:textColor">?attr/lv_item_title_color</item>
+        <item name="android:textColor">?attr/list_item_title_color</item>
         <item name="android:layout_gravity">center</item>
         <item name="android:gravity">center_vertical</item>
     </style>
@@ -241,7 +241,7 @@
         <item name="android:layout_height">wrap_content</item>
         <item name="android:layout_marginStart">0dp</item>
         <item name="android:textSize">12sp</item>
-        <item name="android:textColor">?attr/lv_item_desc_color</item>
+        <item name="android:textColor">?attr/list_item_desc_color</item>
         <item name="android:layout_gravity">center</item>
         <item name="android:gravity">center_vertical</item>
     </style>
@@ -251,7 +251,7 @@
         <item name="android:layout_width">wrap_content</item>
         <item name="android:layout_height">match_parent</item>
         <item name="android:textSize">12sp</item>
-        <item name="android:textColor">?attr/lv_item_desc_color</item>
+        <item name="android:textColor">?attr/list_item_desc_color</item>
         <item name="android:layout_gravity">center</item>
         <item name="android:gravity">center|right</item>
         <item name="android:drawableRight">@drawable/ic_arrow_right</item>

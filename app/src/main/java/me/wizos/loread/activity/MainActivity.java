@@ -23,7 +23,6 @@ import android.widget.ImageView;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.RelativeLayout;
-import android.widget.Spinner;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -114,19 +113,17 @@ import me.wizos.loread.view.colorful.setter.ViewGroupSetter;
  * @author Wizos on 2016‎年5‎月23‎日
  */
 public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.OnRefreshListener {
-    private static final String TAG = "MainActivity";
-    private ImageView vToolbarAutoMark;
+    private ImageView autoMarkView;
     private Toolbar toolbar;
-    private SwipeRefreshLayoutS swipeRefreshLayoutS;
+    private SwipeRefreshLayoutS swipeRefreshLayout;
     private SwipeRecyclerView articleListView;
     private ArticlePagedListAdapter articlesAdapter;
     private IconFontView refreshIcon;
 
     // 方案1
     private SwipeRecyclerView categoryListView;
-    // private CategoriesAdapter categoryListAdapter;
     private StreamsAdapter categoryListAdapter;
-    private TextView createCategoryButton;
+    // private CategoriesAdapter categoryListAdapter;
 
     // 方案2
     // private ExpandableRecyclerView tagListView;
@@ -139,8 +136,9 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
 
     private TextView countTips;
     private Integer[] scrollIndex;
-    private int scrollPositionEnd;
     private View articlesHeaderView;
+    private View categoriesHeaderView;
+
 
     private BottomSheetDialog quickSettingDialog;
     private BottomSheetDialog tagBottomSheetDialog;
@@ -197,40 +195,40 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
                 .build();
         WorkManager.getInstance(this).enqueueUniquePeriodicWork(SyncWorker.TAG, ExistingPeriodicWorkPolicy.KEEP, syncRequest);
         XLog.d("SyncWorker Id: " + syncRequest.getId());
-        WorkManager.getInstance(this).getWorkInfoByIdLiveData(syncRequest.getId())
-                .observe(this, workInfo -> {
-                    XLog.d("周期任务 workInfos 数量：" );
-                        switch (workInfo.getState()){
-                            case FAILED:
-                                XLog.d("周期任务：FAILED");
-                                break;
-                            case RUNNING:
-                                XLog.d("周期任务：RUNNING");
-                                break;
-                            case BLOCKED:
-                                XLog.d("周期任务：BLOCKED");
-                                break;
-                            case CANCELLED:
-                                XLog.d("周期任务：CANCELLED");
-                                break;
-                            case ENQUEUED:
-                                XLog.d("周期任务：ENQUEUED");
-                                break;
-                            case SUCCEEDED:
-                                XLog.d("周期任务：SUCCEEDED");
-                                break;
-                        }
-                        Data progress = workInfo.getProgress();
-                        String value = progress.getString(SyncWorker.TAG);
-                        XLog.d("周期任务进度：" + value);
-                        // Do something with progress
-                });
+        // WorkManager.getInstance(this).getWorkInfoByIdLiveData(syncRequest.getId())
+        //         .observe(this, workInfo -> {
+        //             XLog.d("周期任务 workInfos 数量：" );
+        //             switch (workInfo.getState()){
+        //                 case FAILED:
+        //                     XLog.d("周期任务：FAILED");
+        //                     break;
+        //                 case RUNNING:
+        //                     XLog.d("周期任务：RUNNING");
+        //                     break;
+        //                 case BLOCKED:
+        //                     XLog.d("周期任务：BLOCKED");
+        //                     break;
+        //                 case CANCELLED:
+        //                     XLog.d("周期任务：CANCELLED");
+        //                     break;
+        //                 case ENQUEUED:
+        //                     XLog.d("周期任务：ENQUEUED");
+        //                     break;
+        //                 case SUCCEEDED:
+        //                     XLog.d("周期任务：SUCCEEDED");
+        //                     break;
+        //             }
+        //             Data progress = workInfo.getProgress();
+        //             String value = progress.getString(SyncWorker.TAG);
+        //             XLog.d("周期任务进度：" + value);
+        //             // Do something with progress
+        //         });
 
         LiveEventBus.get(SyncWorker.SYNC_TASK_START, Boolean.class)
                 .observeSticky(this, new Observer<Boolean>() {
                     @Override
                     public void onChanged(Boolean startSyncTask) {
-                        if (!swipeRefreshLayoutS.isEnabled() || !startSyncTask) {
+                        if (!swipeRefreshLayout.isEnabled() || !startSyncTask) {
                             return;
                         }
                         XLog.d("同步中");
@@ -247,11 +245,11 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
                     @Override
                     public void onChanged(Boolean isSyncing) {
                         XLog.d("任务状态："  + isSyncing );
-                        swipeRefreshLayoutS.setRefreshing(false);
+                        swipeRefreshLayout.setRefreshing(false);
                         if(isSyncing){
-                            swipeRefreshLayoutS.setEnabled(false);
+                            swipeRefreshLayout.setEnabled(false);
                         }else {
-                            swipeRefreshLayoutS.setEnabled(true);
+                            swipeRefreshLayout.setEnabled(true);
                         }
                     }
                 });
@@ -400,9 +398,9 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
 
 
     protected void initIconView() {
-        vToolbarAutoMark = findViewById(R.id.main_toolbar_auto_mark);
+        autoMarkView = findViewById(R.id.main_toolbar_auto_mark);
         if (App.i().getUser().isMarkReadOnScroll()) {
-            vToolbarAutoMark.setVisibility(View.VISIBLE);
+            autoMarkView.setVisibility(View.VISIBLE);
         }
         //vPlaceHolder = findViewById(R.id.main_placeholder);
         refreshIcon = findViewById(R.id.main_bottombar_refresh_articles);
@@ -415,19 +413,19 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
     }
 
     protected void initSwipeRefreshLayout() {
-        swipeRefreshLayoutS = findViewById(R.id.main_swipe_refresh);
-        if (swipeRefreshLayoutS == null) {
+        swipeRefreshLayout = findViewById(R.id.main_swipe_refresh);
+        if (swipeRefreshLayout == null) {
             return;
         }
-        swipeRefreshLayoutS.setOnRefreshListener(this);
+        swipeRefreshLayout.setOnRefreshListener(this);
         //设置样式刷新显示的位置
-        swipeRefreshLayoutS.setProgressViewOffset(true, 0, 120);
-        swipeRefreshLayoutS.setViewGroup(articleListView);
+        swipeRefreshLayout.setProgressViewOffset(true, 0, 120);
+        swipeRefreshLayout.setViewGroup(articleListView);
     }
 
     @Override
     public void onRefresh() {
-        if (!swipeRefreshLayoutS.isEnabled()) {
+        if (!swipeRefreshLayout.isEnabled()) {
             return;
         }
         XLog.i("下拉刷新");
@@ -441,33 +439,33 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
         // WorkManager.getInstance(this).enqueueUniqueWork(SyncWorker.TAG, ExistingWorkPolicy.KEEP, oneTimeWorkRequest);
         XLog.i("单期SyncWorker Id: " + oneTimeWorkRequest.getId());
         WorkManager.getInstance(this).enqueue(oneTimeWorkRequest);
-        WorkManager.getInstance(this).getWorkInfoByIdLiveData(oneTimeWorkRequest.getId())
-                .observe(this, workInfo -> {
-                    XLog.i("单次任务" );
-                    switch (workInfo.getState()){
-                        case FAILED:
-                            XLog.i("单次任务：FAILED");
-                            break;
-                        case RUNNING:
-                            XLog.i("单次任务：RUNNING");
-                            break;
-                        case BLOCKED:
-                            XLog.i("单次任务：BLOCKED");
-                            break;
-                        case CANCELLED:
-                            XLog.i("单次任务：CANCELLED");
-                            break;
-                        case ENQUEUED:
-                            XLog.i("单次任务：ENQUEUED");
-                            break;
-                        case SUCCEEDED:
-                            XLog.i("单次任务：SUCCEEDED");
-                            break;
-                    }
-                    Data progress = workInfo.getProgress();
-                    String value = progress.getString(SyncWorker.TAG);
-                    XLog.i("周期任务进度：" + value);
-                });
+        // WorkManager.getInstance(this).getWorkInfoByIdLiveData(oneTimeWorkRequest.getId())
+        //         .observe(this, workInfo -> {
+        //             XLog.i("单次任务" );
+        //             switch (workInfo.getState()){
+        //                 case FAILED:
+        //                     XLog.i("单次任务：FAILED");
+        //                     break;
+        //                 case RUNNING:
+        //                     XLog.i("单次任务：RUNNING");
+        //                     break;
+        //                 case BLOCKED:
+        //                     XLog.i("单次任务：BLOCKED");
+        //                     break;
+        //                 case CANCELLED:
+        //                     XLog.i("单次任务：CANCELLED");
+        //                     break;
+        //                 case ENQUEUED:
+        //                     XLog.i("单次任务：ENQUEUED");
+        //                     break;
+        //                 case SUCCEEDED:
+        //                     XLog.i("单次任务：SUCCEEDED");
+        //                     break;
+        //             }
+        //             Data progress = workInfo.getProgress();
+        //             String value = progress.getString(SyncWorker.TAG);
+        //             XLog.i("周期任务进度：" + value);
+        //         });
     }
 
     // 按下back键时会调用onDestroy()销毁当前的activity，重新启动此activity时会调用onCreate()重建；
@@ -518,7 +516,7 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
                 });
 
         articleListView.scrollToPosition(0);
-        articlesAdapter.setLastPos(0);
+        // articlesAdapter.setLastPos(0);
         XLog.d("加载文章数据" );
     }
 
@@ -549,7 +547,7 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
                     });
         }
         articleListView.scrollToPosition(0);
-        articlesAdapter.setLastPos(0);
+        // articlesAdapter.setLastPos(0);
     }
 
     private void renderViewByArticlesData(String toolBarTitle, int articleSize) {
@@ -674,7 +672,7 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
             return;
         }
         Intent intent = new Intent(MainActivity.this, FeedActivity.class);
-        intent.putExtra("feedId", feedId);
+        intent.putExtra(Contract.FEED_ID, feedId);
         startActivity(intent);
         overridePendingTransition(R.anim.in_from_bottom, R.anim.fade_out);
     }
@@ -764,7 +762,7 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
             @Override
             public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
                 super.onScrollStateChanged(recyclerView, newState);
-                articlesAdapter.setLastPos(linearLayoutManager.findLastVisibleItemPosition()-1);
+                // articlesAdapter.setLastPos(linearLayoutManager.findLastVisibleItemPosition()-1);
                 // XLog.i("【滚动】" + ((RecyclerView.LayoutParams) recyclerView.getChildAt(1).getLayoutParams()).getViewAdapterPosition() + " = "+  linearLayoutManager.findFirstVisibleItemPosition() + " , " + linearLayoutManager.findLastVisibleItemPosition());
                 if (!autoMarkReaded) {
                     return;
@@ -868,17 +866,17 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
             }
         });
         articleListViewModel = new ViewModelProvider(this).get(ArticleListViewModel.class);
-        articlesAdapter = new ArticlePagedListAdapter();
+        articlesAdapter = new ArticlePagedListAdapter(this);
         articleListView.setAdapter(articlesAdapter);
     }
 
 
-   private CategoryViewModel categoryViewModel;
-   public void onClickCategoryIcon(View view) {
-       XLog.i("tag按钮被点击");
-       tagBottomSheetDialog.show();
-       categoryListAdapter.notifyDataSetChanged();
-   }
+    private CategoryViewModel categoryViewModel;
+    public void onClickCategoryIcon(View view) {
+        XLog.i("tag按钮被点击");
+        tagBottomSheetDialog.show();
+        categoryListAdapter.notifyDataSetChanged();
+    }
 
     private void initCategoriesData(){
         categoryViewModel.observeCategoriesAndFeeds(this, new Observer<Integer>() {
@@ -905,7 +903,7 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
     // StickyHeaderLayout stickyHeaderLayout;
     public void initTagListView() {
         tagBottomSheetDialog = new BottomSheetDialog(MainActivity.this);
-        tagBottomSheetDialog.setContentView(R.layout.bottom_sheet_category);
+        tagBottomSheetDialog.setContentView(R.layout.main_bottom_sheet_category);
         tagBottomSheetLayout = tagBottomSheetDialog.findViewById(R.id.sheet_tag);
 
         categoryListView = tagBottomSheetDialog.findViewById(R.id.main_tag_list_view);
@@ -915,10 +913,51 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
         // 关闭默认的动画
         ((SimpleItemAnimator) categoryListView.getItemAnimator()).setSupportsChangeAnimations(false);
         // 设置悬浮头部VIEW
-        // tagListView.setHeaderView(getLayoutInflater().inflate(R.layout.main_expandable_item_group_header, tagListView, false));
+        // categoryListView.setHeaderView(getLayoutInflater().inflate(R.layout.main_expandable_item_group_header, tagListView, false));
 
-        // View headerView = getLayoutInflater().inflate(R.layout.tag_expandable_item_group, tagListView, false);
-        // tagListView.addHeaderView(headerView);
+        // View headerView = getLayoutInflater().inflate(R.layout.main_bottom_sheet_category_group, tagListView, false);
+        // categoryListView.addHeaderView(headerView);
+
+        categoriesHeaderView = getLayoutInflater().inflate(R.layout.main_bottom_sheet_category_header, categoryListView, false);
+        categoryListView.addHeaderView(categoriesHeaderView);
+
+
+        ImageView createCategoryButton = categoriesHeaderView.findViewById(R.id.category_header_item_create_category);
+        if(App.i().getApi() instanceof LocalApi){
+            createCategoryButton.setVisibility(View.VISIBLE);
+            createCategoryButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    new MaterialDialog.Builder(MainActivity.this)
+                            .title(R.string.edit_name)
+                            .inputType(InputType.TYPE_CLASS_TEXT)
+                            .inputRange(1, 22)
+                            .input(null, null, new MaterialDialog.InputCallback() {
+                                @Override
+                                public void onInput(@NotNull MaterialDialog dialog, CharSequence input) {
+                                    Category category = new Category();
+                                    category.setUid(App.i().getUser().getId());
+                                    category.setTitle(input.toString());
+                                    category.setId(EncryptUtils.MD5(input.toString()));
+                                    CoreDB.i().categoryDao().insert(category);
+                                }
+                            })
+                            .positiveText(R.string.confirm)
+                            .negativeText(android.R.string.cancel)
+                            .show();
+                }
+            });
+        }
+
+        ImageView manageFeedButton = categoriesHeaderView.findViewById(R.id.category_header_item_manage_feed);
+        manageFeedButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(MainActivity.this, FeedManagerActivity.class);
+                startActivity(intent);
+                overridePendingTransition(R.anim.in_from_bottom, R.anim.fade_out);
+            }
+        });
 
         categoryListAdapter = new StreamsAdapter(this);
 
@@ -1059,34 +1098,6 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
 
         categoryListView.setAdapter(categoryListAdapter);
         categoryViewModel = new ViewModelProvider(this).get(CategoryViewModel.class);
-
-
-        createCategoryButton = tagBottomSheetDialog.findViewById(R.id.main_tag_create_category);
-        if(App.i().getApi() instanceof LocalApi){
-            createCategoryButton.setVisibility(View.VISIBLE);
-        }
-        createCategoryButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                new MaterialDialog.Builder(MainActivity.this)
-                        .title(R.string.edit_name)
-                        .inputType(InputType.TYPE_CLASS_TEXT)
-                        .inputRange(1, 22)
-                        .input(null, null, new MaterialDialog.InputCallback() {
-                            @Override
-                            public void onInput(@NotNull MaterialDialog dialog, CharSequence input) {
-                                Category category = new Category();
-                                category.setUid(App.i().getUser().getId());
-                                category.setTitle(input.toString());
-                                category.setId(EncryptUtils.MD5(input.toString()));
-                                CoreDB.i().categoryDao().insert(category);
-                            }
-                        })
-                        .positiveText(R.string.confirm)
-                        .negativeText(android.R.string.cancel)
-                        .show();
-            }
-        });
     }
 
     private void showConfirmDialog(final int start, final int end) {
@@ -1129,11 +1140,11 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
     // 标记以上/以下为已读
     @SuppressLint("StaticFieldLeak")
     private class MarkListReadAsyncTask extends AsyncTask<Integer, Integer, Integer> {
-       private boolean includesForcedUnread = false;
-       protected MarkListReadAsyncTask setIncludesForcedUnread(boolean includesForcedUnread){
-           this.includesForcedUnread = includesForcedUnread;
-           return this;
-       }
+        private boolean includesForcedUnread = false;
+        protected MarkListReadAsyncTask setIncludesForcedUnread(boolean includesForcedUnread){
+            this.includesForcedUnread = includesForcedUnread;
+            return this;
+        }
         @Override
         protected Integer doInBackground(Integer... params) {
             int startIndex = params[0];
@@ -1268,30 +1279,30 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
             CoreDB.i().articleDao().update(article);
 
             App.i().getApi().markArticleUnstar(article.getId(), new CallbackX() {
-                 @Override
-                 public void onSuccess(Object result) {
-                 }
-                 @Override
-                 public void onFailure(Object error) {
-                     article.setStarStatus(App.STATUS_STARED);
-                     CoreDB.i().articleDao().update(article);
-                 }
-             });
+                @Override
+                public void onSuccess(Object result) {
+                }
+                @Override
+                public void onFailure(Object error) {
+                    article.setStarStatus(App.STATUS_STARED);
+                    CoreDB.i().articleDao().update(article);
+                }
+            });
 
         } else {
             article.setStarStatus(App.STATUS_STARED);
             CoreDB.i().articleDao().update(article);
             App.i().getApi().markArticleStared(article.getId(), new CallbackX() {
-                 @Override
-                 public void onSuccess(Object result) {
-                 }
+                @Override
+                public void onSuccess(Object result) {
+                }
 
-                 @Override
-                 public void onFailure(Object error) {
-                     article.setStarStatus(App.STATUS_UNSTAR);
-                     CoreDB.i().articleDao().update(article);
-                 }
-             });
+                @Override
+                public void onFailure(Object error) {
+                    article.setStarStatus(App.STATUS_UNSTAR);
+                    CoreDB.i().articleDao().update(article);
+                }
+            });
         }
     }
 
@@ -1364,9 +1375,9 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
             CoreDB.i().userDao().update(user);
             autoMarkReaded = b;
             if (autoMarkReaded) {
-                vToolbarAutoMark.setVisibility(View.VISIBLE);
+                autoMarkView.setVisibility(View.VISIBLE);
             } else {
-                vToolbarAutoMark.setVisibility(View.GONE);
+                autoMarkView.setVisibility(View.GONE);
             }
         });
 
@@ -1705,49 +1716,58 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
         return super.onOptionsItemSelected(item);
     }
 
-    private Spinner categoryNameSpinner;
-
-
     /**
      * 设置各个视图与颜色属性的关联
      */
     @Override
     protected Colorful.Builder buildColorful(Colorful.Builder mColorfulBuilder) {
-        ViewGroupSetter articlesHeaderVS = new ViewGroupSetter((ViewGroup) articlesHeaderView);
-        articlesHeaderVS.childViewBgColor(R.id.main_header, R.attr.root_view_bg);
-        articlesHeaderVS.childViewTextColor(R.id.main_header_title, R.attr.lv_item_desc_color);
+        ViewGroupSetter articlesHeaderGroupSetter = new ViewGroupSetter((ViewGroup) articlesHeaderView);
+        articlesHeaderGroupSetter.childViewBgColor(R.id.main_header, R.attr.root_view_bg);
+        articlesHeaderGroupSetter.childViewTextColor(R.id.main_header_title, R.attr.list_item_desc_color);
         // articlesHeaderVS.childViewBgDrawable(R.id.main_header_eye, R.attr.lv_item_desc_color);
+
+        ViewGroupSetter categoryHeaderGroupSetter = new ViewGroupSetter((ViewGroup) categoriesHeaderView);
+        categoryHeaderGroupSetter.childViewBgColor(R.id.category_header_item, R.attr.root_view_bg);
+        categoryHeaderGroupSetter.childViewTextColor(R.id.category_header_item_title, R.attr.list_item_title_color);
+        categoryHeaderGroupSetter.childImageSrcResource(R.id.category_header_item_icon, R.drawable.ic_folder);
+        categoryHeaderGroupSetter.childImageSrcResource(R.id.category_header_item_create_category, R.drawable.ic_create_folder);
+        categoryHeaderGroupSetter.childImageSrcResource(R.id.category_header_item_manage_feed, R.drawable.ic_dashboard);
 
         ViewGroupSetter artListViewSetter = new ViewGroupSetter(articleListView);
         // 绑定ListView的Item View中的news_title视图，在换肤时修改它的text_color属性
         // artListViewSetter.childViewBgColor(R.id.main_slv_item, R.attr.root_view_bg);
-        artListViewSetter.childViewTextColor(R.id.main_slv_item_title, R.attr.lv_item_title_color);
-        artListViewSetter.childViewTextColor(R.id.main_slv_item_summary, R.attr.lv_item_desc_color);
-        artListViewSetter.childViewTextColor(R.id.main_slv_item_author, R.attr.lv_item_info_color);
-        artListViewSetter.childViewTextColor(R.id.main_slv_item_time, R.attr.lv_item_info_color);
+        artListViewSetter.childViewTextColor(R.id.main_slv_item_title, R.attr.list_item_title_color);
+        artListViewSetter.childViewTextColor(R.id.main_slv_item_summary, R.attr.list_item_desc_color);
+        artListViewSetter.childViewTextColor(R.id.main_slv_item_author, R.attr.list_item_info_color);
+        artListViewSetter.childViewTextColor(R.id.main_slv_item_time, R.attr.list_item_info_color);
         // artListViewSetter.childViewBgColor(R.id.main_slv_item_divider, R.attr.lv_item_divider);
         artListViewSetter.childViewBgColor(R.id.main_list_item_surface, R.attr.root_view_bg);
         // artListViewSetter.childViewBgColor(R.id.main_list_item_menu_left, R.attr.root_view_bg);
         // artListViewSetter.childViewBgColor(R.id.main_list_item_menu_right, R.attr.root_view_bg);
         // artListViewSetter.childViewBgColor(R.id.swipe_layout, R.attr.root_view_bg);
 
-        ViewGroupSetter relative = new ViewGroupSetter(tagBottomSheetLayout);
-        relative.childViewBgColor(R.id.sheet_tag, R.attr.root_view_bg);
+        ViewGroupSetter bottomSheetLayout = new ViewGroupSetter(tagBottomSheetLayout);
+        bottomSheetLayout.childViewBgColor(R.id.sheet_tag, R.attr.root_view_bg);
+        bottomSheetLayout.childViewBgColor(R.id.main_tag_list_view, R.attr.root_view_bg);
         // relative.childViewBgColor(R.id.sheet_tag_sticky_header,R.attr.root_view_bg);
-        relative.childViewBgColor(R.id.main_tag_list_view, R.attr.root_view_bg);
-        relative.childViewBgColor(R.id.main_tag_create_category, R.attr.root_view_bg);
 
         // 绑定ListView的Item View中的news_title视图，在换肤时修改它的text_color属性
         ViewGroupSetter tagListViewSetter = new ViewGroupSetter(categoryListView);
-        tagListViewSetter.childViewBgColor(R.id.group_item, R.attr.root_view_bg);  // 这个不能生效！不然反而会影响底色修改
-        // tagListViewSetter.childViewTextColor(R.id.group_item_icon, R.attr.tag_slv_item_icon);
-        // tagListViewSetter.childViewBgDrawable(R.id.group_item_icon, R.attr.tag_slv_item_icon);
-        tagListViewSetter.childViewTextColor(R.id.group_item_title, R.attr.lv_item_title_color);
-        tagListViewSetter.childViewTextColor(R.id.group_item_count, R.attr.lv_item_desc_color);
+        tagListViewSetter.childViewBgColor(R.id.group_item, R.attr.root_view_bg);
+        // tagListViewSetter.childImageSrcResource(R.id.group_item_icon, R.attr.tag_slv_item_icon);
+        tagListViewSetter.childViewTextColor(R.id.group_item_title, R.attr.list_item_title_color);
+        tagListViewSetter.childViewTextColor(R.id.group_item_count, R.attr.list_item_desc_color);
 
-        tagListViewSetter.childViewBgColor(R.id.child_item, R.attr.root_view_bg);  // 这个不生效，反而会影响底色修改
-        tagListViewSetter.childViewTextColor(R.id.child_item_title, R.attr.lv_item_title_color);
-        tagListViewSetter.childViewTextColor(R.id.child_item_count, R.attr.lv_item_desc_color);
+        // tagListViewSetter.childViewBgColor(R.id.category_header_item, R.attr.root_view_bg);
+        // tagListViewSetter.childViewTextColor(R.id.category_header_item_title, R.attr.list_item_title_color);
+        // tagListViewSetter.childImageSrcResource(R.id.category_header_item_icon, R.drawable.ic_folder);
+        // tagListViewSetter.childImageSrcResource(R.id.category_header_item_create_category, R.drawable.ic_create_folder);
+        // tagListViewSetter.childImageSrcResource(R.id.category_header_item_manage_feed, R.drawable.ic_dashboard);
+
+
+        tagListViewSetter.childViewBgColor(R.id.child_item, R.attr.root_view_bg);
+        tagListViewSetter.childViewTextColor(R.id.child_item_title, R.attr.list_item_title_color);
+        tagListViewSetter.childViewTextColor(R.id.child_item_count, R.attr.list_item_desc_color);
 
         mColorfulBuilder
                 // 设置 toolbar
@@ -1769,8 +1789,9 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
 
                 // 设置 listview 背景色
                 // 这里做设置，实质是将View（根据Activity的findViewById），并直接添加到 colorful 内的 mElements 中。
-                .setter(relative)
-                .setter(articlesHeaderVS)
+                .setter(bottomSheetLayout)
+                .setter(categoryHeaderGroupSetter)
+                .setter(articlesHeaderGroupSetter)
                 .setter(artListViewSetter)
                 .setter(tagListViewSetter);
         return mColorfulBuilder;

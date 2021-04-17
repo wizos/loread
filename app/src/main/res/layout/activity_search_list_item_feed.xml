@@ -55,7 +55,7 @@
                 android:ellipsize="end"
                 android:textSize="14sp"
                 tools:text="这里就是一个大标题这里就是一个大标题这里就是一个大标题"
-                android:textColor="?attr/lv_item_title_color" />
+                android:textColor="?attr/list_item_title_color" />
 
             <TextView
                 android:id="@+id/search_list_item_summary"
@@ -68,7 +68,7 @@
                 android:textSize="13sp"
                 android:layout_marginEnd="0dp"
                 tools:text="简介简介简介简介简介简介简介简介简介简介简介简介简介简介"
-                android:textColor="?attr/lv_item_desc_color" />
+                android:textColor="?attr/list_item_desc_color" />
 
             <TextView
                 android:id="@+id/search_list_item_feed_url"
@@ -81,7 +81,7 @@
                 android:textSize="13sp"
                 android:layout_marginEnd="0dp"
                 tools:text="http://loread.xyz/feed"
-                android:textColor="?attr/lv_item_desc_color" />
+                android:textColor="?attr/list_item_desc_color" />
         </LinearLayout>
 
         <CheckBox
@@ -91,7 +91,7 @@
             android:layout_gravity="center_vertical"
             android:gravity="center"
             android:textSize="13sp"
-            android:textColor="?attr/lv_item_title_color"
+            android:textColor="?attr/list_item_title_color"
             android:button="@drawable/selector_subscription"
             android:checked="false"/>
         <!--<me.wizos.loread.view.IconFontView-->
@@ -122,7 +122,7 @@
             android:layout_marginStart="2dp"
             android:textSize="12sp"
             tools:text="订阅人数"
-            android:textColor="?attr/lv_item_info_color" />
+            android:textColor="?attr/list_item_info_color" />
 
         <TextView
             android:id="@+id/search_list_item_last_updated"
@@ -134,7 +134,7 @@
             android:gravity="end"
             android:textSize="12sp"
             tools:text="上次更新时间"
-            android:textColor="?attr/lv_item_info_color" />
+            android:textColor="?attr/list_item_info_color" />
     </RelativeLayout>
     <!--<View-->
     <!--    android:id="@+id/search_list_item_divider"-->

@@ -26,6 +26,7 @@ public class InputStreamCache {
      */
     private ByteArrayOutputStream byteArrayOutputStream;
     private InputStream inputStream;
+    private Charset charset;
 
     public InputStreamCache(InputStream inputStream) {
         if (inputStream == null) return;
@@ -66,6 +67,9 @@ public class InputStreamCache {
      * @return InputStream
      */
     public String getSting() {
+        if(charset != null){
+            return getSting(charset);
+        }
         if (byteArrayOutputStream == null) return null;
         return new String(byteArrayOutputStream.toByteArray());
     }
@@ -94,5 +98,17 @@ public class InputStreamCache {
                 XLog.e(e.getMessage());
             }
         }
+    }
+
+    public Charset getCharset() {
+        return charset;
+    }
+
+    public void setCharset(Charset charset) {
+        this.charset = charset;
+    }
+
+    public void setCharset(String charset) {
+        this.charset = Charset.forName(charset);
     }
 }

@@ -28,7 +28,7 @@
             android:paddingEnd="5dp"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textColor="?attr/lv_item_title_color"
+            android:textColor="?attr/list_item_title_color"
             android:text="@string/execute"/>
         <TextView
             android:id="@+id/item_action_textview"
@@ -38,7 +38,7 @@
             android:paddingEnd="5dp"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textColor="?attr/lv_item_title_color"
+            android:textColor="?attr/list_item_title_color"
             tools:text="标为已读 + 增加星标"/>
     </LinearLayout>
 </LinearLayout>

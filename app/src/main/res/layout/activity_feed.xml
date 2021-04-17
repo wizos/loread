@@ -69,7 +69,7 @@
                     android:layout_height="wrap_content"
                     android:lines="1"
                     android:textSize="14sp"
-                    android:textColor="?attr/lv_item_title_color"
+                    android:textColor="?attr/list_item_title_color"
                     tools:text="99" />
 
                 <TextView
@@ -81,7 +81,7 @@
                     android:layout_marginStart="20dp"
                     android:lines="1"
                     android:textSize="14sp"
-                    android:textColor="?attr/lv_item_title_color"
+                    android:textColor="?attr/list_item_title_color"
                     tools:text="2019/05/01" />
             </LinearLayout>
 
@@ -128,7 +128,7 @@
                     android:lines="1"
                     android:textSize="14sp"
                     android:textStyle="bold"
-                    android:textColor="?attr/lv_item_title_color"
+                    android:textColor="?attr/list_item_title_color"
                     android:text="@string/article_count" />
 
                 <TextView
@@ -141,7 +141,7 @@
                     android:maxLines="1"
                     android:ellipsize="end"
                     android:textSize="12sp"
-                    android:textColor="?attr/lv_item_desc_color"
+                    android:textColor="?attr/list_item_desc_color"
                     tools:text="全部 22, 未读 12, 收藏 10" />
             </LinearLayout>
 
@@ -159,7 +159,7 @@
                     android:lines="1"
                     android:textSize="14sp"
                     android:textStyle="bold"
-                    android:textColor="?attr/lv_item_title_color"
+                    android:textColor="?attr/list_item_title_color"
                     android:text="@string/site_url" />
 
                 <!--android:onClick="openHtmlUrl"-->
@@ -173,7 +173,7 @@
                     android:maxLines="1"
                     android:ellipsize="end"
                     android:textSize="12sp"
-                    android:textColor="?attr/lv_item_desc_color"
+                    android:textColor="?attr/list_item_desc_color"
                     tools:text="http://blog.wizos.me" />
                 <ImageView
                     android:id="@+id/feed_site_link_edit"
@@ -207,7 +207,7 @@
                     android:lines="1"
                     android:textSize="14sp"
                     android:textStyle="bold"
-                    android:textColor="?attr/lv_item_title_color"
+                    android:textColor="?attr/list_item_title_color"
                     android:text="@string/feed_url" />
                 <!--android:onClick="openFeedUrl"-->
                 <TextView
@@ -220,7 +220,7 @@
                     android:maxLines="1"
                     android:ellipsize="end"
                     android:textSize="12sp"
-                    android:textColor="?attr/lv_item_desc_color"
+                    android:textColor="?attr/list_item_desc_color"
                     tools:text="http://blog.wizos.me/feedfffffffffddddddddnn" />
 
                 <ImageView
@@ -380,7 +380,7 @@
                 <androidx.appcompat.widget.AppCompatButton
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="10dp"
+                    android:layout_marginTop="30dp"
                     android:layout_marginBottom="10dp"
                     android:paddingTop="10dp"
                     android:paddingBottom="10dp"

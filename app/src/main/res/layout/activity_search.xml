@@ -55,7 +55,7 @@
             android:id="@+id/search_list_view"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:divider="?attr/lv_item_divider"
+            android:divider="?attr/list_item_divider"
             android:layout_below="@id/search_appBarLayout"
             android:groupIndicator="@null"
             android:fadingEdgeLength="4dp"

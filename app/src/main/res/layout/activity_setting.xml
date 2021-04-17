@@ -240,14 +240,14 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:textSize="16sp"
-                        android:textColor="?attr/lv_item_title_color"
+                        android:textColor="?attr/list_item_title_color"
                         android:text="@string/iframe_auto_height" />
                     <TextView
                         android:id="@+id/setting_iframe_auto_height_desc"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:textSize="12sp"
-                        android:textColor="?attr/lv_item_desc_color"
+                        android:textColor="?attr/list_item_desc_color"
                         android:text="@string/may_not_play_text_exceptions" />
                 </LinearLayout>
                 <com.kyleduo.switchbutton.SwitchButton
@@ -271,14 +271,14 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:textSize="16sp"
-                        android:textColor="?attr/lv_item_title_color"
+                        android:textColor="?attr/list_item_title_color"
                         android:text="@string/block_ads" />
                     <TextView
                         android:id="@+id/setting_adblock_desc"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:textSize="12sp"
-                        android:textColor="?attr/lv_item_desc_color"
+                        android:textColor="?attr/list_item_desc_color"
                         android:text="@string/may_cause_abnormal_images_and_web_pages" />
                 </LinearLayout>
                 <com.kyleduo.switchbutton.SwitchButton

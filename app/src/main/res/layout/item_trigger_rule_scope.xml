@@ -10,7 +10,7 @@
         android:textSize="16sp"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:textColor="?attr/lv_item_title_color"
+        android:textColor="?attr/list_item_title_color"
         android:background="?attr/root_view_bg"
         android:textStyle="bold"
         tools:text="分类：XXX"/>

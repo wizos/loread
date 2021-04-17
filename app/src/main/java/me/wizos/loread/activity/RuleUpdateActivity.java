@@ -372,25 +372,25 @@ public class RuleUpdateActivity extends BaseActivity {
                 .backgroundColor(R.id.rule_manager_root, R.attr.root_view_bg)
                 .backgroundColor(R.id.rule_manager_toolbar, R.attr.topbar_bg)
 
-                .textColor(R.id.rule_black_host_title,R.attr.lv_item_title_color)
-                .textColor(R.id.rule_black_host_url,R.attr.lv_item_info_color)
-                .textColor(R.id.rule_black_host_update,R.attr.lv_item_info_color)
+                .textColor(R.id.rule_black_host_title,R.attr.list_item_title_color)
+                .textColor(R.id.rule_black_host_url,R.attr.list_item_info_color)
+                .textColor(R.id.rule_black_host_update,R.attr.list_item_info_color)
 
-                .textColor(R.id.rule_url_rewrite_title,R.attr.lv_item_title_color)
-                .textColor(R.id.rule_url_rewrite_url,R.attr.lv_item_info_color)
-                .textColor(R.id.rule_url_rewrite_update,R.attr.lv_item_info_color)
+                .textColor(R.id.rule_url_rewrite_title,R.attr.list_item_title_color)
+                .textColor(R.id.rule_url_rewrite_url,R.attr.list_item_info_color)
+                .textColor(R.id.rule_url_rewrite_update,R.attr.list_item_info_color)
 
-                .textColor(R.id.rule_header_referer_title,R.attr.lv_item_title_color)
-                .textColor(R.id.rule_header_referer_url,R.attr.lv_item_info_color)
-                .textColor(R.id.rule_header_referer_update,R.attr.lv_item_info_color)
+                .textColor(R.id.rule_header_referer_title,R.attr.list_item_title_color)
+                .textColor(R.id.rule_header_referer_url,R.attr.list_item_info_color)
+                .textColor(R.id.rule_header_referer_update,R.attr.list_item_info_color)
 
-                .textColor(R.id.rule_header_useragent_title,R.attr.lv_item_title_color)
-                .textColor(R.id.rule_header_useragent_url,R.attr.lv_item_info_color)
-                .textColor(R.id.rule_header_useragent_update,R.attr.lv_item_info_color)
+                .textColor(R.id.rule_header_useragent_title,R.attr.list_item_title_color)
+                .textColor(R.id.rule_header_useragent_url,R.attr.list_item_info_color)
+                .textColor(R.id.rule_header_useragent_update,R.attr.list_item_info_color)
 
-                .textColor(R.id.rule_readable_title,R.attr.lv_item_title_color)
-                .textColor(R.id.rule_readable_url,R.attr.lv_item_info_color)
-                .textColor(R.id.rule_readable_update,R.attr.lv_item_info_color);
+                .textColor(R.id.rule_readable_title,R.attr.list_item_title_color)
+                .textColor(R.id.rule_readable_url,R.attr.list_item_info_color)
+                .textColor(R.id.rule_readable_update,R.attr.list_item_info_color);
         return mColorfulBuilder;
     }
 }

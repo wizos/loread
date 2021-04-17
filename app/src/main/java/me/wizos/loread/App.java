@@ -80,9 +80,9 @@ public class App extends Application implements Thread.UncaughtExceptionHandler 
     private static String TAG = "App";
     private static App instance;
     public static final String CATEGORY_ALL = "/category/global.all";
-    // public static final String CATEGORY_UNCATEGORIZED = "/category/global.uncategorized";
+    public static final String CATEGORY_UNCATEGORIZED = "/category/global.uncategorized";
     // 已退订的文章
-    public static final String STREAM_UNSUBSCRIBED = "/category/global.unsubscribed";
+    public static final String CATEGORY_UNSUBSCRIBED = "/category/global.unsubscribed";
     // public static final String CATEGORY_TAG = "/category/global.tag";
     // public static final String CATEGORY_SEARCH = "/category/global.search";
 
@@ -311,7 +311,7 @@ public class App extends Application implements Thread.UncaughtExceptionHandler 
 
     @Override
     public void uncaughtException(@NotNull Thread thread, @NotNull Throwable ex) {
-        XLog.e("线程意外报错：");
+        XLog.e("线程意外报错：" + thread );
         Tool.printCallStack(ex);
         UMCrash.registerUMCrashCallback(new UMCrashCallback() {
             @Override

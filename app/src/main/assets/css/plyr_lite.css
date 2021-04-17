@@ -1,0 +1,130 @@
+.loread__controls {
+    padding: 0;
+    position: absolute;
+    margin: 0;
+    border-bottom-left-radius: inherit;
+    border-bottom-right-radius: inherit;
+    color: #fff;
+    background: #0000001c;
+    border-radius: 5px;
+    transition: opacity .4s ease-in-out,transform .4s ease-in-out;
+    z-index: 9999;
+    align-items: center;
+    justify-content: flex-end;
+    text-align: center;
+}
+
+.loread__controls > * {
+    display: block;
+}
+
+.loread__controls * {
+    box-sizing: inherit;
+}
+
+.loread__controls .loread__controls__item {
+    margin-left: calc(10px / 4);
+    margin-left: calc(var(--plyr-control-spacing,10px)/ 4);
+}
+.loread__menu {
+    display: flex;
+    position: relative;
+}
+
+.loread__controls button{
+    touch-action: manipulation;
+    font: inherit;
+    line-height: inherit;
+    width: auto;
+}
+
+.loread__control {
+    background: 0 0;
+    border: 0;
+    border-radius: 3px;
+    border-radius: var(--plyr-control-radius,3px);
+    color: inherit;
+    cursor: pointer;
+    flex-shrink: 0;
+    overflow: visible;
+    padding: calc(10px * .7);
+    padding: calc(var(--plyr-control-spacing,10px) * .7);
+    position: relative;
+    transition: all .3s ease;
+}
+.loread__menu__container {
+    animation: plyr-popup .2s ease;
+    background: rgba(255,255,255,.9);
+    background: var(--plyr-menu-background,rgba(255,255,255,.9));
+    border-radius: 4px;
+    box-shadow: 0 1px 2px rgba(0,0,0,.15);
+    box-shadow: var(--plyr-menu-shadow,0 1px 2px rgba(0,0,0,.15));
+    color: #4a5464;
+    color: var(--plyr-menu-color,#4a5464);
+    font-size: 15px;
+    font-size: var(--plyr-font-size-base,15px);
+    position: absolute;
+    right: 40px;
+    bottom: 0%;
+    text-align: left;
+    white-space: nowrap;
+    z-index: 3;
+}
+.loread__menu__container .loread__control[role=menuitemradio] {
+    padding-left: calc(10px * .7);
+    padding-left: calc(var(--plyr-control-spacing,10px) * .7);
+}
+.loread__menu__container .loread__control {
+    align-items: center;
+    color: #4a5464;
+    color: var(--plyr-menu-color,#4a5464);
+    font-size: 13px;
+    font-size: var(--plyr-font-size-menu,var(--plyr-font-size-small,13px));
+    padding-bottom: calc(calc(10px * .7)/ 1.5);
+    padding-bottom: calc(calc(var(--plyr-control-spacing,10px) * .7)/ 1.5);
+    padding-left: calc(calc(10px * .7) * 1.5);
+    padding-left: calc(calc(var(--plyr-control-spacing,10px) * .7) * 1.5);
+    padding-right: calc(calc(10px * .7) * 1.5);
+    padding-right: calc(calc(var(--plyr-control-spacing,10px) * .7) * 1.5);
+    -webkit-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+.plyr--fullscreen-enabled [data-plyr=fullscreen], .plyr--pip-supported [data-plyr=pip] {
+    display: inline-block;
+}
+.plyr [data-plyr=fullscreen], .plyr [data-plyr=pip] {
+    display: none;
+}
+button[data-plyr=speed]{
+	min-width: 30px;
+}
+.loread__controls button{
+   outline:none;
+}
+.loread__control svg {
+    display: block;
+    fill: currentColor;
+    height: 18px;
+    height: var(--plyr-control-icon-size,18px);
+    pointer-events: none;
+    width: 18px;
+    width: var(--plyr-control-icon-size,18px);
+}
+.loread__control.loread__control--pressed .icon--not-pressed, .loread__control.loread__control--pressed .label--not-pressed, .loread__control:not(.loread__control--pressed) .icon--pressed, .loread__control:not(.loread__control--pressed) .label--pressed {
+    display: none;
+}
+.loread__control.loread__tab-focus, .loread__control:hover, .loread__control[aria-expanded=true] {
+    background: #00b3ff;
+    background: var(--plyr-video-control-background-hover,var(--plyr-color-main,var(--plyr-color-main,#00b3ff)));
+    color: #fff;
+    color: var(--plyr-video-control-color-hover,#fff);
+}
+.loread__icon {
+  width: 1em;
+  height: 1em;
+  vertical-align: -0.15em;
+  fill: currentColor;
+  overflow: hidden;
+}

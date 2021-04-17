@@ -20,15 +20,12 @@ import android.os.Handler;
 import android.os.Parcelable;
 import android.text.InputType;
 import android.text.TextUtils;
-import android.util.ArrayMap;
-import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewConfiguration;
-import android.webkit.CookieManager;
 import android.webkit.JavascriptInterface;
 import android.webkit.SslErrorHandler;
 import android.webkit.WebChromeClient;
@@ -63,25 +60,15 @@ import com.umeng.analytics.MobclickAgent;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
 
-import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.IOException;
 import java.lang.ref.WeakReference;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import javax.net.ssl.HttpsURLConnection;
 
 import cc.shinichi.library.ImagePreview;
 import cc.shinichi.library.view.listener.OnBigImageLongClickListener;
@@ -109,19 +96,12 @@ import me.wizos.loread.extractor.Distill;
 import me.wizos.loread.extractor.ExtractPage;
 import me.wizos.loread.network.HttpClientManager;
 import me.wizos.loread.network.callback.CallbackX;
-import me.wizos.loread.sniffer.SnifferUtils;
-import me.wizos.loread.sniffer.bean.Media;
-import me.wizos.loread.sniffer.bean.MediaAudio;
-import me.wizos.loread.sniffer.bean.MediaVideo;
 import me.wizos.loread.utils.ArticleUtils;
-import me.wizos.loread.utils.DataUtils;
 import me.wizos.loread.utils.EncryptUtils;
 import me.wizos.loread.utils.FileUtils;
-import me.wizos.loread.utils.HttpsUtils;
 import me.wizos.loread.utils.ImgFileType;
 import me.wizos.loread.utils.ImgFileTypeJudge;
 import me.wizos.loread.utils.ImgUtils;
-import me.wizos.loread.utils.InputStreamCache;
 import me.wizos.loread.utils.ScreenUtils;
 import me.wizos.loread.utils.SnackbarUtils;
 import me.wizos.loread.utils.StringUtils;
@@ -181,14 +161,14 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
         Bundle bundle;
         if (savedInstanceState != null) {
             bundle = savedInstanceState;
-            App.i().articleProgress.put(bundle.getString("articleId"), bundle.getInt("articleProgress"));
+            App.i().articleProgress.put(bundle.getString(Contract.ARTICLE_ID), bundle.getInt(Contract.ARTICLE_PROGRESS));
         } else {
             bundle = getIntent().getExtras();
         }
         // setSelection 没有滚动效果，直接跳到指定位置。smoothScrollToPosition 有滚动效果的
         // 文章在列表中的位置编号，下标从 0 开始
-        articleNo = bundle.getInt("articleNo");
-        articleId = bundle.getString("articleId");
+        articleNo = bundle.getInt(Contract.ARTICLE_NO);
+        articleId = bundle.getString(Contract.ARTICLE_ID);
 
         initToolbar();
         initView(); // 初始化界面上的 View，将变量映射到布局上。
@@ -244,9 +224,9 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
 
     @Override
     protected void onSaveInstanceState(Bundle outState) {
-        outState.putString("articleId", articleId);
-        outState.putInt("articleNo", articleNo);
-        outState.putInt("articleProgress", saveArticleProgress());
+        outState.putString(Contract.ARTICLE_ID, articleId);
+        outState.putInt(Contract.ARTICLE_NO, articleNo);
+        outState.putInt(Contract.ARTICLE_PROGRESS, saveArticleProgress());
         outState.putInt("theme", App.i().getUser().getThemeMode());
         //XLog.i("自动保存：" + articleNo + "==" + "==" + articleId);
         super.onSaveInstanceState(outState);
@@ -270,7 +250,7 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
     public void readImage(String articleId, String imgId, String originalUrl) {
         String cacheUrl = FileUtils.readCacheFilePath(EncryptUtils.MD5(articleId), originalUrl);
         // XLog.d("加载图片 - 缓存地址：" + cacheUrl);
-         articleHandler.post(new Runnable() {
+        articleHandler.post(new Runnable() {
             @Override
             public void run() {
                 if (TextUtils.isEmpty(cacheUrl)) {
@@ -594,7 +574,7 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
                                             if (selectedWebView.get() != null && !selectedWebView.get().isDestroyed()) {
                                                 selectedWebView.get().loadUrl("javascript:setTimeout( onImageLoadSuccess('" + imgId + "','" + file.getPath() + "'),1)");
                                             }
-                                         }
+                                        }
                                     });
                                 }
                             });
@@ -805,26 +785,6 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
         if(selectedWebView !=null){
             selectedWebView.requestDisallowInterceptTouchEvent(disallow);
         }
-    }
-
-    @JavascriptInterface
-    @Override
-    public void foundAudio(String src, long duration) {
-        XLog.i("发现音频：" + src + "  -> 时长：" + duration);
-        Media media = new MediaAudio();
-        media.setSrc(src);
-        media.setDuration(duration);
-        mediaMap.put(src, media);
-    }
-
-    @JavascriptInterface
-    @Override
-    public void foundVideo(String src, long duration) {
-        XLog.i("发现视频：" + src + "  -> 时长：" + duration);
-        Media media = new MediaVideo();
-        media.setSrc(src);
-        media.setDuration(duration);
-        mediaMap.put(src, media);
     }
 
     @JavascriptInterface
@@ -1227,7 +1187,6 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
         }
     }
 
-    private ArrayMap<String, Media> mediaMap = new ArrayMap<>();
 
     public class WebViewClientX extends WebViewClient {
         // 通过重写WebViewClient的onReceivedSslError方法来接受所有网站的证书，忽略SSL错误。
@@ -1246,13 +1205,7 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
             if (CorePref.i().globalPref().getBoolean(Contract.BLOCK_ADS, true) && HostBlockConfig.i().isAd(url.toLowerCase()) ) {
                 return new WebResourceResponse(null, null, null);
             }
-            // 这里的嗅探并不多余，例如网易云的音频地址并不会出现在html中，但是网络请求中可以发现到。
-            // https://music.163.com/outchain/player?type=2&id=1299293129&height=66
-            Media media = SnifferUtils.hasMedia(url);
-            if (media != null){
-                XLog.d("根据 url 嗅探到多媒体：" + url);
-                mediaMap.put(media.getSrc(), media);
-            }
+
             // 此处有2个方案来实现替换图片请求为本地下载好的图片
             // 【1】无法将 图片链接 通过重定向到 file:/storage/emulated/0 以及 content://me.wizos.loread
             // 【2】可以通过拦截 图片请求，直接返回本地图片流 WebResourceResponse。但是囿于以下2个问题，导致很复杂：
@@ -1273,154 +1226,109 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
             //     e.printStackTrace();
             // }
 
-            // 仅拦截http，并且结尾为 css, js, woff, ttf 的请求
-            if (!CorePref.i().globalPref().getBoolean(Contract.IFRAME_LISTENER, true) || !request.getMethod().equalsIgnoreCase("GET") || !url.startsWith("http") || url.endsWith(".css") || url.endsWith(".js") || url.endsWith(".woff") || url.endsWith(".ttf")  || url.contains(".css?") || url.contains(".js?") || url.contains(".woff?") || url.contains(".ttf?")){
-                return super.shouldInterceptRequest(view, request);
-            }
 
-            try {
-                HttpsURLConnection.setDefaultHostnameVerifier(HttpsUtils.UnSafeHostnameVerifier);
-                HttpsURLConnection.setDefaultSSLSocketFactory(HttpsUtils.getSslSocketFactory().sSLSocketFactory);
-                HttpURLConnection connection = (HttpURLConnection) new URL(url).openConnection();
-                connection.setRequestMethod(request.getMethod());
-                connection.setConnectTimeout(10_000);
-                connection.setReadTimeout(30_000);
-
-                for (Map.Entry<String, String> requestHeader : request.getRequestHeaders().entrySet()) {
-                    connection.setRequestProperty(requestHeader.getKey(), requestHeader.getValue());
-                }
-
-                connection.setRequestProperty(Contract.COOKIE, CookieManager.getInstance().getCookie(url));
-
-                XLog.i("请求加载资源A："  + url );
-                // 将响应转换为网络资源响应参数所需的格式
-                if(isInterceptorThisRequest(connection.getResponseCode())){
-                    XLog.w("webview 无法代理，因为响应码为：" + connection.getResponseCode() );
-                    return super.shouldInterceptRequest(view, request);
-                }
-
-                XLog.i("请求加载资源B："  + url );
-                String encoding = connection.getContentEncoding();
-
-                Map<String, String> responseHeaders = new HashMap<>();
-                for (String key : connection.getHeaderFields().keySet()) {
-                    responseHeaders.put(key, connection.getHeaderField(key));
-                }
-                // 会导致视频无法加载
-                // responseHeaders.put("Access-Control-Allow-Origin", "*");
-
-                String ua = HeaderUserAgentConfig.i().guessUserAgentByUrl(url);
-                if (!StringUtils.isEmpty(ua)) {
-                    responseHeaders.put(Contract.USER_AGENT, ua );
-                }
-
-                String referer = HeaderRefererConfig.i().guessRefererByUrl(url);
-                if (!StringUtils.isEmpty(referer)) {
-                    responseHeaders.put(Contract.REFERER, referer);
-                }
-
-                String mimeType = "text/plain";
-                if (connection.getContentType() != null && !connection.getContentType().isEmpty()) {
-                    mimeType = connection.getContentType().split(";")[0];
-                }
-                // XLog.d(url + ",   内容编码：" + mimeType + " , " +  connection.getContentType());
-
-                if(!mimeType.contains("text/html") ){
-                    return super.shouldInterceptRequest(view, request);
-                    // 不能使用以下方法，会导致播放时视频异常
-                    // return new WebResourceResponse(mimeType, encoding, connection.getResponseCode(), StringUtils.isEmpty(connection.getResponseMessage()) ? "OK" : connection.getResponseMessage(), responseHeaders, connection.getInputStream());
-                }
-
-
-                // XLog.i("请求加载资源D：" );
-
-                // Document document = Jsoup.parse(connection.getInputStream(), connection.getContentEncoding(), url);
-                // document.outputSettings().prettyPrint(false);
-                // document.body().append(js);
-                // // document.body().append(FileUtils.readFileFromAssets(ArticleActivity.this, "js/iframe.js"));
-                // Elements metaElements = document.select("meta[http-equiv=content-type], meta[charset]");
-                // for (Element meta : metaElements) {
-                //     if (meta.hasAttr("http-equiv")){
-                //         meta.attr("content", StringUtils.charset(meta.attr("content")));
-                //         XLog.i("编码1：" + StringUtils.charset(meta.attr("content")));
-                //     }
-                //     if (meta.hasAttr("charset")){
-                //         meta.attr("charset", StandardCharsets.UTF_8.displayName());
-                //         XLog.i("编码2：" + StandardCharsets.UTF_8.displayName());
-                //     }
-                // }
-                // String result = document.outerHtml();
-
-                // 方法二，由于在初始化 Jsoup.parse 中 encoding 可能为 null，导致得到的数据中部分出现乱码
-                // Document document = Jsoup.parse(connection.getInputStream(), encoding, url);
-                // document.outputSettings().prettyPrint(false);
-                // XLog.i("得到的iframe为："  + " , " + document.outerHtml());
-                // XLog.i("webview 代理， 内容编码A：" + mimeType + " , " + encoding + " , " + connection.getResponseMessage());
-                // if(StringUtils.isEmpty(encoding)){
-                //     Element metaElement = document.select("meta[http-equiv=content-type], meta[charset]").first();
-                //     if(metaElement != null){
-                //         encoding = DataUtils.getCharsetFromContentType(metaElement.toString());
-                //     }else {
-                //         encoding = Charset.defaultCharset().displayName();
-                //     }
-                // }
-                // document.body().append(js);
-
-                // 先将 inputStream 缓存起来
-                InputStreamCache inputStreamCache = new InputStreamCache(connection.getInputStream());
-
-                // 读取 inputStream，并默认转为 utf-8 编码的 String，再用 Jsoup 解析出来
-                Document document = Jsoup.parse(inputStreamCache.getSting(), url);
-                document.outputSettings().prettyPrint(false);
-                // XLog.i("得到的iframe为："  + " , " + document.outerHtml());
-                XLog.d("webview 代理， 内容编码A：" + mimeType + " , " + encoding + " , " + connection.getResponseMessage());
-                Element metaElement = document.select("meta[http-equiv=content-type], meta[charset]").first();
-                if(metaElement != null){
-                    encoding = DataUtils.getCharsetFromContentType(metaElement.toString());
-                }else {
-                    encoding = StandardCharsets.UTF_8.displayName();
-                }
-                // 当默认读取的 utf-8 编码，与 html 的实际编码不相同时，再次用 Jsoup 及准确的编码来做解析
-                if(!StandardCharsets.UTF_8.displayName().equalsIgnoreCase(encoding)){
-                    document = Jsoup.parse(inputStreamCache.getInputStream(), encoding, url);
-                    document.outputSettings().prettyPrint(false);
-                }
-
-                document.head().append("<style>" + FileUtils.readFileFromAssets(ArticleActivity.this, "css/plyr.css") + "</style>");
-                document.body().append("<script>" + FileUtils.readFileFromAssets(ArticleActivity.this, "js/zepto.min.js") + "</script>");
-                document.body().append("<script>" + FileUtils.readFileFromAssets(ArticleActivity.this, "js/plyr.js") + "</script>");
-
-                String plyrI18n = ",i18n:{speed:'"+ App.i().getString(R.string.speed) +"',normal:'"+ App.i().getString(R.string.normal) +"'}";
-                document.body().append("<script>const PlyrConfig = {controls: ['play-large','play','progress','current-time','duration','settings','download','fullscreen'],settings: ['captions', 'quality', 'speed'],speed : { selected: 2, options: [0.75, 1, 1.5, 1.75, 2] } " + plyrI18n + "}</script>");
-
-                String js;
-                js = FileUtils.readFile(App.i().getUserConfigPath() + "iframe.js");
-                if (TextUtils.isEmpty(js)) {
-                    js = FileUtils.readFileFromAssets(ArticleActivity.this, "js/iframe.js");
-                }
-
-                document.body().append(js);
-                inputStreamCache.destroyCache();
-
-                // XLog.i("得到的iframe为："  + " , " + result);
-                // XLog.i("得到的html为：" + js);
-
-                XLog.d("webview 代理， 内容编码B：" + mimeType + " , " + encoding + " , " + connection.getResponseMessage());
-                // https://www.jianshu.com/p/08920c2bb128
-                // 出现锟斤拷的原因就是UTF-8转码GBK的过程中出现了问题
-                return new WebResourceResponse(mimeType, encoding, connection.getResponseCode(), StringUtils.isEmpty(connection.getResponseMessage()) ? "OK" : connection.getResponseMessage(), responseHeaders, new ByteArrayInputStream(document.outerHtml().getBytes(encoding)));
-            } catch (ClassCastException | IOException e) {
-                // Tool.printCallStack(e);
-                e.printStackTrace();
-                XLog.e("无法加载：" + e.getLocalizedMessage());
-            }
-            XLog.i("webview 走代理失败");
+            // try {
+            //     HttpsURLConnection.setDefaultHostnameVerifier(HttpsUtils.UnSafeHostnameVerifier);
+            //     HttpsURLConnection.setDefaultSSLSocketFactory(HttpsUtils.getSslSocketFactory().sSLSocketFactory);
+            //     HttpURLConnection connection = (HttpURLConnection) new URL(url).openConnection();
+            //     connection.setRequestMethod(request.getMethod());
+            //     connection.setConnectTimeout(10_000);
+            //     connection.setReadTimeout(30_000);
+            //
+            //     for (Map.Entry<String, String> requestHeader : request.getRequestHeaders().entrySet()) {
+            //         connection.setRequestProperty(requestHeader.getKey(), requestHeader.getValue());
+            //     }
+            //
+            //     connection.setRequestProperty(Contract.COOKIE, CookieManager.getInstance().getCookie(url));
+            //
+            //     XLog.i("请求加载资源A："  + url );
+            //     // 将响应转换为网络资源响应参数所需的格式
+            //     if(isInterceptorThisRequest(connection.getResponseCode())){
+            //         XLog.w("webview 无法代理，因为响应码为：" + connection.getResponseCode() );
+            //         return super.shouldInterceptRequest(view, request);
+            //     }
+            //
+            //     XLog.i("请求加载资源B："  + url );
+            //     String encoding = connection.getContentEncoding();
+            //
+            //     Map<String, String> responseHeaders = new HashMap<>();
+            //     for (String key : connection.getHeaderFields().keySet()) {
+            //         responseHeaders.put(key, connection.getHeaderField(key));
+            //     }
+            //     // 会导致视频无法加载
+            //     // responseHeaders.put("Access-Control-Allow-Origin", "*");
+            //
+            //     String ua = HeaderUserAgentConfig.i().guessUserAgentByUrl(url);
+            //     if (!StringUtils.isEmpty(ua)) {
+            //         responseHeaders.put(Contract.USER_AGENT, ua );
+            //     }
+            //
+            //     String referer = HeaderRefererConfig.i().guessRefererByUrl(url);
+            //     if (!StringUtils.isEmpty(referer)) {
+            //         responseHeaders.put(Contract.REFERER, referer);
+            //     }
+            //
+            //     String mimeType = "text/plain";
+            //     if (connection.getContentType() != null && !connection.getContentType().isEmpty()) {
+            //         mimeType = connection.getContentType().split(";")[0];
+            //     }
+            //     // XLog.d(url + ",   内容编码：" + mimeType + " , " +  connection.getContentType());
+            //
+            //     if(!mimeType.contains("text/html") ){
+            //         return super.shouldInterceptRequest(view, request);
+            //         // 不能使用以下方法，会导致播放时视频异常
+            //         // return new WebResourceResponse(mimeType, encoding, connection.getResponseCode(), StringUtils.isEmpty(connection.getResponseMessage()) ? "OK" : connection.getResponseMessage(), responseHeaders, connection.getInputStream());
+            //     }
+            //
+            //     // 方法1，由于在初始化 Jsoup.parse 中 encoding 可能为 null，导致得到的数据中部分出现乱码
+            //     // Document document = Jsoup.parse(connection.getInputStream(), encoding, url);
+            //
+            //     // 先将 inputStream 缓存起来
+            //     InputStreamCache inputStreamCache = new InputStreamCache(connection.getInputStream());
+            //
+            //     // 读取 inputStream，并默认转为 utf-8 编码的 String，再用 Jsoup 解析出来
+            //     Document document = Jsoup.parse(inputStreamCache.getSting(), url);
+            //     document.outputSettings().prettyPrint(false);
+            //     // XLog.i("得到的iframe为："  + " , " + document.outerHtml());
+            //     XLog.d("webview 代理， 内容编码A：" + mimeType + " , " + encoding + " , " + connection.getResponseMessage());
+            //     Element metaElement = document.select("meta[http-equiv=content-type], meta[charset]").first();
+            //     if(metaElement != null){
+            //         encoding = DataUtils.getCharsetFromContentType(metaElement.toString());
+            //     }else {
+            //         encoding = StandardCharsets.UTF_8.displayName();
+            //     }
+            //     // 当默认读取的 utf-8 编码，与 html 的实际编码不相同时，再次用 Jsoup 及准确的编码来做解析
+            //     if(!StandardCharsets.UTF_8.displayName().equalsIgnoreCase(encoding)){
+            //         document = Jsoup.parse(inputStreamCache.getInputStream(), encoding, url);
+            //         document.outputSettings().prettyPrint(false);
+            //     }
+            //
+            //     document.head().append("<style>" + FileUtils.readFileFromAssets(ArticleActivity.this, "css/plyr.css") + "</style>");
+            //     document.body().append("<script>" + FileUtils.readFileFromAssets(ArticleActivity.this, "js/zepto.min.js") + "</script>");
+            //     document.body().append("<script>" + FileUtils.readFileFromAssets(ArticleActivity.this, "js/plyr.js") + "</script>");
+            //
+            //     String plyrI18n = ",i18n:{speed:'"+ App.i().getString(R.string.speed) +"',normal:'"+ App.i().getString(R.string.normal) +"'}";
+            //     document.body().append("<script>const PlyrConfig = {controls: ['play-large','play','progress','current-time','duration','settings','download','fullscreen'],settings: ['captions', 'quality', 'speed'],speed : { selected: 2, options: [0.75, 1, 1.5, 1.75, 2] } " + plyrI18n + "}</script>");
+            //
+            //     String js;
+            //     js = FileUtils.readFile(App.i().getUserConfigPath() + "iframe.js");
+            //     if (TextUtils.isEmpty(js)) {
+            //         js = FileUtils.readFileFromAssets(ArticleActivity.this, "js/iframe.js");
+            //     }
+            //
+            //     document.body().append(js);
+            //     inputStreamCache.destroyCache();
+            //
+            //     XLog.d("webview 代理， 内容编码B：" + mimeType + " , " + encoding + " , " + connection.getResponseMessage());
+            //     // https://www.jianshu.com/p/08920c2bb128
+            //     // 出现锟斤拷的原因就是UTF-8转码GBK的过程中出现了问题
+            //     return new WebResourceResponse(mimeType, encoding, connection.getResponseCode(), StringUtils.isEmpty(connection.getResponseMessage()) ? "OK" : connection.getResponseMessage(), responseHeaders, new ByteArrayInputStream(document.outerHtml().getBytes(encoding)));
+            // } catch (ClassCastException | IOException e) {
+            //     // Tool.printCallStack(e);
+            //     e.printStackTrace();
+            //     XLog.e("无法加载：" + e.getLocalizedMessage());
+            // }
             return super.shouldInterceptRequest(view, request);
-        }
-
-
-        private boolean isInterceptorThisRequest(int code) {
-            return (code < 100 || code > 599 || (code > 299 && code < 400));
         }
 
 
@@ -1775,13 +1683,13 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
                         return true;
                     }
                 })
-               // .neutralText(getString(R.string.new_directory))
-               // .onNeutral(new MaterialDialog.SingleButtonCallback() {
-               //     @Override
-               //     public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
-               //         newDirectory(uid,dialog);
-               //     }
-               // })
+                // .neutralText(getString(R.string.new_directory))
+                // .onNeutral(new MaterialDialog.SingleButtonCallback() {
+                //     @Override
+                //     public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
+                //         newDirectory(uid,dialog);
+                //     }
+                // })
                 .show();
     }
 
@@ -1867,16 +1775,14 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
             }
             MobclickAgent.onEvent(this, "readability", url);
             String finalUrl = url;
+
+
             distill = new Distill(url, selectedArticle.getLink(), keyword, new Distill.Listener() {
                 @Override
                 public void onResponse(ExtractPage page) {
                     App.i().oldArticles.put(selectedArticle.getId(),(Article)selectedArticle.clone());
 
                     selectedArticle.updateContent(ArticleUtils.getOptimizedContent(finalUrl, page.getContent()));
-                    // Date date = DateParser.parseDate(page.getTime(), Locale.getDefault());
-                    // if(date != null){
-                    //     selectedArticle.setPubDate(date.getTime());
-                    // }
 
                     CoreDB.i().articleDao().update(selectedArticle);
                     articleHandler.post(new Runnable() {
@@ -1933,6 +1839,7 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
         String info = selectedArticle.getTitle() + "\n" +
                 "ID=" + selectedArticle.getId() + "\n" +
                 "ID-MD5=" + EncryptUtils.MD5(selectedArticle.getId()) + "\n" +
+                "Link-MD5=" + EncryptUtils.MD5(selectedArticle.getLink()) + "\n" +
                 "Uid=" + selectedArticle.getUid() + "\n" +
                 "ReadState=" + selectedArticle.getReadStatus() + "\n" +
                 "ReadUpdated=" + selectedArticle.getReadUpdated() + "\n" +
@@ -1955,7 +1862,7 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
         new MaterialDialog.Builder(this)
                 .title(R.string.article_info)
                 .content(info)
-                .positiveText(R.string.agree)
+                .positiveText("复制渲染内容")
                 .onPositive(new MaterialDialog.SingleButtonCallback() {
                     @Override
                     public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
@@ -1965,11 +1872,23 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
                         ClipData mClipData = ClipData.newPlainText("ArticleContent", ArticleUtils.getPageForDisplay(selectedArticle));
                         // 将ClipData内容放到系统剪贴板里。
                         cm.setPrimaryClip(mClipData);
-                        ToastUtils.show("已复制文章内容");
+                        ToastUtils.show("已复制");
                     }
                 })
-
                 .positiveColorRes(R.color.material_red_400)
+                .neutralText("复制原始信息")
+                .onNeutral(new MaterialDialog.SingleButtonCallback() {
+                    @Override
+                    public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
+                        //获取剪贴板管理器：
+                        ClipboardManager cm = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+                        // 创建普通字符型ClipData
+                        ClipData mClipData = ClipData.newPlainText("ArticleContent", info);
+                        // 将ClipData内容放到系统剪贴板里。
+                        cm.setPrimaryClip(mClipData);
+                        ToastUtils.show("已复制");
+                    }
+                })
                 .titleGravity(GravityEnum.CENTER)
                 .titleColorRes(R.color.material_red_400)
                 .contentColorRes(android.R.color.white)
@@ -1996,7 +1915,7 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
                 return true;
             }
             Intent data = new Intent();
-            data.putExtra("articleNo", articleNo);
+            data.putExtra(Contract.ARTICLE_NO, articleNo);
             //注意下面的RESULT_OK常量要与回传接收的Activity中onActivityResult()方法一致
             this.setResult(App.ActivityResult_ArtToMain, data);
             this.finish();
@@ -2039,14 +1958,12 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
         //     readabilityMenuItem.setVisible(false);
         // }
         if(BuildConfig.DEBUG){
-            MenuItem speak = menu.findItem(R.id.article_menu_speak);
-            speak.setVisible(true);
             MenuItem articleInfo = menu.findItem(R.id.article_menu_article_info);
             articleInfo.setVisible(true);
+            MenuItem editLink = menu.findItem(R.id.article_menu_edit_link);
+            editLink.setVisible(true);
             MenuItem editContent = menu.findItem(R.id.article_menu_edit_content);
             editContent.setVisible(true);
-            MenuItem showSniffer = menu.findItem(R.id.article_menu_show_sniffer);
-            showSniffer.setVisible(true);
         }
         return true;
     }
@@ -2072,16 +1989,40 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
                     ToastUtils.show(R.string.unable_to_edit_unsubscribed_feed);
                 }
                 break;
-            // case R.id.article_menu_readability:
-            //     showRSSArticle();
-            //     break;
+            case R.id.article_menu_share:
+                if(selectedArticle == null){
+                    break;
+                }
+                Intent sendIntent = new Intent(Intent.ACTION_SEND);
+                sendIntent.setType("text/plain");
+                sendIntent.putExtra(Intent.EXTRA_SUBJECT, selectedArticle.getTitle());
+                sendIntent.putExtra(Intent.EXTRA_TEXT, selectedArticle.getTitle() + " " + selectedArticle.getLink());
+                sendIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                startActivity(Intent.createChooser(sendIntent, getString(R.string.share_to)));
+                overridePendingTransition(R.anim.fade_in, R.anim.out_from_bottom);
+                break;
             case R.id.article_menu_speak:
                 Intent intent = new Intent(ArticleActivity.this, TTSActivity.class);
-                intent.putExtra("articleNo", articleNo);
+                intent.putExtra(Contract.ARTICLE_NO, articleNo);
                 startActivity(intent);
                 break;
             case R.id.article_menu_article_info:
                 showArticleInfo();
+                break;
+            case R.id.article_menu_edit_link:
+                new MaterialDialog.Builder(ArticleActivity.this)
+                        .title("修改文章链接")
+                        .inputType(InputType.TYPE_TEXT_FLAG_MULTI_LINE)
+                        .input(getString(R.string.copy_link), selectedArticle.getLink(), new MaterialDialog.InputCallback() {
+                            @Override
+                            public void onInput(@NonNull MaterialDialog dialog, CharSequence input) {
+                                selectedArticle.setLink(input.toString());
+                                CoreDB.i().articleDao().update(selectedArticle);
+                            }
+                        })
+                        .positiveText(R.string.confirm)
+                        .negativeText(android.R.string.cancel)
+                        .show();
                 break;
             case R.id.article_menu_edit_content:
                 new MaterialDialog.Builder(ArticleActivity.this)
@@ -2091,20 +2032,13 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
                         .input(getString(R.string.site_remark), selectedArticle.getContent(), new MaterialDialog.InputCallback() {
                             @Override
                             public void onInput(@NonNull MaterialDialog dialog, CharSequence input) {
-                                dialog.getInputEditText().setGravity(Gravity.TOP);
+                                // dialog.getInputEditText().setGravity(Gravity.TOP);
                                 selectedArticle.updateContent(input.toString());
                                 CoreDB.i().articleDao().update(selectedArticle);
                             }
                         })
                         .positiveText(R.string.confirm)
                         .negativeText(android.R.string.cancel)
-                        .show();
-                break;
-            case R.id.article_menu_show_sniffer:
-                new MaterialDialog.Builder(this)
-                        .title("嗅探结果")
-                        .items(mediaMap.values())
-                        // .content(mediaMap.entrySet().toString())
                         .show();
                 break;
         }

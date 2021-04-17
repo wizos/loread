@@ -12,10 +12,19 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="center_vertical"
-        android:hint="输入"
+        android:hint="输入 URL, Intent, SQL"
         style="@style/SettingItem"
         android:padding="15dp"/>
 
+    <EditText
+        android:id="@+id/lab_enter2_edittext"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_vertical"
+        android:hint="输入 Header"
+        style="@style/SettingItem"
+        android:minLines="1"
+        android:padding="15dp"/>
 
     <ScrollView
         android:layout_width="match_parent"
@@ -27,7 +36,7 @@
             tools:ignore="WebViewLayout">
 
             <Button
-                android:text="打开 URL"
+                android:text="打开 URL(WEB1)"
                 android:textAllCaps="false"
                 android:onClick="openLink"
                 android:layout_height="50dp"
@@ -59,9 +68,18 @@
                 android:gravity="center_vertical"
                 android:layout_gravity="center_vertical"/>
             <Button
-                android:text="获取全文"
+                android:text="获取原文（OkHTTP）"
                 android:textAllCaps="false"
-                android:onClick="getFullText"
+                android:onClick="getPlainTextByOkHttp"
+                android:layout_height="50dp"
+                style="@style/SettingItem"
+                android:gravity="center_vertical"
+                android:layout_gravity="center_vertical"/>
+
+            <Button
+                android:text="获取原文（Webview）"
+                android:textAllCaps="false"
+                android:onClick="getPlainTextByWebview"
                 android:layout_height="50dp"
                 style="@style/SettingItem"
                 android:gravity="center_vertical"

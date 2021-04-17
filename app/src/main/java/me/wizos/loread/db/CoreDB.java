@@ -9,6 +9,8 @@ import androidx.room.RoomDatabase;
 import androidx.room.migration.Migration;
 import androidx.sqlite.db.SupportSQLiteDatabase;
 
+import com.elvishew.xlog.XLog;
+
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -30,8 +32,7 @@ import me.wizos.loread.db.rule.Scope;
  */
 @Database(
         entities = {User.class,Article.class,Feed.class,Category.class, FeedCategory.class, Tag.class, ArticleTag.class, Scope.class, Condition.class, Action.class},
-        views = {FeedView.class,CategoryView.class},
-        version = 6
+        version = 7
 )
 public abstract class CoreDB extends RoomDatabase {
     public static final String DATABASE_NAME = "loread.db";
@@ -66,7 +67,6 @@ public abstract class CoreDB extends RoomDatabase {
             database.execSQL("ALTER TABLE Feed ADD lastSyncTime INTEGER NOT NULL DEFAULT 0");
             database.execSQL("ALTER TABLE Feed ADD lastSyncError TEXT");
             database.execSQL("ALTER TABLE Feed ADD lastErrorCount INTEGER NOT NULL DEFAULT 0");
-
             database.execSQL("ALTER TABLE User ADD lastSyncTime INTEGER NOT NULL DEFAULT 0");
 
             database.execSQL("DROP VIEW IF EXISTS FeedView;");
@@ -85,6 +85,17 @@ public abstract class CoreDB extends RoomDatabase {
             database.execSQL("update Feed set syncInterval = 0 where syncInterval = -1");
         }
     };
+    private static final Migration MIGRATION_6_7 = new Migration(6, 7) {
+        @Override
+        public void migrate(SupportSQLiteDatabase database) {
+            database.execSQL("ALTER TABLE Article ADD guid TEXT");
+            // database.execSQL("ALTER TABLE Feed ADD lastPubDate INTEGER");
+            database.execSQL("DROP VIEW IF EXISTS FeedView;");
+            database.execSQL("DROP VIEW IF EXISTS CategoryView;");
+        }
+    };
+
+
     // 设置爬取时间可以为null，但是实际验证是不允许为null的
 
     public static synchronized void init(Context context) {
@@ -96,6 +107,7 @@ public abstract class CoreDB extends RoomDatabase {
                                 @Override
                                 public void onOpen(@NonNull SupportSQLiteDatabase db) {
                                     super.onOpen(db);
+                                    XLog.i("数据库版本：" + db.getVersion());
                                     createTriggers(db);
                                 }
                             })
@@ -104,6 +116,7 @@ public abstract class CoreDB extends RoomDatabase {
                             .addMigrations(MIGRATION_3_4)
                             .addMigrations(MIGRATION_4_5)
                             .addMigrations(MIGRATION_5_6)
+                            .addMigrations(MIGRATION_6_7)
                             .allowMainThreadQueries()
                             .build();
                 }
@@ -196,14 +209,6 @@ public abstract class CoreDB extends RoomDatabase {
                         "  END";
         db.execSQL(updateArticleFeedUrlWhenWhenUpdateFeed);
 
-        // // 当插入新文章时，自动给 feedTitle 字段赋值
-        // String updateArticleFeedTitleWhenInsertArticle =
-        //         "CREATE TEMP TRIGGER IF NOT EXISTS updateArticleFeedTitleWhenInsertArticle" +
-        //                 " AFTER INSERT ON ARTICLE" +
-        //                 "  BEGIN" +
-        //                 "   UPDATE ARTICLE SET FEEDTITLE = (select TITLE from FEED where ID = new.FEEDID AND UID IS new.UID) WHERE ID IS new.ID AND UID IS new.UID;" +
-        //                 "  END";
-        // db.execSQL(updateArticleFeedTitleWhenInsertArticle);
         // 当 feedTitle 更新时，自动更新 feedtitle 字段
         String updateArticleFeedTitleWhenUpdateFeed =
                 "CREATE TEMP TRIGGER IF NOT EXISTS updateArticleFeedTitleWhenUpdateFeed" +
@@ -347,7 +352,7 @@ public abstract class CoreDB extends RoomDatabase {
 
         // 当feed的星标计数变动时，更新tag的星标计数
         String updateTagStarCountWhenAdd =
-                "    CREATE TEMP TRIGGER IF NOT EXISTS updateTagStarCountWhenAdd" +
+                "CREATE TEMP TRIGGER IF NOT EXISTS updateTagStarCountWhenAdd" +
                         " AFTER UPDATE OF STARCOUNT ON FEED" +
                         " WHEN (new.STARCOUNT != old.STARCOUNT)" +
                         "      BEGIN" +

@@ -12,11 +12,22 @@ public class Contract {
     public static final String COOKIE = "Cookie";
     public static final String REFERER = "Referer";
 
+    public static final String ARTICLE_ID = "articleId";
+    public static final String ARTICLE_NO = "articleNo";
+    public static final String FEED_ID = "feedId";
+    public static final String ARTICLE_PROGRESS = "articleProgress";
+
+
     public static final String ENABLE_REMOTE_URL_REWRITE_RULE = "enable_remote_url_rewrite_rule";
     public static final String ENABLE_REMOTE_HOST_BLOCK_RULE = "enable_remote_host_block_rule";
     public static final String ENABLE_CHECK_UPDATE = "enable_check_update";
     public static final String DEFAULT_USER_AGENT = "default_user-agent"; // 跟随系统, 指定的项目
     public static final String IFRAME_LISTENER = "iframe_listener";
+    public static final String LOREAD_WIZOS_ME = "https://loread.wizos.me/";
+    public static final String PATH_PLYR_LITE = "css/plyr_lite.css";
+    public static final String PATH_ICONFONT = "js/iconfont.js";
+    public static final String PATH_ZEPTO = "js/zepto.min.js";
+    public static final String PATH_MEDIA_CONTROLS = "js/media_controls.js";
     public static final String BLOCK_ADS = "block_ads";
 
     public static final String SOCKS5_PROXY = "socks5_proxy";
@@ -77,6 +88,9 @@ public class Contract {
     public static final String MARK_STAR = "mark_star";
 
     public static final String EXT_JSON = ".json";
+
+    public static final String TEXT_CSS = "text/css";
+    public static final String TEXT_JS = "text/javascript";
 
     // ACCOUNT_TYPE用于我们当前APP获取系统帐户的唯一标识，这个在account_preferences.xml中有，两处的声明必须是一致
     // public static final String ACCOUNT_TYPE = "me.wizos.loread";

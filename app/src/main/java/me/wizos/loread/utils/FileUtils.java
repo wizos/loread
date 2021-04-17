@@ -832,4 +832,14 @@ public class FileUtils {
             return null;
         }
     }
+
+
+    public static InputStream getInputStreamFromLocalOrAssets(Context context, String path) throws IOException {
+        File localFile = new File(App.i().getUserConfigPath() + path);
+        if(localFile.exists()){
+            return new FileInputStream(localFile);
+        }else {
+            return context.getAssets().open(path);
+        }
+    }
 }

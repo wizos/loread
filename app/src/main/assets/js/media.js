@@ -7,7 +7,7 @@ $(document).ready(function(e) {
     handleTable();
     $("section, img").removeAttr("style");
 
-    hljs.initHighlightingOnLoad();
+    hljs.highlightAll();
     MathJax = {
         tex: {inlineMath: [['\\$', '\\$'], ['\\(', '\\)']]},
         svg: {fontCache: 'global'},
@@ -21,41 +21,14 @@ $(document).ready(function(e) {
         }
     };
     handleSlidingConflicts();
-    handleEvent();
 });
 
-function handleEvent() {
-    window.addEventListener('message',function(e) {
-        var data = e.data;
-        var event = data.event;
-        //console.log("收到子 iframe 的信息：" + event + "，id: " + data.id);
-        if (event === 'audio') {
-            console.log(" 音频：" + "src：" + data.src + "; id：" + data.id);
-            ArticleBridge.foundAudio(data.src, data.duration);
-        } else if (event === 'video') {
-            //console.log("video 变化：" + "宽:" + data.width + "px; 高:" + data.height + "px; src：" + data.src + "；标题：" + data.title);
-            var frame = document.getElementById(data.id);
-            $(frame).css("height", (data.height / data.width * frame.clientWidth));
-            $(frame).css("pointer-events", "auto");
-            ArticleBridge.foundVideo(data.src, data.duration);
-        }
-/*
- else if (event === 'iframe') {
-            console.log("iframe 变化" + "width:" + data.width + "; height:" + data.height);
-            var frame = document.getElementById(data.id);
-            if (data.height > data.width && frame) {
-                $(frame).css("height", (data.height / data.width * frame.clientWidth));
-            }
-        }
-*/
-    });
-}
 
 
 function handleSlidingConflicts() {
     $("code, pre, .table_wrap, mjx-container").on("scroll", function(e) {
         horizontal = e.currentTarget.scrollLeft;
-        if(horizontal > 0){ArticleBridge.requestDisallowInterceptTouchEvent(true);}
+        if(horizontal > 0){LoreadBridge.requestDisallowInterceptTouchEvent(true);}
     });
 }
 
@@ -81,18 +54,18 @@ function handleImage() {
         // 此时去下载图片
         if (displayUrl == IMAGE_HOLDER_CLICK_TO_LOAD_URL) {
             image.attr('src', IMAGE_HOLDER_LOADING_URL);
-            ArticleBridge.downImage(articleId, image.attr('id'), originalUrl, false);
+            LoreadBridge.downImage(articleId, image.attr('id'), originalUrl, false);
         } else if (displayUrl == IMAGE_HOLDER_LOAD_FAILED_URL) {
             image.attr('src', IMAGE_HOLDER_LOADING_URL);
-            ArticleBridge.downImage(articleId, image.attr('id'), originalUrl, false);
+            LoreadBridge.downImage(articleId, image.attr('id'), originalUrl, false);
         } else if (displayUrl == IMAGE_HOLDER_IMAGE_ERROR_URL) {
             image.attr('src', IMAGE_HOLDER_LOADING_URL);
-            ArticleBridge.downImage(articleId, image.attr('id'), originalUrl, true);
+            LoreadBridge.downImage(articleId, image.attr('id'), originalUrl, true);
         } else if (displayUrl != IMAGE_HOLDER_LOADING_URL) { // 由于此时正在加载中所以不处理
             if (image.parent()[0].tagName.toLowerCase() === "a" && image.parent().attr('href').toLowerCase() !== image.attr('original-src').toLowerCase()) {
-                ArticleBridge.openImageOrLink(articleId, displayUrl, image.parent().attr('href'));
+                LoreadBridge.openImageOrLink(articleId, displayUrl, image.parent().attr('href'));
             } else {
-                ArticleBridge.openImage(articleId, displayUrl);
+                LoreadBridge.openImage(articleId, displayUrl);
             }
         }
         // 阻止元素发生默认的行为（例如点击提交按钮时阻止对表单的提交）
@@ -103,7 +76,7 @@ function handleImage() {
 
     lozad('.img-lozad', {
         load: function(el) {
-            ArticleBridge.readImage(articleId, el.getAttribute('id'), el.getAttribute('original-src'));
+            LoreadBridge.readImage(articleId, el.getAttribute('id'), el.getAttribute('original-src'));
         },
         rootMargin: '540px 0px'
     }).observe();
@@ -119,7 +92,7 @@ function handleAudio() {
         audio.attr("style", "pointer-events:none;");
         audio.wrap('<div class="audio_wrap"></div>');
         audio.parent().click(function(event) {
-            ArticleBridge.openAudio(audio.attr("src"));
+            LoreadBridge.openAudio(audio.attr("src"));
             event.preventDefault();
         });
     });
@@ -145,7 +118,7 @@ function handleVideo() {
 function handleFrame() {
     $('iframe').each(function() {
         var frame = $(this);
-        var url = ArticleBridge.rewrite(frame.attr("src"));
+        var url = LoreadBridge.rewrite(frame.attr("src"));
         if (isEmpty(url)) {
             url = frame.attr("src");
         }
@@ -164,7 +137,7 @@ function handleFrame() {
             frame.css("pointer-events", "none");
             frame.parent().click(function(event) {
                 if (!loadOnInner(frame.attr('src'))) {
-                    ArticleBridge.openLink(frame.attr("src"));
+                    LoreadBridge.openLink(frame.attr("src"));
                     event.preventDefault();
                 }
             });
@@ -188,7 +161,7 @@ function handleEmbed() {
         // 让iframe默认为点击新窗口打开
         frame.css("pointer-events", "none");
         frame.parent().click(function(event) {
-            ArticleBridge.openLink(frame.attr("src"));
+            LoreadBridge.openLink(frame.attr("src"));
             event.preventDefault();
         });
 
@@ -241,7 +214,7 @@ function loadOnInner(url) {
     if (isEmpty(url)) {
         return false;
     }
-    var flags = ["anchor.fm", "ixigua.com","music.163.com/outchain/player", "player.bilibili.com/player.html", "bilibili.com/blackboard/html5mobileplayer.html", "player.youku.com", "open.iqiyi.com", "letv.com", "sohu.com", "v.qq.com", "fpie1.com/#/video", "fpie2.com/#/video", "share.polyv.net", "www.google.com/maps/embed", "youtube.com/embed", "vimeo.com"];
+    var flags = ["anchor.fm", "music.163.com/outchain/player"];
     for (var i = 0; i < flags.length; i++) {
         if (url.indexOf(flags[i]) != -1) {
             return true;

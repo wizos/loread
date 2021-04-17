@@ -21,7 +21,6 @@ public class Translator {
         merge(context, R.array.action_judge_title_key, R.array.action_judge_title);
         merge(context, R.array.action_judge_content, R.array.action_judge_content_key);
         merge(context, R.array.action_judge_equals, R.array.action_judge_equals_key);
-        // merge(context, R.array.action_judge_number, R.array.action_judge_number_key);
     }
 
     public void merge(Context context, @ArrayRes int keysId, @ArrayRes int valuesId){

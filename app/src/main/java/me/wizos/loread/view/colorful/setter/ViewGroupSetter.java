@@ -68,6 +68,11 @@ public class ViewGroupSetter extends ViewSetter {
         return this;
     }
 
+    public ViewGroupSetter childImageSrcResource(int viewId, int resourceId) {
+        mItemViewSetters.add(new ImageSrcResourceSetter(viewId, resourceId));
+        return this;
+    }
+
     /**
      * 设置文本颜色,因此View的类型必须为TextView或者其子类
      *
@@ -145,15 +150,12 @@ public class ViewGroupSetter extends ViewSetter {
     private void clearListViewRecyclerBin(View rootView) {
         if (rootView instanceof AbsListView) {
             try {
-                Field localField = AbsListView.class
-                        .getDeclaredField("mRecycler");
+                Field localField = AbsListView.class.getDeclaredField("mRecycler");
                 localField.setAccessible(true);
-                Method localMethod = Class.forName(
-                        "android.widget.AbsListView$RecycleBin")
-                        .getDeclaredMethod("clear");
+                Method localMethod = Class.forName("android.widget.AbsListView$RecycleBin").getDeclaredMethod("clear");
                 localMethod.setAccessible(true);
                 localMethod.invoke(localField.get(rootView));
-//				Log.e("", "### 清空AbsListView的RecycerBin ");
+				// Log.e("", "### 清空AbsListView的RecycerBin ");
             } catch (NoSuchFieldException e1) {
                 e1.printStackTrace();
             } catch (ClassNotFoundException e2) {
@@ -170,6 +172,17 @@ public class ViewGroupSetter extends ViewSetter {
 
     private void clearRecyclerViewRecyclerBin(View rootView) {
         if (rootView instanceof RecyclerView) {
+            try {
+                Field declaredField = RecyclerView.class.getDeclaredField("mRecycler");
+                declaredField.setAccessible(true);
+                Method declaredMethod = Class.forName(RecyclerView.Recycler.class.getName()).getDeclaredMethod("clear");
+                declaredMethod.setAccessible(true);
+                declaredMethod.invoke(declaredField.get(rootView));
+                ((RecyclerView) rootView).getRecycledViewPool().clear();
+            } catch (NoSuchFieldException | ClassNotFoundException | InvocationTargetException | NoSuchMethodException | IllegalAccessException e) {
+                XLog.e("错误：" + e);
+            }
+
             // XLog.i("### 准备 清空RecyclerView的Recycer ");
             // RecyclerView.RecycledViewPool recycledViewPool = ((RecyclerView) rootView).getRecycledViewPool();
             // recycledViewPool.clear();
@@ -198,16 +211,7 @@ public class ViewGroupSetter extends ViewSetter {
             //     e5.printStackTrace();
             // }
 
-            try {
-                Field declaredField = RecyclerView.class.getDeclaredField("mRecycler");
-                declaredField.setAccessible(true);
-                Method declaredMethod = Class.forName(RecyclerView.Recycler.class.getName()).getDeclaredMethod("clear");
-                declaredMethod.setAccessible(true);
-                declaredMethod.invoke(declaredField.get(rootView));
-                ((RecyclerView) rootView).getRecycledViewPool().clear();
-            } catch (NoSuchFieldException | ClassNotFoundException | InvocationTargetException | NoSuchMethodException | IllegalAccessException e) {
-                XLog.e("错误：" + e);
-            }
+
 
             // Class<RecyclerView> recyclerViewClass = RecyclerView.class;
             // try {

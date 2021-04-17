@@ -238,11 +238,11 @@ public class ProxyActivity extends BaseActivity {
         mColorfulBuilder
                 .backgroundColor(R.id.proxy_root, R.attr.root_view_bg)
                 .backgroundColor(R.id.proxy_toolbar, R.attr.topbar_bg)
-                .textColor(R.id.proxy_server_edittext,R.attr.lv_item_title_color)
-                .textColor(R.id.proxy_port_edittext,R.attr.lv_item_title_color)
-                .textColor(R.id.proxy_username_edittext,R.attr.lv_item_title_color)
-                .textColor(R.id.proxy_password_edittext,R.attr.lv_item_title_color)
-                .textColor(R.id.proxy_enable_title, R.attr.lv_item_title_color);
+                .textColor(R.id.proxy_server_edittext,R.attr.list_item_title_color)
+                .textColor(R.id.proxy_port_edittext,R.attr.list_item_title_color)
+                .textColor(R.id.proxy_username_edittext,R.attr.list_item_title_color)
+                .textColor(R.id.proxy_password_edittext,R.attr.list_item_title_color)
+                .textColor(R.id.proxy_enable_title, R.attr.list_item_title_color);
         return mColorfulBuilder;
     }
 }

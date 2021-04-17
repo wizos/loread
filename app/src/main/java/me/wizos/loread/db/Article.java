@@ -22,9 +22,10 @@ import me.wizos.loread.utils.ArticleUtils;
         )
 public class Article implements Cloneable{
     @NonNull
-    private String id;
-    @NonNull
     private String uid;
+    @NonNull
+    private String id;
+    private String guid;
     private String title;
     private String content;
     private String summary;
@@ -61,6 +62,14 @@ public class Article implements Cloneable{
 
     public void setId(String id) {
         this.id = id;
+    }
+
+    public String getGuid() {
+        return guid;
+    }
+
+    public void setGuid(String guid) {
+        this.guid = guid;
     }
 
     public String getTitle() {
@@ -221,6 +230,7 @@ public class Article implements Cloneable{
         return "Article{" +
                 "id='" + id + '\'' +
                 ", uid='" + uid + '\'' +
+                ", guid='" + guid + '\'' +
                 ", title='" + title + '\'' +
                 ", summary='" + summary + '\'' +
                 ", image='" + image + '\'' +

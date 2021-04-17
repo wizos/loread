@@ -29,6 +29,7 @@ import me.wizos.loread.db.CoreDB;
 import me.wizos.loread.db.Feed;
 import me.wizos.loread.db.rule.TriggerRule;
 import me.wizos.loread.utils.Classifier;
+import me.wizos.loread.utils.TriggerRuleUtils;
 import me.wizos.loread.view.colorful.Colorful;
 import me.wizos.loread.view.colorful.setter.ViewGroupSetter;
 import pokercc.android.expandablerecyclerview.ExpandableRecyclerView;
@@ -188,6 +189,8 @@ public class TriggerRuleManagerActivity extends BaseActivity {
         //监听左上角的返回箭头
         if (item.getItemId() == android.R.id.home) {
             exit();
+        }else if(item.getItemId() == R.id.action_manager_menu_exe_all_rules){
+            TriggerRuleUtils.exeAllRules(App.i().getUser().getId(), 0);
         }else if(item.getItemId() == R.id.action_manager_menu_create_rule_global){
             Intent intent = new Intent(this, TriggerRuleEditActivity.class);
             intent.putExtra(Contract.TYPE, Contract.TYPE_GLOBAL);
@@ -227,15 +230,15 @@ public class TriggerRuleManagerActivity extends BaseActivity {
     @Override
     protected Colorful.Builder buildColorful(Colorful.Builder mColorfulBuilder) {
         ViewGroupSetter ruleListViewSetter = new ViewGroupSetter(rulesView);
-        ruleListViewSetter.childViewTextColor(R.id.item_rule_target_textview, R.attr.lv_item_title_color);
+        ruleListViewSetter.childViewTextColor(R.id.item_rule_target_textview, R.attr.list_item_title_color);
         ruleListViewSetter.childViewBgColor(R.id.item_rule_target_textview, R.attr.root_view_bg);
 
-        ruleListViewSetter.childViewTextColor(R.id.item_condition_labelview, R.attr.lv_item_title_color);
-        ruleListViewSetter.childViewTextColor(R.id.item_condition_textview, R.attr.lv_item_title_color);
+        ruleListViewSetter.childViewTextColor(R.id.item_condition_labelview, R.attr.list_item_title_color);
+        ruleListViewSetter.childViewTextColor(R.id.item_condition_textview, R.attr.list_item_title_color);
         ruleListViewSetter.childViewBgColor(R.id.item_condition, R.attr.root_view_bg);
 
-        ruleListViewSetter.childViewTextColor(R.id.item_action_labelview, R.attr.lv_item_title_color);
-        ruleListViewSetter.childViewTextColor(R.id.item_action_textview, R.attr.lv_item_title_color);
+        ruleListViewSetter.childViewTextColor(R.id.item_action_labelview, R.attr.list_item_title_color);
+        ruleListViewSetter.childViewTextColor(R.id.item_action_textview, R.attr.list_item_title_color);
         ruleListViewSetter.childViewBgColor(R.id.item_action, R.attr.root_view_bg);
 
         mColorfulBuilder

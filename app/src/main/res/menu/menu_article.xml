@@ -10,36 +10,40 @@
         android:enabled="true"
         android:visible="true"
         app:showAsAction="ifRoom" />
-    <!--<item-->
-    <!--    android:id="@+id/article_menu_readability"-->
-    <!--    android:icon="@drawable/ic_chrome_reader"-->
-    <!--    android:title="@string/readability"-->
-    <!--    android:enabled="true"-->
-    <!--    android:visible="false"-->
-    <!--    tools:visible="true"-->
-    <!--    app:showAsAction="ifRoom" />-->
+
+    <item
+        android:id="@+id/article_menu_share"
+        android:icon="@drawable/ic_share_2"
+        android:title="@string/share"
+        android:enabled="true"
+        android:visible="true"
+        app:showAsAction="ifRoom" />
+
     <item
         android:id="@+id/article_menu_speak"
-        android:title="朗读"
+        android:icon="@drawable/ic_music"
+        android:title="@string/speak"
         android:enabled="true"
-        android:visible="false"
+        android:visible="true"
         app:showAsAction="never" />
+
     <item
         android:id="@+id/article_menu_article_info"
         android:title="原始数据"
         android:enabled="true"
         android:visible="false"
         app:showAsAction="never" />
+
     <item
-        android:id="@+id/article_menu_edit_content"
-        android:title="编辑内容"
+        android:id="@+id/article_menu_edit_link"
+        android:title="编辑链接"
         android:enabled="true"
         android:visible="false"
         app:showAsAction="never" />
 
     <item
-        android:id="@+id/article_menu_show_sniffer"
-        android:title="显示嗅探数据"
+        android:id="@+id/article_menu_edit_content"
+        android:title="编辑内容"
         android:enabled="true"
         android:visible="false"
         app:showAsAction="never" />

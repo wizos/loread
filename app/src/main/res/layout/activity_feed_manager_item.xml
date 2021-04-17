@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+    <RelativeLayout
+        android:id="@+id/feed_manager_item"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:paddingTop="6dp"
+        android:paddingBottom="6dp"
+        android:paddingStart="12dp"
+        android:paddingEnd="12dp"
+        android:background="?attr/root_view_bg"
+        tools:ignore="UselessParent">
+        <!--MarginStart指的是控件距离开头View部分的间距大小，MarginLeft则指的是控件距离左边View部分的间距大小，MarginEnd和MarginRight同理。-->
+        <!--一般情况下，View开始部分就是左边，但是有的语言目前为止还是按照从右往左的顺序来书写的-->
+
+        <ImageView
+            android:id="@+id/feed_manager_item_icon"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:layout_marginEnd="5dp"
+            android:layout_gravity="center_vertical"
+            android:adjustViewBounds="true"
+            android:layout_centerVertical="true"
+            tools:src="@drawable/logo"
+            tools:ignore="ContentDescription,RtlSymmetry" />
+
+        <RelativeLayout
+            android:id="@+id/feed_manager_item_text"
+            android:layout_marginTop="3dp"
+            android:layout_marginBottom="3dp"
+            android:layout_toEndOf="@id/feed_manager_item_icon"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+            <TextView
+                android:id="@+id/feed_manager_item_title"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:fontFamily="sans-serif"
+                android:textStyle="bold"
+                android:layout_marginEnd="6dp"
+                android:layout_marginStart="2dp"
+                android:textSize="14sp"
+                tools:text="知微 RSS"
+                android:textColor="?attr/list_item_title_color" />
+            <TextView
+                android:id="@+id/feed_manager_item_count"
+                android:layout_alignParentEnd="true"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="2dp"
+                android:gravity="end"
+                android:textSize="12sp"
+                tools:text="21/4/18"
+                android:textColor="?attr/list_item_info_color"
+                tools:ignore="RelativeOverlap" />
+        </RelativeLayout>
+
+        <RelativeLayout
+            android:id="@+id/feed_manager_item_info"
+            android:layout_marginTop="3dp"
+            android:layout_marginBottom="3dp"
+            android:layout_below="@id/feed_manager_item_text"
+            android:layout_toEndOf="@id/feed_manager_item_icon"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+            <TextView
+                android:id="@+id/feed_manager_item_feed_url"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="6dp"
+                android:layout_marginStart="2dp"
+                android:textSize="12sp"
+                tools:text="https://blog.wizos.me/rss"
+                android:textColor="?attr/list_item_info_color" />
+            <TextView
+                android:id="@+id/feed_manager_item_pubDate"
+                android:layout_alignParentEnd="true"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="2dp"
+                android:gravity="end"
+                android:textSize="12sp"
+                tools:text="2021-04-17 02:02:02"
+                android:textColor="?attr/list_item_info_color"
+                tools:ignore="RelativeOverlap" />
+        </RelativeLayout>
+
+        <TextView
+            android:id="@+id/feed_manager_item_error"
+            android:layout_below="@id/feed_manager_item_info"
+            android:layout_toEndOf="@id/feed_manager_item_icon"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="3dp"
+            android:layout_marginBottom="3dp"
+            android:textSize="12sp"
+            tools:text="内容并非标准 RSS"
+            android:visibility="gone"
+            tools:visibility="visible"
+            android:textColor="@android:color/holo_red_light" />
+    </RelativeLayout>
+</FrameLayout>

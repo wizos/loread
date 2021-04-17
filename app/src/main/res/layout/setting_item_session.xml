@@ -15,6 +15,6 @@
         android:layout_height="match_parent"
         android:gravity="center_vertical"
         android:textSize="13sp"
-        android:textColor="?attr/lv_item_title_color"
+        android:textColor="?attr/list_item_title_color"
         tools:text="标题" />
 </LinearLayout>

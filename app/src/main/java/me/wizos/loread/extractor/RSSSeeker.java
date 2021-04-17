@@ -1,12 +1,6 @@
 package me.wizos.loread.extractor;
 
-import android.os.Handler;
-import android.os.Looper;
-import android.os.Message;
 import android.util.ArrayMap;
-import android.webkit.WebSettings;
-
-import androidx.annotation.NonNull;
 
 import com.elvishew.xlog.XLog;
 
@@ -18,32 +12,22 @@ import org.jsoup.select.Elements;
 
 import java.io.IOException;
 import java.net.URL;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.regex.Pattern;
 
 import me.wizos.loread.App;
-import me.wizos.loread.Contract;
 import me.wizos.loread.R;
-import me.wizos.loread.network.HttpClientManager;
-import me.wizos.loread.utils.DataUtils;
+import me.wizos.loread.network.Getting;
+import me.wizos.loread.utils.InputStreamCache;
 import me.wizos.loread.utils.StringUtils;
-import okhttp3.Call;
-import okhttp3.Callback;
-import okhttp3.MediaType;
-import okhttp3.OkHttpClient;
 import okhttp3.Request;
-import okhttp3.Response;
-import okhttp3.ResponseBody;
 
 public class RSSSeeker {
     private static final String TAG = "RSSSeeker";
-    private static final int TIMEOUT = 10_000; // 30 秒 30_000
     private String url;
     private Listener dispatcher;
+    private Getting getting;
 
-    private OkHttpClient okHttpClient;
-    private Handler handler;
     private Document document;
 
     private ArrayMap<String, String> rssMap = new ArrayMap<>();
@@ -53,33 +37,18 @@ public class RSSSeeker {
 
     public RSSSeeker(@NotNull String url, @NotNull Listener callback) {
         this.url = url;
-        this.okHttpClient = HttpClientManager.i().searchClient();
         this.dispatcher = new Listener() {
             @Override
             public void onResponse(ArrayMap<String, String> rssMap) {
-                handler.removeMessages(TIMEOUT);
-                optimizeRSSMap(); callback.onResponse(rssMap);
-                handler.post(() -> destroy());
+                optimizeRSSMap();
+                callback.onResponse(rssMap);
             }
 
             @Override
             public void onFailure(String msg) {
-                handler.removeMessages(TIMEOUT);
                 callback.onFailure(msg);
-                handler.post(() -> destroy());
             }
         };
-        this.handler = new Handler(Looper.getMainLooper(), new Handler.Callback() {
-            @Override
-            public boolean handleMessage(@NonNull Message msg) {
-                XLog.i("处理超时：" + msg.what + "  " + (msg.what != TIMEOUT));
-                if(msg.what != TIMEOUT){
-                    return false; //返回true 不对msg进行进一步处理
-                }
-                dispatcher.onFailure(App.i().getString(R.string.timeout));
-                return true;
-            }
-        });
     }
 
     public void optimizeRSSMap(){
@@ -95,40 +64,28 @@ public class RSSSeeker {
     }
 
     public void start() {
-        XLog.i("开始用 OkHttp 获取全文：" + url );
-        handler.sendEmptyMessageDelayed(TIMEOUT, TIMEOUT);
-        Request.Builder request = new Request.Builder().url(url).tag(TAG);
-        request.header(Contract.USER_AGENT, WebSettings.getDefaultUserAgent(App.i()));
-        okHttpClient.newCall(request.build()).enqueue(new Callback() {
+        XLog.i("开始用 OkHttp 获取RSS：" + url );
+        getting = new Getting(url, new Getting.Listener() {
             @Override
-            public void onFailure(@NotNull Call call, @NotNull IOException e) {
-                if(call.isCanceled()){
-                    return;
+            public void onResponse(InputStreamCache inputStreamCache) {
+                try {
+                    document = Jsoup.parse(inputStreamCache.getInputStream(), inputStreamCache.getCharset().displayName(), url);
+                    find(document);
+                }catch (IOException e){
+                    e.printStackTrace();
+                    XLog.e(e.getLocalizedMessage());
                 }
-                XLog.d("OkHttp 获取失败");
+
+            }
+
+            @Override
+            public void onFailure(String msg) {
+                XLog.d("获取失败");
                 dispatcher.onFailure(App.i().getString(R.string.not_responding_plz_try_again));
             }
-            @Override
-            public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
-                if(call.isCanceled()){
-                    return;
-                }
-                ResponseBody responseBody = response.body();
-                XLog.d("OkHttp 获取成功：" + " = " );
-                if( response.isSuccessful() && responseBody != null){
-                    MediaType mediaType  = responseBody.contentType();
-                    String charset = null;
-                    if( mediaType != null ){
-                        charset = DataUtils.getCharsetFromContentType(mediaType.toString());
-                    }
-                    document = Jsoup.parse(responseBody.byteStream(), charset, url);
-                    find(document);
-                }else {
-                    dispatcher.onFailure(App.i().getString(R.string.not_responding_plz_try_again));
-                }
-                response.close();
-            }
         });
+        getting.policy(Getting.ONLY_OKHTTP);
+        getting.start();
     }
 
 
@@ -229,20 +186,22 @@ public class RSSSeeker {
             }
         }
     }
+
     private void checkUrlWithFeedSuffix(String url,String title){
         XLog.d("检查RSS链接：" + url );
-        okHttpClient.newCall(new Request.Builder().url(url).tag(TAG).head().build()).enqueue(new Callback() {
+        Getting getting = new Getting(url, new Getting.Listener() {
             @Override
-            public void onFailure(@NotNull Call call, @NotNull IOException e) {
+            public void onResponse(InputStreamCache inputStreamCache) {
+                putMap(rssMap,url,title);
             }
+
             @Override
-            public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
-                if(response.code() == 200){
-                    putMap(rssMap,url,title);
-                }
-                response.close();
+            public void onFailure(String msg) {
             }
         });
+        getting.request(new Request.Builder().url(url).tag(TAG).head().build());
+        getting.policy(Getting.ONLY_OKHTTP);
+        getting.start();
     }
 
     private void putMap(ArrayMap<String,String> map, String url, String title){
@@ -251,31 +210,13 @@ public class RSSSeeker {
         }
     }
 
-    public void destroy(){
-        if(handler != null){
-            handler.removeMessages(TIMEOUT);
-        }
-        if (okHttpClient != null) {
-            Iterator<Call> it;
-            it = okHttpClient.dispatcher().queuedCalls().iterator();
-            Call call;
-            while(it.hasNext()) {
-                call = it.next();
-                call.cancel();
-            }
-
-            it = okHttpClient.dispatcher().runningCalls().iterator();
-            while(it.hasNext()) {
-                call = it.next();
-                call.cancel();
-            }
+    public void cancel(){
+        if(getting!= null){
+            getting.destroy();
         }
     }
     public interface Listener {
         void onResponse(ArrayMap<String, String> rssMap);
         void onFailure(String msg);
-        // void onTimeout();
-        // void onNotResponse();
-        // void onNoTextFound();
     }
 }

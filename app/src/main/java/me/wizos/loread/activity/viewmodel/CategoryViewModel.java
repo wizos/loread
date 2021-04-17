@@ -52,13 +52,13 @@ public class CategoryViewModel extends ViewModel {
 
         long time1 = System.currentTimeMillis();
         if( App.i().getUser().getStreamStatus() == App.STATUS_UNREAD ){
-            categories = CoreDB.i().categoryDao().getCategoriesUnreadCount(uid);
+            rootCollection.setCount(CoreDB.i().articleDao().getUnreadCount(uid) + CoreDB.i().articleDao().getUnreadingCount(uid));
             XLog.i("读取未读分类A，耗时：" + (System.currentTimeMillis() - time1));
-            rootCollection.setCount(CoreDB.i().articleDao().getUnreadCount(uid));
+            categories = CoreDB.i().categoryDao().getCategoriesUnreadCount(uid);
             XLog.i("读取未读分类B，耗时：" + (System.currentTimeMillis() - time1));
             feeds = CoreDB.i().feedDao().getFeedsUnreadCount(uid);
             XLog.i("读取未读分类C，耗时：" + (System.currentTimeMillis() - time1));
-            count = CoreDB.i().articleDao().getUnreadCountUnsubscribe(uid);
+            count = CoreDB.i().articleDao().getUnreadCountUnsubscribe(uid) + CoreDB.i().articleDao().getUnreadingCountUnsubscribe(uid);
             XLog.i("读取未读分类D，耗时：" + (System.currentTimeMillis() - time1));
         }else if( App.i().getUser().getStreamStatus() == App.STATUS_STARED ){
             rootCollection.setCount(CoreDB.i().articleDao().getStarCount(uid));
@@ -75,7 +75,7 @@ public class CategoryViewModel extends ViewModel {
         if(count > 0){
             unsubscribeArticles = new CollectionTree();
             Collection unsubscribeCollection = new Collection();
-            unsubscribeCollection.setId("user/" + uid + App.STREAM_UNSUBSCRIBED);
+            unsubscribeCollection.setId("user/" + uid + App.CATEGORY_UNSUBSCRIBED);
             unsubscribeCollection.setTitle(App.i().getString(R.string.unsubscribed));
             unsubscribeCollection.setCount(count);
             unsubscribeArticles.setType(CollectionTree.SMART);

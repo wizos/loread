@@ -74,10 +74,12 @@ import me.wizos.loread.utils.Converter;
 import me.wizos.loread.utils.EncryptUtils;
 import me.wizos.loread.utils.FeedParserUtils;
 import me.wizos.loread.utils.HttpCall;
+import me.wizos.loread.utils.InputStreamCache;
 import me.wizos.loread.utils.TimeUtils;
 import me.wizos.loread.view.SwipeRefreshLayoutS;
 import me.wizos.loread.view.colorful.Colorful;
 import me.wizos.loread.view.colorful.setter.ViewGroupSetter;
+import okhttp3.ResponseBody;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -185,7 +187,7 @@ public class SearchActivity extends BaseActivity {
         listViewAdapter.notifyDataSetChanged();
         callCount = 0;
         if(rssSeeker != null){
-            rssSeeker.destroy();
+            rssSeeker.cancel();
         }
 
         MobclickAgent.onEvent(this, "search_feeds", keyword);
@@ -355,17 +357,33 @@ public class SearchActivity extends BaseActivity {
                     return;
                 }
 
+                ResponseBody responseBody = response.body();
+                if(responseBody == null){
+                    failureUpdateResults();
+                    return;
+                }
+                InputStreamCache inputStreamCache = new InputStreamCache(responseBody.byteStream());
+
                 Feed feed = new Feed();
                 feed.setUid(App.i().getUser().getId());
                 feed.setId(EncryptUtils.MD5(url));
                 feed.setFeedUrl(url);
-                FeedEntries feedEntries = FeedParserUtils.parseResponseBody(SearchActivity.this, feed, response.body(), new Converter.ArticleConvertListener() {
+
+                FeedEntries feedEntries = FeedParserUtils.parseInputSteam(SearchActivity.this, feed, inputStreamCache, new Converter.ArticleConvertListener() {
                     @Override
                     public Article onEnd(Article article) {
                         article.setCrawlDate(App.i().getLastShowTimeMillis());
                         return article;
                     }
                 });
+
+                // FeedEntries feedEntries = FeedParserUtils.parseResponseBody(SearchActivity.this, feed, response.body(), new Converter.ArticleConvertListener() {
+                //     @Override
+                //     public Article onEnd(Article article) {
+                //         article.setCrawlDate(App.i().getLastShowTimeMillis());
+                //         return article;
+                //     }
+                // });
                 if(feedEntries == null || !feedEntries.isSuccess()){
                     failureUpdateResults();
                 }else {
@@ -656,7 +674,7 @@ public class SearchActivity extends BaseActivity {
     @Override
     protected void onDestroy() {
         if(rssSeeker != null){
-            rssSeeker.destroy();
+            rssSeeker.cancel();
         }
         super.onDestroy();
     }
@@ -665,16 +683,16 @@ public class SearchActivity extends BaseActivity {
     protected Colorful.Builder buildColorful(Colorful.Builder mColorfulBuilder) {
         ViewGroupSetter artListViewSetter = new ViewGroupSetter(listView);
         // 绑定ListView的Item View中的news_title视图，在换肤时修改它的text_color属性
-        artListViewSetter.childViewTextColor(R.id.search_list_item_title, R.attr.lv_item_title_color);
-        artListViewSetter.childViewTextColor(R.id.search_list_item_summary, R.attr.lv_item_desc_color);
-        artListViewSetter.childViewTextColor(R.id.search_list_item_feed_url, R.attr.lv_item_desc_color);
+        artListViewSetter.childViewTextColor(R.id.search_list_item_title, R.attr.list_item_title_color);
+        artListViewSetter.childViewTextColor(R.id.search_list_item_summary, R.attr.list_item_desc_color);
+        artListViewSetter.childViewTextColor(R.id.search_list_item_feed_url, R.attr.list_item_desc_color);
         // artListViewSetter.childViewTextColor(R.id.search_list_item_sub_state, R.attr.lv_item_title_color);
-        artListViewSetter.childViewBgDrawable(R.id.search_list_item_sub_state, R.attr.lv_item_title_color);
+        artListViewSetter.childViewBgDrawable(R.id.search_list_item_sub_state, R.attr.list_item_title_color);
 
-        artListViewSetter.childViewTextColor(R.id.search_intent_feeds, R.attr.lv_item_desc_color);
+        artListViewSetter.childViewTextColor(R.id.search_intent_feeds, R.attr.list_item_desc_color);
 
-        artListViewSetter.childViewTextColor(R.id.search_list_item_sub_velocity, R.attr.lv_item_info_color);
-        artListViewSetter.childViewTextColor(R.id.search_list_item_last_updated, R.attr.lv_item_info_color);
+        artListViewSetter.childViewTextColor(R.id.search_list_item_sub_velocity, R.attr.list_item_info_color);
+        artListViewSetter.childViewTextColor(R.id.search_list_item_last_updated, R.attr.list_item_info_color);
 
         mColorfulBuilder
                 .backgroundColor(R.id.search_root, R.attr.root_view_bg)

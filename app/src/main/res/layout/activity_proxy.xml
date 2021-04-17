@@ -58,7 +58,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:textSize="12sp"
-                android:textColor="?attr/lv_item_desc_color"
+                android:textColor="?attr/list_item_desc_color"
                 android:gravity="center|start"
                 android:paddingTop="10dp"
                 android:paddingBottom="10dp"
@@ -74,7 +74,7 @@
                     android:layout_height="wrap_content"
                     android:hint="@string/server"
                     android:text="@string/server_127_0_0_1"
-                    android:textColor="?attr/lv_item_title_color"
+                    android:textColor="?attr/list_item_title_color"
                     android:inputType="textUri"
                     android:maxLines="1" />
             </me.zhanghai.android.materialedittext.MaterialTextInputLayout>
@@ -88,7 +88,7 @@
                     android:id="@+id/proxy_port_edittext"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:textColor="?attr/lv_item_title_color"
+                    android:textColor="?attr/list_item_title_color"
                     android:hint="@string/port"
                     android:inputType="numberDecimal"
                     android:maxLines="1" />
@@ -103,7 +103,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:hint="@string/username"
-                    android:textColor="?attr/lv_item_title_color"
+                    android:textColor="?attr/list_item_title_color"
                     android:inputType="text"
                     android:maxLines="1" />
             </me.zhanghai.android.materialedittext.MaterialTextInputLayout>
@@ -117,7 +117,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:hint="@string/password"
-                    android:textColor="?attr/lv_item_title_color"
+                    android:textColor="?attr/list_item_title_color"
                     android:inputType="textVisiblePassword"
                     android:maxLines="1" />
             </me.zhanghai.android.materialedittext.MaterialTextInputLayout>

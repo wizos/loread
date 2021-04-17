@@ -81,7 +81,7 @@
                     android:maxLines="2"
                     android:textSize="15sp"
                     tools:text="这里就是一个大标题这里就是一个大标题这里就是一个大标题"
-                    android:textColor="?attr/lv_item_title_color" />
+                    android:textColor="?attr/list_item_title_color" />
             </LinearLayout>
 
             <TextView
@@ -98,7 +98,7 @@
                 android:textSize="13sp"
                 android:layout_marginEnd="2dp"
                 tools:text="简介简介简介简介简介简介简介简介简介简介简介简介简介简介"
-                android:textColor="?attr/lv_item_desc_color" />
+                android:textColor="?attr/list_item_desc_color" />
 
             <ImageView
                 android:id="@id/main_slv_item_img"
@@ -136,7 +136,7 @@
                 android:ellipsize="end"
                 android:maxLines="1"
                 tools:text="文章作者fdsfsd是电饭锅电饭锅"
-                android:textColor="?attr/lv_item_info_color" />
+                android:textColor="?attr/list_item_info_color" />
 
             <TextView
                 android:id="@+id/main_slv_item_time"
@@ -149,7 +149,7 @@
                 android:maxLines="1"
                 android:textSize="12sp"
                 tools:text="文章时间"
-                android:textColor="?attr/lv_item_info_color" />
+                android:textColor="?attr/list_item_info_color" />
         </RelativeLayout>
 
         <!--<View-->

@@ -12,6 +12,7 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -40,6 +41,9 @@ import me.wizos.loread.db.rule.TriggerRule;
 
 
 public class TriggerRuleEditActivity extends AppCompatActivity {
+    @BindView(R.id.action_toolbar)
+    Toolbar toolbar;
+
     @BindView(R.id.action_target)
     TextView targetView;
 
@@ -65,7 +69,7 @@ public class TriggerRuleEditActivity extends AppCompatActivity {
         // BackgroundLibrary.inject2(this);
         setContentView(R.layout.activity_trigger_rule_edit);
         ButterKnife.bind(this);
-        setSupportActionBar(findViewById(R.id.action_toolbar));
+        setSupportActionBar(toolbar);
         // 这个小于4.0版本是默认为true，在4.0及其以上是false。该方法的作用：决定左上角的图标是否可以点击(没有向左的小图标)，true 可点
         getSupportActionBar().setHomeButtonEnabled(true);
         // 决定左上角图标的左侧是否有向左的小箭头，true 有小箭头
@@ -145,10 +149,6 @@ public class TriggerRuleEditActivity extends AppCompatActivity {
                         validCondition = false;
                         break;
                     }
-
-                    // if(CoreDB.i().triggerRuleDao().getRule(uid, triggerRule.getTarget().getType(), triggerRule.getTarget().getTarget(), condition.getAttr(), condition.getJudge(), condition.getValue()) != null){
-                    //
-                    // }
                 }
 
                 if(!validCondition){

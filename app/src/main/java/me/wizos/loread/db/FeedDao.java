@@ -1,16 +1,20 @@
 package me.wizos.loread.db;
 
 import androidx.lifecycle.LiveData;
+import androidx.paging.DataSource;
 import androidx.room.Dao;
 import androidx.room.Delete;
 import androidx.room.Insert;
 import androidx.room.OnConflictStrategy;
 import androidx.room.Query;
+import androidx.room.RawQuery;
 import androidx.room.Transaction;
 import androidx.room.Update;
+import androidx.sqlite.db.SupportSQLiteQuery;
 
 import java.util.List;
 
+import me.wizos.loread.App;
 import me.wizos.loread.bean.collectiontree.CollectionFeed;
 
 @Dao
@@ -195,8 +199,8 @@ public interface FeedDao {
     // int getFeedsCountByUnCategory(String uid);
 
 
-    @Query("SELECT * FROM FeedView WHERE uid = :uid" )
-    List<Feed> getFeedsRealTimeCount(String uid);
+    // @Query("SELECT * FROM FeedView WHERE uid = :uid" )
+    // List<Feed> getFeedsRealTimeCount(String uid);
 
     @Transaction
     @Insert(onConflict = OnConflictStrategy.REPLACE)
@@ -209,6 +213,18 @@ public interface FeedDao {
     @Transaction
     @Query("UPDATE feed SET title = :newName where uid = :uid AND id = :id")
     void updateName(String uid, String id, String newName);
+
+    @Transaction
+    @Query("UPDATE feed SET allCount = (select COUNT(*) from Article where Feed.uid = Article.uid AND Feed.id = Article.feedId) where uid = :uid")
+    void updateAllCount(String uid);
+
+    @Transaction
+    @Query("UPDATE feed SET unreadCount = (select COUNT(*) from Article where Feed.uid = Article.uid AND Feed.id = Article.feedId AND readStatus IN (" + App.STATUS_UNREAD  + ", " + App.STATUS_UNREADING + ")) where uid = :uid")
+    void updateUnreadCount(String uid);
+
+    @Transaction
+    @Query("UPDATE feed SET starCount = (select COUNT(*) from Article where Feed.uid = Article.uid AND Feed.id = Article.feedId AND starStatus = " + App.STATUS_STARED + ") where uid = :uid")
+    void updateStarCount(String uid);
 
     @Transaction
     @Query("UPDATE feed SET syncInterval = -1 where uid = :uid AND lastErrorCount = 16")
@@ -240,4 +256,8 @@ public interface FeedDao {
     @Transaction
     @Query("DELETE FROM feed WHERE uid = :uid")
     void clear(String uid);
+
+    @Transaction
+    @RawQuery(observedEntities = {Feed.class, FeedCategory.class})
+    DataSource.Factory<Integer,Feed>  get(SupportSQLiteQuery query);
 }

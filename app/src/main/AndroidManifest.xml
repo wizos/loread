@@ -196,6 +196,14 @@
             android:launchMode="singleTop"
             android:theme="@style/AppTheme.Day.NoActionBar" />
         <activity
+            android:name=".activity.FeedManagerActivity"
+            android:configChanges="uiMode|orientation|screenSize|keyboardHidden"
+            android:label="@string/feed_manager"
+            android:launchMode="singleTop"
+            android:theme="@style/AppTheme.Day.NoActionBar" />
+
+
+        <activity
             android:name=".activity.UrlRewriteActivity"
             android:configChanges="uiMode|orientation|screenSize|keyboardHidden"
             android:label="@string/url_rewrite"

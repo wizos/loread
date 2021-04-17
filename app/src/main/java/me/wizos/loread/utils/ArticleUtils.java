@@ -128,10 +128,10 @@ public class ArticleUtils {
 
         String initImageHolderUrl =
                 "const MEDIA_PLAY_RATE = 2;" +
-                "var IMAGE_HOLDER_CLICK_TO_LOAD_URL = placeholder.getData({text: '" + App.i().getString(R.string.click_to_load_this_picture) + "'});" +
-                "var IMAGE_HOLDER_LOADING_URL = placeholder.getData({text: '" + App.i().getString(R.string.loading) + "'});" +
-                "var IMAGE_HOLDER_LOAD_FAILED_URL = placeholder.getData({text: '" + App.i().getString(R.string.loading_failed_click_here_to_retry) + "'});" +
-                "var IMAGE_HOLDER_IMAGE_ERROR_URL = placeholder.getData({text: '" + App.i().getString(R.string.picture_error_click_here_to_retry) + "'});";
+                        "var IMAGE_HOLDER_CLICK_TO_LOAD_URL = placeholder.getData({text: '" + App.i().getString(R.string.click_to_load_this_picture) + "'});" +
+                        "var IMAGE_HOLDER_LOADING_URL = placeholder.getData({text: '" + App.i().getString(R.string.loading) + "'});" +
+                        "var IMAGE_HOLDER_LOAD_FAILED_URL = placeholder.getData({text: '" + App.i().getString(R.string.loading_failed_click_here_to_retry) + "'});" +
+                        "var IMAGE_HOLDER_IMAGE_ERROR_URL = placeholder.getData({text: '" + App.i().getString(R.string.picture_error_click_here_to_retry) + "'});";
         String content = getFormatContentForDisplay(article);
 
         String plyrI18n = ",i18n:{speed:'"+ App.i().getString(R.string.speed) +"',normal:'"+ App.i().getString(R.string.normal) +"'}";
@@ -344,8 +344,8 @@ public class ArticleUtils {
         // documentBody.getElementsByTag("noscript").unwrap();
         elements = documentBody.getElementsByTag("noscript");
         for (int i = 0, size = elements.size(); i < size; i++) {
-           element = elements.get(i).tagName("details");
-           element.insertChildren(0,new Element("summary").text("\uD83D\uDD17"));
+            element = elements.get(i).tagName("details");
+            element.insertChildren(0,new Element("summary").text("\uD83D\uDD17"));
         }
 
         // 去除推荐部分，可能有误杀
@@ -932,7 +932,7 @@ public class ArticleUtils {
         }
         return keyword;
     }
-    
+
     public static String getOptimizedAuthor(Feed feed, String articleAuthor) {
         if (null == feed) {
             if (StringUtils.isEmpty(articleAuthor)) {

@@ -580,89 +580,89 @@ public class Extractor {
     }
 
 
-//    /*输入Jsoup的Document，获取正文文本*/
-//    public static String getContentByDoc(Document doc,String mKeyWord) { // throws Exception
-//        Extractor ce = new Extractor(doc,mKeyWord);
-//        Element newDoc = ce.getContentElement();
-//
-//        XLog.e("含关键字的正文3是：" + newDoc.outerHtml());
-//        if( newDoc == null ){
-//            return "";
-//        }
-//        XLog.e("含关键字的正文4是：" + newDoc.outerHtml());
-//        return newDoc.outerHtml();
-//    }
+    //    /*输入Jsoup的Document，获取正文文本*/
+    //    public static String getContentByDoc(Document doc,String mKeyWord) { // throws Exception
+    //        Extractor ce = new Extractor(doc,mKeyWord);
+    //        Element newDoc = ce.getContentElement();
+    //
+    //        XLog.e("含关键字的正文3是：" + newDoc.outerHtml());
+    //        if( newDoc == null ){
+    //            return "";
+    //        }
+    //        XLog.e("含关键字的正文4是：" + newDoc.outerHtml());
+    //        return newDoc.outerHtml();
+    //    }
 
-//    /*输入HTML，获取正文文本*/
-//    public static String getContentByHtml(String html) throws Exception {
-//        Document doc = Jsoup.parse(html);
-//        return getContentElementByDoc(doc).text();
-//    }
-//    /*输入HTML，获取正文文本*/
-//    public static String getContentHtml(String html) throws Exception {
-//        Document doc = Jsoup.parse(html);
-//        return getContentElementByDoc(doc).text();
-//    }
-//    public static String getContentHtml(String baseUri,InputStream inputStream) throws Exception {
-//        Document doc = Jsoup.parse(inputStream,null,baseUri);
-//        XLog.e("编码是2：" + doc.charset() );
-//        return getContentElementByDoc(doc).outerHtml();
-//    }
-//    public static String getContentHtml(String baseUri,Document doc) throws Exception {
-//        XLog.e("编码是2：" + doc.charset() );
-//        return getContentElementByDoc(doc).outerHtml();
-//    }
-//    public static String getContentHtmlByUrl(String content) throws Exception {
-//        Document doc = Jsoup.connect(content).get();
-//        return getContentElementByDoc(doc).outerHtml();
-//    }
+    //    /*输入HTML，获取正文文本*/
+    //    public static String getContentByHtml(String html) throws Exception {
+    //        Document doc = Jsoup.parse(html);
+    //        return getContentElementByDoc(doc).text();
+    //    }
+    //    /*输入HTML，获取正文文本*/
+    //    public static String getContentHtml(String html) throws Exception {
+    //        Document doc = Jsoup.parse(html);
+    //        return getContentElementByDoc(doc).text();
+    //    }
+    //    public static String getContentHtml(String baseUri,InputStream inputStream) throws Exception {
+    //        Document doc = Jsoup.parse(inputStream,null,baseUri);
+    //        XLog.e("编码是2：" + doc.charset() );
+    //        return getContentElementByDoc(doc).outerHtml();
+    //    }
+    //    public static String getContentHtml(String baseUri,Document doc) throws Exception {
+    //        XLog.e("编码是2：" + doc.charset() );
+    //        return getContentElementByDoc(doc).outerHtml();
+    //    }
+    //    public static String getContentHtmlByUrl(String content) throws Exception {
+    //        Document doc = Jsoup.connect(content).get();
+    //        return getContentElementByDoc(doc).outerHtml();
+    //    }
 
-//    /*输入HTML和URL，获取正文文本*/
-//    public static String getContentByHtml(String html, String content) throws Exception {
-//        Document doc = Jsoup.parse(html, content);
-//        return getContentElementByDoc(doc).text();
-//    }
+    //    /*输入HTML和URL，获取正文文本*/
+    //    public static String getContentByHtml(String html, String content) throws Exception {
+    //        Document doc = Jsoup.parse(html, content);
+    //        return getContentElementByDoc(doc).text();
+    //    }
 
-//    /*输入URL，获取正文文本*/
-//    public static String getContentByUrl(String content) throws Exception {
-//        HttpRequest request = new HttpRequest(content);
-//        String html = request.response().decode();
-//        return getContentByHtml(html, content);
-//    }
+    //    /*输入URL，获取正文文本*/
+    //    public static String getContentByUrl(String content) throws Exception {
+    //        HttpRequest request = new HttpRequest(content);
+    //        String html = request.response().decode();
+    //        return getContentByHtml(html, content);
+    //    }
 
-//    /*输入Jsoup的Document，获取结构化新闻信息*/
-//    public static ModPage getNewsByDoc(Document doc) throws Exception {
-//        Extractor ce = new Extractor(doc);
-//        return ce.getNews();
-//    }
+    //    /*输入Jsoup的Document，获取结构化新闻信息*/
+    //    public static ModPage getNewsByDoc(Document doc) throws Exception {
+    //        Extractor ce = new Extractor(doc);
+    //        return ce.getNews();
+    //    }
 
-//    /*输入HTML，获取结构化新闻信息*/
-//    public static ModPage getNewsByHtml(String html) throws Exception {
-//        Document doc = Jsoup.parse(html);
-//        return getNewsByDoc(doc);
-//    }
+    //    /*输入HTML，获取结构化新闻信息*/
+    //    public static ModPage getNewsByHtml(String html) throws Exception {
+    //        Document doc = Jsoup.parse(html);
+    //        return getNewsByDoc(doc);
+    //    }
 
-//    /*输入HTML和URL，获取结构化新闻信息*/
-//    public static ModPage getNewsByHtml(String html, String content) throws Exception {
-//        Document doc = Jsoup.parse(html, content);
-//        return getNewsByDoc(doc);
-//    }
+    //    /*输入HTML和URL，获取结构化新闻信息*/
+    //    public static ModPage getNewsByHtml(String html, String content) throws Exception {
+    //        Document doc = Jsoup.parse(html, content);
+    //        return getNewsByDoc(doc);
+    //    }
 
-//    /*输入URL，获取结构化新闻信息*/
-//    public static ModPage getNewsByUrl(String content) throws Exception {
-////        HttpRequest request = new HttpRequest(content);
-////        String html = request.response().decode();
-//        return getNewsByHtml(OkGo.get(content).execute().body().string(), content);
-//    }
+    //    /*输入URL，获取结构化新闻信息*/
+    //    public static ModPage getNewsByUrl(String content) throws Exception {
+    ////        HttpRequest request = new HttpRequest(content);
+    ////        String html = request.response().decode();
+    //        return getNewsByHtml(OkGo.get(content).execute().body().string(), content);
+    //    }
 
-//    public static void main(String[] args) throws Exception {
-//        ModPage news = Extractor.getNewsByUrl("http://www.huxiu.com/article/121959/1.html");
-//        System.out.println(news.getContent());
-//        System.out.println(news.getTitle());
-//        System.out.println(news.getTime());
-//        System.out.println(news.getData());
-//        //System.out.println(news.getContentElement());
-//        //System.out.println(news);
-//    }
+    //    public static void main(String[] args) throws Exception {
+    //        ModPage news = Extractor.getNewsByUrl("http://www.huxiu.com/article/121959/1.html");
+    //        System.out.println(news.getContent());
+    //        System.out.println(news.getTitle());
+    //        System.out.println(news.getTime());
+    //        System.out.println(news.getData());
+    //        //System.out.println(news.getContentElement());
+    //        //System.out.println(news);
+    //    }
 
 }

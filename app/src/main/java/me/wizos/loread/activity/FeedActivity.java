@@ -13,7 +13,6 @@ import android.text.TextUtils;
 import android.util.ArrayMap;
 import android.view.MenuItem;
 import android.view.View;
-import android.webkit.WebSettings;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -44,7 +43,6 @@ import com.umeng.analytics.MobclickAgent;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -66,7 +64,7 @@ import me.wizos.loread.db.CoreDB;
 import me.wizos.loread.db.Feed;
 import me.wizos.loread.db.FeedCategory;
 import me.wizos.loread.db.User;
-import me.wizos.loread.network.HttpClientManager;
+import me.wizos.loread.network.Getting;
 import me.wizos.loread.network.SyncWorker;
 import me.wizos.loread.network.api.BaseApi;
 import me.wizos.loread.network.api.LocalApi;
@@ -74,15 +72,11 @@ import me.wizos.loread.network.callback.CallbackX;
 import me.wizos.loread.utils.BackupUtils;
 import me.wizos.loread.utils.Converter;
 import me.wizos.loread.utils.FeedParserUtils;
+import me.wizos.loread.utils.InputStreamCache;
 import me.wizos.loread.utils.PagingUtils;
 import me.wizos.loread.utils.UriUtils;
 import me.wizos.loread.view.IconFontView;
 import me.wizos.loread.view.colorful.Colorful;
-import okhttp3.Call;
-import okhttp3.Callback;
-import okhttp3.Request;
-import okhttp3.Response;
-import okhttp3.ResponseBody;
 
 public class FeedActivity extends BaseActivity {
     @BindView(R.id.feed_toolbar)
@@ -273,68 +267,120 @@ public class FeedActivity extends BaseActivity {
                     return;
                 }
                 ToastUtils.show(R.string.fetching);
-                Request.Builder request = new Request.Builder().url(feed.getFeedUrl());
-                request.header(Contract.USER_AGENT, WebSettings.getDefaultUserAgent(App.i()));
-                HttpClientManager.i().searchClient().newCall(request.build()).enqueue(new Callback() {
+                Getting getting = new Getting(feed.getFeedUrl(), new Getting.Listener() {
                     @Override
-                    public void onFailure(@NotNull Call call, @NotNull IOException e) {
-                        ToastUtils.show(getString(R.string.fetch_failed_with_reason, e.getLocalizedMessage()));
-                    }
-
-                    @Override
-                    public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
-                        if(!response.isSuccessful()){
-                            ToastUtils.show(getString(R.string.fetch_failed_with_reason, response.code() + "," + response.message()));
+                    public void onResponse(InputStreamCache inputStreamCache) {
+                        FeedEntries feedEntries = FeedParserUtils.parseInputSteam(FeedActivity.this, feed, inputStreamCache, new Converter.ArticleConvertListener() {
+                            @Override
+                            public Article onEnd(Article article) {
+                                article.setCrawlDate(App.i().getLastShowTimeMillis());
+                                return article;
+                            }
+                        });
+                        if(feedEntries == null){
+                            ToastUtils.show(getString(R.string.fetch_failed));
+                        }else if(!feedEntries.isSuccess()){
+                            ToastUtils.show(getString(R.string.fetch_failed_with_reason, feedEntries.getFeed().getLastSyncError()));
                         }else {
-                            ResponseBody responseBody = response.body();
-                            if(responseBody == null){
-                                ToastUtils.show(getString(R.string.fetch_failed_with_reason, getString(R.string.return_data_exception)));
-                            }else {
-                                FeedEntries feedEntries = FeedParserUtils.parseResponseBody(FeedActivity.this, feed, responseBody, new Converter.ArticleConvertListener() {
-                                    @Override
-                                    public Article onEnd(Article article) {
-                                        article.setCrawlDate(App.i().getLastShowTimeMillis());
-                                        return article;
-                                    }
-                                });
-                                if(feedEntries == null){
-                                    ToastUtils.show(getString(R.string.fetch_failed));
-                                }else if(!feedEntries.isSuccess()){
-                                    ToastUtils.show(getString(R.string.fetch_failed_with_reason, feedEntries.getFeed().getLastSyncError()));
-                                }else {
-                                    AsyncTask.THREAD_POOL_EXECUTOR.execute(new Runnable() {
+                            AsyncTask.THREAD_POOL_EXECUTOR.execute(new Runnable() {
+                                @Override
+                                public void run() {
+                                    Map<String, Article> articleMap = feedEntries.getArticleMap();
+                                    String uid = App.i().getUser().getId();
+                                    PagingUtils.slice(new ArrayList<>(articleMap.keySet()), 50, new PagingUtils.PagingListener<String>() {
                                         @Override
-                                        public void run() {
-                                            Map<String, Article> articleMap = feedEntries.getArticleMap();
-                                            String uid = App.i().getUser().getId();
-                                            PagingUtils.slice(new ArrayList<>(articleMap.keySet()), 50, new PagingUtils.PagingListener<String>() {
-                                                @Override
-                                                public void onPage(@NotNull List<String> childList) {
-                                                    List<String> removeIds = CoreDB.i().articleDao().getIds(uid, childList);
-                                                    if(removeIds != null){
-                                                        for (String id: removeIds){
-                                                            articleMap.remove(id);
-                                                        }
-                                                    }
+                                        public void onPage(@NotNull List<String> childList) {
+                                            List<String> removeIds = CoreDB.i().articleDao().getIds(uid, childList);
+                                            if(removeIds != null){
+                                                for (String id: removeIds){
+                                                    articleMap.remove(id);
                                                 }
-                                            });
-                                            ArrayList<Article> newArticles = new ArrayList<>(articleMap.values());
-                                            for (Article article: newArticles){
-                                                article.setCrawlDate(App.i().getLastShowTimeMillis());
-                                            }
-                                            CoreDB.i().articleDao().insert(newArticles);
-                                            BaseApi.updateCollectionCount();
-                                            ToastUtils.show(getString(R.string.fetch_success_with_reason, newArticles.size()));
-                                            if(newArticles.size() > 0){
-                                                LiveEventBus.get(SyncWorker.NEW_ARTICLE_NUMBER).post(newArticles.size());
                                             }
                                         }
                                     });
+                                    ArrayList<Article> newArticles = new ArrayList<>(articleMap.values());
+                                    CoreDB.i().articleDao().insert(newArticles);
+                                    BaseApi.updateCollectionCount();
+                                    ToastUtils.show(getString(R.string.fetch_success_with_reason, newArticles.size()));
+                                    if(newArticles.size() > 0){
+                                        LiveEventBus.get(SyncWorker.NEW_ARTICLE_NUMBER).post(newArticles.size());
+                                    }
                                 }
-                            }
+                            });
                         }
                     }
+
+                    @Override
+                    public void onFailure(String msg) {
+                        ToastUtils.show(getString(R.string.fetch_failed_with_reason, msg));
+                    }
                 });
+
+                getting.policy(Getting.BOTH_OKHTTP_FIRST);
+                getting.start();
+
+                // Request.Builder request = new Request.Builder().url(feed.getFeedUrl());
+                // request.header(Contract.USER_AGENT, WebSettings.getDefaultUserAgent(App.i()));
+                // HttpClientManager.i().searchClient().newCall(request.build()).enqueue(new Callback() {
+                //     @Override
+                //     public void onFailure(@NotNull Call call, @NotNull IOException e) {
+                //         ToastUtils.show(getString(R.string.fetch_failed_with_reason, e.getLocalizedMessage()));
+                //     }
+                //
+                //     @Override
+                //     public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
+                //         if(!response.isSuccessful()){
+                //             ToastUtils.show(getString(R.string.fetch_failed_with_reason, StringUtils.isEmpty(response.message()) ? response.code(): (response.code() + "," + response.message())) );
+                //         }else {
+                //             ResponseBody responseBody = response.body();
+                //             if(responseBody == null){
+                //                 ToastUtils.show(getString(R.string.fetch_failed_with_reason, getString(R.string.return_data_exception)));
+                //             }else {
+                //                 FeedEntries feedEntries = FeedParserUtils.parseResponseBody(FeedActivity.this, feed, responseBody, new Converter.ArticleConvertListener() {
+                //                     @Override
+                //                     public Article onEnd(Article article) {
+                //                         article.setCrawlDate(App.i().getLastShowTimeMillis());
+                //                         return article;
+                //                     }
+                //                 });
+                //                 if(feedEntries == null){
+                //                     ToastUtils.show(getString(R.string.fetch_failed));
+                //                 }else if(!feedEntries.isSuccess()){
+                //                     ToastUtils.show(getString(R.string.fetch_failed_with_reason, feedEntries.getFeed().getLastSyncError()));
+                //                 }else {
+                //                     AsyncTask.THREAD_POOL_EXECUTOR.execute(new Runnable() {
+                //                         @Override
+                //                         public void run() {
+                //                             Map<String, Article> articleMap = feedEntries.getArticleMap();
+                //                             String uid = App.i().getUser().getId();
+                //                             PagingUtils.slice(new ArrayList<>(articleMap.keySet()), 50, new PagingUtils.PagingListener<String>() {
+                //                                 @Override
+                //                                 public void onPage(@NotNull List<String> childList) {
+                //                                     List<String> removeIds = CoreDB.i().articleDao().getIds(uid, childList);
+                //                                     if(removeIds != null){
+                //                                         for (String id: removeIds){
+                //                                             articleMap.remove(id);
+                //                                         }
+                //                                     }
+                //                                 }
+                //                             });
+                //                             ArrayList<Article> newArticles = new ArrayList<>(articleMap.values());
+                //                             for (Article article: newArticles){
+                //                                 article.setCrawlDate(App.i().getLastShowTimeMillis());
+                //                             }
+                //                             CoreDB.i().articleDao().insert(newArticles);
+                //                             BaseApi.updateCollectionCount();
+                //                             ToastUtils.show(getString(R.string.fetch_success_with_reason, newArticles.size()));
+                //                             if(newArticles.size() > 0){
+                //                                 LiveEventBus.get(SyncWorker.NEW_ARTICLE_NUMBER).post(newArticles.size());
+                //                             }
+                //                         }
+                //                     });
+                //                 }
+                //             }
+                //         }
+                //     }
+                // });
             }
         });
 

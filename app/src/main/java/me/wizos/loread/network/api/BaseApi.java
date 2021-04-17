@@ -326,14 +326,14 @@ public abstract class BaseApi {
                 // 兜底策略：删掉所有未订阅、无星标的文章
                 CoreDB.i().articleDao().deleteUnsubscribeUnStar(uid);
                 // 兜底策略
-                CoreDB.i().feedCategoryDao().deleteByCategoryId(uid);
-                CoreDB.i().feedCategoryDao().deleteByFeedId(uid);
+                CoreDB.i().feedCategoryDao().deleteRedundantByCategoryId(uid);
+                CoreDB.i().feedCategoryDao().deleteRedundantByFeedId(uid);
 
-                long lastMarkTimeMillis = App.i().getLastShowTimeMillis();
-                CoreDB.i().articleDao().updateIdleCrawlDate(uid, lastMarkTimeMillis, lastMarkTimeMillis);
+                CoreDB.i().articleDao().updateIdleCrawlDate(uid, App.i().getLastShowTimeMillis());
                 CoreDB.i().articleDao().updateFeedUrl(uid);
                 CoreDB.i().articleDao().updateFeedTitle(uid);
                 CoreDB.i().feedDao().blockSync(uid);
+                updateCollectionCount();
             }
         });
     }
@@ -344,8 +344,16 @@ public abstract class BaseApi {
             public void run() {
                 long time1 = System.currentTimeMillis();
                 String uid = App.i().getUser().getId();
-                CoreDB.i().feedDao().update(CoreDB.i().feedDao().getFeedsRealTimeCount(uid));
-                CoreDB.i().categoryDao().update(CoreDB.i().categoryDao().getCategoriesRealTimeCount(uid));
+                CoreDB.i().feedDao().updateAllCount(uid);
+                CoreDB.i().feedDao().updateUnreadCount(uid);
+                CoreDB.i().feedDao().updateStarCount(uid);
+
+                CoreDB.i().categoryDao().updateAllCount(uid);
+                CoreDB.i().categoryDao().updateUnreadCount(uid);
+                CoreDB.i().categoryDao().updateStarCount(uid);
+
+                // CoreDB.i().feedDao().update(CoreDB.i().feedDao().getFeedsRealTimeCount(uid));
+                // CoreDB.i().categoryDao().update(CoreDB.i().categoryDao().getCategoriesRealTimeCount(uid));
                 long time2 = System.currentTimeMillis();
                 XLog.i("重置计数耗时：" + (time2 - time1));
             }

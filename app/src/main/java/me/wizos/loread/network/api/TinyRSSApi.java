@@ -149,7 +149,7 @@ public class TinyRSSApi extends AuthApi implements ILogin {
 
     @Override
     public void sync() {
-        long startSyncTimeMillis = App.i().getLastShowTimeMillis();
+        long startSyncTimeMillis = App.i().getLastShowTimeMillis() + 3600_000;
         String uid = App.i().getUser().getId();
         try {
             // TinyResponse<ApiLevel> apiLevelTinyResponse = service.getApiLevel(new GetApiLevel(getAuthorization())).execute().body();
@@ -227,12 +227,11 @@ public class TinyRSSApi extends AuthApi implements ILogin {
                 }
                 List<ArticleItem> items = articleItemsResponse.getContent();
                 articles = new ArrayList<>(items.size());
-                // long syncTimeMillis = App.i().getLastShowTimeMillis();
                 for (ArticleItem item : items) {
                     articles.add(Converter.from(item, new Converter.ArticleConvertListener() {
                         @Override
                         public Article onEnd(Article article) {
-                            article.setCrawlDate(App.i().getLastShowTimeMillis());
+                            article.setCrawlDate(startSyncTimeMillis);
                             article.setUid(uid);
                             return article;
                         }
@@ -261,7 +260,6 @@ public class TinyRSSApi extends AuthApi implements ILogin {
         }
 
         handleDuplicateArticles(startSyncTimeMillis);
-        updateCollectionCount();
         handleArticleInfo();
         LiveEventBus.get(SyncWorker.SYNC_PROCESS_FOR_SUBTITLE).post( null );
     }

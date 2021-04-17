@@ -64,7 +64,7 @@ public class ArticleListViewModel extends ViewModel {
             }
         }else {
             if (streamStatus == App.STATUS_STARED){
-                if (streamId.contains(App.STREAM_UNSUBSCRIBED)){
+                if (streamId.contains(App.CATEGORY_UNSUBSCRIBED)){
                     articleFactory = articleDao.getStaredByUnsubscribed(uid, timeMillis);
                     articleIdsLiveData = articleDao.getStaredIdsByUnsubscribed(uid,timeMillis);
                 }else {
@@ -72,7 +72,7 @@ public class ArticleListViewModel extends ViewModel {
                     articleIdsLiveData = articleDao.getStaredArticleIds(uid,timeMillis);
                 }
             } else if (streamStatus == App.STATUS_UNREAD) {
-                if (streamId.contains(App.STREAM_UNSUBSCRIBED)){
+                if (streamId.contains(App.CATEGORY_UNSUBSCRIBED)){
                     articleFactory = articleDao.getUnreadByUnsubscribed(uid, timeMillis);
                     articleIdsLiveData = articleDao.getUnreadIdsByUnsubscribed(uid,timeMillis);
                 }else {
@@ -80,7 +80,7 @@ public class ArticleListViewModel extends ViewModel {
                     articleIdsLiveData = articleDao.getUnreadIds(uid,timeMillis);
                 }
             } else {
-                if (streamId.contains(App.STREAM_UNSUBSCRIBED)){
+                if (streamId.contains(App.CATEGORY_UNSUBSCRIBED)){
                     articleFactory = articleDao.getAllByUnsubscribed(uid, timeMillis);
                     articleIdsLiveData = articleDao.getAllIdsByUnsubscribed(uid,timeMillis);
                 }else {

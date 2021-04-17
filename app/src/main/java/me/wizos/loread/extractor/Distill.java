@@ -1,23 +1,6 @@
 package me.wizos.loread.extractor;
 
-import android.annotation.SuppressLint;
-import android.content.MutableContextWrapper;
-import android.graphics.Bitmap;
-import android.net.Uri;
-import android.os.Handler;
-import android.os.Looper;
-import android.os.Message;
-import android.text.TextUtils;
-import android.webkit.JavascriptInterface;
-import android.webkit.WebResourceRequest;
-import android.webkit.WebResourceResponse;
-import android.webkit.WebSettings;
-import android.webkit.WebView;
-
-import androidx.annotation.NonNull;
-
 import com.elvishew.xlog.XLog;
-import com.just.agentweb.WebViewClient;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,194 +13,82 @@ import org.jsoup.select.Selector;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.Map;
 
 import javax.script.Bindings;
 import javax.script.SimpleBindings;
 
 import me.wizos.loread.App;
-import me.wizos.loread.Contract;
 import me.wizos.loread.R;
-import me.wizos.loread.config.HostBlockConfig;
 import me.wizos.loread.config.article_extract.ArticleExtractConfig;
 import me.wizos.loread.config.article_extract.ArticleExtractRule;
-import me.wizos.loread.config.url_rewrite.UrlRewriteConfig;
 import me.wizos.loread.log.Console;
-import me.wizos.loread.network.HttpClientManager;
-import me.wizos.loread.utils.DataUtils;
+import me.wizos.loread.network.Getting;
 import me.wizos.loread.utils.HttpCall;
+import me.wizos.loread.utils.InputStreamCache;
 import me.wizos.loread.utils.ScriptUtils;
 import me.wizos.loread.utils.StringUtils;
 import me.wizos.loread.utils.UriUtils;
-import me.wizos.loread.view.webview.WebViewS;
-import okhttp3.Call;
-import okhttp3.Callback;
-import okhttp3.MediaType;
-import okhttp3.Request;
-import okhttp3.Response;
-import okhttp3.ResponseBody;
-
-import static me.wizos.loread.Contract.HTTP;
-import static me.wizos.loread.Contract.HTTPS;
 
 public class Distill {
-    private static final String TAG = "Distill";
-    private static final int TIMEOUT = 15_000; // 30 秒 30_000
     private String url;
     private String originalUrl;
     private String keyword;
     private Listener dispatcher;
+    private Getting getting;
 
-    private Call call;
-    private WebViewS webViewS;
-    private Handler handler;
-    private Document doc;
 
-    private boolean isCancel = false;
-    private boolean isRunning = false;
 
     public Distill(@NotNull String url, @Nullable String originalUrl, @Nullable String keyword, @NotNull Listener callback) {
         this.url = url;
         this.originalUrl = originalUrl;
         this.keyword = keyword;
-        this.dispatcher = new Listener() {
-            @Override
-            public void onResponse(ExtractPage page) {
-                handler.removeMessages(TIMEOUT);
-                if(!isCancel) callback.onResponse(page);
-                handler.post(() -> destroy());
-            }
-
-            @Override
-            public void onFailure(String msg) {
-                handler.removeMessages(TIMEOUT);
-                if(!isCancel) callback.onFailure(msg);
-                handler.post(() -> destroy());
-            }
-        };
-        this.handler = new Handler(Looper.getMainLooper(), new Handler.Callback() {
-            @Override
-            public boolean handleMessage(@NonNull Message msg) {
-                XLog.w("处理超时：" + msg.what);
-                if(msg.what != TIMEOUT){
-                    return false; //返回true 不对msg进行进一步处理
-                }
-                if(doc == null){
-                    dispatcher.onFailure(App.i().getString(R.string.timeout));
-                }else {
-                    try {
-                        readability(doc);
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                }
-                return true;
-            }
-        });
+        this.dispatcher = callback;
     }
 
 
     public void getContent(){
-        isRunning = true;
-        handler.sendEmptyMessageDelayed(TIMEOUT, TIMEOUT);
         if(!UriUtils.isHttpOrHttpsUrl(url)){
             dispatcher.onFailure(App.i().getString(R.string.article_link_is_wrong_with_reason, url));
             return;
         }
-        // Request request = new Request.Builder().url(url).tag(TAG).build();
-        Request.Builder request = new Request.Builder().url(url).tag(TAG);
-        request.header(Contract.USER_AGENT, WebSettings.getDefaultUserAgent(App.i()));
 
-        call = HttpClientManager.i().searchClient().newCall(request.build());
-
-
-        XLog.d("开始用 OkHttp 获取全文");
-        call.enqueue(new Callback() {
+        getting = new Getting(url, new Getting.Listener() {
             @Override
-            public void onFailure(@NotNull Call call, @NotNull IOException e) {
-                if(call.isCanceled()){
-                    return;
-                }
-                dispatcher.onFailure(e.getLocalizedMessage());
-                XLog.w("OkHttp 获取全文失败：" + e.getLocalizedMessage());
-            }
-            @Override
-            public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
-                if(call.isCanceled()){
-                    return;
-                }
-                ResponseBody responseBody = response.body();
-                if(!response.isSuccessful()){
-                    dispatcher.onFailure(App.i().getString(R.string.response_code, response.code()));
-                    return;
-                }
-
-                if(responseBody == null){
-                    dispatcher.onFailure(App.i().getString(R.string.original_text_exception_plz_check));
-                    return;
-                }
-
-                MediaType mediaType  = responseBody.contentType();
-                String charset = null;
-                if( mediaType != null ){
-                    charset = DataUtils.getCharsetFromContentType(mediaType.toString());
-                }
-                doc = Jsoup.parse(responseBody.byteStream(), charset, url);
-                // document.getElementsByTag("script").remove();
+            public void onResponse(InputStreamCache inputStreamCache) {
                 XLog.w("OkHttp 获取全文成功：" + keyword + " = " );
-                if(!doc.body().text().contains(keyword)){
-                    getByWebView();
-                }else {
-                    readability(doc);
-                }
-                response.close();
-            }
-        });
-    }
-
-
-    @SuppressLint("JavascriptInterface")
-    private void getByWebView(){
-        handler.post(new Runnable() {
-            @Override
-            public void run() {
-                webViewS = new WebViewS(new MutableContextWrapper(App.i()));
-                webViewS.getSettings().setLoadsImagesAutomatically(false);//设置自动加载图片
-                webViewS.getSettings().setBlockNetworkImage(true);//设置网页在加载的时候暂时不加载图片
-                webViewS.addJavascriptInterface(new Bridge() {
-                    @JavascriptInterface
-                    @Override
-                    public void getHtml(String html) throws IOException {
-                        XLog.d("WebView 获取全文成功：" + StringUtils.isEmpty(html) );
-                        if(!StringUtils.isEmpty(html)){
-                            readability(Jsoup.parse(html, url));
-                        }else {
-                            dispatcher.onFailure(App.i().getString(R.string.not_responding_plz_try_again));
-                        }
+                try {
+                    Document doc = Jsoup.parse(inputStreamCache.getInputStream(), inputStreamCache.getCharset().displayName(), url);
+                    doc.outputSettings().prettyPrint(false);
+                    XLog.i("易读，keyword：" + keyword);
+                    if(!StringUtils.isEmpty(originalUrl)){
+                        url = originalUrl;
                     }
-                }, Bridge.TAG);
-                webViewS.setWebViewClient(mWebViewClient);
-                webViewS.loadUrl(url);
+                    ExtractPage extractPage =  getArticles(url, doc, keyword);
+                    // XLog.e("获取易读，原文：" + content);
+                    if(!StringUtils.isEmpty(extractPage.getMsg())){
+                        dispatcher.onFailure(extractPage.getMsg());
+                    }else if(StringUtils.isEmpty(extractPage.getContent())){
+                        dispatcher.onFailure( App.i().getString(R.string.no_text_found) );
+                    }else {
+                        dispatcher.onResponse(extractPage);
+                    }
+                }catch (IOException e){
+                    XLog.e(e.getLocalizedMessage());
+                    e.printStackTrace();
+                }
+            }
+
+            @Override
+            public void onFailure(String msg) {
+                dispatcher.onFailure(msg);
             }
         });
-    }
 
-    private void readability(Document doc) throws IOException{
-        doc.outputSettings().prettyPrint(false);
-        XLog.i("易读，keyword：" + keyword);
-        if(!StringUtils.isEmpty(originalUrl)){
-            url = originalUrl;
-        }
-        ExtractPage extractPage =  getArticles(url, doc, keyword);
-        // XLog.e("获取易读，原文：" + content);
-        if(!StringUtils.isEmpty(extractPage.getMsg())){
-            dispatcher.onFailure(extractPage.getMsg());
-        }else if(StringUtils.isEmpty(extractPage.getContent())){
-            dispatcher.onFailure( App.i().getString(R.string.no_text_found) );
-        }else {
-            dispatcher.onResponse(extractPage);
-            // ArticleUtils.getOptimizedContent(url, extractPage.getContent())
-        }
+        getting.policy(Getting.BOTH_WITH_KEYWORD);
+        getting.keyword(keyword);
+        getting.start();
+
+        XLog.d("开始用 Getting 获取全文");
     }
 
     /*输入Jsoup的Document，获取正文文本*/
@@ -334,105 +205,13 @@ public class Distill {
         return null;
     }
 
-
-
-
-    private WebViewClient mWebViewClient = new WebViewClient() {
-        @Override
-        public WebResourceResponse shouldInterceptRequest(WebView view, final WebResourceRequest request) {
-            String scheme = request.getUrl().getScheme();
-            if (scheme.equalsIgnoreCase(HTTP) || scheme.equalsIgnoreCase(HTTPS)) {
-                String url = request.getUrl().toString().toLowerCase();
-                // XLog.e("重定向地址：" + url );
-                // 有广告的请求数据，我们直接返回空数据，注：不能直接返回null
-                if (HostBlockConfig.i().isAd(url) || url.endsWith(".css")) { //
-                    return new WebResourceResponse(null, null, null);
-                }
-
-                String newUrl = UrlRewriteConfig.i().getRedirectUrl(url);
-                // XLog.i("重定向地址：" + url + " -> " + newUrl);
-                if(!TextUtils.isEmpty(newUrl) && !url.equalsIgnoreCase(newUrl)){
-                    return super.shouldInterceptRequest(view, new WebResourceRequest() {
-                        @Override
-                        public Uri getUrl() {
-                            return Uri.parse(newUrl);
-                        }
-                        @SuppressLint("NewApi")
-                        @Override
-                        public boolean isRedirect(){
-                            return true;
-                        }
-                        @SuppressLint("NewApi")
-                        @Override
-                        public boolean isForMainFrame() {
-                            return request.isForMainFrame();
-                        }
-                        @SuppressLint("NewApi")
-                        @Override
-                        public boolean hasGesture() {
-                            return request.hasGesture();
-                        }
-                        @SuppressLint("NewApi")
-                        @Override
-                        public String getMethod() {
-                            return request.getMethod();
-                        }
-                        @SuppressLint("NewApi")
-                        @Override
-                        public Map<String, String> getRequestHeaders() {
-                            return request.getRequestHeaders();
-                        }
-                    });
-                }
-            }
-            return super.shouldInterceptRequest(view, request);
-        }
-        @Override
-        public void onPageStarted(WebView webView, String url, Bitmap favicon) {
-            super.onPageStarted(webView, url, favicon);
-        }
-        @Override
-        public void onPageFinished(WebView webView, String url) {
-            super.onPageFinished(webView, url);
-            webView.loadUrl(Bridge.COMMEND);
-        }
-    };
-
     public void cancel(){
-        isCancel = true;
-        destroy();
-    }
-
-    public boolean isRunning() {
-        return isRunning;
-    }
-
-    public void destroy(){
-        isRunning = false;
-        if(handler != null){
-            handler.removeMessages(TIMEOUT);
-        }
-        if(call != null){
-            call.cancel();
-        }
-        if(webViewS != null){
-            webViewS.destroy();
-            webViewS = null;
+        if(getting != null){
+            getting.destroy();
         }
     }
     public interface Listener {
         void onResponse(ExtractPage page);
         void onFailure(String msg);
-        // void onResponse(String content);
-        // void onTimeout();
-        // void onNotResponse();
-        // void onNoTextFound();
-    }
-
-    public interface Bridge {
-        String TAG = "ReadabilityBridge";
-        String COMMEND = "javascript:ReadabilityBridge.getHtml(document.documentElement.outerHTML)";
-        // void log(String msg);
-        void getHtml(String html) throws IOException;
     }
 }

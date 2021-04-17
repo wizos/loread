@@ -23,6 +23,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewConfiguration;
 import android.webkit.CookieManager;
+import android.webkit.JavascriptInterface;
 import android.webkit.SslErrorHandler;
 import android.webkit.WebResourceError;
 import android.webkit.WebResourceRequest;
@@ -48,6 +49,8 @@ import com.just.agentweb.WebViewClient;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.io.IOException;
+import java.lang.ref.WeakReference;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Map;
@@ -61,11 +64,13 @@ import me.wizos.loread.config.HostBlockConfig;
 import me.wizos.loread.config.header_useragent.UserAgentConfig;
 import me.wizos.loread.config.url_rewrite.UrlRewriteConfig;
 import me.wizos.loread.db.CorePref;
+import me.wizos.loread.utils.FileUtils;
 import me.wizos.loread.utils.ScreenUtils;
 import me.wizos.loread.utils.StringUtils;
 import me.wizos.loread.view.colorful.Colorful;
 import me.wizos.loread.view.webview.DownloadListenerS;
 import me.wizos.loread.view.webview.LongClickPopWindow;
+import me.wizos.loread.view.webview.VideoHelper;
 
 import static me.wizos.loread.Contract.SCHEMA_FEEDME;
 import static me.wizos.loread.Contract.SCHEMA_HTTP;
@@ -404,12 +409,38 @@ public class WebActivity extends BaseActivity implements WebBridge {
         handler.postDelayed(mShowPart2Runnable, UI_ANIMATION_DELAY);
     }
 
-
+    private static boolean videoIsPortrait = false;
+    @JavascriptInterface
     @Override
-    public void log(String msg) {
-        XLog.i(WebBridge.TAG, msg);
+    public void postVideoPortrait(boolean portrait) {
+        videoIsPortrait = portrait;
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                videoIsPortrait = false;
+            }
+        });
     }
 
+    @JavascriptInterface
+    @Override
+    public void foundAudio(String src, long duration) {
+        XLog.i("发现音频：" + src + "  -> 时长：" + duration);
+    }
+
+    @JavascriptInterface
+    @Override
+    public void foundVideo(String src, long duration) {
+        XLog.i("发现视频：" + src + "  -> 时长：" + duration);
+    }
+
+    @JavascriptInterface
+    @Override
+    public void log(String msg) {
+        XLog.i(msg);
+    }
+
+    @JavascriptInterface
     @Override
     public void toggleScreenOrientation() {
         XLog.d("切换屏幕方向");
@@ -421,6 +452,7 @@ public class WebActivity extends BaseActivity implements WebBridge {
     }
 
     protected WebChromeClient mWebChromeClient = new WebChromeClient() {
+        WeakReference<VideoHelper> video;
         @Override
         public void onReceivedTitle(WebView view, String title) {
             super.onReceivedTitle(view, title);
@@ -428,6 +460,31 @@ public class WebActivity extends BaseActivity implements WebBridge {
                 mToolbar.setTitle(title);
                 receivedUrl = agentWeb.getWebCreator().getWebView().getUrl();
                 mToolbar.setSubtitle(receivedUrl);
+            }
+        }
+        // 表示进入全屏的时候
+        @Override
+        public void onShowCustomView(View view, CustomViewCallback callback) {
+            super.onShowCustomView(view,callback);
+            if(video == null){
+                video = new WeakReference<>(new VideoHelper(WebActivity.this, agentWeb.getWebCreator().getWebView()));
+            }
+            if (video.get() != null) {
+                video.get().onShowCustomView(view, videoIsPortrait, callback);
+            }
+            videoIsPortrait = false;
+        }
+
+        //表示退出全屏的时候
+        @Override
+        public void onHideCustomView() {
+            super.onHideCustomView();
+            // XLog.i("退出全屏");
+            if(video == null){
+                video = new WeakReference<>(new VideoHelper(WebActivity.this, agentWeb.getWebCreator().getWebView()));
+            }
+            if (video.get() != null) {
+                video.get().onHideCustomView();
             }
         }
     };
@@ -441,196 +498,36 @@ public class WebActivity extends BaseActivity implements WebBridge {
      * https://github.com/Ryan-Shz/FastWebView/blob/817bb89f7fbca2b3ec790f1f633aeb3f50ac53fa/fastwebview/src/main/java/com/ryan/github/view/loader/OkHttpResourceLoader.java
      */
     protected WebViewClient mWebViewClient = new WebViewClient() {
-        // @Override
-        // public void onReceivedHttpAuthRequest(WebView view, HttpAuthHandler handler, String host, String realm){
-        //     //身份验证（账号密码）
-        //     handler.proceed("userName", "password");
-        // }
-
-        // @Override
-        // public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
-        //     String scheme = request.getUrl().getScheme().trim();
-        //     if (scheme.equalsIgnoreCase(HTTP) || scheme.equalsIgnoreCase(HTTPS)) {
-        //         String url = request.getUrl().toString();
-        //         if (HostBlockConfig.i().isAd(url)) {
-        //             // 有广告的请求数据，我们直接返回空数据，注：不能直接返回null
-        //             return new WebResourceResponse(null, null, null);
-        //         }
-        //
-        //         String newUrl = UrlRewriteConfig.i().getRedirectUrl(url);
-        //         // XLog.i("重定向地址：" + url + " -> " + newUrl);
-        //
-        //         if(App.i().socks5ProxyNode == null){
-        //             XLog.i("webview 不走代理");
-        //             if(!TextUtils.isEmpty(newUrl) && !url.equalsIgnoreCase(newUrl)){
-        //                 return super.shouldInterceptRequest(view, new WebResourceRequest() {
-        //                     @Override
-        //                     public Uri getUrl() {
-        //                         return Uri.parse(newUrl);
-        //                     }
-        //                     @SuppressLint("NewApi")
-        //                     @Override
-        //                     public boolean isRedirect(){
-        //                         return true;
-        //                     }
-        //                     @SuppressLint("NewApi")
-        //                     @Override
-        //                     public boolean isForMainFrame() {
-        //                         return request.isForMainFrame();
-        //                     }
-        //                     @SuppressLint("NewApi")
-        //                     @Override
-        //                     public boolean hasGesture() {
-        //                         return request.hasGesture();
-        //                     }
-        //                     @SuppressLint("NewApi")
-        //                     @Override
-        //                     public String getMethod() {
-        //                         return request.getMethod();
-        //                     }
-        //                     @SuppressLint("NewApi")
-        //                     @Override
-        //                     public Map<String, String> getRequestHeaders() {
-        //                         return request.getRequestHeaders();
-        //                     }
-        //                 });
-        //             }
-        //             return super.shouldInterceptRequest(view, request);
-        //         }else {
-        //             XLog.i("webview 走代理：" + HttpClientManager.i().simpleClient().proxy() + url);
-        //             if(!TextUtils.isEmpty(newUrl) && !url.equalsIgnoreCase(newUrl)){
-        //                 url = newUrl;
-        //             }
-        //             try {
-        //                 // Request.Builder builder = new Request.Builder().url(url).tag(TAG).method(request.getMethod(), null);
-        //                 // for (Map.Entry<String, String> requestHeader : request.getRequestHeaders().entrySet()) {
-        //                 //     builder.header(requestHeader.getKey(), requestHeader.getValue());
-        //                 // }
-        //                 //
-        //                 // Response response = HttpClientManager.i().simpleClient().newCall(builder.build()).execute();
-        //                 // ResponseBody responseBody = response.body();
-        //                 // if(!response.isSuccessful()){
-        //                 //     XLog.i("webview 走代理失败， 返回体为null: " +  response.code() + " ," + response.message());
-        //                 //     return super.shouldInterceptRequest(view, request);
-        //                 // }
-        //                 //
-        //                 // MediaType mediaType  = responseBody.contentType();
-        //                 // String charset = null;
-        //                 // String mimeType = "text/plain";
-        //                 // if( mediaType != null ){
-        //                 //     charset = DataUtil.getCharsetFromContentType(mediaType.toString());
-        //                 //     mimeType = mediaType.toString();
-        //                 // }
-        //                 // XLog.i("webview 走代理， 内容编码：" + mimeType + " , " + charset + " , " + response.message() );
-        //                 //
-        //                 // InputStream in = new BufferedInputStream(responseBody.byteStream());
-        //                 //
-        //                 // Map<String, String> responseHeaders = new HashMap<>();
-        //                 // for (Pair<? extends String, ? extends String> header: response.headers()) {
-        //                 //     responseHeaders.put(header.getFirst(), header.getSecond());
-        //                 // }
-        //                 // if(TextUtils.isEmpty(charset)){
-        //                 //     charset = responseHeaders.get("content-encoding");
-        //                 //     XLog.i("webview 走代理，编码：" + mimeType + " , " + charset + " , " + response.message() );
-        //                 // }
-        //                 // if(isInterceptorThisRequest(response.code())){
-        //                 //     XLog.i("webview 代理，由于响应码为，所以跳过：" + response.code() );
-        //                 //     return super.shouldInterceptRequest(view, request);
-        //                 // }
-        //                 // return new WebResourceResponse(mimeType, charset, response.code(), "ok", responseHeaders, in);
-        //
-        //                 String urlString = url.split("#")[0];
-        //                 Proxy proxy = new Proxy(Proxy.Type.SOCKS, new InetSocketAddress(App.i().socks5ProxyNode.getServer(), App.i().socks5ProxyNode.getPort()));
-        //                 HttpURLConnection connection = (HttpURLConnection) new URL(urlString).openConnection(proxy);
-        //                 connection.setRequestMethod(request.getMethod());
-        //                 for (Map.Entry<String, String> requestHeader : request.getRequestHeaders().entrySet()) {
-        //                     connection.setRequestProperty(requestHeader.getKey(), requestHeader.getValue());
-        //                 }
-        //
-        //                 // 将响应转换为网络资源响应参数所需的格式
-        //                 // transform response to required format for WebResourceResponse parameters
-        //                 InputStream in = new BufferedInputStream(connection.getInputStream());
-        //                 String encoding = connection.getContentEncoding();
-        //                 // connection.getHeaderFields();
-        //                 Map<String, String> responseHeaders = new HashMap<>();
-        //                 for (String key : connection.getHeaderFields().keySet()) {
-        //                     responseHeaders.put(key, connection.getHeaderField(key));
-        //                 }
-        //
-        //                 String mimeType = "text/plain";
-        //                 if (connection.getContentType() != null && !connection.getContentType().isEmpty()) {
-        //                     mimeType = connection.getContentType().split("; ")[0];
-        //                 }
-        //                 XLog.i("webview 走代理， 内容编码：" + mimeType + " , " + encoding + " , " + connection.getResponseMessage());
-        //                 if(isInterceptorThisRequest(connection.getResponseCode())){
-        //                     XLog.i("webview 代理，由于响应码为，所以跳过：" + connection.getResponseCode() );
-        //                     return super.shouldInterceptRequest(view, request);
-        //                 }
-        //                 return new WebResourceResponse(mimeType, encoding, connection.getResponseCode(), connection.getResponseMessage(), responseHeaders, in);
-        //                 // return new WebResourceResponse(mimeType, "binary", in);
-        //             } catch (IOException e) {
-        //                 e.printStackTrace();
-        //                 XLog.e("无法加载：" + e.getMessage());
-        //             }
-        //             // failed doing proxied http request: return empty response
-        //             XLog.i("webview 走代理失败");
-        //             return super.shouldInterceptRequest(view, request);
-        //             // return new WebResourceResponse("text/plain", "UTF-8", 204, "No Content", new HashMap<String, String>(), new ByteArrayInputStream(new byte[]{}));
-        //         }
-        //     }
-        //
-        //     return super.shouldInterceptRequest(view, request);
-        // }
-        // /**
-        //  * references {@link android.webkit.WebResourceResponse} setStatusCodeAndReasonPhrase
-        //  */
-        // private boolean isInterceptorThisRequest(int code) {
-        //     return (code < 100 || code > 599 || (code > 299 && code < 400));
-        // }
-
         @Override
         public WebResourceResponse shouldInterceptRequest(WebView view, final WebResourceRequest request) {
-            String url = request.getUrl().toString();
-            if (url.toLowerCase().startsWith(SCHEMA_HTTP) || url.toLowerCase().startsWith(SCHEMA_HTTPS)) {
-                if (CorePref.i().globalPref().getBoolean(Contract.BLOCK_ADS, true) && HostBlockConfig.i().isAd(url)) {
-                    // 有广告的请求数据，我们直接返回空数据，注：不能直接返回null
-                    return new WebResourceResponse(null, null, null);
-                }
-                // NOTE: 2021/1/24  由于会将小图转为大图，造成问题，所以不重定向。
-                String newUrl = UrlRewriteConfig.i().getRedirectUrl(url);
-                XLog.d("网页重定向：" + url + " -> " + newUrl);
-                if(!TextUtils.isEmpty(newUrl) && !url.equalsIgnoreCase(newUrl)){
-                    return super.shouldInterceptRequest(view, new WebResourceRequest() {
-                        @Override
-                        public Uri getUrl() {
-                            return Uri.parse(newUrl);
-                        }
-                        @SuppressLint("NewApi")
-                        @Override
-                        public boolean isRedirect(){
-                            return true;
-                        }
-                        @SuppressLint("NewApi")
-                        @Override
-                        public boolean isForMainFrame() {
-                            return request.isForMainFrame();
-                        }
-                        @SuppressLint("NewApi")
-                        @Override
-                        public boolean hasGesture() {
-                            return request.hasGesture();
-                        }
-                        @SuppressLint("NewApi")
-                        @Override
-                        public String getMethod() {
-                            return request.getMethod();
-                        }
-                        @SuppressLint("NewApi")
-                        @Override
-                        public Map<String, String> getRequestHeaders() {
-                            return request.getRequestHeaders();
-                        }
-                    });
+            String url = request.getUrl().toString().toLowerCase();
+            XLog.d("拦截请求：" + url);
+            if (!url.startsWith(SCHEMA_HTTP) && !url.startsWith(SCHEMA_HTTPS)) {
+                return super.shouldInterceptRequest(view,request);
+
+            }
+            if (CorePref.i().globalPref().getBoolean(Contract.BLOCK_ADS, true) && HostBlockConfig.i().isAd(url)) {
+                // 有广告的请求数据，我们直接返回空数据，注：不能直接返回null
+                return new WebResourceResponse(null, null, null);
+            }
+
+            // 这里的嗅探并不多余，例如网易云的音频地址并不会出现在html中，但是网络请求中可以发现到。
+            // https://music.163.com/outchain/player?type=2&id=1299293129&height=66
+
+            if(url.contains(Contract.LOREAD_WIZOS_ME)){
+                try {
+                    if(url.contains(Contract.PATH_PLYR_LITE)){
+                        return new WebResourceResponse("text/css", StandardCharsets.UTF_8.displayName(), FileUtils.getInputStreamFromLocalOrAssets(WebActivity.this, Contract.PATH_PLYR_LITE));
+                    }else if(url.contains(Contract.PATH_ICONFONT)){
+                        return new WebResourceResponse("text/javascript", StandardCharsets.UTF_8.displayName(), FileUtils.getInputStreamFromLocalOrAssets(WebActivity.this, Contract.PATH_ICONFONT));
+                    }else if(url.contains(Contract.PATH_ZEPTO)){
+                        return new WebResourceResponse("text/javascript", StandardCharsets.UTF_8.displayName(), FileUtils.getInputStreamFromLocalOrAssets(WebActivity.this, Contract.PATH_ZEPTO));
+                    }else if(url.contains(Contract.PATH_MEDIA_CONTROLS)){
+                        return new WebResourceResponse("text/javascript", StandardCharsets.UTF_8.displayName(), FileUtils.getInputStreamFromLocalOrAssets(WebActivity.this, Contract.PATH_MEDIA_CONTROLS));
+                    }
+                }catch (IOException e){
+                    e.printStackTrace();
+                    XLog.e("加载错误：" + e.getLocalizedMessage());
                 }
             }
             return super.shouldInterceptRequest(view, request);
@@ -707,10 +604,10 @@ public class WebActivity extends BaseActivity implements WebBridge {
         @Override
         public void onPageFinished(WebView view, String url) {
             super.onPageFinished(view, url);
-            // 注入视频全屏js
-            view.loadUrl(WebBridge.Video.fullScreenJsFun(url));
-            // XLog.i("页面加载完成");
-            // view.loadUrl(Distill.Bridge.COMMEND_PRINT_HTML);
+            XLog.d("页面加载完成");
+            if (CorePref.i().globalPref().getBoolean(Contract.IFRAME_LISTENER, true)) {
+                view.loadUrl(WebBridge.COMMEND_LOAD_MEDIA_CONTROLS);
+            }
             if (itemStop != null) {
                 itemStop.setVisible(false);
             }
@@ -873,16 +770,22 @@ public class WebActivity extends BaseActivity implements WebBridge {
                 break;
             case R.id.web_menu_get_html:
                 XLog.i("测试点击");
-                agentWeb.getWebCreator().getWebView().loadUrl(COMMEND_PRINT_HTML);
-                agentWeb.getJsAccessEntrace().callJs(COMMEND_PRINT_HTML);
-                break;
+                new MaterialDialog.Builder(this)
+                        .inputType(InputType.TYPE_CLASS_TEXT)
+                        .input(null, COMMEND_PRINT_HTML, new MaterialDialog.InputCallback() {
+                            @Override
+                            public void onInput(@NonNull MaterialDialog dialog, CharSequence input) {
+                                agentWeb.getWebCreator().getWebView().loadUrl(input.toString());
+                            }
+                        })
+                        .positiveText(R.string.execute)
+                        .negativeText(android.R.string.cancel)
+                        .show();
             default:
                 break;
         }
         return super.onOptionsItemSelected(item);
     }
-    String COMMEND_PRINT_HTML = "javascript: function(){ console.log(document.documentElement.outerHTML); window.WebBridge.log(document.documentElement.outerHTML);} ";
-    // String COMMEND = "javascript:window.onload = function(){ReadabilityBridge.getHtml(document.documentElement.outerHTML);void(0);}";
 
     private void exit() {
         this.finish();
@@ -892,13 +795,11 @@ public class WebActivity extends BaseActivity implements WebBridge {
     @Override
     protected void onPause() {
         super.onPause();
-        // agentWeb.getWebLifeCycle().onPause();
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        // agentWeb.getWebLifeCycle().onResume();
     }
 
     @Override

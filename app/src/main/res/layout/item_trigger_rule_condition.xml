@@ -14,7 +14,7 @@
         android:paddingEnd="5dp"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:textColor="?attr/lv_item_title_color"
+        android:textColor="?attr/list_item_title_color"
         android:text="@string/and"/>
     <TextView
         android:id="@+id/item_condition_textview"
@@ -24,6 +24,6 @@
         android:paddingEnd="5dp"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:textColor="?attr/lv_item_title_color"
+        android:textColor="?attr/list_item_title_color"
         tools:text="标题包含“美女”"/>
 </LinearLayout>

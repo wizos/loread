@@ -160,14 +160,14 @@
 //     @Override
 //     public RecyclerView.ViewHolder createParentHolder(@NonNull ViewGroup root, int viewType) {
 //         // XLog.d("createParentHolder");
-//         View view = mInflater.inflate(R.layout.tag_expandable_item_group, root, false);
+//         View view = mInflater.inflate(R.layout.main_bottom_sheet_category_group, root, false);
 //         return new ParentHolder(view);
 //     }
 //
 //     @Override
 //     public RecyclerView.ViewHolder createChildHolder(@NonNull ViewGroup root, int viewType) {
 //         // XLog.d("createChildHolder");
-//         View view = mInflater.inflate(R.layout.tag_expandable_item_child, root, false);
+//         View view = mInflater.inflate(R.layout.main_bottom_sheet_category_child, root, false);
 //         return new ChildHolder(view);
 //     }
 //

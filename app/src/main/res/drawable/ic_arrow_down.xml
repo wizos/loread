@@ -11,6 +11,6 @@
     android:viewportWidth="24"
     android:viewportHeight="24">
   <path
-      android:fillColor="?attr/tag_slv_item_icon"
+      android:fillColor="?attr/list_item_icon"
       android:pathData="M7.41,8.59L12,13.17l4.59,-4.58L18,10l-6,6 -6,-6 1.41,-1.41z"/>
 </vector>

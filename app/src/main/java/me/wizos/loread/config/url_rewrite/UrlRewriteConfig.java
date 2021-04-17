@@ -45,12 +45,12 @@ public class UrlRewriteConfig {
                     Gson gson = new Gson();
                     // if(CorePref.i().userPref().getBoolean(Contract.ENABLE_REMOTE_URL_REWRITE_RULE, false)){
 
-                    String includeConfig = FileUtils.readFileFromAssets(App.i(), "rule/" + FILENAME);
-                    if (!TextUtils.isEmpty(includeConfig)) {
-                        UrlRewriteRule remoteRule = gson.fromJson(includeConfig, UrlRewriteRule.class);
-                        rule.hostReplace.putAll(remoteRule.hostReplace);
-                        rule.urlRewrite.putAll(remoteRule.urlRewrite);
-                    }
+                    // String includeConfig = FileUtils.readFileFromAssets(App.i(), "rule/" + FILENAME);
+                    // if (!TextUtils.isEmpty(includeConfig)) {
+                    //     UrlRewriteRule remoteRule = gson.fromJson(includeConfig, UrlRewriteRule.class);
+                    //     rule.hostReplace.putAll(remoteRule.hostReplace);
+                    //     rule.urlRewrite.putAll(remoteRule.urlRewrite);
+                    // }
 
                     String remoteConfig = FileUtils.readFile(App.i().getGlobalConfigPath() + FILENAME);
                     if (!TextUtils.isEmpty(remoteConfig)) {

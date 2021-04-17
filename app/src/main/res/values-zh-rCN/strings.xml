@@ -23,6 +23,7 @@
     <string name="enter_user_agent">输入 UserAgent 标识</string>
     <string name="remove_custom_user_agent">删除自定义UA</string>
 
+    <string name="feed_manager">订阅管理</string>
     <string name="theme_switched_automatically">已自动切换主题</string>
     <string name="feed_url_display">订阅网址：%s</string>
     <string name="site_url_display">站点网址：%s</string>
@@ -106,6 +107,7 @@
     <string name="step_sync_article_size">%1$s 同步文章 [%2$d]</string>
     <string name="step_sync_article_refs">%1$s 同步文章信息</string>
     <string name="fetch_article_full_content">抓取文章全文</string>
+    <string name="execute_all_rules">执行所有规则</string>
     <string name="execute_rules">执行规则</string>
 
     <plurals name="articles_count">
@@ -332,14 +334,22 @@
     <!--    <item>大于</item>-->
     <!--</string-array>-->
 
+    <string-array name="feed_manager_order_title">
+        <item>标题</item>
+        <item>文章数量</item>
+        <item>未读数量</item>
+        <item>星标数量</item>
+        <item>健康情况</item>
+    </string-array>
 
     <string-array name="exception">
         <item>未登录</item>
-        <item>SocketTimeoutException</item>
-        <item>ConnectException</item>
-        <item>IOException</item>
-        <item>RuntimeException</item>
+        <item>SocketTimeout 异常</item>
+        <item>链接异常</item>
+        <item>IO 异常</item>
+        <item>Runtime 异常</item>
     </string-array>
+
     <string name="not_logged_in">未登录</string>
 
     <string name="if_x">如果</string>
@@ -438,6 +448,7 @@
     <string name="search_header_search_cloudy_feeds">搜索订阅源</string>
     <string name="search_header_search_local_articles">搜索手机上的文章</string>
 
+    <string name="link">链接</string>
     <string name="share_link">分享链接</string>
     <string name="copy_link">复制链接</string>
     <string name="open_by_outer">外部打开</string>
@@ -468,9 +479,11 @@
     <string name="include_valueless">包含无价值文章</string>
     <string name="night_theme">夜间主题</string>
 
+    <string name="order">排序</string>
     <string name="article_list_order_asc">上旧下新</string>
     <string name="article_list_order_desc">上新下旧</string>
 
+    <string name="filter">过滤</string>
     <string name="all">所有</string>
     <string name="unread">未读</string>
     <string name="starred">收藏</string>
@@ -557,7 +570,7 @@
     <string name="unsubscribe">退订</string>
 
     <string name="display_filter_is_under_development">展示筛选器，功能开发中</string>
-    
+
     <string name="click_to_load_this_picture">点击加载此图片</string>
     <string name="loading_failed_click_here_to_retry">加载失败，点击重试</string>
     <string name="picture_error_click_here_to_retry">图片异常，点击重试</string>
@@ -589,6 +602,7 @@
     <string name="exit_search">退出搜索</string>
     <string name="subscription">订阅源</string>
 
+    <string name="search_feed_name_and_feed_url">搜索源的名称与订阅链接</string>
     <string name="update_all">更新所有</string>
 
     <string name="yesterday_time">昨天 %1$s</string>

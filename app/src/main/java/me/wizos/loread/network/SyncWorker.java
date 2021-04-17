@@ -12,7 +12,6 @@ import com.jeremyliao.liveeventbus.LiveEventBus;
 import me.wizos.loread.App;
 import me.wizos.loread.db.CoreDB;
 import me.wizos.loread.db.User;
-import me.wizos.loread.network.api.FeverTinyRSSApi;
 import me.wizos.loread.utils.NetworkUtils;
 
 public class SyncWorker extends Worker  {
@@ -66,9 +65,9 @@ public class SyncWorker extends Worker  {
 
         App.i().isSyncing = true;
         LiveEventBus.get(SyncWorker.SYNC_TASK_STATUS).post(true);
-        if(App.i().getApi() instanceof FeverTinyRSSApi){
-            ((FeverTinyRSSApi) App.i().getApi()).setWorker(this);
-        }
+        // if(App.i().getApi() instanceof FeverTinyRSSApi){
+        //     ((FeverTinyRSSApi) App.i().getApi()).setWorker(this);
+        // }
         App.i().getApi().sync();
         App.i().isSyncing = false;
         LiveEventBus.get(SyncWorker.SYNC_TASK_STATUS).post(false);

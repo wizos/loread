@@ -1,9 +1,6 @@
 package me.wizos.loread.adapter;
 
 import android.content.Context;
-import android.os.Handler;
-import android.os.Looper;
-import android.os.Message;
 import android.text.Html;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
@@ -13,8 +10,6 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.paging.PagedList;
 import androidx.paging.PagedListAdapter;
 import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.RecyclerView;
@@ -43,34 +38,13 @@ import me.wizos.loread.utils.StringUtils;
 import me.wizos.loread.view.IconFontView;
 
 public class ArticlePagedListAdapter extends PagedListAdapter<Article, ArticlePagedListAdapter.ArticleViewHolder> {
-    private static final int TIMEOUT = 400; // 30 秒 30_000
     private RequestOptions canDownloadOptions;
     private RequestOptions cannotDownloadOptions;
     private Context context;
-    private Handler handler;
 
-    public ArticlePagedListAdapter() {
+    public ArticlePagedListAdapter(Context context) {
         super(DIFF_CALLBACK);
-        handler = new Handler(Looper.getMainLooper(), new Handler.Callback() {
-            @Override
-            public boolean handleMessage(@NonNull Message msg) {
-                if(msg.what != TIMEOUT){
-                    return false; //返回true 不对msg进行进一步处理
-                }
-                XLog.d("重置位置：" + lastPos + " , " + getCurrentList().getLastKey());
-                if(lastPos >=0 && lastPos < getItemCount()){
-                    ArticlePagedListAdapter.super.getItem(lastPos);
-                }else {
-                    lastPos = getItemCount();
-                }
-                return true;
-            }
-        });
-    }
-
-    @NonNull
-    public ArticleViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int position) {
-        context = parent.getContext();
+        this.context = context;
         canDownloadOptions = new RequestOptions()
                 .centerCrop()
                 .onlyRetrieveFromCache(false)
@@ -79,24 +53,20 @@ public class ArticlePagedListAdapter extends PagedListAdapter<Article, ArticlePa
                 .centerCrop()
                 .onlyRetrieveFromCache(true)
                 .priority(Priority.HIGH);
+    }
+
+    @NonNull
+    public ArticleViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int position) {
         return new ArticleViewHolder(LayoutInflater.from(context).inflate(R.layout.activity_main_list_item, parent, false));
     }
 
     @Override
     public void onBindViewHolder(@NonNull ArticleViewHolder holder, int position) {
-        if(handler.hasMessages(TIMEOUT)){
-            handler.removeMessages(TIMEOUT);
-        }
         Article article = super.getItem(position);
         // XLog.d("创建onBindViewHolder，LastKey = " + Objects.requireNonNull(getCurrentList()).getLastKey() + " , " + getCurrentList().getPositionOffset() + "  " + (article == null) + "  " + position);
         // 如果article是null，在此处不停循环的获取getItem得到的还是null
         if (article != null) {
             holder.bindTo(article);
-            if(position < lastPos && lastPos < getItemCount() ){
-                handler.sendEmptyMessageDelayed(TIMEOUT,TIMEOUT);
-            }else {
-                lastPos = position;
-            }
         } else {
             // Null defines a placeholder item - PagedListAdapter automatically invalidates this row when the actual object is loaded from the database.
             holder.placeholder();
@@ -115,7 +85,8 @@ public class ArticlePagedListAdapter extends PagedListAdapter<Article, ArticlePa
                     && oldArticle.getStarStatus() == newArticle.getStarStatus()
                     && oldArticle.getSaveStatus() == newArticle.getSaveStatus()
                     && oldArticle.getTitle().equals(newArticle.getTitle())
-                    && (oldArticle.getImage() != null && oldArticle.getImage().equals(newArticle.getImage()) )
+                    // && (oldArticle.getImage() != null && oldArticle.getImage().equals(newArticle.getImage()) )
+                    && (oldArticle.getImage() != null ? oldArticle.getImage().equals(newArticle.getImage()) : newArticle.getImage()==null)
                     && oldArticle.getSummary().equals(newArticle.getSummary());
         }
     };
@@ -248,7 +219,7 @@ public class ArticlePagedListAdapter extends PagedListAdapter<Article, ArticlePa
      * 但是实际上被修改的项不是视图中的最后一项，所以视图中下一页的前几项会需要重新加载，进而走到onBindViewHolder的getItem。
      * 又因为这几项没有提前被加载到内存中，所以得到的是null，又触发了更新为占位符的逻辑，等到数据加载完了重新渲染时，就产生了跳动的现象。
      */
-    private int lastPos = 0;
+    // private int lastPos = 0;
     // @Override
     // public Article getItem(int position) {
     //     XLog.e("获取项目：" + position + " , " + lastPos + " , " );
@@ -258,21 +229,21 @@ public class ArticlePagedListAdapter extends PagedListAdapter<Article, ArticlePa
     // public Article getItem(int position){
     //     return super.getItem(position);
     // }
-    public void setLastPos(int position){
-        lastPos = position;
-    }
+    // public void setLastPos(int position){
+    //     lastPos = position;
+    // }
 
-    // 不能再 submitList 用 lastPos = (int)getCurrentList().getLastKey()。因为修改了列表的某项时，lastKey已经变为该项了。
-    @Override
-    public void submitList(@Nullable PagedList<Article> pagedList) {
-        super.submitList(pagedList);
-        // XLog.i("提交的文件数量：" + lastPos + " , " );
-        if(pagedList == null){
-            lastPos = 0;
-        }else if(lastPos >= 0 && lastPos < pagedList.size() && lastPos < getItemCount()){
-            super.getItem(lastPos);
-        }else {
-            lastPos = pagedList.size();
-        }
-    }
+    // // 不能再 submitList 用 lastPos = (int)getCurrentList().getLastKey()。因为修改了列表的某项时，lastKey已经变为该项了。
+    // @Override
+    // public void submitList(@Nullable PagedList<Article> pagedList) {
+    //     super.submitList(pagedList);
+    //     // XLog.i("提交的文件数量：" + lastPos + " , " );
+    //     if(pagedList == null){
+    //         lastPos = 0;
+    //     }else if(lastPos >= 0 && lastPos < pagedList.size() && lastPos < getItemCount()){
+    //         super.getItem(lastPos);
+    //     }else {
+    //         lastPos = pagedList.size();
+    //     }
+    // }
 }

@@ -212,7 +212,7 @@ public class TriggerRulesGroupedAdapter extends ExpandableAdapter<ExpandableAdap
                             public void run() {
                                 TriggerRuleUtils.exeRule(App.i().getUser().getId(),0, triggerRule);
                                 ToastUtils.show(R.string.executed);
-                             }
+                            }
                         });
                     }
                     dialog.dismiss();
