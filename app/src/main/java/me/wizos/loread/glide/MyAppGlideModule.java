@@ -50,13 +50,6 @@ public class MyAppGlideModule extends AppGlideModule {
         XLog.d("注册指定类型的源数据，并指定它的图片加载所使用的 ModelLoader");
         // 在 Glide 中使用 OkHttp
         registry.replace(GlideUrl.class, InputStream.class, new OkHttpUrlLoader.Factory(HttpClientManager.i().imageHttpClient()));
-        // registry
-        //         // .append(WebpDrawable.class, new WebpDrawableEncoder())
-        //         // .append(InputStream.class, WebpDrawable.class, new WebpResourceDecoder(context, glide))
-        //         // .append(ByteBuffer.class, WebpDrawable.class, new WebpBytebufferDecoder(context, glide))
-        //         // .append(WebpDrawable.class, new WebpDrawableEncoder())
-        //         .register(SVG.class, PictureDrawable.class, new SvgDrawableTranscoder())
-        //         .append(InputStream.class, SVG.class, new SvgDecoder());
     }
     /**
      * 配置图片缓存的路径和缓存空间的大小

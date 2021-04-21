@@ -71,7 +71,7 @@ public abstract class BaseApi {
 
     abstract public void addFeed(FeedEntries feedEntries, CallbackX cb);
 
-    abstract public void unsubscribeFeed(String feedId, CallbackX cb);
+    abstract public void deleteFeed(String feedId, CallbackX cb);
 
     abstract public void renameFeed(String feedId, String targetName, CallbackX cb);
 
@@ -319,47 +319,59 @@ public abstract class BaseApi {
 
     // 优化在使用状态下多次同步到新文章时，这些文章的爬取时间
     void handleArticleInfo() {
-        AsyncTask.THREAD_POOL_EXECUTOR.execute(new Runnable() {
-            @Override
-            public void run() {
-                String uid = App.i().getUser().getId();
-                // 兜底策略：删掉所有未订阅、无星标的文章
-                CoreDB.i().articleDao().deleteUnsubscribeUnStar(uid);
-                // 兜底策略
-                CoreDB.i().feedCategoryDao().deleteRedundantByCategoryId(uid);
-                CoreDB.i().feedCategoryDao().deleteRedundantByFeedId(uid);
+        String uid = App.i().getUser().getId();
+        // 兜底策略：删掉所有未订阅、无星标的文章
+        CoreDB.i().articleDao().deleteUnsubscribeUnStar(uid);
+        // 兜底策略
+        CoreDB.i().feedCategoryDao().deleteRedundantByCategoryId(uid);
+        CoreDB.i().feedCategoryDao().deleteRedundantByFeedId(uid);
 
-                CoreDB.i().articleDao().updateIdleCrawlDate(uid, App.i().getLastShowTimeMillis());
-                CoreDB.i().articleDao().updateFeedUrl(uid);
-                CoreDB.i().articleDao().updateFeedTitle(uid);
-                CoreDB.i().feedDao().blockSync(uid);
-                updateCollectionCount();
-            }
-        });
+        CoreDB.i().articleDao().updateIdleCrawlDate(uid, App.i().getLastShowTimeMillis());
+        CoreDB.i().articleDao().updateFeedUrl(uid);
+        CoreDB.i().articleDao().updateFeedTitle(uid);
+        CoreDB.i().feedDao().blockSync(uid);
+        CoreDB.i().feedDao().updateLastPubDate(uid);
+        updateCollectionCount(uid);
     }
 
-    public static void updateCollectionCount() {
-        AsyncTask.THREAD_POOL_EXECUTOR.execute(new Runnable() {
-            @Override
-            public void run() {
-                long time1 = System.currentTimeMillis();
-                String uid = App.i().getUser().getId();
-                CoreDB.i().feedDao().updateAllCount(uid);
-                CoreDB.i().feedDao().updateUnreadCount(uid);
-                CoreDB.i().feedDao().updateStarCount(uid);
+    public static void updateCollectionCount(String uid) {
+        long time = System.currentTimeMillis();
+        CoreDB.i().feedDao().updateStarCount2(uid);// 耗时
+        XLog.i("重置计数耗时A：" + (System.currentTimeMillis() - time));
+        CoreDB.i().feedDao().updateUnreadCount2(uid); // 耗时
+        XLog.i("重置计数耗时B：" + (System.currentTimeMillis() - time));
+        CoreDB.i().feedDao().updateAllCount2(uid);
+        XLog.i("重置计数耗时C：" + (System.currentTimeMillis() - time));
 
-                CoreDB.i().categoryDao().updateAllCount(uid);
-                CoreDB.i().categoryDao().updateUnreadCount(uid);
-                CoreDB.i().categoryDao().updateStarCount(uid);
+        CoreDB.i().categoryDao().updateAllCount(uid);
+        XLog.i("重置计数耗时D：" + (System.currentTimeMillis() - time));
+        CoreDB.i().categoryDao().updateUnreadCount(uid);
+        XLog.i("重置计数耗时E：" + (System.currentTimeMillis() - time));
+        CoreDB.i().categoryDao().updateStarCount(uid);
+        XLog.i("重置计数耗时F：" + (System.currentTimeMillis() - time));
 
-                // CoreDB.i().feedDao().update(CoreDB.i().feedDao().getFeedsRealTimeCount(uid));
-                // CoreDB.i().categoryDao().update(CoreDB.i().categoryDao().getCategoriesRealTimeCount(uid));
-                long time2 = System.currentTimeMillis();
-                XLog.i("重置计数耗时：" + (time2 - time1));
-            }
-        });
+        // CoreDB.i().feedDao().update(CoreDB.i().feedDao().getFeedsRealTimeCount(uid));
+        // CoreDB.i().categoryDao().update(CoreDB.i().categoryDao().getCategoriesRealTimeCount(uid));
     }
+    public static void updateCollectionCount2(String uid) {
+        long time = System.currentTimeMillis();
+        CoreDB.i().feedDao().updateStarCount(uid);// 耗时
+        XLog.i("重置计数耗时A：" + (System.currentTimeMillis() - time));
+        CoreDB.i().feedDao().updateUnreadCount(uid); // 耗时
+        XLog.i("重置计数耗时B：" + (System.currentTimeMillis() - time));
+        CoreDB.i().feedDao().updateAllCount(uid);
+        XLog.i("重置计数耗时C：" + (System.currentTimeMillis() - time));
 
+        CoreDB.i().categoryDao().updateAllCount(uid);
+        XLog.i("重置计数耗时D：" + (System.currentTimeMillis() - time));
+        CoreDB.i().categoryDao().updateUnreadCount(uid);
+        XLog.i("重置计数耗时E：" + (System.currentTimeMillis() - time));
+        CoreDB.i().categoryDao().updateStarCount(uid);
+        XLog.i("重置计数耗时F：" + (System.currentTimeMillis() - time));
+
+        // CoreDB.i().feedDao().update(CoreDB.i().feedDao().getFeedsRealTimeCount(uid));
+        // CoreDB.i().categoryDao().update(CoreDB.i().categoryDao().getCategoriesRealTimeCount(uid));
+    }
 
     public void deleteExpiredArticles() {
         // 最后的 300 * 1000L 是留前5分钟时间的不删除
@@ -395,7 +407,40 @@ public abstract class BaseApi {
         PagingUtils.slice(expiredArticles, 100, childList -> CoreDB.i().articleDao().delete(uid, childList));
     }
 
-    void fetchReadability(String uid, long syncTimeMillis) {
+    public static void deleteUnsubscribedArticles(String feedId) {
+        // 最后的 300 * 1000L 是留前5分钟时间的不删除
+        String uid = App.i().getUser().getId();
+
+        List<Article> boxReadArts = CoreDB.i().articleDao().getUnStarPreFiled(uid, feedId);
+        //XLog.i("移动文章" + boxReadArts.size());
+        for (Article article : boxReadArts) {
+            article.setSaveStatus(App.STATUS_IS_FILED);
+            String dir = SaveDirectory.i().getSaveDir(article.getFeedId(), article.getId()) + "/";
+            //XLog.d("保存目录：" + dir);
+            ArticleUtils.saveArticle(App.i().getUserBoxPath() + dir, article);
+        }
+        CoreDB.i().articleDao().update(boxReadArts);
+
+        List<Article> storeReadArts = CoreDB.i().articleDao().getStaredPreFiled(uid, feedId);
+        //XLog.i("移动文章" + storeReadArts.size());
+        for (Article article : storeReadArts) {
+            article.setSaveStatus(App.STATUS_IS_FILED);
+            String dir = "/" + SaveDirectory.i().getSaveDir(article.getFeedId(), article.getId()) + "/";
+            ArticleUtils.saveArticle(App.i().getUserStorePath() + dir, article);
+        }
+        CoreDB.i().articleDao().update(storeReadArts);
+
+        List<String> needDeleteArticles = CoreDB.i().articleDao().getUnStarIdsByFeedId(uid, feedId);
+        ArrayList<String> idListMD5 = new ArrayList<>(needDeleteArticles.size());
+        for (String articleId : needDeleteArticles) {
+            idListMD5.add(EncryptUtils.MD5(articleId));
+        }
+        // XLog.d("清除：" + time + "--" + expiredArticles);
+        FileUtils.deleteHtmlDirList(idListMD5);
+        PagingUtils.slice(needDeleteArticles, 100, childList -> CoreDB.i().articleDao().delete(uid, childList));
+    }
+
+    public static void fetchReadability(String uid, long syncTimeMillis) {
         List<Article> articles = CoreDB.i().articleDao().getNeedReadability(uid, syncTimeMillis);
         XLog.i("开始获取易读文章 " + uid + " , " + syncTimeMillis);
         for (Article article : articles) {
@@ -487,5 +532,4 @@ public abstract class BaseApi {
             });
         }
     }
-
 }

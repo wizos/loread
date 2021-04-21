@@ -57,7 +57,7 @@ public class FileUtils {
     }
 
 
-    public static void deleteHtmlDirList(ArrayList<String> fileNameInMD5List) {
+    public static void deleteHtmlDirList(List<String> fileNameInMD5List) {
         String externalCacheDir = App.i().getUserFilesDir() + "/cache/";
         for (String fileNameInMD5 : fileNameInMD5List) {
             // XLog.e("删除文件：" +  externalCacheDir + fileNameInMD5 );

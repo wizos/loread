@@ -1,7 +1,7 @@
 apply plugin: 'com.android.application'
-// 使用Kotlin插件
+// // 使用Kotlin插件
 // apply plugin: 'kotlin-android'
-// 使用Kotlin Android扩展插件
+// // 使用Kotlin Android扩展插件
 // apply plugin: 'kotlin-android-extensions'
 
 android {
@@ -31,7 +31,6 @@ android {
         buildConfigField "String", "INOREADER_APP_KEY", "\"${INOREADER_APP_KEY}\""
         buildConfigField "String", "FEEDLY_APP_ID", "\"${FEEDLY_APP_ID}\""
         buildConfigField "String", "FEEDLY_APP_KEY", "\"${FEEDLY_APP_KEY}\""
-
     }
     buildTypes {
         release {
@@ -84,9 +83,11 @@ dependencies {
     implementation 'androidx.appcompat:appcompat:1.2.0'
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
     implementation 'androidx.cardview:cardview:1.0.0'
-    implementation 'androidx.recyclerview:recyclerview:1.1.0'
+    implementation 'androidx.recyclerview:recyclerview:1.2.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.0.4'
     implementation "androidx.paging:paging-runtime:2.1.2"
+
+
     implementation "androidx.work:work-runtime:2.5.0"
     implementation 'com.google.android.material:material:1.3.0'
 
@@ -166,6 +167,8 @@ dependencies {
 
     implementation "androidx.room:room-runtime:2.2.6"
     annotationProcessor "androidx.room:room-compiler:2.2.6"
+    implementation 'com.tencent.wcdb:room:1.0.8'  // 代替 room-runtime，同时也不需要再引用 wcdb-android
+    annotationProcessor 'android.arch.persistence.room:compiler:1.1.1' // compiler 需要用 room 的
 
     // 基于 mmap 的高性能通用 key-value 组件
     implementation 'com.tencent:mmkv:1.2.6'
@@ -179,11 +182,11 @@ dependencies {
     implementation 'com.elvishew:xlog:1.8.0'
 
     // 权限申请 [https://github.com/getActivity/XXPermissions]
-    implementation 'com.hjq:xxpermissions:9.5'
+    implementation 'com.hjq:xxpermissions:10.6'
 
-    implementation files('libs/umeng-common-9.3.3.jar')
-    implementation (name:'umeng-asms-armeabi-v1.1.4', ext:'aar')
-    implementation (name:'umeng-apm-armeabi-v1.1.0', ext:'aar')
+    implementation files('libs/umeng-common-9.3.8.jar')
+    implementation (name:'umeng-asms-armeabi-v1.2.2', ext:'aar')
+    implementation (name:'umeng-apm-armeabi-v1.2.0', ext:'aar')
 
     // 依赖注入
     implementation 'com.jakewharton:butterknife:10.2.1'

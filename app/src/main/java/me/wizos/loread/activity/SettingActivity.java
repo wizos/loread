@@ -539,7 +539,7 @@ public class SettingActivity extends BaseActivity {
         super.onActivityResult(requestCode, resultCode, intent);
         if (requestCode == IMPORT_OPML_CODE) {
             if (intent == null){
-                ToastUtils.show(R.string.import_failed_feedback_to_the_developer);
+                ToastUtils.show(R.string.not_imported);
                 return;
             }
             Uri uri = intent.getData();

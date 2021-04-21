@@ -341,7 +341,7 @@ public class TinyRSSApi extends AuthApi implements ILogin {
         cb.onFailure(App.i().getString(R.string.server_api_not_supported, Contract.PROVIDER_TINYRSS));
     }
 
-    public void unsubscribeFeed(String feedId, CallbackX cb) {
+    public void deleteFeed(String feedId, CallbackX cb) {
         UnsubscribeFeed unsubscribeFeed = new UnsubscribeFeed(getAuthorization());
         unsubscribeFeed.setFeedId(Integer.parseInt(feedId));
         service.unsubscribeFeed(unsubscribeFeed).enqueue(new Callback<TinyResponse<Map>>() {

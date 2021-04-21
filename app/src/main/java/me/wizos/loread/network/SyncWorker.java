@@ -1,6 +1,7 @@
 package me.wizos.loread.network;
 
 import android.content.Context;
+import android.os.AsyncTask;
 
 import androidx.annotation.NonNull;
 import androidx.work.Worker;
@@ -22,8 +23,8 @@ public class SyncWorker extends Worker  {
     public final static String NEW_ARTICLE_NUMBER = "NewArticleNumber";
 
     public final static String IS_AUTO_SYNC = "auto_sync";
+    private final Object mLock = new Object();
 
-    // public final static boolean isAutoSync = false;
     public SyncWorker(@NonNull Context context, @NonNull WorkerParameters workerParams) {
         super(context, workerParams);
 
@@ -32,7 +33,7 @@ public class SyncWorker extends Worker  {
     @NonNull
     @Override
     public Result doWork() {
-        XLog.i("同步任务：" + this);
+        XLog.i("同步任务：" + this + ", " + Thread.currentThread());
         //接收外面传递进来的数据
         boolean autoSync = getInputData().getBoolean(IS_AUTO_SYNC, false);
 
@@ -65,10 +66,28 @@ public class SyncWorker extends Worker  {
 
         App.i().isSyncing = true;
         LiveEventBus.get(SyncWorker.SYNC_TASK_STATUS).post(true);
-        // if(App.i().getApi() instanceof FeverTinyRSSApi){
-        //     ((FeverTinyRSSApi) App.i().getApi()).setWorker(this);
-        // }
-        App.i().getApi().sync();
+
+        AsyncTask.THREAD_POOL_EXECUTOR.execute(new Runnable() {
+            @Override
+            public void run() {
+                App.i().getApi().sync();
+                synchronized(mLock) {
+                    XLog.d("同步结束，释放当前线程" );
+                    mLock.notify();
+                }
+            }
+        });
+
+        try {
+            synchronized (mLock) {
+                XLog.d("等待同步结束，冻结当前线程" );
+                mLock.wait();
+            }
+        }catch (Exception e){
+            XLog.e("wait 异常：" + e.getLocalizedMessage());
+            e.printStackTrace();
+        }
+
         App.i().isSyncing = false;
         LiveEventBus.get(SyncWorker.SYNC_TASK_STATUS).post(false);
 

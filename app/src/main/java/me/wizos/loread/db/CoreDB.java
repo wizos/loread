@@ -1,6 +1,7 @@
 package me.wizos.loread.db;
 
 import android.content.Context;
+import android.os.AsyncTask;
 
 import androidx.annotation.NonNull;
 import androidx.room.Database;
@@ -32,11 +33,12 @@ import me.wizos.loread.db.rule.Scope;
  */
 @Database(
         entities = {User.class,Article.class,Feed.class,Category.class, FeedCategory.class, Tag.class, ArticleTag.class, Scope.class, Condition.class, Action.class},
-        version = 7
+        views = {FeedViewAllCount.class, FeedViewUnreadCount.class, FeedViewStarCount.class},
+        version = 9
 )
 public abstract class CoreDB extends RoomDatabase {
     public static final String DATABASE_NAME = "loread.db";
-    private static CoreDB databaseInstance;
+    private static volatile CoreDB databaseInstance;
     private static final Migration MIGRATION_1_2 = new Migration(1, 2) {
         @Override
         public void migrate(SupportSQLiteDatabase database) {
@@ -82,32 +84,69 @@ public abstract class CoreDB extends RoomDatabase {
     private static final Migration MIGRATION_5_6 = new Migration(5, 6) {
         @Override
         public void migrate(SupportSQLiteDatabase database) {
-            database.execSQL("update Feed set syncInterval = 0 where syncInterval = -1");
+            database.execSQL("UPDATE Feed SET syncInterval = 0 WHERE syncInterval = -1");
         }
     };
     private static final Migration MIGRATION_6_7 = new Migration(6, 7) {
         @Override
         public void migrate(SupportSQLiteDatabase database) {
             database.execSQL("ALTER TABLE Article ADD guid TEXT");
-            // database.execSQL("ALTER TABLE Feed ADD lastPubDate INTEGER");
             database.execSQL("DROP VIEW IF EXISTS FeedView;");
             database.execSQL("DROP VIEW IF EXISTS CategoryView;");
         }
     };
 
+    private static final Migration MIGRATION_7_8 = new Migration(7, 8) {
+        @Override
+        public void migrate(SupportSQLiteDatabase database) {
+            database.execSQL("ALTER TABLE Feed ADD lastPubDate INTEGER NOT NULL DEFAULT 0");
+            database.execSQL("UPDATE Article SET feedUrl = (SELECT Feed.feedUrl FROM FEED WHERE Feed.uid = Article.uid AND Feed.id = Article.feedId) WHERE feedUrl IS NULL");
+            database.execSQL("UPDATE Article SET feedTitle = (SELECT Feed.title FROM FEED WHERE Feed.uid = Article.uid AND Feed.id = Article.feedId) WHERE feedTitle IS NULL");
+        }
+    };
+
+    // 增加以下索引，对于加快搜索速度并无帮助
+    private static final Migration MIGRATION_8_9 = new Migration(8, 9) {
+        @Override
+        public void migrate(SupportSQLiteDatabase database) {
+            // database.execSQL("CREATE INDEX IF NOT EXISTS `index_Article_readUpdated` ON `Article` (`readUpdated`)");
+            // database.execSQL("CREATE INDEX IF NOT EXISTS `index_Article_starUpdated` ON `Article` (`starUpdated`)");
+            // database.execSQL("CREATE INDEX IF NOT EXISTS `index_Article_pubDate` ON `Article` (`pubDate`)");
+            // database.execSQL("CREATE INDEX IF NOT EXISTS `index_Article_crawlDate` ON `Article` (`crawlDate`)");
+            // database.execSQL("CREATE INDEX IF NOT EXISTS `index_Feed_displayMode` ON `Feed` (`displayMode`)");
+
+            database.execSQL("DROP INDEX `index_Article_readStatus`");
+            database.execSQL("DROP INDEX `index_Article_starStatus`");
+            database.execSQL("DROP INDEX `index_Article_saveStatus`");
+
+            database.execSQL("CREATE INDEX IF NOT EXISTS `index_Article_uid_readStatus` ON `Article` (`uid`, `readStatus`)");
+            database.execSQL("CREATE INDEX IF NOT EXISTS `index_Article_uid_starStatus` ON `Article` (`uid`, `starStatus`)");
+            database.execSQL("CREATE INDEX IF NOT EXISTS `index_Article_uid_crawlDate` ON `Article` (`uid`, `crawlDate`)");
+
+            database.execSQL("CREATE VIEW `FeedViewAllCount` AS SELECT feed.uid, feed.id, a.allCount FROM feed INNER JOIN ( SELECT uid, feedId, COUNT(1) AS allCount FROM article GROUP BY uid, feedId ) a ON feed.uid = a.uid AND feed.id = a.feedId");
+            database.execSQL("CREATE VIEW `FeedViewUnreadCount` AS SELECT feed.uid, feed.id, a.unreadCount FROM feed INNER JOIN ( SELECT uid, feedId, COUNT(1) AS unreadCount FROM article WHERE readStatus = 1 GROUP BY uid, feedId UNION SELECT uid, feedId, COUNT(1) AS unreadCount FROM article WHERE readStatus = 3 GROUP BY uid, feedId ) a ON feed.uid = a.uid AND feed.id = a.feedId");
+            database.execSQL("CREATE VIEW `FeedViewStarCount` AS SELECT feed.uid, feed.id, a.starCount FROM feed INNER JOIN ( SELECT uid, feedId, COUNT(1) AS starCount FROM article WHERE starStatus = 4 GROUP BY uid, feedId ) a ON feed.uid = a.uid AND feed.id = a.feedId");
+            // 使用execSQL在我的MX5上会报异常
+            database.query("PRAGMA mmap_size=268435456;");
+        }
+    };
+
 
     // 设置爬取时间可以为null，但是实际验证是不允许为null的
-
     public static synchronized void init(Context context) {
         if(databaseInstance == null) {
             synchronized (CoreDB.class) { // 同步锁，避免多线程时可能 new 出两个实例的情况
                 if (databaseInstance == null) {
+                    // WCDBOpenHelperFactory factory = new WCDBOpenHelperFactory()
+                    //         .writeAheadLoggingEnabled(true)       // 打开WAL以及读写并发，可以省略让Room决定是否要打开
+                    //         .asyncCheckpointEnabled(true);        // 打开异步Checkpoint优化，不需要可以省略
+                    XLog.i("数据库初始化");
                     databaseInstance = Room.databaseBuilder(context.getApplicationContext(), CoreDB.class, DATABASE_NAME)
                             .addCallback(new Callback() {
                                 @Override
                                 public void onOpen(@NonNull SupportSQLiteDatabase db) {
                                     super.onOpen(db);
-                                    XLog.i("数据库版本：" + db.getVersion());
+                                    XLog.i("数据库版本号：" + db.getVersion());
                                     createTriggers(db);
                                 }
                             })
@@ -117,7 +156,15 @@ public abstract class CoreDB extends RoomDatabase {
                             .addMigrations(MIGRATION_4_5)
                             .addMigrations(MIGRATION_5_6)
                             .addMigrations(MIGRATION_6_7)
+                            .addMigrations(MIGRATION_7_8)
+                            .addMigrations(MIGRATION_8_9)
                             .allowMainThreadQueries()
+                            // .openHelperFactory(factory)
+                            // 设置日志模式, AUTOMATIC是默认行为, RAM低或者API16以下则无日志
+                            .setJournalMode(JournalMode.AUTOMATIC)
+                            //设置查询的线程池，一般不需要设置
+                            .setQueryExecutor(AsyncTask.THREAD_POOL_EXECUTOR)
+                            .setTransactionExecutor(AsyncTask.SERIAL_EXECUTOR)
                             .build();
                 }
             }
@@ -490,6 +537,7 @@ public abstract class CoreDB extends RoomDatabase {
      */
     public abstract UserDao userDao();
     public abstract ArticleDao articleDao();
+    // public abstract Article2Dao article2Dao();
     public abstract FeedDao feedDao();
     public abstract CategoryDao categoryDao();
     public abstract FeedCategoryDao feedCategoryDao();

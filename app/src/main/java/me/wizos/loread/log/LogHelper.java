@@ -31,7 +31,7 @@ public class LogHelper {
                 .fileNameGenerator(new DateFileNameGenerator())    // 指定日志文件名生成器，默认为 ChangelessFileNameGenerator("log")
                 // .backupStrategy(new NeverBackupStrategy())         // 指定日志文件备份策略，默认为 FileSizeBackupStrategy(1024 * 1024)
                 // .shouldBackup()
-                .cleanStrategy(new FileLastModifiedCleanStrategy(14*24*60*1000))     // 指定日志文件清除策略，默认为 NeverCleanStrategy()
+                .cleanStrategy(new FileLastModifiedCleanStrategy(7*24*3600*1000))     // 指定日志文件清除策略，默认为 NeverCleanStrategy()
                 .build();
         // 初始化 XLog
         XLog.init(config, androidPrinter, filePrinter);

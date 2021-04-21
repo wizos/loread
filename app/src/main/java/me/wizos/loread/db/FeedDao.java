@@ -60,9 +60,9 @@ public interface FeedDao {
             "WHERE feed.uid = :uid " +
             "AND feed.lastErrorCount < 16 " +
             "AND ( " +
-            "      (syncInterval = 0 AND (lastSyncTime + :globalSyncInterval * 60000 + lastErrorCount * lastErrorCount * lastErrorCount * 15000) < :currentTimeMillis) " +
+            "      (syncInterval = 0 AND (lastSyncTime + :globalSyncInterval * 60000 + lastErrorCount * lastErrorCount * lastErrorCount * 1000000) < :currentTimeMillis) " +
             "      OR " +
-            "      (syncInterval > 0 AND (lastSyncTime + syncInterval * 60000 + lastErrorCount * lastErrorCount * lastErrorCount * 15000) < :currentTimeMillis) " +
+            "      (syncInterval > 0 AND (lastSyncTime + syncInterval * 60000 + lastErrorCount * lastErrorCount * lastErrorCount * 1000000) < :currentTimeMillis) " +
             "    ) " +
             "ORDER BY lastSyncTime ASC")
     List<Feed> getFeedsNeedSync(String uid, int globalSyncInterval, long currentTimeMillis);
@@ -223,8 +223,28 @@ public interface FeedDao {
     void updateUnreadCount(String uid);
 
     @Transaction
-    @Query("UPDATE feed SET starCount = (select COUNT(*) from Article where Feed.uid = Article.uid AND Feed.id = Article.feedId AND starStatus = " + App.STATUS_STARED + ") where uid = :uid")
+    @Query("UPDATE feed SET starCount = (select COUNT(*) from Article where Feed.uid = Article.uid AND Feed.id = Article.feedId AND starStatus IN (" + App.STATUS_STARED + ") ) where uid = :uid")
     void updateStarCount(String uid);
+
+    @Transaction
+    @Query("UPDATE Feed SET allCount = IFNULL( (SELECT allCount FROM FeedViewAllCount WHERE FeedViewAllCount.uid = :uid AND FeedViewAllCount.id = Feed.id), 0 ) WHERE uid = :uid")
+    void updateAllCount2(String uid);
+
+    @Transaction
+    @Query("UPDATE Feed SET unreadCount = IFNULL( (SELECT unreadCount FROM FeedViewUnreadCount WHERE FeedViewUnreadCount.uid = :uid AND FeedViewUnreadCount.id = Feed.id), 0 ) WHERE uid = :uid")
+    void updateUnreadCount2(String uid);
+
+    @Transaction
+    @Query("UPDATE Feed SET starCount = IFNULL( (SELECT starCount FROM FeedViewStarCount WHERE FeedViewStarCount.uid = :uid AND FeedViewStarCount.id = Feed.id), 0 ) WHERE uid = :uid")
+    void updateStarCount2(String uid);
+
+    @Transaction
+    @Query("UPDATE feed SET lastPubDate = IFNULL( (select pubDate from Article where Feed.uid = Article.uid AND Feed.id = Article.feedId ORDER BY pubDate DESC LIMIT 1), 0) where uid = :uid")
+    void updateLastPubDate(String uid);
+
+    @Transaction
+    @Query("UPDATE feed SET lastPubDate = IFNULL( (select pubDate from Article where Article.uid = Feed.uid AND Article.feedId = Feed.id ORDER BY pubDate DESC LIMIT 1), 0) where uid = :uid AND id = :id")
+    void updateLastPubDate(String uid, String id);
 
     @Transaction
     @Query("UPDATE feed SET syncInterval = -1 where uid = :uid AND lastErrorCount = 16")

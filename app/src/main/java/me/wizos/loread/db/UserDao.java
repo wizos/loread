@@ -22,8 +22,8 @@ public interface UserDao {
     LiveData<Integer> getSize();
 
 
-    @Query("select t2.num2+t3.num3+t4.num4 from" +
-            // "  (select count(*) num1 from user) AS t1," + t1.num1+
+    @Query("select t1.num1+t2.num2+t3.num3+t4.num4 from" +
+            "  (select count(*) num1 from user) AS t1," +
             "  (select count(*) num2 from category) AS t2," +
             "  (select count(*) num3 from Feed) AS t3," +
             "  (select count(*) num4 from feedcategory) AS t4")

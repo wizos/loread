@@ -55,7 +55,7 @@ import static me.wizos.loread.Contract.SCHEMA_HTTP;
 import static me.wizos.loread.Contract.SCHEMA_HTTPS;
 
 public class Getting {
-    private static final String TAG = "Getting";
+    private static final String TAG = "GettingBridge";
     private static final int TIMEOUT = 30_000; // 30 秒 30_000
     private static final int CALL_SIZE = 2;
     private int callCount = 0;
@@ -112,6 +112,7 @@ public class Getting {
                 }else {
                     dispatcher.onResponse(inputStreamTemp);
                 }
+                destroy();
                 return true;
             }
         });
@@ -166,15 +167,16 @@ public class Getting {
         call.enqueue(new Callback() {
             @Override
             public void onFailure(@NotNull Call call, @NotNull IOException e) {
+                XLog.w("OkHttp 获取 Html 失败：" + e.getLocalizedMessage());
                 if(call.isCanceled()){
                     return;
                 }
                 echo(false, null, e.getLocalizedMessage());
-                XLog.w("OkHttp 获取 Html 失败：" + e.getLocalizedMessage());
             }
 
             @Override
             public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
+                XLog.d("OkHttp 获取 Html 响应：" + response.code() + " , " + response.message());
                 if(call.isCanceled()){
                     return;
                 }
@@ -217,10 +219,15 @@ public class Getting {
                     @Override
                     public void getHtml(String html) throws IOException {
                         XLog.d("WebView 获取html成功：" + StringUtils.isEmpty(html) );
+                        // XLog.d( html );
                         if(StringUtils.isEmpty(html)){
                             echo(false, null, App.i().getString(R.string.content_of_feed_is_empty));
                         }else {
-                            if(html.contains("webkit-xml-viewer-source-xml")){
+                            if(html.contains("webkit-xml-viewer-source-xml\"><rss")){
+                                html = html.substring(html.indexOf("webkit-xml-viewer-source-xml\">") + 30, html.indexOf("</rss>") + 6);
+                            }else if(html.contains("webkit-xml-viewer-source-xml\"><feed")){
+                                html = html.substring(html.indexOf("webkit-xml-viewer-source-xml\">") + 30, html.indexOf("</feed>") + 7);
+                            }else if(html.contains("webkit-xml-viewer-source-xml")){
                                 Document document = Jsoup.parse(html);
                                 html = document.getElementById("webkit-xml-viewer-source-xml").html();
                             }

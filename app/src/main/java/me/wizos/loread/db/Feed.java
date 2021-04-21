@@ -15,7 +15,7 @@ import static androidx.room.ForeignKey.CASCADE;
  */
 @Entity(
         primaryKeys = {"id","uid"},
-        indices = {@Index({"id"}),@Index({"uid"}),@Index({"title"}),@Index({"feedUrl"})},
+        indices = {@Index({"id"}),@Index({"uid"}),@Index({"title"}),@Index({"feedUrl"})}, // ,@Index({"displayMode"})
         foreignKeys = @ForeignKey(entity = User.class, parentColumns = "id", childColumns = "uid", onDelete = CASCADE))
 public class Feed {
     @NonNull
@@ -49,6 +49,7 @@ public class Feed {
     // 最近同步异常的次数
     private int lastErrorCount;
 
+    private long lastPubDate;
 
     @NotNull
     public String getUid() {
@@ -191,6 +192,14 @@ public class Feed {
         this.lastErrorCount = lastErrorCount;
     }
 
+    public long getLastPubDate() {
+        return lastPubDate;
+    }
+
+    public void setLastPubDate(long lastPubDate) {
+        this.lastPubDate = lastPubDate;
+    }
+
     @NotNull
     @Override
     public String toString() {
@@ -209,7 +218,8 @@ public class Feed {
                 ", syncInterval=" + syncInterval +
                 ", lastSyncTime=" + lastSyncTime +
                 ", lastErrorCount=" + lastErrorCount +
-                ", lastSyncError='" + lastSyncError + '\'' +
+                ", lastSyncError='" + lastSyncError +
+                ", lastPubDate='" + lastPubDate + '\'' +
                 '}';
     }
 }

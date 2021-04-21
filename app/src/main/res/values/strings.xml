@@ -397,6 +397,7 @@
         <item>Unread count</item>
         <item>Star count</item>
         <item>Health state</item>
+        <item>Last publish</item>
     </string-array>
 
     <string-array name="feed_manager_order_value">
@@ -405,6 +406,7 @@
         <item>unread count</item>
         <item>star count</item>
         <item>health state</item>
+        <item>last publish</item>
     </string-array>
 
     <string name="keyword">Keywords</string>
@@ -682,8 +684,10 @@
 
 
     <string name="feed_desc">Description</string>
+    <string name="pubDate">Last publish</string>
     <string name="article_count">Article count</string>
     <string name="article_count_detail">All %1$d, Unread %2$d, Star %3$d</string>
+    <string name="article_count_detail_debug">All %1$d, Unread %2$d, Save %4$d</string>
     <string name="site_url">Site url</string>
     <string name="feed_url">Feed url</string>
     <string name="feed_name">Feed name</string>
@@ -760,6 +764,8 @@
     <string name="rss_logo">Logo of RSS</string>
 
     <string name="content_of_feed_is_empty">The content of feed is empty</string>
+    <string name="content_of_feed_is_not_in_standard">The content of feed is not in standard</string>
+    <string name="content_of_feed_unable_to_get">The content of feed unable to get</string>
 
 
     <string name="add_subscription">Add feed</string>
@@ -777,6 +783,7 @@
     <string name="url_is_not_accessible_with_reason">URL is not accessible: %1$s</string>
 
     <string name="import_failed_feedback_to_the_developer">Import failed, please feedback to the developer</string>
+    <string name="not_imported">Not imported</string>
     <string name="the_apk_does_not_exist">The apk does not exist!</string>
     <string name="is_not_an_apk_file">Is not an apk file!</string>
     <string name="no_search_results_found">No search results found</string>

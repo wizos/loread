@@ -227,6 +227,7 @@ public class Converter {
         }else {
             article.setLink(item.getLink());
         }
+        article.setGuid(item.getUri());
 
         article.setFeedId(feed.getId());
         article.setFeedUrl(feed.getFeedUrl());

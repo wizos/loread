@@ -565,7 +565,7 @@ public class InoReaderApi extends OAuthApi implements ILogin {
         });
     }
 
-    public void unsubscribeFeed(String feedId, CallbackX cb) {
+    public void deleteFeed(String feedId, CallbackX cb) {
         FormBody.Builder builder = new FormBody.Builder();
         builder.add("ac", "unsubscribe");
         builder.add("s", feedId);

@@ -25,6 +25,8 @@ import com.didichuxing.doraemonkit.DoraemonKit;
 import com.elvishew.xlog.XLog;
 import com.hjq.toast.ToastUtils;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -53,12 +55,16 @@ import me.wizos.loread.db.Tag;
 import me.wizos.loread.db.User;
 import me.wizos.loread.network.Getting;
 import me.wizos.loread.network.SyncWorker;
+import me.wizos.loread.network.api.BaseApi;
 import me.wizos.loread.network.api.FeverApi;
+import me.wizos.loread.network.api.LocalApi;
 import me.wizos.loread.network.api.TinyRSSApi;
+import me.wizos.loread.utils.ArticleUtils;
 import me.wizos.loread.utils.BackupUtils;
 import me.wizos.loread.utils.EncryptUtils;
 import me.wizos.loread.utils.FileUtils;
 import me.wizos.loread.utils.InputStreamCache;
+import me.wizos.loread.utils.PagingUtils;
 import me.wizos.loread.utils.StringUtils;
 import me.wizos.loread.utils.UriUtils;
 import okhttp3.Request;
@@ -533,6 +539,7 @@ public class LabActivity extends AppCompatActivity {
                     long time = System.currentTimeMillis();
                     CoreDB.i().articleDao().exeSQL(new SimpleSQLiteQuery(sql));
                     XLog.i("耗时：" + (System.currentTimeMillis() - time));
+                    ToastUtils.show("SQL耗时：" +  (System.currentTimeMillis() - time));
                 }
             });
         }
@@ -556,40 +563,64 @@ public class LabActivity extends AppCompatActivity {
         });
     }
 
-    // public void deleteRepeatedGuidArticles(View view){
-    //     materialDialog = new MaterialDialog.Builder(this)
-    //             .title("正在处理")
-    //             .content("请耐心等待下")
-    //             .progress(true, 0)
-    //             .canceledOnTouchOutside(false)
-    //             .progressIndeterminateStyle(false)
-    //             .show();
-    //     AsyncTask.SERIAL_EXECUTOR.execute(new Runnable() {
-    //         @Override
-    //         public void run() {
-    //             List<Article> articles = CoreDB.i().articleDao().getAll(App.i().getUser().getId());
-    //             ArrayMap<String, String> temp = new ArrayMap<>(articles.size());
-    //
-    //             for (Article article : articles) {
-    //                 temp.put(EncryptUtils.MD5(article.getId()), "1");
-    //             }
-    //
-    //             File dir = new File(App.i().getUserCachePath());
-    //             File[] arts = dir.listFiles();
-    //             XLog.e("文件数量：" + arts.length);
-    //             String x;
-    //             for (File sourceFile : arts) {
-    //                 x = temp.get(sourceFile.getName());
-    //                 if (null == x) {
-    //                     XLog.e("移动文件名：" + "   " + sourceFile.getName());
-    //                     FileUtils.moveDir(sourceFile.getAbsolutePath(), App.i().getUserFilesDir() + "/move/" + sourceFile.getName());
-    //                 }
-    //             }
-    //             materialDialog.dismiss();
-    //             ToastUtils.show("清理完成");
-    //         }
-    //     });
-    // }
+    public void deleteRepeatedGuidArticles(View view){
+        if(!(App.i().getApi() instanceof LocalApi)){
+            return;
+        }
+        materialDialog = new MaterialDialog.Builder(this)
+                .title("正在处理")
+                .content("请耐心等待下")
+                .progress(true, 0)
+                .canceledOnTouchOutside(false)
+                .progressIndeterminateStyle(false)
+                .show();
+        AsyncTask.SERIAL_EXECUTOR.execute(new Runnable() {
+            @Override
+            public void run() {
+                List<Article> articles = CoreDB.i().articleDao().getAll(App.i().getUser().getId());
+                Set<Article> articleSet = new HashSet<>();
+
+                List<String> idSet = new ArrayList<>();
+                List<String> idMd5Set = new ArrayList<>();
+
+                for (Article article : articles) {
+                    if(!StringUtils.isEmpty(article.getLink()) && !article.getId().equalsIgnoreCase(EncryptUtils.MD5(article.getLink()))){
+                        articleSet.add(article);
+                    }
+                }
+
+                PagingUtils.slice(new ArrayList<>(articleSet), 50, new PagingUtils.PagingListener<Article>() {
+                    @Override
+                    public void onPage(@NotNull List<Article> childList) {
+                        for (Article article : childList) {
+                            if(article.getSaveStatus() == App.STATUS_TO_BE_FILED){
+                                if(article.getStarStatus() == App.STATUS_STARED){
+                                    article.setSaveStatus(App.STATUS_IS_FILED);
+                                    String dir = "/" + SaveDirectory.i().getSaveDir(article.getFeedId(), article.getId()) + "/";
+                                    ArticleUtils.saveArticle(App.i().getUserStorePath() + dir, article);
+                                }else {
+                                    article.setSaveStatus(App.STATUS_IS_FILED);
+                                    String dir = SaveDirectory.i().getSaveDir(article.getFeedId(), article.getId()) + "/";
+                                    //XLog.d("保存目录：" + dir);
+                                    ArticleUtils.saveArticle(App.i().getUserBoxPath() + dir, article);
+                                }
+                            }
+                            if(article.getStarStatus() == App.STATUS_UNSTAR){
+                                idSet.add(article.getId());
+                                idMd5Set.add(EncryptUtils.MD5(article.getId()));
+                            }
+                        }
+                    }
+                });
+
+                FileUtils.deleteHtmlDirList(idMd5Set);
+                PagingUtils.slice(idSet, 100, childList -> CoreDB.i().articleDao().delete(App.i().getUser().getId(), childList));
+
+                materialDialog.dismiss();
+                ToastUtils.show("清理完成");
+            }
+        });
+    }
 
     public void deleteMissingHtmlDir(View view) {
         materialDialog = new MaterialDialog.Builder(this)
@@ -625,7 +656,16 @@ public class LabActivity extends AppCompatActivity {
             }
         });
     }
-
+    public void trimCount(View view) {
+        long time = System.currentTimeMillis();
+        AsyncTask.THREAD_POOL_EXECUTOR.execute(new Runnable() {
+            @Override
+            public void run() {
+                BaseApi.updateCollectionCount(App.i().getUser().getId());
+                XLog.i("整理耗时：" + (System.currentTimeMillis() - time));
+            }
+        });
+    }
 
     public void trimArticlesCrawlDate(View view) {
         long time = System.currentTimeMillis();

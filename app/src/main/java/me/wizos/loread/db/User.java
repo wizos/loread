@@ -46,7 +46,7 @@ public class User {
     private boolean autoSync = true;
 
     // 自动同步的时间间隔，单位为分钟
-    private int autoSyncFrequency = 30;
+    private int autoSyncFrequency = 60;
     // 最近同步的时间
     private long lastSyncTime;
 

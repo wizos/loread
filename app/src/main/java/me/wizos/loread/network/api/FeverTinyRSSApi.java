@@ -377,7 +377,7 @@ public class FeverTinyRSSApi extends AuthApi implements ILogin {
         cb.onFailure(App.i().getString(R.string.server_api_not_supported, Contract.PROVIDER_FEVER));
     }
 
-    public void unsubscribeFeed(String feedId, CallbackX cb) {
+    public void deleteFeed(String feedId, CallbackX cb) {
         UnsubscribeFeed unsubscribeFeed = new UnsubscribeFeed(getAuthorization());
         unsubscribeFeed.setFeedId(Integer.parseInt(feedId));
         tinyRSSService.unsubscribeFeed(unsubscribeFeed).enqueue(new retrofit2.Callback<TinyResponse<Map>>() {

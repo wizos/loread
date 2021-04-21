@@ -1,6 +1,7 @@
 package me.wizos.loread.activity;
 
 import android.content.Intent;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.KeyEvent;
@@ -41,12 +42,6 @@ public class TriggerRuleManagerActivity extends BaseActivity {
 
     @BindView(R.id.action_manager_toolbar)
     Toolbar toolbar;
-
-    // @BindView(R.id.action_manager_sticky_layout)
-    // StickyHeaderLayout stickyLayout;
-    // RulesAdapter rulesAdapter;
-
-    // TriggerRulesAdapter rulesAdapter;
 
     TriggerRulesGroupedAdapter rulesAdapter;
 
@@ -190,7 +185,12 @@ public class TriggerRuleManagerActivity extends BaseActivity {
         if (item.getItemId() == android.R.id.home) {
             exit();
         }else if(item.getItemId() == R.id.action_manager_menu_exe_all_rules){
-            TriggerRuleUtils.exeAllRules(App.i().getUser().getId(), 0);
+            AsyncTask.THREAD_POOL_EXECUTOR.execute(new Runnable() {
+                @Override
+                public void run() {
+                    TriggerRuleUtils.exeRules(App.i().getUser().getId(), type, targetId, 0);
+                }
+            });
         }else if(item.getItemId() == R.id.action_manager_menu_create_rule_global){
             Intent intent = new Intent(this, TriggerRuleEditActivity.class);
             intent.putExtra(Contract.TYPE, Contract.TYPE_GLOBAL);

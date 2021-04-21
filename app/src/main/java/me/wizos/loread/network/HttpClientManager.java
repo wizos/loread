@@ -226,7 +226,7 @@ public class HttpClientManager {
             }
         }
         imageHttpClient.dispatcher().setMaxRequests(4);
-        simpleOkHttpClient.dispatcher().setMaxRequests(6);
+        simpleOkHttpClient.dispatcher().setMaxRequests(10);
         searchHttpClient.dispatcher().setMaxRequests(5);
         smallOkHttpClient.dispatcher().setMaxRequests(5);
     }

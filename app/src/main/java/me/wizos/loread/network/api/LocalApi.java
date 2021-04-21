@@ -44,6 +44,8 @@ import me.wizos.loread.db.FeedCategory;
 import me.wizos.loread.network.HttpClientManager;
 import me.wizos.loread.network.SyncWorker;
 import me.wizos.loread.network.callback.CallbackX;
+import me.wizos.loread.service.TaskBus;
+import me.wizos.loread.utils.BackupUtils;
 import me.wizos.loread.utils.Converter;
 import me.wizos.loread.utils.EncryptUtils;
 import me.wizos.loread.utils.FeedParserUtils;
@@ -111,6 +113,7 @@ public class LocalApi extends BaseApi {
         List<Feed> needSyncFeeds = CoreDB.i().feedDao().getFeedsNeedSync(uid, App.i().getUser().getAutoSyncFrequency(), startSyncTimeMillis);
         XLog.e("需要同步的订阅源数量为：" + needSyncFeeds.size() + "， 全局同步时间间隔：" + App.i().getUser().getAutoSyncFrequency() + " , 当前时间：" +  startSyncTimeMillis);
         if(needSyncFeeds.size() == 0){
+            // ToastUtils.show();
             return;
         }
         LiveEventBus.get(SyncWorker.SYNC_PROCESS_FOR_SUBTITLE).post(getString(R.string.sync_feed, "1", needSyncFeeds.size()));
@@ -129,12 +132,25 @@ public class LocalApi extends BaseApi {
             }
         });
 
+        TaskBus<Article> taskBus = new TaskBus.Builder<Article>()
+                .triggerSize(50)
+                .triggerTime(500)
+                .trigger(new TaskBus.Trigger<Article>() {
+                    @Override
+                    public void execute(List<Article> data) {
+                        CoreDB.i().articleDao().insert(data);
+                    }
+                })
+                .build();
+        taskBus.start();
+
         for(Feed feed: needSyncFeeds){
             Request.Builder request = new Request.Builder().url(feed.getFeedUrl());
             request.header(Contract.USER_AGENT, WebSettings.getDefaultUserAgent(App.i()));
 
             Call call = HttpClientManager.i().simpleClient().newCall(request.build());
             // XLog.d("同步：" + feed.getTitle() + "（" + feed.getFeedUrl()+ "）" );
+            feed.setLastSyncTime(System.currentTimeMillis());
             call.enqueue(new Callback() {
                 @Override
                 public void onFailure(@NotNull Call call, @NotNull IOException e) {
@@ -145,7 +161,6 @@ public class LocalApi extends BaseApi {
                     if ( !(e instanceof ConnectException) && !(e instanceof SocketTimeoutException) && !(e instanceof SSLException)){
                         feed.setLastSyncError(e.getLocalizedMessage());
                         feed.setLastErrorCount(feed.getLastErrorCount() + 1);
-                        feed.setLastSyncTime(System.currentTimeMillis());
                     }
 
                     checkSyncEnd(feed, syncedFeedCount, needSyncFeeds.size());
@@ -179,32 +194,43 @@ public class LocalApi extends BaseApi {
 
                                         PagingUtils.slice(new ArrayList<>(articleMap.keySet()), 50, new PagingUtils.PagingListener<String>() {
                                             @Override
-                                            public void onPage(@NotNull List<String> childList) {
-                                                List<String> removeIds = CoreDB.i().articleDao().getIds(uid, childList);
+                                            public void onPage(@NotNull List<String> childIds) {
+                                                List<String> removeIds = CoreDB.i().articleDao().getIntersectionIds(uid, childIds);
                                                 if(removeIds != null){
                                                     for (String id: removeIds){
                                                         articleMap.remove(id);
-                                                        // XLog.e("重复文章：" + id);
                                                     }
                                                 }
                                             }
                                         });
+
+                                        PagingUtils.slice(new ArrayList<>(feedEntries.getGuids()), 50, new PagingUtils.PagingListener<String>() {
+                                            @Override
+                                            public void onPage(@NotNull List<String> childIds) {
+                                                List<String> removeIds = CoreDB.i().articleDao().getIntersectionIdsByGuid(uid, feedEntries.getFeed().getId(), childIds);
+                                                if(removeIds != null){
+                                                    for (String id: removeIds){
+                                                        articleMap.remove(id);
+                                                    }
+                                                }
+                                            }
+                                        });
+
+
                                         ArrayList<Article> newArticles = new ArrayList<>(articleMap.values());
-                                        for (Article article: newArticles){
-                                            article.setCrawlDate(startSyncTimeMillis);
-                                        }
+                                        // for (Article article: newArticles){
+                                        //     article.setCrawlDate(startSyncTimeMillis);
+                                        // }
                                         // XLog.i("抓取了新文章：" + newArticles.size() + ", 已抓取：" + newArticleCount);
                                         // XLog.i("新文章：" + newArticles );
                                         newArticleCount = newArticleCount + newArticles.size();
-                                        CoreDB.i().articleDao().insert(newArticles);
+                                        // CoreDB.i().articleDao().insert(newArticles);
+                                        taskBus.add(newArticles);
                                     }
-                                }else {
-                                    feed.setLastSyncTime(System.currentTimeMillis());
                                 }
                             }else {
                                 feed.setLastSyncError( StringUtils.isEmpty(response.message()) ? String.valueOf(response.code()) : (response.code() + ", " + response.message()) );
                                 feed.setLastErrorCount(feed.getLastErrorCount() + 1);
-                                feed.setLastSyncTime(System.currentTimeMillis());
                             }
                             response.close();
                             checkSyncEnd(feed, syncedFeedCount, needSyncFeeds.size());
@@ -217,8 +243,8 @@ public class LocalApi extends BaseApi {
         try {
             waitSyncTimeout(needSyncFeeds.size());
             synchronized (mLock) {
-                mLock.wait(needSyncFeeds.size() * 20_000);
                 XLog.d("最多等待时间：" + (needSyncFeeds.size() * 20_000));
+                mLock.wait(needSyncFeeds.size() * 20_000);
             }
         }catch (Exception e){
             XLog.e("wait 异常：" + e.getLocalizedMessage());
@@ -269,7 +295,8 @@ public class LocalApi extends BaseApi {
         if (handler.hasMessages(TIMEOUT)) {
             handler.removeMessages(TIMEOUT);
         }
-        handler.sendEmptyMessageDelayed(TIMEOUT, needSyncFeedCount * 20_000);
+
+        handler.sendEmptyMessageDelayed(TIMEOUT, Math.min(6, needSyncFeedCount) * 20_000);
     }
 
 
@@ -318,35 +345,40 @@ public class LocalApi extends BaseApi {
 
     @Override
     public void deleteCategory(String categoryId, CallbackX cb) {
-        List<Feed> feeds = CoreDB.i().feedDao().getByCategoryId(App.i().getUser().getId(), categoryId);
-        CoreDB.i().feedDao().delete(feeds);
+        AsyncTask.SERIAL_EXECUTOR.execute(new Runnable() {
+            @Override
+            public void run() {
+                List<Feed> feeds = CoreDB.i().feedDao().getByCategoryId(App.i().getUser().getId(), categoryId);
+                for(Feed feed: feeds){
+                    BackupUtils.exportUserUnsubscribeOPML(App.i().getUser(), feed);
+                    BaseApi.deleteUnsubscribedArticles(feed.getId());
 
-        CoreDB.i().articleDao().deleteUnsubscribeUnStar(App.i().getUser().getId());
-        // PagingUtils.slice(feeds, 50, new PagingUtils.PagingListener<Feed>() {
-        //     @Override
-        //     public void onPage(@NotNull List<Feed> childFeeds) {
-        //         for (Feed feed: childFeeds){
-        //             CoreDB.i().articleDao().deleteUnStarByFeedId(App.i().getUser().getId(), feed.getId());
-        //         }
-        //     }
-        // });
+                    // CoreDB.i().feedCategoryDao().deleteByFeedId(feed.getUid(), feed.getId());
+                    // CoreDB.i().articleDao().deleteUnStarByFeedId(feed.getUid(), feed.getId());
+                    CoreDB.i().deleteFeed(feed);
+                }
+                // CoreDB.i().feedDao().delete(feeds);
 
-        Category category = CoreDB.i().categoryDao().getById(App.i().getUser().getId(), categoryId);
-        CoreDB.i().categoryDao().delete(category);
+                // 兜底策略
+                CoreDB.i().articleDao().deleteUnsubscribeUnStar(App.i().getUser().getId());
 
-        List<FeedCategory> feedCategories = CoreDB.i().feedCategoryDao().getByCategoryId(App.i().getUser().getId(), categoryId);
-        CoreDB.i().feedCategoryDao().delete(feedCategories);
-        cb.onSuccess(App.i().getString(R.string.success));
+                CoreDB.i().categoryDao().delete(App.i().getUser().getId(), categoryId);
+
+                CoreDB.i().feedCategoryDao().deleteByCategoryId(App.i().getUser().getId(), categoryId);
+                cb.onSuccess(App.i().getString(R.string.success));
+            }
+        });
     }
 
-    public void unsubscribeFeed(String feedId, CallbackX cb) {
+    public void deleteFeed(String feedId, CallbackX cb) {
         cb.onSuccess(App.i().getString(R.string.success));
     }
 
     @Override
     public void addFeed(FeedEntries feedEntries, CallbackX cb) {
+        String uid = App.i().getUser().getId();
         Feed feed = feedEntries.getFeed();
-        feed.setUid(App.i().getUser().getId());
+        feed.setUid(uid);
         feed.setSyncInterval(0);
         // 从搜索界面传过来的时候，因为没有考虑到其他api，所有没有feedId，要在这里组装
         feed.setId(EncryptUtils.MD5(feed.getFeedUrl()));
@@ -364,7 +396,13 @@ public class LocalApi extends BaseApi {
             }
             CoreDB.i().feedCategoryDao().insert(feedCategories);
         }
-        updateCollectionCount();
+        AsyncTask.SERIAL_EXECUTOR.execute(new Runnable() {
+            @Override
+            public void run() {
+                updateCollectionCount(uid);
+                CoreDB.i().feedDao().updateLastPubDate(uid, feed.getId());
+            }
+        });
         cb.onSuccess(App.i().getString(R.string.subscribe_success));
     }
 
@@ -373,7 +411,6 @@ public class LocalApi extends BaseApi {
         CoreDB.i().feedDao().updateName(App.i().getUser().getId(), feedId, targetName);
         cb.onSuccess(App.i().getString(R.string.success));
     }
-
 
     @Override
     public void importOPML(Uri uri, CallbackX cb) {

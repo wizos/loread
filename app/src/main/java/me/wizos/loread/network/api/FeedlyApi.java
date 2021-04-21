@@ -482,7 +482,7 @@ public class FeedlyApi extends OAuthApi {
         });
     }
 
-    public void unsubscribeFeed(String feedId, CallbackX cb) {
+    public void deleteFeed(String feedId, CallbackX cb) {
         ArrayList<String> feedIds = new ArrayList<>();
         feedIds.add(feedId);
         service.delFeed(getAuthorization(),feedIds).enqueue(new Callback<String>() {

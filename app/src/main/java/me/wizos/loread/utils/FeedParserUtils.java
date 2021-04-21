@@ -28,111 +28,110 @@ import me.wizos.loread.R;
 import me.wizos.loread.bean.FeedEntries;
 import me.wizos.loread.bean.jsonfeed.JsonFeed;
 import me.wizos.loread.db.Feed;
-import okhttp3.MediaType;
-import okhttp3.ResponseBody;
 
 public class FeedParserUtils {
     public static final String UTF8_BOM = "\uFEFF";
-
-    public static FeedEntries parseResponseBody(Context context, Feed feed, ResponseBody responseBody, Converter.ArticleConvertListener convertListener) {
-        if(responseBody == null){
-            return null;
-        }
-        FeedEntries feedEntries = new FeedEntries();
-        feedEntries.setFeed(feed);
-
-        Charset charset;
-        String content;
-
-        // 先将 inputStream 缓存起来
-        InputStreamCache inputStreamCache = new InputStreamCache(responseBody.byteStream());
-
-        content = inputStreamCache.getSting();
-
-        if (StringUtils.isEmpty(content)) {
-            feedEntries.setSuccess(false);
-            feedEntries.getFeed().setLastSyncError(context.getString(R.string.content_of_feed_is_empty));
-            feedEntries.getFeed().setLastErrorCount(feedEntries.getFeed().getLastErrorCount());
-            feedEntries.getFeed().setLastSyncTime(System.currentTimeMillis());
-            return feedEntries;
-        }
-
-        content = content.trim();
-        if (content.startsWith(UTF8_BOM)) {
-            content = content.substring(1);
-        }
-        try {
-            if(content.startsWith("<")){ // content.startsWith("<?xml version") || content.startsWith("<rss") content.startsWith("<feed")
-                SyndFeed xmlFeed = new SyndFeedInput().build(new XmlReader(inputStreamCache.getInputStream()));
-                feedEntries.setSuccess(true);
-                feedEntries.getFeed().setLastSyncError(null);
-                feedEntries.getFeed().setLastErrorCount(0);
-                feedEntries.getFeed().setLastSyncTime(System.currentTimeMillis());
-                feedEntries.from(feed, xmlFeed, convertListener);
-            }else if(content.startsWith("{")){
-                JsonFeed jsonFeed = parseJsonFeed(content);
-                feedEntries.setSuccess(true);
-                feedEntries.getFeed().setLastSyncError(null);
-                feedEntries.getFeed().setLastErrorCount(0);
-                feedEntries.getFeed().setLastSyncTime(System.currentTimeMillis());
-                feedEntries.from(feed, jsonFeed, convertListener);
-            }else {
-                SyndFeed xmlFeed = new SyndFeedInput().build(new XmlReader(inputStreamCache.getInputStream()));
-                feedEntries.setSuccess(true);
-                feedEntries.getFeed().setLastSyncError(null);
-                feedEntries.getFeed().setLastErrorCount(0);
-                feedEntries.getFeed().setLastSyncTime(System.currentTimeMillis());
-                feedEntries.from(feed, xmlFeed, convertListener);
-            }
-        }catch (ParsingFeedException e){
-            try {
-                MediaType contentType = responseBody.contentType();
-                if (contentType != null) {
-                    charset = contentType.charset(StandardCharsets.UTF_8);
-                } else {
-                    charset = getXMLCharset(inputStreamCache);
-                }
-                if(!StandardCharsets.UTF_8.displayName().equalsIgnoreCase(charset.displayName())){
-                    content = inputStreamCache.getSting(charset);
-                }
-
-                SyndFeed xmlFeed = new SyndFeedInput().build(new XmlReader(new ByteArrayInputStream(StringUtils.keepValidXMLChars(content).getBytes(charset))));
-                feedEntries.setSuccess(true);
-                feedEntries.getFeed().setLastSyncError(null);
-                feedEntries.getFeed().setLastErrorCount(0);
-                feedEntries.getFeed().setLastSyncTime(System.currentTimeMillis());
-                feedEntries.from(feed, xmlFeed, convertListener);
-            }catch (Exception e2){
-                XLog.w("解析异常：" + e.getLocalizedMessage() + " => " + feed);
-                Tool.printCallStack(e);
-                e.printStackTrace();
-                feedEntries.setSuccess(false);
-                feedEntries.getFeed().setLastSyncError(e.getLocalizedMessage());
-                feedEntries.getFeed().setLastErrorCount(feedEntries.getFeed().getLastErrorCount());
-                feedEntries.getFeed().setLastSyncTime(System.currentTimeMillis());
-            }
-        }catch (FeedException | IOException e){
-            XLog.w("解析异常：" + e.getLocalizedMessage() + " => " + feed);
-            Tool.printCallStack(e);
-            e.printStackTrace();
-            feedEntries.setSuccess(false);
-            feedEntries.getFeed().setLastSyncError(e.getLocalizedMessage());
-            feedEntries.getFeed().setLastErrorCount(feedEntries.getFeed().getLastErrorCount());
-            feedEntries.getFeed().setLastSyncTime(System.currentTimeMillis());
-        }
-        inputStreamCache.destroyCache();
-        return feedEntries;
-    }
+    //
+    // public static FeedEntries parseResponseBody(Context context, Feed feed, ResponseBody responseBody, Converter.ArticleConvertListener convertListener) {
+    //     if(responseBody == null){
+    //         return null;
+    //     }
+    //     FeedEntries feedEntries = new FeedEntries();
+    //     feedEntries.setFeed(feed);
+    //
+    //     Charset charset;
+    //     String content;
+    //
+    //     // 先将 inputStream 缓存起来
+    //     InputStreamCache inputStreamCache = new InputStreamCache(responseBody.byteStream());
+    //
+    //     content = inputStreamCache.getSting();
+    //
+    //     if (StringUtils.isEmpty(content)) {
+    //         feedEntries.setSuccess(false);
+    //         feedEntries.getFeed().setLastSyncError(context.getString(R.string.content_of_feed_is_empty));
+    //         feedEntries.getFeed().setLastErrorCount(feedEntries.getFeed().getLastErrorCount());
+    //         feedEntries.getFeed().setLastSyncTime(System.currentTimeMillis());
+    //         return feedEntries;
+    //     }
+    //
+    //     content = content.trim();
+    //     if (content.startsWith(UTF8_BOM)) {
+    //         content = content.substring(1);
+    //     }
+    //     try {
+    //         if(content.startsWith("<")){ // content.startsWith("<?xml version") || content.startsWith("<rss") content.startsWith("<feed")
+    //             SyndFeed xmlFeed = new SyndFeedInput().build(new XmlReader(inputStreamCache.getInputStream()));
+    //             feedEntries.setSuccess(true);
+    //             feedEntries.getFeed().setLastSyncError(null);
+    //             feedEntries.getFeed().setLastErrorCount(0);
+    //             feedEntries.getFeed().setLastSyncTime(System.currentTimeMillis());
+    //             feedEntries.from(feed, xmlFeed, convertListener);
+    //         }else if(content.startsWith("{")){
+    //             JsonFeed jsonFeed = parseJsonFeed(content);
+    //             feedEntries.setSuccess(true);
+    //             feedEntries.getFeed().setLastSyncError(null);
+    //             feedEntries.getFeed().setLastErrorCount(0);
+    //             feedEntries.getFeed().setLastSyncTime(System.currentTimeMillis());
+    //             feedEntries.from(feed, jsonFeed, convertListener);
+    //         }else {
+    //             SyndFeed xmlFeed = new SyndFeedInput().build(new XmlReader(inputStreamCache.getInputStream()));
+    //             feedEntries.setSuccess(true);
+    //             feedEntries.getFeed().setLastSyncError(null);
+    //             feedEntries.getFeed().setLastErrorCount(0);
+    //             feedEntries.getFeed().setLastSyncTime(System.currentTimeMillis());
+    //             feedEntries.from(feed, xmlFeed, convertListener);
+    //         }
+    //     }catch (ParsingFeedException e){
+    //         try {
+    //             MediaType contentType = responseBody.contentType();
+    //             if (contentType != null) {
+    //                 charset = contentType.charset(StandardCharsets.UTF_8);
+    //             } else {
+    //                 charset = getXMLCharset(inputStreamCache);
+    //             }
+    //             if(!StandardCharsets.UTF_8.displayName().equalsIgnoreCase(charset.displayName())){
+    //                 content = inputStreamCache.getSting(charset);
+    //             }
+    //
+    //             SyndFeed xmlFeed = new SyndFeedInput().build(new XmlReader(new ByteArrayInputStream(StringUtils.keepValidXMLChars(content).getBytes(charset))));
+    //             feedEntries.setSuccess(true);
+    //             feedEntries.getFeed().setLastSyncError(null);
+    //             feedEntries.getFeed().setLastErrorCount(0);
+    //             feedEntries.getFeed().setLastSyncTime(System.currentTimeMillis());
+    //             feedEntries.from(feed, xmlFeed, convertListener);
+    //         }catch (Exception e2){
+    //             XLog.w("解析异常：" + e.getLocalizedMessage() + " => " + feed);
+    //             Tool.printCallStack(e);
+    //             e.printStackTrace();
+    //             feedEntries.setSuccess(false);
+    //             feedEntries.getFeed().setLastSyncError(e.getLocalizedMessage());
+    //             feedEntries.getFeed().setLastErrorCount(feedEntries.getFeed().getLastErrorCount());
+    //             feedEntries.getFeed().setLastSyncTime(System.currentTimeMillis());
+    //         }
+    //     }catch (FeedException | IOException e){
+    //         XLog.w("解析异常：" + e.getLocalizedMessage() + " => " + feed);
+    //         Tool.printCallStack(e);
+    //         e.printStackTrace();
+    //         feedEntries.setSuccess(false);
+    //         feedEntries.getFeed().setLastSyncError(e.getLocalizedMessage());
+    //         feedEntries.getFeed().setLastErrorCount(feedEntries.getFeed().getLastErrorCount());
+    //         feedEntries.getFeed().setLastSyncTime(System.currentTimeMillis());
+    //     }
+    //     inputStreamCache.destroyCache();
+    //     return feedEntries;
+    // }
 
 
 
 
     public static FeedEntries parseInputSteam(Context context, Feed feed, InputStreamCache inputStreamCache, Converter.ArticleConvertListener convertListener) {
+        FeedEntries feedEntries = new FeedEntries();
+        feedEntries.setFeed(feed);
+        feed.setLastSyncError(context.getString(R.string.content_of_feed_unable_to_get));
         if(inputStreamCache == null){
             return null;
         }
-        FeedEntries feedEntries = new FeedEntries();
-        feedEntries.setFeed(feed);
 
         Charset charset;
         String content;
@@ -143,8 +142,6 @@ public class FeedParserUtils {
         if (StringUtils.isEmpty(content)) {
             feedEntries.setSuccess(false);
             feedEntries.getFeed().setLastSyncError(context.getString(R.string.content_of_feed_is_empty));
-            feedEntries.getFeed().setLastErrorCount(feedEntries.getFeed().getLastErrorCount());
-            feedEntries.getFeed().setLastSyncTime(System.currentTimeMillis());
             return feedEntries;
         }
 
@@ -153,27 +150,21 @@ public class FeedParserUtils {
             content = content.substring(1);
         }
         try {
-            if(content.startsWith("<")){ // content.startsWith("<?xml version") || content.startsWith("<rss") content.startsWith("<feed")
+            if(content.startsWith("<?x") || content.startsWith("<rss") || content.startsWith("<feed")){
                 SyndFeed xmlFeed = new SyndFeedInput().build(new XmlReader(inputStreamCache.getInputStream()));
                 feedEntries.setSuccess(true);
                 feedEntries.getFeed().setLastSyncError(null);
                 feedEntries.getFeed().setLastErrorCount(0);
-                feedEntries.getFeed().setLastSyncTime(System.currentTimeMillis());
                 feedEntries.from(feed, xmlFeed, convertListener);
             }else if(content.startsWith("{")){
                 JsonFeed jsonFeed = parseJsonFeed(content);
                 feedEntries.setSuccess(true);
                 feedEntries.getFeed().setLastSyncError(null);
                 feedEntries.getFeed().setLastErrorCount(0);
-                feedEntries.getFeed().setLastSyncTime(System.currentTimeMillis());
                 feedEntries.from(feed, jsonFeed, convertListener);
             }else {
-                SyndFeed xmlFeed = new SyndFeedInput().build(new XmlReader(inputStreamCache.getInputStream()));
-                feedEntries.setSuccess(true);
-                feedEntries.getFeed().setLastSyncError(null);
-                feedEntries.getFeed().setLastErrorCount(0);
-                feedEntries.getFeed().setLastSyncTime(System.currentTimeMillis());
-                feedEntries.from(feed, xmlFeed, convertListener);
+                feedEntries.setSuccess(false);
+                feedEntries.getFeed().setLastSyncError(context.getString(R.string.content_of_feed_is_not_in_standard));
             }
         }catch (ParsingFeedException e){
             try {
@@ -189,26 +180,23 @@ public class FeedParserUtils {
                 feedEntries.setSuccess(true);
                 feedEntries.getFeed().setLastSyncError(null);
                 feedEntries.getFeed().setLastErrorCount(0);
-                feedEntries.getFeed().setLastSyncTime(System.currentTimeMillis());
                 feedEntries.from(feed, xmlFeed, convertListener);
             }catch (Exception e2){
                 XLog.w("解析异常：" + e.getLocalizedMessage() + " => " + feed);
+                XLog.w("异常原文：" + inputStreamCache.getCharset() + " -> " + content);
                 Tool.printCallStack(e);
                 e.printStackTrace();
                 feedEntries.setSuccess(false);
                 feedEntries.getFeed().setLastSyncError(e.getLocalizedMessage());
-                feedEntries.getFeed().setLastErrorCount(feedEntries.getFeed().getLastErrorCount());
-                feedEntries.getFeed().setLastSyncTime(System.currentTimeMillis());
             }
         }catch (FeedException | IOException e){
             XLog.w("解析异常：" + e.getLocalizedMessage() + " => " + feed);
             Tool.printCallStack(e);
             e.printStackTrace();
             feedEntries.setSuccess(false);
-            feedEntries.getFeed().setLastSyncError(e.getLocalizedMessage());
-            feedEntries.getFeed().setLastErrorCount(feedEntries.getFeed().getLastErrorCount());
-            feedEntries.getFeed().setLastSyncTime(System.currentTimeMillis());
         }
+
+        feedEntries.getFeed().setLastSyncTime(System.currentTimeMillis());
         inputStreamCache.destroyCache();
         return feedEntries;
     }

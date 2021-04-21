@@ -5149,7 +5149,7 @@ typeof navigator === "object" && (function (global, factory) {
 
         this.bind(elements.buttons.download, 'click', function () {
 	      // 修改点
-	      ArticleBridge.downFile(elements.buttons.download.getAttribute('href'));
+	      LoreadBridge.downFile(elements.buttons.download.getAttribute('href'));
           //triggerEvent.call(player, player.media, 'download');
         }, 'download'); // Fullscreen toggle
 
@@ -5157,9 +5157,9 @@ typeof navigator === "object" && (function (global, factory) {
 	      // 修改点
 	      if(!player.fullscreen.active && player.isVideo){
 		    if(player.media.videoHeight > player.media.videoWidth){
-			  ArticleBridge.postVideoPortrait(true);
+			  LoreadBridge.postVideoPortrait(true);
 		    }else{
-		      ArticleBridge.postVideoPortrait(false);
+		      LoreadBridge.postVideoPortrait(false);
 		    }
 	      }
           player.fullscreen.toggle();

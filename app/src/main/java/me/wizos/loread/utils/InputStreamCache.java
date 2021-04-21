@@ -14,6 +14,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 
 /**
  * 流操作过程中处理流的多次消费问题
@@ -26,7 +27,7 @@ public class InputStreamCache {
      */
     private ByteArrayOutputStream byteArrayOutputStream;
     private InputStream inputStream;
-    private Charset charset;
+    private Charset charset = StandardCharsets.UTF_8;
 
     public InputStreamCache(InputStream inputStream) {
         if (inputStream == null) return;
@@ -109,6 +110,8 @@ public class InputStreamCache {
     }
 
     public void setCharset(String charset) {
-        this.charset = Charset.forName(charset);
+        if(!StringUtils.isEmpty(charset)){
+            this.charset = Charset.forName(charset);
+        }
     }
 }

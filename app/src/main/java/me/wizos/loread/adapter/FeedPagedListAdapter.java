@@ -26,6 +26,7 @@ import me.wizos.loread.App;
 import me.wizos.loread.R;
 import me.wizos.loread.db.Feed;
 import me.wizos.loread.utils.StringUtils;
+import me.wizos.loread.utils.TimeUtils;
 
 public class FeedPagedListAdapter extends PagedListAdapter<Feed, FeedPagedListAdapter.FeedViewHolder> {
     private RequestOptions canDownloadOptions;
@@ -89,7 +90,7 @@ public class FeedPagedListAdapter extends PagedListAdapter<Feed, FeedPagedListAd
 
         TextView errorView;
         TextView countView;
-        // TextView pubDateView;
+        TextView pubDateView;
 
 
         FeedViewHolder(@NonNull View itemView) {
@@ -99,6 +100,7 @@ public class FeedPagedListAdapter extends PagedListAdapter<Feed, FeedPagedListAd
             feedUrlView = (TextView) itemView.findViewById(R.id.feed_manager_item_feed_url);
             errorView = (TextView) itemView.findViewById(R.id.feed_manager_item_error);
             countView = (TextView) itemView.findViewById(R.id.feed_manager_item_count);
+            pubDateView = (TextView) itemView.findViewById(R.id.feed_manager_item_pubDate);
         }
         void placeholder(){
             iconView.setImageDrawable(null);
@@ -109,6 +111,7 @@ public class FeedPagedListAdapter extends PagedListAdapter<Feed, FeedPagedListAd
             feedUrlView.setText("");
             errorView.setText("");
             countView.setText("");
+            pubDateView.setText("");
             itemView.setOnClickListener(null);
         }
 
@@ -156,6 +159,8 @@ public class FeedPagedListAdapter extends PagedListAdapter<Feed, FeedPagedListAd
             }
 
             countView.setText(feed.getAllCount() + " / " + feed.getUnreadCount() + " / " + feed.getStarCount());
+
+            pubDateView.setText(TimeUtils.readability(feed.getLastPubDate()));
         }
     }
 

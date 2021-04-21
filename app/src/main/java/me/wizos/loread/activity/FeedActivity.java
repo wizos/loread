@@ -74,6 +74,8 @@ import me.wizos.loread.utils.Converter;
 import me.wizos.loread.utils.FeedParserUtils;
 import me.wizos.loread.utils.InputStreamCache;
 import me.wizos.loread.utils.PagingUtils;
+import me.wizos.loread.utils.StringUtils;
+import me.wizos.loread.utils.TimeUtils;
 import me.wizos.loread.utils.UriUtils;
 import me.wizos.loread.view.IconFontView;
 import me.wizos.loread.view.colorful.Colorful;
@@ -87,6 +89,9 @@ public class FeedActivity extends BaseActivity {
 
     @BindView(R.id.feed_fab)
     FloatingActionButton iconFab;
+
+    @BindView(R.id.feed_pubDate)
+    TextView pubDateView;
 
     @BindView(R.id.feed_article_count)
     TextView articleCountView;
@@ -103,6 +108,8 @@ public class FeedActivity extends BaseActivity {
     @BindView(R.id.feed_rss_link_edit)
     ImageView rssLinkEditButton;
 
+    @BindView(R.id.feed_sync_error)
+    TextView lastSyncErrorView;
 
     @BindView(R.id.feed_settings)
     LinearLayout feedSettingsLayout;
@@ -147,6 +154,7 @@ public class FeedActivity extends BaseActivity {
     Feed feed;
     String feedId;
     ArrayList<CategoryItem> preCategoryItems;
+    Getting getting;
 
     FeedViewModel feedViewModel;
     RequestOptions options = new RequestOptions().circleCrop();
@@ -214,13 +222,10 @@ public class FeedActivity extends BaseActivity {
             public void onChanged(Feed feed) {
                 if(null == feed){
                     finish();
-                    // feedSettingsLayout.setVisibility(View.GONE);
                 }else {
-                    // feedSettingsLayout.setVisibility(View.VISIBLE);
                     FeedActivity.this.feed = feed;
                     initSettingView();
                 }
-
             }
         });
     }
@@ -233,7 +238,17 @@ public class FeedActivity extends BaseActivity {
         // 以下不生效
         // getSupportActionBar().setSubtitle(feed.getFeedUrl());
         // toolbar.setSubtitle(feed.getFeedUrl());
-        articleCountView.setText(getString(R.string.article_count_detail, feed.getAllCount(), feed.getUnreadCount(), feed.getStarCount()));
+        if(feed.getLastPubDate() == 0){
+            pubDateView.setVisibility(View.GONE);
+        }else {
+            pubDateView.setVisibility(View.VISIBLE);
+            pubDateView.setText(TimeUtils.readability(feed.getLastPubDate()));
+        }
+        if(BuildConfig.DEBUG){
+            articleCountView.setText( getString(R.string.article_count_detail_debug, feed.getAllCount(), feed.getUnreadCount(), feed.getStarCount(), CoreDB.i().articleDao().getSavedCountByFeedId(App.i().getUser().getId(), feed.getId())) );
+        }else {
+            articleCountView.setText( getString(R.string.article_count_detail, feed.getAllCount(), feed.getUnreadCount(), feed.getStarCount()) );
+        }
         siteLinkView.setText(feed.getHtmlUrl());
         siteLinkView.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -248,6 +263,13 @@ public class FeedActivity extends BaseActivity {
                 openFeedUrl();
             }
         });
+
+        if(StringUtils.isEmpty(feed.getLastSyncError())){
+            lastSyncErrorView.setVisibility(View.GONE);
+        }else {
+            lastSyncErrorView.setVisibility(View.VISIBLE);
+            lastSyncErrorView.setText(feed.getLastSyncError());
+        }
 
         if(App.i().getApi() instanceof LocalApi){
             siteLinkEditButton.setVisibility(View.VISIBLE);
@@ -267,20 +289,30 @@ public class FeedActivity extends BaseActivity {
                     return;
                 }
                 ToastUtils.show(R.string.fetching);
-                Getting getting = new Getting(feed.getFeedUrl(), new Getting.Listener() {
+                feed.setLastSyncTime(System.currentTimeMillis());
+
+                if(getting != null){
+                    getting.destroy();
+                }
+                getting = new Getting(feed.getFeedUrl(), new Getting.Listener() {
                     @Override
                     public void onResponse(InputStreamCache inputStreamCache) {
+                        long syncTime = App.i().getLastShowTimeMillis();
                         FeedEntries feedEntries = FeedParserUtils.parseInputSteam(FeedActivity.this, feed, inputStreamCache, new Converter.ArticleConvertListener() {
                             @Override
                             public Article onEnd(Article article) {
-                                article.setCrawlDate(App.i().getLastShowTimeMillis());
+                                article.setCrawlDate(syncTime);
                                 return article;
                             }
                         });
                         if(feedEntries == null){
                             ToastUtils.show(getString(R.string.fetch_failed));
+                            feed.setLastErrorCount(feed.getLastErrorCount()==0?1:feed.getLastErrorCount());
+                            CoreDB.i().feedDao().update(feed);
                         }else if(!feedEntries.isSuccess()){
                             ToastUtils.show(getString(R.string.fetch_failed_with_reason, feedEntries.getFeed().getLastSyncError()));
+                            feed.setLastErrorCount(feed.getLastErrorCount()==0?1:feed.getLastErrorCount());
+                            CoreDB.i().feedDao().update(feed);
                         }else {
                             AsyncTask.THREAD_POOL_EXECUTOR.execute(new Runnable() {
                                 @Override
@@ -298,11 +330,32 @@ public class FeedActivity extends BaseActivity {
                                             }
                                         }
                                     });
+
+
+                                    PagingUtils.slice(new ArrayList<>(feedEntries.getGuids()), 50, new PagingUtils.PagingListener<String>() {
+                                        @Override
+                                        public void onPage(@NotNull List<String> childIds) {
+                                            List<String> removeIds = CoreDB.i().articleDao().getIntersectionIdsByGuid(uid, feedEntries.getFeed().getId(), childIds);
+                                            if(removeIds != null){
+                                                for (String id: removeIds){
+                                                    articleMap.remove(id);
+                                                }
+                                            }
+                                        }
+                                    });
+
                                     ArrayList<Article> newArticles = new ArrayList<>(articleMap.values());
-                                    CoreDB.i().articleDao().insert(newArticles);
-                                    BaseApi.updateCollectionCount();
+
+                                    feed.setLastSyncError(null);
+                                    feed.setLastErrorCount(0);
+                                    CoreDB.i().feedDao().update(feed);
+
                                     ToastUtils.show(getString(R.string.fetch_success_with_reason, newArticles.size()));
                                     if(newArticles.size() > 0){
+                                        CoreDB.i().articleDao().insert(newArticles);
+                                        CoreDB.i().feedDao().updateLastPubDate(uid, feedId);
+                                        BaseApi.fetchReadability(uid, syncTime);
+                                        BaseApi.updateCollectionCount(uid);
                                         LiveEventBus.get(SyncWorker.NEW_ARTICLE_NUMBER).post(newArticles.size());
                                     }
                                 }
@@ -313,6 +366,8 @@ public class FeedActivity extends BaseActivity {
                     @Override
                     public void onFailure(String msg) {
                         ToastUtils.show(getString(R.string.fetch_failed_with_reason, msg));
+                        feed.setLastSyncError(msg);
+                        CoreDB.i().feedDao().update(feed);
                     }
                 });
 
@@ -523,6 +578,77 @@ public class FeedActivity extends BaseActivity {
         });
 
 
+        User user = App.i().getUser();
+        if(user != null && App.i().getApi() instanceof LocalApi){
+            feedSyncFrequencyLayout.setVisibility(View.VISIBLE);
+            int feedSyncInterval = feed.getSyncInterval();
+            if(feedSyncInterval == -1){
+                feedSyncFrequencyView.setText(getString(R.string.disable_sync_frequency));
+            }else if(feedSyncInterval == 0){
+                feedSyncInterval = user.getAutoSyncFrequency();
+                if (feedSyncInterval >= 60) {
+                    feedSyncFrequencyView.setText(getString(R.string.default_sync_frequency, getString(R.string.xx_hour, feedSyncInterval / 60)));
+                } else {
+                    feedSyncFrequencyView.setText(getString(R.string.default_sync_frequency, getString(R.string.xx_minute, feedSyncInterval)));
+                }
+            }else if (feedSyncInterval >= 60) {
+                feedSyncFrequencyView.setText(getString(R.string.xx_hour, feedSyncInterval / 60));
+            } else {
+                feedSyncFrequencyView.setText(getString(R.string.xx_minute, feedSyncInterval));
+            }
+
+            feedSyncFrequencyLayout.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    int[] minuteArray = getResources().getIntArray(R.array.feed_sync_frequency_value);
+                    int preSelectTimeFrequencyIndex = -1;
+                    int num = minuteArray.length;
+                    CharSequence[] list = new CharSequence[num];
+                    int item;
+                    for (int i = 0; i < num; i++) {
+                        item = minuteArray[i];
+                        if(item == -1){
+                            list[i] = getString(R.string.disable_sync_frequency);
+                        }else if(item == 0){
+                            int userSyncInterval = user.getAutoSyncFrequency();
+                            if (userSyncInterval >= 60) {
+                                list[i] = getString(R.string.default_sync_frequency, getString(R.string.xx_hour, userSyncInterval / 60));
+                            } else {
+                                list[i] = getString(R.string.default_sync_frequency, getString(R.string.xx_minute, userSyncInterval));
+                            }
+                        }else if(item >= 60){
+                            list[i] = getResources().getString(R.string.xx_hour, item / 60);
+                        }else {
+                            list[i] = getResources().getString(R.string.xx_minute, item);
+                        }
+
+                        if (feed.getSyncInterval() == minuteArray[i]) {
+                            preSelectTimeFrequencyIndex = i;
+                        }
+                    }
+
+
+                    new MaterialDialog.Builder(FeedActivity.this)
+                            .title(R.string.sync_frequency)
+                            .items(list)
+                            .itemsCallbackSingleChoice(preSelectTimeFrequencyIndex, new MaterialDialog.ListCallbackSingleChoice() {
+                                @Override
+                                public boolean onSelection(MaterialDialog dialog, View view, int which, CharSequence text) {
+                                    feed.setSyncInterval(minuteArray[which]);
+                                    CoreDB.i().feedDao().update(feed);
+
+                                    XLog.i("选择了" + which);
+                                    feedSyncFrequencyView.setText(list[which]);
+                                    dialog.dismiss();
+                                    return true; // allow selection
+                                }
+                            })
+                            .show();
+                }
+            });
+        }
+
+
         if(BuildConfig.DEBUG){
             String optionName = SaveDirectory.i().getDirNameSettingByFeed(feed.getId());
             feedSaveFolderView.setText(optionName);
@@ -546,76 +672,6 @@ public class FeedActivity extends BaseActivity {
                             .show();
                 }
             });
-
-            User user = App.i().getUser();
-            if(user != null && App.i().getApi() instanceof LocalApi){
-                feedSyncFrequencyLayout.setVisibility(View.VISIBLE);
-                int feedSyncInterval = feed.getSyncInterval();
-                if(feedSyncInterval == -1){
-                    feedSyncFrequencyView.setText(getString(R.string.disable_sync_frequency));
-                }else if(feedSyncInterval == 0){
-                    feedSyncInterval = user.getAutoSyncFrequency();
-                    if (feedSyncInterval >= 60) {
-                        feedSyncFrequencyView.setText(getString(R.string.default_sync_frequency, getString(R.string.xx_hour, feedSyncInterval / 60)));
-                    } else {
-                        feedSyncFrequencyView.setText(getString(R.string.default_sync_frequency, getString(R.string.xx_minute, feedSyncInterval)));
-                    }
-                }else if (feedSyncInterval >= 60) {
-                    feedSyncFrequencyView.setText(getString(R.string.xx_hour, feedSyncInterval / 60));
-                } else {
-                    feedSyncFrequencyView.setText(getString(R.string.xx_minute, feedSyncInterval));
-                }
-
-                feedSyncFrequencyLayout.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        int[] minuteArray = getResources().getIntArray(R.array.feed_sync_frequency_value);
-                        int preSelectTimeFrequencyIndex = -1;
-                        int num = minuteArray.length;
-                        CharSequence[] list = new CharSequence[num];
-                        int item;
-                        for (int i = 0; i < num; i++) {
-                            item = minuteArray[i];
-                            if(item == -1){
-                                list[i] = getString(R.string.disable_sync_frequency);
-                            }else if(item == 0){
-                                int userSyncInterval = user.getAutoSyncFrequency();
-                                if (userSyncInterval >= 60) {
-                                    list[i] = getString(R.string.default_sync_frequency, getString(R.string.xx_hour, userSyncInterval / 60));
-                                } else {
-                                    list[i] = getString(R.string.default_sync_frequency, getString(R.string.xx_minute, userSyncInterval));
-                                }
-                            }else if(item >= 60){
-                                list[i] = getResources().getString(R.string.xx_hour, item / 60);
-                            }else {
-                                list[i] = getResources().getString(R.string.xx_minute, item);
-                            }
-
-                            if (feed.getSyncInterval() == minuteArray[i]) {
-                                preSelectTimeFrequencyIndex = i;
-                            }
-                        }
-
-
-                        new MaterialDialog.Builder(FeedActivity.this)
-                                .title(R.string.sync_frequency)
-                                .items(list)
-                                .itemsCallbackSingleChoice(preSelectTimeFrequencyIndex, new MaterialDialog.ListCallbackSingleChoice() {
-                                    @Override
-                                    public boolean onSelection(MaterialDialog dialog, View view, int which, CharSequence text) {
-                                        feed.setSyncInterval(minuteArray[which]);
-                                        CoreDB.i().feedDao().update(feed);
-
-                                        XLog.i("选择了" + which);
-                                        feedSyncFrequencyView.setText(list[which]);
-                                        dialog.dismiss();
-                                        return true; // allow selection
-                                    }
-                                })
-                                .show();
-                    }
-                });
-            }
 
 
             feedInfoButton.setVisibility(View.VISIBLE);
@@ -654,18 +710,6 @@ public class FeedActivity extends BaseActivity {
             });
         }
 
-
-        // createRuleButton.setOnClickListener(new View.OnClickListener() {
-        //     @Override
-        //     public void onClick(View v) {
-        //         Intent intent = new Intent(FeedActivity.this, TriggerRuleEditActivity.class);
-        //         intent.putExtra(Contract.TYPE, Contract.TYPE_FEED);
-        //         intent.putExtra(Contract.TARGET_ID, feed.getId());
-        //         // intent.putExtra(Contract.TARGET_NAME, feed.getTitle());
-        //         startActivity(intent);
-        //         overridePendingTransition(R.anim.in_from_bottom, R.anim.fade_out);
-        //     }
-        // });
 
         viewRulesButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -877,40 +921,29 @@ public class FeedActivity extends BaseActivity {
         if (feed == null) {
             return;
         }
-        // if (CoreDB.i().feedDao().getById(App.i().getUser().getId(), feed.getId()) == null) {
-        //     showSelectFolder(view, feed);
-        // } else {
-        //
-        // }
+
         new MaterialDialog.Builder(this)
                 .title(R.string.warning)
                 .content(R.string.are_you_sure_that_unsubscribe_this_feed_link)
                 .positiveText(R.string.confirm)
                 .negativeText(R.string.cancel)
                 .positiveColor(Color.RED)
-                .onPositive((dialog, which) -> App.i().getApi().unsubscribeFeed(feed.getId(), new CallbackX() {
+                .onPositive((dialog, which) -> App.i().getApi().deleteFeed(feed.getId(), new CallbackX() {
                     @Override
                     public void onSuccess(Object result) {
-                        // ((AppCompatButton) view).setText(R.string.subscribe);
-                        // Drawable drawable = new DrawableCreator.Builder()
-                        //         .setRipple(true, getResources().getColor(R.color.primary))
-                        //         .setPressedSolidColor(getResources().getColor(R.color.primary), getResources().getColor(R.color.bluePrimary))
-                        //         .setSolidColor(getResources().getColor(R.color.bluePrimary))
-                        //         .setCornersRadius(ScreenUtils.dp2px(30))
-                        //         .build();
-                        // view.setBackground(drawable);
-
                         AsyncTask.THREAD_POOL_EXECUTOR.execute(new Runnable() {
                             @Override
                             public void run() {
                                 long time = System.currentTimeMillis();
                                 BackupUtils.exportUserUnsubscribeOPML(App.i().getUser(), feed);
+                                XLog.i("退订成功，数据库耗时A：" + (System.currentTimeMillis() - time) );
+                                BaseApi.deleteUnsubscribedArticles(feed.getId());
+                                XLog.i("退订成功，数据库耗时B：" + (System.currentTimeMillis() - time) );
                                 CoreDB.i().feedCategoryDao().deleteByFeedId(feed.getUid(), feed.getId());
                                 CoreDB.i().articleDao().deleteUnStarByFeedId(feed.getUid(), feed.getId());
                                 CoreDB.i().deleteFeed(feed);
-                                // CoreDB.i().articleDao().deleteUnsubscribeUnStar(feed.getUid());
                                 ToastUtils.show(getString(R.string.unsubscribe_succeeded));
-                                XLog.i("退订成功，数据库耗时：" + (System.currentTimeMillis() - time) );
+                                XLog.i("退订成功，数据库耗时C：" + (System.currentTimeMillis() - time) );
                             }
                         });
                     }

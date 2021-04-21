@@ -1,0 +1,14 @@
+{
+  "host_replace": {},
+  "url_rewrite": {
+    "ytimg.com": "var m = null;if( (m = url.match(/^https?:\\/\\/i\\.ytimg\\.com\\/an_webp\\/([^\\/]+)\\/\\w+\\.(jpg|jpeg|gif|png|bmp|webp)(\\?.+)?$/i)) ) {url = url.replace(url, 'https://i.ytimg.com/vi/' + m[1] + '/maxresdefault.jpg');if(!call.valid(url)){url = url.replace(url, 'https://i.ytimg.com/vi/' + m[1] + '/hqdefault.jpg');}}",
+    "sinaimg.com": "var m = null;if( (m = url.match(/^(https?:\\/\\/(?:(?:ww|wx|ws|tvax|tva)\\d+|wxt|wt)\\.sinaimg\\.(?:cn|com)\\/)([\\w\\.]+)(\\/.+)(?:\\?.+)?$/i)) ) {if(m[2] != 'large') {var newUrl = url.replace(url, m[1] + 'large' + m[3]);if(call.valid(newUrl)){url = newUrl;}}}",
+    "www.viidii.info": "url = url.replace(/https*:\\/\\/www\\.viidii\\.info\\/\\?/,'').replace(/______/g,'.').replace('&z','');",
+    "doubanio.com": "var m = null; if( (m = url.match(/^(https?:\\/\\/\\w+\\.douban(?:io)?\\.com\\/view\\/.+\\/)(\\w+)(\\/public\\/.+\\.(jpg|jpeg|gif|png|bmp|webp))(?:\\?.+)?$/i)) ){if(m[2] != 'r'){var newUrl = m[1] + 'r' + m[3];if(call.valid(newUrl)){url = newUrl;}else if(m[2] != 'l'){url = url.replace(url, m[1] + 'l' + m[3]);}}}",
+    "sinaimg.cn": "var m = null;if( (m = url.match(/^(https?:\\/\\/(?:(?:ww|wx|ws|tvax|tva)\\d+|wxt|wt)\\.sinaimg\\.(?:cn|com)\\/)([\\w\\.]+)(\\/.+)(?:\\?.+)?$/i)) ) {if(m[2] != 'large') {var newUrl = url.replace(/^.*?$/i, m[1] + 'large' + m[3]);if(call.valid(newUrl)){url = newUrl;}}}",
+    "bilibili.com": "if ((url.indexOf('bilibili.com/player.html') != -1 || url.indexOf('bilibili.com/blackboard/html5mobileplayer.html') != -1) && url.indexOf('&high_quality=1&danmaku=1') == -1 ) {url = url.replace(url, url+'&high_quality=1&danmaku=1');}",
+    "v.qq.com": "url = url.replace('v.qq.com/iframe/player.html','v.qq.com/txp/iframe/player.html');",
+    "zhimg.com": "var m = null; url = url.replace(/\\?source=\\w+/i,''); if( (m = url.match(/^(https?:\\/\\/.+\\.zhimg\\.com\\/)(?:\\d+\\/)?([\\w\\-]+_)(\\w+)(\\.(jpg|jpeg|gif|png|bmp|webp))(?:\\?.+)?$/i)) ){if(m[3]!='r') {var newUrl = url.replace(url, m[1] + m[2] + 'r' + m[4]); if(call.valid(newUrl)){ url=newUrl;}}}",
+    "ixigua.com": "if ((url.indexOf('ixigua.com/iframe') != -1 && url.indexOf('ixigua.com/embed') == -1)) {url = url.replace(/ixigua.com\\/iframe\\/(\\d+)\\?/i,'ixigua.com/embed?group_id=$1&');}"
+  }
+}

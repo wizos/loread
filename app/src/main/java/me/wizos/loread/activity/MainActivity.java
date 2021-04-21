@@ -74,6 +74,7 @@ import com.yanzhenjie.recyclerview.SwipeRecyclerView;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -163,8 +164,8 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
         super.onCreate(savedInstanceState);// 由于使用了自动换主题，所以要放在这里
         checkProxy();
 
-        refreshArticlesData();  // 获取文章列表数据为 App.articleList
-        initCategoriesData();
+        loadArticlesData();  // 获取文章列表数据为 App.articleList
+        loadCategoriesData();
         autoMarkReaded = App.i().getUser().isMarkReadOnScroll();
         initWorkRequest();
         checkUpdate();
@@ -275,7 +276,7 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
                                 .setAction(getString(R.string.view), new View.OnClickListener() {
                                     @Override
                                     public void onClick(View v) {
-                                        refreshArticlesData();
+                                        loadArticlesData();
                                     }
                                 }).show();
                         refreshIcon.setVisibility(View.VISIBLE);
@@ -345,7 +346,6 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
 
     private void applyPermissions() {
         XXPermissions.with(this)
-                //.constantRequest() //可设置被拒绝后继续申请，直到用户授权或者永久拒绝
                 //.permission(Permission.SYSTEM_ALERT_WINDOW) //支持请求6.0悬浮窗权限8.0请求安装权限
                 .permission(Permission.Group.STORAGE) //不指定权限则自动获取清单中的危险权限
                 .request(new OnPermissionCallback() {
@@ -358,7 +358,11 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
                         for (String id : permissions) {
                             XLog.w("无法获取权限：" + id);
                         }
-                        ToastUtils.show(getString(R.string.plz_grant_permission_tips));
+                        if (never) {
+                            ToastUtils.show(getString(R.string.plz_grant_permission_tips));
+                            // 如果是被永久拒绝就跳转到应用权限系统设置页面
+                            XXPermissions.startPermissionActivity(MainActivity.this, permissions);
+                        }
                     }
                 });
     }
@@ -425,10 +429,10 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
 
     @Override
     public void onRefresh() {
+        XLog.i("下拉刷新：" + swipeRefreshLayout.isEnabled());
         if (!swipeRefreshLayout.isEnabled()) {
             return;
         }
-        XLog.i("下拉刷新");
         Data inputData = new Data.Builder().putBoolean(SyncWorker.IS_AUTO_SYNC, false).build();
         Constraints.Builder builder = new Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED);
         OneTimeWorkRequest oneTimeWorkRequest = new OneTimeWorkRequest.Builder(SyncWorker.class)
@@ -439,6 +443,7 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
         // WorkManager.getInstance(this).enqueueUniqueWork(SyncWorker.TAG, ExistingWorkPolicy.KEEP, oneTimeWorkRequest);
         XLog.i("单期SyncWorker Id: " + oneTimeWorkRequest.getId());
         WorkManager.getInstance(this).enqueue(oneTimeWorkRequest);
+
         // WorkManager.getInstance(this).getWorkInfoByIdLiveData(oneTimeWorkRequest.getId())
         //         .observe(this, workInfo -> {
         //             XLog.i("单次任务" );
@@ -482,15 +487,8 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
      * App.StreamState 包含 3 个状态：All，Unread，Stared
      * App.streamId 至少包含 1 个状态： Reading-list
      */
-    protected void refreshArticlesData() { // 获取 App.articleList , 并且根据 App.articleList 的到未读数目
-        loadArticlesData();
-        refreshIcon.setVisibility(View.GONE);
-    }
-
-
-
-
     private void loadArticlesData() {
+        long time = System.currentTimeMillis();
         openLoadingPopupView();
         String uid = App.i().getUser().getId();
         int streamStatus = App.i().getUser().getStreamStatus();
@@ -499,25 +497,21 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
 
         articleListViewModel.loadArticles(uid, streamId, streamType, streamStatus, this,
                 articles -> {
-                    if( articlesAdapter.getCurrentList() != null ){
-                        XLog.d("获得文章列表，LoadedCount = " + articlesAdapter.getCurrentList().getLoadedCount() +  "，LastKey = " + articlesAdapter.getCurrentList().getLastKey()  + "，LastVisibleItem = " + (linearLayoutManager.findLastVisibleItemPosition()-1) );
-                    }else {
-                        XLog.d("获得文章列表，CurrentList 为 null");
-                    }
-                    // XLog.i("更新列表数据 c");
+                    XLog.d("加载文章，通知文章列表耗时A：" + (System.currentTimeMillis() - time) + ", 当前时间戳为：" + System.currentTimeMillis());
                     renderViewByArticlesData(App.i().getUser().getStreamTitle(), articles.size() );
                     articlesAdapter.submitList(articles);
+                    XLog.d("加载文章，通知文章列表耗时B：" + (System.currentTimeMillis() - time) + ", 当前时间戳为：" + System.currentTimeMillis());
                     dismissLoadingPopupView();
                 },
                 articleIds -> {
-                    // XLog.d("获得文章Ids");
+                    XLog.d("加载文章，通知文章ids耗时A：" + (System.currentTimeMillis() - time) + ", 当前时间戳为：" + System.currentTimeMillis());
                     articlesAdapter.setArticleIds(articleIds);
+                    XLog.d("加载文章，通知文章ids耗时B：" + (System.currentTimeMillis() - time) + ", 当前时间戳为：" + System.currentTimeMillis());
                     App.i().setArticleIds(articleIds);
                 });
 
         articleListView.scrollToPosition(0);
-        // articlesAdapter.setLastPos(0);
-        XLog.d("加载文章数据" );
+        refreshIcon.setVisibility(View.GONE);
     }
 
     private void loadSearchedArticles(String keyword) {
@@ -853,19 +847,19 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
                     return;
                 }
                 Intent intent = new Intent(MainActivity.this, ArticleActivity.class);
-                intent.putExtra("theme", App.i().getUser().getThemeMode());
 
                 String articleId = articlesAdapter.getArticleId(position);
 
                 XLog.i("进入文章详情页，位置：" + position + "，ID：" + articleId);
-                intent.putExtra("articleId", articleId);
-                intent.putExtra("articleNo", position); // 下标从 0 开始
-                intent.putExtra("articleCount", articlesAdapter.getItemCount());
+                intent.putExtra(Contract.ARTICLE_ID, articleId);
+                intent.putExtra(Contract.ARTICLE_NO, position); // 下标从 0 开始
+                // intent.putExtra("articleCount", articlesAdapter.getItemCount());
                 startActivityForResult(intent, App.ActivityResult_ArtToMain);
                 overridePendingTransition(R.anim.in_from_bottom, R.anim.fade_out);
             }
         });
         articleListViewModel = new ViewModelProvider(this).get(ArticleListViewModel.class);
+        articleListViewModel.setActivityWeakReference(new WeakReference<>(this));
         articlesAdapter = new ArticlePagedListAdapter(this);
         articleListView.setAdapter(articlesAdapter);
     }
@@ -878,7 +872,7 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
         categoryListAdapter.notifyDataSetChanged();
     }
 
-    private void initCategoriesData(){
+    private void loadCategoriesData(){
         categoryViewModel.observeCategoriesAndFeeds(this, new Observer<Integer>() {
             @Override
             public void onChanged(Integer integer) {
@@ -983,7 +977,7 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
                     user.setStreamTitle( feed.getTitle() );
                     user.setStreamType( App.TYPE_FEED );
                 }
-                refreshArticlesData();
+                loadArticlesData();
                 CoreDB.i().userDao().update(user);
             }
         });
@@ -1220,91 +1214,236 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
         if (position < 0) {
             return;
         }
-        // String articleId = articlesAdapter.getItem(position).getId();
-        // Article article = CoreDB.i().articleDao().getById(App.i().getUser().getId(),articleId);
         XLog.i("切换已读状态" );
-        Article article = articlesAdapter.getArticle(position);
-        if(article == null){
-            return;
-        }
-        if (autoMarkReaded && article.getReadStatus() == App.STATUS_UNREAD) {
-            article.setReadStatus(App.STATUS_UNREADING);
-            CoreDB.i().articleDao().update(article);
-        } else if (article.getReadStatus() == App.STATUS_READED) {
-            article.setReadStatus(App.STATUS_UNREADING);
-            CoreDB.i().articleDao().update(article);
-            App.i().getApi().markArticleUnread(article.getId(), new CallbackX() {
-                @Override
-                public void onSuccess(Object result) {
-                }
 
-                @Override
-                public void onFailure(Object error) {
+        AsyncTask.THREAD_POOL_EXECUTOR.execute(new Runnable() {
+            @Override
+            public void run() {
+                Article article = articlesAdapter.getArticle(position);
+                if(article == null){
+                    return;
+                }
+                if (autoMarkReaded && article.getReadStatus() == App.STATUS_UNREAD) {
+                    article.setReadStatus(App.STATUS_UNREADING);
+                    CoreDB.i().articleDao().update(article);
+                } else if (article.getReadStatus() == App.STATUS_READED) {
+                    article.setReadStatus(App.STATUS_UNREADING);
+                    CoreDB.i().articleDao().update(article);
+                    App.i().getApi().markArticleUnread(article.getId(), new CallbackX() {
+                        @Override
+                        public void onSuccess(Object result) {
+                        }
+
+                        @Override
+                        public void onFailure(Object error) {
+                            XLog.w("失败的原因是：" + error );
+                            article.setReadStatus(App.STATUS_READED);
+                            CoreDB.i().articleDao().update(article);
+                        }
+                    });
+                } else {
                     article.setReadStatus(App.STATUS_READED);
                     CoreDB.i().articleDao().update(article);
-                    XLog.w("失败的原因是：" + error );
-                }
-            });
-        } else {
-            article.setReadStatus(App.STATUS_READED);
-            CoreDB.i().articleDao().update(article);
-            App.i().getApi().markArticleReaded(article.getId(), new CallbackX() {
-                @Override
-                public void onSuccess(Object result) {
-                }
+                    App.i().getApi().markArticleReaded(article.getId(), new CallbackX() {
+                        @Override
+                        public void onSuccess(Object result) {
+                        }
 
-                @Override
-                public void onFailure(Object error) {
-                    article.setReadStatus(App.STATUS_UNREAD);
-                    CoreDB.i().articleDao().update(article);
+                        @Override
+                        public void onFailure(Object error) {
+                            XLog.w("失败的原因是：" + error );
+                            article.setReadStatus(App.STATUS_UNREAD);
+                            CoreDB.i().articleDao().update(article);
+                        }
+                    });
                 }
-            });
-        }
+            }
+        });
     }
-
+    // private void toggleReadState(final int position) {
+    //     if (position < 0) {
+    //         return;
+    //     }
+    //     // String articleId = articlesAdapter.getItem(position).getId();
+    //     // Article article = CoreDB.i().articleDao().getById(App.i().getUser().getId(),articleId);
+    //     XLog.i("切换已读状态" );
+    //     Article article = articlesAdapter.getArticle(position);
+    //     if(article == null){
+    //         return;
+    //     }
+    //     if (autoMarkReaded && article.getReadStatus() == App.STATUS_UNREAD) {
+    //         article.setReadStatus(App.STATUS_UNREADING);
+    //         AsyncTask.THREAD_POOL_EXECUTOR.execute(new Runnable() {
+    //             @Override
+    //             public void run() {
+    //                 CoreDB.i().articleDao().update(article);
+    //             }
+    //         });
+    //     } else if (article.getReadStatus() == App.STATUS_READED) {
+    //         article.setReadStatus(App.STATUS_UNREADING);
+    //         AsyncTask.THREAD_POOL_EXECUTOR.execute(new Runnable() {
+    //             @Override
+    //             public void run() {
+    //                 CoreDB.i().articleDao().update(article);
+    //             }
+    //         });
+    //         App.i().getApi().markArticleUnread(article.getId(), new CallbackX() {
+    //             @Override
+    //             public void onSuccess(Object result) {
+    //             }
+    //
+    //             @Override
+    //             public void onFailure(Object error) {
+    //                 XLog.w("失败的原因是：" + error );
+    //                 article.setReadStatus(App.STATUS_READED);
+    //                 AsyncTask.THREAD_POOL_EXECUTOR.execute(new Runnable() {
+    //                     @Override
+    //                     public void run() {
+    //                         CoreDB.i().articleDao().update(article);
+    //                     }
+    //                 });
+    //             }
+    //         });
+    //     } else {
+    //         article.setReadStatus(App.STATUS_READED);
+    //         AsyncTask.THREAD_POOL_EXECUTOR.execute(new Runnable() {
+    //             @Override
+    //             public void run() {
+    //                 CoreDB.i().articleDao().update(article);
+    //             }
+    //         });
+    //         App.i().getApi().markArticleReaded(article.getId(), new CallbackX() {
+    //             @Override
+    //             public void onSuccess(Object result) {
+    //             }
+    //
+    //             @Override
+    //             public void onFailure(Object error) {
+    //                 XLog.w("失败的原因是：" + error );
+    //                 article.setReadStatus(App.STATUS_UNREAD);
+    //                 AsyncTask.THREAD_POOL_EXECUTOR.execute(new Runnable() {
+    //                     @Override
+    //                     public void run() {
+    //                         CoreDB.i().articleDao().update(article);
+    //                     }
+    //                 });
+    //             }
+    //         });
+    //     }
+    // }
 
     private void toggleStarState(final int position) {
         if (position < 0) {
             return;
         }
-
         XLog.i("切换加星状态" );
-        Article article = articlesAdapter.getArticle(position);
-        if(article == null){
-            return;
-        }
 
-        if (article.getStarStatus() == App.STATUS_STARED) {
-            article.setStarStatus(App.STATUS_UNSTAR);
-            CoreDB.i().articleDao().update(article);
-
-            App.i().getApi().markArticleUnstar(article.getId(), new CallbackX() {
-                @Override
-                public void onSuccess(Object result) {
-                }
-                @Override
-                public void onFailure(Object error) {
-                    article.setStarStatus(App.STATUS_STARED);
-                    CoreDB.i().articleDao().update(article);
-                }
-            });
-
-        } else {
-            article.setStarStatus(App.STATUS_STARED);
-            CoreDB.i().articleDao().update(article);
-            App.i().getApi().markArticleStared(article.getId(), new CallbackX() {
-                @Override
-                public void onSuccess(Object result) {
+        AsyncTask.THREAD_POOL_EXECUTOR.execute(new Runnable() {
+            @Override
+            public void run() {
+                Article article = articlesAdapter.getArticle(position);
+                if(article == null){
+                    return;
                 }
 
-                @Override
-                public void onFailure(Object error) {
+                if (article.getStarStatus() == App.STATUS_STARED) {
                     article.setStarStatus(App.STATUS_UNSTAR);
                     CoreDB.i().articleDao().update(article);
+
+                    App.i().getApi().markArticleUnstar(article.getId(), new CallbackX() {
+                        @Override
+                        public void onSuccess(Object result) {
+                        }
+                        @Override
+                        public void onFailure(Object error) {
+                            XLog.w("失败的原因是：" + error );
+                            article.setStarStatus(App.STATUS_STARED);
+                            CoreDB.i().articleDao().update(article);
+                        }
+                    });
+                } else {
+                    article.setStarStatus(App.STATUS_STARED);
+                    CoreDB.i().articleDao().update(article);
+                    App.i().getApi().markArticleStared(article.getId(), new CallbackX() {
+                        @Override
+                        public void onSuccess(Object result) {
+                        }
+
+                        @Override
+                        public void onFailure(Object error) {
+                            XLog.w("失败的原因是：" + error );
+                            article.setStarStatus(App.STATUS_UNSTAR);
+                            CoreDB.i().articleDao().update(article);
+                        }
+                    });
                 }
-            });
-        }
+            }
+        });
     }
+
+    // private void toggleStarState(final int position) {
+    //     if (position < 0) {
+    //         return;
+    //     }
+    //
+    //     XLog.i("切换加星状态" );
+    //     Article article = articlesAdapter.getArticle(position);
+    //     if(article == null){
+    //         return;
+    //     }
+    //
+    //     if (article.getStarStatus() == App.STATUS_STARED) {
+    //         article.setStarStatus(App.STATUS_UNSTAR);
+    //         AsyncTask.THREAD_POOL_EXECUTOR.execute(new Runnable() {
+    //             @Override
+    //             public void run() {
+    //                 CoreDB.i().articleDao().update(article);
+    //             }
+    //         });
+    //
+    //         App.i().getApi().markArticleUnstar(article.getId(), new CallbackX() {
+    //             @Override
+    //             public void onSuccess(Object result) {
+    //             }
+    //             @Override
+    //             public void onFailure(Object error) {
+    //                 XLog.w("失败的原因是：" + error );
+    //                 article.setStarStatus(App.STATUS_STARED);
+    //                 AsyncTask.THREAD_POOL_EXECUTOR.execute(new Runnable() {
+    //                     @Override
+    //                     public void run() {
+    //                         CoreDB.i().articleDao().update(article);
+    //                     }
+    //                 });
+    //             }
+    //         });
+    //     } else {
+    //         article.setStarStatus(App.STATUS_STARED);
+    //         AsyncTask.THREAD_POOL_EXECUTOR.execute(new Runnable() {
+    //             @Override
+    //             public void run() {
+    //                 CoreDB.i().articleDao().update(article);
+    //             }
+    //         });
+    //         App.i().getApi().markArticleStared(article.getId(), new CallbackX() {
+    //             @Override
+    //             public void onSuccess(Object result) {
+    //             }
+    //
+    //             @Override
+    //             public void onFailure(Object error) {
+    //                 XLog.w("失败的原因是：" + error );
+    //                 article.setStarStatus(App.STATUS_UNSTAR);
+    //                 AsyncTask.THREAD_POOL_EXECUTOR.execute(new Runnable() {
+    //                     @Override
+    //                     public void run() {
+    //                         CoreDB.i().articleDao().update(article);
+    //                     }
+    //                 });
+    //             }
+    //         });
+    //     }
+    // }
 
 
     // TODO: 2018/3/4 改用观察者模式。http://iaspen.cn/2015/05/09/观察者模式在android上的最佳实践
@@ -1345,7 +1484,7 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
     }
 
     public void onClickRefreshIcon(View view) {
-        refreshArticlesData();
+        loadArticlesData();
     }
 
     public void onClickQuickSettingIcon(View view) {
@@ -1428,8 +1567,8 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
                     toolbar.setNavigationIcon(R.drawable.ic_state_all);
                 }
                 CoreDB.i().userDao().update(user);
-                refreshArticlesData();
-                initCategoriesData();
+                loadArticlesData();
+                loadCategoriesData();
                 quickSettingDialog.dismiss();
             }
         });
@@ -1517,7 +1656,7 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
 
     private void openLoadingPopupView(){
         if(loadingPopupView == null){
-            loadingPopupView = new XPopup.Builder(MainActivity.this).asLoading(getString(R.string.loading));
+            loadingPopupView = new XPopup.Builder(MainActivity.this).asLoading();
         }
         loadingPopupView.show();
     }

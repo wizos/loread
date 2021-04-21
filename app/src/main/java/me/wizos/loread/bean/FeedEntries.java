@@ -32,16 +32,19 @@ public class FeedEntries {
     Feed feed;
     List<FeedCategory> feedCategories;
     List<Article> articles;
+    List<String> guids;
     Map<String, Article> articleMap;
 
     public void from(Feed feed, SyndFeed remoteFeed, Converter.ArticleConvertListener convertListener) {
         this.feed = Converter.updateFrom(feed, remoteFeed);
         this.articles = new ArrayList<>(remoteFeed.getEntries().size());
+        this.guids = new ArrayList<>(remoteFeed.getEntries().size());
         this.articleMap = new ArrayMap<>(remoteFeed.getEntries().size());
         Article article;
         for (SyndEntry entry: remoteFeed.getEntries()){
             article = Converter.from(feed, entry, convertListener);
             articles.add(article);
+            guids.add(article.getGuid());
             articleMap.put(article.getId(), article);
         }
         success = true;
@@ -50,11 +53,13 @@ public class FeedEntries {
     public void from(Feed feed, JsonFeed remoteFeed, Converter.ArticleConvertListener convertListener) {
         this.feed = Converter.updateFrom(feed, remoteFeed);
         this.articles = new ArrayList<>(remoteFeed.getItems().size());
+        this.guids = new ArrayList<>(remoteFeed.getItems().size());
         this.articleMap = new ArrayMap<>(remoteFeed.getItems().size());
         Article article;
         for (JsonItem entry: remoteFeed.getItems()){
             article = Converter.from(feed.getUid(), feed.getId(), feed.getTitle(), entry, convertListener);
             articles.add(article);
+            guids.add(article.getGuid());
             articleMap.put(article.getId(), article);
         }
         success = true;
@@ -91,6 +96,10 @@ public class FeedEntries {
 
     public void setArticles(List<Article> articleList) {
         this.articles = articleList;
+    }
+
+    public List<String> getGuids() {
+        return guids;
     }
 
     public Map<String, Article> getArticleMap() {

@@ -89,7 +89,7 @@ public class ArticleUtils {
 
         FileUtils.save(filePathTitle + ".html", html);
         FileUtils.moveDir(App.i().getUserFilesDir() + "/cache/" + articleIdInMD5 + "/original", filePathTitle + "_files");
-        XLog.e("保存文件夹：" + filePathTitle + " , " + App.i().getUserFilesDir() + "/cache/" + articleIdInMD5 + "/original");
+        XLog.i("保存文件夹：" + filePathTitle + " , " + App.i().getUserFilesDir() + "/cache/" + articleIdInMD5 + "/original");
     }
 
     public static String getPageForDisplay(Article article) {
@@ -954,6 +954,26 @@ public class ArticleUtils {
         }
     }
 
+    public static String getOptimizedAuthor(String feedTitle, String articleAuthor) {
+        if (StringUtils.isEmpty(feedTitle)) {
+            if (StringUtils.isEmpty(articleAuthor)) {
+                return "";
+            }else {
+                return articleAuthor;
+            }
+        }
+        if(StringUtils.isEmpty(articleAuthor)){
+            return "";
+        }
+
+        if (feedTitle.toLowerCase().contains(articleAuthor.toLowerCase())) {
+            return feedTitle;
+        } else if (articleAuthor.toLowerCase().contains(feedTitle.toLowerCase())) {
+            return articleAuthor;
+        } else {
+            return feedTitle + " / " + articleAuthor;
+        }
+    }
 
     public static String getOptimizedContentWithEnclosures(String content, @Nullable List<Enclosure> attachments){
         if(content == null){

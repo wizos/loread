@@ -6,9 +6,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
-import org.jsoup.select.Selector;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -124,49 +122,6 @@ public class Distill {
             extractPage = new ExtractPage();
             extractPage.setMsg(App.i().getString(R.string.get_readability_failure_with_reason, e.getMessage()));
         }
-        return extractPage;
-    }
-
-    /*输入Jsoup的Document，获取正文文本*/
-    public ExtractPage getContentWithKeyword(String url, Document doc, String keyword) throws MalformedURLException {
-        URL uri = new URL(url);
-        ArticleExtractRule rule;
-        String content = null;
-        ExtractPage extractPage = new ExtractPage();
-        rule = ArticleExtractConfig.i().getRule(uri.getHost(),doc);
-        XLog.i("抓取规则："  + uri.getHost() + " ==  " + rule );
-        if(rule == null){
-            Element newDoc = new Extractor(doc).getContentElementWithKeyword(keyword);
-            if(newDoc == null){
-                extractPage.setMsg(App.i().getString(R.string.no_text_found));
-            }else {
-                content = newDoc.html();
-                if(StringUtils.isEmpty(content)){
-                    extractPage.setMsg(App.i().getString(R.string.no_text_found));
-                }else {
-                    try {
-                        ArticleExtractConfig.i().saveRuleByHost(doc, uri, newDoc.cssSelector());
-                    }catch (Selector.SelectorParseException | NullPointerException e){
-                        e.printStackTrace();
-                    }
-                }
-            }
-        }else {
-            content = getContentByRule(uri, doc, rule);
-            XLog.d("获取到的内容：" + content);
-            if(StringUtils.isEmpty(content)){
-                Element newDoc = new Extractor(doc).getContentElementWithKeyword(keyword);
-                if(newDoc == null){
-                    extractPage.setMsg(App.i().getString(R.string.no_text_found_by_rule_and_extractor, uri.getHost()));
-                }else {
-                    content = newDoc.html();
-                    if(StringUtils.isEmpty(content)){
-                        extractPage.setMsg(App.i().getString(R.string.no_text_found_by_rule_and_extractor, uri.getHost()));
-                    }
-                }
-            }
-        }
-        extractPage.setContent(content);
         return extractPage;
     }
 

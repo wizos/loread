@@ -51,7 +51,6 @@
         <RelativeLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent">
-
             <me.wizos.loread.view.IconFontView
                 android:id="@+id/main_placeholder"
                 android:layout_width="wrap_content"

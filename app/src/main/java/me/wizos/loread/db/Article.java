@@ -17,7 +17,11 @@ import me.wizos.loread.utils.ArticleUtils;
  * Created by Wizos on 2020/3/17.
  */
 @Entity(primaryKeys = {"id","uid"},
-        indices = { @Index({"id"}),@Index({"uid"}),@Index({"title"}),@Index({"feedId","uid"}),@Index({"readStatus"}),@Index({"starStatus"}),@Index({"saveStatus"})},
+        indices = {@Index({"id"}), @Index({"uid"}), @Index({"title"}),@Index({"feedId","uid"}),
+                @Index({"uid","readStatus"}),@Index({"uid","starStatus"}),@Index({"uid","crawlDate"})
+                // @Index({"readStatus"}),@Index({"starStatus"}),@Index({"saveStatus"})
+                // @Index({"readUpdated"}), @Index({"starUpdated"}), @Index({"pubDate"}), @Index({"crawlDate"})
+                },
         foreignKeys = @ForeignKey(entity = User.class, parentColumns = "id", childColumns = "uid")
         )
 public class Article implements Cloneable{

@@ -227,7 +227,6 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
         outState.putString(Contract.ARTICLE_ID, articleId);
         outState.putInt(Contract.ARTICLE_NO, articleNo);
         outState.putInt(Contract.ARTICLE_PROGRESS, saveArticleProgress());
-        outState.putInt("theme", App.i().getUser().getThemeMode());
         //XLog.i("自动保存：" + articleNo + "==" + "==" + articleId);
         super.onSaveInstanceState(outState);
     }
@@ -367,7 +366,6 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
                                     webViewMenu.dismiss();
                                     Intent intent = new Intent(ArticleActivity.this, WebActivity.class);
                                     intent.setData(Uri.parse(link));
-                                    intent.putExtra("theme", App.i().getUser().getThemeMode());
                                     startActivity(intent);
                                     overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
                                 }
@@ -383,8 +381,10 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
                                         // 创建普通字符型ClipData
                                         ClipData mClipData = ClipData.newRawUri("url", Uri.parse(link));
                                         // 将ClipData内容放到系统剪贴板里。
-                                        cm.setPrimaryClip(mClipData);
-                                        ToastUtils.show(getString(R.string.copy_success));
+                                        if(cm!=null){
+                                            cm.setPrimaryClip(mClipData);
+                                            ToastUtils.show(getString(R.string.copy_success));
+                                        }
                                     }
                                 });
                         popWindow.findViewById(R.id.webview_share_link)
@@ -664,8 +664,11 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
     public void downFile(String url){
         StringBuilder stringBuilder = new StringBuilder();
         if(selectedArticle != null){
-            Feed feed = CoreDB.i().feedDao().getById(App.i().getUser().getId(), selectedArticle.getFeedId());
-            stringBuilder.append(ArticleUtils.getOptimizedAuthor(feed, selectedArticle.getAuthor()));
+            if(selectedFeed == null){
+                stringBuilder.append(selectedArticle.getAuthor());
+            }else {
+                stringBuilder.append(ArticleUtils.getOptimizedAuthor(selectedFeed.getTitle(), selectedArticle.getAuthor()));
+            }
             stringBuilder.append("_");
             stringBuilder.append(TimeUtils.format(selectedArticle.getPubDate(), "yyMMdd-HHmm"));
             String fileName = ArticleUtils.getExtractedTitle(selectedArticle.getSummary());
@@ -704,7 +707,6 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
         if(App.i().getUser().isOpenLinkBySysBrowser() && (url.startsWith(SCHEMA_HTTP) || url.startsWith(SCHEMA_HTTPS))){
             intent = new Intent(ArticleActivity.this, WebActivity.class);
             intent.setData(Uri.parse(url));
-            // intent.putExtra("theme", App.i().getUser().getThemeMode());
         }else{
             intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
             List<ResolveInfo> activities = getPackageManager().queryIntentActivities(intent, PackageManager.MATCH_DEFAULT_ONLY);
@@ -734,12 +736,10 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
                 } else {
                     intent = new Intent(ArticleActivity.this, WebActivity.class);
                     intent.setData(Uri.parse(url));
-                    intent.putExtra("theme", App.i().getUser().getThemeMode());
                 }
             }else {
                 intent = new Intent(ArticleActivity.this, WebActivity.class);
                 intent.setData(Uri.parse(url));
-                intent.putExtra("theme", App.i().getUser().getThemeMode());
             }
         }
         // 添加这一句表示对目标应用临时授权该Uri所代表的文件
@@ -945,13 +945,7 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
                     return;
                 }
 
-                // 内容未变的时候不要重新载入内容
-                // String oldArticleContent = selectedArticle == null ? null :selectedArticle.getContent();
-                // if(!article.getContent().equals(oldArticleContent)){
-                //     swipeRefreshLayoutS.setRefreshing(false);
-                //     // swipeRefreshLayoutS.finishRefresh();
-                //     loadWebViewContent(article);
-                // }
+                selectedFeed = CoreDB.i().feedDao().getById(App.i().getUser().getId(), article.getFeedId());
 
                 if(selectedArticle == null ||
                         !selectedArticle.getContent().equals(article.getContent()) ||
@@ -959,11 +953,9 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
                         !selectedArticle.getFeedTitle().equals(article.getFeedTitle()) ){
                     // swipeRefreshLayoutS.finishRefresh();
                     swipeRefreshLayoutS.setRefreshing(false);
-                    loadWebViewContent(article);
+                    loadWebViewContent(selectedFeed, article);
                 }
-
                 selectedArticle = article;
-                selectedFeed = CoreDB.i().feedDao().getById(App.i().getUser().getId(), article.getFeedId());
 
                 // XLog.d("加载文章");
                 initIconState(selectedFeed, selectedArticle);
@@ -1076,7 +1068,6 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
                                                     webViewMenu.dismiss();
                                                     Intent intent = new Intent(ArticleActivity.this, WebActivity.class);
                                                     intent.setData(Uri.parse(link));
-                                                    intent.putExtra("theme", App.i().getUser().getThemeMode());
                                                     startActivity(intent);
                                                     overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
                                                 }
@@ -1092,8 +1083,10 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
                                                         // 创建普通字符型ClipData
                                                         ClipData mClipData = ClipData.newRawUri("url", Uri.parse(link));
                                                         // 将ClipData内容放到系统剪贴板里。
-                                                        cm.setPrimaryClip(mClipData);
-                                                        ToastUtils.show(getString(R.string.copy_success));
+                                                        if(cm!=null){
+                                                            cm.setPrimaryClip(mClipData);
+                                                            ToastUtils.show(getString(R.string.copy_success));
+                                                        }
                                                     }
                                                 });
                                         popWindow.findViewById(R.id.webview_share_link)
@@ -1104,8 +1097,6 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
                                                         Intent sendIntent = new Intent(Intent.ACTION_SEND);
                                                         sendIntent.setType("text/plain");
                                                         sendIntent.putExtra(Intent.EXTRA_TEXT, link);
-                                                        //sendIntent.setData(Uri.parse(status.getExtra()));
-                                                        //sendIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                                                         startActivity(Intent.createChooser(sendIntent, getString(R.string.share_to)));
                                                     }
                                                 });
@@ -1120,10 +1111,9 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
     }
 
 
-    private void loadWebViewContent(Article article){
+    private void loadWebViewContent(Feed feed, Article article){
         // 检查该订阅源默认显示什么。【RSS，已读，保存的网页，原始网页】
         // XLog.e("要加载的位置为：" + position + "  " + selectedArticle.getTitle());
-        Feed feed = CoreDB.i().feedDao().getById(App.i().getUser().getId(), article.getFeedId());
         if (feed != null) {
             toolbar.setTitle(feed.getTitle());
             if(feed.getDisplayMode() == App.OPEN_MODE_LINK){
@@ -1839,7 +1829,6 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
         String info = selectedArticle.getTitle() + "\n" +
                 "ID=" + selectedArticle.getId() + "\n" +
                 "ID-MD5=" + EncryptUtils.MD5(selectedArticle.getId()) + "\n" +
-                "Link-MD5=" + EncryptUtils.MD5(selectedArticle.getLink()) + "\n" +
                 "Uid=" + selectedArticle.getUid() + "\n" +
                 "ReadState=" + selectedArticle.getReadStatus() + "\n" +
                 "ReadUpdated=" + selectedArticle.getReadUpdated() + "\n" +
@@ -1979,9 +1968,7 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
                 overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
                 break;
             case R.id.article_menu_feed:
-                final Feed feed = CoreDB.i().feedDao().getById(App.i().getUser().getId(), selectedArticle.getFeedId());
-                //final View feedConfigView = findViewById(R.id.article_feed_config);
-                if (feed != null) {
+                if (selectedFeed != null) {
                     Intent intent = new Intent(ArticleActivity.this, FeedActivity.class);
                     intent.putExtra("feedId", selectedArticle.getFeedId());
                     startActivity(intent);

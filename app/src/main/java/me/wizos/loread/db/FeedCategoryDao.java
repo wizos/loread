@@ -56,6 +56,10 @@ public interface FeedCategoryDao {
     void delete(List<FeedCategory> feedCategories);
 
     @Transaction
+    @Query("DELETE FROM feedcategory WHERE uid = :uid AND categoryId = :categoryId")
+    void deleteByCategoryId(String uid, String categoryId);
+
+    @Transaction
     @Query("DELETE FROM feedcategory WHERE uid = (:uid) AND feedId = :feedId")
     void deleteByFeedId(String uid, String feedId);
 

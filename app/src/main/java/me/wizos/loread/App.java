@@ -192,29 +192,14 @@ public class App extends Application implements Thread.UncaughtExceptionHandler 
         super.onCreate();
         instance = this;
         MMKV.initialize(this);
-        CoreDB.init(this);
         LogHelper.init(this, CorePref.i().globalPref().getBoolean(Contract.ENABLE_LOGGING, false));
+        CoreDB.init(this);
 
         initVar();
         TimeHandler.init(this);
         ToastUtils.init(this, new ToastAliPayStyle(this));
 
         DoraemonKit.install(this, BuildConfig.DORAEMON_KIT_PRODUCT_ID);
-        // if(BuildConfig.DEBUG){
-        //     Matrix.Builder builder = new Matrix.Builder(this); // build matrix
-        //     builder.patchListener(new TestPluginListener(this)); // add general pluginListener
-        //     DynamicConfigImpl dynamicConfig = new DynamicConfigImpl(); // dynamic config
-        //     // init plugin
-        //     IOCanaryPlugin ioCanaryPlugin = new IOCanaryPlugin(new IOConfig.Builder()
-        //             .dynamicConfig(dynamicConfig)
-        //             .build());
-        //     //add to matrix
-        //     builder.plugin(ioCanaryPlugin);
-        //     //init matrix
-        //     Matrix.init(builder.build());
-        //     //start plugin
-        //     ioCanaryPlugin.start();
-        // }
 
         UMConfigure.init(this, UMConfigure.DEVICE_TYPE_PHONE,"");
         // 打开统计SDK调试模式
@@ -222,7 +207,7 @@ public class App extends Application implements Thread.UncaughtExceptionHandler 
         // 子进程是否支持自定义事件统计。参数：boolean 默认不使用
         UMConfigure. setProcessEvent(false);
 
-        XLog.i("App 版本：" + VersionUtils.getVersionName(this));
+        XLog.i("App 版本号：" + VersionUtils.getVersionName(this));
         XLog.i("UMeng 信息：" + Arrays.toString(UMConfigure.getTestDeviceInfo(this)));
         if(BuildConfig.DEBUG){
             MobclickAgent.setPageCollectionMode(MobclickAgent.PageMode.MANUAL);
@@ -238,7 +223,7 @@ public class App extends Application implements Thread.UncaughtExceptionHandler 
         CorePref.i().globalPref().putString(Contract.USER_AGENT, WebSettings.getDefaultUserAgent(this));
 
         PackageInfo webViewPackageInfo = WebViewCompat.getCurrentWebViewPackage(this);
-        XLog.i("WebView 版本: " + (webViewPackageInfo == null ? "" :webViewPackageInfo.versionName) );
+        XLog.i("WebView 版本号: " + (webViewPackageInfo == null ? "" :webViewPackageInfo.versionName) );
 
         WebView.setWebContentsDebuggingEnabled(BuildConfig.DEBUG);
         if(BuildConfig.DEBUG) AgentWebConfig.debug();

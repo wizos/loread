@@ -19,7 +19,7 @@ import me.wizos.loread.R;
 
 
 public class TimeHandler extends BroadcastReceiver {
-    private static TimeHandler instance;
+    private static volatile TimeHandler instance;
     private TimeHandler(Context context){
         IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction(Intent.ACTION_TIME_TICK);
@@ -30,7 +30,7 @@ public class TimeHandler extends BroadcastReceiver {
     }
 
     public static TimeHandler init(Context context){
-        if (instance == null) { // 双重锁定，只有在 withDB 还没被初始化的时候才会进入到下一行，然后加上同步锁
+        if (instance == null) { // 双重锁定，只有在 coreDB 还没被初始化的时候才会进入到下一行，然后加上同步锁
             synchronized (TimeHandler.class) { // 同步锁，避免多线程时可能 new 出两个实例的情况
                 if (instance == null) {
                     instance = new TimeHandler(context);

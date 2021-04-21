@@ -1,7 +1,5 @@
 package me.wizos.loread.utils;
 
-import android.os.AsyncTask;
-
 import androidx.sqlite.db.SimpleSQLiteQuery;
 
 import com.elvishew.xlog.XLog;
@@ -47,15 +45,30 @@ public class TriggerRuleUtils {
     public static void exeAllRules(String uid, long minCrawlTimeMillis){
         List<TriggerRule> triggerRules = CoreDB.i().triggerRuleDao().getRules(uid);
         XLog.i("执行 triggerRules 规则：" + minCrawlTimeMillis);
-        AsyncTask.THREAD_POOL_EXECUTOR.execute(new Runnable() {
-            @Override
-            public void run() {
-                for (TriggerRule triggerRule:triggerRules){
-                    exeRule(uid, minCrawlTimeMillis, triggerRule);
-                }
-            }
-        });
+        for (TriggerRule triggerRule:triggerRules){
+            exeRule(uid, minCrawlTimeMillis, triggerRule);
+        }
     }
+
+    public static void exeRules(String uid, String type, String targetId, long minCrawlTimeMillis){
+        List<TriggerRule> triggerRules;
+        if(!StringUtils.isEmpty(targetId)){
+            if(Contract.TYPE_CATEGORY.equalsIgnoreCase(type)){
+                triggerRules = CoreDB.i().triggerRuleDao().getAboveCategoryRules(uid, targetId);
+            }else if(Contract.TYPE_FEED.equalsIgnoreCase(type)){
+                triggerRules = CoreDB.i().triggerRuleDao().getAboveFeedRules(uid, targetId);
+            }else {
+                triggerRules = CoreDB.i().triggerRuleDao().getRules(uid);
+            }
+        }else {
+            triggerRules = CoreDB.i().triggerRuleDao().getRules(uid);
+        }
+        for (TriggerRule triggerRule:triggerRules){
+            exeRule(uid, minCrawlTimeMillis, triggerRule);
+        }
+    }
+
+
 
     /**
      * 执行规则

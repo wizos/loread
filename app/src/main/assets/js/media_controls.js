@@ -1,19 +1,5 @@
 LoreadBridge.log('开始嵌入控制器脚本');
 $(document).ready(function(e) {
-    LoreadBridge.log('嗅探多媒体');
-    var iframes = document.getElementsByTagName("iframe");
-    for (var i = 0; i < iframes.length; i++) {
-        foundFrame(iframes[i])
-    }
-    var videos = document.getElementsByTagName("video");
-    for (var i = 0; i < videos.length; i++) {
-        foundVideo(videos[i])
-    }
-    var audios = document.getElementsByTagName("audio");
-    for (var i = 0; i < audios.length; i++) {
-        foundAudio(audios[i])
-    }
-
     LoreadBridge.log('监听是否动态增加 iframe, video，audio');
     const mediaObserver = new MutationObserver(function(records) {
         records.forEach((record, index, records) => {
@@ -34,6 +20,19 @@ $(document).ready(function(e) {
     });
     mediaObserver.observe(document.body, {attributes: false,childList: true,subtree: true});
 
+    LoreadBridge.log('嗅探多媒体');
+    var iframes = document.getElementsByTagName("iframe");
+    for (var i = 0; i < iframes.length; i++) {
+        foundFrame(iframes[i])
+    }
+    var videos = document.getElementsByTagName("video");
+    for (var i = 0; i < videos.length; i++) {
+        foundVideo(videos[i])
+    }
+    var audios = document.getElementsByTagName("audio");
+    for (var i = 0; i < audios.length; i++) {
+        foundAudio(audios[i])
+    }
 
     function getScrollTop(videoElement) {
         if (!videoElement.window) {
@@ -176,25 +175,12 @@ $(document).ready(function(e) {
                 $(this).removeClass("loread__control--pressed");
                 if (document.exitFullscreen) {
                     document.exitFullscreen();
-                } else if (document.webkitCancelFullScreen) {
-                    document.webkitCancelFullScreen();
-                } else if (document.mozCancelFullScreen) {
-                    document.mozCancelFullScreen();
-                } else if (document.msExitFullscreen) {
-                    document.msExitFullscreen();
                 }
                 LoreadBridge.log("请求全屏");
             }else{
                 $(this).addClass("loread__control--pressed");
                 if (el.requestFullscreen) {
                     el.requestFullscreen();
-                } else if (el.webkitRequestFullScreen) {
-                    el.webkitRequestFullScreen();
-                } else if (el.mozRequestFullScreen) {
-                    el.mozRequestFullScreen();
-                } else if (el.msRequestFullscreen) {
-                    // IE11
-                    el.msRequestFullscreen();
                 }
                 LoreadBridge.log("取消全屏");
             }

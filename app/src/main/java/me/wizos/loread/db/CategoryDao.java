@@ -68,15 +68,15 @@ public interface CategoryDao {
     void updateName(String uid, String id, String newName);
 
     @Transaction
-    @Query("UPDATE category SET allCount = (SELECT SUM(feed.allCount) FROM feed LEFT JOIN feedCategory ON feed.uid = feedCategory.uid AND feed.id = feedCategory.feedId WHERE feed.uid = category.uid AND feedCategory.categoryId = category.id AND feedCategory.categoryId IS NOT NULL) WHERE uid = :uid")
+    @Query("UPDATE category SET allCount = IFNULL((SELECT SUM(feed.allCount) FROM feed LEFT JOIN feedCategory ON feed.uid = feedCategory.uid AND feed.id = feedCategory.feedId WHERE feed.uid = category.uid AND feedCategory.categoryId = category.id AND feedCategory.categoryId IS NOT NULL), 0) WHERE uid = :uid")
     void updateAllCount(String uid);
 
     @Transaction
-    @Query("UPDATE category SET unreadCount = (SELECT SUM(feed.unreadCount) FROM feed LEFT JOIN feedCategory ON feed.uid = feedCategory.uid AND feed.id = feedCategory.feedId WHERE feed.uid = category.uid AND feedCategory.categoryId = category.id AND feedCategory.categoryId IS NOT NULL) WHERE uid = :uid")
+    @Query("UPDATE category SET unreadCount = IFNULL((SELECT SUM(feed.unreadCount) FROM feed LEFT JOIN feedCategory ON feed.uid = feedCategory.uid AND feed.id = feedCategory.feedId WHERE feed.uid = category.uid AND feedCategory.categoryId = category.id AND feedCategory.categoryId IS NOT NULL), 0) WHERE uid = :uid")
     void updateUnreadCount(String uid);
 
     @Transaction
-    @Query("UPDATE category SET starCount = (SELECT SUM(feed.starCount) FROM feed LEFT JOIN feedCategory ON feed.uid = feedCategory.uid AND feed.id = feedCategory.feedId WHERE feed.uid = category.uid AND feedCategory.categoryId = category.id AND feedCategory.categoryId IS NOT NULL) WHERE uid = :uid")
+    @Query("UPDATE category SET starCount = IFNULL((SELECT SUM(feed.starCount) FROM feed LEFT JOIN feedCategory ON feed.uid = feedCategory.uid AND feed.id = feedCategory.feedId WHERE feed.uid = category.uid AND feedCategory.categoryId = category.id AND feedCategory.categoryId IS NOT NULL), 0) WHERE uid = :uid")
     void updateStarCount(String uid);
 
     @Update
@@ -90,6 +90,9 @@ public interface CategoryDao {
     @Delete
     @Transaction
     void delete(Category... categories);
+
+    @Query("DELETE FROM category WHERE uid = :uid AND id = :id" )
+    void delete(String uid, String id);
 
     @Transaction
     @Query("DELETE FROM category WHERE uid = :uid")

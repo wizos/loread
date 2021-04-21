@@ -595,7 +595,7 @@ public class SearchActivity extends BaseActivity {
                             return;
                         }
                         view.setEnabled(false);
-                        App.i().getApi().unsubscribeFeed(feed.getId(), new CallbackX() {
+                        App.i().getApi().deleteFeed(feed.getId(), new CallbackX() {
                             @Override
                             public void onSuccess(Object result) {
                                 CoreDB.i().feedDao().deleteByFeedUrl(App.i().getUser().getId(), searchFeed.getFeedUrl());

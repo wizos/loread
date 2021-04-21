@@ -99,6 +99,7 @@
     <string name="unable_to_find_app">没有找到对应的应用</string>
 
 
+    <!--<string name="sync_feed">没有订阅源需要更新</string>-->
     <string name="sync_feed">同步订阅源[%1$s / %2$d]</string>
     <string name="step_sync_feed_info">%1$s 同步订阅源信息</string>
 
@@ -340,6 +341,7 @@
         <item>未读数量</item>
         <item>星标数量</item>
         <item>健康情况</item>
+        <item>最近发表</item>
     </string-array>
 
     <string-array name="exception">
@@ -562,8 +564,10 @@
     <string name="open_with">打开方式</string>
 
     <string name="feed_desc">简介</string>
+    <string name="pubDate">最近发表</string>
     <string name="article_count">文章数量</string>
     <string name="article_count_detail">全部 %1$d, 未读 %2$d, 收藏 %3$d</string>
+    <string name="article_count_detail_debug">全部 %1$d, 未读 %2$d, 收藏 %3$d, 保存 %4$d</string>
     <string name="site_url">站点网址</string>
     <string name="feed_url">订阅网址</string>
     <string name="feed_name">订阅源名称</string>
@@ -631,6 +635,8 @@
 
 
     <string name="content_of_feed_is_empty">Feed 内容为空</string>
+    <string name="content_of_feed_is_not_in_standard">Feed 内容格式不符合标准</string>
+    <string name="content_of_feed_unable_to_get">Feed 内容无法抓取</string>
 
     <string name="add_subscription">添加订阅</string>
     <string name="paste_subscription">从剪切板导入</string>
@@ -646,6 +652,7 @@
     <string name="url_is_not_accessible_with_reason">网址无法访问：%1$s</string>
 
     <string name="import_failed_feedback_to_the_developer">导入失败，请反馈给开发者</string>
+    <string name="not_imported">未导入</string>
     <string name="the_apk_does_not_exist">apk 不存在！</string>
     <string name="is_not_an_apk_file">不是 apk 文件！</string>
     <string name="no_search_results_found">未搜索到任何结果</string>

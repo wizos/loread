@@ -29,6 +29,9 @@ public class TimeUtils {
     }
 
     public static String readability(long timestamp) {
+        if(timestamp <= 0){
+            return "";
+        }
         // 如果“今天0点 <= 时间 < 今天24点59分”，则格式为“今天 HH:mm”
         // 如果“昨天0点 <= 时间 < 昨天24点59分”，则格式为“昨天 HH:mm”
         Calendar calendar = GregorianCalendar.getInstance(Locale.getDefault());

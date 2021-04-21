@@ -50,7 +50,6 @@ import com.just.agentweb.WebViewClient;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
-import java.lang.ref.WeakReference;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Map;
@@ -94,6 +93,7 @@ public class WebActivity extends BaseActivity implements WebBridge {
     private int downX, downY;
     private boolean isPortrait = true; //是否为竖屏
 
+    private VideoHelper videoHelper;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -172,6 +172,7 @@ public class WebActivity extends BaseActivity implements WebBridge {
                 .ready()//设置 WebSettings。
                 .go(link); //WebView载入该url地址的页面并显示。
 
+        videoHelper = new VideoHelper(this, agentWeb.getWebCreator().getWebView());
         WebSettings webSettings = agentWeb.getWebCreator().getWebView().getSettings();
         // webSettings.setHorizontalScrollBarEnabled(false);
         webSettings.setTextZoom(100);
@@ -302,10 +303,14 @@ public class WebActivity extends BaseActivity implements WebBridge {
     public boolean onKeyDown(int keyCode, KeyEvent event) {
         // 后者为短期内按下的次数
         if (keyCode == KeyEvent.KEYCODE_BACK && event.getRepeatCount() == 0) {
+            if (videoHelper != null && videoHelper.isFullScreen()) {
+                videoHelper.onHideCustomView();
+                return true;
+            }
             if (agentWeb.getWebCreator().getWebView().canGoBack()) {
-                if (WebActivity.this.getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE) {
-                    portrait();
-                }
+                // if (WebActivity.this.getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE) {
+                //     portrait();
+                // }
                 agentWeb.getWebCreator().getWebView().stopLoading();
                 agentWeb.back();
             } else {
@@ -452,7 +457,6 @@ public class WebActivity extends BaseActivity implements WebBridge {
     }
 
     protected WebChromeClient mWebChromeClient = new WebChromeClient() {
-        WeakReference<VideoHelper> video;
         @Override
         public void onReceivedTitle(WebView view, String title) {
             super.onReceivedTitle(view, title);
@@ -466,11 +470,8 @@ public class WebActivity extends BaseActivity implements WebBridge {
         @Override
         public void onShowCustomView(View view, CustomViewCallback callback) {
             super.onShowCustomView(view,callback);
-            if(video == null){
-                video = new WeakReference<>(new VideoHelper(WebActivity.this, agentWeb.getWebCreator().getWebView()));
-            }
-            if (video.get() != null) {
-                video.get().onShowCustomView(view, videoIsPortrait, callback);
+            if (videoHelper != null) {
+                videoHelper.onShowCustomView(view, videoIsPortrait, callback);
             }
             videoIsPortrait = false;
         }
@@ -479,12 +480,8 @@ public class WebActivity extends BaseActivity implements WebBridge {
         @Override
         public void onHideCustomView() {
             super.onHideCustomView();
-            // XLog.i("退出全屏");
-            if(video == null){
-                video = new WeakReference<>(new VideoHelper(WebActivity.this, agentWeb.getWebCreator().getWebView()));
-            }
-            if (video.get() != null) {
-                video.get().onHideCustomView();
+            if (videoHelper != null) {
+                videoHelper.onHideCustomView();
             }
         }
     };
@@ -805,6 +802,9 @@ public class WebActivity extends BaseActivity implements WebBridge {
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        if(videoHelper != null){
+            videoHelper.onDestroy();
+        }
         CookieManager.getInstance().flush();
         agentWeb.getWebCreator().getWebView().stopLoading();
         agentWeb.getWebCreator().getWebView().clearCache(true);

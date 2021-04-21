@@ -1,7 +1,6 @@
 package me.wizos.loread.adapter;
 
 import android.content.Context;
-import android.text.Html;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -32,7 +31,6 @@ import me.wizos.loread.R;
 import me.wizos.loread.config.HeaderRefererConfig;
 import me.wizos.loread.db.Article;
 import me.wizos.loread.db.CoreDB;
-import me.wizos.loread.db.Feed;
 import me.wizos.loread.service.TimeHandler;
 import me.wizos.loread.utils.StringUtils;
 import me.wizos.loread.view.IconFontView;
@@ -76,18 +74,20 @@ public class ArticlePagedListAdapter extends PagedListAdapter<Article, ArticlePa
     private static DiffUtil.ItemCallback<Article> DIFF_CALLBACK = new DiffUtil.ItemCallback<Article>() {
         @Override
         public boolean areItemsTheSame(Article oldArticle, Article newArticle) {
+            // XLog.d("文章：判断id是否一致");
             return oldArticle.getId().equals(newArticle.getId());
         }
 
         @Override
         public boolean areContentsTheSame(Article oldArticle, Article newArticle) {
+            // XLog.d("文章：判断内容是否一致");
             return oldArticle.getReadStatus() == newArticle.getReadStatus()
                     && oldArticle.getStarStatus() == newArticle.getStarStatus()
                     && oldArticle.getSaveStatus() == newArticle.getSaveStatus()
-                    && oldArticle.getTitle().equals(newArticle.getTitle())
-                    // && (oldArticle.getImage() != null && oldArticle.getImage().equals(newArticle.getImage()) )
+                    // && oldArticle.getTitle().equals(newArticle.getTitle())
+                    && (oldArticle.getTitle() != null ? oldArticle.getTitle().equals(newArticle.getTitle()) : newArticle.getTitle()==null)
                     && (oldArticle.getImage() != null ? oldArticle.getImage().equals(newArticle.getImage()) : newArticle.getImage()==null)
-                    && oldArticle.getSummary().equals(newArticle.getSummary());
+                    && (oldArticle.getSummary() != null ? oldArticle.getSummary().equals(newArticle.getSummary()) : newArticle.getSummary()==null);
         }
     };
 
@@ -169,12 +169,7 @@ public class ArticlePagedListAdapter extends PagedListAdapter<Article, ArticlePa
                 articleImg.setVisibility(View.GONE);
             }
 
-            Feed feed = CoreDB.i().feedDao().getById(App.i().getUser().getId(),article.getFeedId());
-            if (feed != null && !TextUtils.isEmpty(feed.getTitle())) {
-                articleFeed.setText(Html.fromHtml(feed.getTitle()));
-            } else {
-                articleFeed.setText(article.getFeedTitle());
-            }
+            articleFeed.setText(article.getFeedTitle());
 
             articlePublished.setText(TimeHandler.i().readability(article.getPubDate()));
 

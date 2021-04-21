@@ -114,6 +114,15 @@
                 style="@style/SettingItem"
                 android:text="清理因故未删的缓存文件"/>
 
+            <!--<Button-->
+            <!--    android:layout_width="match_parent"-->
+            <!--    android:onClick="deleteRepeatedGuidArticles"-->
+            <!--    android:gravity="center_vertical"-->
+            <!--    android:layout_gravity="center_vertical"-->
+            <!--    android:layout_height="50dp"-->
+            <!--    style="@style/SettingItem"-->
+            <!--    android:text="清理历史Guid的缓存文件"/>-->
+
             <Button
                 android:layout_width="match_parent"
                 android:onClick="deleteExpiredArticles"
@@ -122,6 +131,15 @@
                 android:layout_height="50dp"
                 style="@style/SettingItem"
                 android:text="清理过期已读数据"/>
+
+            <Button
+                android:layout_width="match_parent"
+                android:onClick="trimCount"
+                android:gravity="center_vertical"
+                android:layout_gravity="center_vertical"
+                android:layout_height="50dp"
+                style="@style/SettingItem"
+                android:text="重置文章计数"/>
 
             <Button
                 android:layout_width="match_parent"
