@@ -18,21 +18,28 @@ import me.wizos.loread.db.rule.TriggerRule;
 
 @Dao
 public interface TriggerRuleDao {
+    @Transaction
     @Query("SELECT * FROM Scope WHERE uid = :uid AND id = :id LIMIT 1")
     TriggerRule getRule(String uid, long id);
 
+    @Transaction
     @Query("SELECT * FROM Scope WHERE uid = :uid ORDER BY CASE WHEN type = 'global' THEN 0 WHEN type = 'category' THEN 1 ELSE 2 END, target COLLATE NOCASE ASC")
     List<TriggerRule> getRules(String uid);
+    @Transaction
     @Query("SELECT * FROM Scope WHERE uid = :uid ORDER BY CASE WHEN type = 'global' THEN 0 WHEN type = 'category' THEN 1 ELSE 2 END, target COLLATE NOCASE ASC")
     LiveData<List<TriggerRule>> getRulesLiveDate(String uid);
 
+    @Transaction
     @Query("SELECT * FROM Scope WHERE uid = :uid AND ((type = 'global') OR (type = 'category' AND target = :targetId)) ORDER BY CASE WHEN type = 'global' THEN 0 WHEN type = 'category' THEN 1 ELSE 2 END, target COLLATE NOCASE ASC")
     List<TriggerRule> getAboveCategoryRules(String uid, String targetId);
+    @Transaction
     @Query("SELECT * FROM Scope WHERE uid = :uid AND ((type = 'global') OR (type = 'category' AND target = :targetId)) ORDER BY CASE WHEN type = 'global' THEN 0 WHEN type = 'category' THEN 1 ELSE 2 END, target COLLATE NOCASE ASC")
     LiveData<List<TriggerRule>> getAboveCategoryRulesLiveDate(String uid, String targetId);
 
+    @Transaction
     @Query("SELECT Scope.* FROM Scope WHERE uid = :uid AND ((type = 'global') OR (type = 'category' AND target in (SELECT categoryId FROM FeedCategory WHERE uid = :uid AND feedId = :targetId)) OR (type = 'feed' AND target = :targetId)) ORDER BY CASE WHEN type = 'global' THEN 0 WHEN type = 'category' THEN 1 ELSE 2 END, target COLLATE NOCASE ASC")
     List<TriggerRule> getAboveFeedRules(String uid, String targetId);
+    @Transaction
     @Query("SELECT Scope.* FROM Scope " +
             // "LEFT JOIN Feed ON (target.uid = feed.uid AND target.target = feed.id AND target.type = 'feed')" +
             "WHERE uid = :uid AND ((type = 'global') OR (type = 'category' AND target in (SELECT categoryId FROM FeedCategory WHERE uid = :uid AND feedId = :targetId)) OR (type = 'feed' AND target = :targetId)) ORDER BY CASE WHEN type = 'global' THEN 0 WHEN type = 'category' THEN 1 ELSE 2 END, target COLLATE NOCASE ASC")

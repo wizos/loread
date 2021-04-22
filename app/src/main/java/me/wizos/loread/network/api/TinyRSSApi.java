@@ -149,7 +149,7 @@ public class TinyRSSApi extends AuthApi implements ILogin {
 
     @Override
     public void sync() {
-        long startSyncTimeMillis = App.i().getLastShowTimeMillis() + 3600_000;
+        long startSyncTimeMillis = System.currentTimeMillis() + 3600_000;
         String uid = App.i().getUser().getId();
         try {
             // TinyResponse<ApiLevel> apiLevelTinyResponse = service.getApiLevel(new GetApiLevel(getAuthorization())).execute().body();

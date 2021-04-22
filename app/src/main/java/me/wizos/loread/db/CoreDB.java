@@ -1,7 +1,6 @@
 package me.wizos.loread.db;
 
 import android.content.Context;
-import android.os.AsyncTask;
 
 import androidx.annotation.NonNull;
 import androidx.room.Database;
@@ -11,6 +10,7 @@ import androidx.room.migration.Migration;
 import androidx.sqlite.db.SupportSQLiteDatabase;
 
 import com.elvishew.xlog.XLog;
+import com.tencent.wcdb.room.db.WCDBOpenHelperFactory;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -34,7 +34,7 @@ import me.wizos.loread.db.rule.Scope;
 @Database(
         entities = {User.class,Article.class,Feed.class,Category.class, FeedCategory.class, Tag.class, ArticleTag.class, Scope.class, Condition.class, Action.class},
         views = {FeedViewAllCount.class, FeedViewUnreadCount.class, FeedViewStarCount.class},
-        version = 9
+        version = 10
 )
 public abstract class CoreDB extends RoomDatabase {
     public static final String DATABASE_NAME = "loread.db";
@@ -132,14 +132,22 @@ public abstract class CoreDB extends RoomDatabase {
     };
 
 
+    private static final Migration MIGRATION_9_10 = new Migration(9, 10) {
+        @Override
+        public void migrate(SupportSQLiteDatabase database) {
+            database.execSQL("DROP VIEW IF EXISTS FeedViewUnreadCount");
+            database.execSQL("CREATE VIEW `FeedViewUnreadCount` AS SELECT feed.uid, feed.id, a.unreadCount FROM feed INNER JOIN ( SELECT uid, feedId, COUNT(1) AS unreadCount FROM article WHERE readStatus IN (1, 3) GROUP BY uid, feedId ) a ON feed.uid = a.uid AND feed.id = a.feedId");
+        }
+    };
+
     // 设置爬取时间可以为null，但是实际验证是不允许为null的
     public static synchronized void init(Context context) {
         if(databaseInstance == null) {
             synchronized (CoreDB.class) { // 同步锁，避免多线程时可能 new 出两个实例的情况
                 if (databaseInstance == null) {
-                    // WCDBOpenHelperFactory factory = new WCDBOpenHelperFactory()
-                    //         .writeAheadLoggingEnabled(true)       // 打开WAL以及读写并发，可以省略让Room决定是否要打开
-                    //         .asyncCheckpointEnabled(true);        // 打开异步Checkpoint优化，不需要可以省略
+                    WCDBOpenHelperFactory factory = new WCDBOpenHelperFactory()
+                            .writeAheadLoggingEnabled(true)       // 打开WAL以及读写并发，可以省略让Room决定是否要打开
+                            .asyncCheckpointEnabled(true);        // 打开异步Checkpoint优化，不需要可以省略
                     XLog.i("数据库初始化");
                     databaseInstance = Room.databaseBuilder(context.getApplicationContext(), CoreDB.class, DATABASE_NAME)
                             .addCallback(new Callback() {
@@ -158,13 +166,14 @@ public abstract class CoreDB extends RoomDatabase {
                             .addMigrations(MIGRATION_6_7)
                             .addMigrations(MIGRATION_7_8)
                             .addMigrations(MIGRATION_8_9)
+                            .addMigrations(MIGRATION_9_10)
                             .allowMainThreadQueries()
-                            // .openHelperFactory(factory)
-                            // 设置日志模式, AUTOMATIC是默认行为, RAM低或者API16以下则无日志
-                            .setJournalMode(JournalMode.AUTOMATIC)
-                            //设置查询的线程池，一般不需要设置
-                            .setQueryExecutor(AsyncTask.THREAD_POOL_EXECUTOR)
-                            .setTransactionExecutor(AsyncTask.SERIAL_EXECUTOR)
+                            .openHelperFactory(factory)
+                            // // 设置日志模式, AUTOMATIC是默认行为, RAM低或者API16以下则无日志
+                            // .setJournalMode(JournalMode.AUTOMATIC)
+                            // //设置查询的线程池，一般不需要设置
+                            // .setQueryExecutor(AsyncTask.THREAD_POOL_EXECUTOR)
+                            // .setTransactionExecutor(AsyncTask.SERIAL_EXECUTOR)
                             .build();
                 }
             }

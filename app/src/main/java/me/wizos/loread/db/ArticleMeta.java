@@ -1,0 +1,228 @@
+package me.wizos.loread.db;
+
+
+import org.jetbrains.annotations.NotNull;
+
+import me.wizos.loread.App;
+
+public class ArticleMeta{
+    private String uid;
+    private String id;
+    // private String guid;
+    private String title;
+    // private String content;
+    private String summary;
+    private String image;
+    // private String enclosure; // 包含图片，视频等多媒体信息
+
+    // private String feedId;
+    // private String feedUrl;
+    private String feedTitle;
+    private String author;
+    private String link = "";
+    private long pubDate;
+    private long crawlDate;
+    private int readStatus = App.STATUS_UNREAD;
+    private int starStatus = App.STATUS_UNSTAR;
+    private int saveStatus = App.STATUS_NOT_FILED;
+    // private long readUpdated;
+    // private long starUpdated;
+
+    public String getUid() {
+        return uid;
+    }
+
+    public void setUid(String uid) {
+        this.uid = uid;
+    }
+
+    public String getId() {
+        return this.id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    // public String getGuid() {
+    //     return guid;
+    // }
+    //
+    // public void setGuid(String guid) {
+    //     this.guid = guid;
+    // }
+
+    public String getTitle() {
+        return this.title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    // public String getContent() {
+    //     return this.content;
+    // }
+    //
+    // public void setContent(String content) {
+    //     this.content = content;
+    // }
+
+    public String getSummary() {
+        return this.summary;
+    }
+
+    public void setSummary(String summary) {
+        this.summary = summary;
+    }
+
+    public String getImage() {
+        return this.image;
+    }
+
+    public void setImage(String image) {
+        this.image = image;
+    }
+
+    // public String getEnclosure() {
+    //     return this.enclosure;
+    // }
+    //
+    // public void setEnclosure(String enclosure) {
+    //     this.enclosure = enclosure;
+    // }
+    //
+    // public String getFeedId() {
+    //     return this.feedId;
+    // }
+    //
+    // public void setFeedId(String feedId) {
+    //     this.feedId = feedId;
+    // }
+    //
+    // public String getFeedUrl() {
+    //     return feedUrl;
+    // }
+    //
+    // public void setFeedUrl(String feedUrl) {
+    //     this.feedUrl = feedUrl;
+    // }
+
+    public String getFeedTitle() {
+        return this.feedTitle;
+    }
+
+    public void setFeedTitle(String feedTitle) {
+        this.feedTitle = feedTitle;
+    }
+
+    public String getAuthor() {
+        return this.author;
+    }
+
+    public void setAuthor(String author) {
+        this.author = author;
+    }
+
+    public String getLink() {
+        return this.link;
+    }
+
+    public void setLink(String link) {
+        this.link = link;
+    }
+
+    public long getPubDate() {
+        return this.pubDate;
+    }
+
+    public void setPubDate(long pubDate) {
+        this.pubDate = pubDate;
+    }
+
+    public long getCrawlDate() {
+        return this.crawlDate;
+    }
+
+    public void setCrawlDate(long crawlDate) {
+        this.crawlDate = crawlDate;
+    }
+
+    public int getReadStatus() {
+        return this.readStatus;
+    }
+
+    public void setReadStatus(int readStatus) {
+        this.readStatus = readStatus;
+    }
+
+    public int getStarStatus() {
+        return this.starStatus;
+    }
+
+    public void setStarStatus(int starStatus) {
+        this.starStatus = starStatus;
+    }
+
+    public int getSaveStatus() {
+        return this.saveStatus;
+    }
+
+    public void setSaveStatus(int saveStatus) {
+        this.saveStatus = saveStatus;
+    }
+
+    // public long getReadUpdated() {
+    //     return readUpdated;
+    // }
+    //
+    // public void setReadUpdated(long readUpdated) {
+    //     this.readUpdated = readUpdated;
+    // }
+    //
+    // public long getStarUpdated() {
+    //     return starUpdated;
+    // }
+
+    // public void setStarUpdated(long starUpdated) {
+    //     this.starUpdated = starUpdated;
+    // }
+
+    // public void updateContent(String content) {
+    //     this.content = ArticleUtils.getOptimizedContent(link, content);;
+    //     this.summary = ArticleUtils.getOptimizedSummary(content);
+    //     this.image = ArticleUtils.getCoverUrl(link, content);
+    // }
+    // public void updateContent(String link, String content) {
+    //     this.content = ArticleUtils.getOptimizedContent(link, content);;
+    //     this.summary = ArticleUtils.getOptimizedSummary(content);
+    //     this.image = ArticleUtils.getCoverUrl(link, content);
+    // }
+
+    @NotNull
+    @Override
+    public String toString() {
+        return "Article{" +
+                "id='" + id + '\'' +
+                ", uid='" + uid + '\'' +
+                // ", guid='" + guid + '\'' +
+                ", title='" + title + '\'' +
+                ", summary='" + summary + '\'' +
+                ", image='" + image + '\'' +
+                // ", enclosure='" + enclosure + '\'' +
+                // ", feedId='" + feedId + '\'' +
+                // ", feedUrl='" + feedUrl + '\'' +
+                ", feedTitle='" + feedTitle + '\'' +
+                ", author='" + author + '\'' +
+                ", link='" + link + '\'' +
+                ", pubDate=" + pubDate +
+                ", crawlDate=" + crawlDate +
+                ", readStatus=" + readStatus +
+                ", starStatus=" + starStatus +
+                ", saveStatus=" + saveStatus +
+                // ", readUpdated=" + readUpdated +
+                // ", starUpdated=" + starUpdated +
+                // ", content='" + content +
+                '}';
+    }
+}

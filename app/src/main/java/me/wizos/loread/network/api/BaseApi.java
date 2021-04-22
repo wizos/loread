@@ -465,7 +465,7 @@ public abstract class BaseApi {
             Distill distill = new Distill(url, article.getLink(), keyword, new Distill.Listener() {
                 @Override
                 public void onResponse(ExtractPage page) {
-                    article.updateContent(ArticleUtils.getOptimizedContent(finalUrl, page.getContent()));
+                    article.updateContent(finalUrl, page.getContent());
                     CoreDB.i().articleDao().update(article);
                 }
 

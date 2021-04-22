@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/web2_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fitsSystemWindows="true"
+    android:addStatesFromChildren="true"
+    android:windowDrawsSystemBarBackgrounds="true"
+    tools:context="me.wizos.loread.activity.Web2Activity">
+
+    <com.google.android.material.appbar.AppBarLayout
+        android:id="@+id/web2_appBarLayout"
+        android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        <androidx.appcompat.widget.Toolbar
+            android:id="@+id/web2_toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            android:background="?attr/topbar_bg"
+            app:navigationIcon="@drawable/ic_close"
+            app:contentInsetStartWithNavigation="0dp"
+            app:subtitleTextAppearance="@style/MyToolbar.SubTitle"
+            app:popupTheme="@style/OverflowMenuStyle"
+            app:layout_scrollFlags="enterAlways|snap"
+            tools:title="网页标题" />
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <FrameLayout
+        android:id="@+id/web2_layout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:persistentDrawingCache="animation"
+        android:background="?attr/root_view_bg"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior" >
+        <WebView
+            android:id="@+id/web2_webview"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"/>
+    </FrameLayout>
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

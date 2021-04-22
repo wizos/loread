@@ -143,8 +143,11 @@ public class FeedActivity extends BaseActivity {
     @BindView(R.id.feed_view_info)
     TextView feedInfoButton;
 
-    @BindView(R.id.feed_refetch)
-    TextView refetchButton;
+    @BindView(R.id.feed_fetch_articles_skip)
+    TextView fetchArticlesSkipButton;
+
+    @BindView(R.id.feed_fetch_articles_overwrite)
+    TextView fetchArticlesOverwriteButton;
 
     @BindView(R.id.feed_view_rules)
     TextView viewRulesButton;
@@ -274,14 +277,16 @@ public class FeedActivity extends BaseActivity {
         if(App.i().getApi() instanceof LocalApi){
             siteLinkEditButton.setVisibility(View.VISIBLE);
             rssLinkEditButton.setVisibility(View.VISIBLE);
-            refetchButton.setVisibility(View.VISIBLE);
+            fetchArticlesSkipButton.setVisibility(View.VISIBLE);
+            fetchArticlesOverwriteButton.setVisibility(View.VISIBLE);
         }else {
             siteLinkEditButton.setVisibility(View.GONE);
             rssLinkEditButton.setVisibility(View.GONE);
-            refetchButton.setVisibility(View.GONE);
+            fetchArticlesSkipButton.setVisibility(View.GONE);
+            fetchArticlesOverwriteButton.setVisibility(View.GONE);
         }
 
-        refetchButton.setOnClickListener(new View.OnClickListener() {
+        fetchArticlesSkipButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 if(!UriUtils.isHttpOrHttpsUrl(feed.getFeedUrl())){
@@ -373,71 +378,107 @@ public class FeedActivity extends BaseActivity {
 
                 getting.policy(Getting.BOTH_OKHTTP_FIRST);
                 getting.start();
-
-                // Request.Builder request = new Request.Builder().url(feed.getFeedUrl());
-                // request.header(Contract.USER_AGENT, WebSettings.getDefaultUserAgent(App.i()));
-                // HttpClientManager.i().searchClient().newCall(request.build()).enqueue(new Callback() {
-                //     @Override
-                //     public void onFailure(@NotNull Call call, @NotNull IOException e) {
-                //         ToastUtils.show(getString(R.string.fetch_failed_with_reason, e.getLocalizedMessage()));
-                //     }
-                //
-                //     @Override
-                //     public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
-                //         if(!response.isSuccessful()){
-                //             ToastUtils.show(getString(R.string.fetch_failed_with_reason, StringUtils.isEmpty(response.message()) ? response.code(): (response.code() + "," + response.message())) );
-                //         }else {
-                //             ResponseBody responseBody = response.body();
-                //             if(responseBody == null){
-                //                 ToastUtils.show(getString(R.string.fetch_failed_with_reason, getString(R.string.return_data_exception)));
-                //             }else {
-                //                 FeedEntries feedEntries = FeedParserUtils.parseResponseBody(FeedActivity.this, feed, responseBody, new Converter.ArticleConvertListener() {
-                //                     @Override
-                //                     public Article onEnd(Article article) {
-                //                         article.setCrawlDate(App.i().getLastShowTimeMillis());
-                //                         return article;
-                //                     }
-                //                 });
-                //                 if(feedEntries == null){
-                //                     ToastUtils.show(getString(R.string.fetch_failed));
-                //                 }else if(!feedEntries.isSuccess()){
-                //                     ToastUtils.show(getString(R.string.fetch_failed_with_reason, feedEntries.getFeed().getLastSyncError()));
-                //                 }else {
-                //                     AsyncTask.THREAD_POOL_EXECUTOR.execute(new Runnable() {
-                //                         @Override
-                //                         public void run() {
-                //                             Map<String, Article> articleMap = feedEntries.getArticleMap();
-                //                             String uid = App.i().getUser().getId();
-                //                             PagingUtils.slice(new ArrayList<>(articleMap.keySet()), 50, new PagingUtils.PagingListener<String>() {
-                //                                 @Override
-                //                                 public void onPage(@NotNull List<String> childList) {
-                //                                     List<String> removeIds = CoreDB.i().articleDao().getIds(uid, childList);
-                //                                     if(removeIds != null){
-                //                                         for (String id: removeIds){
-                //                                             articleMap.remove(id);
-                //                                         }
-                //                                     }
-                //                                 }
-                //                             });
-                //                             ArrayList<Article> newArticles = new ArrayList<>(articleMap.values());
-                //                             for (Article article: newArticles){
-                //                                 article.setCrawlDate(App.i().getLastShowTimeMillis());
-                //                             }
-                //                             CoreDB.i().articleDao().insert(newArticles);
-                //                             BaseApi.updateCollectionCount();
-                //                             ToastUtils.show(getString(R.string.fetch_success_with_reason, newArticles.size()));
-                //                             if(newArticles.size() > 0){
-                //                                 LiveEventBus.get(SyncWorker.NEW_ARTICLE_NUMBER).post(newArticles.size());
-                //                             }
-                //                         }
-                //                     });
-                //                 }
-                //             }
-                //         }
-                //     }
-                // });
             }
         });
+        fetchArticlesOverwriteButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(!UriUtils.isHttpOrHttpsUrl(feed.getFeedUrl())){
+                    ToastUtils.show(R.string.invalid_url_hint);
+                    return;
+                }
+                ToastUtils.show(R.string.fetching);
+                feed.setLastSyncTime(System.currentTimeMillis());
+
+                if(getting != null){
+                    getting.destroy();
+                }
+                getting = new Getting(feed.getFeedUrl(), new Getting.Listener() {
+                    @Override
+                    public void onResponse(InputStreamCache inputStreamCache) {
+                        long syncTime = App.i().getLastShowTimeMillis();
+                        FeedEntries feedEntries = FeedParserUtils.parseInputSteam(FeedActivity.this, feed, inputStreamCache, new Converter.ArticleConvertListener() {
+                            @Override
+                            public Article onEnd(Article article) {
+                                article.setCrawlDate(syncTime);
+                                return article;
+                            }
+                        });
+                        if(feedEntries == null){
+                            ToastUtils.show(getString(R.string.fetch_failed));
+                            feed.setLastErrorCount(feed.getLastErrorCount()==0?1:feed.getLastErrorCount());
+                            CoreDB.i().feedDao().update(feed);
+                        }else if(!feedEntries.isSuccess()){
+                            ToastUtils.show(getString(R.string.fetch_failed_with_reason, feedEntries.getFeed().getLastSyncError()));
+                            feed.setLastErrorCount(feed.getLastErrorCount()==0?1:feed.getLastErrorCount());
+                            CoreDB.i().feedDao().update(feed);
+                        }else {
+                            AsyncTask.THREAD_POOL_EXECUTOR.execute(new Runnable() {
+                                @Override
+                                public void run() {
+                                    List<Article> localExistArticles = new ArrayList<>();
+                                    Map<String, Article> articleMap = feedEntries.getArticleMap();
+                                    String uid = App.i().getUser().getId();
+                                    PagingUtils.slice(new ArrayList<>(articleMap.keySet()), 50, new PagingUtils.PagingListener<String>() {
+                                        @Override
+                                        public void onPage(@NotNull List<String> childList) {
+                                            List<String> removeIds = CoreDB.i().articleDao().getIds(uid, childList);
+                                            if(removeIds != null){
+                                                for (String id: removeIds){
+                                                    localExistArticles.add( articleMap.remove(id) );
+                                                    // articleMap.remove(id);
+                                                }
+                                            }
+                                        }
+                                    });
+
+
+                                    PagingUtils.slice(new ArrayList<>(feedEntries.getGuids()), 50, new PagingUtils.PagingListener<String>() {
+                                        @Override
+                                        public void onPage(@NotNull List<String> childIds) {
+                                            List<String> removeIds = CoreDB.i().articleDao().getIntersectionIdsByGuid(uid, feedEntries.getFeed().getId(), childIds);
+                                            if(removeIds != null){
+                                                for (String id: removeIds){
+                                                    localExistArticles.add( articleMap.remove(id) );
+                                                    // articleMap.remove(id);
+                                                }
+                                            }
+                                        }
+                                    });
+
+                                    ArrayList<Article> newArticles = new ArrayList<>(articleMap.values());
+
+                                    feed.setLastSyncError(null);
+                                    feed.setLastErrorCount(0);
+                                    CoreDB.i().feedDao().update(feed);
+
+                                    ToastUtils.show(getString(R.string.fetch_success_with_reason, newArticles.size()));
+                                    CoreDB.i().articleDao().update(localExistArticles);
+                                    if(newArticles.size() > 0){
+                                        CoreDB.i().articleDao().insert(newArticles);
+                                        CoreDB.i().feedDao().updateLastPubDate(uid, feedId);
+                                        BaseApi.fetchReadability(uid, syncTime);
+                                        BaseApi.updateCollectionCount(uid);
+                                        LiveEventBus.get(SyncWorker.NEW_ARTICLE_NUMBER).post(newArticles.size());
+                                    }
+                                }
+                            });
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(String msg) {
+                        ToastUtils.show(getString(R.string.fetch_failed_with_reason, msg));
+                        feed.setLastSyncError(msg);
+                        CoreDB.i().feedDao().update(feed);
+                    }
+                });
+
+                getting.policy(Getting.BOTH_OKHTTP_FIRST);
+                getting.start();
+            }
+        });
+
 
         if (!TextUtils.isEmpty(feed.getTitle())) {
             feedNameView.setText(feed.getTitle());

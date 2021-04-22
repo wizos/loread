@@ -366,7 +366,7 @@
                     android:background="?android:attr/selectableItemBackground"/>
 
                 <TextView
-                    android:id="@+id/feed_refetch"
+                    android:id="@+id/feed_fetch_articles_skip"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:padding="15dp"
@@ -375,7 +375,20 @@
                     android:gravity="center"
                     android:visibility="gone"
                     tools:visibility="visible"
-                    android:text="@string/refetch"
+                    android:text="@string/fetch_articles_skip_local_ones"
+                    android:background="?android:attr/selectableItemBackground"/>
+
+                <TextView
+                    android:id="@+id/feed_fetch_articles_overwrite"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:padding="15dp"
+                    android:textSize="14sp"
+                    android:textColor="@color/bluePrimary"
+                    android:gravity="center"
+                    android:visibility="gone"
+                    tools:visibility="visible"
+                    android:text="@string/fetch_articles_overwrite_local_ones"
                     android:background="?android:attr/selectableItemBackground"/>
 
                 <TextView

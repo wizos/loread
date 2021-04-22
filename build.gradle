@@ -3,15 +3,16 @@ apply plugin: 'com.github.ben-manes.versions'
 
 buildscript {
     repositories {
-        google()
         jcenter()
-        maven { url 'https://maven.google.com/' }
         maven { url "https://jitpack.io" }
+        google()
+        maven { url 'https://maven.google.com/' }
         maven { url 'https://dl.bintray.com/umsdk/release' }
         maven { url 'https://maven.icosillion.com/artifactory/open-source/'}
     }
     dependencies {
         classpath 'com.android.tools.build:gradle:4.0.2'
+        classpath 'com.didichuxing.doraemonkit:dokitx-plugin:3.3.5'
         classpath 'com.github.ben-manes:gradle-versions-plugin:0.36.0'
         // 添加了Kotlin编译插件
         // classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.4.21"
@@ -21,10 +22,10 @@ buildscript {
 
 allprojects {
     repositories {
-        google()
         jcenter()
-        maven { url 'https://maven.google.com/' }
         maven { url "https://jitpack.io" }
+        google()
+        maven { url 'https://maven.google.com/' }
         maven { url 'https://dl.bintray.com/umsdk/release' }
         maven { url 'https://maven.icosillion.com/artifactory/open-source/'}
     }
@@ -34,7 +35,8 @@ ext {
     buildToolsVersion = "29.0.3"
     minSdkVersion = 22
     targetSdkVersion = 29
-    rome_version = "1.15.0"
+    romeVersion = "1.15.0"
+    glideVersion = "4.12.0"
     DEBUG_LOG = "false"
 }
 task clean(type: Delete) {

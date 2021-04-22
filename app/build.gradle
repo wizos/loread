@@ -1,4 +1,5 @@
 apply plugin: 'com.android.application'
+apply plugin: 'com.didi.dokit'
 // // 使用Kotlin插件
 // apply plugin: 'kotlin-android'
 // // 使用Kotlin Android扩展插件
@@ -39,7 +40,7 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
         debug {
-            applicationIdSuffix '.debug' //增加包名后缀
+            // applicationIdSuffix '.debug' //增加包名后缀
             minifyEnabled false
             debuggable true
         }
@@ -69,13 +70,48 @@ repositories{
         dirs 'libs'
     }
 }
+dokitExt {
+    //通用设置
+    comm {
+        //地图经纬度开关
+        gpsSwitch false
+        //网络开关
+        networkSwitch true
+        //大图开关
+        bigImgSwitch true
+        //webView js 抓包
+        webViewSwitch true
+    }
+
+    slowMethod {
+        //调用栈模式配置 对应gradle.properties中DOKIT_METHOD_STRATEGY=0
+        // stackMethod {
+        //     //默认值为 5ms 小于该值的函数在调用栈中不显示
+        //     thresholdTime 10
+        //     //调用栈函数入口 千万不要用我默认的配置 如果有特殊需求修改成项目中自己的入口 假如不需要可以去掉该字段
+        //     enterMethods = ["com.didichuxing.doraemondemo.MainDebugActivity.test1"]
+        //     //黑名单 粒度最小到类 暂不支持到方法  千万不要用我默认的配置 如果有特殊需求修改成项目中自己的入口 假如不需要可以去掉该字段
+        //     methodBlacklist = ["com.facebook.drawee.backends.pipeline.Fresco"]
+        // }
+        //普通模式配置 对应gradle.properties中DOKIT_METHOD_STRATEGY=1
+        normalMethod {
+            //默认值为 500ms 小于该值的函数在运行时不会在控制台中被打印
+            thresholdTime 500
+            //需要针对函数插装的包名 千万不要用我默认的配置 如果有特殊需求修改成项目中自己的项目包名 假如不需要可以去掉该字段
+            packageNames = ["me.wizos.loread"]
+            //不需要针对函数插装的包名&类名 千万不要用我默认的配置 如果有特殊需求修改成项目中自己的项目包名 假如不需要可以去掉该字段
+            methodBlacklist = ["me.wizos.loread.network"]
+        }
+    }
+}
+
 dependencies {
     implementation fileTree(include: ['*.jar'], dir: 'libs')
 
-    implementation "org.jetbrains.kotlin:kotlin-stdlib:1.4.21"
-    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.9"
-    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.3.9"
-    // implementation 'com.github.liangjingkanji:Net:2.3.12'
+    // implementation "org.jetbrains.kotlin:kotlin-stdlib:1.4.21"
+    // implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.9"
+    // implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.3.9"
+
     // 开发工具
     testImplementation 'junit:junit:4.13'
     implementation 'androidx.annotation:annotation:1.2.0'
@@ -118,7 +154,7 @@ dependencies {
     implementation project(path: ':support')
     // 分组列表
     // (https://github.com/donkingliang/GroupedRecyclerViewAdapter)
-    implementation 'com.github.donkingliang:GroupedRecyclerViewAdapter:2.4.0'
+    // implementation 'com.github.donkingliang:GroupedRecyclerViewAdapter:2.4.0'
     implementation "pokercc.android.ExpandableRecyclerView:expandableRecyclerView:0.8.5"
 
     // 对话框
@@ -165,8 +201,8 @@ dependencies {
     // https://github.com/codyer/ElegantBus
     // implementation "com.github.codyer.ElegantBus:core:2.0.0" // 不需要跨进程时使用
 
-    implementation "androidx.room:room-runtime:2.2.6"
-    annotationProcessor "androidx.room:room-compiler:2.2.6"
+    implementation "androidx.room:room-runtime:2.3.0"
+    annotationProcessor "androidx.room:room-compiler:2.3.0"
     implementation 'com.tencent.wcdb:room:1.0.8'  // 代替 room-runtime，同时也不需要再引用 wcdb-android
     annotationProcessor 'android.arch.persistence.room:compiler:1.1.1' // compiler 需要用 room 的
 
@@ -179,7 +215,7 @@ dependencies {
 
     // 日志
     // [https://github.com/elvishew/xLog]
-    implementation 'com.elvishew:xlog:1.8.0'
+    implementation 'com.elvishew:xlog:1.9.0'
 
     // 权限申请 [https://github.com/getActivity/XXPermissions]
     implementation 'com.hjq:xxpermissions:10.6'
@@ -210,14 +246,13 @@ dependencies {
 
 
     // 创建和解析JSONFeed提要, github.com/fschiettecatte/JsonFeed 无法使用，JSONObject 使用的类找不到
-
     // [https://github.com/rometools/rome]
     // RSS 解析与生成
-    implementation "com.rometools:rome:$rome_version"
+    implementation "com.rometools:rome:$romeVersion"
     // 诸如MediaRSS，GeoRSS等扩展的生成器和解析器
-    implementation "com.rometools:rome-modules:$rome_version"
+    implementation "com.rometools:rome-modules:$romeVersion"
     // OPML 解析与工具
-    implementation "com.rometools:rome-opml:$rome_version"
+    implementation "com.rometools:rome-opml:$romeVersion"
 
     // 解析播客源 [https://github.com/MarkusLewis/Podcast-Feed-Library] rome 已支持该功能
     // implementation 'com.icosillion.podengine:podengine:2.3'
@@ -228,9 +263,14 @@ dependencies {
     // JS 库 [https://github.com/APISENSE/rhino-android]
     implementation 'io.apisense:rhino-android:1.1.1'
 
+    // 查看大图 [https://github.com/SherlockGougou/BigImageViewPager]
+    implementation 'com.github.SherlockGougou:BigImageViewPager:androidx-6.1.3' // 6.0.1,6.1.3
+    // Glide 底层使用okhttp3
+    implementation("com.github.bumptech.glide:okhttp3-integration:$glideVersion") { transitive = false }
+
     // [https://github.com/bumptech/glide]
-    implementation 'com.github.bumptech.glide:glide:4.12.0'
-    annotationProcessor 'com.github.bumptech.glide:compiler:4.12.0'
+    implementation "com.github.bumptech.glide:glide:$glideVersion"
+    annotationProcessor "com.github.bumptech.glide:compiler:$glideVersion"
 
     // [https://github.com/kirich1409/SvgGlidePlugins]
     implementation project(':svg')
@@ -244,21 +284,17 @@ dependencies {
     // implementation 'com.github.penfeizhou.android.animation:gif:2.8.0'
     // implementation 'com.github.penfeizhou.android.animation:glide-plugin:2.8.0'
 
-    // Glide 底层使用okhttp3
-    implementation('com.github.bumptech.glide:okhttp3-integration:4.11.0') { transitive = false }
-    // 查看大图 [https://github.com/SherlockGougou/BigImageViewPager]
-    implementation 'com.github.SherlockGougou:BigImageViewPager:androidx-6.0.1' // 6.0.1,6.1.3
-
     // 生成/扫描二维码 https://github.com/bingoogolapple/BGAQRCode-Androidc
     // implementation 'cn.bingoogolapple:bga-qrcode-zxing:1.3.7'
-    implementation 'com.king.zxing:zxing-lite:2.0.2'
+    // https://github.com/jenly1314/ZXingLite
+    implementation 'com.king.zxing:zxing-lite:2.0.3'
 
     // retrofit2
-    implementation('com.squareup.retrofit2:retrofit:2.8.1') { transitive = false }
-    implementation('com.squareup.retrofit2:converter-gson:2.8.1') { transitive = false }
+    implementation('com.squareup.retrofit2:retrofit:2.9.0') { transitive = false }
+    implementation('com.squareup.retrofit2:converter-gson:2.9.0') { transitive = false }
     // okHttp
-    implementation 'com.squareup.okhttp3:okhttp:4.9.0'
-    implementation 'com.squareup.okio:okio:2.9.0'
+    implementation 'com.squareup.okhttp3:okhttp:4.9.1'
+    implementation 'com.squareup.okio:okio:2.10.0'
     implementation files('libs/okgo-3.0.4.jar')
 
     // NetCipher是适用于Android的库，它提供了多种改进方法移动应用程序中的网络安全。
@@ -281,6 +317,8 @@ dependencies {
 
     // 图片压缩 [https://github.com/Curzibn/Luban]
     implementation project(path: ':luban')
+    // https://github.com/forJrking/KLuban
+    // implementation 'com.github.forJrking:KLuban:1.0.7'
 
     // 防止三方 SDK 中常见的损害用户体验的行为 [https://github.com/oasisfeng/condom]
     implementation 'com.oasisfeng.condom:library:2.5.0'

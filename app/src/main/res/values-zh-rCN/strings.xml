@@ -273,6 +273,8 @@
     <string name="view_rule">查看规则</string>
     <string name="action">动作</string>
     <string name="execute">执行</string>
+    <string name="fetch_articles_skip_local_ones">抓取文章（跳过已同步的）</string>
+    <string name="fetch_articles_overwrite_local_ones">抓取文章（覆盖已同步的）</string>
     <string name="refetch">重新抓取</string>
     <string name="fetching">抓取中</string>
     <string name="fetch_success">抓取成功</string>

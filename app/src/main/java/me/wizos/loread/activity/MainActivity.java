@@ -83,7 +83,6 @@ import java.util.concurrent.TimeUnit;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 import me.wizos.loread.App;
-import me.wizos.loread.BuildConfig;
 import me.wizos.loread.Contract;
 import me.wizos.loread.R;
 import me.wizos.loread.activity.viewmodel.ArticleListViewModel;
@@ -500,13 +499,11 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
                     XLog.d("加载文章，通知文章列表耗时A：" + (System.currentTimeMillis() - time) + ", 当前时间戳为：" + System.currentTimeMillis());
                     renderViewByArticlesData(App.i().getUser().getStreamTitle(), articles.size() );
                     articlesAdapter.submitList(articles);
-                    XLog.d("加载文章，通知文章列表耗时B：" + (System.currentTimeMillis() - time) + ", 当前时间戳为：" + System.currentTimeMillis());
                     dismissLoadingPopupView();
                 },
                 articleIds -> {
-                    XLog.d("加载文章，通知文章ids耗时A：" + (System.currentTimeMillis() - time) + ", 当前时间戳为：" + System.currentTimeMillis());
-                    articlesAdapter.setArticleIds(articleIds);
                     XLog.d("加载文章，通知文章ids耗时B：" + (System.currentTimeMillis() - time) + ", 当前时间戳为：" + System.currentTimeMillis());
+                    articlesAdapter.setArticleIds(articleIds);
                     App.i().setArticleIds(articleIds);
                 });
 
@@ -517,18 +514,18 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
     private void loadSearchedArticles(String keyword) {
         MobclickAgent.onEvent(this, "click_button_search_articles", keyword);
         openLoadingPopupView();
-        if(BuildConfig.DEBUG && keyword.equals("<重复文章>")){
-            articleListViewModel.loadArticles(App.i().getUser().getId(), this,
-                    articles -> {
-                        renderViewByArticlesData( getString(R.string.title_search,keyword), articles.size() );
-                        articlesAdapter.submitList(articles);
-                        dismissLoadingPopupView();
-                    },
-                    articleIds -> {
-                        articlesAdapter.setArticleIds(articleIds);
-                        App.i().setArticleIds(articleIds);
-                    });
-        }else {
+        // if(BuildConfig.DEBUG && keyword.equals("<重复文章>")){
+        //     articleListViewModel.loadArticles(App.i().getUser().getId(), this,
+        //             articles -> {
+        //                 renderViewByArticlesData( getString(R.string.title_search,keyword), articles.size() );
+        //                 articlesAdapter.submitList(articles);
+        //                 dismissLoadingPopupView();
+        //             },
+        //             articleIds -> {
+        //                 articlesAdapter.setArticleIds(articleIds);
+        //                 App.i().setArticleIds(articleIds);
+        //             });
+        // }else {
             articleListViewModel.loadArticles(App.i().getUser().getId(), keyword, this,
                     articles -> {
                         renderViewByArticlesData( getString(R.string.title_search,keyword), articles.size() );
@@ -539,7 +536,7 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
                         articlesAdapter.setArticleIds(articleIds);
                         App.i().setArticleIds(articleIds);
                     });
-        }
+        // }
         articleListView.scrollToPosition(0);
         // articlesAdapter.setLastPos(0);
     }
@@ -1260,77 +1257,6 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
             }
         });
     }
-    // private void toggleReadState(final int position) {
-    //     if (position < 0) {
-    //         return;
-    //     }
-    //     // String articleId = articlesAdapter.getItem(position).getId();
-    //     // Article article = CoreDB.i().articleDao().getById(App.i().getUser().getId(),articleId);
-    //     XLog.i("切换已读状态" );
-    //     Article article = articlesAdapter.getArticle(position);
-    //     if(article == null){
-    //         return;
-    //     }
-    //     if (autoMarkReaded && article.getReadStatus() == App.STATUS_UNREAD) {
-    //         article.setReadStatus(App.STATUS_UNREADING);
-    //         AsyncTask.THREAD_POOL_EXECUTOR.execute(new Runnable() {
-    //             @Override
-    //             public void run() {
-    //                 CoreDB.i().articleDao().update(article);
-    //             }
-    //         });
-    //     } else if (article.getReadStatus() == App.STATUS_READED) {
-    //         article.setReadStatus(App.STATUS_UNREADING);
-    //         AsyncTask.THREAD_POOL_EXECUTOR.execute(new Runnable() {
-    //             @Override
-    //             public void run() {
-    //                 CoreDB.i().articleDao().update(article);
-    //             }
-    //         });
-    //         App.i().getApi().markArticleUnread(article.getId(), new CallbackX() {
-    //             @Override
-    //             public void onSuccess(Object result) {
-    //             }
-    //
-    //             @Override
-    //             public void onFailure(Object error) {
-    //                 XLog.w("失败的原因是：" + error );
-    //                 article.setReadStatus(App.STATUS_READED);
-    //                 AsyncTask.THREAD_POOL_EXECUTOR.execute(new Runnable() {
-    //                     @Override
-    //                     public void run() {
-    //                         CoreDB.i().articleDao().update(article);
-    //                     }
-    //                 });
-    //             }
-    //         });
-    //     } else {
-    //         article.setReadStatus(App.STATUS_READED);
-    //         AsyncTask.THREAD_POOL_EXECUTOR.execute(new Runnable() {
-    //             @Override
-    //             public void run() {
-    //                 CoreDB.i().articleDao().update(article);
-    //             }
-    //         });
-    //         App.i().getApi().markArticleReaded(article.getId(), new CallbackX() {
-    //             @Override
-    //             public void onSuccess(Object result) {
-    //             }
-    //
-    //             @Override
-    //             public void onFailure(Object error) {
-    //                 XLog.w("失败的原因是：" + error );
-    //                 article.setReadStatus(App.STATUS_UNREAD);
-    //                 AsyncTask.THREAD_POOL_EXECUTOR.execute(new Runnable() {
-    //                     @Override
-    //                     public void run() {
-    //                         CoreDB.i().articleDao().update(article);
-    //                     }
-    //                 });
-    //             }
-    //         });
-    //     }
-    // }
 
     private void toggleStarState(final int position) {
         if (position < 0) {
@@ -1380,70 +1306,6 @@ public class MainActivity extends BaseActivity implements SwipeRefreshLayoutS.On
             }
         });
     }
-
-    // private void toggleStarState(final int position) {
-    //     if (position < 0) {
-    //         return;
-    //     }
-    //
-    //     XLog.i("切换加星状态" );
-    //     Article article = articlesAdapter.getArticle(position);
-    //     if(article == null){
-    //         return;
-    //     }
-    //
-    //     if (article.getStarStatus() == App.STATUS_STARED) {
-    //         article.setStarStatus(App.STATUS_UNSTAR);
-    //         AsyncTask.THREAD_POOL_EXECUTOR.execute(new Runnable() {
-    //             @Override
-    //             public void run() {
-    //                 CoreDB.i().articleDao().update(article);
-    //             }
-    //         });
-    //
-    //         App.i().getApi().markArticleUnstar(article.getId(), new CallbackX() {
-    //             @Override
-    //             public void onSuccess(Object result) {
-    //             }
-    //             @Override
-    //             public void onFailure(Object error) {
-    //                 XLog.w("失败的原因是：" + error );
-    //                 article.setStarStatus(App.STATUS_STARED);
-    //                 AsyncTask.THREAD_POOL_EXECUTOR.execute(new Runnable() {
-    //                     @Override
-    //                     public void run() {
-    //                         CoreDB.i().articleDao().update(article);
-    //                     }
-    //                 });
-    //             }
-    //         });
-    //     } else {
-    //         article.setStarStatus(App.STATUS_STARED);
-    //         AsyncTask.THREAD_POOL_EXECUTOR.execute(new Runnable() {
-    //             @Override
-    //             public void run() {
-    //                 CoreDB.i().articleDao().update(article);
-    //             }
-    //         });
-    //         App.i().getApi().markArticleStared(article.getId(), new CallbackX() {
-    //             @Override
-    //             public void onSuccess(Object result) {
-    //             }
-    //
-    //             @Override
-    //             public void onFailure(Object error) {
-    //                 XLog.w("失败的原因是：" + error );
-    //                 article.setStarStatus(App.STATUS_UNSTAR);
-    //                 AsyncTask.THREAD_POOL_EXECUTOR.execute(new Runnable() {
-    //                     @Override
-    //                     public void run() {
-    //                         CoreDB.i().articleDao().update(article);
-    //                     }
-    //                 });
-    //             }
-    //         });
-    //     }
-    // }
 
 
     // TODO: 2018/3/4 改用观察者模式。http://iaspen.cn/2015/05/09/观察者模式在android上的最佳实践

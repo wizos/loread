@@ -220,7 +220,7 @@ public class FeedlyApi extends OAuthApi {
 
     @Override
     public void sync() {
-        long startSyncTimeMillis = App.i().getLastShowTimeMillis() + 3600_000;
+        long startSyncTimeMillis = System.currentTimeMillis() + 3600_000;
         String uid = App.i().getUser().getId();
         try {
             XLog.e("3 - 同步订阅源信息");

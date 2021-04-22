@@ -136,7 +136,6 @@ public class FeedParserUtils {
         Charset charset;
         String content;
 
-
         content = inputStreamCache.getSting();
 
         if (StringUtils.isEmpty(content)) {

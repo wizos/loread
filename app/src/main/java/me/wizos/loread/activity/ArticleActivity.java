@@ -1772,7 +1772,7 @@ public class ArticleActivity extends BaseActivity implements ArticleBridge {
                 public void onResponse(ExtractPage page) {
                     App.i().oldArticles.put(selectedArticle.getId(),(Article)selectedArticle.clone());
 
-                    selectedArticle.updateContent(ArticleUtils.getOptimizedContent(finalUrl, page.getContent()));
+                    selectedArticle.updateContent(finalUrl, page.getContent());
 
                     CoreDB.i().articleDao().update(selectedArticle);
                     articleHandler.post(new Runnable() {

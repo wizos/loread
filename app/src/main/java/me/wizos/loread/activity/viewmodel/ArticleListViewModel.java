@@ -20,14 +20,14 @@ import java.util.List;
 
 import me.wizos.loread.App;
 import me.wizos.loread.bean.collectiontree.CollectionTree;
-import me.wizos.loread.db.Article;
 import me.wizos.loread.db.ArticleDao;
+import me.wizos.loread.db.ArticleMeta;
 import me.wizos.loread.db.CoreDB;
 
 // LiveData通常结合ViewModel一起使用。我们知道ViewModel是用来存放数据的，因此我们可以将数据库放在ViewModel中进行实例化。
 // 但数据库在实例化的时候需要Context，而ViewModel不能传入任何带有Context引用的对象，所以应该用它的子类AndroidViewModel，它可以接受Application作为参数，用于数据库的实例化。
 public class ArticleListViewModel extends AndroidViewModel {
-    private LiveData<PagedList<Article>> articlesLiveData;
+    private LiveData<PagedList<ArticleMeta>> articlesLiveData;
     private LiveData<List<String>> articleIdsLiveData;
     private WeakReference<Activity> activityWeakReference;
 
@@ -39,7 +39,7 @@ public class ArticleListViewModel extends AndroidViewModel {
         this.activityWeakReference = activityWeakReference;
     }
 
-    public void loadArticles(String uid, String streamId, int streamType, int streamStatus, @NonNull LifecycleOwner owner, @NonNull Observer<PagedList<Article>> articlesObserver, @NonNull Observer<List<String>> articleIdsObserver){
+    public void loadArticles(String uid, String streamId, int streamType, int streamStatus, @NonNull LifecycleOwner owner, @NonNull Observer<PagedList<ArticleMeta>> articlesObserver, @NonNull Observer<List<String>> articleIdsObserver){
         if(articlesLiveData != null && articlesLiveData.hasObservers()){
             articlesLiveData.removeObservers(owner);
             articlesLiveData = null;
@@ -58,7 +58,7 @@ public class ArticleListViewModel extends AndroidViewModel {
                 long timeMillis = System.currentTimeMillis();
                 App.i().setLastShowTimeMillis(timeMillis);
 
-                DataSource.Factory<Integer, Article> articleFactory;
+                DataSource.Factory<Integer, ArticleMeta> articleFactory;
                 // XLog.i("生成 getArticles ：" + streamId + "   " + timeMillis);
 
                 XLog.d("加载文章，耗时A：" + (System.currentTimeMillis() - time));
@@ -98,8 +98,8 @@ public class ArticleListViewModel extends AndroidViewModel {
                             articleFactory = articleDao.getUnreadByUnsubscribed(uid, timeMillis);
                             articleIdsLiveData = articleDao.getUnreadIdsByUnsubscribed(uid,timeMillis);
                         }else {
-                            articleFactory = articleDao.getUnread2(uid, timeMillis);
-                            articleIdsLiveData = articleDao.getUnreadIds2(uid,timeMillis);
+                            articleFactory = articleDao.getUnread(uid, timeMillis);
+                            articleIdsLiveData = articleDao.getUnreadIds(uid,timeMillis);
                         }
                     } else {
                         if (streamId.contains(App.CATEGORY_UNSUBSCRIBED)){
@@ -111,7 +111,6 @@ public class ArticleListViewModel extends AndroidViewModel {
                         }
                     }
                 }
-
 
                 // setPageSize 指定每次分页加载的条目数量
                 assert articleFactory != null;
@@ -231,7 +230,7 @@ public class ArticleListViewModel extends AndroidViewModel {
     //     XLog.d("加载文章，耗时F：" + (System.currentTimeMillis() - time) + ", 当前时间戳为：" + System.currentTimeMillis());
     // }
     //
-    public void loadArticles(String uid, String keyword, @NonNull LifecycleOwner owner, @NonNull Observer<PagedList<Article>> articlesObserver, @NonNull Observer<List<String>> articleIdsObserver){
+    public void loadArticles(String uid, String keyword, @NonNull LifecycleOwner owner, @NonNull Observer<PagedList<ArticleMeta>> articlesObserver, @NonNull Observer<List<String>> articleIdsObserver){
         if(articlesLiveData != null && articlesLiveData.hasObservers()){
             articlesLiveData.removeObservers(owner);
             articlesLiveData = null;
@@ -269,40 +268,40 @@ public class ArticleListViewModel extends AndroidViewModel {
         });
     }
 
-    public void loadArticles(String uid, @NonNull LifecycleOwner owner, @NonNull Observer<PagedList<Article>> articlesObserver, @NonNull Observer<List<String>> articleIdsObserver){
-        if(articlesLiveData != null && articlesLiveData.hasObservers()){
-            articlesLiveData.removeObservers(owner);
-            articlesLiveData = null;
-        }
-        if(articleIdsLiveData != null && articleIdsLiveData.hasObservers()){
-            articleIdsLiveData.removeObservers(owner);
-            articleIdsLiveData = null;
-        }
-
-        AsyncTask.THREAD_POOL_EXECUTOR.execute(new Runnable() {
-            @Override
-            public void run() {
-                // setPageSize 指定每次分页加载的条目数量
-                articlesLiveData = new LivePagedListBuilder<>(CoreDB.i().articleDao().getDuplicateArticles(uid), new PagedList.Config.Builder()
-                        .setInitialLoadSizeHint(20)
-                        .setPageSize(20)
-                        .setPrefetchDistance(20)
-                        .setMaxSize(60)
-                        .build()
-                ).build();
-                articleIdsLiveData = CoreDB.i().articleDao().getDuplicateArticleIds(uid);
-
-                if(activityWeakReference != null && activityWeakReference.get() != null){
-                    activityWeakReference.get().runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            //  Cannot invoke observe on a background thread
-                            articlesLiveData.observe(owner, articlesObserver);
-                            articleIdsLiveData.observe(owner, articleIdsObserver);
-                        }
-                    });
-                }
-            }
-        });
-    }
+    // public void loadArticles(String uid, @NonNull LifecycleOwner owner, @NonNull Observer<PagedList<Article>> articlesObserver, @NonNull Observer<List<String>> articleIdsObserver){
+    //     if(articlesLiveData != null && articlesLiveData.hasObservers()){
+    //         articlesLiveData.removeObservers(owner);
+    //         articlesLiveData = null;
+    //     }
+    //     if(articleIdsLiveData != null && articleIdsLiveData.hasObservers()){
+    //         articleIdsLiveData.removeObservers(owner);
+    //         articleIdsLiveData = null;
+    //     }
+    //
+    //     AsyncTask.THREAD_POOL_EXECUTOR.execute(new Runnable() {
+    //         @Override
+    //         public void run() {
+    //             // setPageSize 指定每次分页加载的条目数量
+    //             articlesLiveData = new LivePagedListBuilder<>(CoreDB.i().articleDao().getDuplicateArticles(uid), new PagedList.Config.Builder()
+    //                     .setInitialLoadSizeHint(20)
+    //                     .setPageSize(20)
+    //                     .setPrefetchDistance(20)
+    //                     .setMaxSize(60)
+    //                     .build()
+    //             ).build();
+    //             articleIdsLiveData = CoreDB.i().articleDao().getDuplicateArticleIds(uid);
+    //
+    //             if(activityWeakReference != null && activityWeakReference.get() != null){
+    //                 activityWeakReference.get().runOnUiThread(new Runnable() {
+    //                     @Override
+    //                     public void run() {
+    //                         //  Cannot invoke observe on a background thread
+    //                         articlesLiveData.observe(owner, articlesObserver);
+    //                         articleIdsLiveData.observe(owner, articleIdsObserver);
+    //                     }
+    //                 });
+    //             }
+    //         }
+    //     });
+    // }
 }

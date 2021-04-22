@@ -102,7 +102,7 @@ public class LocalApi extends BaseApi {
          * 2、
          */
 
-        long startSyncTimeMillis = App.i().getLastShowTimeMillis() + 3600_000;
+        long startSyncTimeMillis = System.currentTimeMillis() + 3600_000;
         String uid = App.i().getUser().getId();
 
         if(CoreDB.i().feedDao().getCount(uid) == 0){

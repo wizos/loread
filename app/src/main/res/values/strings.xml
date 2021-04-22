@@ -693,6 +693,8 @@
     <string name="feed_name">Feed name</string>
     <string name="unsubscribe">Unsubscribe</string>
 
+    <string name="fetch_articles_skip_local_ones">Fetch articles (skip local ones)</string>
+    <string name="fetch_articles_overwrite_local_ones">Fetch articles (overwrite local ones)</string>
     <string name="refetch">Refetch</string>
     <string name="fetching">Fetching</string>
     <string name="fetch_success">Fetch success</string>

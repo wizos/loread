@@ -217,6 +217,11 @@ public class Article implements Cloneable{
         this.summary = ArticleUtils.getOptimizedSummary(content);
         this.image = ArticleUtils.getCoverUrl(link, content);
     }
+    public void updateContent(String link, String content) {
+        this.content = ArticleUtils.getOptimizedContent(link, content);;
+        this.summary = ArticleUtils.getOptimizedSummary(content);
+        this.image = ArticleUtils.getCoverUrl(link, content);
+    }
 
     @NotNull
     @Override

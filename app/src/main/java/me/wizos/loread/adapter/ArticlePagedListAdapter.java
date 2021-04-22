@@ -30,12 +30,13 @@ import me.wizos.loread.Contract;
 import me.wizos.loread.R;
 import me.wizos.loread.config.HeaderRefererConfig;
 import me.wizos.loread.db.Article;
+import me.wizos.loread.db.ArticleMeta;
 import me.wizos.loread.db.CoreDB;
 import me.wizos.loread.service.TimeHandler;
 import me.wizos.loread.utils.StringUtils;
 import me.wizos.loread.view.IconFontView;
 
-public class ArticlePagedListAdapter extends PagedListAdapter<Article, ArticlePagedListAdapter.ArticleViewHolder> {
+public class ArticlePagedListAdapter extends PagedListAdapter<ArticleMeta, ArticlePagedListAdapter.ArticleViewHolder> {
     private RequestOptions canDownloadOptions;
     private RequestOptions cannotDownloadOptions;
     private Context context;
@@ -60,7 +61,7 @@ public class ArticlePagedListAdapter extends PagedListAdapter<Article, ArticlePa
 
     @Override
     public void onBindViewHolder(@NonNull ArticleViewHolder holder, int position) {
-        Article article = super.getItem(position);
+        ArticleMeta article = super.getItem(position);
         // XLog.d("创建onBindViewHolder，LastKey = " + Objects.requireNonNull(getCurrentList()).getLastKey() + " , " + getCurrentList().getPositionOffset() + "  " + (article == null) + "  " + position);
         // 如果article是null，在此处不停循环的获取getItem得到的还是null
         if (article != null) {
@@ -71,15 +72,15 @@ public class ArticlePagedListAdapter extends PagedListAdapter<Article, ArticlePa
         }
     }
 
-    private static DiffUtil.ItemCallback<Article> DIFF_CALLBACK = new DiffUtil.ItemCallback<Article>() {
+    private static DiffUtil.ItemCallback<ArticleMeta> DIFF_CALLBACK = new DiffUtil.ItemCallback<ArticleMeta>() {
         @Override
-        public boolean areItemsTheSame(Article oldArticle, Article newArticle) {
+        public boolean areItemsTheSame(ArticleMeta oldArticle, ArticleMeta newArticle) {
             // XLog.d("文章：判断id是否一致");
             return oldArticle.getId().equals(newArticle.getId());
         }
 
         @Override
-        public boolean areContentsTheSame(Article oldArticle, Article newArticle) {
+        public boolean areContentsTheSame(ArticleMeta oldArticle, ArticleMeta newArticle) {
             // XLog.d("文章：判断内容是否一致");
             return oldArticle.getReadStatus() == newArticle.getReadStatus()
                     && oldArticle.getStarStatus() == newArticle.getStarStatus()
@@ -128,7 +129,7 @@ public class ArticlePagedListAdapter extends PagedListAdapter<Article, ArticlePa
         }
 
 
-        void bindTo(Article article){
+        void bindTo(ArticleMeta article){
             if (TextUtils.isEmpty(article.getTitle())) {
                 articleTitle.setText(App.i().getString(R.string.no_title));
             } else {

@@ -14,5 +14,5 @@ android {
 }
 
 dependencies {
-    api 'androidx.recyclerview:recyclerview:1.1.0'
+    api 'androidx.recyclerview:recyclerview:1.2.0'
 }

@@ -37,7 +37,7 @@ import me.wizos.loread.adapter.FeedPagedListAdapter;
 import me.wizos.loread.bean.SpinnerData;
 import me.wizos.loread.db.CoreDB;
 import me.wizos.loread.db.Feed;
-import me.wizos.loread.utils.DictUtils;
+import me.wizos.loread.utils.SpinnerUtils;
 import me.wizos.loread.view.colorful.Colorful;
 
 /**
@@ -94,7 +94,7 @@ public class FeedManagerActivity extends BaseActivity {
         categoriesData.addAll(CoreDB.i().categoryDao().getCategoriesForSpinnerData(App.i().getUser().getId()));
 
         categorySpinner.setAdapter(new ArrayAdapter<SpinnerData>(this, android.R.layout.simple_spinner_dropdown_item, categoriesData));
-        orderSpinner.setAdapter( new ArrayAdapter<SpinnerData>(this, android.R.layout.simple_spinner_dropdown_item, DictUtils.getSpinnerData(this, R.array.feed_manager_order_title, R.array.feed_manager_order_value)) );
+        orderSpinner.setAdapter( new ArrayAdapter<SpinnerData>(this, android.R.layout.simple_spinner_dropdown_item, SpinnerUtils.getSpinnerData(this, R.array.feed_manager_order_title, R.array.feed_manager_order_value)) );
 
         TextWatcher afterTextChangedListener = new TextWatcher() {
             @Override
